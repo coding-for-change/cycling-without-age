@@ -14,7 +14,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 You are a Senior Software Architect. We are building a Next.js application using a Strict Vertical Slice Architecture with a Hierarchical Layering system. The goal is total decoupling of business logic from the UI and infrastructure.
 
 ## 2. THE ARCHITECTURAL LAYERS & INTERACTION LAW
-Imports must only flow downward. Violation of these rules is a build-breaking error.
+Imports must only flow downward. Violation of these rules is a build-breaking error. Code is self-explanitory and therefore no comments.
 
 ### THE PRESENTATION LAYER (`src/app` & `src/features/*/components`)
 - **Role**: UI Rendering & User Input.
@@ -93,3 +93,16 @@ No Shortcuts:
 - Database calls MUST go through Service → Facade.
 - A "use case" that touches only one feature is not a use case — collapse it into the Action.
 - Auth checks live in `lib/auth-guards.ts`, called from Actions and (cross-feature) Use Cases. Never inside a Facade.
+
+## 7. NATIVE (CAPACITOR) RULES
+The iOS/Android apps are thin Capacitor shells whose WebView loads https://cwa.codingforchange.com.
+
+- ALL `@capacitor/*` imports live in `src/lib/native/*` (lint-enforced via `no-restricted-imports`).
+  Features import the semantic wrappers (`@/lib/native/haptics`), never plugins directly.
+- Native APIs are client-only: call them from client components; the wrappers are SSR-safe
+  no-ops on web (guarded by `Capacitor.isNativePlatform()`). Everything must degrade
+  gracefully in the browser — web-first.
+- Haptics semantics: `haptics.success/warning/error` at action completion, fired next to the
+  toast in the client component that receives the Server Action result; `haptics.tap` for
+  significant direct interactions (send, destructive confirm); the selection trio for scrubbing.
+  At most one haptic per user action — haptics mark moments, not every tap.

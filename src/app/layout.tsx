@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { defaultLocale, locales, LOCALE_COOKIE } from "@/lib/i18n";
+import { NativeBootstrap } from "@/lib/native/native-bootstrap";
 import "./globals.css";
 
 const inter = Inter({
@@ -44,7 +45,10 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: setLangScript }} />
       </head>
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">
+        <NativeBootstrap />
+        {children}
+      </body>
     </html>
   );
 }

@@ -13,7 +13,10 @@ export default function GlobalError({
   retry: () => void;
 }) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html
+      lang="en"
+      className="h-full antialiased"
+    >
       <body className="flex min-h-full flex-col items-center justify-center gap-4 p-6 text-center font-sans">
         <h1 className="text-2xl font-semibold">Something went wrong</h1>
         <p className="text-muted-foreground">

@@ -48,3 +48,12 @@ src/
 ## Manifesto Rules
 - **Deep-linking into a feature's `/services` folder is a build-breaking offense.**
 - **Every Feature MUST expose its logic through a single `facade.ts`.**
+
+## Native Shell (Capacitor)
+
+The iOS (`ios/`) and Android (`android/`) apps are thin Capacitor shells whose WebView loads the
+deployed site (remote-URL shell — the app is server-rendered and cannot be statically exported).
+Native plugin access is cross-cutting infrastructure and lives in `src/lib/native/*`
+(`haptics.ts`, `native-bootstrap.tsx`), same status as `lib/auth-guards`: any layer's client
+components may import the wrappers, but `@capacitor/*` is never imported outside `src/lib/native/`
+(lint-enforced). See AGENTS.md §7 for the operational rules.

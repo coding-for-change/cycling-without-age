@@ -11,10 +11,21 @@
     "format:check": "prettier --check .",
     "db:migrate": "dotenv -e .env.local -- prisma migrate dev",
     "db:push": "dotenv -e .env.local -- prisma db push",
+    "cap:sync": "cap sync",
+    "cap:assets": "capacitor-assets generate --ios --android",
+    "cap:ios": "cap run ios",
+    "cap:android": "cap run android",
+    "cap:ios:dev": "CAP_SERVER_URL=http://localhost:3000 cap run ios",
+    "cap:android:dev": "CAP_SERVER_URL=http://10.0.2.2:3000 cap run android",
     "prepare": "husky"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/ios": "^8.5.0",
+    "@capacitor/splash-screen": "^8.0.2",
     "@formatjs/intl-localematcher": "^0.8.13",
     "@hookform/resolvers": "^5.9.1",
     "@prisma/client": "^6.19.2",
@@ -44,6 +55,8 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.0",
     "@tailwindcss/postcss": "^4",
     "@types/negotiator": "^0.6.5",
     "@types/node": "^20",
