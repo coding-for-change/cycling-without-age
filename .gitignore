@@ -33,6 +33,7 @@ yarn-error.log*
 # env files
 .env*
 !.env.example
+.vault_pass
 
 # generated
 src/generated/
