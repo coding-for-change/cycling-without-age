@@ -1,0 +1,104 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Decrypt Secrets
+        run: |
+          if ! command -v ansible-playbook &> /dev/null; then
+            pipx install ansible-core
+          fi
+          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > .vault_pass
+
+          # Since the file uses inline !vault tags rather than full-file encryption, we use a simple playbook to parse it.
+          cat << 'EOF' > dump.yml
+          - hosts: localhost
+            gather_facts: false
+            vars_files:
+              - .config/secrets.yml
+            tasks:
+              - copy:
+                  content: "{{ vars | to_nice_json }}"
+                  dest: decrypted.json
+          EOF
+          ansible-playbook dump.yml --vault-password-file .vault_pass
+
+          # Register secrets with GitHub Actions to dynamically mask them in the logs
+          echo "::add-mask::$(jq -r '.REGISTRY_USERNAME // empty' decrypted.json)"
+          echo "::add-mask::$(jq -r '.REGISTRY_PASSWORD // empty' decrypted.json)"
+          echo "::add-mask::$(jq -r '.DATABASE_URL // empty' decrypted.json)"
+      # 2. Build Docker image
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t registry.infra.codingforchange.com/cwa:${{ github.sha }} \
+            -t registry.infra.codingforchange.com/cwa:latest \
+            .
+
+      # 3. Push to private registry
+      - name: Login to registry
+        run: |
+          jq -r '.REGISTRY_PASSWORD // empty' decrypted.json | docker login registry.infra.codingforchange.com \
+            -u "$(jq -r '.REGISTRY_USERNAME // empty' decrypted.json)" \
+            --password-stdin
+
+      - name: Push Docker image
+        run: |
+          docker push registry.infra.codingforchange.com/cwa:${{ github.sha }}
+          docker push registry.infra.codingforchange.com/cwa:latest
+
+      # 4. Deploy to VPS via SSH
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          jq -r '.VPS_DEPLOY_KEY // empty' decrypted.json > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H codingforchange.com >> ~/.ssh/known_hosts
+
+      - name: Copy files to VPS
+        run: |
+          SSH="ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key"
+          SCP="scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key"
+          SSH_TARGET="deploy-cwa@codingforchange.com"
+
+          # Ensure target directory exists
+          $SSH $SSH_TARGET "mkdir -p /var/www/cwa"
+
+          # Copy docker-compose (prod → docker-compose.yml on VPS)
+          $SCP docker-compose.prod.yml ${SSH_TARGET}:/var/www/cwa/docker-compose.yml
+
+          # Copy Caddyfile
+          $SCP Caddyfile ${SSH_TARGET}:/var/www/cwa/Caddyfile
+
+          # Write .env from decrypted secrets and copy to VPS
+          printf '%s\n' \
+            "DATABASE_URL=$(jq -r '.DATABASE_URL // empty' decrypted.json)" \
+            "NEXT_PUBLIC_APP_URL=https://cwa.codingforchange.com" \
+            > /tmp/.env
+          $SCP /tmp/.env ${SSH_TARGET}:/var/www/cwa/.env
+          rm -f /tmp/.env
+
+      - name: Deploy on VPS
+        run: |
+          SSH="ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key deploy-cwa@codingforchange.com"
+
+          $SSH "cd /var/www/cwa && \
+            docker compose pull && \
+            docker compose up -d"
+
+      - name: Clean up Secrets
+        if: always()
+        run: |
+          rm -f .vault_pass dump.yml decrypted.json
