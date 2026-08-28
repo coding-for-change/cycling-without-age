@@ -96,7 +96,8 @@ jobs:
 
           $SSH "cd /var/www/cwa && \
             docker compose pull && \
-            docker compose up -d"
+            docker compose up -d && \
+            sudo systemctl reload caddy"
 
       - name: Clean up Secrets
         if: always()
