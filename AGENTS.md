@@ -74,6 +74,9 @@ Actionable Chain: When asked to build a feature:
 4. Write the Server Action (`actions.ts`): `requireAdmin()` (or similar) → call Facade → `revalidatePath`.
 5. (Only if the Action would have to call two or more different feature Facades) Create a Use Case in `src/use-cases/` and have the Action delegate to it.
 6. Wire up the UI to call the Action.
+7. Never commit on your own. Always the user commits
+8. Always utilize Ultracode and subagents when possible
+9. Prs are only opened on user request
 
 No Shortcuts:
 - Database calls MUST go through Service → Facade.

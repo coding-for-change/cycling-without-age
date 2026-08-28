@@ -37,4 +37,4 @@ See [AGENTS.md](AGENTS.md) and [docs-internal/ARCHITECTURE.md](docs-internal/ARC
 
 The only GitHub Actions secret is `ANSIBLE_VAULT_PASSWORD`. All other secrets live encrypted in [.config/secrets.yml](.config/secrets.yml) (Ansible Vault, inline `!vault` values — safe to commit). Non-secret env values (`NEXT_PUBLIC_APP_URL`) are hardcoded in the workflows.
 
-Prod database: shared MySQL on the host, database `cwa`, reached from the container via `host.docker.internal`.
+Prod database: shared MySQL on the host, database `application_cwa_prod` (user `application_cwa_prod`, managed in the coding-for-change-infra repo), reached from the container via `host.docker.internal`.
