@@ -8,3 +8,13 @@ node_modules
 docker-compose*.yml
 Caddyfile
 .DS_Store
+.vault_pass
+.cursor
+.config
+.github
+.husky
+android
+ios
+docs-internal
+*.log
+tsconfig.tsbuildinfo
