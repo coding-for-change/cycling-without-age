@@ -70,7 +70,8 @@ online column applies to this app:
   only one bundled in `src/fonts/`. TacaPro regular is print body text, and **Extrabold
   does not appear in the brand book at all**. Exposed as `--font-taca` / utility class
   `font-display`; `h1`–`h4` default to it at weight 700.
-  ⚠ Its licensing for web use is unresolved — see `src/fonts/LICENSE.md` before shipping.
+  ⚠ Obtained from CWA's own brand-book page; webfont licensing still to be confirmed
+  with CWA — see `src/fonts/LICENSE.md`.
 - **Body text** — the app's sans stack (Inter), substituting the book's **Arial**. Inter
   is a neutral grotesque in the same register, is already the app's font, and renders
   more consistently across platforms than Arial/Helvetica fallbacks. This is the one

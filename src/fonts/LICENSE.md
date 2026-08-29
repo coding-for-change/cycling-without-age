@@ -1,8 +1,10 @@
 # Taca Pro — provenance and licensing status
 
-> **Unresolved.** These files are a commercial desktop typeface being served as a
-> webfont. No license covering that use has been located. Read this before shipping
-> the app publicly. See "What needs to happen" at the bottom.
+> **Partly resolved.** This font came from **Cycling Without Age's own website**, linked
+> from their official brand-book page — so it reached us through the organisation's
+> intended channel, not a font-piracy mirror. What is still unconfirmed is whether that
+> distribution covers **webfont** use by a chapter. One email should settle it; see
+> "What needs to happen".
 
 ## What is here
 
@@ -40,6 +42,11 @@ embedding a font **into a document** (PDF, Word). It is permissive as those bits
 
 ## Why the licensing question is open
 
+0. **CWA distributing it is not the same as CWA licensing it to us for the web.** A
+   foundry license held by CWA International for producing brand materials would not
+   automatically extend to a chapter self-hosting the font as a webfont on a public
+   site. It is also possible CWA is distributing more broadly than their own license
+   allows. This is the one question left, and only CWA can answer it.
 1. **The license pointer is dead.** Both the embedded `LicenseURL` and the PDF that
    shipped with these files point at `fountaintype.com`. That domain no longer serves
    the foundry — it resolves to a parked one.com certificate.
@@ -54,20 +61,41 @@ embedding a font **into a document** (PDF, Word). It is permissive as those bits
    `.woff2` files under a `…wfkit2…` naming scheme. These are `.otf` carrying the
    2012 Fountain copyright — a desktop release.
 
-## How these files got into this repo
+## How these files got into this repo — the full chain
 
-Ported byte-identical (verified by SHA-256) from `book2go-mockup/src/fonts/`, where
-they were committed in `b133e7b` ("Brand foundation…"). That is the same mockup this
-branch's other UI code came from. The original acquisition — who obtained them and
-under what terms — is not recorded in either repo.
+Every step below is verified by SHA-256, not inferred.
 
-They were most likely added while implementing `docs/BRAND.md`, which specifies Taca Pro
-as the CWA corporate typeface. Note that the brand book specifies the *typeface*; it is
-not a source of licensed font files.
+1. **Downloaded from CWA's own website**, via Chrome. macOS recorded the source on the
+   archive (`kMDItemWhereFroms`):
+
+   ```
+   https://cyclingwithoutage.org/wp-content/uploads/2015/01/CWA-font-TacaPro.zip
+   referred from  https://cyclingwithoutage.org/brand-book/
+   ```
+
+   That is the **official CWA brand-book page** offering the font package to chapters
+   and ambassadors. The archive is still at `~/Downloads/CWA-font-TacaPro.zip`.
+
+2. **The archive is the untouched Fountain retail package** — a `taca_pro/` folder, all
+   file dates 2014-02-13, containing five weights (Extralight, Light, Regular, Bold,
+   Extrabold) plus `FountainLicense.pdf`. Five weights matches the family MyFonts sells
+   today. CWA appears to have uploaded the package as they received it.
+
+3. **Unzipped into `book2go-mockup/src/fonts/`** and committed there in `b133e7b`
+   ("Brand foundation…").
+
+4. **Copied into this repo** during the mockup port that this branch trimmed back.
+
+`TacaPro-Bold.otf` here is byte-identical to the one inside the CWA archive
+(`256baf0d…`), as is the license PDF that travelled with it (`aa9d3bbf…`).
+
+So the provenance question is answered: the font came from Cycling Without Age.
 
 ## About the `FountainLicense.pdf` that used to sit here
 
-Removed in favour of this file. It contained no license terms — one page, three lines:
+Removed in favour of this file. It is still in the CWA archive and in
+`book2go-mockup` (git blob `43cca091…`). It contained no license terms — one page,
+three lines:
 
 > "Our End User License Agreement (EULA) can always be found at our site:
 > http://www.fountaintype.com/support/license-agreement"
@@ -80,20 +108,23 @@ licensee. It named no purchaser, no date of sale, and no scope.
 The original file remains in git history at `book2go-mockup/src/fonts/FountainLicense.pdf`
 if it is ever needed.
 
-One point in favour of legitimate origin: foundries ship a license PDF alongside the
-font files in a retail download, and free-font mirror sites do not. The presence of that
-leaflet suggests these came from a genuine Fountain distribution package. It does not
-establish who licensed it, or that the license covers web use.
+Its presence was the first hint of legitimate origin — foundries ship a license leaflet
+in a retail download and piracy mirrors do not — which the download trail above has since
+confirmed outright.
 
 ## What needs to happen
 
 In order of preference:
 
 1. **Ask CWA International**, at **start@cyclingwithoutage.org** — the address the brand
-   book itself gives for design assets and implementation questions (p. 43). The book
-   specifies Taca Pro, so whoever produced it licensed the font; a chapter may be covered
-   under the organisation's existing grant. Request the EULA or purchase record before
-   buying anything. (Nothing in the book's 44 pages says where to obtain the font.)
+   book gives for design assets and implementation questions (p. 43). Because the font
+   came from their own brand-book page, the question is narrow and concrete:
+
+   > You distribute the TacaPro package from your brand-book page. We are building a
+   > chapter web app and are self-hosting TacaPro Bold as a webfont. Does the license
+   > you hold cover that, or should we buy our own webfont license?
+
+   Ask before buying anything — they may already hold a grant that covers chapters.
 2. **Otherwise buy a webfont license** from MyFonts under the chapter's name, replace
    these `.otf`s with the `.woff2` files it ships, and commit the receipt reference
    here. `.woff2` is the better format for web delivery regardless — smaller, and what
