@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   deploy:
@@ -119,6 +120,20 @@ jobs:
             docker compose pull && \
             docker compose up -d && \
             sudo systemctl reload caddy"
+
+      - name: Comment deployment URL on PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          URL="https://${{ env.BRANCH_NAME_SAFE }}.cwa.codingforchange.com"
+          PR=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+          if [ -n "$PR" ]; then
+            gh pr comment "$PR" --edit-last --create-if-none \
+              --body "🚀 Feature branch deployed: $URL"
+          else
+            echo "No open PR for branch $BRANCH — skipping comment"
+          fi
 
       - name: Clean up Secrets
         if: always()

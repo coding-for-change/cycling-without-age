@@ -1,0 +1,87 @@
+name: Cleanup Feature Branch Deployment
+
+on:
+  delete:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    # delete fires for tags too — only act on branches. Fork PRs have no
+    # feature deployments (and no secrets), so skip them.
+    if: >-
+      (github.event_name == 'delete' && github.event.ref_type == 'branch') ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # branch may already be deleted — secrets config lives on the default branch
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Decrypt Secrets
+        run: |
+          if ! command -v ansible-playbook &> /dev/null; then
+            pipx install ansible-core
+          fi
+          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > .vault_pass
+
+          cat << 'EOF' > dump.yml
+          - hosts: localhost
+            gather_facts: false
+            vars_files:
+              - .config/secrets.yml
+            tasks:
+              - copy:
+                  dest: decrypted.json
+                  content: >
+                    {{ {
+                      "VPS_DEPLOY_KEY": VPS_DEPLOY_KEY | default("")
+                    } | to_json }}
+                no_log: true
+          EOF
+
+          ansible-playbook dump.yml --vault-password-file .vault_pass
+
+          # IMPORTANT: We purposefully DO NOT use echo "::add-mask::..." for VPS_DEPLOY_KEY.
+          # Attempting to mask a multiline string using echo causes bash to expand it into multiple lines.
+          # GitHub Actions only masks the first line (the "BEGIN OPENSSH PRIVATE KEY" header),
+          # and then logs the remaining lines in plain text, causing the key to leak.
+          # Since the key is only written to a file later and never printed, it is safe without this command.
+
+      - name: Set Safe Branch Name
+        env:
+          # branch names are user-controlled — never interpolate them into shell directly
+          RAW_BRANCH: ${{ github.event_name == 'delete' && github.event.ref || github.event.pull_request.head.ref }}
+        run: |
+          BRANCH_NAME_SAFE=$(echo "$RAW_BRANCH" | tr -cd 'a-zA-Z0-9-' | tr 'A-Z' 'a-z')
+          echo "BRANCH_NAME_SAFE=$BRANCH_NAME_SAFE" >> $GITHUB_ENV
+
+      - name: Remove deployment from VPS
+        if: env.BRANCH_NAME_SAFE != ''
+        run: |
+          mkdir -p ~/.ssh
+          jq -r '.VPS_DEPLOY_KEY // empty' decrypted.json > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H codingforchange.com >> ~/.ssh/known_hosts
+
+          TARGET_DIR="/var/www/cwa-feature-${{ env.BRANCH_NAME_SAFE }}"
+
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key deploy-cwa@codingforchange.com "
+            if [ -d '${TARGET_DIR}' ]; then
+              cd '${TARGET_DIR}' && docker compose down --volumes --remove-orphans || true
+              rm -rf '${TARGET_DIR}'
+              sudo systemctl reload caddy
+              echo 'Removed ${TARGET_DIR}'
+            else
+              echo 'No deployment at ${TARGET_DIR} — nothing to do'
+            fi"
+
+      - name: Clean up Secrets
+        if: always()
+        run: rm -f .vault_pass dump.yml decrypted.json
