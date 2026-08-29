@@ -8,6 +8,11 @@ node_modules
 docker-compose*.yml
 Caddyfile
 .DS_Store
+ios
+android
+native
+assets
+capacitor.config.ts
 .vault_pass
 .cursor
 .config

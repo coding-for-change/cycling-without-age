@@ -10,3 +10,6 @@ public
 pnpm-lock.yaml
 package-lock.json
 yarn.lock
+ios
+android
+native
