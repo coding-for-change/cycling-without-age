@@ -61,6 +61,7 @@ export function PilotGate({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const db = useStore((s) => s.db)!;
+  const [now] = useState(() => Date.now());
 
   const [session, setSession] = useState<Session | null>(() => {
     const s = auth.boot("pilot", DEMO_SESSIONS.pilot);
@@ -95,8 +96,7 @@ export function PilotGate({ children }: { children: ReactNode }) {
         .sort((a, b) => b.ts - a.ts),
     [db, pilotId],
   );
-  // eslint-disable-next-line react-hooks/purity -- live "now" read, intentional in this ported mock (SOURCE downgrades this rule repo-wide)
-  const hasFreshNotifs = notifs.some((n) => n.ts > Date.now() - 864e5);
+  const hasFreshNotifs = notifs.some((n) => n.ts > now - 864e5);
 
   const anyUnread = db.chats.some((c) => {
     const r = find(db.rides, c.rideId);

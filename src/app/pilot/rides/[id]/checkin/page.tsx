@@ -3,7 +3,7 @@
 /* Check-in: three quick taps before you roll, walk-up passengers with an
    on-the-spot waiver, then the ride goes in_progress. */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n";
 import { useStore, find } from "@/lib/store";
@@ -24,7 +24,7 @@ export default function CheckinPage() {
   const [wOpen, setWOpen] = useState(false);
   const [wName, setWName] = useState("");
   const [wWaiver, setWWaiver] = useState(false);
-  const startedAt = useRef<number | null>(null); // elapsed time kept in-memory only
+  const [startedAt, setStartedAt] = useState<number | null>(null); // elapsed time kept in-memory only
 
   const ride = find(db.rides, id);
   const wrongState =
@@ -55,10 +55,9 @@ export default function CheckinPage() {
           <div className="flex flex-col items-center gap-2 text-center">
             <div className="display">{t("pilot.check.onRoad")}</div>
             <p className="muted">{t("pilot.check.onRoadSub")}</p>
-            {/* eslint-disable-next-line react-hooks/refs -- read-once elapsed-time snapshot, intentional in this ported mock (SOURCE downgrades this rule repo-wide) */}
             <div className="text-xs muted">
               {t("pilot.check.elapsed", {
-                t: fmt.rel(startedAt.current || ride.ts),
+                t: fmt.rel(startedAt || ride.ts),
               })}
             </div>
           </div>
@@ -99,7 +98,7 @@ export default function CheckinPage() {
 
   function start() {
     if (!allChecked) return;
-    startedAt.current = Date.now();
+    setStartedAt(Date.now());
     update((d) => {
       find(d.rides, id)!.status = "in_progress";
     });

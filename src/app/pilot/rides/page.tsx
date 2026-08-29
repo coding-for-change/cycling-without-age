@@ -38,19 +38,18 @@ function RidesScreen() {
   );
   const [weekOff, setWeekOff] = useState(0);
   const [selIdx, setSelIdx] = useState(-1);
+  const [now] = useState(() => Date.now());
 
   const open = openRides(db, pilotId);
   const mine = myUpcoming(db, pilotId);
-  // eslint-disable-next-line react-hooks/purity -- live "now" read, intentional in this ported mock (SOURCE downgrades this rule repo-wide)
-  const urgent = open.filter((r) => r.ts < Date.now() + 4 * 36e5);
+  const urgent = open.filter((r) => r.ts < now + 4 * 36e5);
   const past = db.rides
     .filter((r) => r.status === "done" && r.pilotId === pilotId)
     .sort((a, b) => b.ts - a.ts);
 
   /* week block state */
   const days = weekDays(weekOff);
-  // eslint-disable-next-line react-hooks/purity -- live "now" read, intentional in this ported mock (SOURCE downgrades this rule repo-wide)
-  const today = dayStart(Date.now());
+  const today = dayStart(now);
   let sel = selIdx;
   if (sel < 0) {
     sel = days.indexOf(today);

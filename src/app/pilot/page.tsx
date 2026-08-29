@@ -3,6 +3,7 @@
 /* Pilot home: training gate → next ride hero → open rides → impact → week →
    chapter events → community story → home garage. */
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n";
 import { useStore, find } from "@/lib/store";
@@ -38,6 +39,7 @@ export default function PilotHome() {
   const db = useStore((s) => s.db)!;
   const update = useStore((s) => s.update);
   const { pilotId, bell } = usePilot();
+  const [now] = useState(() => Date.now());
 
   const p = find(db.pilots, pilotId);
   if (!p) return null;
@@ -45,18 +47,16 @@ export default function PilotHome() {
   const chapter = find(db.chapters, p.chapterId);
   const garage = db.garages[0]; // garages carry no chapterId in the seed — first one is the München home base
   const open = openRides(db, pilotId);
-  // eslint-disable-next-line react-hooks/purity -- live "now" read, intentional in this ported mock (SOURCE downgrades this rule repo-wide)
-  const urgent = open.filter((r) => r.ts < Date.now() + 4 * 36e5);
+  const urgent = open.filter((r) => r.ts < now + 4 * 36e5);
   const mine = myUpcoming(db, pilotId);
   const next = mine[0];
   const stats = pilotStats(db, pilotId);
   const events = db.rides
-    // eslint-disable-next-line react-hooks/purity -- live "now" read, intentional in this ported mock (SOURCE downgrades this rule repo-wide)
     .filter(
       (r) =>
         r.type === "event" &&
         r.chapterId === "muc" &&
-        r.ts > Date.now() &&
+        r.ts > now &&
         r.status !== "cancelled" &&
         r.status !== "done",
     )
@@ -72,8 +72,7 @@ export default function PilotHome() {
         : "pilot.greetEvening";
 
   const days = weekDays(0);
-  // eslint-disable-next-line react-hooks/purity -- live "now" read, intentional in this ported mock (SOURCE downgrades this rule repo-wide)
-  const today = dayStart(Date.now());
+  const today = dayStart(now);
 
   function toggleAvail(dayInt: number) {
     update((d) => {
@@ -98,8 +97,7 @@ export default function PilotHome() {
           />
         }
         title={t(greetKey, { name: firstName(p.name) })}
-        // eslint-disable-next-line react-hooks/purity -- live "now" read, intentional in this ported mock (SOURCE downgrades this rule repo-wide)
-        sub={fmt.dateLong(Date.now())}
+        sub={fmt.dateLong(now)}
         right={bell}
       />
       <div className="app-body gap-6">
@@ -319,8 +317,7 @@ export default function PilotHome() {
           </div>
           <div className="flex items-center justify-between">
             <span className="hint">{t("pilot.weekHint")}</span>
-            {/* eslint-disable-next-line react-hooks/purity -- live "now" read, intentional in this ported mock (SOURCE downgrades this rule repo-wide) */}
-            <WeatherChip ts={Date.now()} />
+            <WeatherChip ts={now} />
           </div>
         </div>
 
