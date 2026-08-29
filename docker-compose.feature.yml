@@ -7,7 +7,7 @@ services:
     env_file:
       - .env
     ports:
-      - "${APP_PORT}:3000"
+      - "127.0.0.1:${APP_PORT}:3000"
     command: >
       sh -c "npx prisma migrate deploy &&
              node server.js"
