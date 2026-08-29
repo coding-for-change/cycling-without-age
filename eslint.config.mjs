@@ -40,6 +40,7 @@ const eslintConfig = defineConfig([
             {
               from: { type: "app" },
               allow: [
+                { to: { type: "app" } },
                 { to: { type: "use-cases" } },
                 { to: { type: "feature-facade" } },
                 { to: { type: "shared" } },
@@ -69,6 +70,24 @@ const eslintConfig = defineConfig([
     rules: {
       "@typescript-eslint/no-unused-vars": "off",
       "react-hooks/purity": "off",
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
+  {
+    // Mock/demo routes ported from book2go-mockup (see docs/BRAND.md). The
+    // localStorage-backed store relies on a synchronous client-mount
+    // hydration gate (AppBoot, PilotGate, PassengerShell, …) — don't rewrite
+    // the vendored pattern just to satisfy this rule.
+    files: [
+      "src/app/page.tsx",
+      "src/app/launcher-i18n.ts",
+      "src/app/passenger/**",
+      "src/app/pilot/**",
+      "src/app/admin/**",
+      "src/components/AppBoot.tsx",
+      "src/components/auth/**",
+    ],
+    rules: {
       "react-hooks/set-state-in-effect": "off",
     },
   },
