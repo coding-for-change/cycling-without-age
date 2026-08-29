@@ -1,10 +1,22 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+});
+
+/* TacaPro — the CWA corporate typeface (see docs/BRAND.md). Headlines only;
+   body text stays on Inter. */
+const taca = localFont({
+  variable: "--font-taca",
+  src: [
+    { path: "../fonts/TacaPro-Regular.otf", weight: "400" },
+    { path: "../fonts/TacaPro-Bold.otf", weight: "700" },
+    { path: "../fonts/TacaPro-Extrabold.otf", weight: "800" },
+  ],
 });
 
 export const metadata: Metadata = {
@@ -31,7 +43,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} h-full antialiased`}
+      className={`${inter.variable} ${taca.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>
