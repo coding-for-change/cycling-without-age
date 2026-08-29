@@ -13,3 +13,13 @@ android
 native
 assets
 capacitor.config.ts
+.vault_pass
+.cursor
+.config
+.github
+.husky
+android
+ios
+docs-internal
+*.log
+tsconfig.tsbuildinfo
