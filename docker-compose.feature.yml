@@ -1,0 +1,25 @@
+services:
+  app:
+    image: localhost:5000/cwa-${BRANCH_NAME_SAFE}:latest
+    restart: unless-stopped
+    depends_on:
+      - db
+    env_file:
+      - .env
+    ports:
+      - "${APP_PORT}:3000"
+    command: >
+      sh -c "npx prisma migrate deploy &&
+             node server.js"
+
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_DATABASE: cwa
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:

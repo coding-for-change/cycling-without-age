@@ -1,0 +1,10 @@
+services:
+  app:
+    image: localhost:5000/cwa:latest
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "3001:3000"
+    env_file:
+      - .env
