@@ -3,6 +3,45 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ==========================================================================
+   Cycling Without Age — brand theme (see docs/BRAND.md), used by the mock
+   passenger/pilot/admin routes ported from book2go-mockup.
+
+   The palette is the brand book's four colors — black, white, mint #92D2C6,
+   red #ED1C24 — plus tints of them (greys are black tints). Type is only ever
+   black or white. TacaPro carries headlines; body text stays on Inter (the
+   site's existing sans font) rather than the brand book's Arial, so the rest
+   of the app's shadcn UI is unaffected.
+   ========================================================================== */
+:root {
+  --canvas: #ffffff;
+  --canvas-deep: #f4f2ef; /* warm light grey — black 30/30/30 at ~5% */
+  --paper: #ffffff;
+  --ink: #2e2823; /* warm espresso — reads as black, without the harshness */
+  --ink-soft: rgb(46 40 35 / 0.62);
+  --ink-faint: rgb(46 40 35 / 0.42);
+  --line: rgb(46 40 35 / 0.12);
+
+  --mint: #92d2c6; /* caretaking — blocks, accents, progress. Text on it: black. */
+  --mint-tint: #e4f3ef;
+  --mint-deep: #28584e; /* darkened mint for surfaces that need white type */
+  --red: #ed1c24; /* energy, action — RESERVED for primary actions & alerts */
+  --red-hover: #d0121a;
+  --red-tint: #fde9ea;
+  --grey-tint: #efedea;
+
+  --r-card: 1.25rem;
+  --r-tile: 1.5rem;
+  --r-cover: 1.125rem;
+
+  --shadow-soft:
+    0 2px 4px -2px rgb(0 0 0 / 0.05), 0 8px 20px -8px rgb(0 0 0 / 0.09);
+  --shadow-lift:
+    0 4px 8px -4px rgb(0 0 0 / 0.09), 0 18px 36px -14px rgb(0 0 0 / 0.16);
+
+  --font-display: var(--font-taca), "Arial Black", Arial, sans-serif;
+}
+
 @theme {
   --font-sans:
     var(--font-inter), ui-sans-serif, system-ui, -apple-system,
@@ -130,4 +169,34 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-canvas: var(--canvas);
+  --color-canvas-deep: var(--canvas-deep);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-mint: var(--mint);
+  --color-mint-tint: var(--mint-tint);
+  --color-mint-deep: var(--mint-deep);
+  --color-red: var(--red);
+  --color-red-hover: var(--red-hover);
+  --color-red-tint: var(--red-tint);
+  --color-grey-tint: var(--grey-tint);
+  --font-display: var(--font-display);
+}
+
+/* Headlines carry TacaPro Bold by default (BRAND.md § Typography); body stays on
+   the app's sans. The weight is set explicitly because Bold (700) is the only face
+   we ship — leaving it inherited would request a weight that doesn't exist and let
+   the browser decide. The `font-display` utility comes from --font-display above. */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 700;
+  }
 }
