@@ -76,22 +76,29 @@ online column applies to this app:
 | Highlights | TacaPro bold | **Arial bold** |
 | Main body text | TacaPro regular | **Arial regular** |
 
-### What this app currently ships: Arial only
+### What this app currently ships: Inter only
 
-**No webfont is loaded.** Everything — headlines, highlights, body — is Arial, with
-`"Helvetica Neue"`, `Helvetica` and `"Liberation Sans"` (the metric-compatible Arial on
-Linux) behind it. Headlines separate from body by **weight**, not typeface: `h1`–`h4`
-default to `--font-display` at 700, and `font-display` is the utility elsewhere. Both
-`--font-display` and `--font-sans` resolve to the same stack, so the distinction is
-purely a weight change today.
+Everything — headlines, highlights, body — is **Inter**, self-hosted by `next/font`
+(`Inter()` in `src/app/layout.tsx`, exposed as `--font-inter`), with the system UI stack
+and finally Arial behind it. Headlines separate from body by **weight**, not typeface:
+`h1`–`h4` default to `--font-display` at 700, and `font-display` is the utility
+elsewhere. Both `--font-display` and `--font-sans` resolve to the same stack, so the
+distinction is purely a weight change today.
 
-This matches the book for **body text and highlights**, which the online column already
-sets in Arial. It **deviates for headlines**, which the book sets in TacaPro bold. That
-is a real cost: TacaPro's squircle letterforms are the most recognisable thing about a
-CWA headline, and Arial bold carries none of it. Accepted deliberately for now.
+This **deviates from the book on both counts** — headlines (TacaPro bold) and body
+(Arial). Chosen deliberately as a product decision: Inter is a screen-first face with
+proper hinting and a full weight range, and it holds a UI at small sizes better than
+Arial does. The cost stands as before — TacaPro's squircle letterforms are the most
+recognisable thing about a CWA headline, and Inter bold carries none of it.
 
-Being a system font, Arial also means no download, no layout shift, and no `next/font`
-wiring at all.
+`next/font` self-hosts and preloads the file and inlines fallback metrics, so there is
+no external request and no layout shift.
+
+**Email** cannot use any of this: no stylesheet, no CSS variables, no `next/font`. The
+mirror lives in `src/lib/brand.ts` — same Inter stack, with the `<Font>` webfont from
+`rsms.me` for the clients that honour `@font-face` (Apple Mail, iOS Mail, Thunderbird)
+and Helvetica everywhere else. `npm run check:brand` fails if its colours drift from
+`globals.css`.
 
 ### Why TacaPro is not bundled
 
@@ -112,7 +119,7 @@ chapter self-hosting it as a webfont.
    a webfont licence for **Bold alone** covers the online spec.
 2. Add the `.woff2` to `src/fonts/`, load it with `next/font/local` in
    `src/app/layout.tsx`, and point `--font-display` at it — leaving `--font-sans` on
-   Arial, which is what the book asks for.
+   Inter for body copy.
 
 Full history, including the verified download chain, is in commits `b6e909e`, `ab4bf0c`
 and the one that removed it.

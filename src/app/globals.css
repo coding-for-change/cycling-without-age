@@ -13,9 +13,9 @@
    type, icon strokes, borders, rules, illustration line work. Don't reach for a
    literal #000 alongside it.
 
-   Type is Arial throughout — no webfont is loaded, and headlines separate from
-   body by weight, not typeface. The brand's TacaPro is not bundled; BRAND.md
-   explains why and how to reinstate it.
+   Type is Inter throughout, self-hosted by next/font (--font-inter), and
+   headlines separate from body by weight, not typeface. The brand's TacaPro is
+   not bundled; BRAND.md explains why and how to reinstate it.
    ========================================================================== */
 :root {
   --canvas: #ffffff;
@@ -44,16 +44,19 @@
   --shadow-lift:
     0 4px 8px -4px rgb(0 0 0 / 0.09), 0 18px 36px -14px rgb(0 0 0 / 0.16);
 
-  /* One family for everything. Headlines separate from body by weight (700),
-     not by typeface — see docs/BRAND.md § Typography. Helvetica covers older
-     macOS; Liberation Sans is the metric-compatible Arial on Linux. */
+  /* One family for everything: Inter. Headlines separate from body by weight
+     (700), not by typeface — see docs/BRAND.md § Typography. --font-inter is
+     set by next/font in src/app/layout.tsx; the rest is the system fallback
+     while it loads. */
   --font-display:
-    Arial, "Helvetica Neue", Helvetica, "Liberation Sans", sans-serif;
+    var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Helvetica, Arial, sans-serif;
 }
 
 @theme {
   --font-sans:
-    Arial, "Helvetica Neue", Helvetica, "Liberation Sans", sans-serif;
+    var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Helvetica, Arial, sans-serif;
 
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
@@ -211,7 +214,7 @@
   --font-display: var(--font-display);
 }
 
-/* Headlines are Arial Bold (BRAND.md § Typography). --font-display and --font-sans
+/* Headlines are Inter Bold (BRAND.md § Typography). --font-display and --font-sans
    are the same stack today, so weight is the only thing separating a headline from
    body text — set it explicitly, because Tailwind's preflight resets headings to
    `font-weight: inherit` and they would otherwise render at 400. The `font-display`
