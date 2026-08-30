@@ -4,10 +4,10 @@ import { defaultLocale, locales, LOCALE_COOKIE } from "@/lib/i18n";
 import { NativeBootstrap } from "@/lib/native/native-bootstrap";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
+/* No webfonts are loaded. Everything runs on Arial (see docs/BRAND.md §
+   Typography) — a system font, so there is nothing to download, no layout shift
+   and no `next/font` wiring. The brand's TacaPro is not bundled; see BRAND.md
+   for why and how to put it back. */
 
 export const metadata: Metadata = {
   title: "Cycling Without Age",

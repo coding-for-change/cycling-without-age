@@ -3,10 +3,57 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ==========================================================================
+   Cycling Without Age — brand theme. See docs/BRAND.md, which separates what
+   the brand book mandates from what this product decided on top of it.
+
+   The palette is the brand book's four colors — black, white, mint #92D2C6,
+   red #ED1C24 — plus tints of them (greys are ink tints). The book's black is
+   rendered here as --ink #2e2823, and that one token carries EVERY black mark:
+   type, icon strokes, borders, rules, illustration line work. Don't reach for a
+   literal #000 alongside it.
+
+   Type is Arial throughout — no webfont is loaded, and headlines separate from
+   body by weight, not typeface. The brand's TacaPro is not bundled; BRAND.md
+   explains why and how to reinstate it.
+   ========================================================================== */
+:root {
+  --canvas: #ffffff;
+  --canvas-deep: #f4f2ef; /* warm light grey — black 30/30/30 at ~5% */
+  --paper: #ffffff;
+  --ink: #2e2823; /* warm espresso (h27 s14% l16%) — the brand's black, warmed
+                     for a lit screen. The single ink for every black mark. */
+  --ink-soft: rgb(46 40 35 / 0.62);
+  --ink-faint: rgb(46 40 35 / 0.42);
+  --line: rgb(46 40 35 / 0.12);
+
+  --mint: #92d2c6; /* caretaking — blocks, accents, progress. Text on it: ink. */
+  --mint-tint: #e4f3ef;
+  --mint-deep: #28584e; /* darkened mint for surfaces that need white type */
+  --red: #ed1c24; /* energy, action — RESERVED for primary actions & alerts */
+  --red-hover: #d0121a;
+  --red-tint: #fde9ea;
+  --grey-tint: #efedea;
+
+  --r-card: 1.25rem;
+  --r-tile: 1.5rem;
+  --r-cover: 1.125rem;
+
+  --shadow-soft:
+    0 2px 4px -2px rgb(0 0 0 / 0.05), 0 8px 20px -8px rgb(0 0 0 / 0.09);
+  --shadow-lift:
+    0 4px 8px -4px rgb(0 0 0 / 0.09), 0 18px 36px -14px rgb(0 0 0 / 0.16);
+
+  /* One family for everything. Headlines separate from body by weight (700),
+     not by typeface — see docs/BRAND.md § Typography. Helvetica covers older
+     macOS; Liberation Sans is the metric-compatible Arial on Linux. */
+  --font-display:
+    Arial, "Helvetica Neue", Helvetica, "Liberation Sans", sans-serif;
+}
+
 @theme {
   --font-sans:
-    var(--font-inter), ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    Arial, "Helvetica Neue", Helvetica, "Liberation Sans", sans-serif;
 
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
@@ -50,36 +97,50 @@
   }
 }
 
+/* shadcn's neutral scale, remapped onto the brand ink.
+
+   These are the tokens that decide what an unstyled <Button>, <Card> or body
+   paragraph actually renders. Left at shadcn's defaults they are pure-neutral
+   greys (--foreground #0a0a0a, --primary #000), so the app rendered three
+   different blacks: #0a0a0a for text, #000 for buttons, and the brand's
+   #2e2823 only where someone wrote `text-ink` by hand. The brand ink was the
+   one black that never appeared.
+
+   `hsl(27 13.6% 16%)` is exactly --ink #2e2823; the greys below share its hue
+   so borders and muted text stay in the same warm family. Every foreground
+   here is that ink, so brand ink is what you get by DEFAULT and `text-ink` is
+   a restatement rather than a correction. */
 :root {
   --background: 0 0% 100%;
-  --foreground: 0 0% 3.9%;
+  --foreground: 27 13.6% 16%;
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 3.9%;
+  --card-foreground: 27 13.6% 16%;
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 3.9%;
-  /* Primary: true black */
-  --primary: 0 0% 0%;
+  --popover-foreground: 27 13.6% 16%;
+  --primary: 27 13.6% 16%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 0 0% 96.1%;
-  --secondary-foreground: 0 0% 9%;
-  --muted: 0 0% 96.1%;
-  --muted-foreground: 0 0% 45.1%;
-  --accent: 0 0% 96.1%;
-  --accent-foreground: 0 0% 9%;
+  --secondary: 27 14% 96%;
+  --secondary-foreground: 27 13.6% 16%;
+  --muted: 27 14% 96%;
+  --muted-foreground: 27 8% 45%;
+  --accent: 27 14% 96%;
+  --accent-foreground: 27 13.6% 16%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 89.8%;
-  --input: 0 0% 89.8%;
-  --ring: 0 0% 3.9%;
+  --border: 27 14% 88%;
+  --input: 27 14% 88%;
+  --ring: 27 13.6% 16%;
   --radius: 0.625rem;
-  --sidebar: hsl(0 0% 98%);
-  --sidebar-foreground: hsl(240 5.3% 26.1%);
-  --sidebar-primary: hsl(240 5.9% 10%);
-  --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(240 4.8% 95.9%);
-  --sidebar-accent-foreground: hsl(240 5.9% 10%);
-  --sidebar-border: hsl(220 13% 91%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+  /* shadcn ships these cool-grey, with a BLUE ring — a hue the brand does not
+     have. Rewarmed onto the ink hue; focus rings use ink. */
+  --sidebar: hsl(27 14% 98%);
+  --sidebar-foreground: hsl(27 13.6% 16%);
+  --sidebar-primary: hsl(27 13.6% 16%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(27 14% 96%);
+  --sidebar-accent-foreground: hsl(27 13.6% 16%);
+  --sidebar-border: hsl(27 14% 88%);
+  --sidebar-ring: hsl(27 13.6% 16%);
 }
 
 .dark {
@@ -90,7 +151,7 @@
   --popover: 0 0% 3.9%;
   --popover-foreground: 0 0% 98%;
   --primary: 0 0% 100%;
-  --primary-foreground: 0 0% 0%;
+  --primary-foreground: 27 13.6% 16%;
   --secondary: 0 0% 14.9%;
   --secondary-foreground: 0 0% 98%;
   --muted: 0 0% 14.9%;
@@ -102,14 +163,16 @@
   --border: 0 0% 14.9%;
   --input: 0 0% 14.9%;
   --ring: 0 0% 83.1%;
-  --sidebar: hsl(240 5.9% 10%);
-  --sidebar-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-primary: hsl(224.3 76.3% 48%);
+  /* Same rewarming; the blue primary and ring become mint, the brand's own
+     accent, rather than a hue from outside the palette. */
+  --sidebar: hsl(27 13.6% 12%);
+  --sidebar-foreground: hsl(0 0% 98%);
+  --sidebar-primary: hsl(168 45% 25%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(240 3.7% 15.9%);
-  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-border: hsl(240 3.7% 15.9%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+  --sidebar-accent: hsl(27 10% 18%);
+  --sidebar-accent-foreground: hsl(0 0% 98%);
+  --sidebar-border: hsl(27 10% 18%);
+  --sidebar-ring: hsl(168 42% 70%);
 }
 
 @layer base {
@@ -130,4 +193,35 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-canvas: var(--canvas);
+  --color-canvas-deep: var(--canvas-deep);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-mint: var(--mint);
+  --color-mint-tint: var(--mint-tint);
+  --color-mint-deep: var(--mint-deep);
+  --color-red: var(--red);
+  --color-red-hover: var(--red-hover);
+  --color-red-tint: var(--red-tint);
+  --color-grey-tint: var(--grey-tint);
+  --font-display: var(--font-display);
+}
+
+/* Headlines are Arial Bold (BRAND.md § Typography). --font-display and --font-sans
+   are the same stack today, so weight is the only thing separating a headline from
+   body text — set it explicitly, because Tailwind's preflight resets headings to
+   `font-weight: inherit` and they would otherwise render at 400. The `font-display`
+   utility comes from --font-display above. */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 700;
+  }
 }
