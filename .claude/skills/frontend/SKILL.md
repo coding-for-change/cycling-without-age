@@ -101,9 +101,11 @@ page references. Don't cite the book for a rule it doesn't make.
 
     Note the last row: the currency stays EUR in both, only the notation moves. If a
     screen reads correctly in both locales it will hold everywhere else.
-  - ⚠ `src/lib/utils.ts` currently hardcodes `de-DE` in three module-level formatters.
-    It predates this rule and does not follow it; take the locale as an argument when you
-    next touch those helpers.
+  - **Use `@/lib/format`** — `formatDate`, `formatDateTime`, `formatTime`,
+    `formatNumber`, `formatCurrency`, plus `resolveLocale` and the ISO helpers. Every
+    function takes the locale explicitly, and the instant-based ones require a
+    `timeZone`, so the two hazards above are unrepresentable rather than merely
+    discouraged. Extend that module instead of formatting inline.
 - **Accessibility**: every interactive element keyboard-reachable, `aria-label` on
   icon-only buttons, visible focus states, and respect `prefers-reduced-motion` on any
   animation you add.
