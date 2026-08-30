@@ -76,17 +76,48 @@ online column applies to this app:
 | Highlights | TacaPro bold | **Arial bold** |
 | Main body text | TacaPro regular | **Arial regular** |
 
-- **TacaPro Bold (700) is the only TacaPro weight the online spec calls for**, and the
-  only one bundled in `src/fonts/`. TacaPro regular is print body text, and **Extrabold
-  does not appear in the brand book at all**. Exposed as `--font-taca` / utility class
-  `font-display`; `h1`–`h4` default to it at weight 700.
-  ⚠ Obtained from CWA's own brand-book page; webfont licensing still to be confirmed
-  with CWA — see `src/fonts/LICENSE.md`.
-- **Body text** — the app's sans stack (Inter), substituting the book's **Arial**. Inter
-  is a neutral grotesque in the same register, is already the app's font, and renders
-  more consistently across platforms than Arial/Helvetica fallbacks. This is the one
-  deliberate deviation in this section. Bold for inline highlights (the book's Arial
-  bold). **Do not add a third font.**
+### What this app currently ships: Arial only
+
+**No webfont is loaded.** Everything — headlines, highlights, body — is Arial, with
+`"Helvetica Neue"`, `Helvetica` and `"Liberation Sans"` (the metric-compatible Arial on
+Linux) behind it. Headlines separate from body by **weight**, not typeface: `h1`–`h4`
+default to `--font-display` at 700, and `font-display` is the utility elsewhere. Both
+`--font-display` and `--font-sans` resolve to the same stack, so the distinction is
+purely a weight change today.
+
+This matches the book for **body text and highlights**, which the online column already
+sets in Arial. It **deviates for headlines**, which the book sets in TacaPro bold. That
+is a real cost: TacaPro's squircle letterforms are the most recognisable thing about a
+CWA headline, and Arial bold carries none of it. Accepted deliberately for now.
+
+Being a system font, Arial also means no download, no layout shift, and no `next/font`
+wiring at all.
+
+### Why TacaPro is not bundled
+
+TacaPro **is** the CWA corporate typeface and the brand book is unambiguous about it. It
+was bundled here and then removed, because its licence for **web** use could not be
+confirmed: the font is a commercial desktop release from Fountain (Peter Bruhn, 2012),
+the foundry shut down after Bruhn's death in 2014, and its EULA URL is long dead. The
+files did come from CWA's own brand-book page —
+`cyclingwithoutage.org/wp-content/uploads/2015/01/CWA-font-TacaPro.zip` — so the
+provenance was sound; what was never established is whether CWA's licence extends to a
+chapter self-hosting it as a webfont.
+
+**To put it back**, once that is settled:
+
+1. Ask **start@cyclingwithoutage.org** (the address the book gives for design assets,
+   p. 43) whether their licence covers chapter webfont use. If not, Taca is sold today
+   by the designer, Rúben R. Dias, at <https://myfonts.com/fonts/ruben-dias/taca> —
+   a webfont licence for **Bold alone** covers the online spec.
+2. Add the `.woff2` to `src/fonts/`, load it with `next/font/local` in
+   `src/app/layout.tsx`, and point `--font-display` at it — leaving `--font-sans` on
+   Arial, which is what the book asks for.
+
+Full history, including the verified download chain, is in commits `b6e909e`, `ab4bf0c`
+and the one that removed it.
+
+- **Do not add a further font.** One family, differentiated by weight.
 - Headline / body proportion stays consistent (the book uses 14pt/12pt/10pt print scale:
   small, steady steps — not giant jumps). Line height ≈ 1.2× for text blocks, paragraph
   spacing ≈ 1.6×. **Never justify text.**

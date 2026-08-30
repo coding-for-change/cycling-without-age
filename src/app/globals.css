@@ -4,16 +4,18 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ==========================================================================
-   Cycling Without Age — brand theme (see docs/BRAND.md), used by the mock
-   passenger/pilot/admin routes ported from book2go-mockup.
+   Cycling Without Age — brand theme. See docs/BRAND.md, which separates what
+   the brand book mandates from what this product decided on top of it.
 
    The palette is the brand book's four colors — black, white, mint #92D2C6,
    red #ED1C24 — plus tints of them (greys are ink tints). The book's black is
    rendered here as --ink #2e2823, and that one token carries EVERY black mark:
    type, icon strokes, borders, rules, illustration line work. Don't reach for a
-   literal #000 alongside it. TacaPro carries headlines; body text stays on Inter (the
-   site's existing sans font) rather than the brand book's Arial, so the rest
-   of the app's shadcn UI is unaffected.
+   literal #000 alongside it.
+
+   Type is Arial throughout — no webfont is loaded, and headlines separate from
+   body by weight, not typeface. The brand's TacaPro is not bundled; BRAND.md
+   explains why and how to reinstate it.
    ========================================================================== */
 :root {
   --canvas: #ffffff;
@@ -42,13 +44,16 @@
   --shadow-lift:
     0 4px 8px -4px rgb(0 0 0 / 0.09), 0 18px 36px -14px rgb(0 0 0 / 0.16);
 
-  --font-display: var(--font-taca), "Arial Black", Arial, sans-serif;
+  /* One family for everything. Headlines separate from body by weight (700),
+     not by typeface — see docs/BRAND.md § Typography. Helvetica covers older
+     macOS; Liberation Sans is the metric-compatible Arial on Linux. */
+  --font-display:
+    Arial, "Helvetica Neue", Helvetica, "Liberation Sans", sans-serif;
 }
 
 @theme {
   --font-sans:
-    var(--font-inter), ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    Arial, "Helvetica Neue", Helvetica, "Liberation Sans", sans-serif;
 
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
@@ -190,10 +195,11 @@
   --font-display: var(--font-display);
 }
 
-/* Headlines carry TacaPro Bold by default (BRAND.md § Typography); body stays on
-   the app's sans. The weight is set explicitly because Bold (700) is the only face
-   we ship — leaving it inherited would request a weight that doesn't exist and let
-   the browser decide. The `font-display` utility comes from --font-display above. */
+/* Headlines are Arial Bold (BRAND.md § Typography). --font-display and --font-sans
+   are the same stack today, so weight is the only thing separating a headline from
+   body text — set it explicitly, because Tailwind's preflight resets headings to
+   `font-weight: inherit` and they would otherwise render at 400. The `font-display`
+   utility comes from --font-display above. */
 @layer base {
   h1,
   h2,

@@ -10,9 +10,9 @@ Read `docs/BRAND.md` (the condensed brand rules) before styling anything new.
 
 ## Non-negotiables
 
-Rules 1, 2, 5–9 come from the brand book. Rules 3 and 4 are this product's screen
-interpretation and are marked as such — `docs/BRAND.md` separates the two in full, with
-page references. Don't cite the book for a rule it doesn't make.
+Rules 1, 2 and 6–9 come from the brand book. Rules 3, 4 and the headline half of 5 are
+this product's screen interpretation and are marked as such — `docs/BRAND.md` separates
+the two in full, with page references. Don't cite the book for a rule it doesn't make.
 
 1. **Four colors for UI chrome**: ink, white, mint `#92D2C6`, red `#ED1C24` — plus
    tints of those. Never introduce another hue into chrome (buttons, badges, tiles,
@@ -34,11 +34,13 @@ page references. Don't cite the book for a rule it doesn't make.
    no black pills with white type. White type belongs on red or `--mint-deep` only.
    Note `--mint-deep` is a fifth color this product added; the book has four. Keep it for
    dark surfaces and don't spawn further shades off it.
-5. **Typography**: the book's *online* spec is TacaPro **bold** headlines, Arial bold
-   highlights, Arial regular body (`docs/BRAND.md` has the table). Here: TacaPro carries
-   headlines — `h1`–`h4` default to it, elsewhere use the `font-display` utility — and
-   body text stays on the app's sans (Inter, substituting Arial). **Weight 700 is the
-   only TacaPro weight the online spec calls for.** Do not add any further font.
+5. **Typography — Arial, and only Arial.** No webfont is loaded. The book's *online*
+   spec is TacaPro bold headlines over Arial body (`docs/BRAND.md` has the table); we
+   match it for body and highlights and deviate for headlines, because TacaPro is not
+   bundled — see BRAND.md for why and how to reinstate it. **Headlines differ by weight,
+   not typeface**: `h1`–`h4` default to `--font-display` at 700, elsewhere use the
+   `font-display` utility. Do not add a font, and do not reach for `next/font` — adding
+   one is a brand decision, not a styling one.
 6. **Whitespace is a feature** ("We love space. Less is definitely more."): one clear
    hero action per screen, calm sections, never justify text.
 7. **Tone**: light-hearted, fun, engaging, authentic. Storytelling copy, concrete detail

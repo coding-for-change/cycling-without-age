@@ -1,20 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
-import localFont from "next/font/local";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
-
-/* TacaPro Bold — the CWA corporate typeface (see docs/BRAND.md). The brand book's
-   online spec is TacaPro bold headlines over an Arial body, so Bold is the only
-   weight we ship; body text stays on Inter. */
-const taca = localFont({
-  variable: "--font-taca",
-  src: [{ path: "../fonts/TacaPro-Bold.otf", weight: "700" }],
-});
+/* No webfonts are loaded. Everything runs on Arial (see docs/BRAND.md §
+   Typography) — a system font, so there is nothing to download, no layout shift
+   and no `next/font` wiring. The brand's TacaPro is not bundled; see BRAND.md
+   for why and how to put it back. */
 
 export const metadata: Metadata = {
   title: "Cycling Without Age",
@@ -40,7 +30,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${taca.variable} h-full antialiased`}
+      className="h-full antialiased"
     >
       <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>
