@@ -8,8 +8,10 @@
    passenger/pilot/admin routes ported from book2go-mockup.
 
    The palette is the brand book's four colors — black, white, mint #92D2C6,
-   red #ED1C24 — plus tints of them (greys are black tints). Type is only ever
-   black or white. TacaPro carries headlines; body text stays on Inter (the
+   red #ED1C24 — plus tints of them (greys are ink tints). The book's black is
+   rendered here as --ink #2e2823, and that one token carries EVERY black mark:
+   type, icon strokes, borders, rules, illustration line work. Don't reach for a
+   literal #000 alongside it. TacaPro carries headlines; body text stays on Inter (the
    site's existing sans font) rather than the brand book's Arial, so the rest
    of the app's shadcn UI is unaffected.
    ========================================================================== */
@@ -17,12 +19,13 @@
   --canvas: #ffffff;
   --canvas-deep: #f4f2ef; /* warm light grey — black 30/30/30 at ~5% */
   --paper: #ffffff;
-  --ink: #2e2823; /* warm espresso — reads as black, without the harshness */
+  --ink: #2e2823; /* warm espresso (h27 s14% l16%) — the brand's black, warmed
+                     for a lit screen. The single ink for every black mark. */
   --ink-soft: rgb(46 40 35 / 0.62);
   --ink-faint: rgb(46 40 35 / 0.42);
   --line: rgb(46 40 35 / 0.12);
 
-  --mint: #92d2c6; /* caretaking — blocks, accents, progress. Text on it: black. */
+  --mint: #92d2c6; /* caretaking — blocks, accents, progress. Text on it: ink. */
   --mint-tint: #e4f3ef;
   --mint-deep: #28584e; /* darkened mint for surfaces that need white type */
   --red: #ed1c24; /* energy, action — RESERVED for primary actions & alerts */

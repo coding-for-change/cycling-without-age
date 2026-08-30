@@ -19,9 +19,12 @@ page references. Don't cite the book for a rule it doesn't make.
    nav, backgrounds). The tokens live in `src/app/globals.css` and are exposed as
    Tailwind utilities (`bg-mint`, `text-ink`, `border-line`, …). **Use the tokens;
    never hardcode a hex value in a component.**
-2. **Type is ink or white. Only.** `--ink` is a warm espresso near-black (`#2e2823`) —
-   softer than pure `#000`, still reads as the brand's black. Secondary text =
-   `--ink-soft` (ink at reduced opacity), never mint or red text in chrome.
+2. **Everything the book sets in black is `--ink`. Type is ink or white, only.**
+   `--ink` is a warm espresso (`#2e2823`) — a very dark brown that reads as the brand's
+   black, softer than pure `#000` on a lit screen. It covers **all** black marks: text,
+   icon strokes, borders, rules, and illustration line work. Never mix a literal `#000`
+   in alongside it. Secondary text = `--ink-soft` (ink at reduced opacity), never mint or
+   red text in chrome. The supplied CWA logo keeps its own pure black — don't recolour it.
 3. **Red is reserved** (a product decision, not a brand-book rule): the primary action on
    a screen, live/critical states, the logo, the slogan bar. If red appears more than a
    couple of times per screen, cut it back. The book uses red freely in the physical

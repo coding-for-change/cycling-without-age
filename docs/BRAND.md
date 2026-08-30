@@ -10,7 +10,7 @@ The brand has exactly four colors. Everything on screen derives from them.
 
 | Token         | Value     | Brand meaning / usage                                              |
 | ------------- | --------- | ------------------------------------------------------------------ |
-| Black         | `#000000` | Font color, line work, ink fills. (Print: CMYK 30/30/30/100)       |
+| Black         | `#000000` | Font color, line work, ink fills. (Print: CMYK 30/30/30/100) **On screen this app renders it as `--ink #2e2823` — see below.** |
 | White         | `#FFFFFF` | Canvas, cards, font color on dark/red grounds                      |
 | Mint Green    | `#92D2C6` | "Caretaking." Color blocks, accents, the diagonal-edge motif. PMS 565C |
 | Red           | `#ED1C24` | "Energy, action, passion." The logo red. **Reserved for primary actions and alerts.** PMS 485C |
@@ -30,10 +30,20 @@ The brand has exactly four colors. Everything on screen derives from them.
 These are ours, not the brand book's. They are deliberate and defensible on screen, but
 do not cite the book for them:
 
-- **`--ink` is `#2e2823`, not `#000000`.** The book specifies pure black (`#000000`,
-  print CMYK 30/30/30/100). We use a warm espresso near-black: the CMYK build is a rich
-  black, and on a lit display pure `#000` is harsher than on paper. Ink at reduced
-  opacity for secondary text is also ours.
+- **`--ink` is `#2e2823` — a warm espresso — wherever the book says black.** The book
+  specifies pure `#000000` (print CMYK 30/30/30/100, itself a *rich* black rather than
+  flat K100). On a lit display pure `#000` is harsher than it is on paper, so we warm it:
+  `#2e2823` is hue 27°, saturation 14%, lightness 16% — technically a very dark brown,
+  and it reads as the brand's black at every size we use it.
+
+  **This applies to every black mark, not just type:** body and heading text, icon
+  strokes, borders and rules, and illustration line work all use `--ink`. One ink, no
+  exceptions — a page mixing `#000` outlines with `#2e2823` text shows the mismatch as a
+  faint colour shift exactly where the eye compares them. Ink at reduced opacity
+  (`--ink-soft`, `--ink-faint`) for secondary text and hairlines is also ours.
+
+  The one thing that stays pure black is **the CWA logo**, which is a supplied asset and
+  is never recoloured (see Motifs).
 - **Derived tints** (`mint-tint`, `red-tint`, warm greys = ink at low opacity) extend the
   book's 80%-transparency idea to opaque UI surfaces. Introduce no *new* hue into chrome
   (no blue, amber, violet, …).
@@ -129,8 +139,9 @@ Imagery keeps its own colors and is never tinted or duotoned into the UI palette
 chrome around it carries the brand instead.
 
 There is no illustration system in this repo yet. If a surface needs artwork before
-photography is available, add it deliberately (flat SVG with espresso line work, mint
-vegetation, the CWA-red bench) rather than reaching for stock imagery or emoji.
+photography is available, add it deliberately — flat SVG with line work in `--ink` (the
+same espresso as the type, per Colors above), mint vegetation and the CWA-red bench —
+rather than reaching for stock imagery or emoji.
 
 ## Getting assets and answers from CWA
 
