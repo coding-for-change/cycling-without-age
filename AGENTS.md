@@ -1,7 +1,11 @@
 <!-- BEGIN:nextjs-agent-rules -->
+
 # This is NOT the Next.js you know
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
 <!-- END:nextjs-agent-rules -->
 
 # THE SYSTEM PROMPT: CLEAN NEXT.JS HIERARCHICAL ARCHITECTURE
@@ -10,7 +14,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 You are a Senior Software Architect. We are building a Next.js application using a Strict Vertical Slice Architecture with a Hierarchical Layering system. The goal is total decoupling of business logic from the UI and infrastructure.
 
 ## 2. THE ARCHITECTURAL LAYERS & INTERACTION LAW
-Imports must only flow downward. Violation of these rules is a build-breaking error.
+Imports must only flow downward. Violation of these rules is a build-breaking error. Code is self-explanitory and therefore no comments.
 
 ### THE PRESENTATION LAYER (`src/app` & `src/features/*/components`)
 - **Role**: UI Rendering & User Input.
@@ -37,6 +41,12 @@ Imports must only flow downward. Violation of these rules is a build-breaking er
 ### CROSS-CUTTING INFRASTRUCTURE (`src/lib/`)
 - **Role**: Shared infrastructure usable from any layer (DB client, mailer, role enums, **auth guards**).
 - **`lib/auth-guards.ts`** (when auth is added): `getSession`, `requireAuth`, `requireAdmin`, `requireOwner`. Auth is a cross-cutting concern, not a feature. Call these from Actions and Use Cases (NOT from Facades).
+
+## UI and Frontend decisions
+- **Loading**: Strictly adhere to the best practices from Next.js. Pages that might have loading time should always have skeletons, using <Suspense> and loading.tsx
+- **Goal**: Always go the extra mile. Try to deliver a stelar clean and beatiful user experience. For dashboard opt for a style like "Linear"
+- **Navigation**: Should always be instant. Use the guides: https://nextjs.org/docs/app/guides/instant-navigation. Use lazy loading. Use ViewTransition Library where it makes sense to create a smooth native App like feeling and experience
+- **Internationlazation**: The WebApp will be multilingual. Users language will be saved as preference. Every text should and string should 
 
 ## 3. FOLDER STRUCTURE & COMPONENT PLACEMENT
 ```text
@@ -77,8 +87,22 @@ Actionable Chain: When asked to build a feature:
 7. Never commit on your own. Always the user commits
 8. Always utilize Ultracode and subagents when possible
 9. Prs are only opened on user request
+10. After implementing a new feature, run a detailed security check to confirm that authorization is correct and not any vulnerabilities are created
 
 No Shortcuts:
 - Database calls MUST go through Service → Facade.
 - A "use case" that touches only one feature is not a use case — collapse it into the Action.
 - Auth checks live in `lib/auth-guards.ts`, called from Actions and (cross-feature) Use Cases. Never inside a Facade.
+
+## 7. NATIVE (CAPACITOR) RULES
+The iOS/Android apps are thin Capacitor shells whose WebView loads https://cwa.codingforchange.com.
+
+- ALL `@capacitor/*` imports live in `src/lib/native/*` (lint-enforced via `no-restricted-imports`).
+  Features import the semantic wrappers (`@/lib/native/haptics`), never plugins directly.
+- Native APIs are client-only: call them from client components; the wrappers are SSR-safe
+  no-ops on web (guarded by `Capacitor.isNativePlatform()`). Everything must degrade
+  gracefully in the browser — web-first.
+- Haptics semantics: `haptics.success/warning/error` at action completion, fired next to the
+  toast in the client component that receives the Server Action result; `haptics.tap` for
+  significant direct interactions (send, destructive confirm); the selection trio for scrubbing.
+  At most one haptic per user action — haptics mark moments, not every tap.

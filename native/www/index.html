@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Cycling Without Age</title>
+    <style>
+      body {
+        font-family: -apple-system, system-ui, sans-serif;
+        display: flex;
+        min-height: 100dvh;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        margin: 0;
+        padding: 24px;
+      }
+      button {
+        font: inherit;
+        padding: 12px 24px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      This page is bundled into the native app as the Capacitor webDir and shown
+      via server.errorPath when the WebView cannot load the remote site.
+    -->
+    <div>
+      <h1>Cycling Without Age</h1>
+      <p>No internet connection. Please check your connection and try again.</p>
+      <p lang="da">Ingen internetforbindelse. Tjek din forbindelse og prøv igen.</p>
+      <!-- ponytail: prod URL hardcoded; this page is unreachable-server UX, dev doesn't need it -->
+      <button onclick="location.replace('https://cwa.codingforchange.com')">Retry</button>
+    </div>
+    <script>
+      // Splash launches with launchAutoHide:false; hide it so this page is visible.
+      window.Capacitor?.Plugins?.SplashScreen?.hide();
+    </script>
+  </body>
+</html>
