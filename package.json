@@ -12,6 +12,7 @@
     "format:check": "prettier --check .",
     "db:migrate": "dotenv -e .env.local -- prisma migrate dev",
     "db:push": "dotenv -e .env.local -- prisma db push",
+    "db:seed": "JITI_JSX=1 JITI_TSCONFIG_PATHS=1 dotenv -e .env.local -- jiti prisma/seed.ts",
     "cap:sync": "cap sync",
     "cap:assets": "capacitor-assets generate --ios --android",
     "cap:ios": "cap run ios",
@@ -19,7 +20,8 @@
     "cap:ios:dev": "CAP_SERVER_URL=http://localhost:3000 cap run ios",
     "cap:android:dev": "CAP_SERVER_URL=http://10.0.2.2:3000 cap run android",
     "prepare": "husky",
-    "check:brand": "node scripts/check-brand-tokens.mjs"
+    "check:brand": "node scripts/check-brand-tokens.mjs",
+    "test": "jest"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -64,6 +66,7 @@
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.5.0",
     "@tailwindcss/postcss": "^4",
+    "@types/jest": "^30.0.0",
     "@types/negotiator": "^0.6.5",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -74,6 +77,8 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-boundaries": "^6.0.2",
     "husky": "^9.1.7",
+    "jest": "^30.5.0",
+    "jiti": "^2.7.0",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "tailwindcss": "^4",
@@ -81,5 +86,8 @@
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,mjs,cjs,json,css,md,yml,yaml}": "prettier --write"
+  },
+  "prisma": {
+    "seed": "JITI_JSX=1 JITI_TSCONFIG_PATHS=1 dotenv -e .env.local -- jiti prisma/seed.ts"
   }
 }
