@@ -67,8 +67,43 @@ page references. Don't cite the book for a rule it doesn't make.
   brand surface, pass brand tokens explicitly (`className="bg-mint text-ink"`); don't
   quietly redefine the shadcn tokens, or every dialog and dropdown in the app shifts
   with it.
-- **Formatting**: currency in EUR, times 24h, dates locale-aware via `Intl` (not a
-  hand-rolled formatter).
+- **Formatting — European _and_ US conventions, from the first line of code.** CWA is a
+  global movement (the brand book lists chapters across Europe, North America, Australia
+  and Japan), so nothing user-facing may assume one region. Two independent axes, and
+  conflating them is the classic bug:
+  - **Locale decides _how_ a value is written** — date order, 12h vs 24h, decimal and
+    thousands separators. Always pass the locale in; never pin one inside a formatter.
+  - **Currency decides _what_ the money is** and comes from the data (the chapter's own
+    currency), never from the viewer's locale. A €50 ride is €50 whether it is read in
+    Munich or Denver — render it as `Intl.NumberFormat(locale, { style: "currency",
+    currency })`, so an American sees European money in American notation. Inferring the
+    currency from the locale silently turns €50 into $50.
+- **Formatting mechanics**:
+  - `Intl.DateTimeFormat` / `Intl.NumberFormat` / `Intl.RelativeTimeFormat` only. Never
+    hand-roll, and never `hour12: false` — `en-US` wants 12h, `de-DE` wants 24h, and
+    `Intl` already knows. Override only for a stated reason.
+  - **Resolve the locale on the server and pass it down.** Reading `navigator.language`
+    during render makes the server and client format differently and React will throw a
+    hydration mismatch. Pin `timeZone` explicitly for the same reason — the server is
+    UTC, the browser is not.
+  - Cache formatters per `(locale, options)`. Constructing `Intl.*` inside a component
+    body runs on every render and is genuinely slow.
+  - Machine-readable values (`YYYY-MM-DD`, `<time dateTime>`, query params, API payloads)
+    stay ISO 8601 and locale-independent. Only what a human reads gets localised.
+  - **Test in `en-US` and `de-DE`.** They differ on every axis. The same instant and the
+    same €50, `dateStyle`/`timeStyle: "short"`:
+
+    | | `en-US` | `de-DE` |
+    | --- | --- | --- |
+    | date + time | `3/7/26, 2:30 PM` | `07.03.26, 14:30` |
+    | number | `1,234.56` | `1.234,56` |
+    | 50 EUR | `€50.00` | `50,00 €` |
+
+    Note the last row: the currency stays EUR in both, only the notation moves. If a
+    screen reads correctly in both locales it will hold everywhere else.
+  - ⚠ `src/lib/utils.ts` currently hardcodes `de-DE` in three module-level formatters.
+    It predates this rule and does not follow it; take the locale as an argument when you
+    next touch those helpers.
 - **Accessibility**: every interactive element keyboard-reachable, `aria-label` on
   icon-only buttons, visible focus states, and respect `prefers-reduced-motion` on any
   animation you add.
