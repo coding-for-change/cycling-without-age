@@ -182,6 +182,6 @@ The book routes design questions to the Copenhagen hub (p. 43):
 > us at **start@cyclingwithoutage.org**."
 
 That is the address to use for the logo lockups, the InDesign templates, city stickers
-(p. 20), and — relevant here — **the TacaPro licensing question** in
-`src/fonts/LICENSE.md`. The book specifies the typeface but does not supply or license
-it; nothing in its 44 pages says where to obtain the font.
+(p. 20), and — relevant here — **the TacaPro licensing question** described under
+Typography above. The book specifies the typeface but does not supply or license it;
+nothing in its 44 pages says where to obtain the font.

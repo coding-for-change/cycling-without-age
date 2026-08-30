@@ -64,11 +64,14 @@ the two in full, with page references. Don't cite the book for a rule it doesn't
   one. Style is `new-york`, RSC on. Compose class names with `cn()` from `@/lib/utils`.
   Anything genuinely shared and stateless that shadcn doesn't cover belongs in
   `src/components/ui/`; anything domain-specific belongs in its feature slice.
-- **Brand vs. shadcn**: the shadcn primitives ship with their own neutral token set
-  (`--primary`, `--muted`, …) that is *not* the brand palette. When a component is a
-  brand surface, pass brand tokens explicitly (`className="bg-mint text-ink"`); don't
-  quietly redefine the shadcn tokens, or every dialog and dropdown in the app shifts
-  with it.
+- **Brand vs. shadcn**: shadcn ships its own neutral token set (`--foreground`,
+  `--primary`, `--muted`, …) which decides what an unstyled component renders. Those
+  have already been remapped onto `--ink` once, centrally, in `globals.css` — so a
+  plain `<Button>` or paragraph is on-brand by default and `text-ink` is a restatement,
+  not a correction. **Don't re-point them again**, per-component or otherwise: one edit
+  there moves all 61 primitives at once, which is the leverage, and it is easy to
+  destroy by accident. For mint or red, pass the brand tokens explicitly
+  (`className="bg-mint text-ink"`).
 - **Formatting — European _and_ US conventions, from the first line of code.** CWA is a
   global movement (the brand book lists chapters across Europe, North America, Australia
   and Japan), so nothing user-facing may assume one region. Two independent axes, and
