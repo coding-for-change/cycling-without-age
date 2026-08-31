@@ -12,7 +12,6 @@ type Strings = { title: string; steps: string[]; finish: string };
 
 const ICONS = [Play, Users, Bike] as const;
 
-
 export function PilotNextSteps({
   progress,
   strings,

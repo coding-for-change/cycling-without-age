@@ -10,7 +10,6 @@ import { LocationScreen } from "./_components/location-screen";
 import { LocationSkeleton } from "./_components/location-skeleton";
 import { StepTransition } from "../_components/step-transition";
 
-
 async function getChapterPins() {
   "use cache";
   return (await chapters.listChapters()).map((chapter) => ({
@@ -56,7 +55,6 @@ async function Location({
     : params.as === "pilot"
       ? "pilot"
       : "passenger";
-
 
   const at =
     mode === "guest"

@@ -7,7 +7,6 @@ import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { haptics } from "@/lib/native/haptics";
 
-
 const NEVER_CHANGES = () => () => {};
 const hasWebAuthn = () => typeof window.PublicKeyCredential !== "undefined";
 
@@ -30,7 +29,7 @@ export function PasskeyButton({ label }: { label: string }) {
       onClick={() =>
         startTransition(async () => {
           const result = await authClient.signIn.passkey();
-         
+
           if (result?.error) return;
           haptics.success();
           router.replace("/onboarding");

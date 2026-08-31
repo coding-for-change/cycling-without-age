@@ -87,7 +87,6 @@ export function CountryStep({
       `[data-code="${active}"]`,
     );
     row?.scrollIntoView({ block: "center" });
-
   }, []);
 
   const choose = (code: CountryCode) => {

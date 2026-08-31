@@ -38,7 +38,7 @@ export function IdentifierStep({
 }) {
   const router = useRouter();
   const { flow, update } = useFlow();
-  const { say } = useCharacter();
+  const { say, oops } = useCharacter();
   const [pending, startTransition] = useTransition();
   const [value, setValue] = useState(flow.display ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +46,6 @@ export function IdentifierStep({
 
   const country = (flow.country as CountryCode | null) ?? defaultCountry;
   const isPhone = looksLikePhone(value);
-
 
   useEffect(() => {
     let cancelled = false;
@@ -76,6 +75,7 @@ export function IdentifierStep({
     const result = parseIdentity(value, country);
     if (!result.ok) {
       haptics.error();
+      oops();
       say("confus");
       setError(
         result.problem === "invalidPhone"
@@ -101,6 +101,7 @@ export function IdentifierStep({
 
       if (sendError) {
         haptics.error();
+        oops();
         say("triste");
         setError(
           sendError.status === 429

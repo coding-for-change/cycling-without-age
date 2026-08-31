@@ -6,6 +6,7 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useCharacter } from "@/components/character";
 import { haptics } from "@/lib/native/haptics";
 import { cn } from "@/lib/utils";
 import type { OnboardingRole } from "@/lib/onboarding";
@@ -44,6 +45,7 @@ export function ProfileStep({
   continueLabel: string;
 }) {
   const router = useRouter();
+  const { oops } = useCharacter();
   // Seeded from what they saved, so the back button leads to their own answers
   // rather than a blank form.
   const [firstName, setFirstName] = useState(defaults.firstName);
@@ -62,6 +64,7 @@ export function ProfileStep({
       const result = await submitProfile(details);
       if (!result.ok) {
         haptics.error();
+        oops();
         setError(strings.errors[result.error] ?? strings.errors.generic);
         return;
       }
@@ -94,8 +97,9 @@ export function ProfileStep({
           </Button>
 
           {/* Booking for someone who cannot use a phone is a first-class path,
-              not an escape hatch — but it is the quieter of the two, so it is a
-              text button under the primary one rather than a second pill. */}
+              not an escape hatch, so it gets the same pill as the primary — in
+              mint, the caretaking colour, which is what this path is. Red stays
+              with the one hero action. */}
           {role === "passenger" && (
             <button
               type="button"
@@ -104,7 +108,7 @@ export function ProfileStep({
                 haptics.tap();
                 send(null);
               }}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm text-ink-soft transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none disabled:opacity-50"
+              className="mt-3 flex h-14 w-full items-center justify-center gap-2 rounded-full border border-mint bg-mint-tint px-4 text-base font-medium text-ink transition-colors hover:bg-mint focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none disabled:opacity-50"
             >
               {strings.forSomeoneElse}
               <ArrowRight

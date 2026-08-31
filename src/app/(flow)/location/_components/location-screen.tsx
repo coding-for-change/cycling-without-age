@@ -84,7 +84,6 @@ export function LocationScreen({
   const atHome = mode === "passenger" && residence === "home";
   const hasToken = Boolean(process.env.NEXT_PUBLIC_MAPBOX_TOKEN);
 
-
   const sessionToken = useMemo(() => crypto.randomUUID(), []);
 
   const consoling = Boolean(home && !home.inRange);
@@ -92,7 +91,6 @@ export function LocationScreen({
     setCharacterPose(consoling ? "away" : "compact");
     return () => setCharacterPose(null);
   }, [setCharacterPose, consoling]);
-
 
   useEffect(() => {
     let live = true;
@@ -151,6 +149,7 @@ export function LocationScreen({
 
   const fail = (problem: string) => {
     haptics.error();
+    character.oops();
     setError(strings.errors[problem] ?? strings.errors.generic);
   };
 
@@ -430,7 +429,6 @@ export function LocationScreen({
     </div>
   );
 }
-
 
 function HomePanel({
   home,

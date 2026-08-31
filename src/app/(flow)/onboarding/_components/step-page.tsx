@@ -43,7 +43,6 @@ export type StepContext = {
   dict: Dictionary;
 };
 
-
 export function OnboardingStepPage({
   step,
   render,
@@ -89,7 +88,6 @@ async function Resolve({
     state.preset.chapterId && state.preset.role
       ? ((await chapters.getChapter(state.preset.chapterId))?.name ?? null)
       : null;
-
 
   const name = rider ?? {
     firstName: account?.name?.split(" ")[0] ?? "",

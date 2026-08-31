@@ -4,7 +4,6 @@ import { getDictionary, getLocale } from "@/lib/i18n";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WelcomeCarousel } from "./_components/welcome-carousel";
 
-
 async function getChapterCoords(): Promise<[number, number][]> {
   "use cache";
   return (await chapters.listChapters()).map((chapter) => [
