@@ -64,5 +64,22 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Cycling Without Age uses your location to show the chapters closest to you.</string>
+	<!-- Dev-only: WKWebView refuses http:// under App Transport Security, which
+	     blocks `CAP_SERVER_URL=http://<lan-ip>:3000 cap copy ios`. Scoped to web
+	     content, so native URLSession traffic stays https-only. Strip before a
+	     store build (same checklist item as `npm run cap:sync` restoring the
+	     prod URL). -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+	</dict>
+	<!-- Required for the prompt iOS shows when the app talks to a 192.168.x.x
+	     host from a physical device; without it the request is denied silently. -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Cycling Without Age connects to a development server on your local network.</string>
 </dict>
 </plist>
+

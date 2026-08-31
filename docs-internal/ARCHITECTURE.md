@@ -10,7 +10,6 @@ You must strictly adhere to these four layers. Imports may only flow downward.
 - **Components**: Responsible for UI only.
 - **Server Actions**: Entry point for mutations.
 - **Law**: Can ONLY call Global Use Cases or Feature Facades. Never call a Service or Database directly.
-
 ### 2. The Orchestration Layer (`src/use-cases/`)
 - **Role**: Coordinates workflows that involve multiple features.
 - **Example**: `processCheckout.ts` might call `CartFacade`, `PaymentFacade`, and `EmailFacade`.
@@ -134,3 +133,27 @@ demo structure. See [DEV-ACCOUNTS.md](./DEV-ACCOUNTS.md) for the login table.
 | chapter admin | approve/reject pilot applications for own chapter; promote members to chapter admin; manage own chapter |
 | pilot | free self-signup; membership per chapter requires approval; may belong to many chapters |
 | passenger | free self-signup; membership active immediately, no application |
+
+## Onboarding (COD-157)
+
+### Account ≠ passenger
+
+An account (`User`) and a person who rides (`Passenger`) are separate rows, because one
+account will book for several people — a relative or carer signing up on behalf of someone
+who cannot use a phone. `Passenger` carries the rider's identity plus `chapterId`,
+`managedByUserId` (the account that created it) and an optional `userId`, set only for the
+account holder's own profile.
+
+Every passenger one account manages must share a chapter. That is enforced in
+`features/passengers/facade.ts`, not by a constraint: "the chapter this account already books
+for" is a fact about existing rows, not a shape a column can express.
+
+The account holder's **own** home lives on `User` (`residence`, `address`, `latitude`,
+`longitude`) — that is what the service-radius check is run against. `birthDate` and `gender`
+appear on both `User` (a pilot is always the account holder) and `Passenger` (a rider may
+have no account at all). Collapsing that would need a `Person` table; it is a deliberate
+duplication, marked in the schema.
+
+`Organization.serviceRadiusKm` (default 10) is how far a chapter will ride from its own
+position. Per chapter rather than a constant — a rural chapter covers more ground than a city
+one, and the number is a policy, not a fact about geography.

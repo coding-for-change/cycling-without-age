@@ -118,8 +118,27 @@ the two in full, with page references. Don't cite the book for a rule it doesn't
   icon-only buttons, visible focus states, and respect `prefers-reduced-motion` on any
   animation you add.
 
+## Strings and the character
+
+- **i18n exists**: `src/lib/i18n` is server-only by construction (it reads `next/headers`).
+  `en.ts` is the source of truth for the dictionary *shape*; `da.ts` and `de.ts` are typed
+  against it, so a missing key is a build error. **Pass strings down as props** — a Client
+  Component cannot import the module. German uses Sie-form for passenger-facing copy and
+  du-form for pilot-facing copy, so the same English sentence sometimes needs two German
+  ones. Interpolate with `fill()` from `@/lib/utils`.
+- Because `getDictionary()` reads cookies, any component that awaits it must sit inside
+  `<Suspense>` with a `<Skeleton>` fallback, or `cacheComponents` blocks the route's
+  prerender. That is a build constraint, not a preference.
+- **The character** (`@/components/character`) is the animation engine from
+  jeremy-prt/bloub, vendored under `bloub/` (MIT, attributed) with the Vue view rewritten in
+  React. Treat `bloub/` as third-party: it is prettier-ignored and lint-relaxed, and the one
+  local change is recorded in its README. Colour it with a token utility
+  (`className="text-mint"`) — it paints `currentColor`, so no hex reaches a component. It is
+  mounted once in the `(flow)` layout and is `aria-hidden`: a decorative mascot, never a
+  control.
+
 ## What is deliberately not here yet
 
-There is no shared UI kit beyond shadcn, no i18n module, no client store, and no
-illustration system in this repo yet. If a task needs one, build it in the right layer
-per `AGENTS.md` and extend this skill in the same change — do not import from a mockup.
+There is no client store and no illustration system beyond the character. If a task needs
+one, build it in the right layer per `AGENTS.md` and extend this skill in the same change —
+do not import from a mockup.

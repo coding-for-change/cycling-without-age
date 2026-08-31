@@ -21,6 +21,9 @@ jest.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT:${url}`);
   },
+  forbidden: () => {
+    throw new Error("FORBIDDEN");
+  },
 }));
 jest.mock("@/lib/auth", () => ({
   auth: { api: { getSession: jest.fn() } },
@@ -46,7 +49,12 @@ const signedInAs = (access: Partial<Access>) =>
   });
 
 const denied = (run: () => Promise<unknown>) =>
-  expect(run()).rejects.toThrow("REDIRECT:/");
+  expect(run()).rejects.toThrow("FORBIDDEN");
+
+// A signed-out visitor never reaches the 403: `requireAuth` sends them to sign in
+// first, which is the one authorization outcome that stays a redirect.
+const sentToSignIn = (run: () => Promise<unknown>) =>
+  expect(run()).rejects.toThrow("REDIRECT:/sign-in");
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -63,11 +71,11 @@ describe("a visitor who is not signed in", () => {
   });
 
   it("cannot reach anything behind a guard", async () => {
-    await denied(requireAuth);
-    await denied(requireSuperAdmin);
-    await denied(() => requireCountryAdmin(DE));
-    await denied(() => requireChapterAdmin(BERLIN));
-    await denied(() => requireChapterRole(BERLIN, "passenger"));
+    await sentToSignIn(requireAuth);
+    await sentToSignIn(requireSuperAdmin);
+    await sentToSignIn(() => requireCountryAdmin(DE));
+    await sentToSignIn(() => requireChapterAdmin(BERLIN));
+    await sentToSignIn(() => requireChapterRole(BERLIN, "passenger"));
   });
 });
 
