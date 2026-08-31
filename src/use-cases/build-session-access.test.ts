@@ -19,6 +19,9 @@ jest.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT:${url}`);
   },
+  forbidden: () => {
+    throw new Error("FORBIDDEN");
+  },
 }));
 jest.mock("@/lib/auth", () => ({ auth: { api: { getSession: jest.fn() } } }));
 jest.mock("@/lib/prisma", () => ({
@@ -64,7 +67,12 @@ async function signIn(userId: string) {
 }
 
 const denied = (run: () => Promise<unknown>) =>
-  expect(run()).rejects.toThrow("REDIRECT:/");
+  expect(run()).rejects.toThrow("FORBIDDEN");
+
+// A signed-out visitor never reaches the 403: `requireAuth` sends them to sign in
+// first, which is the one authorization outcome that stays a redirect.
+const sentToSignIn = (run: () => Promise<unknown>) =>
+  expect(run()).rejects.toThrow("REDIRECT:/sign-in");
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -175,9 +183,9 @@ describe("what each persona can do after signing in", () => {
 
   it("signed-out: no session, no access, every guard closed", async () => {
     getSessionMock.mockResolvedValue(null);
-    await denied(requireAuth);
-    await denied(requireSuperAdmin);
-    await denied(() => requireChapterAdmin(BERLIN));
+    await sentToSignIn(requireAuth);
+    await sentToSignIn(requireSuperAdmin);
+    await sentToSignIn(() => requireChapterAdmin(BERLIN));
     expect(db.member.findMany).not.toHaveBeenCalled();
   });
 });

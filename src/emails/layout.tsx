@@ -43,8 +43,8 @@ export function EmailLayout({
         <Container style={styles.container}>
           <Img
             src={`${baseUrl}/logo.png`}
-            width="40"
-            height="40"
+            width="140"
+            height="50"
             alt="Cycling Without Age"
             style={styles.logo}
           />

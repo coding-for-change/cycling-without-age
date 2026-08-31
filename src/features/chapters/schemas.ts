@@ -22,6 +22,9 @@ export const chapterInput = z.object({
   city: z.string().trim().min(1).max(120),
   address: z.string().trim().max(240).optional(),
   careHomeName: z.string().trim().max(160).optional(),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  serviceRadiusKm: z.number().int().min(1).max(200).optional(),
 });
 export type ChapterInput = z.infer<typeof chapterInput>;
 

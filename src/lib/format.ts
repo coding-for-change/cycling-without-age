@@ -233,3 +233,62 @@ export function toIsoDateLocal(date: Date): string {
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
 }
+
+
+const IMPERIAL_LOCALES: readonly Locale[] = ["en-US"];
+
+const METRES_PER_MILE = 1609.344;
+
+export function formatDistance(meters: number, locale: Locale): string {
+  if (IMPERIAL_LOCALES.includes(locale)) {
+    const miles = meters / METRES_PER_MILE;
+    return numberFormatter(locale, {
+      style: "unit",
+      unit: "mile",
+      unitDisplay: "short",
+      maximumFractionDigits: miles < 10 ? 1 : 0,
+    }).format(miles);
+  }
+
+  if (meters < 1000) {
+    return numberFormatter(locale, {
+      style: "unit",
+      unit: "meter",
+      unitDisplay: "short",
+      maximumFractionDigits: 0,
+    }).format(Math.round(meters / 10) * 10);
+  }
+
+  const km = meters / 1000;
+  return numberFormatter(locale, {
+    style: "unit",
+    unit: "kilometer",
+    unitDisplay: "short",
+    maximumFractionDigits: km < 10 ? 1 : 0,
+  }).format(km);
+}
+
+/**
+ * A ride length a person reads: `8 min`, `1 hr 20 min`.
+ *
+ * Rounded up to the whole minute — an estimate that says "9 min" and takes ten is
+ * worse than one that says ten. `Intl.NumberFormat` with a unit rather than a
+ * hand-rolled string, so `de-DE` gets "Min." and `da-DK` gets "min." for free.
+ */
+export function formatDuration(seconds: number, locale: Locale): string {
+  const minutes = Math.max(1, Math.ceil(seconds / 60));
+  const unit = (value: number, unit: "hour" | "minute") =>
+    numberFormatter(locale, {
+      style: "unit",
+      unit,
+      unitDisplay: "short",
+      maximumFractionDigits: 0,
+    }).format(value);
+
+  if (minutes < 60) return unit(minutes, "minute");
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest === 0
+    ? unit(hours, "hour")
+    : `${unit(hours, "hour")} ${unit(rest, "minute")}`;
+}

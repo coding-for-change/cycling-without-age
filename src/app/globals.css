@@ -35,7 +35,7 @@
   --red-tint: #fde9ea;
   --grey-tint: #efedea;
 
-  --r-card: 1.25rem;
+  --r-card: 0.75rem;
   --r-tile: 1.5rem;
   --r-cover: 1.125rem;
 
@@ -44,10 +44,6 @@
   --shadow-lift:
     0 4px 8px -4px rgb(0 0 0 / 0.09), 0 18px 36px -14px rgb(0 0 0 / 0.16);
 
-  /* One family for everything: Inter. Headlines separate from body by weight
-     (700), not by typeface — see docs/BRAND.md § Typography. --font-inter is
-     set by next/font in src/app/layout.tsx; the rest is the system fallback
-     while it loads. */
   --font-display:
     var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
     Helvetica, Arial, sans-serif;
@@ -134,8 +130,6 @@
   --input: 27 14% 88%;
   --ring: 27 13.6% 16%;
   --radius: 0.625rem;
-  /* shadcn ships these cool-grey, with a BLUE ring — a hue the brand does not
-     have. Rewarmed onto the ink hue; focus rings use ink. */
   --sidebar: hsl(27 14% 98%);
   --sidebar-foreground: hsl(27 13.6% 16%);
   --sidebar-primary: hsl(27 13.6% 16%);
@@ -226,5 +220,306 @@
   h4 {
     font-family: var(--font-display);
     font-weight: 700;
+  }
+}
+
+/* ==========================================================================
+   Sign-in flow motion.
+
+   The character is mounted once in the (flow) layout and never remounts, so it
+   travels between poses with a plain transform transition.
+   ========================================================================== */
+.character-stage {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 20;
+  width: 20rem;
+  height: 20rem;
+  transform-origin: top left;
+  pointer-events: none;
+  transform: translate(var(--ch-x), var(--ch-y)) scale(var(--ch-scale));
+  transition:
+    transform 420ms cubic-bezier(0.2, 0, 0, 1),
+    opacity 260ms ease-out;
+  will-change: transform;
+}
+
+/* Centred and large: the first thing anyone sees on the carousel. */
+.character-stage[data-pose="hero"] {
+  --ch-scale: 0.7;
+  --ch-x: calc(50vw - var(--ch-scale) * 10rem);
+  --ch-y: 21.5svh;
+}
+
+/* Small, tucked into the top-right corner while a question is being answered. */
+.character-stage[data-pose="compact"] {
+  --ch-scale: 0.2;
+  --ch-x: calc(100vw - 1rem - var(--ch-scale) * 20rem);
+  --ch-y: calc(1rem + env(safe-area-inset-top));
+}
+
+@media (min-width: 768px) {
+  .character-stage[data-pose="hero"] {
+    --ch-scale: 1;
+    --ch-y: 17.5svh;
+  }
+  /* Bigger on a desktop viewport, but never over the map on /location — that
+     route keeps the mobile size and lives in the right-hand column. */
+  .character-stage[data-pose="compact"] {
+    --ch-scale: 0.34;
+  }
+  .character-stage[data-pose="compact"][data-aside="true"] {
+    --ch-scale: 0.2;
+    --ch-x: calc(100vw - 1rem - var(--ch-scale) * 20rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .character-stage {
+    transition: none;
+  }
+}
+
+::view-transition-old(.nav-forward) {
+  --slide-offset: -60px;
+  animation:
+    150ms ease-in both flow-fade reverse,
+    400ms ease-in-out both flow-slide reverse;
+}
+::view-transition-new(.nav-forward) {
+  --slide-offset: 60px;
+  animation:
+    210ms ease-out 150ms both flow-fade,
+    400ms ease-in-out both flow-slide;
+}
+::view-transition-old(.nav-back) {
+  --slide-offset: 60px;
+  animation:
+    150ms ease-in both flow-fade reverse,
+    400ms ease-in-out both flow-slide reverse;
+}
+::view-transition-new(.nav-back) {
+  --slide-offset: -60px;
+  animation:
+    210ms ease-out 150ms both flow-fade,
+    400ms ease-in-out both flow-slide;
+}
+
+@keyframes flow-fade {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+@keyframes flow-slide {
+  from {
+    translate: var(--slide-offset);
+  }
+  to {
+    translate: 0;
+  }
+}
+
+/* The overlay swallows clicks for the length of the animation otherwise. */
+::view-transition {
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
+
+/* Stepped aside: the carousel's later slides carry a photograph, and the
+   character is only the artwork for the first one. It fades from wherever it
+   was rather than jumping, so swiping back brings it straight home. */
+.character-stage[data-pose="away"] {
+  --ch-scale: 0.7;
+  --ch-x: calc(50vw - var(--ch-scale) * 10rem);
+  --ch-y: 21.5svh;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .character-stage[data-pose="away"] {
+    --ch-scale: 1;
+    --ch-y: 17.5svh;
+  }
+}
+
+@media (min-width: 1024px) {
+  .character-stage[data-pose="hero"],
+  .character-stage[data-pose="away"] {
+    --ch-x: calc(75vw - var(--ch-scale) * 10rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .character-stage[data-pose="compact"]:not([data-aside="true"]) {
+    --ch-scale: 2.3;
+    --ch-x: calc(90vw - var(--ch-scale) * 10rem);
+    --ch-y: calc(50svh - var(--ch-scale) * 10rem);
+  }
+}
+@media (min-width: 1440px) {
+  .character-stage[data-pose="compact"]:not([data-aside="true"]) {
+    --ch-scale: 3.3;
+  }
+}
+@media (min-width: 1920px) {
+  .character-stage[data-pose="compact"]:not([data-aside="true"]) {
+    --ch-scale: 4.4;
+  }
+}
+
+/* The story progress bar: the active segment fills over one autoplay interval,
+   which the component sets as `--story-ms` so the timer and the bar cannot
+   drift apart. */
+.story-fill {
+  transform-origin: left;
+  animation: story-fill var(--story-ms) linear forwards;
+}
+
+@keyframes story-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .story-fill {
+    animation: none;
+    transform: scaleX(1);
+  }
+}
+
+/* ==========================================================================
+   Carousel illustration motion. Ported from the mockup's brand.css so the
+   ported art keeps the movement it was drawn with.
+   ========================================================================== */
+.art-float {
+  animation: art-float 5s ease-in-out infinite;
+}
+
+.art-beat {
+  transform-origin: center;
+  animation: art-beat 2.6s ease-in-out infinite;
+}
+
+.art-pop {
+  animation: art-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.art-dash {
+  stroke-dasharray: 20 12;
+  animation: art-dash 1.4s linear infinite;
+}
+
+.art-ping {
+  transform-origin: center;
+  animation: art-ping 2.8s ease-out infinite;
+}
+
+/* One band's width, so the doubled coastline loops without a seam. */
+.art-globe {
+  animation: art-globe 26s linear infinite;
+}
+
+.art-roll {
+  animation: art-roll 2.4s ease-in-out infinite;
+}
+
+@keyframes art-roll {
+  0%,
+  100% {
+    transform: translateX(-2%);
+  }
+  50% {
+    transform: translateX(2%);
+  }
+}
+
+@keyframes art-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes art-beat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  12% {
+    transform: scale(1.12);
+  }
+  24% {
+    transform: scale(1);
+  }
+  36% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes art-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+@keyframes art-dash {
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+
+@keyframes art-ping {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.28;
+  }
+  70%,
+  100% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+}
+
+@keyframes art-globe {
+  to {
+    transform: translateX(-192px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .art-float,
+  .art-beat,
+  .art-pop,
+  .art-dash,
+  .art-ping,
+  .art-globe,
+  .art-roll {
+    animation: none;
+  }
+  .art-ping {
+    opacity: 0.28;
   }
 }

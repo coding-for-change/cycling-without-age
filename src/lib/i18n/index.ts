@@ -5,23 +5,19 @@ import { match } from "@formatjs/intl-localematcher";
 import Negotiator from "negotiator";
 import en, { type Dictionary } from "./en";
 import da from "./da";
+import de from "./de";
+import { defaultLocale, hasLocale, locales, type Locale } from "./locales";
 
-export const locales = ["en", "da"] as const;
-export type Locale = (typeof locales)[number];
-export const defaultLocale: Locale = "en";
+export { defaultLocale, hasLocale, locales };
+export type { Locale };
 
-// Set this cookie to persist the user's language preference.
 export const LOCALE_COOKIE = "NEXT_LOCALE";
 
 export type { Dictionary };
 
-const dictionaries: Record<Locale, Dictionary> = { en, da };
-
-export const hasLocale = (locale: string): locale is Locale =>
-  (locales as readonly string[]).includes(locale);
+const dictionaries: Record<Locale, Dictionary> = { en, da, de };
 
 export async function getLocale(): Promise<Locale> {
-  // Saved user preference wins over the device/browser language.
   const cookieLocale = (await cookies()).get(LOCALE_COOKIE)?.value;
   if (cookieLocale && hasLocale(cookieLocale)) return cookieLocale;
 
@@ -34,7 +30,6 @@ export async function getLocale(): Promise<Locale> {
   try {
     return match(languages, locales, defaultLocale) as Locale;
   } catch {
-    // match() throws on malformed Accept-Language values.
     return defaultLocale;
   }
 }

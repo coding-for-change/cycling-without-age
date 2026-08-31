@@ -9,19 +9,34 @@ datasource db {
 }
 
 model User {
-  id                  String               @id
-  name                String               @db.Text
+  id                  String    @id
+  name                String    @db.Text
   email               String
-  emailVerified       Boolean              @default(false)
-  image               String?              @db.Text
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  emailVerified       Boolean   @default(false)
+  image               String?   @db.Text
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
   phoneNumber         String?
   phoneNumberVerified Boolean?
-  role                String?              @db.Text
-  banned              Boolean?             @default(false)
-  banReason           String?              @db.Text
+  role                String?   @db.Text
+  banned              Boolean?  @default(false)
+  banReason           String?   @db.Text
   banExpires          DateTime?
+  birthDate DateTime? @db.Date
+  gender    Gender?
+  locale    String?   @db.VarChar(5)
+  residence Residence?
+  address   String?    @db.Text
+  latitude  Float?
+  longitude Float?
+  managesOthers Boolean @default(false)
+  notifyEmail Boolean @default(false)
+  notifyPush  Boolean @default(false)
+  consentSafetyAt DateTime?
+  consentDataAt   DateTime?
+  passkeyPromptedAt    DateTime?
+  pilotNextStepsSeenAt DateTime?
+  welcomeEmailSentAt DateTime?
   sessions            Session[]
   accounts            Account[]
   passkeys            Passkey[]
@@ -30,6 +45,8 @@ model User {
   countryAdminOf      CountryAdmin[]
   applications        ChapterApplication[] @relation("applicant")
   decidedApplications ChapterApplication[] @relation("decider")
+  passengers          Passenger[]          @relation("manages")
+  passengerProfile    Passenger?           @relation("self")
 
   @@unique([email])
   @@unique([phoneNumber])
@@ -120,10 +137,15 @@ model Organization {
   city         String               @db.Text
   address      String?              @db.Text
   careHomeName String?              @db.Text
+  latitude     Float
+  longitude    Float
   applications ChapterApplication[]
+  passengers   Passenger[]
+  serviceRadiusKm Int @default(10)
 
   @@unique([slug])
   @@index([countryId])
+  @@index([latitude, longitude])
   @@map("organization")
 }
 
@@ -217,4 +239,37 @@ model ChapterApplication {
   @@index([chapterId, status])
   @@index([decidedByUserId])
   @@map("chapter_application")
+}
+
+enum Gender {
+  female
+  male
+  other
+}
+
+enum Residence {
+  careHome
+  home
+}
+
+model Passenger {
+  id              String       @id @default(cuid())
+  chapterId       String
+  chapter         Organization @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  managedByUserId String
+  managedBy       User         @relation("manages", fields: [managedByUserId], references: [id], onDelete: Cascade)
+  userId          String?      @unique
+  user            User?        @relation("self", fields: [userId], references: [id], onDelete: SetNull)
+
+  firstName String   @db.Text
+  lastName  String   @db.Text
+  birthDate DateTime @db.Date
+  gender    Gender
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([chapterId])
+  @@index([managedByUserId])
+  @@map("passenger")
 }
