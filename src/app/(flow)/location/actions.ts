@@ -19,7 +19,6 @@ import { settlePassengerLocation } from "@/use-cases/settle-passenger-location";
 
 const chapterId = z.string().min(1).max(64);
 
-
 export async function rememberGuestChapter(
   id: string,
 ): Promise<{ ok: true } | { ok: false; error: "unknownChapter" }> {
@@ -36,7 +35,6 @@ export async function rememberGuestChapter(
   return { ok: true };
 }
 
-
 const SEARCH_LIMIT = { max: 60, windowMs: 60_000 };
 const RESOLVE_LIMIT = { max: 20, windowMs: 60_000 };
 const searchInput = z.object({
@@ -51,7 +49,7 @@ export async function suggestAddresses(
   const session = await requireAuth();
   const parsed = searchInput.safeParse(input);
   if (!parsed.success) return [];
-  
+
   if (!withinRateLimit(`places:${session.user.id}`, SEARCH_LIMIT)) return [];
   return suggestPlaces(parsed.data.query, parsed.data.sessionToken, {
     language: parsed.data.language,
@@ -155,7 +153,6 @@ const settleInput = z.discriminatedUnion("residence", [
   z.object({ residence: z.literal("careHome"), chapterId }),
   z.object({ residence: z.literal("home"), chapterId, home: homeInput }),
 ]);
-
 
 export async function settlePassengerAt(
   input: unknown,

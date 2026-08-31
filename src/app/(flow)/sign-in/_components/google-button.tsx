@@ -5,7 +5,6 @@ import { useTransition } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 
-
 export function GoogleButton({ label }: { label: string }) {
   const [pending, startTransition] = useTransition();
 

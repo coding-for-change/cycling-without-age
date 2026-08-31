@@ -17,7 +17,14 @@ const phiFor = (longitude: number) =>
 
 const EUROPE = phiFor(10);
 
-export function Globe({ markers }: { markers: [number, number][] }) {
+
+export function Globe({
+  markers,
+  active,
+}: {
+  markers: [number, number][];
+  active: boolean;
+}) {
   const canvas = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -43,7 +50,7 @@ export function Globe({ markers }: { markers: [number, number][] }) {
         baseColor: rgb(brand.mint),
         markerColor: rgb(brand.red),
         glowColor: rgb(brand.canvas),
-        markers: markers.map((location) => ({ location, size: 0.01 })),
+        markers: markers.map((location) => ({ location, size: 0.02 })),
         markerElevation: 0,
       });
     } catch {
@@ -52,7 +59,7 @@ export function Globe({ markers }: { markers: [number, number][] }) {
     }
 
     let frame = 0;
-    if (!still) {
+    if (active && !still) {
       const tick = () => {
         phi += 0.0025;
         globe.update({ phi });
@@ -65,7 +72,7 @@ export function Globe({ markers }: { markers: [number, number][] }) {
       cancelAnimationFrame(frame);
       globe.destroy();
     };
-  }, [markers]);
+  }, [markers, active]);
 
   return (
     <div className="relative mx-auto aspect-square h-full max-h-[min(84vw,27rem)]">

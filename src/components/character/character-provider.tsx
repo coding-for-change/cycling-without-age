@@ -23,6 +23,7 @@ const MOODS: ExpressionId[] = [
 ];
 
 const HOLD_MS = 2200;
+const OOPS_MS = 3000;
 
 export type CharacterApi = {
   /** Put the character in `mood`, then let it drift back to neutral. */
@@ -34,6 +35,13 @@ export type CharacterApi = {
    * fades, when a shape relaxes) is timed.
    */
   play: (state: StateId, holdMs?: number) => void;
+  /**
+   * Every failed action: the body morphs into an exclamation mark and turns red
+   * for three seconds. `exclaim` carries no face, so a `say(...)` fired beside it
+   * is invisible until the shape relaxes — which is what makes it the fallback
+   * when reduced motion has skipped the morph entirely.
+   */
+  oops: () => void;
 };
 
 type CharacterCtx = CharacterApi & {
@@ -64,6 +72,18 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
     timer.current = setTimeout(() => setMood("neutre"), ms);
   };
 
+  const play = (next: StateId, holdMs?: number) => {
+    // The whole point of these states is the movement; with motion turned
+    // down there is nothing left to show, only a silhouette that jumps.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (stateTimer.current) clearTimeout(stateTimer.current);
+    setState(next);
+    stateTimer.current = setTimeout(
+      () => setState("idle"),
+      holdMs ?? STATE_BY_ID.get(next)!.duration * 1000,
+    );
+  };
+
   useEffect(
     () => () => {
       if (timer.current) clearTimeout(timer.current);
@@ -80,18 +100,8 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
         // No haptic here: at most one per user action (AGENTS.md §7), and the
         // component that calls `say` already fires one next to its own message.
         say: (next, holdMs = HOLD_MS) => hold(next, holdMs),
-        play: (next, holdMs) => {
-          // The whole point of these states is the movement; with motion turned
-          // down there is nothing left to show, only a silhouette that jumps.
-          if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
-            return;
-          if (stateTimer.current) clearTimeout(stateTimer.current);
-          setState(next);
-          stateTimer.current = setTimeout(
-            () => setState("idle"),
-            holdMs ?? STATE_BY_ID.get(next)!.duration * 1000,
-          );
-        },
+        play,
+        oops: () => play("exclaim", OOPS_MS),
         tap: () => {
           haptics.tap();
           hold(MOODS[Math.floor(Math.random() * MOODS.length)], HOLD_MS);

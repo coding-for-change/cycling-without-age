@@ -162,7 +162,10 @@ export function WelcomeCarousel({
                     <div className="flex min-h-0 flex-1 items-center justify-center py-4">
                       {Art ? <Art /> : null}
                       {index === slides.length - 1 && (
-                        <Globe markers={chapterCoords} />
+                        <Globe
+                          markers={chapterCoords}
+                          active={current === index}
+                        />
                       )}
                     </div>
                   );

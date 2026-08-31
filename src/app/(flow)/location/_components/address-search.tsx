@@ -18,7 +18,6 @@ type Strings = {
   noResults: string;
 };
 
-
 export function AddressSearch({
   sessionToken,
   language,

@@ -15,7 +15,6 @@ import {
 import { Step } from "../../_components/step";
 import { useFlow } from "../../_components/flow-state";
 
-
 const RESEND_AFTER_MS = 30_000;
 
 type Strings = {
@@ -33,7 +32,7 @@ type Strings = {
 export function CodeStep({ strings }: { strings: Strings }) {
   const router = useRouter();
   const { flow, update } = useFlow();
-  const { say } = useCharacter();
+  const { say, oops } = useCharacter();
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -55,6 +54,7 @@ export function CodeStep({ strings }: { strings: Strings }) {
 
   const failWith = (key: string) => {
     haptics.error();
+    oops();
     say("triste");
     setError(strings.errors[key] ?? strings.errors.generic);
     setCode("");

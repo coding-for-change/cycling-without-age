@@ -5,6 +5,7 @@ import { useContext, useEffect, useId, useRef, useState } from "react";
 import { BotEngine, type BotFrame } from "./bloub/engine";
 import { EXPRESSION_BY_ID, type ExpressionId } from "./bloub/expressions";
 import { clamp, easings } from "./bloub/math";
+import { cn } from "@/lib/utils";
 import { DEMI_VIEWBOX, RAYON } from "./bloub/repere";
 import { CharacterContext } from "./character-provider";
 import { lookAt, RESTING, type Aim } from "./gaze";
@@ -47,6 +48,9 @@ export function Character({
   const ctx = useContext(CharacterContext);
   const mood = expression ?? ctx?.mood ?? "neutre";
   const state = ctx?.state ?? "idle";
+  // The "!" is only ever played by `oops()`, so the state doubles as the signal
+  // to switch to the brand red — the one place errors are allowed to use it.
+  const alarmed = state === "exclaim";
   const tap = onTap ?? ctx?.tap;
 
   const [engine] = useState(
@@ -195,7 +199,11 @@ export function Character({
       width={size}
       height={size}
       viewBox={`${-DEMI_VIEWBOX} ${-DEMI_VIEWBOX} ${DEMI_VIEWBOX * 2} ${DEMI_VIEWBOX * 2}`}
-      className={className}
+      className={cn(
+        "transition-colors duration-300",
+        className,
+        alarmed && "text-red",
+      )}
       // The body is a full-viewBox rect clipped by a mask, and a mask does not
       // affect hit-testing — so without this the character's transparent square
       // corners would swallow taps meant for the page underneath it. Pointer

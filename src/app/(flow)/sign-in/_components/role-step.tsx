@@ -30,7 +30,6 @@ export function RoleStep({
     router.push(`/location?as=${role}`, { transitionTypes: ["nav-forward"] });
   };
 
-
   const options = [
     {
       role: "passenger" as const,

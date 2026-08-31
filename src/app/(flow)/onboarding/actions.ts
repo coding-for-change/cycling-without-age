@@ -15,13 +15,10 @@ import {
   resolveDestination,
 } from "@/use-cases/onboarding-progress";
 
-
 const ONBOARDING = "/onboarding";
-
 
 export type StepResult =
   { ok: true; next: string } | { ok: false; error: string };
-
 
 async function atStep(step: OnboardingStep) {
   const session = await requireAuth();
@@ -48,7 +45,6 @@ const consentSchema = z.object({
 });
 
 export async function submitConsent(input: unknown): Promise<StepResult> {
-  
   const at = await atStep("consent");
   if (!at) return { ok: false, error: "error" };
 

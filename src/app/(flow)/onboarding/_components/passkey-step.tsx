@@ -18,7 +18,6 @@ type Strings = {
   failed: string;
 };
 
-
 export function PasskeyStep({
   progress,
   strings,
@@ -42,6 +41,7 @@ export function PasskeyStep({
       const result = await authClient.passkey.addPasskey();
       if (result?.error) {
         haptics.error();
+        character.oops();
         character.say("triste");
         setError(strings.failed);
         await markPasskeyAnswered();

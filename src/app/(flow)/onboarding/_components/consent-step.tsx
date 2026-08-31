@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition, type ReactNode } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { useCharacter } from "@/components/character";
 import { haptics } from "@/lib/native/haptics";
 import { requestNotificationPermission } from "@/lib/native/push";
 import { cn, fill } from "@/lib/utils";
@@ -44,6 +45,7 @@ export function ConsentStep({
   continueLabel: string;
 }) {
   const router = useRouter();
+  const { oops } = useCharacter();
 
   const [ticked, setTicked] = useState<Record<Box, boolean>>({
     safety: defaults.safety,
@@ -77,6 +79,7 @@ export function ConsentStep({
       });
       if (!result.ok) {
         haptics.error();
+        oops();
         setError(strings.error);
         return;
       }
@@ -158,7 +161,6 @@ export function ConsentStep({
     </Step>
   );
 }
-
 
 function LegalLinks({ strings }: { strings: Strings }) {
   const parts = strings.dataSuffix.split(/(\{imprint\}|\{privacy\})/);
