@@ -1,0 +1,193 @@
+# CodeRabbit configuration — https://docs.coderabbit.ai/reference/yaml-template
+#
+# CodeRabbit is good at the generic sweep (bugs, security, style) but knows
+# nothing about this project's own rules. The path_instructions below restate
+# the parts of AGENTS.md and .claude/skills/frontend/SKILL.md that a reviewer
+# can actually check on a diff.
+#
+# Those two files remain the source of truth. If a rule changes there and here,
+# they will drift — keep this file to rules that are stable and mechanical, and
+# leave nuance to the skill.
+
+language: "en-US"
+tone_instructions: "Direct and concrete. Point at the line and say what breaks. Skip praise and preamble."
+early_access: false
+enable_free_tier: true
+
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+  changed_files_summary: true
+  sequence_diagrams: true
+
+  # Generated and vendored code: never review, never summarise.
+  path_filters:
+    - "!src/generated/**"
+    - "!**/*.tsbuildinfo"
+    - "!package-lock.json"
+    - "!.next/**"
+    - "!public/**"
+    - "!**/*.otf"
+    - "!**/*.woff2"
+
+  path_instructions:
+    # ---------------------------------------------------------------- brand --
+    - path: "src/**/*.{css,tsx,ts}"
+      instructions: |
+        Brand rules from docs/BRAND.md and .claude/skills/frontend/SKILL.md.
+
+        COLOUR — the palette is exactly: ink (--ink #2e2823, a warm espresso),
+        white, mint (--mint #92D2C6), red (--red #ED1C24), plus --mint-deep
+        #28584E for dark surfaces, and tints of those.
+        - Flag any hardcoded hex, rgb() or hsl() colour in a component. Colours
+          come from tokens (`bg-mint`, `text-ink`, `border-line`), never literals.
+        - Flag any literal #000 / 0 0% 0% / `black`. Every black mark — text,
+          icon strokes, borders, rules, illustration line work — is --ink. The
+          shadcn neutral tokens in globals.css are already mapped onto --ink;
+          flag any change that points them back at a neutral grey, and flag any
+          per-component attempt to re-point them.
+        - Flag any hue outside the palette (blue, amber, violet, teal that is
+          not mint). Illustration and photography are exempt; UI chrome is not.
+        - Text is ink or white only — never mint or red type in chrome. White
+          type belongs on red or --mint-deep.
+
+        TYPOGRAPHY — Arial only; no webfont is loaded. Flag any `next/font`
+        import, @font-face, Google Fonts link, or new font family. Headlines
+        differ from body by weight (700), not typeface.
+
+        ICONS — lucide-react only. Flag emoji used as icons, icon fonts, or
+        external image assets for iconography.
+
+        COPY — flag user-visible strings that are hardcoded in a way that
+        cannot be extracted later (buried in a ternary or template deep in
+        markup). Copy is English-only for now but must stay extractable.
+
+    # ----------------------------------------------------- i18n / formatting --
+    - path: "src/**/*.{ts,tsx}"
+      instructions: |
+        FORMATTING — this app must render correctly in both European and US
+        conventions. See .claude/skills/frontend/SKILL.md § Formatting.
+
+        - Flag any `Intl.*` formatter constructed with a hardcoded locale
+          ("de-DE", "en-US", …). Locale is always passed in as an argument.
+        - Flag any `Intl.*` constructed inside a component body or render path
+          rather than cached — use the helpers in `@/lib/format`.
+        - Flag `hour12: true/false`. The locale resolves this; en-US wants 12h
+          and de-DE wants 24h on their own.
+        - Flag currency derived from the viewer's locale. Currency is an ISO
+          4217 code from the data (the chapter's own currency); the locale only
+          governs notation. Deriving it turns a EUR 50 ride into $50.
+        - Flag date/time formatting of an instant without an explicit
+          `timeZone`. The server runs UTC and the browser does not — this
+          produces React hydration mismatches and off-by-one days.
+        - Flag `navigator.language` read during render. Resolve the locale on
+          the server and pass it down.
+        - Flag hand-rolled date or number formatting (manual padStart, string
+          concatenation, `.split("T")`) for anything a human reads. ISO 8601 is
+          correct only for machine-readable values.
+
+        ARCHITECTURE — AGENTS.md defines a strict vertical-slice hierarchy and
+        imports may only flow downward. Flag violations:
+
+        - Presentation (`src/app/**`, `src/features/*/components`) calling a
+          Service or Prisma directly. It may only call Server Actions, Use Cases
+          or Feature Facades.
+        - A Facade (`src/features/*/facade.ts`) importing another feature, a Use
+          Case, or anything session/HTTP-shaped. Facades stay reusable from CRON
+          and scripts.
+        - Auth checks inside a Facade. They live in `lib/auth-guards.ts` and are
+          called from Actions and cross-feature Use Cases.
+        - A Use Case in `src/use-cases/` that touches only one feature — that
+          collapses into the Action.
+        - `revalidatePath` / `revalidateTag` anywhere but an Action.
+
+        COMMENTS — AGENTS.md § 2: "Code is self-explanatory and therefore no
+        comments." Flag explanatory comments added to application code; the fix
+        is a clearer name or a smaller function. Do NOT flag: JSDoc on an
+        exported API, a comment recording *why* a non-obvious choice was made
+        (a workaround, a spec reference, a hydration hazard), or license headers.
+
+        LOADING & NAVIGATION — AGENTS.md § UI and Frontend decisions.
+        - Flag an async server component doing a slow fetch with no `<Suspense>`
+          boundary or `loading.tsx` alongside it. Pages that can wait need
+          skeletons, not spinners.
+        - Flag client-side navigation that blocks on data where a prefetched
+          `<Link>` or streamed boundary would keep it instant.
+
+        INTERNATIONALISATION — the app is multilingual and the user's language
+        is a saved preference. Flag any new user-visible string committed in a
+        form that cannot be extracted for translation.
+
+        NATIVE (CAPACITOR) — AGENTS.md § 7. The iOS/Android apps are thin
+        Capacitor shells around the web app, so everything must work web-first.
+
+        - Flag any `@capacitor/*` import outside `src/lib/native/*`. Features
+          import the semantic wrappers (`@/lib/native/haptics`), never plugins
+          directly. This is lint-enforced, so an import here usually means the
+          rule was disabled — flag that too.
+        - Flag a native call from a server component or module scope. Native
+          APIs are client-only and the wrappers must stay SSR-safe no-ops on
+          web, guarded by `Capacitor.isNativePlatform()`.
+        - Flag a feature that only works on native, with no graceful web
+          degradation.
+        - Haptics: at most ONE per user action — they mark moments, not taps.
+          Flag haptics fired in a loop, on every keystroke, or on scroll.
+          `success/warning/error` belong next to the toast in the client
+          component receiving the Server Action result.
+
+    # ---------------------------------------------------------- components ---
+    - path: "src/components/ui/**"
+      instructions: |
+        These are shadcn primitives generated into the repo. They are edited
+        deliberately and rarely.
+
+        - Treat any diff here as higher-risk than ordinary app code and say so.
+        - Flag hardcoded colours; these components must stay token-driven
+          (`bg-primary`, `text-muted-foreground`), which is what lets the brand
+          palette apply to all of them from one place.
+        - Flag removal of accessibility wiring: aria-*, role, focus management,
+          keyboard handlers, or Radix primitives swapped for plain elements.
+
+    # --------------------------------------------------------------- docs ----
+    - path: "{docs/**,.claude/**,*.md}"
+      instructions: |
+        These files are the project's own rulebook.
+
+        - Flag references to files, exports, commits or paths that do not exist
+          in the repo. Dangling references are the main failure mode here.
+        - docs/BRAND.md deliberately separates what the CWA Brand Book mandates
+          from decisions this product made on top of it. Flag any new rule added
+          to the "from the book" side without a page reference, and any product
+          decision presented as if the book required it.
+
+    # ----------------------------------------------------------- security ---
+    - path: "src/{features,use-cases,app}/**/*.ts"
+      instructions: |
+        AGENTS.md § 6 rule 10 requires a security pass on every new feature.
+        On Actions, Facades and route handlers specifically:
+
+        - Flag a Server Action or route handler with no authorization check.
+          Guards live in `lib/auth-guards.ts` and are called from Actions and
+          cross-feature Use Cases — never from a Facade.
+        - Flag an authorization check that verifies authentication but not
+          ownership, where the record belongs to a specific user or chapter.
+        - Flag unvalidated input reaching a Service. Actions validate with the
+          feature's Zod schema first.
+        - Flag anything that returns more of a record than the caller needs —
+          password hashes, tokens, other users' personal data.
+
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
