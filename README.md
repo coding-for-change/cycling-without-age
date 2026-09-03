@@ -29,3 +29,13 @@ A pre-commit hook (husky + lint-staged) formats staged files with Prettier.
 
 See [AGENTS.md](AGENTS.md) and [docs-internal/ARCHITECTURE.md](docs-internal/ARCHITECTURE.md). The layering is enforced by `eslint-plugin-boundaries`.
 
+
+## License
+
+[PolyForm Noncommercial 1.0.0](LICENSE.md) — source-available, not open source. Free for personal use and for charities, educational institutions, public research bodies, public health and safety organisations, environmental organisations, and government institutions, including CWA, every CWA chapter, and any municipality.
+
+The Cycling Without Age name and logo are trademarks of Cycling Without Age and are not covered by this license. The logo artwork in `assets/` and the native app icons generated from it are copyright Cycling Without Age, used with permission, and carved out of the license — replace them with your own branding before deploying. See [NOTICE.md](NOTICE.md).
+
+### Commercial use
+
+Any other use — for example a for-profit care home operator running its own instance, or an agency selling hosting of it — needs a separate license. Write to info@codingforchange.com.
