@@ -10,8 +10,13 @@ import { LocationScreen } from "./_components/location-screen";
 import { LocationSkeleton } from "./_components/location-skeleton";
 import { StepTransition } from "../_components/step-transition";
 
+/* Deliberately not `"use cache"`: a cached scope with no request-scoped inputs
+   is filled during prerendering, which makes `next build` open a database
+   connection — CI builds with no services, and a build could otherwise bake an
+   empty chapter list into the static shell. The read follows its request-time
+   caller instead, inside the <Suspense> boundary below, and the route still
+   partial-prerenders. */
 async function getChapterPins() {
-  "use cache";
   return (await chapters.listChapters()).map((chapter) => ({
     id: chapter.id,
     name: chapter.name,
