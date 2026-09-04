@@ -3,6 +3,7 @@ import { chapters } from "@/features/chapters";
 import {
   getHighestRole,
   getSession,
+  requireAdminScope,
   requireAuth,
   requireChapterAdmin,
   requireChapterRole,
@@ -29,17 +30,63 @@ jest.mock("@/lib/auth", () => ({
   auth: { api: { getSession: jest.fn() } },
 }));
 jest.mock("@/features/chapters", () => ({
-  chapters: { getChapterCountryId: jest.fn() },
+  chapters: {
+    getChapterCountryId: jest.fn(),
+    listCountries: jest.fn(),
+    listChapters: jest.fn(),
+  },
 }));
 
 const getSessionMock = auth.api.getSession as unknown as jest.Mock;
 const getChapterCountryId = chapters.getChapterCountryId as jest.Mock;
+const listCountries = chapters.listCountries as jest.Mock;
+const listChapters = chapters.listChapters as jest.Mock;
 
 const DE = "country-de";
 const DK = "country-dk";
 const BERLIN = "chapter-berlin";
 const AARHUS = "chapter-aarhus";
 const UNKNOWN = "chapter-ghost";
+
+// Full rows, as the facade really returns them — the guard is expected to project
+// them down to the four fields AdminScope carries.
+const COUNTRY_ROWS = [
+  { id: DE, code: "DE", name: "Deutschland", createdAt: new Date(0) },
+  { id: DK, code: "DK", name: "Danmark", createdAt: new Date(0) },
+];
+const CHAPTER_ROWS = [
+  {
+    id: BERLIN,
+    slug: "berlin",
+    name: "Berlin",
+    countryId: DE,
+    city: "Berlin",
+    latitude: 52.5,
+    longitude: 13.4,
+  },
+  {
+    id: AARHUS,
+    slug: "aarhus",
+    name: "Aarhus",
+    countryId: DK,
+    city: "Aarhus",
+    latitude: 56.2,
+    longitude: 10.2,
+  },
+];
+const BERLIN_SCOPE = {
+  id: BERLIN,
+  slug: "berlin",
+  name: "Berlin",
+  countryId: DE,
+};
+const AARHUS_SCOPE = {
+  id: AARHUS,
+  slug: "aarhus",
+  name: "Aarhus",
+  countryId: DK,
+};
+const DE_SCOPE = { id: DE, code: "DE", name: "Deutschland" };
 
 const signedInAs = (access: Partial<Access>) =>
   getSessionMock.mockResolvedValue({
@@ -61,6 +108,8 @@ beforeEach(() => {
   getChapterCountryId.mockImplementation(async (id: string) =>
     id === BERLIN ? DE : id === AARHUS ? DK : null,
   );
+  listCountries.mockResolvedValue(COUNTRY_ROWS);
+  listChapters.mockResolvedValue(CHAPTER_ROWS);
 });
 
 describe("a visitor who is not signed in", () => {
@@ -76,6 +125,7 @@ describe("a visitor who is not signed in", () => {
     await sentToSignIn(() => requireCountryAdmin(DE));
     await sentToSignIn(() => requireChapterAdmin(BERLIN));
     await sentToSignIn(() => requireChapterRole(BERLIN, "passenger"));
+    await sentToSignIn(requireAdminScope);
   });
 });
 
@@ -96,6 +146,7 @@ describe("a user who just signed up (no roles yet)", () => {
     await denied(() => requireChapterAdmin(BERLIN));
     await denied(() => requireChapterRole(BERLIN, "pilot"));
     await denied(() => requireChapterRole(BERLIN, "passenger"));
+    await denied(requireAdminScope);
   });
 });
 
@@ -113,6 +164,11 @@ describe("a passenger of Aarhus", () => {
     await denied(() => requireChapterRole(BERLIN, "passenger"));
     await denied(() => requireChapterAdmin(AARHUS));
   });
+
+  it("cannot open the admin dashboard", async () => {
+    await denied(requireAdminScope);
+    expect(listChapters).not.toHaveBeenCalled();
+  });
 });
 
 describe("a pilot of Berlin", () => {
@@ -128,6 +184,12 @@ describe("a pilot of Berlin", () => {
     await denied(() => requireChapterRole(AARHUS, "pilot"));
     await denied(() => requireChapterAdmin(BERLIN));
     await denied(() => requireCountryAdmin(DE));
+  });
+
+  // The regression: /admin used to sit behind requireAuth alone, so a pilot got in.
+  it("cannot open the admin dashboard", async () => {
+    await denied(requireAdminScope);
+    expect(listChapters).not.toHaveBeenCalled();
   });
 });
 
@@ -151,6 +213,18 @@ describe("an admin of Berlin", () => {
     await denied(() => requireChapterRole(AARHUS, "pilot"));
     await denied(() => requireCountryAdmin(DE));
     await denied(requireSuperAdmin);
+  });
+
+  it("opens the admin dashboard scoped to Berlin alone", async () => {
+    const { session, scope } = await requireAdminScope();
+    expect(session.user.id).toBe("u1");
+    expect(scope).toEqual({
+      global: false,
+      countries: [],
+      chapters: [BERLIN_SCOPE],
+      canSeeChapters: false,
+      canSeeCountries: false,
+    });
   });
 });
 
@@ -176,6 +250,17 @@ describe("a country admin of Germany", () => {
   it("cannot administrate a chapter with no resolvable country", async () => {
     await denied(() => requireChapterAdmin(UNKNOWN));
   });
+
+  it("opens the admin dashboard on Germany, without the countries view", async () => {
+    const { scope } = await requireAdminScope();
+    expect(scope).toEqual({
+      global: false,
+      countries: [DE_SCOPE],
+      chapters: [BERLIN_SCOPE],
+      canSeeChapters: true,
+      canSeeCountries: false,
+    });
+  });
 });
 
 describe("a superadmin", () => {
@@ -190,5 +275,16 @@ describe("a superadmin", () => {
 
   it("administrates even a chapter with no resolvable country", async () => {
     await expect(requireChapterAdmin(UNKNOWN)).resolves.toBeTruthy();
+  });
+
+  it("opens the admin dashboard on everything", async () => {
+    const { scope } = await requireAdminScope();
+    expect(scope).toEqual({
+      global: true,
+      countries: [DE_SCOPE, { id: DK, code: "DK", name: "Danmark" }],
+      chapters: [BERLIN_SCOPE, AARHUS_SCOPE],
+      canSeeChapters: true,
+      canSeeCountries: true,
+    });
   });
 });

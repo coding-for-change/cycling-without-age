@@ -130,7 +130,10 @@
   --input: 27 14% 88%;
   --ring: 27 13.6% 16%;
   --radius: 0.625rem;
-  --sidebar: hsl(27 14% 98%);
+  /* The sidebar surface IS the ground the content card floats on, so it points
+     at --canvas-deep rather than a near-white of its own: one warm surface, one
+     white card, which is what makes the inset variant read as intended. */
+  --sidebar: var(--canvas-deep);
   --sidebar-foreground: hsl(27 13.6% 16%);
   --sidebar-primary: hsl(27 13.6% 16%);
   --sidebar-primary-foreground: hsl(0 0% 100%);

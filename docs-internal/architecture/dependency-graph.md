@@ -6,6 +6,8 @@ Which Use Cases call which Facades. Update this whenever a feature or use case i
 graph TD
   subgraph Presentation
     A[src/app]
+    ADM[app/admin shell]
+    CMD[app/admin/commands]
   end
   subgraph Boundary
     G[lib/auth-guards]
@@ -26,6 +28,10 @@ graph TD
     F2[features/membership facade]
     F3[features/profile facade]
     F4[features/passengers facade]
+    CM1[features/chapters/commands]
+    CM2[features/membership/commands]
+    CM3[features/profile/commands]
+    CM4[features/passengers/commands]
   end
   subgraph Data
     S1[chapters/services]
@@ -45,6 +51,14 @@ graph TD
   A --> U2
   G --> F1
   AUTH[lib/auth customSession] --> U1
+
+  A --> ADM
+  ADM --> G
+  ADM --> CMD
+  CMD --> CM1
+  CMD --> CM2
+  CMD --> CM3
+  CMD --> CM4
 
   A --> ACT1
   A --> ACT2
@@ -94,6 +108,20 @@ graph TD
 | `settle-passenger-location` | `membership`, `profile` | "Where do you live" and "which chapter serves you" are one answer given on one screen, but two features own the two halves. |
 | `accept-onboarding-consent` | `membership`, `profile` | Records consent and, when a QR preset skipped the location step, performs the join it would have done. |
 | `complete-onboarding-profile` | `chapters`, `membership`, `passengers`, `profile` | Writes the account's own details, creates the rider profile a ride will point at, resolves the chapter, and sends the welcome mail. |
+
+No use case was added for the admin shell. `G --> F1` now carries two guards:
+`requireChapterAdmin` (`chapters.getChapterCountryId`) and `requireAdminScope`
+(`chapters.listCountries` + `chapters.listChapters`). Resolving the admin scope needs the
+`chapters` facade and nothing else, so per AGENTS.md it collapsed into `lib/auth-guards`
+rather than becoming a use case — the same call the `requireChapterAdmin` precedent already
+makes. If it ever needs a second facade (say, membership counts per chapter), that is when it
+graduates to `src/use-cases/`.
+
+The `CM*` nodes are the ⌘K contributions, not a new layer: `app/admin/commands` imports each
+slice's `commands.ts` and merges it into the palette. They sit in the Features subgraph
+because they are part of the slice's public surface — `eslint.config.mjs` lists
+`src/features/*/{facade,index,commands}.ts` as the `feature-facade` element — and they import
+nothing but types, so no edge leaves them.
 
 Single-facade work has no use case: `lib/auth-guards` calls `chapters.getChapterCountryId`
 directly, `features/membership/actions` calls the membership facade directly, and the passkey
