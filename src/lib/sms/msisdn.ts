@@ -1,5 +1,3 @@
-
-
 export function toMsisdn(phone: string) {
   const trimmed = phone.replace(/[\s()\-.]/g, "");
   if (!/^\+[1-9]\d{7,14}$/.test(trimmed)) {

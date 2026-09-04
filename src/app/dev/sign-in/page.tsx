@@ -11,8 +11,15 @@ export default function DevSignInPage() {
   const [phoneCode, setPhoneCode] = useState("");
   const [status, setStatus] = useState("");
 
-  const report = (label: string, error: { message?: string; status?: number } | null) =>
-    setStatus(error ? `${label} failed: ${error.message ?? `status ${error.status}`}` : `${label} ok`);
+  const report = (
+    label: string,
+    error: { message?: string; status?: number } | null,
+  ) =>
+    setStatus(
+      error
+        ? `${label} failed: ${error.message ?? `status ${error.status}`}`
+        : `${label} ok`,
+    );
 
   return (
     <main>
