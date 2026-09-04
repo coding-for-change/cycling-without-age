@@ -5,12 +5,19 @@ import { auth } from "@/lib/auth";
 import { chapters } from "@/features/chapters";
 import {
   getHighestRole as highestRole,
+  hasAnyAdminScope,
   hasChapterRole,
   isChapterAdmin,
   isCountryAdmin,
   isSuperAdmin,
+  resolveAdminScope,
 } from "@/lib/access";
-import type { Access, ChapterRole, HighestRole } from "@/lib/access";
+import type {
+  Access,
+  AdminScope,
+  ChapterRole,
+  HighestRole,
+} from "@/lib/access";
 
 export type Session = NonNullable<Awaited<ReturnType<typeof getSession>>>;
 
@@ -54,6 +61,45 @@ export async function requireChapterRole(chapterId: string, role: ChapterRole) {
   if (hasChapterRole(session.access, chapterId, role)) return session;
   return requireChapterAdmin(chapterId);
 }
+
+/**
+ * The gate for the admin dashboard as a whole: anyone who administers *something*
+ * gets in, and what they administer comes back with them. The narrower guards
+ * above still decide individual chapters and countries — this one only answers
+ * "is there any admin surface for this person at all", which is the question
+ * `/admin` used to answer with `requireAuth` alone.
+ *
+ * Cached per request because the shell and the page underneath both call it.
+ */
+export const requireAdminScope = cache(
+  async (): Promise<{ session: Session; scope: AdminScope }> => {
+    const session = await requireAuth();
+    if (!hasAnyAdminScope(session.access)) deny();
+
+    // ponytail: full country + chapter scan on every admin request, deduped per
+    // request by `cache`. Fine at three chapters; at three hundred, resolve only
+    // the scope's own rows (`listChapters(countryId)` per administered country
+    // plus the directly-administered ids).
+    const [countries, allChapters] = await Promise.all([
+      chapters.listCountries(),
+      chapters.listChapters(),
+    ]);
+
+    return {
+      session,
+      scope: resolveAdminScope(
+        session.access,
+        countries.map(({ id, code, name }) => ({ id, code, name })),
+        allChapters.map(({ id, slug, name, countryId }) => ({
+          id,
+          slug,
+          name,
+          countryId,
+        })),
+      ),
+    };
+  },
+);
 
 export function getHighestRole(session: { access: Access }): HighestRole {
   return highestRole(session.access);

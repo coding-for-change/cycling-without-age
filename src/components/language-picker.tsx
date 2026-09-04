@@ -10,21 +10,24 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import { locales, LOCALE_LABELS } from "@/lib/i18n/locales";
 import type { Locale } from "@/lib/i18n";
-import { setLocale } from "../actions";
+import { setLocale } from "@/app/actions";
 
-const LANGUAGES = [
-  { locale: "en", name: "English" },
-  { locale: "da", name: "Dansk" },
-  { locale: "de", name: "Deutsch" },
-] as const;
+const LANGUAGES = locales.map((locale) => ({
+  locale,
+  ...LOCALE_LABELS[locale],
+}));
 
 export function LanguagePicker({
   locale,
   label,
+  className,
 }: {
   locale: Locale;
   label: string;
+  className?: string;
 }) {
   const [pending, startTransition] = useTransition();
   const active = LANGUAGES.find((l) => l.locale === locale) ?? LANGUAGES[0];
@@ -36,7 +39,10 @@ export function LanguagePicker({
           variant="outline"
           aria-label={`${label} — ${active.name}`}
           disabled={pending}
-          className="group h-11 gap-2 rounded-full border-line bg-canvas px-4 shadow-none hover:bg-grey-tint"
+          className={cn(
+            "group h-11 gap-2 rounded-full border-line bg-canvas px-4 shadow-none hover:bg-grey-tint",
+            className,
+          )}
         >
           <Languages
             aria-hidden

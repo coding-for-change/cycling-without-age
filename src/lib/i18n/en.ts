@@ -201,6 +201,120 @@ const en = {
     ],
     finish: "Next",
   },
+  admin: {
+    nav: {
+      overview: "Overview",
+      rides: "Rides",
+      members: "Members",
+      passengers: "Passengers",
+      bikes: "Trishaws",
+      chat: "Messages",
+      reports: "Reports",
+      chapters: "Chapters",
+      countries: "Countries",
+      settings: "Settings",
+      help: "Get help",
+    },
+    navGroups: {
+      main: "Chapter work",
+      organisation: "Organisation",
+      footer: "Account",
+    },
+    navLabel: "Admin sections",
+    newRide: "New ride",
+    scope: {
+      switchLabel: "Switch perspective or chapter",
+      label: "Scope",
+      perspective: "Perspective",
+      all: "All chapters",
+      allInCountry: "All chapters in {country}",
+    },
+    perspectives: {
+      admin: "Admin",
+      pilot: "Pilot",
+      passenger: "Passenger",
+    },
+    roles: {
+      superadmin: "Superadmin",
+      countryAdmin: "Country admin",
+      chapterAdmin: "Chapter admin",
+      pilot: "Pilot",
+      passenger: "Passenger",
+    },
+    user: {
+      menuLabel: "Your account",
+      account: "Account",
+    },
+    commands: {
+      open: "Open the command bar",
+      hint: "for anything",
+      placeholder: "Search for a page or an action",
+      empty: "Nothing goes by that name.",
+      dialogTitle: "Command bar",
+      dialogDescription:
+        "Jump to a page, change perspective, or run an action from the keyboard.",
+      newRide: "Start a new ride",
+      viewAsAdmin: "View as admin",
+      viewAsPilot: "View as pilot",
+      viewAsPassenger: "View as passenger",
+      toggleSidebar: "Toggle the sidebar",
+      language: "Language: {name}",
+      signOut: "Sign out",
+      groups: {
+        create: "Create",
+        navigate: "Go to",
+        perspective: "Perspective",
+        scope: "Scope",
+        account: "Account",
+      },
+    },
+    pages: {
+      overview: {
+        title: "Overview",
+        body: "Once rides are booked, this is where the week ahead lands \u2014 today's trips, the pilots taking them out, and anything still waiting on you.",
+      },
+      rides: {
+        title: "Rides",
+        body: "Every trip your chapter has booked, from the request to the wave goodbye at the door. Nothing booked yet.",
+      },
+      members: {
+        title: "Members",
+        body: "Pilots, chapter admins and the people waiting to be approved. Approvals will happen right here.",
+      },
+      passengers: {
+        title: "Passengers",
+        body: "The people your chapter rides with \u2014 including the ones a relative or carer books for.",
+      },
+      bikes: {
+        title: "Trishaws",
+        body: "Each trishaw your chapter looks after, who last had it out, and when it next needs a service.",
+      },
+      chat: {
+        title: "Messages",
+        body: "Conversations between pilots, passengers and the chapter. Nothing has been said yet.",
+      },
+      reports: {
+        title: "Reports",
+        body: "Rides ridden, hours volunteered, kilometres covered \u2014 the numbers a chapter needs when someone asks what it does.",
+      },
+      chapters: {
+        title: "Chapters",
+        body: "The chapters you look after, and the ones you can start. A chapter is a place, a care home and the volunteers around it.",
+      },
+      countries: {
+        title: "Countries",
+        body: "Every country in the movement and the admins who run it. Only a superadmin sees this.",
+      },
+      settings: {
+        title: "Settings",
+        body: "How far your chapter will ride, who to reach, and the details on the chapter's own page.",
+      },
+      help: {
+        title: "Get help",
+        body: "Guides for chapter admins, and a way to reach someone when a guide is not enough.",
+      },
+    },
+  },
   legal: {
     imprint: {
       title: "Imprint",

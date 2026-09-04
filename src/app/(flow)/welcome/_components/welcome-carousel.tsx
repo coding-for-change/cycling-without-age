@@ -9,7 +9,7 @@ import { cn, fill } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { useSetCharacterPose } from "../../_components/character-stage";
-import { LanguagePicker } from "../../_components/language-picker";
+import { LanguagePicker } from "@/components/language-picker";
 import { HandsArt, TrishawArt } from "./slide-art";
 import { Globe } from "./globe";
 

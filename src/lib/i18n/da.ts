@@ -203,6 +203,120 @@ const da: Dictionary = {
     ],
     finish: "Videre",
   },
+  admin: {
+    nav: {
+      overview: "Overblik",
+      rides: "Ture",
+      members: "Medlemmer",
+      passengers: "Passagerer",
+      bikes: "Rickshawer",
+      chat: "Beskeder",
+      reports: "Rapporter",
+      chapters: "Afdelinger",
+      countries: "Lande",
+      settings: "Indstillinger",
+      help: "Få hjælp",
+    },
+    navGroups: {
+      main: "Afdelingens arbejde",
+      organisation: "Organisation",
+      footer: "Konto",
+    },
+    navLabel: "Adminafsnit",
+    newRide: "Ny tur",
+    scope: {
+      switchLabel: "Skift perspektiv eller afdeling",
+      label: "Område",
+      perspective: "Perspektiv",
+      all: "Alle afdelinger",
+      allInCountry: "Alle afdelinger i {country}",
+    },
+    perspectives: {
+      admin: "Admin",
+      pilot: "Pilot",
+      passenger: "Passager",
+    },
+    roles: {
+      superadmin: "Superadmin",
+      countryAdmin: "Landeadmin",
+      chapterAdmin: "Afdelingsadmin",
+      pilot: "Pilot",
+      passenger: "Passager",
+    },
+    user: {
+      menuLabel: "Din konto",
+      account: "Konto",
+    },
+    commands: {
+      open: "Åbn kommandopaletten",
+      hint: "til alt",
+      placeholder: "Søg efter en side eller en handling",
+      empty: "Der er ikke noget med det navn.",
+      dialogTitle: "Kommandopalette",
+      dialogDescription:
+        "Hop til en side, skift perspektiv eller kør en handling fra tastaturet.",
+      newRide: "Start en ny tur",
+      viewAsAdmin: "Se som admin",
+      viewAsPilot: "Se som pilot",
+      viewAsPassenger: "Se som passager",
+      toggleSidebar: "Vis eller skjul sidepanelet",
+      language: "Sprog: {name}",
+      signOut: "Log ud",
+      groups: {
+        create: "Opret",
+        navigate: "Gå til",
+        perspective: "Perspektiv",
+        scope: "Omfang",
+        account: "Konto",
+      },
+    },
+    pages: {
+      overview: {
+        title: "Overblik",
+        body: "Så snart der bookes ture, lander ugen der kommer her — dagens ture, piloterne der kører dem, og alt det, der stadig venter på dig.",
+      },
+      rides: {
+        title: "Ture",
+        body: "Alle ture, din afdeling har booket, fra anmodningen til farvellet ved døren. Der er ikke booket noget endnu.",
+      },
+      members: {
+        title: "Medlemmer",
+        body: "Piloter, afdelingsadmins og dem, der venter på at blive godkendt. Godkendelserne sker lige her.",
+      },
+      passengers: {
+        title: "Passagerer",
+        body: "De mennesker, din afdeling kører med — også dem, som en pårørende eller en plejer booker for.",
+      },
+      bikes: {
+        title: "Rickshawer",
+        body: "Hver rickshaw, din afdeling passer på, hvem der sidst havde den ude, og hvornår den skal til service igen.",
+      },
+      chat: {
+        title: "Beskeder",
+        body: "Samtaler mellem piloter, passagerer og afdelingen. Der er ikke sagt noget endnu.",
+      },
+      reports: {
+        title: "Rapporter",
+        body: "Kørte ture, frivillige timer, tilbagelagte kilometer — de tal, en afdeling har brug for, når nogen spørger, hvad den egentlig laver.",
+      },
+      chapters: {
+        title: "Afdelinger",
+        body: "De afdelinger, du passer på, og dem du kan starte. En afdeling er et sted, et plejehjem og de frivillige omkring det.",
+      },
+      countries: {
+        title: "Lande",
+        body: "Alle lande i bevægelsen og de admins, der driver dem. Det er kun en superadmin, der ser dette.",
+      },
+      settings: {
+        title: "Indstillinger",
+        body: "Hvor langt din afdeling kører, hvem man kan få fat på, og oplysningerne på afdelingens egen side.",
+      },
+      help: {
+        title: "Få hjælp",
+        body: "Guides til afdelingsadmins — og en vej til et menneske, når en guide ikke er nok.",
+      },
+    },
+  },
   legal: {
     imprint: {
       title: "Kolofon",
