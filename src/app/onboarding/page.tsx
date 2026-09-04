@@ -5,7 +5,6 @@ import { requireAuth } from "@/lib/auth-guards";
 import { readJoinPreset } from "@/lib/join-preset";
 import { resolveDestination } from "@/use-cases/onboarding-progress";
 
-
 export default function OnboardingPage() {
   return (
     <Suspense fallback={<Waiting />}>

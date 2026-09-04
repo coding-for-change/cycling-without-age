@@ -5,7 +5,6 @@ import { getDictionary } from "@/lib/i18n";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SignOutButton } from "@/components/sign-out-button";
 
-
 export default function AdminPage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
@@ -21,7 +20,6 @@ export default function AdminPage() {
     </main>
   );
 }
-
 
 async function Scope() {
   const session = await requireAuth();

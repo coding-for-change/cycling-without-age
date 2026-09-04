@@ -20,7 +20,6 @@ export default function PassengerHomePage() {
   );
 }
 
-
 async function ChosenChapter() {
   const id = await readGuestChapterId();
   const chapter = id ? await chapters.getChapter(id) : null;

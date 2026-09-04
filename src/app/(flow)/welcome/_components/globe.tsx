@@ -17,7 +17,6 @@ const phiFor = (longitude: number) =>
 
 const EUROPE = phiFor(10);
 
-
 export function Globe({
   markers,
   active,

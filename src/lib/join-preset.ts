@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import type { OnboardingRole } from "@/lib/onboarding";
 
-
 export const JOIN_PRESET_COOKIE = "cwa.join";
 export const JOIN_PRESET_MAX_AGE = 60 * 60;
 

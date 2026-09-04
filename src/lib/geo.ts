@@ -1,6 +1,5 @@
 export type Coords = { lat: number; lng: number };
 
-
 const EARTH_RADIUS_M = 6_371_008.8;
 
 export function distanceMeters(a: Coords, b: Coords): number {

@@ -234,7 +234,6 @@ export function toIsoDateLocal(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-
 const IMPERIAL_LOCALES: readonly Locale[] = ["en-US"];
 
 const METRES_PER_MILE = 1609.344;

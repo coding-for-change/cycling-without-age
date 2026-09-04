@@ -73,7 +73,6 @@ export type NearestChapter = {
   inRange: boolean;
 };
 
-
 export async function nearestChapter(
   here: Coords,
 ): Promise<NearestChapter | null> {

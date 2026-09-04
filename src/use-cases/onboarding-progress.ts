@@ -14,7 +14,6 @@ export type OnboardingState = {
   preset: { chapterId: string | null; role: OnboardingRole | null };
 };
 
-
 export async function getOnboardingState(
   userId: string,
   cookiePreset: JoinPreset,
