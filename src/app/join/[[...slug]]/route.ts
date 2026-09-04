@@ -7,7 +7,6 @@ import {
   JOIN_PRESET_MAX_AGE,
 } from "@/lib/join-preset";
 
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug?: string[] }> },

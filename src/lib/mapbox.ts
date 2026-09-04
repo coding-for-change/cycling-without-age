@@ -43,7 +43,6 @@ async function get<T>(url: string): Promise<T | null> {
   }
 }
 
-
 export async function suggestPlaces(
   query: string,
   sessionToken: string,

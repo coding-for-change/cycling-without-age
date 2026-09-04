@@ -20,13 +20,11 @@ export type IdentityResult =
 
 const email = z.email();
 
-
 export function looksLikePhone(input: string): boolean {
   const trimmed = input.trim();
   if (trimmed.includes("@")) return false;
   return /^[+\d]/.test(trimmed);
 }
-
 
 export function parseIdentity(
   input: string,
@@ -52,7 +50,6 @@ export const COUNTRIES = getCountries();
 
 export const dialCodeOf = (country: CountryCode) =>
   `+${getCountryCallingCode(country)}`;
-
 
 export function defaultCountryFor(locale: Locale): CountryCode {
   const region = locale.split("-")[1];

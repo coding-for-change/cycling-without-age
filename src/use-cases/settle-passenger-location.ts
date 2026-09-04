@@ -2,7 +2,6 @@ import { membership } from "@/features/membership";
 import { profile } from "@/features/profile";
 import type { HomeInput, Residence } from "@/features/profile";
 
-
 export async function settlePassengerLocation({
   userId,
   chapterId,

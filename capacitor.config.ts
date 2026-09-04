@@ -1,6 +1,5 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
-
 const url = process.env.CAP_SERVER_URL ?? "https://cwa.codingforchange.com";
 
 const config: CapacitorConfig = {

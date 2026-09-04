@@ -30,7 +30,6 @@ export async function addPassenger(input: PassengerInput) {
 export const countPassengers = (userId: string) =>
   countPassengersManagedBy(userId);
 
-
 export async function saveOwnPassenger(input: PassengerInput) {
   const data = passengerInput.parse(input);
   if (!data.userId)
