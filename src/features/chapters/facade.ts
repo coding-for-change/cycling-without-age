@@ -1,6 +1,16 @@
 import { distanceMeters, type Coords } from "@/lib/geo";
-import { chapterInput, chapterUpdateInput, countryInput } from "./schemas";
-import type { ChapterInput, ChapterUpdateInput, CountryInput } from "./schemas";
+import {
+  chapterInput,
+  chapterUpdateInput,
+  countryInput,
+  countryUpdateInput,
+} from "./schemas";
+import type {
+  ChapterInput,
+  ChapterUpdateInput,
+  CountryInput,
+  CountryUpdateInput,
+} from "./schemas";
 import {
   deleteCountryAdmin,
   findCountries,
@@ -10,6 +20,7 @@ import {
   findCountryById,
   insertCountry,
   insertCountryAdmin,
+  updateCountryById,
 } from "./services/countries";
 import {
   findChapterById,
@@ -27,6 +38,15 @@ export const getCountryByCode = (code: string) =>
 
 export const createCountry = (input: CountryInput) =>
   insertCountry(countryInput.parse(input));
+
+export async function updateCountry(id: string, input: CountryUpdateInput) {
+  const data = countryUpdateInput.parse(input);
+  if (data.code) {
+    const clash = await findCountryByCode(data.code);
+    if (clash && clash.id !== id) throw new Error("Code already taken");
+  }
+  return updateCountryById(id, data);
+}
 
 export const listCountryAdmins = (countryId: string) =>
   findCountryAdmins(countryId);

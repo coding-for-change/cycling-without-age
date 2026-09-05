@@ -10,6 +10,9 @@ export const countryInput = z.object({
 });
 export type CountryInput = z.infer<typeof countryInput>;
 
+export const countryUpdateInput = countryInput.partial();
+export type CountryUpdateInput = z.infer<typeof countryUpdateInput>;
+
 export const chapterInput = z.object({
   name: z.string().trim().min(1).max(120),
   slug: z

@@ -25,6 +25,17 @@ running, the mailer prints the code to the `next dev` console instead.)
 | `passenger@cwa.local` | passenger in **München**, phone `+4915112345678` (pre-verified) |
 | `multi@cwa.local` | pilot **and** chapter admin in **Hamburg**, plus country admin **DK** (role-stacking case) |
 
+## Walking the core loop
+
+Every admin account is asked for a passkey the first time it opens `/admin` — the enrollment
+gate sends it to `/onboarding/passkey?required=1`, and the dashboard opens once one is added. Chrome or
+Safari on a Mac will offer Touch ID.
+
+To see the whole application loop end to end: sign in as `admin.muenchen@cwa.local`, open
+**Members**, and approve Pernille (`pilot.pending@cwa.local`) with a note. The decision email
+lands in Mailpit, the event shows on her page at `/admin/members/[userId]`, and signing in as
+her afterwards lands on `/pilot` with the approval celebration — once.
+
 ## The demo org structure
 
 | Country | Chapters |

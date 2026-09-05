@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
 import { defaultLocale, locales, LOCALE_COOKIE } from "@/lib/i18n";
 import { NativeBootstrap } from "@/lib/native/native-bootstrap";
 import "./globals.css";
@@ -53,6 +54,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans">
         <NativeBootstrap />
         {children}
+        <Toaster />
       </body>
     </html>
   );

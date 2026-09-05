@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { chapters } from "@/features/chapters";
 import { homeInput } from "@/features/profile";
-import { requireAuth } from "@/lib/auth-guards";
+import { readNextPath, requireAuth } from "@/lib/auth-guards";
 import {
   GUEST_CHAPTER_COOKIE,
   GUEST_CHAPTER_MAX_AGE,
@@ -175,7 +175,14 @@ export async function settlePassengerAt(
     revalidatePath("/onboarding");
     // Named outright rather than left to `/onboarding` to redirect: a cached
     // redirect replays. See `resolveDestination`.
-    return { ok: true, next: await resolveDestination(session, EMPTY_PRESET) };
+    return {
+      ok: true,
+      next: await resolveDestination(
+        session,
+        EMPTY_PRESET,
+        await readNextPath(),
+      ),
+    };
   } catch {
     return { ok: false, error: "generic" };
   }

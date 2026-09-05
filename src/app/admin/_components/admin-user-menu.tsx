@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { CircleUserRound, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -17,19 +17,29 @@ import {
 } from "@/components/ui/sidebar";
 import { getInitials } from "@/lib/utils";
 import { useSignOut } from "@/components/sign-out-button";
+import {
+  AccountDialog,
+  type AccountStrings,
+} from "@/components/account-dialog";
+import type { Locale } from "@/lib/format";
 
 export function AdminUserMenu({
   name,
   email,
   image,
   strings,
+  account,
+  locale,
 }: {
   name: string;
   email: string;
   image?: string | null;
   strings: { menuLabel: string; account: string; signOut: string };
+  account: AccountStrings;
+  locale: Locale;
 }) {
   const { signOut, pending } = useSignOut();
+  const [accountOpen, setAccountOpen] = useState(false);
 
   const avatar = (
     <Avatar className="size-8 rounded-lg">
@@ -53,7 +63,7 @@ export function AdminUserMenu({
             <SidebarMenuButton
               size="lg"
               aria-label={strings.menuLabel}
-              className="data-[state=open]:bg-mint-tint"
+              className="data-[state=open]:bg-canvas-deeper"
             >
               {avatar}
               <span className="grid flex-1 text-left leading-tight">
@@ -77,16 +87,14 @@ export function AdminUserMenu({
             </div>
             <DropdownMenuSeparator className="bg-line" />
             <DropdownMenuItem
-              asChild
+              onSelect={() => setAccountOpen(true)}
               className="gap-3 rounded-xl py-2.5"
             >
-              <Link href="/admin/settings">
-                <CircleUserRound
-                  aria-hidden
-                  className="size-4 text-ink-soft"
-                />
-                {strings.account}
-              </Link>
+              <CircleUserRound
+                aria-hidden
+                className="size-4 text-ink-soft"
+              />
+              {strings.account}
             </DropdownMenuItem>
             <DropdownMenuItem
               disabled={pending}
@@ -101,6 +109,12 @@ export function AdminUserMenu({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <AccountDialog
+          open={accountOpen}
+          onOpenChange={setAccountOpen}
+          strings={account}
+          locale={locale}
+        />
       </SidebarMenuItem>
     </SidebarMenu>
   );

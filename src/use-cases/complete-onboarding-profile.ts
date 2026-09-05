@@ -6,10 +6,9 @@ import { profile } from "@/features/profile";
 import type { PersonalDetailsInput } from "@/features/profile";
 import { getEmailStrings, resolveEmailLocale } from "@/emails/strings";
 import { WelcomeEmail } from "@/emails/welcome";
+import { APP_URL } from "@/lib/app-url";
 import { sendMail } from "@/lib/mailer";
 import type { OnboardingRole } from "@/lib/onboarding";
-
-const baseUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
 
 export async function completeOnboardingProfile({
   userId,
@@ -90,7 +89,7 @@ async function sendWelcome({
         locale: emailLocale,
         strings: copy,
         chapterName,
-        href: `${baseUrl}${role === "pilot" ? "/pilot" : "/passenger"}`,
+        href: `${APP_URL}${role === "pilot" ? "/pilot" : "/passenger"}`,
       }),
     });
   } catch (error) {

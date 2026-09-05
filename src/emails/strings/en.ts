@@ -54,6 +54,28 @@ const en = {
     footer:
       "You received this email because you asked to pilot for a Cycling Without Age chapter.",
   },
+  applicationApproved: {
+    subject: "You're a pilot at {chapter}",
+    preview: "Your chapter said yes",
+    heading: "Welcome aboard",
+    intro:
+      "{chapter} has approved you as a pilot. Next: the training videos, a workshop with one of the captains — and then your first ride.",
+    noteHeading: "From your chapter",
+    cta: "Open Cycling Without Age",
+    footer:
+      "You received this email because you asked to pilot for a Cycling Without Age chapter.",
+  },
+  applicationRejected: {
+    subject: "About your pilot request at {chapter}",
+    preview: "An answer from your chapter",
+    heading: "Not this time",
+    intro:
+      "{chapter} can't take you on as a pilot right now. Trishaws, captains and training dates all have to line up — another chapter nearby may well have room.",
+    noteHeading: "From your chapter",
+    cta: "Find another chapter",
+    footer:
+      "You received this email because you asked to pilot for a Cycling Without Age chapter.",
+  },
 };
 
 export type EmailStrings = typeof en;

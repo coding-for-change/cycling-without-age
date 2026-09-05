@@ -204,7 +204,13 @@ const de: Dictionary = {
     create: "Passkey einrichten",
     skip: "Jetzt nicht",
     failed:
-      "Das hat nicht geklappt. Sie können einen Passkey später im Profil anlegen.",
+      "Das hat nicht geklappt. Sie können einen Passkey später im Konto anlegen.",
+    nameLabel: "Passkey benennen (optional)",
+    namePlaceholder: "Arbeitslaptop",
+    admin: {
+      title: "Admins melden sich mit einem Passkey an",
+      body: "Dein Gerät wird dein Schlüssel zum Dashboard — Fingerabdruck, Gesicht oder PIN. Leg einen an, um es zu öffnen.",
+    },
   },
   pilotNextSteps: {
     // du-Form: Pilot-Texte, siehe docs/BRAND.md § Voice & tone.
@@ -258,6 +264,18 @@ const de: Dictionary = {
       pilot: "Pilot",
       passenger: "Passagier",
     },
+    table: {
+      search: "Suchen …",
+      clearSearch: "Suche löschen",
+      columns: "Spalten",
+      noResults: "Nichts passt.",
+      pageInfo: "{from}–{to} von {total}",
+      page: "Seite {page}",
+      previous: "Zurück",
+      next: "Weiter",
+      all: "Alle",
+      sortAria: "Nach {column} sortieren",
+    },
     user: {
       menuLabel: "Dein Konto",
       account: "Konto",
@@ -271,6 +289,8 @@ const de: Dictionary = {
       dialogDescription:
         "Spring zu einer Seite, wechsle die Perspektive oder starte eine Aktion über die Tastatur.",
       newRide: "Neue Ausfahrt starten",
+      newChapter: "Neue Ortsgruppe gründen",
+      newCountry: "Neues Land anlegen",
       viewAsAdmin: "Als Admin ansehen",
       viewAsPilot: "Als Pilot ansehen",
       viewAsPassenger: "Als Passagier ansehen",
@@ -331,6 +351,212 @@ const de: Dictionary = {
         body: "Anleitungen für Ortsgruppen-Admins — und ein Weg zu einem Menschen, wenn eine Anleitung nicht reicht.",
       },
     },
+    requests: {
+      title: "Warten auf Freigabe",
+      body: "Alle hier haben gefragt, ob sie für deine Ortsgruppe pilotieren dürfen. Lies, entscheide — und sie hören noch in derselben Minute von uns.",
+      empty: "Es wartet niemand. Wer als Nächstes fragt, landet genau hier.",
+      count: "{count} warten",
+      columns: {
+        person: "Person",
+        chapter: "Ortsgruppe",
+        applied: "Gefragt",
+      },
+      review: "Ansehen",
+      approve: "Freigeben",
+      reject: "Absagen",
+      approveTitle: "{name} an Bord holen?",
+      approveBody:
+        "Die Person bekommt eine E-Mail mit den drei Schritten bis zur ersten Ausfahrt.",
+      rejectTitle: "{name} absagen?",
+      rejectBody:
+        "Die Person bekommt eine E-Mail und kann bei einer anderen Ortsgruppe anfragen.",
+      noteLabel: "Eine Nachricht an {name} (optional)",
+      notePlaceholder:
+        "Ein Trainingstermin, eine Telefonnummer, ein freundliches Wort.",
+      approved: "{name} ist an Bord.",
+      rejected: "{name} ist informiert.",
+    },
+    members: {
+      title: "Alle in der Ortsgruppe",
+      empty:
+        "Noch keine Mitglieder. Gib eine Pilotanfrage frei, und der erste Name steht hier.",
+      columns: {
+        person: "Person",
+        role: "Rolle",
+        phone: "Telefon",
+        joined: "Dabei seit",
+      },
+      actions: "Aktionen für {name}",
+      history: "Verlauf",
+      promote: "Zum Ortsgruppen-Admin machen",
+      demote: "Adminrechte entziehen",
+      remove: "Aus der Ortsgruppe entfernen",
+      promoteTitle: "{name} zum Ortsgruppen-Admin machen?",
+      promoteBody:
+        "Damit kann die Person Piloten freigeben, Ausfahrten buchen und alle Angaben sehen.",
+      demoteTitle: "{name} die Adminrechte entziehen?",
+      demoteBody:
+        "Die Person bleibt in der Ortsgruppe — sie entscheidet nur nicht mehr mit.",
+      removeTitle: "{name} aus der Ortsgruppe entfernen?",
+      removeBody:
+        "Der Zugang zur Ortsgruppe ist damit weg. Gefahrene Ausfahrten bleiben im Protokoll.",
+      promoted: "{name} ist Ortsgruppen-Admin.",
+      demoted: "{name} ist kein Admin mehr.",
+      removed: "{name} ist nicht mehr in der Ortsgruppe.",
+      errors: {
+        lastAdmin:
+          "Eine Ortsgruppe kann nicht ihren letzten Admin verlieren. Füge zuerst einen weiteren hinzu.",
+        alreadyDecided: "Das hat schon jemand entschieden.",
+        self: "Deine eigene Rolle kannst du nicht ändern. Bitte eine andere Admin darum.",
+        generic: "Das hat nicht geklappt. Versuch es erneut.",
+      },
+    },
+    person: {
+      back: "Zurück zu den Mitgliedern",
+      roles: "Rollen",
+      noRoles: "Noch keine Rolle",
+      contact: "Kontakt",
+      noEmail: "Keine E-Mail-Adresse",
+      noPhone: "Keine Telefonnummer",
+      joined: "Dabei seit {date}",
+      history: "Verlauf",
+      historyEmpty:
+        "Noch nichts zu erzählen. Jede Freigabe, jede Rollenänderung und jede E-Mail landet hier.",
+    },
+    history: {
+      applicationSubmitted: "{actor} hat gefragt, hier zu pilotieren",
+      applicationApproved: "{actor} hat die Anfrage freigegeben",
+      applicationRejected: "{actor} hat die Anfrage abgelehnt",
+      roleGranted: "{actor} hat eine neue Rolle vergeben",
+      roleRevoked: "{actor} hat eine Rolle zurückgenommen",
+      memberRemoved: "{actor} hat diese Person aus der Ortsgruppe entfernt",
+      emailSent: "Eine E-Mail ist raus — {template}",
+      countryAdminAppointed:
+        "{actor} hat diese Person zum Länder-Admin gemacht",
+      countryAdminRemoved: "{actor} hat diese Person als Länder-Admin abgelöst",
+      you: "Du",
+      someone: "Jemand",
+      templates: {
+        approval: "Freigegeben",
+        rejection: "Abgelehnt",
+      },
+    },
+    chapters: {
+      new: "Neue Ortsgruppe",
+      edit: "Ortsgruppe bearbeiten",
+      empty: "Noch keine Ortsgruppen. Gründe die erste.",
+      fields: {
+        name: "Name der Ortsgruppe",
+        slug: "Webadresse",
+        country: "Land",
+        city: "Stadt",
+        address: "Adresse",
+        careHomeName: "Pflegeheim",
+        latitude: "Breitengrad",
+        longitude: "Längengrad",
+        serviceRadiusKm: "Wie weit sie fährt (km)",
+      },
+      save: "Ortsgruppe speichern",
+      cancel: "Abbrechen",
+      created: "{name} steht auf der Karte.",
+      saved: "Gespeichert.",
+      errors: {
+        slugTaken: "Diese Webadresse ist schon belegt. Nimm eine andere.",
+        generic: "Das hat nicht geklappt. Versuch es noch mal.",
+      },
+    },
+    countries: {
+      new: "Neues Land",
+      edit: "Land bearbeiten",
+      empty: "Noch keine Länder.",
+      fields: {
+        name: "Name des Landes",
+        code: "Ländercode",
+      },
+      admins: "Länder-Admins",
+      noAdmins: "Noch kein Admin",
+      appoint: "Länder-Admin hinzufügen",
+      appointLabel: "E-Mail-Adresse",
+      appointBody: "Die Person muss sich einmal angemeldet haben.",
+      appointPlaceholder: "name@beispiel.de",
+      appointed: "{email} verantwortet jetzt dieses Land.",
+      removeAdmin: "{name} entfernen",
+      confirmRemoveAdmin: "{name} als Länder-Admin entfernen?",
+      save: "Land speichern",
+      cancel: "Abbrechen",
+      created: "{name} ist Teil der Bewegung.",
+      saved: "Gespeichert.",
+      errors: {
+        codeTaken: "Dieser Ländercode ist schon belegt.",
+        noAccount: "Zu dieser E-Mail-Adresse gibt es noch kein Konto.",
+        generic: "Das hat nicht geklappt. Versuch es noch mal.",
+      },
+    },
+  },
+  pilot: {
+    // du-Form: Pilot-Texte, siehe docs/BRAND.md § Voice & tone.
+    home: {
+      title: "Bereit, wenn du es bist",
+      yourChapters: "Deine Ortsgruppen",
+      training: "Training für die Wartezeit",
+      trainingHint:
+        "Rund 20 Minuten Video — danach kennst du die Rikscha, bevor du das erste Mal draufsitzt.",
+      celebration: {
+        title: "Du bist dabei.",
+        body: "{chapter} sagt willkommen. Schau die Trainingsvideos und triff dann eine Captain für deine erste Ausfahrt.",
+        dismiss: "Alles klar",
+      },
+      account: "Konto",
+    },
+    status: {
+      pendingTitle: "Deine Anfrage liegt bei {chapter}",
+      reviewers: "Gelesen von",
+      reviewersNone:
+        "Die Ortsgruppe hat noch keinen Admin benannt. Wir stoßen sie an.",
+      steps: ["Angefragt", "Wird geprüft", "Willkommen"],
+      appliedOn: "Gefragt am {date}",
+      pendingHint:
+        "Ortsgruppen antworten meist innerhalb weniger Tage. Für dich gibt es nichts zu tun.",
+      rejectedTitle: "{chapter} sagt diesmal nein",
+      rejectedBody:
+        "Das passiert — Rikschas, Captains und Trainingstermine müssen alle zusammenpassen. Eine andere Ortsgruppe in der Nähe hat vielleicht Platz.",
+      note: "Ihre Nachricht",
+      applyElsewhere: "Andere Ortsgruppe finden",
+    },
+    training: {
+      title: "Training für die Wartezeit",
+      body: "Die Videos werden noch gedreht. Sobald sie fertig sind, stehen sie hier — rund 20 Minuten, danach ein Workshop mit einer der Captains.",
+      back: "Zurück zur Pilot-Startseite",
+    },
+  },
+  passenger: {
+    account: "Konto",
+  },
+  account: {
+    // du-Form: Das Konto teilen sich Admins, Piloten und Passagiere; die
+    // Sicherheitstexte richten sich an Aktive.
+    title: "Konto",
+    passkeys: "Passkeys",
+    passkeysBody:
+      "Mit einem Passkey meldet dich dein eigenes Gerät an — Fingerabdruck, Gesicht oder PIN. Nichts zu merken, nichts zu tippen.",
+    add: "Passkey hinzufügen",
+    nameLabel: "Passkey benennen (optional)",
+    namePlaceholder: "Arbeitslaptop",
+    unnamed: "Passkey",
+    thisDevice: "Dieses Gerät",
+    synced: "Synchronisiert",
+    added: "Passkey hinzugefügt.",
+    remove: "Entfernen",
+    removeConfirm: "{name} entfernen?",
+    removeBody:
+      "Zum Anmelden auf diesem Gerät brauchst du dann einen anderen Passkey oder einen Code per E-Mail oder SMS.",
+    empty:
+      "Noch keine Passkeys. Leg einen an, und dieses Gerät erkennt dich wieder.",
+    failed: "Das hat nicht geklappt. Versuch es erneut.",
+    signInAgain:
+      "Es ist eine Weile her. Melde dich neu an, bevor du einen Passkey anlegst.",
+    signInAgainAction: "Neu anmelden",
+    back: "Zurück",
   },
   legal: {
     imprint: {

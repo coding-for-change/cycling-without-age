@@ -20,6 +20,7 @@
 :root {
   --canvas: #ffffff;
   --canvas-deep: #f4f2ef; /* warm light grey — black 30/30/30 at ~5% */
+  --canvas-deeper: #e9e6e1; /* the same warm grey one step down — ink at ~10% */
   --paper: #ffffff;
   --ink: #2e2823; /* warm espresso (h27 s14% l16%) — the brand's black, warmed
                      for a lit screen. The single ink for every black mark. */
@@ -137,7 +138,7 @@
   --sidebar-foreground: hsl(27 13.6% 16%);
   --sidebar-primary: hsl(27 13.6% 16%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(27 14% 96%);
+  --sidebar-accent: var(--canvas-deeper);
   --sidebar-accent-foreground: hsl(27 13.6% 16%);
   --sidebar-border: hsl(27 14% 88%);
   --sidebar-ring: hsl(27 13.6% 16%);
@@ -196,6 +197,7 @@
 
   --color-canvas: var(--canvas);
   --color-canvas-deep: var(--canvas-deep);
+  --color-canvas-deeper: var(--canvas-deeper);
   --color-paper: var(--paper);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);

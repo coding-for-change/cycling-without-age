@@ -99,7 +99,7 @@ export function ScopeSwitcher({
             <SidebarMenuButton
               size="lg"
               aria-label={strings.switchLabel}
-              className="data-[state=open]:bg-mint-tint"
+              className="data-[state=open]:bg-canvas-deeper"
             >
               {identity}
               <ChevronsUpDown

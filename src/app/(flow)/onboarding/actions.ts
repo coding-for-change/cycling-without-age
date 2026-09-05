@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { profile } from "@/features/profile";
 import { personalDetailsInput } from "@/features/profile";
-import { requireAuth } from "@/lib/auth-guards";
+import { readNextPath, requireAuth } from "@/lib/auth-guards";
 import { readJoinPreset } from "@/lib/join-preset";
 import { getLocale } from "@/lib/i18n";
 import { canViewStep, type OnboardingStep } from "@/lib/onboarding";
@@ -35,7 +35,11 @@ const onward = async (
   session: Parameters<typeof resolveDestination>[0],
 ): Promise<StepResult> => ({
   ok: true,
-  next: await resolveDestination(session, await readJoinPreset()),
+  next: await resolveDestination(
+    session,
+    await readJoinPreset(),
+    await readNextPath(),
+  ),
 });
 
 const consentSchema = z.object({
@@ -130,5 +134,9 @@ export async function finishPilotNextSteps(): Promise<StepResult> {
  *  action — that slice has no business knowing what onboarding looks like. */
 export async function nextOnboardingPath(): Promise<string> {
   const session = await requireAuth();
-  return resolveDestination(session, await readJoinPreset());
+  return resolveDestination(
+    session,
+    await readJoinPreset(),
+    await readNextPath(),
+  );
 }

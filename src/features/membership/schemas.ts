@@ -18,5 +18,6 @@ export const applicationDecisionInput = z.object({
   applicationId: z.string().min(1),
   decidedByUserId: z.string().min(1),
   approve: z.boolean(),
+  note: z.string().trim().max(500).optional(),
 });
 export type ApplicationDecisionInput = z.infer<typeof applicationDecisionInput>;

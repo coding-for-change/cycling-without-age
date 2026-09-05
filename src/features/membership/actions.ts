@@ -5,11 +5,13 @@ import { z } from "zod";
 import { Prisma } from "@/generated/prisma";
 import { MAX_PILOT_CHAPTERS, membership } from "@/features/membership";
 import { requireAuth } from "@/lib/auth-guards";
+import { submitPilotApplications } from "@/use-cases/submit-pilot-applications";
 
 /**
- * The Boundary Layer for joining a chapter (AGENTS.md §2). Both operations touch
- * only the membership feature, so the Action calls the Facade directly — a Use
- * Case here would be a layer with nothing to coordinate.
+ * The Boundary Layer for joining a chapter (AGENTS.md §2). Joining as a
+ * passenger touches only the membership feature, so the Action calls the Facade
+ * directly; applying as a pilot also writes history, so that one goes through a
+ * Use Case.
  *
  * A Server Action is a public POST endpoint, not a private function: everything
  * below re-derives identity from the session and re-validates its input, because
@@ -59,11 +61,10 @@ export async function applyToChaptersAsPilot(
   if (!parsed.success) return { ok: false, error: "generic" };
 
   try {
-    // Sequential rather than Promise.all: one foreign-key violation must not
-    // leave the others in an unknown state, and five upserts is not a problem.
-    for (const id of parsed.data) {
-      await membership.applyAsPilot({ userId: session.user.id, chapterId: id });
-    }
+    await submitPilotApplications({
+      userId: session.user.id,
+      chapterIds: parsed.data,
+    });
     // `/onboarding` decides the next screen from this application's existence.
     revalidatePath("/onboarding");
     return { ok: true };
@@ -74,6 +75,22 @@ export async function applyToChaptersAsPilot(
     if (error instanceof Error && error.message === membership.ALREADY_PILOT) {
       return { ok: false, error: "alreadyPilot" };
     }
+    return { ok: false, error: "generic" };
+  }
+}
+
+/**
+ * Fired by the celebration banner on `/pilot` so it appears exactly once.
+ * Deliberately does not revalidate: the banner is already on screen and the
+ * next natural request re-reads `approvalSeenAt`.
+ */
+export async function acknowledgeApproval(): Promise<MembershipActionResult> {
+  const session = await requireAuth();
+
+  try {
+    await membership.markApprovalsSeen(session.user.id);
+    return { ok: true };
+  } catch {
     return { ok: false, error: "generic" };
   }
 }

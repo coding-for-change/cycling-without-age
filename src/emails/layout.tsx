@@ -11,10 +11,9 @@ import {
   Text,
 } from "@react-email/components";
 import type { ReactNode } from "react";
+import { APP_URL } from "@/lib/app-url";
 import { brand } from "@/lib/brand";
 import type { Locale } from "@/lib/i18n";
-
-const baseUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
 
 export function EmailLayout({
   locale,
@@ -42,7 +41,7 @@ export function EmailLayout({
       <Body style={styles.page}>
         <Container style={styles.container}>
           <Img
-            src={`${baseUrl}/logo.png`}
+            src={`${APP_URL}/logo.png`}
             width="140"
             height="50"
             alt="Cycling Without Age"

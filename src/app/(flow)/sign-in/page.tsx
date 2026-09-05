@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth-guards";
+import { getSession, readNextPath } from "@/lib/auth-guards";
 import { readJoinPreset } from "@/lib/join-preset";
 import { resolveDestination } from "@/use-cases/onboarding-progress";
 import { getDictionary } from "@/lib/i18n";
@@ -30,8 +30,13 @@ async function Identifier() {
   // Only this exact route: `/sign-in/code` and `/sign-in/role` are steps of the
   // flow and a session is expected there.
   const session = await getSession();
-  if (session)
-    redirect(await resolveDestination(session, await readJoinPreset()));
+  if (session) {
+    const [preset, next] = await Promise.all([
+      readJoinPreset(),
+      readNextPath(),
+    ]);
+    redirect(await resolveDestination(session, preset, next));
+  }
 
   const [dict, head] = await Promise.all([getDictionary(), headers()]);
   const locale = resolveLocale(head.get("accept-language"));

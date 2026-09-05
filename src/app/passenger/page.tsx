@@ -1,8 +1,13 @@
 import { Suspense } from "react";
+import { UserRound } from "lucide-react";
 import { chapters } from "@/features/chapters";
-import { getSession } from "@/lib/auth-guards";
+import { getSession, redirectIfElsewhere } from "@/lib/auth-guards";
 import { readGuestChapterId } from "@/lib/guest-chapter";
 import { getDictionary } from "@/lib/i18n";
+import { Button } from "@/components/ui/button";
+import { headers } from "next/headers";
+import { resolveLocale } from "@/lib/format";
+import { AccountDialog } from "@/components/account-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SignOutButton } from "@/components/sign-out-button";
 
@@ -14,7 +19,7 @@ export default function PassengerHomePage() {
         <ChosenChapter />
       </Suspense>
       <Suspense fallback={null}>
-        <SignOut />
+        <SessionActions />
       </Suspense>
     </main>
   );
@@ -30,12 +35,31 @@ async function ChosenChapter() {
   );
 }
 
-async function SignOut() {
+async function SessionActions() {
   const session = await getSession();
   if (!session) return null;
-  const dict = await getDictionary();
+  // Guests keep browsing; a signed-in person with a home elsewhere is sent to it.
+  redirectIfElsewhere(session, "passenger");
+  const [dict, head] = await Promise.all([getDictionary(), headers()]);
+  const locale = resolveLocale(head.get("accept-language"));
   return (
-    <div className="mt-6">
+    <div className="mt-6 flex flex-wrap items-center gap-3">
+      <AccountDialog
+        strings={dict.account}
+        locale={locale}
+        trigger={
+          <Button
+            variant="outline"
+            className="min-h-11 gap-2 rounded-full border-line"
+          >
+            <UserRound
+              className="size-4"
+              aria-hidden
+            />
+            {dict.passenger.account}
+          </Button>
+        }
+      />
       <SignOutButton label={dict.common.signOut} />
     </div>
   );

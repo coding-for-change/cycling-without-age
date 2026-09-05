@@ -10,11 +10,18 @@ import type {
   PersonalDetailsInput,
   Residence,
 } from "./schemas";
-import { findProfile, updateProfile } from "./services/profile";
+import {
+  findProfile,
+  findUserIdByEmail,
+  updateProfile,
+} from "./services/profile";
 
 export type Profile = NonNullable<Awaited<ReturnType<typeof findProfile>>>;
 
 export const getProfile = (userId: string) => findProfile(userId);
+
+export const getUserIdByEmail = async (email: string) =>
+  (await findUserIdByEmail(email.trim().toLowerCase()))?.id ?? null;
 
 export const setLocale = (userId: string, locale: string) =>
   updateProfile(userId, { locale });

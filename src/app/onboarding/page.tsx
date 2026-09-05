@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { requireAuth } from "@/lib/auth-guards";
+import { readNextPath, requireAuth } from "@/lib/auth-guards";
 import { readJoinPreset } from "@/lib/join-preset";
 import { resolveDestination } from "@/use-cases/onboarding-progress";
 
@@ -26,5 +26,6 @@ function Waiting() {
 
 async function Resolve(): Promise<null> {
   const session = await requireAuth();
-  redirect(await resolveDestination(session, await readJoinPreset()));
+  const [preset, next] = await Promise.all([readJoinPreset(), readNextPath()]);
+  redirect(await resolveDestination(session, preset, next));
 }

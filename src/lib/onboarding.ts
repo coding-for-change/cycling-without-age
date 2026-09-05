@@ -1,5 +1,12 @@
 export type OnboardingRole = "passenger" | "pilot";
 
+/**
+ * How long a "not now" on the passkey step is honoured. A permanent latch means
+ * an account that skipped once is never offered a passkey again — the one
+ * measure that would have made it safe.
+ */
+export const PASSKEY_REPROMPT_MS = 30 * 24 * 60 * 60 * 1000;
+
 export type OnboardingStep =
   "role" | "location" | "consent" | "profile" | "passkey" | "pilotNextSteps";
 

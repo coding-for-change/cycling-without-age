@@ -75,6 +75,10 @@ the two in full, with page references. Don't cite the book for a rule it doesn't
   one. Style is `new-york`, RSC on. Compose class names with `cn()` from `@/lib/utils`.
   Anything genuinely shared and stateless that shadcn doesn't cover belongs in
   `src/components/ui/`; anything domain-specific belongs in its feature slice.
+- **Admin lists**: every admin table is `DataTable` from `src/components/ui/data-table.tsx`
+  (search, filters, "Columns" visibility menu, sortable headers, pagination, clickable rows
+  via `rowHref` — `stopRowClick` on any interactive cell). Never hand-roll a `<Table>` for a
+  list: the server parent maps rows and passes `dict.admin.table` as `strings`.
 - **Brand vs. shadcn**: shadcn ships its own neutral token set (`--foreground`,
   `--primary`, `--muted`, …) which decides what an unstyled component renders. Those
   have already been remapped onto `--ink` once, centrally, in `globals.css` — so a
