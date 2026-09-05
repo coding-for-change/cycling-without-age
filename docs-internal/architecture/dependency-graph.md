@@ -14,10 +14,11 @@ graph TD
     ACT1[features/membership/actions]
     ACT2["app/(flow)/location/actions"]
     ACT3["app/(flow)/onboarding/actions"]
-    ACT4["app/join/[[...slug]]/route"]
+    ACT4["app/join/[slug]/start/route"]
     ACT5[app/admin/members/actions]
     ACT6[app/admin/chapters/actions]
     ACT7[app/admin/countries/actions]
+    ACT8[features/accounts/actions]
   end
   subgraph Orchestration
     U1[use-cases/build-session-access]
@@ -29,6 +30,9 @@ graph TD
     U7[use-cases/change-member-role]
     U8[use-cases/submit-pilot-applications]
     U9[use-cases/manage-country-admins]
+    U10[use-cases/provision-assisted-passenger]
+    U11[use-cases/invite-chapter-user]
+    U12[use-cases/claim-account]
   end
   subgraph Features
     F1[features/chapters facade]
@@ -36,6 +40,7 @@ graph TD
     F3[features/profile facade]
     F4[features/passengers facade]
     F5[features/activity facade]
+    F6[features/accounts facade]
     CM1[features/chapters/commands]
     CM2[features/membership/commands]
     CM3[features/profile/commands]
@@ -47,11 +52,13 @@ graph TD
     S3[profile/services]
     S4[passengers/services]
     S5[activity/services]
+    S6[accounts/services]
     DB[(MySQL via lib/prisma)]
   end
   subgraph Infrastructure
     MB[lib/mapbox]
     ML[lib/mailer]
+    BA[lib/auth BetterAuth admin API]
     COOKIE[(guest chapter + join preset cookies)]
   end
 
@@ -90,6 +97,10 @@ graph TD
   ADM --> ACT5
   ADM --> ACT6
   ADM --> ACT7
+  ADM --> ACT8
+  ACT8 --> U10
+  ACT8 --> U11
+  ACT3 --> U12
   ACT1 --> U8
   ACT5 --> F2
   ACT5 --> U6
@@ -125,17 +136,32 @@ graph TD
   U9 --> F1
   U9 --> F3
   U9 --> F5
+  U10 --> F2
+  U10 --> F4
+  U10 --> F5
+  U10 --> F6
+  U11 --> F1
+  U11 --> F2
+  U11 --> F3
+  U11 --> F5
+  U11 --> F6
+  U11 --> ML
+  U12 --> F5
+  U12 --> F6
 
   F1 --> S1
   F2 --> S2
   F3 --> S3
   F4 --> S4
   F5 --> S5
+  F6 --> S6
   S1 --> DB
   S2 --> DB
   S3 --> DB
   S4 --> DB
   S5 --> DB
+  S6 --> DB
+  S6 --> BA
 ```
 
 | Use case | Facades it coordinates | Why it exists |
@@ -149,6 +175,9 @@ graph TD
 | `change-member-role` | `activity`, `membership`, `profile` | A promote/demote/remove is a membership write plus a history event; appointing by email resolves the address through `profile` first. |
 | `submit-pilot-applications` | `activity`, `membership` | The application rows are upserted, so the "asked to pilot" line has to live in `activity` to survive a re-application. |
 | `manage-country-admins` | `activity`, `chapters`, `profile` | Country-admin rows belong to `chapters`, the email lookup to `profile`, and the audit line to `activity`. |
+| `provision-assisted-passenger` | `accounts`, `membership`, `passengers`, `activity` | One "add a passenger at the door" makes the account, joins the chapter, creates the rider row and records who created it — four features, and the helper rule decides whether the rider row points at the new account or at nobody. |
+| `invite-chapter-user` | `accounts`, `chapters`, `membership`, `profile` (+ `activity`, `mailer`) | Provisioning the account, granting the chapter role, and mailing the invitation in the invitee's own locale (hence `profile`) are three features plus infrastructure. |
+| `claim-account` | `accounts`, `activity` | Stamping `claimedAt` and writing the `accountClaimed` line are two features, and the pair has to stay together — a claim nobody can see in the history is not an audit trail. |
 
 No use case was added for the admin shell. `G --> F1` now carries two guards:
 `requireChapterAdmin` (`chapters.getChapterCountryId`) and `requireAdminScope`
@@ -168,6 +197,13 @@ Single-facade work has no use case: `lib/auth-guards` calls `chapters.getChapter
 and `profile.getProfile` (the admin passkey gate) directly, `app/admin/chapters/actions` calls
 the chapters facade directly, `features/membership/actions` calls the membership facade
 directly, and the passkey and pilot-next-steps actions call the profile facade directly.
+
+`features/accounts` (F6) has no UI of its own either — its Server Actions (ACT8) are imported
+straight into the admin passengers and members screens, because "provision a user" is not a
+page. `S6` is the only place outside `prisma/seed.ts` that calls BetterAuth's admin API
+(`auth.api.createUser`); everything else in that slice is ordinary Prisma. `U12` is reached
+from the onboarding consent action (ACT3), not from the admin shell: the account is claimed by
+the person who received it, at the one step nobody may take on their behalf.
 
 `features/activity` (F5) is a slice with no UI of its own: every write goes through a use
 case that pairs it with the mutation it records, and the only read is the person-history feed

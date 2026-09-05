@@ -33,6 +33,7 @@ export function ConsentStep({
   role,
   progress,
   chapterName,
+  setUpBy,
   defaults,
   strings,
   continueLabel,
@@ -40,6 +41,7 @@ export function ConsentStep({
   role: OnboardingRole;
   progress: StepProgress | null;
   chapterName: string | null;
+  setUpBy: string | null;
   defaults: StepDefaults;
   strings: Strings;
   continueLabel: string;
@@ -104,9 +106,10 @@ export function ConsentStep({
     <Step
       title={role === "pilot" ? strings.titlePilot : strings.title}
       description={
-        chapterName
+        setUpBy ??
+        (chapterName
           ? fill(strings.joining, { chapter: chapterName })
-          : undefined
+          : undefined)
       }
       progress={progress ?? undefined}
       action={

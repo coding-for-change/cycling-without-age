@@ -178,6 +178,11 @@ the two in full, with page references. Don't cite the book for a rule it doesn't
   (`className="text-mint"`) — it paints `currentColor`, so no hex reaches a component. It is
   mounted once in the `(flow)` layout and is `aria-hidden`: a decorative mascot, never a
   control.
+- **Avatars** are DiceBear "Gaze" characters, generated on the server from the user id by
+  `avatarSvg()` in `@/lib/avatar` and rendered by `PersonAvatar` (`@/components/person-avatar`).
+  Pass the SVG string down as a prop — the library never ships to the browser. The animated
+  variant is for the large "profile card" surfaces only (account dialog, person header, user
+  menu popover); lists stay static. `User.image` is not shown anywhere.
 
 ## What is deliberately not here yet
 

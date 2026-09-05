@@ -4,7 +4,7 @@ import {
   countPassengersManagedBy,
   findPassengerOfUser,
   findPassengersManagedBy,
-  findPassengersOfChapter,
+  findPassengersOfChapters,
   insertPassenger,
   upsertOwnPassenger,
 } from "./services/passengers";
@@ -12,8 +12,12 @@ import {
 export const getOwnPassenger = (userId: string) => findPassengerOfUser(userId);
 export const listPassengersManagedBy = (userId: string) =>
   findPassengersManagedBy(userId);
-export const listPassengersOfChapter = (chapterId: string) =>
-  findPassengersOfChapter(chapterId);
+export const listPassengersOfChapters = (chapterIds: string[]) =>
+  findPassengersOfChapters(chapterIds);
+
+export type PassengerRow = Awaited<
+  ReturnType<typeof findPassengersOfChapters>
+>[number];
 
 export async function addPassenger(input: PassengerInput) {
   const data = passengerInput.parse(input);

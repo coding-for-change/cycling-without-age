@@ -105,8 +105,10 @@ export function setPersonalDetails(
   });
 }
 
-export const markManagesOthers = (userId: string) =>
-  updateProfile(userId, { managesOthers: true });
+export const markManagesOthers = (
+  userId: string,
+  helperRelationship?: string | null,
+) => updateProfile(userId, { managesOthers: true, helperRelationship });
 
 export const markPasskeyPrompted = (userId: string) =>
   updateProfile(userId, { passkeyPromptedAt: new Date() });

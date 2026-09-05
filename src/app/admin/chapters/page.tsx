@@ -59,6 +59,8 @@ async function Chapters({ searchParams }: { searchParams: AdminSearchParams }) {
         countryName: countryName.get(chapter.countryId) ?? "",
         address: chapter.address,
         careHomeName: chapter.careHomeName,
+        description: chapter.description,
+        logo: chapter.logo,
         latitude: chapter.latitude,
         longitude: chapter.longitude,
         serviceRadiusKm: chapter.serviceRadiusKm,

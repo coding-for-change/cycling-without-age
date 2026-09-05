@@ -76,6 +76,20 @@ const en = {
     footer:
       "You received this email because you asked to pilot for a Cycling Without Age chapter.",
   },
+  invite: {
+    subject: "You've been invited to {chapter}",
+    preview: "A chapter is waiting for you",
+    heading: "You've been invited",
+    intro: "{inviter} has invited you to {chapter} as {role}.",
+    how: "Sign in with this email address and we send you a code \u2014 no password to invent.",
+    cta: "Accept the invitation",
+    footer:
+      "You received this email because a Cycling Without Age chapter admin invited your address.",
+  },
+  roles: {
+    admin: "a chapter admin",
+    pilot: "a pilot",
+  },
 };
 
 export type EmailStrings = typeof en;

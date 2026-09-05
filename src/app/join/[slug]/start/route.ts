@@ -9,11 +9,16 @@ import {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ slug?: string[] }> },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   const [{ slug }, session] = await Promise.all([params, getSession()]);
+  const chapter = await chapters.getChapterBySlug(slug);
 
-  const chapter = slug?.[0] ? await chapters.getChapterBySlug(slug[0]) : null;
+  if (!chapter) {
+    return NextResponse.redirect(
+      new URL(`/join/${encodeURIComponent(slug)}`, request.url),
+    );
+  }
 
   const asked = request.nextUrl.searchParams.get("role");
   const role = asked === "pilot" || asked === "passenger" ? asked : null;
@@ -26,7 +31,7 @@ export async function GET(
 
   response.cookies.set(
     JOIN_PRESET_COOKIE,
-    encodeJoinPreset({ chapterId: chapter?.id ?? null, role }),
+    encodeJoinPreset({ chapterId: chapter.id, role }),
     {
       httpOnly: true,
       sameSite: "lax",

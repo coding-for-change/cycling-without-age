@@ -9,6 +9,7 @@ import { readJoinPreset } from "@/lib/join-preset";
 import { getLocale } from "@/lib/i18n";
 import { canViewStep, type OnboardingStep } from "@/lib/onboarding";
 import { acceptOnboardingConsent } from "@/use-cases/accept-onboarding-consent";
+import { claimAccount } from "@/use-cases/claim-account";
 import { completeOnboardingProfile } from "@/use-cases/complete-onboarding-profile";
 import {
   getOnboardingState,
@@ -70,6 +71,7 @@ export async function submitConsent(input: unknown): Promise<StepResult> {
           ? { chapterId: preset.chapterId, role: preset.role }
           : null,
     });
+    await claimAccount(at.userId);
 
     revalidatePath(ONBOARDING);
 
@@ -79,8 +81,20 @@ export async function submitConsent(input: unknown): Promise<StepResult> {
   }
 }
 
+const relationshipInput = z.enum([
+  "child",
+  "partner",
+  "relative",
+  "carer",
+  "friend",
+  "other",
+]);
+
 /** `null` details is the "booking for someone else" path — see the use case. */
-export async function submitProfile(input: unknown): Promise<StepResult> {
+export async function submitProfile(
+  input: unknown,
+  helperRelationship?: unknown,
+): Promise<StepResult> {
   const at = await atStep("profile");
   if (!at?.progress.role) return { ok: false, error: "generic" };
 
@@ -102,11 +116,14 @@ export async function submitProfile(input: unknown): Promise<StepResult> {
   }
 
   try {
+    const relationship = relationshipInput.safeParse(helperRelationship);
+
     await completeOnboardingProfile({
       userId: at.userId,
       role: at.progress.role,
       details,
       locale: await getLocale(),
+      helperRelationship: relationship.success ? relationship.data : undefined,
     });
     revalidatePath(ONBOARDING);
     return onward(at.session);

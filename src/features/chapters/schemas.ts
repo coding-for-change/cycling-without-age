@@ -25,6 +25,8 @@ export const chapterInput = z.object({
   city: z.string().trim().min(1).max(120),
   address: z.string().trim().max(240).optional(),
   careHomeName: z.string().trim().max(160).optional(),
+  description: z.string().trim().max(600).optional(),
+  logo: z.url().max(500).optional(),
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
   serviceRadiusKm: z.number().int().min(1).max(200).optional(),
@@ -32,6 +34,6 @@ export const chapterInput = z.object({
 export type ChapterInput = z.infer<typeof chapterInput>;
 
 export const chapterUpdateInput = chapterInput
-  .omit({ countryId: true })
+  .omit({ countryId: true, slug: true })
   .partial();
 export type ChapterUpdateInput = z.infer<typeof chapterUpdateInput>;

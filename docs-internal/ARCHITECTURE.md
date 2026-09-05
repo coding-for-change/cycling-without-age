@@ -422,3 +422,97 @@ It derives four things from the membership and application rows: `pilotChapterId
 on mount, and `acknowledgeApproval` deliberately does **not** revalidate `/pilot`: revalidating
 would re-render the banner away a few hundred milliseconds after it appeared. The banner is
 already on screen; the next natural request re-reads the column.
+
+## Growth: join links, assisted signup, the auth wall (COD-170 Phase 2)
+
+### `features/accounts` — provisioning an account someone else will claim
+
+The three growth flows (a chapter admin adding a passenger at the door, a chapter admin
+inviting a co-admin or pilot, and later a care home enrolling a resident) all need the same
+thing: *make a `User` row for a person who is not here right now.* That is a single feature —
+`src/features/accounts` — and every one of them goes through `accounts.provisionUser`.
+
+Provisioning is **idempotent on the contact**, not on the name: a lookup by lowercased email
+or E.164 phone comes first, and an existing account is returned as `{ userId, created: false }`
+with its provenance left untouched. Only `provisionUserStrict` turns that into the
+`"Already has an account"` error the passenger dialog surfaces as `exists`; the invite flow
+deliberately uses the lenient version, because "invite someone who already signed up" is a
+normal request and must still grant them the role.
+
+The row is created through BetterAuth's `auth.api.createUser` with **no password**, so no
+credential account exists, `emailVerified` stays `false`, and **no session is created**. A
+provisioned account is inert until its owner signs in with the same email or number and
+proves it with an OTP — the identity check is the existing sign-in, not a token we invent.
+A phone-only contact gets `phoneTempEmail(phone)` as its `email` (the same helper
+`lib/auth.ts` hands BetterAuth's `signUpOnVerification`), so the unique column stays
+satisfied without inventing a fake address the person could ever be mailed at.
+
+### The helper rule: who owns the account
+
+`Passenger.userId` is the rider's *own* account; `Passenger.managedByUserId` is the account
+that books for them. Which one the provisioned `User` becomes is decided by one comparison,
+in `use-cases/provision-assisted-passenger.ts`:
+
+> **the account belongs to the helper if, and only if, the helper's contact is the contact
+> given for the passenger.**
+
+Both sides run through the same `contact` schema first, so the comparison is between
+normalised values. Same contact → the account is the helper's: it is named after the helper,
+carries `managesOthers: true`, and the passenger row gets `userId: null` with
+`managedByUserId` pointing at it. Different contacts (or no helper at all) → the account is
+the passenger's own, and `userId` and `managedByUserId` are both that account. The helper
+columns (`helperName`, `helperRelationship`, `helperContact`) are written whenever a helper
+was named, in both branches — they are a note about who to call, not a claim of ownership.
+
+Either way `membership.joinAsPassenger` runs, so the account is a member of the chapter
+before anyone claims it. Without that, `onboarding-progress` would report `joined: false` and
+push a claiming helper back to the location step instead of straight to consent.
+
+### Claiming happens at the consent step, never by skipping it
+
+A provisioned account signs in like any other and lands in `/onboarding`. Consent is the one
+thing an admin cannot give on someone else's behalf, so it is **never pre-filled and never
+skipped** — `submitConsent` is what calls `claim-account`, which stamps `claimedAt` and
+records the `accountClaimed` event. Until then `accounts.getClaimBanner(userId)` returns the
+name of whoever set the account up, and the consent step says so in its description
+(`consent.setUpBy`), so the person understands why an account already exists. After the claim
+the banner is `null` and the account is indistinguishable from a self-signup.
+
+The `accountCreated` / `invited` / `accountClaimed` events on `ActivityType` are what make
+that legible afterwards on `/admin/members/[userId]`.
+
+### The join page and the immutable slug
+
+`/join/<slug>` is the public face of a chapter: name, care-home name or city, description and
+logo, and nothing else — no address, no coordinates, no member counts. It is one route with
+three states (member, signed-in non-member, anonymous) plus a Book-a-ride CTA, and
+`/join/<slug>/poster` is the same data on A4 with a QR code.
+
+Anonymous visitors do not get a Server Action; they get a plain link to
+`/join/<slug>/start?role=passenger|pilot`, a Route Handler that writes the join-preset cookie
+and redirects. A GET that mutates is fine here because the "mutation" is a cookie the visitor
+asked for, and the `sec-fetch-dest` check means a prefetch or an `<img>` cannot set it — only
+a real navigation.
+
+That URL is printed on posters, so **the slug is immutable**: `chapterUpdateInput` omits both
+`slug` and `countryId`, and the edit dialog renders the slug read-only. A chapter that has to
+be renamed gets a new chapter, not a silently dead QR code on a noticeboard wall.
+
+The QR itself is `uqr` (zero dependencies) rendered as inline `<svg>` by
+`src/components/qr-code.tsx` — a pure function of its `value`, so it prerenders with the
+page and needs no client bundle, no canvas, and no image request. `border: 4` is the quiet
+zone the QR spec asks for; the default of 1 scans badly across a room.
+
+### The auth wall: drafts survive the sign-in detour
+
+`src/lib/auth-wall.ts` is the contract for "let someone fill something in, *then* ask them to
+sign in". `saveDraft(kind, payload)` puts a versioned, timestamped envelope in
+`sessionStorage`; `signInHref(target)` sends them to `/sign-in?next=<target>`; `useDraft(kind,
+schema)` reads it back on the far side and clears it on mount.
+
+`readDraft` is a pure function so it can be tested without a browser, and it is deliberately
+**silent** about every failure — wrong version, wrong kind, older than an hour, malformed
+JSON, or a payload that fails the caller's Zod schema all return `null` and the screen falls
+back to its no-draft copy. Nothing from `sessionStorage` is ever trusted as input to a write:
+the Book-a-ride confirmation only *displays* the draft. When ride requests become real rows,
+the draft stays a UI convenience and the Server Action re-validates from scratch.

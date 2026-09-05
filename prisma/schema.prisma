@@ -37,6 +37,13 @@ model User {
   passkeyPromptedAt    DateTime?
   pilotNextStepsSeenAt DateTime?
   welcomeEmailSentAt DateTime?
+  createdByUserId String?
+  createdBy       User?   @relation("createdUsers", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdUsers    User[]  @relation("createdUsers")
+  claimedAt       DateTime?
+  helperName         String? @db.Text
+  helperRelationship String? @db.Text
+  helperContact      String? @db.Text
   sessions            Session[]
   accounts            Account[]
   passkeys            Passkey[]
@@ -52,6 +59,7 @@ model User {
 
   @@unique([email])
   @@unique([phoneNumber])
+  @@index([createdByUserId])
   @@map("user")
 }
 
@@ -129,6 +137,7 @@ model Organization {
   name        String       @db.Text
   slug        String
   logo        String?      @db.Text
+  description String?      @db.Text
   createdAt   DateTime     @default(now())
   metadata    String?      @db.Text
   members     Member[]
@@ -289,6 +298,9 @@ enum ActivityType {
   emailSent
   countryAdminAppointed
   countryAdminRemoved
+  accountCreated
+  invited
+  accountClaimed
 }
 
 model ActivityEvent {

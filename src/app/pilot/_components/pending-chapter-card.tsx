@@ -1,8 +1,9 @@
 import { Check } from "lucide-react";
 import { membership } from "@/features/membership";
 import { formatDate, type Locale } from "@/lib/format";
-import { cn, fill, getInitials } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { avatarSvg } from "@/lib/avatar";
+import { cn, fill } from "@/lib/utils";
+import { PersonAvatar } from "@/components/person-avatar";
 import type { Dictionary } from "@/lib/i18n";
 
 type StatusStrings = Dictionary["pilot"]["status"];
@@ -47,17 +48,10 @@ export async function PendingChapterCard({
               key={reviewer.userId}
               className="flex items-center gap-2"
             >
-              <Avatar size="sm">
-                {reviewer.user.image ? (
-                  <AvatarImage
-                    src={reviewer.user.image}
-                    alt=""
-                  />
-                ) : null}
-                <AvatarFallback className="bg-mint-tint text-ink">
-                  {getInitials(reviewer.user.name)}
-                </AvatarFallback>
-              </Avatar>
+              <PersonAvatar
+                svg={avatarSvg(reviewer.userId)}
+                size="sm"
+              />
               <span className="text-sm">{firstName(reviewer.user.name)}</span>
             </li>
           ))}

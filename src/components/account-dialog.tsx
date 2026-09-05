@@ -22,11 +22,13 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
 } from "@/components/ui/sidebar";
+import { PersonAvatar } from "@/components/person-avatar";
 import {
   PasskeyManager,
   type PasskeyManagerStrings,
@@ -38,6 +40,8 @@ export type AccountStrings = PasskeyManagerStrings & {
   passkeysBody: string;
 };
 
+export type AccountProfile = { name: string; email: string; avatar: string };
+
 type Section = "passkeys";
 
 // ponytail: one section today; personal settings land here as further entries.
@@ -48,12 +52,14 @@ const SECTIONS: { key: Section; icon: typeof KeyRound }[] = [
 export function AccountDialog({
   strings,
   locale,
+  profile,
   trigger,
   open,
   onOpenChange,
 }: {
   strings: AccountStrings;
   locale: Locale;
+  profile: AccountProfile;
   trigger?: ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -76,6 +82,20 @@ export function AccountDialog({
             collapsible="none"
             className="hidden md:flex"
           >
+            <SidebarHeader className="items-center gap-3 px-4 pt-6 pb-2 text-center">
+              <PersonAvatar
+                svg={profile.avatar}
+                className="size-20"
+              />
+              <div className="grid w-full leading-tight">
+                <span className="truncate text-sm font-medium">
+                  {profile.name}
+                </span>
+                <span className="truncate text-xs text-ink-soft">
+                  {profile.email}
+                </span>
+              </div>
+            </SidebarHeader>
             <SidebarContent>
               <SidebarGroup>
                 <SidebarGroupContent>

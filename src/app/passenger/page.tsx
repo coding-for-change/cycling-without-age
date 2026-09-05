@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { UserRound } from "lucide-react";
 import { chapters } from "@/features/chapters";
 import { getSession, redirectIfElsewhere } from "@/lib/auth-guards";
+import { avatarSvg } from "@/lib/avatar";
 import { readGuestChapterId } from "@/lib/guest-chapter";
 import { getDictionary } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,11 @@ async function SessionActions() {
       <AccountDialog
         strings={dict.account}
         locale={locale}
+        profile={{
+          name: session.user.name,
+          email: session.user.email,
+          avatar: avatarSvg(session.user.id, true),
+        }}
         trigger={
           <Button
             variant="outline"

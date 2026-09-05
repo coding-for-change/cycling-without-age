@@ -164,6 +164,8 @@ const da: Dictionary = {
     dataSuffix: "Se {imprint} og {privacy}.",
     required: "Sæt kryds i dem alle for at fortsætte.",
     joining: "Du bliver en del af {chapter}.",
+    setUpBy:
+      "{name} har oprettet denne konto til dig. Tjek oplysningerne, og sig ja for at fortsætte.",
     error: "Vi kunne ikke gemme det. Prøv igen.",
   },
   profile: {
@@ -180,6 +182,17 @@ const da: Dictionary = {
       other: "Andet",
     },
     forSomeoneElse: "Jeg opretter kontoen, så en anden kan køre med",
+    relationship: {
+      label: "Din relation til personen",
+      options: {
+        child: "Søn eller datter",
+        partner: "Partner",
+        relative: "Anden pårørende",
+        carer: "Omsorgsperson",
+        friend: "Ven",
+        other: "Andet",
+      },
+    },
     errors: {
       incomplete: "Udfyld alle felter for at fortsætte.",
       birthDate: "Den fødselsdag ser ikke rigtig ud. Tjek årstallet.",
@@ -208,6 +221,51 @@ const da: Dictionary = {
       "Tag din første tur — en kaptajn kører med første gang.",
     ],
     finish: "Videre",
+  },
+  join: {
+    eyebrow: "Cycling Without Age",
+    passenger: {
+      title: "Kom med på en tur",
+      body: "En frivillig træder i pedalerne. Du sidder forrest i gågangsfart, med kun brisen mellem dig og gaden.",
+      cta: "Kør med denne afdeling",
+    },
+    pilot: {
+      title: "Træd i pedalerne",
+      body: "Piloter tager naboer med ud en time ad gangen. Bed om at være med, så vender en afdelingsadmin tilbage \u2014 som regel inden for et par dage.",
+      cta: "Søg om at være pilot her",
+      pending: "Din ansøgning ligger hos afdelingen.",
+    },
+    member: {
+      title: "Du er allerede med i denne afdeling",
+      cta: "Åbn Cycling Without Age",
+    },
+    poster: {
+      scan: "Scan og vær med",
+      or: "eller gå til",
+      slogan: "Ret til vind i håret",
+      madeWith: "Booking af Coding for Change",
+    },
+    app: {
+      title: "Kør med appen",
+      appStore: "Hent i App Store",
+      playStore: "Hent den på Google Play",
+    },
+    ride: {
+      cta: "Bestil en tur",
+      whenTitle: "Hvornår passer det dig?",
+      when: {
+        morning: "om formiddagen",
+        afternoon: "om eftermiddagen",
+        any: "når som helst",
+      },
+      confirm: "Fortsæt",
+      title: "Næsten der",
+      summary: "Du vil gerne køre med {chapter}, {when}.",
+      noDraft:
+        "Vi mistede overblikket over dit valg. Vælg et tidspunkt igen på afdelingens side.",
+      note: "Turbestilling er på vej \u2014 der er ikke sendt noget endnu.",
+      back: "Tilbage til {chapter}",
+    },
   },
   admin: {
     nav: {
@@ -386,6 +444,24 @@ const da: Dictionary = {
       promoted: "{name} er afdelingsadmin.",
       demoted: "{name} er ikke længere admin.",
       removed: "{name} er ude af afdelingen.",
+      invite: {
+        open: "Inviter nogen",
+        title: "Inviter nogen til {chapter}",
+        name: "Personens navn",
+        email: "E-mailadresse",
+        role: {
+          admin: "Afdelingsadmin",
+          pilot: "Pilot",
+        },
+        submit: "Send invitationen",
+        sent: "Invitation sendt til {name}.",
+        existing:
+          "{name} havde allerede en konto \u2014 rollen er sat, og personen har fået besked.",
+        errors: {
+          invalid: "Tjek navnet og e-mailadressen.",
+          generic: "Det virkede ikke. Prøv igen.",
+        },
+      },
       errors: {
         lastAdmin:
           "En afdeling kan ikke miste sin sidste admin. Tilføj en mere først.",
@@ -416,11 +492,15 @@ const da: Dictionary = {
       emailSent: "Der gik en e-mail ud — {template}",
       countryAdminAppointed: "{actor} gjorde personen til landeadmin",
       countryAdminRemoved: "{actor} fjernede personen som landeadmin",
+      accountCreated: "{actor} oprettede denne konto",
+      invited: "{actor} sendte en invitation",
+      accountClaimed: "Personen overtog selv kontoen",
       you: "Du",
       someone: "Nogen",
       templates: {
         approval: "Godkendt",
         rejection: "Afvist",
+        invite: "Invitation",
       },
     },
     chapters: {
@@ -437,6 +517,8 @@ const da: Dictionary = {
         latitude: "Breddegrad",
         longitude: "Længdegrad",
         serviceRadiusKm: "Hvor langt den kører (km)",
+        description: "Beskrivelse",
+        logo: "Logoets webadresse",
       },
       save: "Gem afdeling",
       cancel: "Annuller",
@@ -472,6 +554,47 @@ const da: Dictionary = {
         codeTaken: "Den landekode er taget.",
         noAccount: "Ingen med den mailadresse har en konto endnu.",
         generic: "Det virkede ikke. Prøv igen.",
+      },
+    },
+    passengers: {
+      add: {
+        open: "Tilføj en passager",
+        title: "Tilføj en passager",
+        body: "Til den, der melder sig ved døren i stedet for på en telefon. Personen kan selv overtage kontoen senere med samme e-mail eller nummer.",
+        contact: "E-mail eller telefonnummer",
+        helper: "Nogen hjælper denne person",
+        helperName: "Hjælperens navn",
+        helperRelationship: "Relation",
+        helperContact: "Hjælperens e-mail eller telefonnummer",
+        helperIsAccountHolder:
+          "Kontoen kommer til at tilhøre {helper}, som står for {passenger}.",
+        submit: "Tilføj passager",
+        added: "{name} står på listen.",
+        errors: {
+          exists: "Den e-mail eller det nummer har allerede en konto.",
+          invalid: "Tjek oplysningerne \u2014 noget passer ikke helt.",
+          generic: "Det virkede ikke. Prøv igen.",
+        },
+      },
+      columns: {
+        name: "Navn",
+        born: "Født",
+        joined: "Med siden",
+        chapter: "Afdeling",
+      },
+      empty:
+        "Ingen passagerer endnu. Tilføj den første, eller vent på, at nogen melder sig fra afdelingens side.",
+      pickChapter: "Vælg én afdeling for at tilføje en passager til den.",
+    },
+    settings: {
+      pickChapter: "Vælg en afdeling i sidemenuen for at se afdelingens link.",
+      joinLink: {
+        title: "Tilmeldingslink",
+        body: "Alle, der åbner linket, lander på afdelingens side og kan melde sig derfra. Print plakaten til opslagstavlen på plejehjemmet.",
+        copy: "Kopier link",
+        copied: "Link kopieret.",
+        poster: "Print plakaten",
+        downloadPng: "Gem QR-kode som PNG",
       },
     },
   },

@@ -8,7 +8,7 @@ import {
   stopRowClick,
   type DataTableStrings,
 } from "@/components/ui/data-table";
-import { PersonAvatar } from "./person-avatar";
+import { PersonAvatar } from "@/components/person-avatar";
 
 export type MemberRow = {
   userId: string;
@@ -17,7 +17,7 @@ export type MemberRow = {
   name: string;
   email: string;
   phone: string | null;
-  image: string | null;
+  avatar: string;
   roles: string[];
   isAdmin: boolean;
   since: string;
@@ -56,11 +56,7 @@ export function MembersTable({
       },
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <PersonAvatar
-            name={row.original.name}
-            email={row.original.email}
-            image={row.original.image}
-          />
+          <PersonAvatar svg={row.original.avatar} />
           <div className="grid">
             <Link
               href={href(row.original)}

@@ -175,6 +175,8 @@ const de: Dictionary = {
     dataSuffix: "Siehe {imprint} und {privacy}.",
     required: "Setzen Sie überall ein Häkchen, um fortzufahren.",
     joining: "Sie treten {chapter} bei.",
+    setUpBy:
+      "{name} hat dieses Konto für Sie eingerichtet. Prüfen Sie die Angaben und stimmen Sie zu, um fortzufahren.",
     error: "Das konnten wir nicht speichern. Versuchen Sie es erneut.",
   },
   profile: {
@@ -192,6 +194,17 @@ const de: Dictionary = {
     },
     forSomeoneElse:
       "Ich lege das Konto an, damit jemand anderes mitfahren kann",
+    relationship: {
+      label: "Ihre Beziehung zu der Person",
+      options: {
+        child: "Sohn oder Tochter",
+        partner: "Partnerin oder Partner",
+        relative: "Andere Angehörige",
+        carer: "Pflegeperson",
+        friend: "Freundin oder Freund",
+        other: "Anderes",
+      },
+    },
     errors: {
       incomplete: "Füllen Sie alle Felder aus, um fortzufahren.",
       birthDate: "Der Geburtstag sieht nicht richtig aus. Prüfen Sie das Jahr.",
@@ -221,6 +234,51 @@ const de: Dictionary = {
       "Übernimm deine erste Ausfahrt — beim ersten Mal fährt eine Captain mit.",
     ],
     finish: "Weiter",
+  },
+  join: {
+    eyebrow: "Cycling Without Age",
+    passenger: {
+      title: "Kommen Sie mit auf eine Ausfahrt",
+      body: "Eine Freiwillige tritt in die Pedale. Sie sitzen vorne, im Schritttempo, zwischen Ihnen und der Straße nur der Fahrtwind.",
+      cta: "Mit dieser Ortsgruppe fahren",
+    },
+    pilot: {
+      title: "In die Pedale treten",
+      body: "Piloten nehmen Nachbarn für eine Stunde mit. Fragen Sie an, und ein Admin der Ortsgruppe meldet sich \u2014 meist innerhalb weniger Tage.",
+      cta: "Hier als Pilot anfragen",
+      pending: "Ihre Anfrage liegt bei der Ortsgruppe.",
+    },
+    member: {
+      title: "Sie gehören schon zu dieser Ortsgruppe",
+      cta: "Cycling Without Age öffnen",
+    },
+    poster: {
+      scan: "Scannen und mitmachen",
+      or: "oder öffnen Sie",
+      slogan: "Recht auf Wind im Haar",
+      madeWith: "Buchung von Coding for Change",
+    },
+    app: {
+      title: "Fahren Sie mit der App",
+      appStore: "Laden im App Store",
+      playStore: "Jetzt bei Google Play",
+    },
+    ride: {
+      cta: "Ausfahrt buchen",
+      whenTitle: "Wann passt es Ihnen?",
+      when: {
+        morning: "vormittags",
+        afternoon: "nachmittags",
+        any: "jederzeit",
+      },
+      confirm: "Weiter",
+      title: "Fast geschafft",
+      summary: "Sie möchten mit {chapter} fahren, {when}.",
+      noDraft:
+        "Wir haben Ihre Auswahl verloren. Wählen Sie auf der Seite der Ortsgruppe noch einmal eine Zeit.",
+      note: "Die Buchung kommt bald \u2014 abgeschickt wurde noch nichts.",
+      back: "Zurück zu {chapter}",
+    },
   },
   admin: {
     // du-Form: Das Admin-Dashboard richtet sich an Organisatoren und
@@ -403,6 +461,24 @@ const de: Dictionary = {
       promoted: "{name} ist Ortsgruppen-Admin.",
       demoted: "{name} ist kein Admin mehr.",
       removed: "{name} ist nicht mehr in der Ortsgruppe.",
+      invite: {
+        open: "Jemanden einladen",
+        title: "Jemanden zu {chapter} einladen",
+        name: "Name der Person",
+        email: "E-Mail-Adresse",
+        role: {
+          admin: "Ortsgruppen-Admin",
+          pilot: "Pilot",
+        },
+        submit: "Einladung senden",
+        sent: "Einladung an {name} verschickt.",
+        existing:
+          "{name} hatte schon ein Konto \u2014 die Rolle sitzt, und die Person hat Bescheid bekommen.",
+        errors: {
+          invalid: "Prüf den Namen und die E-Mail-Adresse.",
+          generic: "Das hat nicht geklappt. Versuch es noch mal.",
+        },
+      },
       errors: {
         lastAdmin:
           "Eine Ortsgruppe kann nicht ihren letzten Admin verlieren. Füge zuerst einen weiteren hinzu.",
@@ -434,11 +510,15 @@ const de: Dictionary = {
       countryAdminAppointed:
         "{actor} hat diese Person zum Länder-Admin gemacht",
       countryAdminRemoved: "{actor} hat diese Person als Länder-Admin abgelöst",
+      accountCreated: "{actor} hat dieses Konto angelegt",
+      invited: "{actor} hat eine Einladung geschickt",
+      accountClaimed: "Diese Person hat das Konto übernommen",
       you: "Du",
       someone: "Jemand",
       templates: {
         approval: "Freigegeben",
         rejection: "Abgelehnt",
+        invite: "Einladung",
       },
     },
     chapters: {
@@ -455,6 +535,8 @@ const de: Dictionary = {
         latitude: "Breitengrad",
         longitude: "Längengrad",
         serviceRadiusKm: "Wie weit sie fährt (km)",
+        description: "Beschreibung",
+        logo: "Webadresse des Logos",
       },
       save: "Ortsgruppe speichern",
       cancel: "Abbrechen",
@@ -490,6 +572,49 @@ const de: Dictionary = {
         codeTaken: "Dieser Ländercode ist schon belegt.",
         noAccount: "Zu dieser E-Mail-Adresse gibt es noch kein Konto.",
         generic: "Das hat nicht geklappt. Versuch es noch mal.",
+      },
+    },
+    passengers: {
+      add: {
+        open: "Passagier hinzufügen",
+        title: "Passagier hinzufügen",
+        body: "Für alle, die sich an der Tür anmelden statt am Handy. Das Konto können sie später mit derselben E-Mail oder Nummer selbst übernehmen.",
+        contact: "E-Mail oder Telefonnummer",
+        helper: "Jemand unterstützt diese Person",
+        helperName: "Name der helfenden Person",
+        helperRelationship: "Beziehung",
+        helperContact: "E-Mail oder Telefonnummer der helfenden Person",
+        helperIsAccountHolder:
+          "Dieses Konto gehört dann {helper}, die sich um {passenger} kümmert.",
+        submit: "Passagier hinzufügen",
+        added: "{name} steht auf der Liste.",
+        errors: {
+          exists: "Zu dieser E-Mail oder Nummer gibt es schon ein Konto.",
+          invalid: "Prüf die Angaben \u2014 da stimmt etwas nicht.",
+          generic: "Das hat nicht geklappt. Versuch es noch mal.",
+        },
+      },
+      columns: {
+        name: "Name",
+        born: "Geboren",
+        joined: "Dabei seit",
+        chapter: "Ortsgruppe",
+      },
+      empty:
+        "Noch keine Passagiere. Füg den ersten hinzu, oder warte, bis sich jemand über die Seite der Ortsgruppe meldet.",
+      pickChapter:
+        "Wähl eine einzelne Ortsgruppe, um ihr einen Passagier hinzuzufügen.",
+    },
+    settings: {
+      pickChapter:
+        "Wähl links eine Ortsgruppe, um ihren Beitrittslink zu sehen.",
+      joinLink: {
+        title: "Beitrittslink",
+        body: "Wer diesen Link öffnet, landet auf der Seite deiner Ortsgruppe und kann von dort beitreten. Druck das Plakat für die Wand im Pflegeheim.",
+        copy: "Link kopieren",
+        copied: "Link kopiert.",
+        poster: "Plakat drucken",
+        downloadPng: "QR-Code als PNG speichern",
       },
     },
   },

@@ -7,12 +7,13 @@ import { activity } from "@/features/activity";
 import { membership } from "@/features/membership";
 import { profile } from "@/features/profile";
 import type { ChapterRole } from "@/lib/access";
+import { avatarSvg } from "@/lib/avatar";
 import { formatDate, resolveLocale } from "@/lib/format";
 import { getDictionary } from "@/lib/i18n";
 import { fill } from "@/lib/utils";
 import { readActiveScope } from "../../../active-scope";
 import { MemberMenu } from "../../_components/member-menu";
-import { PersonAvatar } from "../../_components/person-avatar";
+import { PersonAvatar } from "@/components/person-avatar";
 import { ActivityFeed } from "./activity-feed";
 
 export async function PersonBody({
@@ -76,10 +77,8 @@ export async function PersonBody({
 
       <header className="flex flex-wrap items-center gap-4">
         <PersonAvatar
-          name={person.name}
-          email={person.email}
-          image={person.image}
-          size="lg"
+          svg={avatarSvg(userId, true)}
+          className="size-16"
         />
         <div className="grid gap-1">
           <h1 className="text-2xl tracking-tight md:text-3xl">{name}</h1>

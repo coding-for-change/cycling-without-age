@@ -15,16 +15,18 @@ export async function completeOnboardingProfile({
   role,
   details,
   locale,
+  helperRelationship,
 }: {
   userId: string;
   role: OnboardingRole;
   details: PersonalDetailsInput | null;
   locale: string | null;
+  helperRelationship?: string;
 }) {
   const chapterId = await chapterOf(userId, role);
 
   if (!details) {
-    await profile.markManagesOthers(userId);
+    await profile.markManagesOthers(userId, helperRelationship);
   } else {
     await profile.setPersonalDetails(userId, details);
     if (role === "passenger" && chapterId) {

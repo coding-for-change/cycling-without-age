@@ -18,6 +18,7 @@ import { getLocale } from "@/lib/i18n";
 import { getEmailStrings } from "@/emails/strings";
 import { OtpEmail } from "@/emails/otp";
 import { sendSms } from "@/lib/sms";
+import { phoneTempEmail } from "@/lib/identity";
 import { buildSessionAccess } from "@/use-cases/build-session-access";
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
@@ -90,9 +91,7 @@ export const auth = betterAuth({
       sendOTP: async ({ phoneNumber: to, code }) => {
         await sendSms(to, `Your Cycling Without Age code is ${code}.`);
       },
-      signUpOnVerification: {
-        getTempEmail: (phone) => `${phone.replace(/\D/g, "")}@phone.cwa.local`,
-      },
+      signUpOnVerification: { getTempEmail: phoneTempEmail },
     }),
     passkey({ rpName: "Cycling Without Age" }),
     admin({

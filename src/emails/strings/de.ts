@@ -68,6 +68,20 @@ const de: EmailStrings = {
     footer:
       "Du erhältst diese E-Mail, weil du dich als Pilot für eine Cycling-Without-Age-Ortsgruppe beworben hast.",
   },
+  invite: {
+    subject: "Du bist zu {chapter} eingeladen",
+    preview: "Eine Ortsgruppe wartet auf dich",
+    heading: "Du bist eingeladen",
+    intro: "{inviter} hat dich als {role} zu {chapter} eingeladen.",
+    how: "Melde dich mit dieser E-Mail-Adresse an, wir schicken dir einen Code \u2014 kein Passwort zum Ausdenken.",
+    cta: "Einladung annehmen",
+    footer:
+      "Du erhältst diese E-Mail, weil dich eine Admin einer Cycling-Without-Age-Ortsgruppe eingeladen hat.",
+  },
+  roles: {
+    admin: "Ortsgruppen-Admin",
+    pilot: "Pilot",
+  },
 };
 
 export default de;

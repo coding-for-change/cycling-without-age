@@ -14,7 +14,7 @@ import {
   type DecisionLabels,
   type DecisionTarget,
 } from "./decision-dialog";
-import { PersonAvatar } from "./person-avatar";
+import { PersonAvatar } from "@/components/person-avatar";
 import type { NotifyLabels } from "../../_components/action-feedback";
 
 export type RequestRow = {
@@ -23,7 +23,7 @@ export type RequestRow = {
   name: string;
   email: string;
   phone: string | null;
-  image: string | null;
+  avatar: string;
   message: string | null;
   chapterName: string;
   applied: string;
@@ -69,11 +69,7 @@ export function RequestsTable({
       },
       cell: ({ row }) => (
         <div className="flex items-start gap-3">
-          <PersonAvatar
-            name={row.original.name}
-            email={row.original.email}
-            image={row.original.image}
-          />
+          <PersonAvatar svg={row.original.avatar} />
           <div className="grid">
             <span className="font-medium">
               {row.original.name || row.original.email}

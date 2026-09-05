@@ -13,6 +13,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { requireAdminScope } from "@/lib/auth-guards";
+import { avatarSvg } from "@/lib/avatar";
 import { headers } from "next/headers";
 import { resolveLocale } from "@/lib/format";
 import { getDictionary } from "@/lib/i18n";
@@ -95,7 +96,8 @@ export async function AdminSidebar() {
         <AdminUserMenu
           name={session.user.name}
           email={session.user.email}
-          image={session.user.image}
+          avatar={avatarSvg(session.user.id)}
+          avatarAnimated={avatarSvg(session.user.id, true)}
           strings={{
             ...dict.admin.user,
             signOut: dict.common.signOut,

@@ -163,6 +163,8 @@ const en = {
     dataSuffix: "See the {imprint} and the {privacy}.",
     required: "Tick all of them to continue.",
     joining: "You're joining {chapter}.",
+    setUpBy:
+      "{name} set this account up for you. Check the details and agree to continue.",
     error: "We couldn't save that. Try again.",
   },
   profile: {
@@ -179,6 +181,17 @@ const en = {
       other: "Other",
     },
     forSomeoneElse: "I'm creating this account for someone else to ride",
+    relationship: {
+      label: "Your relationship to them",
+      options: {
+        child: "Son or daughter",
+        partner: "Partner",
+        relative: "Another relative",
+        carer: "Carer",
+        friend: "Friend",
+        other: "Other",
+      },
+    },
     errors: {
       incomplete: "Fill in every field to continue.",
       birthDate: "That birthday doesn't look right. Check the year.",
@@ -206,6 +219,51 @@ const en = {
       "Grab your first ride — a captain rides along the first time.",
     ],
     finish: "Next",
+  },
+  join: {
+    eyebrow: "Cycling Without Age",
+    passenger: {
+      title: "Come along for a ride",
+      body: "A volunteer does the pedalling. You sit at the front, at walking pace, with nothing between you and the street.",
+      cta: "Ride with this chapter",
+    },
+    pilot: {
+      title: "Do the pedalling",
+      body: "Pilots take neighbours out for an hour at a time. Ask to join and a chapter admin gets back to you, usually within a few days.",
+      cta: "Ask to pilot here",
+      pending: "Your request is with the chapter.",
+    },
+    member: {
+      title: "You're already part of this chapter",
+      cta: "Open Cycling Without Age",
+    },
+    poster: {
+      scan: "Scan to join",
+      or: "or go to",
+      slogan: "The right to wind in your hair",
+      madeWith: "Booking by Coding for Change",
+    },
+    app: {
+      title: "Ride with the app",
+      appStore: "Download on the App Store",
+      playStore: "Get it on Google Play",
+    },
+    ride: {
+      cta: "Book a ride",
+      whenTitle: "When suits you?",
+      when: {
+        morning: "mornings",
+        afternoon: "afternoons",
+        any: "any time",
+      },
+      confirm: "Continue",
+      title: "Almost there",
+      summary: "You'd like to ride with {chapter}, {when}.",
+      noDraft:
+        "We lost track of what you picked. Choose a time again on the chapter's page.",
+      note: "Ride booking is coming soon \u2014 nothing has been sent yet.",
+      back: "Back to {chapter}",
+    },
   },
   admin: {
     nav: {
@@ -384,6 +442,24 @@ const en = {
       promoted: "{name} is a chapter admin.",
       demoted: "{name} is no longer an admin.",
       removed: "{name} has left the chapter.",
+      invite: {
+        open: "Invite someone",
+        title: "Invite someone to {chapter}",
+        name: "Their name",
+        email: "Email address",
+        role: {
+          admin: "Chapter admin",
+          pilot: "Pilot",
+        },
+        submit: "Send the invitation",
+        sent: "Invitation sent to {name}.",
+        existing:
+          "{name} already had an account \u2014 the role is set and they were told.",
+        errors: {
+          invalid: "Check the name and the email address.",
+          generic: "That didn't work. Try again.",
+        },
+      },
       errors: {
         lastAdmin:
           "A chapter can't lose its last admin. Add another one first.",
@@ -414,11 +490,15 @@ const en = {
       emailSent: "An email went out — {template}",
       countryAdminAppointed: "{actor} made this person a country admin",
       countryAdminRemoved: "{actor} stepped this person down as country admin",
+      accountCreated: "{actor} set this account up",
+      invited: "{actor} sent an invitation",
+      accountClaimed: "This person took the account over",
       you: "You",
       someone: "Someone",
       templates: {
         approval: "Approved",
         rejection: "Turned down",
+        invite: "Invitation",
       },
     },
     chapters: {
@@ -435,6 +515,8 @@ const en = {
         latitude: "Latitude",
         longitude: "Longitude",
         serviceRadiusKm: "How far it rides (km)",
+        description: "Description",
+        logo: "Logo web address",
       },
       save: "Save chapter",
       cancel: "Cancel",
@@ -470,6 +552,47 @@ const en = {
         codeTaken: "That country code is taken.",
         noAccount: "Nobody with that email address has an account yet.",
         generic: "That didn't work. Try again.",
+      },
+    },
+    passengers: {
+      add: {
+        open: "Add a passenger",
+        title: "Add a passenger",
+        body: "For someone who signs up at the door rather than on a phone. They can take the account over later with the same email or number.",
+        contact: "Email or phone number",
+        helper: "Someone helps this person",
+        helperName: "Their name",
+        helperRelationship: "Relationship",
+        helperContact: "Their email or phone number",
+        helperIsAccountHolder:
+          "This account will belong to {helper}, who manages {passenger}.",
+        submit: "Add passenger",
+        added: "{name} is on the list.",
+        errors: {
+          exists: "That email or number already has an account.",
+          invalid: "Check the details \u2014 something isn't quite right.",
+          generic: "That didn't work. Try again.",
+        },
+      },
+      columns: {
+        name: "Name",
+        born: "Born",
+        joined: "Joined",
+        chapter: "Chapter",
+      },
+      empty:
+        "No passengers yet. Add the first one, or wait for someone to join from the chapter's page.",
+      pickChapter: "Pick a single chapter to add a passenger to it.",
+    },
+    settings: {
+      pickChapter: "Pick a chapter in the sidebar to see its join link.",
+      joinLink: {
+        title: "Join link",
+        body: "Anyone who opens this link lands on your chapter's page and can join from there. Print the poster for the care home wall.",
+        copy: "Copy link",
+        copied: "Link copied.",
+        poster: "Print the poster",
+        downloadPng: "Save QR code as PNG",
       },
     },
   },

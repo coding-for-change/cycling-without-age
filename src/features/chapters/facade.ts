@@ -77,14 +77,10 @@ export async function createChapter(input: ChapterInput) {
 }
 
 // A chapter belongs to exactly one country for life — moving it would silently
-// re-scope every country admin's authority over it, so countryId is not updatable.
-export async function updateChapter(id: string, input: ChapterUpdateInput) {
-  const data = chapterUpdateInput.parse(input);
-  if (data.slug) {
-    const clash = await findChapterBySlug(data.slug);
-    if (clash && clash.id !== id) throw new Error("Slug already taken");
-  }
-  return updateChapterById(id, data);
+// re-scope every country admin's authority over it — and the slug is printed on
+// posters, so neither is updatable.
+export function updateChapter(id: string, input: ChapterUpdateInput) {
+  return updateChapterById(id, chapterUpdateInput.parse(input));
 }
 
 export type NearestChapter = {

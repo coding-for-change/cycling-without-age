@@ -24,6 +24,8 @@ export type ChapterRow = {
   countryName: string;
   address: string | null;
   careHomeName: string | null;
+  description: string | null;
+  logo: string | null;
   latitude: number;
   longitude: number;
   serviceRadiusKm: number;

@@ -65,6 +65,20 @@ const da: EmailStrings = {
     footer:
       "Du modtager denne e-mail, fordi du har søgt om at være pilot i en Cycling Without Age-afdeling.",
   },
+  invite: {
+    subject: "Du er inviteret til {chapter}",
+    preview: "En afdeling venter på dig",
+    heading: "Du er inviteret",
+    intro: "{inviter} har inviteret dig til {chapter} som {role}.",
+    how: "Log ind med denne e-mailadresse, så sender vi dig en kode \u2014 du skal ikke finde på en adgangskode.",
+    cta: "Tag imod invitationen",
+    footer:
+      "Du modtager denne e-mail, fordi en afdelingsadmin i Cycling Without Age har inviteret din adresse.",
+  },
+  roles: {
+    admin: "afdelingsadmin",
+    pilot: "pilot",
+  },
 };
 
 export default da;

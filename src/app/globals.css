@@ -528,3 +528,10 @@
     opacity: 0.28;
   }
 }
+
+/* The printable chapter poster (/join/[slug]/poster) is the app's only print
+   surface: A4 edge to edge, its own 16mm gutter drawn by the page itself. */
+@page {
+  size: A4;
+  margin: 0;
+}

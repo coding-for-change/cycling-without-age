@@ -27,8 +27,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { chapterInput, type ChapterInput } from "@/features/chapters/schemas";
-import { fill } from "@/lib/utils";
+import { cn, fill } from "@/lib/utils";
 import { notify, type NotifyLabels } from "../../_components/action-feedback";
 import { createChapterAction, updateChapterAction } from "../actions";
 import type { ChapterRow } from "./chapters-table";
@@ -47,6 +48,8 @@ export type ChapterFormLabels = {
     city: string;
     address: string;
     careHomeName: string;
+    description: string;
+    logo: string;
     latitude: string;
     longitude: string;
     serviceRadiusKm: string;
@@ -61,10 +64,12 @@ function TextField({
   control,
   name,
   label,
+  readOnly,
 }: {
   control: Control<ChapterInput>;
   name: TextName;
   label: string;
+  readOnly?: boolean;
 }) {
   return (
     <FormField
@@ -77,8 +82,12 @@ function TextField({
             <Input
               {...field}
               value={field.value ?? ""}
+              readOnly={readOnly}
               autoComplete="off"
-              className="h-11 border-line text-base"
+              className={cn(
+                "h-11 border-line text-base",
+                readOnly && "bg-canvas-deep text-ink-soft",
+              )}
             />
           </FormControl>
           <FormMessage />
@@ -160,6 +169,8 @@ export function ChapterFormDialog({
           city: chapter.city,
           address: chapter.address ?? "",
           careHomeName: chapter.careHomeName ?? "",
+          description: chapter.description ?? "",
+          logo: chapter.logo ?? undefined,
           latitude: chapter.latitude,
           longitude: chapter.longitude,
           serviceRadiusKm: chapter.serviceRadiusKm,
@@ -171,6 +182,7 @@ export function ChapterFormDialog({
           city: "",
           address: "",
           careHomeName: "",
+          description: "",
         },
   });
 
@@ -180,16 +192,20 @@ export function ChapterFormDialog({
       ? countries[0].name
       : null;
 
-  const submit = form.handleSubmit((values) => {
+  const submit = form.handleSubmit(({ slug, countryId, ...values }) => {
+    // ponytail: a logo can only be cleared in the DB — z.url() rejects "", so a
+    // blanked field reads as "unchanged". Upgrade path is a nullable logo field.
     const payload = {
       ...values,
       address: values.address || undefined,
       careHomeName: values.careHomeName || undefined,
+      description: values.description ?? "",
+      logo: values.logo || undefined,
     };
     startTransition(async () => {
       const result = chapter
         ? await updateChapterAction(chapter.id, payload)
-        : await createChapterAction(payload);
+        : await createChapterAction({ ...payload, slug, countryId });
       notify(result, {
         done: chapter
           ? labels.saved
@@ -282,6 +298,52 @@ export function ChapterFormDialog({
                   label={labels.fields.address}
                 />
               </div>
+              <div className="sm:col-span-2">
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{labels.fields.description}</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          value={field.value ?? ""}
+                          maxLength={600}
+                          rows={3}
+                          className="border-line text-base"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <FormField
+                  control={form.control}
+                  name="logo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{labels.fields.logo}</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="url"
+                          inputMode="url"
+                          value={field.value ?? ""}
+                          onChange={(event) =>
+                            field.onChange(event.target.value || undefined)
+                          }
+                          autoComplete="off"
+                          className="h-11 border-line text-base"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <NumberField
                 control={form.control}
                 name="latitude"
@@ -304,6 +366,7 @@ export function ChapterFormDialog({
                 control={form.control}
                 name="slug"
                 label={labels.fields.slug}
+                readOnly={chapter !== null}
               />
             </div>
 

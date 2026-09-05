@@ -14,7 +14,7 @@ export type FeedEvent = {
 export type HistoryLabels = Record<ActivityType, string> & {
   you: string;
   someone: string;
-  templates: { approval: string; rejection: string };
+  templates: Record<string, string>;
 };
 
 const strings = (payload: unknown): Record<string, string> =>
@@ -51,9 +51,7 @@ export function ActivityFeed({
             ? labels.you
             : (event.actor?.name ?? labels.someone);
         const template =
-          payload.template === "rejection"
-            ? labels.templates.rejection
-            : labels.templates.approval;
+          labels.templates[payload.template] ?? labels.templates.approval;
 
         return (
           <li

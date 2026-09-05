@@ -28,10 +28,22 @@ export const findPassengersManagedBy = (managedByUserId: string) =>
     orderBy: { createdAt: "asc" },
   });
 
-export const findPassengersOfChapter = (chapterId: string) =>
+export const findPassengersOfChapters = (chapterIds: string[]) =>
   prisma.passenger.findMany({
-    where: { chapterId },
+    where: { chapterId: { in: chapterIds } },
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      birthDate: true,
+      gender: true,
+      userId: true,
+      chapterId: true,
+      createdAt: true,
+      chapter: { select: { name: true } },
+      user: { select: { email: true, phoneNumber: true, image: true } },
+    },
   });
 
 export const countPassengersManagedBy = (managedByUserId: string) =>

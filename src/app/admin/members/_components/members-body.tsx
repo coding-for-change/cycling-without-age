@@ -7,12 +7,14 @@ import {
 } from "@/components/ui/empty";
 import { membership } from "@/features/membership";
 import { parseRoles, type ChapterRole } from "@/lib/access";
+import { avatarSvg } from "@/lib/avatar";
 import { formatDate, formatNumber, resolveLocale } from "@/lib/format";
 import { getDictionary } from "@/lib/i18n";
 import { fill } from "@/lib/utils";
 import { AdminPageHeader } from "../../_components/admin-page";
 import { ICONS } from "../../_components/icons";
 import { readActiveScope } from "../../active-scope";
+import { InviteDialog } from "./invite-dialog";
 import { MembersTable, type MemberRow } from "./members-table";
 import { RequestsTable, type RequestRow } from "./requests-table";
 
@@ -49,7 +51,7 @@ export async function MembersBody({
     name: application.user.name,
     email: application.user.email,
     phone: application.user.phoneNumber,
-    image: application.user.image,
+    avatar: avatarSvg(application.userId),
     message: application.message,
     chapterName: application.chapter.name,
     applied: formatDate(application.createdAt, notation),
@@ -67,7 +69,7 @@ export async function MembersBody({
       name: member.user.name,
       email: member.user.email,
       phone: member.user.phoneNumber,
-      image: member.user.image,
+      avatar: avatarSvg(member.userId),
       roles: roles.map(roleLabel),
       isAdmin: roles.includes("admin"),
       since: formatDate(member.createdAt, notation),
@@ -79,7 +81,16 @@ export async function MembersBody({
 
   return (
     <>
-      <AdminPageHeader title={dict.admin.pages.members.title} />
+      <AdminPageHeader title={dict.admin.pages.members.title}>
+        {active.kind === "chapter" ? (
+          <InviteDialog
+            chapterId={active.chapter.id}
+            chapterName={active.chapter.name}
+            roleLabel={dict.admin.members.columns.role}
+            labels={dict.admin.members.invite}
+          />
+        ) : null}
+      </AdminPageHeader>
 
       {requests.length > 0 ? (
         <RequestsTable

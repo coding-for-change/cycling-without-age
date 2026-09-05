@@ -1,5 +1,6 @@
 import { Suspense, type ReactNode } from "react";
 import { redirect } from "next/navigation";
+import { accounts } from "@/features/accounts";
 import { chapters } from "@/features/chapters";
 import { passengers } from "@/features/passengers";
 import { profile } from "@/features/profile";
@@ -41,6 +42,7 @@ export type StepContext = {
    *  than an empty form they have to fill in again. */
   defaults: StepDefaults;
   presetChapterName: string | null;
+  claimBanner: string | null;
   dict: Dictionary;
 };
 
@@ -73,11 +75,12 @@ async function Resolve({
   const session = await requireAuth();
   const preset = await readJoinPreset();
 
-  const [state, dict, account, rider] = await Promise.all([
+  const [state, dict, account, rider, claimBanner] = await Promise.all([
     getOnboardingState(session.user.id, preset),
     getDictionary(),
     profile.getProfile(session.user.id),
     passengers.getOwnPassenger(session.user.id),
+    accounts.getClaimBanner(session.user.id),
   ]);
   const { progress } = state;
 
@@ -100,6 +103,7 @@ async function Resolve({
   return render({
     role: progress.role ?? "passenger",
     presetChapterName,
+    claimBanner,
     defaults: {
       firstName: name.firstName,
       lastName: name.lastName,

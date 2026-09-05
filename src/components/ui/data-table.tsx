@@ -124,7 +124,7 @@ export function DataTable<TData>({
   strings: DataTableStrings;
   searchable?: boolean;
   filters?: DataTableFilter[];
-  rowHref?: (row: TData) => string;
+  rowHref?: (row: TData) => string | undefined;
   initialHidden?: string[];
   getRowId?: (row: TData) => string;
 }) {
