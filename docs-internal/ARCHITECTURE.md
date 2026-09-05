@@ -37,6 +37,7 @@ src/
 │       ├── services/     # "Dumb" data access/DB queries.
 │       ├── facade.ts     # FEATURE BRAIN: Internal orchestration.
 │       ├── actions.ts    # Server Actions for this feature.
+│       ├── commands.ts   # ⌘K entries this slice contributes to the admin palette.
 │       ├── index.ts      # PUBLIC API: Export ONLY the Facade and Components.
 │       └── schemas.ts    # Contracts: Zod schemas and TS types.
 ├── components/           # ATOMIC UI: Shared, stateless shadcn components.
@@ -101,17 +102,20 @@ dynamic roles, every check is server-side, in `lib/auth-guards.ts`.
 access: { role, countryAdminOf: countryId[], memberships: [{ chapterId, roles[] }] }
 ```
 
-Guards read that object, so they never query the DB per request. The single exception is
+Guards read that object, so they mostly never query the DB per request. Two exceptions:
 `requireChapterAdmin`, which resolves the chapter's `countryId` (one indexed lookup)
-only after the membership check has already failed — a country admin is not a member.
+only after the membership check has already failed — a country admin is not a member —
+and `requireAdminScope`, which needs the country and chapter rows to name what the
+person administers (see [Admin shell](#admin-shell-cod-172)).
 
 ### Guards (`lib/auth-guards.ts`)
 
-`requireAuth`, `requireSuperAdmin`, `requireCountryAdmin(countryId)`,
+`getSession`, `requireAuth`, `requireSuperAdmin`, `requireCountryAdmin(countryId)`,
 `requireChapterAdmin(chapterId)`, `requireChapterRole(chapterId, role)`,
-`getHighestRole(session)`. Each higher guard satisfies the lower ones: superadmin passes
-everything; a country admin passes chapter-admin checks for chapters **in their own
-country only**. The predicates behind them are pure and live in `lib/access.ts`, which imports nothing.
+`requireAdminScope()`, `getHighestRole(session)`. Each higher guard satisfies the lower
+ones: superadmin passes everything; a country admin passes chapter-admin checks for
+chapters **in their own country only**. The predicates behind them are pure and live in
+`lib/access.ts`, which imports nothing.
 
 `npm test` (Jest, via `next/jest`) covers the whole chain: `lib/access.test.ts` for the
 pure predicates, `lib/auth-guards.test.ts` for the guards, `use-cases/build-session-access.test.ts`
@@ -157,3 +161,136 @@ duplication, marked in the schema.
 `Organization.serviceRadiusKm` (default 10) is how far a chapter will ride from its own
 position. Per chapter rather than a constant — a rural chapter covers more ground than a city
 one, and the number is a policy, not a fact about geography.
+
+## Command bar (COD-172)
+
+`src/lib/commands.ts` is the registry contract for the ⌘K palette: `IconKey`,
+`CommandActionId`, `ScopeArg`, `CommandRun`, `CommandGroup`, `CommandEntry`,
+`CommandContributor` and `ResolvedCommand`, plus `collectCommands` (filter by scope, drop
+the predicate, hand back the serializable form) and `groupCommands` (bucket the resolved
+commands into `COMMAND_GROUP_ORDER` for rendering, skipping empty groups).
+
+### Entries are data, not closures
+
+Entries are collected on the server and handed to a Client Component, so nothing on a
+`CommandEntry` may be a function or a component. `label` is an already-resolved string, not
+a dictionary key. `run` is declarative data — `{ kind: "navigate", href }` or
+`{ kind: "action", id, arg }` — that the client turns into a `router.push`, a
+`toggleSidebar()`, a `setLocale()` or a sign-out. The icon travels as an `IconKey`, never as
+a component; `src/app/admin/_components/icons.ts` holds the `Record<IconKey, LucideIcon>`,
+which makes a key nobody drew a type error there rather than a blank row in the palette.
+
+`visible` is the one member that never crosses the boundary. It is a predicate over
+`AdminScope` rather than a role name, so a command hides on exactly the same condition as
+the nav row it belongs to; `collectCommands` applies it and strips it.
+
+### What a slice contributes
+
+A slice exports `commands: CommandContributor` from `src/features/<name>/commands.ts`. The
+contributor takes the `Dictionary`, because labels are resolved server-side — the palette
+receives finished strings, never keys. A slice reuses `admin.nav.*` for a destination it
+owns instead of inventing a second wording for the same row, which is also what keeps the
+sidebar label and the palette label from drifting apart.
+
+`commands.ts` is now part of a slice's public surface, alongside `facade.ts` and
+`index.ts`: the `feature-facade` element pattern in `eslint.config.mjs` is
+`src/features/*/{facade,index,commands}.ts`, which is what lets `src/app` import it without
+tripping `boundaries/dependencies`. Do **not** re-export it through `index.ts` — that file
+stays the facade's door ("export ONLY the Facade and Components"), and a presentation
+registry has no business behind it.
+
+### How the shell assembles them
+
+`src/app/admin/commands.ts` owns `adminCommands(dict, scope, ctx)`. Its `staticEntries`
+walks `NAV` (`src/app/admin/nav.ts`) rather than concatenating whatever the slices happen to
+export: a slice **claims** a row by href, and the shell fills in every row nobody claimed
+(label from `admin.nav.*`, icon and `visible` from the `NAV` row itself). That makes "every
+destination is in the palette, exactly once, in sidebar order" structural instead of a
+convention, and it means a slice only writes a `commands.ts` when it has something the row
+alone does not say — search keywords, or a verb that is not a destination. Anything a slice
+contributes that matches no row still comes through, so a typo'd href surfaces in the parity
+test instead of vanishing.
+
+The shell owns the groups no slice does: the `create` entry, the perspective switch (from
+`PERSPECTIVE_HOME`, suppressed when there is only one hat to wear), the scope list (from
+`scopeChoices`, the same builder the sidebar switcher renders, suppressed when there is only
+one choice) and the account group (languages other than the active one, sidebar toggle, sign
+out).
+
+`src/app/admin/commands.test.ts` asserts sidebar/palette parity: for a superadmin, a country
+admin, a chapter admin and a stacked country-plus-chapter admin, the palette's navigate
+hrefs equal `navFor(scope)` exactly — same set, same order, same icons. That test is what
+makes the two-file split (`nav.ts` for the sidebar, `commands.ts` for the palette) safe.
+
+## Admin shell (COD-172)
+
+### Authority sets breadth, the switcher narrows
+
+`/admin/members` means "every member I have authority over": one chapter for a chapter
+admin, a whole country for a country admin, everything for a superadmin. Narrowing rides on
+a query param — `?chapter=<slug>` or `?country=<code>` — not on a URL segment.
+
+A `/admin/[chapter]/…` tree was the obvious alternative and was rejected: a country admin
+needs a country-wide members view, so a chapter segment would have made the common case the
+special case, and every entry into the dashboard would have had to redirect to *some*
+chapter first. With the param, the default view is the widest one the person is entitled to
+and the switcher is an optional filter on top of it.
+
+The pure half lives in `lib/access.ts`, which imports nothing:
+
+- `hasAnyAdminScope(access)` — is there any admin surface for this person at all.
+- `adminChapterIds(access)` — the chapters they administer directly.
+- `resolveAdminScope(access, countries, chapters)` → `AdminScope`: the reachable countries
+  and chapters, plus `canSeeChapters` / `canSeeCountries`, which is what the nav and command
+  `visible` predicates read. A superadmin gets every chapter unconditionally rather than via
+  the country list.
+- `defaultActiveScope(scope)` → `ActiveScope`, what "no param" means. A country is the
+  default only when it covers every chapter in reach, so a Denmark country admin who also
+  runs one German chapter does not open onto a view that silently omits it.
+- `resolveActiveScope(scope, params)` → `ActiveScope | null`. Case-folded on both sides, so
+  a mis-capitalised link reads as a typo rather than as an access failure.
+- `availablePerspectives(access)` → which hats (`Perspective`) the switcher offers, read off
+  the membership rows rather than from `getHighestRole`, which collapses a stack to its top
+  entry. `PERSPECTIVE_HOME` in `lib/redirects.ts` says where each hat lives; `HOME_BY_ROLE`
+  next to it answers the different question of where an account belongs after sign-in.
+
+### `resolveActiveScope` returning `null` is the open thread
+
+`null` means the requested narrowing is outside the caller's authority. **No page consumes
+it yet** — the shell only renders the list of scopes the person is already allowed, so today
+a hand-typed param can at worst mislabel a breadcrumb. **The first page that reads real data
+through `?chapter=` / `?country=` must turn that `null` into `forbidden()`.** Reading the
+param and quietly falling back to the default scope instead would make it an escalation
+path: a chapter admin appending `?country=DK` would get a country-wide answer.
+`lib/access.test.ts` already pins every `null` case; the page-level handling is what does not
+exist yet.
+
+### Why the active scope is resolved in the browser
+
+A Layout cannot read `searchParams`. So the server supplies only what it can know without
+the URL — the list of *allowed* scopes (`scopeChoices`) and the default (`defaultScopeArg`,
+mirroring `defaultActiveScope`) — and `ScopeSwitcher` and `AdminTopBar` read the actual
+narrowing off the URL client-side with `readScopeArg`. A label resolved server-side would
+keep saying "München" after someone widened to the whole country. `scopeHref` rewrites the
+query on the current pathname, because narrowing keeps you on the page you are looking at
+rather than navigating away; the switcher and the palette's `scope.set` action share that one
+helper.
+
+### The gate is called twice, on purpose
+
+`requireAdminScope()` is the gate for the dashboard as a whole: anyone who administers
+*something* gets in, and what they administer comes back with them as `AdminScope`. It is
+`cache()`d per request, and it is called by all three of the shell's streamed children
+(`AdminSidebar`, `AdminChrome`, `AdminCommandBar`) **and again underneath the layout**, in
+`AdminPageBody` — because a Layout is not a security boundary in Next. Keeping that re-check
+in the shared page body rather than in each of the eleven pages makes it impossible to forget
+when a twelfth is added.
+
+Every piece of that chrome reads the session, and under `cacheComponents` a request read
+cannot be prerendered, so each one streams behind its own `<Suspense>` and the static shell
+is just the ground and the content card. `sidebar_state` is deliberately not read in the
+layout: it would make the ground dynamic to save a single frame of animation.
+
+`requireAdminScope` currently scans all countries and all chapters per request (deduped by
+`cache`). That is marked in the source as a known ceiling: at a few hundred chapters it
+should resolve only the scope's own rows instead.

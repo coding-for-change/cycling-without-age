@@ -22,7 +22,7 @@ Imports must only flow downward. Violation of these rules is a build-breaking er
 
 ### THE BOUNDARY LAYER (`src/features/*/actions.ts` & `src/app/**/actions.ts`)
 - **Role**: Server-action transport. The single entry point from Client Components into the server.
-- **Responsibilities**: auth checks (via `lib/auth-guards`, once auth exists), `revalidatePath`/`revalidateTag`, response shaping for the UI.
+- **Responsibilities**: auth checks (via `lib/auth-guards` — `requireAuth`, `requireSuperAdmin`, `requireCountryAdmin`, `requireChapterAdmin`, `requireChapterRole`, `requireAdminScope`), `revalidatePath`/`revalidateTag`, response shaping for the UI.
 - **Law**: Calls a Use Case (cross-feature) OR a Facade directly (single-feature). Never calls Services or DB.
 - **Rule of thumb**: If the work touches only one feature, the Action calls the Facade directly. A Use Case is only created when the Action would have to coordinate two or more Facades.
 
@@ -40,7 +40,7 @@ Imports must only flow downward. Violation of these rules is a build-breaking er
 
 ### CROSS-CUTTING INFRASTRUCTURE (`src/lib/`)
 - **Role**: Shared infrastructure usable from any layer (DB client, mailer, role enums, **auth guards**).
-- **`lib/auth-guards.ts`** (when auth is added): `getSession`, `requireAuth`, `requireAdmin`, `requireOwner`. Auth is a cross-cutting concern, not a feature. Call these from Actions and Use Cases (NOT from Facades).
+- **`lib/auth-guards.ts`**: `getSession`, `requireAuth`, `requireSuperAdmin`, `requireCountryAdmin(countryId)`, `requireChapterAdmin(chapterId)`, `requireChapterRole(chapterId, role)`, `requireAdminScope()`, `getHighestRole`. Auth is a cross-cutting concern, not a feature. Call these from Actions, Use Cases and Server Components (NOT from Facades).
 
 ## UI and Frontend decisions
 - **Loading**: Strictly adhere to the best practices from Next.js. Pages that might have loading time should always have skeletons, using <Suspense> and loading.tsx
@@ -60,18 +60,19 @@ Actionable Chain: When asked to build a feature:
 1. Define Zod Schemas (`schemas.ts`).
 2. Write Dumb Services (`services/`).
 3. Write the Feature Facade (`facade.ts`) to wrap services with business logic. No auth, no `revalidatePath` here.
-4. Write the Server Action (`actions.ts`): `requireAdmin()` (or similar) → call Facade → `revalidatePath`.
+4. Write the Server Action (`actions.ts`): the narrowest guard that fits (`requireChapterAdmin(chapterId)`, `requireCountryAdmin(countryId)`, `requireSuperAdmin()`, `requireAdminScope()`) → call Facade → `revalidatePath`.
 5. (Only if the Action would have to call two or more different feature Facades) Create a Use Case in `src/use-cases/` and have the Action delegate to it.
 6. Wire up the UI to call the Action.
-7. Never commit on your own. Always the user commits
-8. Always utilize Ultracode and subagents when possible
-9. Prs are only opened on user request
-10. After implementing a new feature, run a detailed security check to confirm that authorization is correct and not any vulnerabilities are created
+7. Register the feature's admin surfaces and verbs in `src/features/<name>/commands.ts` (`commands: CommandContributor`) so they appear in the ⌘K command bar. Labels are resolved server-side from the dictionary and `run` is plain data — no functions, no components. A destination that already has a `NAV` row in `src/app/admin/nav.ts` is picked up by href; `src/app/admin/commands.test.ts` fails if the sidebar and the palette disagree.
+8. Never commit on your own. Always the user commits
+9. Always utilize Ultracode and subagents when possible
+10. Prs are only opened on user request
+11. After implementing a new feature, run a detailed security check to confirm that authorization is correct and not any vulnerabilities are created
 
 No Shortcuts:
 - Database calls MUST go through Service → Facade.
 - A "use case" that touches only one feature is not a use case — collapse it into the Action.
-- Auth checks live in `lib/auth-guards.ts`, called from Actions and (cross-feature) Use Cases. Never inside a Facade.
+- Auth checks live in `lib/auth-guards.ts`, called from Actions, (cross-feature) Use Cases and Server Components. Never inside a Facade. A Layout is not a security boundary — the page underneath re-guards.
 
 ## 7. NATIVE (CAPACITOR) RULES
 The iOS/Android apps are thin Capacitor shells whose WebView loads https://cwa.codingforchange.com.

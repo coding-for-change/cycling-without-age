@@ -47,10 +47,11 @@ the two in full, with page references. Don't cite the book for a rule it doesn't
 6. **Whitespace is a feature** ("We love space. Less is definitely more."): one clear
    hero action per screen, calm sections, never justify text.
 7. **Tone**: light-hearted, fun, engaging, authentic. Storytelling copy, concrete detail
-   over abstraction. Copy is currently English-only; when i18n lands, German uses
-   Sie-form for passengers and du-form for pilots/volunteers, Danish is informal — so
-   write strings that can be extracted, and never bake user-visible text into a
-   conditional or a template deep in the markup.
+   over abstraction. Copy ships in three languages (see "Strings and the character"
+   below): German uses Sie-form for passenger-facing copy and du-form for
+   pilot/volunteer/admin-facing copy, Danish is informal — so write strings that can be
+   extracted, and never bake user-visible text into a conditional or a template deep in
+   the markup.
 8. **Logo**: horizontal lockup, clear space, never restyled. The slogan "The right to
    wind in your hair" is never set larger than the accompanying CWA headline.
 9. **Icons**: `lucide-react` only (the configured icon library). No emoji as icons, no
@@ -62,6 +63,13 @@ the two in full, with page references. Don't cite the book for a rule it doesn't
   downward only. UI lives in `src/app/**` (routes) and `src/features/*/components`
   (feature-specific "smart" components). Presentation calls Server Actions, Use Cases,
   or Feature Facades — never a Service or the DB.
+- **Command bar**: every admin surface and every admin verb must be registered in its
+  slice's `src/features/<name>/commands.ts` — a palette that only covers some of the app
+  teaches people not to open it. Labels come from the dictionary (reuse `admin.nav.*` for
+  a destination the slice owns), the icon travels as an `IconKey` and `run` is plain data,
+  because the entries are built on the server and rendered by a Client Component. A
+  destination that has a `NAV` row is claimed by href and the shell fills in the rest;
+  `src/app/admin/commands.test.ts` fails if the sidebar and the palette disagree.
 - **Primitives**: build on the shadcn components already in `src/components/ui/`
   (`button`, `card`, `dialog`, `badge`, `table`, `tabs`, `sheet`, …) before writing a new
   one. Style is `new-york`, RSC on. Compose class names with `cn()` from `@/lib/utils`.
@@ -117,6 +125,36 @@ the two in full, with page references. Don't cite the book for a rule it doesn't
 - **Accessibility**: every interactive element keyboard-reachable, `aria-label` on
   icon-only buttons, visible focus states, and respect `prefers-reduced-motion` on any
   animation you add.
+
+## Admin shell
+
+- A new admin page is `src/app/admin/<name>/page.tsx` plus a row in `NAV`
+  (`src/app/admin/nav.ts`). That row is the single source of the destination — sidebar,
+  breadcrumb and ⌘K all read it — and its `visible` predicate over `AdminScope` is what
+  hides the page per role. There is no separate list to keep in sync.
+- `SidebarInset` **is** the page's `<main>`. Do not add another one.
+- `src/app/admin/_components/admin-page.tsx` is the shared block: `AdminPageShell`
+  (padding + max-width), `AdminPageBody` (title from `admin.pages.<key>` plus the
+  `Empty` state), `AdminPageFallback` (its skeleton) and `AdminPage` wiring the three
+  together behind `<Suspense>`.
+- Page padding and max-width belong to `AdminPageShell`, not to the layout. The layout owns
+  the ground and the card; the page owns its own gutter.
+
+### Gotchas that will recur
+
+- shadcn's `SidebarMenuSkeleton` picks its row widths with `Math.random()`, which is a build
+  error in a `<Suspense>` fallback under `cacheComponents` — an unstable value cannot be
+  prerendered into the static shell. Use fixed widths; see
+  `src/app/admin/_components/sidebar-skeleton.tsx`.
+- `src/hooks/use-mobile.ts` was rewritten onto `useSyncExternalStore`. The original
+  `useState` + effect threw a hydration mismatch for any consumer that hydrates late
+  (anything streamed behind `<Suspense>`), because the server has no viewport and always
+  reports desktop. It is a shadcn registry file, so a future `npx shadcn add` may overwrite
+  it — check it after one.
+- `--sidebar` in `globals.css` points at `--canvas-deep`, so the sidebar surface and the
+  ground are one warm surface with the white content card floating on it. Fix this in the
+  token, never with a `className`: shadcn puts `has-data-[variant=inset]:bg-sidebar` on the
+  provider, which wins over a per-component override.
 
 ## Strings and the character
 
