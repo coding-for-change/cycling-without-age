@@ -99,9 +99,11 @@ export function CodeStep({ strings }: { strings: Strings }) {
               type: "sign-in",
             })
           : await authClient.phoneNumber.sendOtp({ phoneNumber: identifier });
+      // Scheduled before the failure return: a failed send must not leave the
+      // button disabled for the rest of the page's life.
+      setTimeout(() => setCanResend(true), RESEND_AFTER_MS);
       if (sendError) return failWith("generic");
       setNotice(strings.resent);
-      setTimeout(() => setCanResend(true), RESEND_AFTER_MS);
     });
   };
 

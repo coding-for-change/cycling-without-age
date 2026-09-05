@@ -110,7 +110,7 @@ const styles = {
   button: {
     backgroundColor: brand.red,
     borderRadius: "999px",
-    color: "#ffffff",
+    color: brand.canvas,
     display: "block",
     fontSize: "15px",
     fontWeight: 600,

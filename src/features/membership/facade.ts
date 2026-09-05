@@ -96,10 +96,13 @@ export const listApplications = (
 export const listApplicationsOfUser = (userId: string) =>
   findApplicationsOfUser(userId);
 
+/** Thrown by `applyAsPilot`; the action compares against it to name the reason. */
+export const ALREADY_PILOT = "Already a pilot of this chapter";
+
 export async function applyAsPilot(input: PilotApplicationInput) {
   const { userId, chapterId, message } = pilotApplicationInput.parse(input);
   if ((await getMemberRoles(userId, chapterId)).includes("pilot")) {
-    throw new Error("Already a pilot of this chapter");
+    throw new Error(ALREADY_PILOT);
   }
   return upsertPilotApplication(userId, chapterId, message);
 }

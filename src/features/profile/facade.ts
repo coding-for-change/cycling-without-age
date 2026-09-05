@@ -79,6 +79,10 @@ export async function claimWelcomeEmail(userId: string) {
   return true;
 }
 
+/** Undoes `claimWelcomeEmail` after a failed send, so the next attempt may retry. */
+export const releaseWelcomeEmail = (userId: string) =>
+  updateProfile(userId, { welcomeEmailSentAt: null });
+
 export function setPersonalDetails(
   userId: string,
   input: PersonalDetailsInput,

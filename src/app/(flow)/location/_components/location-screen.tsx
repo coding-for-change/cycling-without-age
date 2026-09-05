@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2, MapPin, MapPinOff, Search } from "lucide-react";
 import { applyToChaptersAsPilot } from "@/features/membership/actions";
+import { MAX_PILOT_CHAPTERS } from "@/features/membership/schemas";
 import {
   formatDistance,
   formatDuration,
@@ -119,6 +120,19 @@ export function LocationScreen({
   );
 
   const toggle = (id: string) => {
+    if (
+      multi &&
+      !selected.includes(id) &&
+      selected.length >= MAX_PILOT_CHAPTERS
+    ) {
+      haptics.warning();
+      setError(
+        fill(strings.errors.maxChapters, {
+          count: formatNumber(MAX_PILOT_CHAPTERS, notation),
+        }),
+      );
+      return;
+    }
     haptics.selectionChanged();
     setError(null);
     setSelected((previous) =>

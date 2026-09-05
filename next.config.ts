@@ -6,8 +6,10 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   // Dev-only: the Capacitor WebView loads the dev server by LAN IP, so its
-  // Origin is not localhost and /_next/* would be blocked as cross-site.
-  allowedDevOrigins: ["192.168.178.86"],
+  // Origin is not localhost and /_next/* would be blocked as cross-site. The
+  // private ranges mirror `devTrustedOrigins` in src/lib/auth.ts, so nobody
+  // has to commit their own address.
+  allowedDevOrigins: ["192.168.*.*", "10.*.*.*"],
 };
 
 export default nextConfig;

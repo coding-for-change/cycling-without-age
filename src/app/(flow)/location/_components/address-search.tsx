@@ -38,9 +38,11 @@ export function AddressSearch({
 
   useEffect(() => {
     const term = query.trim();
+    // Claimed before the short-query return, so clearing the box also retires
+    // a request still in flight for the previous text.
+    const ticket = ++latest.current;
     if (term.length < MIN_CHARS) return;
 
-    const ticket = ++latest.current;
     const timer = setTimeout(async () => {
       const found = await suggestAddresses({
         query: term,

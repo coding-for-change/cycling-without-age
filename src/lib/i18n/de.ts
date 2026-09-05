@@ -155,6 +155,8 @@ const de: Dictionary = {
       unknownChapter:
         "Diese Ortsgruppe gibt es nicht mehr. Wählen Sie eine andere.",
       alreadyPilot: "Du bist bereits Pilot in einer dieser Ortsgruppen.",
+      maxChapters:
+        "Du kannst höchstens {count} Ortsgruppen auf einmal anfragen.",
       generic: "Wir konnten das nicht speichern. Versuchen Sie es erneut.",
     },
   },
