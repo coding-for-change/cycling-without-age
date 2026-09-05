@@ -115,6 +115,15 @@ export async function decideApplication(input: ApplicationDecisionInput) {
   // list — approving an application must never be a path to admin.
   if (application.role === "admin") throw new Error("Admin is not applied for");
 
+  // Decide first, and only against a still-pending row: two admins racing cannot
+  // both win, and the role is granted only for a decision that was recorded.
+  const { count } = await setApplicationDecision(
+    applicationId,
+    approve ? "approved" : "rejected",
+    decidedByUserId,
+  );
+  if (count === 0) throw new Error("Application already decided");
+
   if (approve) {
     await grantChapterRole(
       application.userId,
@@ -122,9 +131,4 @@ export async function decideApplication(input: ApplicationDecisionInput) {
       application.role,
     );
   }
-  return setApplicationDecision(
-    applicationId,
-    approve ? "approved" : "rejected",
-    decidedByUserId,
-  );
 }

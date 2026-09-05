@@ -11,7 +11,7 @@ jest.mock("@/lib/prisma", () => ({
     chapterApplication: {
       findUnique: jest.fn(),
       upsert: jest.fn(),
-      update: jest.fn(),
+      updateMany: jest.fn(),
     },
   },
 }));
@@ -21,7 +21,7 @@ const db = prisma as unknown as {
   chapterApplication: {
     findUnique: jest.Mock;
     upsert: jest.Mock;
-    update: jest.Mock;
+    updateMany: jest.Mock;
   };
 };
 
@@ -35,7 +35,10 @@ const memberRow = (role: string | null) =>
 
 const roleWritten = () => db.member.upsert.mock.calls[0][0].update.role;
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  db.chapterApplication.updateMany.mockResolvedValue({ count: 1 });
+});
 
 describe("joining and role stacking", () => {
   it("adds a passenger straight away, no application", async () => {
@@ -179,8 +182,9 @@ describe("deciding an application", () => {
     memberRow("passenger");
     await decide(true);
     expect(roleWritten()).toBe("passenger,pilot");
-    expect(db.chapterApplication.update).toHaveBeenCalledWith(
+    expect(db.chapterApplication.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
+        where: { id: "app-1", status: "pending" },
         data: expect.objectContaining({
           status: "approved",
           decidedByUserId: ADMIN,
@@ -189,11 +193,19 @@ describe("deciding an application", () => {
     );
   });
 
+  it("grants nothing when another admin decided first", async () => {
+    application();
+    memberRow("passenger");
+    db.chapterApplication.updateMany.mockResolvedValue({ count: 0 });
+    await expect(decide(true)).rejects.toThrow("Application already decided");
+    expect(db.member.upsert).not.toHaveBeenCalled();
+  });
+
   it("grants nothing on rejection", async () => {
     application();
     await decide(false);
     expect(db.member.upsert).not.toHaveBeenCalled();
-    expect(db.chapterApplication.update).toHaveBeenCalledWith(
+    expect(db.chapterApplication.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ status: "rejected" }),
       }),
@@ -204,7 +216,7 @@ describe("deciding an application", () => {
     application({ role: "admin" });
     await expect(decide(true)).rejects.toThrow("Admin is not applied for");
     expect(db.member.upsert).not.toHaveBeenCalled();
-    expect(db.chapterApplication.update).not.toHaveBeenCalled();
+    expect(db.chapterApplication.updateMany).not.toHaveBeenCalled();
   });
 
   it("cannot decide an application twice", async () => {
@@ -218,7 +230,7 @@ describe("deciding an application", () => {
   it("cannot decide an application that does not exist", async () => {
     db.chapterApplication.findUnique.mockResolvedValue(null);
     await expect(decide(true)).rejects.toThrow("Unknown application");
-    expect(db.chapterApplication.update).not.toHaveBeenCalled();
+    expect(db.chapterApplication.updateMany).not.toHaveBeenCalled();
   });
 
   it("cannot decide anonymously", async () => {

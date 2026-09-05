@@ -1,5 +1,6 @@
 import { Section, Text } from "@react-email/components";
 import { brand } from "@/lib/brand";
+import type { Locale } from "@/lib/i18n";
 import { EmailLayout } from "./layout";
 
 export type OtpEmailStrings = {
@@ -12,14 +13,17 @@ export type OtpEmailStrings = {
 };
 
 export function OtpEmail({
+  locale,
   otp,
   strings,
 }: {
+  locale: Locale;
   otp: string;
   strings: OtpEmailStrings;
 }) {
   return (
     <EmailLayout
+      locale={locale}
       preview={strings.preview}
       footer={strings.footer}
     >

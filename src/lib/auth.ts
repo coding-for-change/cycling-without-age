@@ -17,7 +17,7 @@ import { passkey } from "@better-auth/passkey";
 import { prisma } from "@/lib/prisma";
 import { createElement } from "react";
 import { sendMail } from "@/lib/mailer";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionary, getLocale } from "@/lib/i18n";
 import { OtpEmail } from "@/emails/otp";
 import { sendSms } from "@/lib/sms";
 import { buildSessionAccess } from "@/use-cases/build-session-access";
@@ -54,12 +54,13 @@ export const auth = betterAuth({
       otpLength: 6,
       expiresIn: 60 * 10,
       sendVerificationOTP: async ({ email, otp }) => {
+        const locale = await getLocale();
         const strings = (await getDictionary()).email.otp;
         await sendMail({
           to: email,
           subject: strings.subject.replace("{otp}", otp),
           text: `${strings.heading}: ${otp}. ${strings.expiry}`,
-          react: createElement(OtpEmail, { otp, strings }),
+          react: createElement(OtpEmail, { locale, otp, strings }),
         });
       },
     }),

@@ -38,7 +38,7 @@ export const setApplicationDecision = (
   status: Exclude<ApplicationStatus, "pending">,
   decidedByUserId: string,
 ) =>
-  prisma.chapterApplication.update({
-    where: { id },
+  prisma.chapterApplication.updateMany({
+    where: { id, status: "pending" },
     data: { status, decidedByUserId, decidedAt: new Date() },
   });

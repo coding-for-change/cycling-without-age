@@ -12,20 +12,23 @@ import {
 } from "@react-email/components";
 import type { ReactNode } from "react";
 import { brand } from "@/lib/brand";
+import type { Locale } from "@/lib/i18n";
 
 const baseUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
 
 export function EmailLayout({
+  locale,
   preview,
   footer,
   children,
 }: {
+  locale: Locale;
   preview: string;
   footer: string;
   children: ReactNode;
 }) {
   return (
-    <Html lang="en">
+    <Html lang={locale}>
       <Head>
         <Font
           fontFamily="Inter"

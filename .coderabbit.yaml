@@ -55,16 +55,24 @@ reviews:
         - Text is ink or white only — never mint or red type in chrome. White
           type belongs on red or --mint-deep.
 
-        TYPOGRAPHY — Arial only; no webfont is loaded. Flag any `next/font`
-        import, @font-face, Google Fonts link, or new font family. Headlines
-        differ from body by weight (700), not typeface.
+        TYPOGRAPHY — Inter, and only Inter; a deliberate product decision
+        (docs/BRAND.md § Typography). It is loaded exactly once via `next/font`
+        in src/app/layout.tsx as --font-inter, and globals.css points both
+        --font-sans and --font-display at it. Flag a second `next/font` call,
+        any @font-face or Google Fonts link, or a new font family. The one
+        exception is email: src/emails/layout.tsx loads Inter through React
+        Email's `<Font>` with a Helvetica fallback, because no stylesheet
+        reaches a mail client. Headlines differ from body by weight (700),
+        not typeface.
 
         ICONS — lucide-react only. Flag emoji used as icons, icon fonts, or
         external image assets for iconography.
 
         COPY — flag user-visible strings that are hardcoded in a way that
         cannot be extracted later (buried in a ternary or template deep in
-        markup). Copy is English-only for now but must stay extractable.
+        markup). Copy lives in the src/lib/i18n dictionaries (en.ts is the
+        shape, the other languages are typed against it) and reaches Client
+        Components as props.
 
     # ----------------------------------------------------- i18n / formatting --
     - path: "src/**/*.{ts,tsx}"

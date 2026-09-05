@@ -26,10 +26,7 @@ export async function sendMail(options: MailOptions) {
     return;
   }
 
-  if (!resend) {
-    console.info("[mailer] RESEND_API_KEY unset, logging instead", options);
-    return;
-  }
+  if (!resend) throw new Error("RESEND_API_KEY is unset — cannot send mail");
 
   const { error } = await resend.emails.send({
     from: process.env.EMAIL_FROM!,
