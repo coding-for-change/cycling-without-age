@@ -18,7 +18,10 @@ the two in full, with page references. Don't cite the book for a rule it doesn't
    tints of those. Never introduce another hue into chrome (buttons, badges, tiles,
    nav, backgrounds). The tokens live in `src/app/globals.css` and are exposed as
    Tailwind utilities (`bg-mint`, `text-ink`, `border-line`, …). **Use the tokens;
-   never hardcode a hex value in a component.**
+   never hardcode a hex value in a component.** Emails are the one exception — no
+   stylesheet reaches them — so they read literals from `src/lib/brand.ts`, which
+   mirrors that `:root` block; `npm run check:brand` fails if the two drift. Add a
+   colour there only after adding it to `globals.css`.
 2. **Everything the book sets in black is `--ink`. Type is ink or white, only.**
    `--ink` is a warm espresso (`#2e2823`) — a very dark brown that reads as the brand's
    black, softer than pure `#000` on a lit screen. It covers **all** black marks: text,
@@ -34,13 +37,13 @@ the two in full, with page references. Don't cite the book for a rule it doesn't
    no black pills with white type. White type belongs on red or `--mint-deep` only.
    Note `--mint-deep` is a fifth color this product added; the book has four. Keep it for
    dark surfaces and don't spawn further shades off it.
-5. **Typography — Arial, and only Arial.** No webfont is loaded. The book's *online*
-   spec is TacaPro bold headlines over Arial body (`docs/BRAND.md` has the table); we
-   match it for body and highlights and deviate for headlines, because TacaPro is not
-   bundled — see BRAND.md for why and how to reinstate it. **Headlines differ by weight,
-   not typeface**: `h1`–`h4` default to `--font-display` at 700, elsewhere use the
-   `font-display` utility. Do not add a font, and do not reach for `next/font` — adding
-   one is a brand decision, not a styling one.
+5. **Typography — Inter, and only Inter.** Loaded once via `next/font` in
+   `src/app/layout.tsx` as `--font-inter`; both `--font-sans` and `--font-display` point
+   at it. The book's *online* spec is TacaPro bold headlines over Arial body
+   (`docs/BRAND.md` has the table) and this app deviates on both, deliberately — see
+   BRAND.md. **Headlines differ by weight, not typeface**: `h1`–`h4` default to
+   `--font-display` at 700, elsewhere use the `font-display` utility. Do not add a
+   second font — adding one is a brand decision, not a styling one.
 6. **Whitespace is a feature** ("We love space. Less is definitely more."): one clear
    hero action per screen, calm sections, never justify text.
 7. **Tone**: light-hearted, fun, engaging, authentic. Storytelling copy, concrete detail

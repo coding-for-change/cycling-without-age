@@ -7,3 +7,214 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id                  String               @id
+  name                String               @db.Text
+  email               String
+  emailVerified       Boolean              @default(false)
+  image               String?              @db.Text
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  phoneNumber         String?
+  phoneNumberVerified Boolean?
+  role                String?              @db.Text
+  banned              Boolean?             @default(false)
+  banReason           String?              @db.Text
+  banExpires          DateTime?
+  sessions            Session[]
+  accounts            Account[]
+  passkeys            Passkey[]
+  members             Member[]
+  invitations         Invitation[]
+  countryAdminOf      CountryAdmin[]
+  applications        ChapterApplication[] @relation("applicant")
+  decidedApplications ChapterApplication[] @relation("decider")
+
+  @@unique([email])
+  @@unique([phoneNumber])
+  @@map("user")
+}
+
+model Session {
+  id                   String   @id
+  expiresAt            DateTime
+  token                String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  ipAddress            String?  @db.Text
+  userAgent            String?  @db.Text
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impersonatedBy       String?  @db.Text
+  activeOrganizationId String?  @db.Text
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String    @db.Text
+  providerId            String    @db.Text
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?   @db.Text
+  password              String?   @db.Text
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String   @db.Text
+  value      String   @db.Text
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier(length: 191)])
+  @@map("verification")
+}
+
+model Passkey {
+  id           String    @id
+  name         String?   @db.Text
+  publicKey    String    @db.Text
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialID String    @db.Text
+  counter      Int
+  deviceType   String    @db.Text
+  backedUp     Boolean
+  transports   String?   @db.Text
+  createdAt    DateTime?
+  aaguid       String?   @db.Text
+
+  @@index([userId])
+  @@index([credentialID(length: 191)])
+  @@map("passkey")
+}
+
+model Organization {
+  id          String       @id @default(cuid())
+  name        String       @db.Text
+  slug        String
+  logo        String?      @db.Text
+  createdAt   DateTime     @default(now())
+  metadata    String?      @db.Text
+  members     Member[]
+  invitations Invitation[]
+
+  countryId    String
+  country      Country              @relation(fields: [countryId], references: [id])
+  city         String               @db.Text
+  address      String?              @db.Text
+  careHomeName String?              @db.Text
+  applications ChapterApplication[]
+
+  @@unique([slug])
+  @@index([countryId])
+  @@map("organization")
+}
+
+model Member {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String       @db.Text
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("member")
+}
+
+model Invitation {
+  id             String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String       @db.Text
+  role           String?      @db.Text
+  status         String       @db.Text
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+  inviterId      String
+  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([email(length: 191)])
+  @@map("invitation")
+}
+
+enum ChapterRole {
+  admin
+  pilot
+  passenger
+}
+
+enum ApplicationStatus {
+  pending
+  approved
+  rejected
+}
+
+model Country {
+  id        String   @id @default(cuid())
+  name      String   @db.Text
+  code      String   @db.VarChar(2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  chapters Organization[]
+  admins   CountryAdmin[]
+
+  @@unique([code])
+  @@map("country")
+}
+
+model CountryAdmin {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  countryId String
+  country   Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, countryId])
+  @@index([countryId])
+  @@map("country_admin")
+}
+
+model ChapterApplication {
+  id              String            @id @default(cuid())
+  userId          String
+  user            User              @relation("applicant", fields: [userId], references: [id], onDelete: Cascade)
+  chapterId       String
+  chapter         Organization      @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  role            ChapterRole       @default(pilot)
+  status          ApplicationStatus @default(pending)
+  message         String?           @db.Text
+  decidedByUserId String?
+  decidedBy       User?             @relation("decider", fields: [decidedByUserId], references: [id], onDelete: SetNull)
+  decidedAt       DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([userId, chapterId])
+  @@index([chapterId, status])
+  @@index([decidedByUserId])
+  @@map("chapter_application")
+}
