@@ -32,4 +32,11 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Capacitor's own BridgeWebChromeClient requests these at runtime when
+         the WebView asks for a position, so /location needs no Geolocation
+         plugin — but an undeclared permission fails the request outright.
+         Both are required: the launcher asks for the pair. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 </manifest>

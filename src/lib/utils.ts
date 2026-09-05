@@ -15,5 +15,11 @@ export function getInitials(name: string) {
     .toUpperCase();
 }
 
-/* Date, time, number and currency formatting live in `@/lib/format` — they need a
-   locale argument, which these general-purpose helpers have no way to supply. */
+export function fill(
+  template: string,
+  values: Record<string, string | number>,
+) {
+  return template.replace(/\{(\w+)\}/g, (match, key: string) =>
+    key in values ? String(values[key]) : match,
+  );
+}
