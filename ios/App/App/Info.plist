@@ -68,9 +68,9 @@
 	<string>Cycling Without Age uses your location to show the chapters closest to you.</string>
 	<!-- Dev-only: WKWebView refuses http:// under App Transport Security, which
 	     blocks `CAP_SERVER_URL=http://<lan-ip>:3000 cap copy ios`. Scoped to web
-	     content, so native URLSession traffic stays https-only. Strip before a
-	     store build (same checklist item as `npm run cap:sync` restoring the
-	     prod URL). -->
+	     content, so native URLSession traffic stays https-only. The "Strip ATS
+	     exception (Release)" build phase deletes this key from Release builds,
+	     so a store build never ships it. -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoadsInWebContent</key>

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma";
-import { membership } from "@/features/membership";
+import { MAX_PILOT_CHAPTERS, membership } from "@/features/membership";
 import { requireAuth } from "@/lib/auth-guards";
 
 /**
@@ -23,7 +23,7 @@ export type MembershipActionResult =
 const chapterId = z.string().min(1).max(64);
 /** The cap is the rate limit for one request: without it a single POST could
  *  create an unbounded number of applications. */
-const chapterIds = z.array(chapterId).min(1).max(5);
+const chapterIds = z.array(chapterId).min(1).max(MAX_PILOT_CHAPTERS);
 
 /** A chapter id that does not exist trips the foreign key rather than a lookup —
  *  the constraint already guarantees it, and calling the chapters facade here
@@ -71,7 +71,7 @@ export async function applyToChaptersAsPilot(
     if (isUnknownChapter(error)) return { ok: false, error: "unknownChapter" };
     // The facade refuses an application from someone who is already a pilot
     // there. Harmless, but the person deserves to be told which it was.
-    if (error instanceof Error && error.message.includes("Already a pilot")) {
+    if (error instanceof Error && error.message === membership.ALREADY_PILOT) {
       return { ok: false, error: "alreadyPilot" };
     }
     return { ok: false, error: "generic" };

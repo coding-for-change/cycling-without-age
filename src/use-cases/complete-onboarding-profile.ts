@@ -67,10 +67,12 @@ async function sendWelcome({
   chapterId: string | null;
   locale: string | null;
 }) {
+  let claimed = false;
   try {
     const account = await profile.getProfile(userId);
     if (!account?.email) return;
-    if (!(await profile.claimWelcomeEmail(userId))) return;
+    claimed = await profile.claimWelcomeEmail(userId);
+    if (!claimed) return;
 
     const emailLocale = resolveEmailLocale(locale ?? account.locale);
     const strings = getEmailStrings(emailLocale);
@@ -93,5 +95,17 @@ async function sendWelcome({
     });
   } catch (error) {
     console.error("[onboarding] welcome email failed", error);
+    // A claim left behind by a failed send would make every later attempt
+    // believe the mail already went out.
+    if (claimed) {
+      await profile
+        .releaseWelcomeEmail(userId)
+        .catch((releaseError) =>
+          console.error(
+            "[onboarding] welcome email not released",
+            releaseError,
+          ),
+        );
+    }
   }
 }

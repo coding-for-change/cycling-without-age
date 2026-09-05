@@ -146,6 +146,7 @@ const en = {
     errors: {
       unknownChapter: "That chapter is no longer available. Pick another one.",
       alreadyPilot: "You already pilot for one of those chapters.",
+      maxChapters: "You can request up to {count} chapters at once.",
       generic: "We couldn't save that. Try again.",
     },
   },

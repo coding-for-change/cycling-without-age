@@ -89,6 +89,29 @@ function numberFormatter(locale: Locale, options: Intl.NumberFormatOptions) {
   return formatter;
 }
 
+const regionNamesByLocale = new Map<string, Intl.DisplayNames>();
+const collators = new Map<string, Intl.Collator>();
+
+/** Localised country names: `regionNames("de").of("DK")` is "Dänemark". */
+export function regionNames(locale: string) {
+  let names = regionNamesByLocale.get(locale);
+  if (!names) {
+    names = new Intl.DisplayNames([locale], { type: "region" });
+    regionNamesByLocale.set(locale, names);
+  }
+  return names;
+}
+
+/** Locale-aware ordering: `list.sort(collator(locale).compare)`. */
+export function collator(locale: string) {
+  let value = collators.get(locale);
+  if (!value) {
+    value = new Intl.Collator(locale);
+    collators.set(locale, value);
+  }
+  return value;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Calendar dates — no time, no zone                                          */
 /* -------------------------------------------------------------------------- */

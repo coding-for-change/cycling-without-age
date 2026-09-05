@@ -147,6 +147,7 @@ const da: Dictionary = {
     errors: {
       unknownChapter: "Den afdeling findes ikke længere. Vælg en anden.",
       alreadyPilot: "Du er allerede pilot i en af de afdelinger.",
+      maxChapters: "Du kan højst anmode om {count} afdelinger ad gangen.",
       generic: "Vi kunne ikke gemme det. Prøv igen.",
     },
   },

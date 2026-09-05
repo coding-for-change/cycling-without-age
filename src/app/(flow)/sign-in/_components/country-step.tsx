@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import type { CountryCode } from "libphonenumber-js";
+import { collator, regionNames } from "@/lib/format";
 import { COUNTRIES, dialCodeOf } from "@/lib/identity";
 import { haptics } from "@/lib/native/haptics";
 import { cn, fill } from "@/lib/utils";
@@ -41,12 +42,13 @@ export function CountryStep({
   const settle = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const countries = useMemo(() => {
-    const names = new Intl.DisplayNames([locale], { type: "region" });
+    const names = regionNames(locale);
+    const byName = collator(locale).compare;
     return COUNTRIES.map((code) => ({
       code,
       name: names.of(code) ?? code,
       dial: dialCodeOf(code),
-    })).sort((a, b) => a.name.localeCompare(b.name, locale));
+    })).sort((a, b) => byName(a.name, b.name));
   }, [locale]);
 
   const matches = useMemo(() => {
