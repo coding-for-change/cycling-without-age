@@ -48,28 +48,7 @@ Imports must only flow downward. Violation of these rules is a build-breaking er
 - **Navigation**: Should always be instant. Use the guides: https://nextjs.org/docs/app/guides/instant-navigation. Use lazy loading. Use ViewTransition Library where it makes sense to create a smooth native App like feeling and experience
 - **Internationlazation**: The WebApp will be multilingual. Users language will be saved as preference. Every text should and string should 
 
-## 3. FOLDER STRUCTURE & COMPONENT PLACEMENT
-```text
-src/
-├── app/                  # ROUTING: Pages, Layouts, API Route handlers.
-│   ├── api/              # External-only endpoints (Webhooks, etc.).
-│   └── (routes)/         # UI Routes. Minimal logic. Calls Use Cases/Facades.
-├── use-cases/            # GLOBAL ORCHESTRATORS: Cross-feature logic.
-├── features/             # BOUNDED CONTEXTS: Domain-specific modules.
-│   └── [feature-name]/
-│       ├── components/   # "Smart" components specific to this domain.
-│       ├── services/     # "Dumb" data access/DB queries.
-│       ├── facade.ts     # FEATURE BRAIN: Internal orchestration.
-│       ├── actions.ts    # Server Actions for this feature.
-│       ├── index.ts      # PUBLIC API: Export ONLY the Facade and Components.
-│       └── schemas.ts    # Contracts: Zod schemas and TS types.
-├── components/ui/        # ATOMIC UI: Shared, stateless shadcn components.
-├── lib/                  # INFRA: DB client, mailer, roles, auth-guards (cross-cutting).
-└── docs/architecture/    # SYSTEM MANIFESTO: Architecture diagrams and rules.
-```
-
 ## 4. LINTER ENFORCEMENT (NON-NEGOTIABLE)
-Install `eslint-plugin-boundaries`. Configure `.eslintrc.json` (or equivalent) with strict boundaries zones.
 Constraint: If an import statement violates this map, you MUST refactor the logic rather than disabling the rule.
 
 ## 5. DOCUMENTATION REQUIREMENTS

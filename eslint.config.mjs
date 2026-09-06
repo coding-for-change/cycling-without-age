@@ -28,7 +28,7 @@ const eslintConfig = defineConfig([
       "boundaries/elements": [
         { type: "app", pattern: "src/app/**/*" },
         { type: "use-cases", pattern: "src/use-cases/**/*" },
-        { type: "feature-facade", pattern: "src/features/*/facade.ts" },
+        { type: "feature-facade", pattern: "src/features/*/{facade,index}.ts" },
         { type: "feature-internal", pattern: "src/features/*/services/**/*" },
         { type: "shared", pattern: "src/components/ui/**/*" },
       ],
