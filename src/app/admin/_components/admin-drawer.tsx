@@ -50,7 +50,6 @@ export function AdminDrawer({
       repositionInputs={false}
     >
       <DrawerContent
-        aria-describedby={description ? undefined : undefined}
         className={cn(
           "bg-canvas",
           "data-[vaul-drawer-direction=bottom]:max-h-[94svh] data-[vaul-drawer-direction=bottom]:rounded-t-(--r-tile)",

@@ -127,7 +127,7 @@ describe("the last admin of a chapter", () => {
     admins(1);
     await expect(
       membership.revokeChapterRole(USER, CHAPTER, "admin"),
-    ).rejects.toThrow("Last admin of the chapter");
+    ).rejects.toThrow("lastAdmin");
     expect(db.member.upsert).not.toHaveBeenCalled();
     expect(db.member.deleteMany).not.toHaveBeenCalled();
   });
@@ -136,7 +136,7 @@ describe("the last admin of a chapter", () => {
     memberRow("admin,pilot");
     admins(1);
     await expect(membership.removeFromChapter(USER, CHAPTER)).rejects.toThrow(
-      "Last admin of the chapter",
+      "lastAdmin",
     );
     expect(db.member.deleteMany).not.toHaveBeenCalled();
   });
@@ -167,7 +167,7 @@ describe("promotion to chapter admin", () => {
     memberRow(null);
     await expect(
       membership.promoteToChapterAdmin(USER, CHAPTER),
-    ).rejects.toThrow("Not a chapter member");
+    ).rejects.toThrow("notChapterMember");
     expect(db.member.upsert).not.toHaveBeenCalled();
   });
 
@@ -190,7 +190,7 @@ describe("applying as a pilot", () => {
     memberRow("pilot");
     await expect(
       membership.applyAsPilot({ userId: USER, chapterId: CHAPTER }),
-    ).rejects.toThrow("Already a pilot of this chapter");
+    ).rejects.toThrow("alreadyPilot");
     expect(db.chapterApplication.upsert).not.toHaveBeenCalled();
   });
 
@@ -256,7 +256,7 @@ describe("deciding an application", () => {
     application();
     memberRow("passenger");
     db.chapterApplication.updateMany.mockResolvedValue({ count: 0 });
-    await expect(decide(true)).rejects.toThrow("Application already decided");
+    await expect(decide(true)).rejects.toThrow("alreadyDecided");
     expect(db.member.upsert).not.toHaveBeenCalled();
   });
 
@@ -273,22 +273,22 @@ describe("deciding an application", () => {
 
   it("cannot become chapter admin through an application", async () => {
     application({ role: "admin" });
-    await expect(decide(true)).rejects.toThrow("Admin is not applied for");
+    await expect(decide(true)).rejects.toThrow("adminNotApplied");
     expect(db.member.upsert).not.toHaveBeenCalled();
     expect(db.chapterApplication.updateMany).not.toHaveBeenCalled();
   });
 
   it("cannot decide an application twice", async () => {
     application({ status: "approved" });
-    await expect(decide(true)).rejects.toThrow("Application already decided");
+    await expect(decide(true)).rejects.toThrow("alreadyDecided");
     application({ status: "rejected" });
-    await expect(decide(true)).rejects.toThrow("Application already decided");
+    await expect(decide(true)).rejects.toThrow("alreadyDecided");
     expect(db.member.upsert).not.toHaveBeenCalled();
   });
 
   it("cannot decide an application that does not exist", async () => {
     db.chapterApplication.findUnique.mockResolvedValue(null);
-    await expect(decide(true)).rejects.toThrow("Unknown application");
+    await expect(decide(true)).rejects.toThrow("unknownApplication");
     expect(db.chapterApplication.updateMany).not.toHaveBeenCalled();
   });
 

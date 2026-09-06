@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { CircleAlert } from "lucide-react";
 import { toast } from "sonner";
@@ -9,9 +8,12 @@ import { AddressSearch } from "@/components/address-search";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import { formatDistance, type Locale } from "@/lib/format";
-import { distanceMeters, type Coords } from "@/lib/geo";
+import { nearestOverlap, type Coords } from "@/lib/geo";
+import { DetailSection } from "../../../_components/detail-page";
+import { CHAPTER_RADIUS_KM } from "@/features/chapters/schemas";
 import { haptics } from "@/lib/native/haptics";
 import { cn, fill } from "@/lib/utils";
+import { reportSave } from "../../../_components/action-feedback";
 import { useSaveStatus } from "../../../_components/save-status";
 import type { MapPin } from "../../_components/chapter-map";
 import {
@@ -25,9 +27,6 @@ const ChapterMap = dynamic(() => import("../../_components/chapter-map"), {
   ssr: false,
   loading: () => <Skeleton className="size-full rounded-none" />,
 });
-
-const MIN_RADIUS_KM = 1;
-const MAX_RADIUS_KM = 60;
 
 type Place = {
   coords: Coords;
@@ -62,7 +61,6 @@ export function ChapterLocation({
   notation: Locale;
   labels: ChapterLabels;
 }) {
-  const router = useRouter();
   const report = useSaveStatus();
   const sessionToken = useMemo(() => crypto.randomUUID(), []);
   // ponytail: the optimistic value holds only until the server moves off the
@@ -89,27 +87,12 @@ export function ChapterLocation({
       serviceRadiusKm: next.radiusKm,
     });
 
-    if (!result.ok) {
-      setOverride(null);
-      report("failed");
-      haptics.error();
-      toast.error(
-        labels.field.errors[result.error] ?? labels.field.errors.generic,
-      );
-      return;
-    }
-
-    report("saved");
-    haptics.success();
-    toast.success(undoable ? labels.field.saved : labels.field.undone, {
-      action: undoable
-        ? {
-            label: labels.field.undo,
-            onClick: () => void persist(previous, next, false),
-          }
-        : undefined,
+    const ok = reportSave(result, {
+      report,
+      labels: labels.field,
+      undo: undoable ? () => void persist(previous, next, false) : undefined,
     });
-    router.refresh();
+    if (!ok) setOverride(null);
   };
 
   const pick = async (mapboxId: string) => {
@@ -134,15 +117,10 @@ export function ChapterLocation({
     );
   };
 
-  const overlap = others
-    .map((pin) => ({ pin, metres: distanceMeters(place.coords, pin.coords) }))
-    .filter(({ pin, metres }) => metres < (radiusKm + pin.radiusKm) * 1000)
-    .sort((a, b) => a.metres - b.metres)[0];
+  const overlap = nearestOverlap(place.coords, radiusKm, others);
 
   return (
-    <section className="grid gap-4 border-t border-line pt-6">
-      <h2 className="text-base font-medium">{labels.location}</h2>
-
+    <DetailSection title={labels.location}>
       <div
         aria-busy={resolving}
         className={cn(resolving && "pointer-events-none opacity-60")}
@@ -184,8 +162,8 @@ export function ChapterLocation({
           </span>
         </div>
         <Slider
-          min={MIN_RADIUS_KM}
-          max={MAX_RADIUS_KM}
+          min={CHAPTER_RADIUS_KM.min}
+          max={CHAPTER_RADIUS_KM.sliderMax}
           step={1}
           value={[radiusKm]}
           aria-label={labels.radius}
@@ -210,6 +188,6 @@ export function ChapterLocation({
           </p>
         ) : null}
       </div>
-    </section>
+    </DetailSection>
   );
 }

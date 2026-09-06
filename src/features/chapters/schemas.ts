@@ -36,6 +36,26 @@ export const slugify = (name: string) =>
 // A logo is fetched by every visitor's browser, so only web schemes may reach the column.
 const httpUrl = z.url({ protocol: /^https?$/ }).max(500);
 
+/** Whether a value is a URL the chapter schemas would accept. */
+export const isHttpUrl = (value: string | null | undefined) =>
+  value != null && httpUrl.safeParse(value).success;
+
+/**
+ * The service-radius bounds, in one place so the sliders, the schema and the
+ * row default cannot drift apart. `max` is what the API accepts; `sliderMax` is
+ * the range the slider offers, which is deliberately the common case, not the
+ * limit.
+ */
+export const CHAPTER_RADIUS_KM = {
+  min: 1,
+  max: 200,
+  sliderMax: 60,
+  default: 10,
+} as const;
+
+/** Matches the column's own cap. */
+export const CHAPTER_DESCRIPTION_MAX = 600;
+
 export const chapterInput = z.object({
   name: z.string().trim().min(1).max(120),
   slug: z
@@ -52,7 +72,12 @@ export const chapterInput = z.object({
   logo: httpUrl.optional(),
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
-  serviceRadiusKm: z.number().int().min(1).max(200).optional(),
+  serviceRadiusKm: z
+    .number()
+    .int()
+    .min(CHAPTER_RADIUS_KM.min)
+    .max(CHAPTER_RADIUS_KM.max)
+    .optional(),
 });
 export type ChapterInput = z.infer<typeof chapterInput>;
 

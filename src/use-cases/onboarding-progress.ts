@@ -15,7 +15,13 @@ import { HOME_BY_ROLE } from "@/lib/redirects";
 export type OnboardingState = {
   progress: OnboardingProgress;
   /** The preset after validation — a chapter that exists, a role we recognise. */
-  preset: { chapterId: string | null; role: OnboardingRole | null };
+  preset: {
+    chapterId: string | null;
+    role: OnboardingRole | null;
+    chapterName: string | null;
+  };
+  /** The account row the progress was derived from, so callers need not re-read it. */
+  account: Awaited<ReturnType<typeof profile.getProfile>>;
 };
 
 export async function getOnboardingState(
@@ -36,6 +42,7 @@ export async function getOnboardingState(
   const preset = {
     chapterId: presetChapter?.id ?? null,
     role: presetChapter ? cookiePreset.role : null,
+    chapterName: presetChapter?.name ?? null,
   };
 
   const roles = memberships.flatMap((m) => m.roles);
@@ -62,6 +69,7 @@ export async function getOnboardingState(
 
   return {
     preset,
+    account,
     progress: {
       role,
       joined,

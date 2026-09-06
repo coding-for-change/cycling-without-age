@@ -2,8 +2,9 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { MapUnavailable } from "@/components/map-unavailable";
 import { useRouter } from "next/navigation";
-import { Check, Loader2, MapPin, MapPinOff, Search } from "lucide-react";
+import { Check, Loader2, MapPin, Search } from "lucide-react";
 import { applyToChaptersAsPilot } from "@/features/membership/actions";
 import { MAX_PILOT_CHAPTERS } from "@/features/membership/schemas";
 import {
@@ -23,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { StepDots, type StepProgress } from "../../_components/step";
+import { StepDots, StepError, type StepProgress } from "../../_components/step";
 import { useSetCharacterPose } from "../../_components/character-stage";
 import { nextOnboardingPath } from "../../onboarding/actions";
 import {
@@ -242,13 +243,7 @@ export function LocationScreen({
           />
         ) : (
           <div className="grid size-full place-items-center bg-canvas-deep p-6 text-center">
-            <p className="max-w-xs text-sm text-ink-soft">
-              <MapPinOff
-                className="mx-auto mb-3 size-6"
-                aria-hidden
-              />
-              {strings.mapUnavailable}
-            </p>
+            <MapUnavailable label={strings.mapUnavailable} />
           </div>
         )}
       </div>
@@ -279,7 +274,6 @@ export function LocationScreen({
               }}
               className="mt-4"
             >
-              {}
               <TabsList className="w-full rounded-full bg-grey-tint p-1 group-data-[orientation=horizontal]/tabs:h-12">
                 {(["careHome", "home"] as const).map((option) => (
                   <TabsTrigger
@@ -419,24 +413,17 @@ export function LocationScreen({
         </div>
 
         <div className="fixed inset-x-0 bottom-0 bg-linear-to-t from-canvas via-canvas px-5 pt-8 pb-[max(1.25rem,env(safe-area-inset-bottom))] lg:static lg:border-t lg:border-line lg:bg-none lg:p-6">
-          {error && (
-            <p
-              role="alert"
-              className="mb-2 text-center text-sm text-red"
-            >
-              {error}
-            </p>
-          )}
+          {error && <StepError>{error}</StepError>}
           {!ready && !error && (
             <p className="mb-2 text-center text-sm text-ink-soft">
               {atHome ? strings.home.hint : strings.selectPrompt}
             </p>
           )}
           <Button
-            size="lg"
             disabled={!ready || pending}
             onClick={submit}
-            className="h-14 w-full rounded-full bg-red text-base text-white shadow-lift hover:bg-red-hover disabled:bg-grey-tint disabled:text-ink-faint disabled:shadow-none"
+            variant="brand"
+            size="hero"
           >
             {label}
           </Button>
@@ -563,7 +550,6 @@ type Strings = {
   distanceAway: string;
   mapUnavailable: string;
   mapLabel: string;
-  retry: string;
   pending: string;
   next: string;
   request: string;

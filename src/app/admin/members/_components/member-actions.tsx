@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { ShieldCheck, ShieldMinus, UserMinus } from "lucide-react";
 import {
@@ -61,7 +60,6 @@ export function MemberActions({
   labels: MemberActionLabels;
   cancel: string;
 }) {
-  const router = useRouter();
   const [change, setChange] = useState<Change | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -86,7 +84,6 @@ export function MemberActions({
       notify(result, { done: named(done), errors: labels.errors });
       if (!result.ok) return;
       setChange(null);
-      router.refresh();
     });
   };
 
@@ -148,11 +145,8 @@ export function MemberActions({
                   event.preventDefault();
                   confirm();
                 }}
-                className={
-                  change === "remove"
-                    ? "min-h-11 bg-red text-white hover:bg-red-hover"
-                    : "min-h-11"
-                }
+                variant={change === "remove" ? "brand" : "default"}
+                className="min-h-11"
               >
                 {change === "remove"
                   ? labels.remove

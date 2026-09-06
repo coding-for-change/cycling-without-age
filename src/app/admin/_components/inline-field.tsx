@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import {
   useId,
   useRef,
@@ -15,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { haptics } from "@/lib/native/haptics";
 import { cn } from "@/lib/utils";
 import { useSaveStatus } from "./save-status";
-import type { ActionResult } from "./action-feedback";
+import { reportSave, type ActionResult } from "./action-feedback";
 
 export type InlineFieldLabels = {
   edit: string;
@@ -66,7 +65,6 @@ export function InlineField({
   className?: string;
   inputClassName?: string;
 }) {
-  const router = useRouter();
   const report = useSaveStatus();
   const id = useId();
   const [editing, setEditing] = useState(false);
@@ -85,29 +83,15 @@ export function InlineField({
     setEditing(true);
   };
 
-  const persist = async (next: Value, previous: Value, undoLabel: string) => {
+  const persist = async (next: Value, previous: Value, undoable: boolean) => {
     setOverride({ from: previous, to: next });
     report("saving");
-    const result = await onSave(next, previous);
-    if (!result.ok) {
-      setOverride(null);
-      report("failed");
-      haptics.error();
-      toast.error(labels.errors[result.error] ?? labels.errors.generic);
-      return;
-    }
-    report("saved");
-    haptics.success();
-    toast.success(undoLabel, {
-      action:
-        undoLabel === labels.saved
-          ? {
-              label: labels.undo,
-              onClick: () => void persist(previous, next, labels.undone),
-            }
-          : undefined,
+    const ok = reportSave(await onSave(next, previous), {
+      report,
+      labels,
+      undo: undoable ? () => void persist(previous, next, false) : undefined,
     });
-    router.refresh();
+    if (!ok) setOverride(null);
   };
 
   const commit = () => {
@@ -129,7 +113,7 @@ export function InlineField({
     }
     setEditing(false);
     if (next === shown) return;
-    void persist(next, shown, labels.saved);
+    void persist(next, shown, true);
   };
 
   const cancel = () => {

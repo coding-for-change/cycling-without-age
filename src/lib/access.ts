@@ -69,6 +69,13 @@ export type AdminScope = {
   chapters: ScopeChapter[];
   canSeeChapters: boolean;
   canSeeCountries: boolean;
+  /** Creating a country is not scoped to one, so only a superadmin may. */
+  canCreateCountries: boolean;
+  /** An account spans chapters, so no chapter or country admin sees enough of
+   *  it to take it away. */
+  canDeleteAccounts: boolean;
+  /** History with no chapter attached — an account claimed, a chapter deleted. */
+  canSeeGlobalEvents: boolean;
 };
 
 export type ActiveScope =
@@ -110,6 +117,9 @@ export function resolveAdminScope(
         ),
     canSeeChapters: global || countryIds.size > 0,
     canSeeCountries: global,
+    canCreateCountries: global,
+    canDeleteAccounts: global,
+    canSeeGlobalEvents: global,
   };
 }
 

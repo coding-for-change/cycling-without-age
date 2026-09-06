@@ -1,3 +1,4 @@
+import { DomainError } from "@/lib/domain-error";
 import {
   consentInput,
   homeInput,
@@ -66,7 +67,7 @@ export async function setResidence(
  */
 export async function recordConsent(userId: string, input: ConsentInput) {
   const { safety, notifications, data } = consentInput.parse(input);
-  if (!data) throw new Error("Data-processing consent is required");
+  if (!data) throw new DomainError("consentRequired");
 
   const existing = await findProfile(userId);
   const now = new Date();

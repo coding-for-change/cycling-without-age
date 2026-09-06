@@ -1,14 +1,16 @@
 import { createElement } from "react";
 import { accounts } from "@/features/accounts";
 import type { InviteInput, InviteRole } from "@/features/accounts";
-import { activity } from "@/features/activity";
+import { activity } from "@/lib/activity";
 import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { profile } from "@/features/profile";
 import { getEmailStrings, resolveEmailLocale } from "@/emails/strings";
 import { InviteEmail } from "@/emails/invite";
+import { afterResponse } from "@/lib/after-response";
 import { APP_URL } from "@/lib/app-url";
 import { formatList, wordsLocale } from "@/lib/format";
+import type { Locale } from "@/lib/i18n/locales";
 import { sendMail } from "@/lib/mailer";
 import { fill } from "@/lib/utils";
 
@@ -20,7 +22,7 @@ export async function inviteChapterUser({
 }: {
   inviterUserId: string;
   inviterName: string;
-  locale: string | null;
+  locale: Locale;
   input: InviteInput;
 }) {
   const { chapterId, name, email, roles } = input;
@@ -32,7 +34,9 @@ export async function inviteChapterUser({
   });
   await membership.grantChapterRoles(userId, chapterId, roles);
 
-  await mailInvite({ userId, email, chapterId, inviterName, roles, locale });
+  await afterResponse(() =>
+    mailInvite({ userId, email, chapterId, inviterName, roles, locale }),
+  );
 
   await activity.record({
     userId,
@@ -58,7 +62,7 @@ async function mailInvite({
   chapterId: string;
   inviterName: string;
   roles: InviteRole[];
-  locale: string | null;
+  locale: Locale;
 }) {
   try {
     const [account, chapter] = await Promise.all([
@@ -73,7 +77,7 @@ async function mailInvite({
     const chapterName = chapter?.name ?? "Cycling Without Age";
     const roleLabel = formatList(
       roles.map((role) => strings.roles[role]),
-      wordsLocale(language ?? ""),
+      wordsLocale(language),
     );
     const intro = fill(copy.intro, {
       inviter: inviterName,

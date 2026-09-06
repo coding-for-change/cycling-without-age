@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useId, useMemo, useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UserPlus } from "lucide-react";
@@ -32,6 +31,8 @@ import { parseIdentity, type CountryCode } from "@/lib/identity";
 import { fill } from "@/lib/utils";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
 import { notify } from "../../_components/action-feedback";
+import { useDrawerParam } from "../../_components/use-drawer-param";
+import { TextField } from "../../_components/text-field";
 
 const GENDERS = assistedPassengerInput.shape.gender.options;
 
@@ -102,13 +103,11 @@ export type AddPassengerLabels = {
 export function AddPassengerDrawer({
   chapterId,
   country,
-  scopeQuery,
   labels,
   person,
 }: {
   chapterId: string;
   country: CountryCode;
-  scopeQuery: string;
   labels: AddPassengerLabels;
   person: {
     firstName: string;
@@ -118,9 +117,7 @@ export function AddPassengerDrawer({
     genders: Record<(typeof GENDERS)[number], string>;
   };
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const { creating: open, openHref, close: clearParam } = useDrawerParam();
   const formId = useId();
   const anotherId = useId();
   const [another, setAnother] = useState(false);
@@ -129,8 +126,6 @@ export function AddPassengerDrawer({
     () => schemaOf(country, labels.errors.invalid),
     [country, labels.errors.invalid],
   );
-
-  const open = searchParams.get("new") === "1";
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -148,12 +143,7 @@ export function AddPassengerDrawer({
 
   const close = () => {
     form.reset();
-    const params = new URLSearchParams(searchParams);
-    params.delete("new");
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, {
-      scroll: false,
-    });
+    clearParam();
   };
 
   const [withHelper, contact, helperContact, helperName, firstName, lastName] =
@@ -201,7 +191,6 @@ export function AddPassengerDrawer({
         errors: labels.errors,
       });
       if (!result.ok) return;
-      router.refresh();
       if (!another) {
         close();
         return;
@@ -215,9 +204,10 @@ export function AddPassengerDrawer({
     <>
       <Button
         asChild
-        className="min-h-11 bg-red text-white hover:bg-red-hover"
+        variant="brand"
+        className="min-h-11"
       >
-        <Link href={`${pathname}${scopeQuery ? `${scopeQuery}&` : "?"}new=1`}>
+        <Link href={openHref}>
           <UserPlus aria-hidden />
           {labels.open}
         </Link>
@@ -254,7 +244,8 @@ export function AddPassengerDrawer({
               type="submit"
               form={formId}
               disabled={pending}
-              className="min-h-11 bg-red text-white hover:bg-red-hover"
+              variant="brand"
+              className="min-h-11"
             >
               {labels.submit}
             </Button>
@@ -270,58 +261,25 @@ export function AddPassengerDrawer({
             className="grid gap-5"
           >
             <div className="grid gap-5 sm:grid-cols-2">
-              <FormField
+              <TextField
                 control={form.control}
                 name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{person.firstName}</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        autoFocus
-                        autoComplete="off"
-                        className="h-11 border-line text-base"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label={person.firstName}
+                autoFocus
+                autoComplete="off"
               />
-              <FormField
+              <TextField
                 control={form.control}
                 name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{person.lastName}</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        autoComplete="off"
-                        className="h-11 border-line text-base"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label={person.lastName}
+                autoComplete="off"
               />
-              <FormField
+              <TextField
                 control={form.control}
                 name="birthDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{person.birthDate}</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="date"
-                        max={new Date().toISOString().slice(0, 10)}
-                        className="h-11 border-line text-base"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label={person.birthDate}
+                type="date"
+                max={new Date().toISOString().slice(0, 10)}
               />
               <FormField
                 control={form.control}
@@ -354,22 +312,11 @@ export function AddPassengerDrawer({
                 )}
               />
               <div className="sm:col-span-2">
-                <FormField
+                <TextField
                   control={form.control}
                   name="contact"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{labels.contact}</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          autoComplete="off"
-                          className="h-11 border-line text-base"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label={labels.contact}
+                  autoComplete="off"
                 />
               </div>
             </div>

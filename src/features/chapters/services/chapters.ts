@@ -27,6 +27,13 @@ export const findChapters = (countryId?: string) =>
     orderBy: { name: "asc" },
   });
 
+/** Only what an admin scope is built from — the fat row carries three @db.Text columns. */
+export const findChapterScopes = () =>
+  prisma.organization.findMany({
+    orderBy: { name: "asc" },
+    select: { id: true, slug: true, name: true, countryId: true },
+  });
+
 export const deleteChapterById = (id: string) =>
   prisma.organization.delete({ where: { id } });
 

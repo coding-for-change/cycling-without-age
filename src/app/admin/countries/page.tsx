@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { chapters } from "@/features/chapters";
-import { requireSuperAdmin } from "@/lib/auth-guards";
+import { readActiveScope } from "../active-scope";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import {
   AdminPageFallback,
@@ -33,44 +33,44 @@ async function Countries({
 }: {
   searchParams: AdminSearchParams;
 }) {
-  await requireSuperAdmin();
-
-  const [dict, language, countries, params] = await Promise.all([
+  const [{ scopeQuery }, dict, language, countries] = await Promise.all([
+    readActiveScope(searchParams, "countries"),
     getDictionary(),
     getLocale(),
     chapters.listCountries(),
-    searchParams,
   ]);
-  const admins = await Promise.all(
-    countries.map((country) => chapters.listCountryAdmins(country.id)),
-  );
+  const countryIds = countries.map((country) => country.id);
+  const [admins, footprints] = await Promise.all([
+    chapters.listAdminsByCountry(countryIds),
+    chapters.listCountryFootprints(countryIds),
+  ]);
 
-  const rows: CountryRow[] = countries.map((country, index) => ({
-    id: country.id,
-    name: country.name,
-    code: country.code,
-    admins: admins[index].map((row) => ({
-      userId: row.userId,
-      name: row.user.name,
-      email: row.user.email,
-    })),
-  }));
-
-  const query = new URLSearchParams();
-  for (const key of ["chapter", "country"] as const) {
-    const value = params[key];
-    if (typeof value === "string") query.set(key, value);
-  }
-  query.set("new", "1");
+  const rows: CountryRow[] = countries.map((country) => {
+    const footprint = footprints.get(country.id);
+    return {
+      id: country.id,
+      name: country.name,
+      code: country.code,
+      admins: admins.get(country.id) ?? [],
+      footprint: {
+        chapters: footprint?.chapters ?? 0,
+        members: footprint?.members ?? 0,
+        passengers: footprint?.passengers ?? 0,
+      },
+    };
+  });
 
   return (
     <>
       <AdminPageHeader title={dict.admin.pages.countries.title}>
         <Button
           asChild
-          className="min-h-11 bg-red text-white hover:bg-red-hover"
+          variant="brand"
+          className="min-h-11"
         >
-          <Link href={`/admin/countries?${query}`}>
+          <Link
+            href={`/admin/countries${scopeQuery ? `${scopeQuery}&` : "?"}new=1`}
+          >
             <Plus aria-hidden />
             {dict.admin.countries.new}
           </Link>

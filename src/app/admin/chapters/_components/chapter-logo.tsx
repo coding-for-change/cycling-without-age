@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { isHttpUrl } from "@/features/chapters/schemas";
 import { cn, getInitials } from "@/lib/utils";
 
 /**
@@ -19,7 +20,7 @@ export function ChapterLogo({
   className?: string;
 }) {
   const [broken, setBroken] = useState<string | null>(null);
-  const usable = logo && logo !== broken && /^https?:\/\//.test(logo);
+  const usable = logo && logo !== broken && isHttpUrl(logo);
 
   return (
     <span

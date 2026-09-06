@@ -11,7 +11,6 @@ export function GoogleButton({ label }: { label: string }) {
   return (
     <Button
       variant="outline"
-      size="lg"
       disabled={pending}
       onClick={() =>
         startTransition(async () => {
@@ -21,9 +20,9 @@ export function GoogleButton({ label }: { label: string }) {
           });
         })
       }
-      className="h-14 w-full gap-3 rounded-full border-line text-base"
+      size="hero"
+      className="gap-3 border-line"
     >
-      {}
       <Image
         src="/Google_Favicon_2025.svg"
         alt=""

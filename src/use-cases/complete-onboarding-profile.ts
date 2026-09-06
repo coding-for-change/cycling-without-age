@@ -6,7 +6,10 @@ import { profile } from "@/features/profile";
 import type { PersonalDetailsInput } from "@/features/profile";
 import { getEmailStrings, resolveEmailLocale } from "@/emails/strings";
 import { WelcomeEmail } from "@/emails/welcome";
+import { afterResponse } from "@/lib/after-response";
 import { APP_URL } from "@/lib/app-url";
+import { fill } from "@/lib/utils";
+import type { Locale } from "@/lib/i18n/locales";
 import { sendMail } from "@/lib/mailer";
 import type { OnboardingRole } from "@/lib/onboarding";
 
@@ -20,7 +23,7 @@ export async function completeOnboardingProfile({
   userId: string;
   role: OnboardingRole;
   details: PersonalDetailsInput | null;
-  locale: string | null;
+  locale: Locale;
   helperRelationship?: string;
 }) {
   const chapterId = await chapterOf(userId, role);
@@ -39,8 +42,10 @@ export async function completeOnboardingProfile({
     }
   }
 
-  if (locale) await profile.setLocale(userId, locale);
-  await sendWelcome({ userId, role, chapterId, locale });
+  await profile.setLocale(userId, locale);
+  // Delivery is not what the person pressing Continue is waiting for; the
+  // helper logs and compensates on its own.
+  await afterResponse(() => sendWelcome({ userId, role, chapterId, locale }));
 }
 
 /** A pilot's chapter is still an application at this point, not a membership. */
@@ -66,7 +71,7 @@ async function sendWelcome({
   userId: string;
   role: OnboardingRole;
   chapterId: string | null;
-  locale: string | null;
+  locale: Locale;
 }) {
   let claimed = false;
   try {
@@ -86,7 +91,7 @@ async function sendWelcome({
     await sendMail({
       to: account.email,
       subject: copy.subject,
-      text: `${copy.heading}\n\n${copy.intro.replace("{chapter}", chapterName)}\n\n${copy.how.join("\n")}`,
+      text: `${copy.heading}\n\n${fill(copy.intro, { chapter: chapterName })}\n\n${copy.how.join("\n")}`,
       react: createElement(WelcomeEmail, {
         locale: emailLocale,
         strings: copy,

@@ -1,8 +1,5 @@
-import { Printer } from "lucide-react";
 import { QrCode } from "@/components/qr-code";
-import { Button } from "@/components/ui/button";
-import { CopyButton } from "../../_components/copy-button";
-import { DownloadQrButton } from "./download-qr-button";
+import { JoinLinkActions } from "../../_components/join-link-actions";
 
 export function JoinLinkCard({
   url,
@@ -26,32 +23,12 @@ export function JoinLinkCard({
         <h2 className="text-lg">{labels.title}</h2>
         <p className="max-w-prose text-sm text-ink-soft">{labels.body}</p>
         <p className="font-mono text-sm break-all">{url}</p>
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <CopyButton
-            value={url}
-            label={labels.copy}
-            copiedLabel={labels.copied}
-          />
-          <Button
-            asChild
-            variant="outline"
-            className="min-h-11"
-          >
-            <a
-              href={`/join/${slug}/poster?print=1`}
-              target="_blank"
-              rel="noopener"
-            >
-              <Printer aria-hidden />
-              {labels.poster}
-            </a>
-          </Button>
-          <DownloadQrButton
-            value={url}
-            fileName={`${slug}-qr.png`}
-            label={labels.downloadPng}
-          />
-        </div>
+        <JoinLinkActions
+          url={url}
+          slug={slug}
+          labels={labels}
+          className="flex flex-wrap items-center gap-2 pt-1"
+        />
       </div>
       <div className="justify-self-start rounded-2xl bg-mint-tint p-4">
         <QrCode

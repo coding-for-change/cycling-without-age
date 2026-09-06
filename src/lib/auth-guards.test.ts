@@ -54,16 +54,16 @@ jest.mock("@/features/profile", () => ({
 jest.mock("@/features/chapters", () => ({
   chapters: {
     getChapterCountryId: jest.fn(),
-    listCountries: jest.fn(),
-    listChapters: jest.fn(),
+    listCountryScopes: jest.fn(),
+    listChapterScopes: jest.fn(),
   },
 }));
 
 const getSessionMock = auth.api.getSession as unknown as jest.Mock;
 const getProfile = profile.getProfile as jest.Mock;
 const getChapterCountryId = chapters.getChapterCountryId as jest.Mock;
-const listCountries = chapters.listCountries as jest.Mock;
-const listChapters = chapters.listChapters as jest.Mock;
+const listCountryScopes = chapters.listCountryScopes as jest.Mock;
+const listChapterScopes = chapters.listChapterScopes as jest.Mock;
 
 const DE = "country-de";
 const DK = "country-dk";
@@ -151,8 +151,8 @@ beforeEach(() => {
   getChapterCountryId.mockImplementation(async (id: string) =>
     id === BERLIN ? DE : id === AARHUS ? DK : null,
   );
-  listCountries.mockResolvedValue(COUNTRY_ROWS);
-  listChapters.mockResolvedValue(CHAPTER_ROWS);
+  listCountryScopes.mockResolvedValue(COUNTRY_ROWS);
+  listChapterScopes.mockResolvedValue(CHAPTER_ROWS);
 });
 
 describe("a visitor who is not signed in", () => {
@@ -220,7 +220,7 @@ describe("a passenger of Aarhus", () => {
 
   it("is sent to its own home instead of the admin dashboard", async () => {
     expect(await redirectedTo(requireAdminScope)).toBe("/passenger");
-    expect(listChapters).not.toHaveBeenCalled();
+    expect(listChapterScopes).not.toHaveBeenCalled();
   });
 
   it("is sent home from a perspective that is not its own", async () => {
@@ -249,7 +249,7 @@ describe("a pilot of Berlin", () => {
   // The regression: /admin used to sit behind requireAuth alone, so a pilot got in.
   it("is sent to /pilot instead of the admin dashboard", async () => {
     expect(await redirectedTo(requireAdminScope)).toBe("/pilot");
-    expect(listChapters).not.toHaveBeenCalled();
+    expect(listChapterScopes).not.toHaveBeenCalled();
   });
 
   it("is sent home from the passenger perspective", async () => {
@@ -295,6 +295,9 @@ describe("an admin of Berlin", () => {
       chapters: [BERLIN_SCOPE],
       canSeeChapters: false,
       canSeeCountries: false,
+      canCreateCountries: false,
+      canDeleteAccounts: false,
+      canSeeGlobalEvents: false,
     });
   });
 });
@@ -336,6 +339,9 @@ describe("a country admin of Germany", () => {
       chapters: [BERLIN_SCOPE],
       canSeeChapters: true,
       canSeeCountries: false,
+      canCreateCountries: false,
+      canDeleteAccounts: false,
+      canSeeGlobalEvents: false,
     });
   });
 });
@@ -362,6 +368,9 @@ describe("a superadmin", () => {
       chapters: [BERLIN_SCOPE, AARHUS_SCOPE],
       canSeeChapters: true,
       canSeeCountries: true,
+      canCreateCountries: true,
+      canDeleteAccounts: true,
+      canSeeGlobalEvents: true,
     });
   });
 });
@@ -428,7 +437,7 @@ describe("the admin passkey gate", () => {
     expect(await redirectedTo(() => requireChapterAdmin(BERLIN))).toBe(
       "/onboarding/passkey?required=1&next=%2Fadmin",
     );
-    expect(listChapters).not.toHaveBeenCalled();
+    expect(listChapterScopes).not.toHaveBeenCalled();
   });
 
   it("comes back to the page the admin was actually on", async () => {
