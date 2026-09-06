@@ -9,10 +9,7 @@ import {
   phoneNumber,
 } from "better-auth/plugins";
 import { adminAc, userAc } from "better-auth/plugins/admin/access";
-import {
-  adminAc as orgAdminAc,
-  memberAc as orgMemberAc,
-} from "better-auth/plugins/organization/access";
+import { memberAc as orgMemberAc } from "better-auth/plugins/organization/access";
 import { passkey } from "@better-auth/passkey";
 import { prisma } from "@/lib/prisma";
 import { createElement } from "react";
@@ -21,6 +18,7 @@ import { getLocale } from "@/lib/i18n";
 import { getEmailStrings } from "@/emails/strings";
 import { OtpEmail } from "@/emails/otp";
 import { sendSms } from "@/lib/sms";
+import { phoneTempEmail } from "@/lib/identity";
 import { buildSessionAccess } from "@/use-cases/build-session-access";
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
@@ -37,6 +35,15 @@ const devTrustedOrigins =
           .map((origin) => origin.trim())
           .filter(Boolean),
       ];
+
+// The org plugin's REST endpoints (/api/auth/organization/*) bypass our facades
+// entirely, so every chapter role gets the member statement set — empty
+// organization/member/invitation — and role changes only happen via withRoles.
+export const organizationRoles = {
+  admin: orgMemberAc,
+  pilot: orgMemberAc,
+  passenger: orgMemberAc,
+};
 
 export const auth = betterAuth({
   appName: "Cycling Without Age",
@@ -84,9 +91,7 @@ export const auth = betterAuth({
       sendOTP: async ({ phoneNumber: to, code }) => {
         await sendSms(to, `Your Cycling Without Age code is ${code}.`);
       },
-      signUpOnVerification: {
-        getTempEmail: (phone) => `${phone.replace(/\D/g, "")}@phone.cwa.local`,
-      },
+      signUpOnVerification: { getTempEmail: phoneTempEmail },
     }),
     passkey({ rpName: "Cycling Without Age" }),
     admin({
@@ -95,7 +100,7 @@ export const auth = betterAuth({
     }),
     organization({
       allowUserToCreateOrganization: false,
-      roles: { admin: orgAdminAc, pilot: orgMemberAc, passenger: orgMemberAc },
+      roles: organizationRoles,
     }),
     customSession(async ({ user, session }) => ({
       user,

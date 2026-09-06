@@ -13,6 +13,9 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { requireAdminScope } from "@/lib/auth-guards";
+import { avatarSeed, avatarSvg } from "@/lib/avatar";
+import { headers } from "next/headers";
+import { resolveLocale } from "@/lib/format";
 import { getDictionary } from "@/lib/i18n";
 import { resolveNav } from "../nav";
 import {
@@ -27,10 +30,12 @@ import { CommandHint } from "./command-hint";
 import { ScopeSwitcher } from "./scope-switcher";
 
 export async function AdminSidebar() {
-  const [{ session, scope }, dict] = await Promise.all([
+  const [{ session, scope }, dict, head] = await Promise.all([
     requireAdminScope(),
     getDictionary(),
+    headers(),
   ]);
+  const locale = resolveLocale(head.get("accept-language"));
 
   const items = resolveNav(scope, dict.admin.nav);
   const inGroup = (group: string) => items.filter((i) => i.group === group);
@@ -91,11 +96,14 @@ export async function AdminSidebar() {
         <AdminUserMenu
           name={session.user.name}
           email={session.user.email}
-          image={session.user.image}
+          avatar={avatarSvg(avatarSeed(session.user.email))}
+          avatarAnimated={avatarSvg(avatarSeed(session.user.email), true)}
           strings={{
             ...dict.admin.user,
             signOut: dict.common.signOut,
           }}
+          account={dict.account}
+          locale={locale}
         />
       </SidebarFooter>
       <SidebarRail />

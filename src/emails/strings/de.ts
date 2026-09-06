@@ -46,6 +46,42 @@ const de: EmailStrings = {
     footer:
       "Du erhältst diese E-Mail, weil du dich als Pilot für ein Cycling-Without-Age-Chapter beworben hast.",
   },
+  applicationApproved: {
+    subject: "Du bist Pilot bei {chapter}",
+    preview: "Deine Ortsgruppe sagt ja",
+    heading: "Willkommen an Bord",
+    intro:
+      "{chapter} hat dich als Pilot freigegeben. Als Nächstes: die Trainingsvideos, ein Workshop mit einer der Captains — und dann deine erste Ausfahrt.",
+    noteHeading: "Von deiner Ortsgruppe",
+    cta: "Cycling Without Age öffnen",
+    footer:
+      "Du erhältst diese E-Mail, weil du dich als Pilot für eine Cycling-Without-Age-Ortsgruppe beworben hast.",
+  },
+  applicationRejected: {
+    subject: "Zu deiner Pilotanfrage bei {chapter}",
+    preview: "Eine Antwort von deiner Ortsgruppe",
+    heading: "Diesmal nicht",
+    intro:
+      "{chapter} kann dich gerade nicht als Pilot aufnehmen. Rikschas, Captains und Trainingstermine müssen alle zusammenpassen — eine andere Ortsgruppe in der Nähe hat vielleicht Platz.",
+    noteHeading: "Von deiner Ortsgruppe",
+    cta: "Andere Ortsgruppe finden",
+    footer:
+      "Du erhältst diese E-Mail, weil du dich als Pilot für eine Cycling-Without-Age-Ortsgruppe beworben hast.",
+  },
+  invite: {
+    subject: "Du bist zu {chapter} eingeladen",
+    preview: "Eine Ortsgruppe wartet auf dich",
+    heading: "Du bist eingeladen",
+    intro: "{inviter} hat dich als {role} zu {chapter} eingeladen.",
+    how: "Melde dich mit dieser E-Mail-Adresse an, wir schicken dir einen Code \u2014 kein Passwort zum Ausdenken.",
+    cta: "Einladung annehmen",
+    footer:
+      "Du erhältst diese E-Mail, weil dich eine Admin einer Cycling-Without-Age-Ortsgruppe eingeladen hat.",
+  },
+  roles: {
+    admin: "Ortsgruppen-Admin",
+    pilot: "Pilot",
+  },
 };
 
 export default de;

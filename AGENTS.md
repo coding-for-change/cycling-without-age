@@ -47,6 +47,16 @@ Imports must only flow downward. Violation of these rules is a build-breaking er
 - **Goal**: Always go the extra mile. Try to deliver a stelar clean and beatiful user experience. For dashboard opt for a style like "Linear"
 - **Navigation**: Should always be instant. Use the guides: https://nextjs.org/docs/app/guides/instant-navigation. Use lazy loading. Use ViewTransition Library where it makes sense to create a smooth native App like feeling and experience
 - **Internationlazation**: The WebApp will be multilingual. Users language will be saved as preference. Every text should and string should 
+- **Text wrapping**: headings MUST use `text-balance`, body text MUST use `text-pretty`. Both are set once in `src/app/globals.css` (`h1`–`h6` balance, `body` pretty — `text-wrap` inherits), so only a heading that is not an `h*` element adds the utility itself.
+- **Spacing**:
+  - MUST use a 4px grid for spacing
+  - SHOULD use spacing from the scale: 5px, 11px, 12px, 13px, 14px, 16px, 19px, 20px
+  - SHOULD use 5px as the default gap between elements
+  - NEVER use arbitrary spacing values (use the design scale)
+  - SHOULD maintain consistent padding within containers
+  - SHOULD use consistent element widths: 52px
+- **Create/edit surfaces are drawers, never centered dialogs**: every admin create or edit form opens in `AdminDrawer` (`src/app/admin/_components/admin-drawer.tsx`, vaul — right side on desktop, bottom sheet on mobile). Its open state lives in the URL (`?new=1`, `?edit=<id>`) so a refresh or a shared link reopens it, ⌘↵ submits. Closing a drawer discards what was typed — there is no draft persistence. Editing an existing record happens in place on its detail page (`InlineField`, autosave, Undo toast, `SaveStatus`), not in a form. Centered dialogs remain only for confirmations (typed `DELETE`, destructive alerts).
+- **Detail pages** follow Linear: header, a main column for the story (activity, notes) and a narrow properties column for state, roles and the destructive zone. Actions sit as visible buttons next to what they act on, never behind a `⋯` menu when there is room. Deleting a whole record asks the admin to type `DELETE`.
 
 ## 4. LINTER ENFORCEMENT (NON-NEGOTIABLE)
 Constraint: If an import statement violates this map, you MUST refactor the logic rather than disabling the rule.

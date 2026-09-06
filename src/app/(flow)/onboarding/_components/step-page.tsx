@@ -1,9 +1,11 @@
 import { Suspense, type ReactNode } from "react";
 import { redirect } from "next/navigation";
+import { accounts } from "@/features/accounts";
 import { chapters } from "@/features/chapters";
 import { passengers } from "@/features/passengers";
 import { profile } from "@/features/profile";
-import { requireAuth } from "@/lib/auth-guards";
+import { readNextPath, requireAuth } from "@/lib/auth-guards";
+import { hasAnyAdminScope } from "@/lib/access";
 import { readJoinPreset } from "@/lib/join-preset";
 import { getDictionary } from "@/lib/i18n";
 import { toIsoDateUtc } from "@/lib/format";
@@ -40,6 +42,7 @@ export type StepContext = {
    *  than an empty form they have to fill in again. */
   defaults: StepDefaults;
   presetChapterName: string | null;
+  claimBanner: string | null;
   dict: Dictionary;
 };
 
@@ -48,7 +51,7 @@ export function OnboardingStepPage({
   render,
 }: {
   step: OnboardingStep;
-  render: (context: StepContext) => ReactNode;
+  render: (context: StepContext) => ReactNode | Promise<ReactNode>;
 }) {
   return (
     <StepTransition>
@@ -67,21 +70,22 @@ async function Resolve({
   render,
 }: {
   step: OnboardingStep;
-  render: (context: StepContext) => ReactNode;
+  render: (context: StepContext) => ReactNode | Promise<ReactNode>;
 }) {
   const session = await requireAuth();
   const preset = await readJoinPreset();
 
-  const [state, dict, account, rider] = await Promise.all([
+  const [state, dict, account, rider, claimBanner] = await Promise.all([
     getOnboardingState(session.user.id, preset),
     getDictionary(),
     profile.getProfile(session.user.id),
     passengers.getOwnPassenger(session.user.id),
+    accounts.getClaimBanner(session.user.id),
   ]);
   const { progress } = state;
 
-  if (!canViewStep(progress, step)) {
-    redirect(await resolveDestination(session, preset));
+  if (!canViewStep(progress, step) && !hasAnyAdminScope(session.access)) {
+    redirect(await resolveDestination(session, preset, await readNextPath()));
   }
 
   const presetChapterName =
@@ -99,6 +103,7 @@ async function Resolve({
   return render({
     role: progress.role ?? "passenger",
     presetChapterName,
+    claimBanner,
     defaults: {
       firstName: name.firstName,
       lastName: name.lastName,

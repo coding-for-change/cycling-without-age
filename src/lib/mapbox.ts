@@ -13,15 +13,29 @@ const SEARCH = "https://api.mapbox.com/search/searchbox/v1";
 const DIRECTIONS = "https://api.mapbox.com/directions/v5/mapbox";
 const TIMEOUT_MS = 4000;
 
+export type PlaceKind = "address" | "poi" | "place";
+
 export type PlaceSuggestion = {
   id: string;
-  /** The bold first line — a street and number. */
+  /** The bold first line — a street and number, or a point of interest's name. */
   name: string;
   /** The rest of the address, already assembled by Mapbox for display. */
   context: string;
+  kind: PlaceKind;
 };
 
-export type ResolvedPlace = { address: string; coords: Coords };
+export type ResolvedPlace = {
+  address: string;
+  coords: Coords;
+  /** The town the place sits in, when Mapbox knows it. */
+  city: string | null;
+  /** ISO 3166-1 alpha-2, upper case. */
+  countryCode: string | null;
+  /** Set when the chosen result was a point of interest rather than an address. */
+  poiName: string | null;
+};
+
+const DEFAULT_TYPES = "address,street,place";
 
 export type Route = {
   /** GeoJSON LineString coordinates, `[lng, lat]` — what mapbox-gl wants. */
@@ -43,16 +57,23 @@ async function get<T>(url: string): Promise<T | null> {
   }
 }
 
+const kindOf = (featureType: string | undefined): PlaceKind =>
+  featureType === "poi" ? "poi" : featureType === "place" ? "place" : "address";
+
 export async function suggestPlaces(
   query: string,
   sessionToken: string,
-  { language, country }: { language?: string; country?: string } = {},
+  {
+    language,
+    country,
+    types = DEFAULT_TYPES,
+  }: { language?: string; country?: string; types?: string } = {},
 ): Promise<PlaceSuggestion[]> {
   const params = new URLSearchParams({
     q: query,
     session_token: sessionToken,
     access_token: TOKEN ?? "",
-    types: "address,street,place",
+    types,
     limit: "5",
     ...(language ? { language } : {}),
     ...(country ? { country } : {}),
@@ -62,6 +83,7 @@ export async function suggestPlaces(
     suggestions?: {
       mapbox_id: string;
       name: string;
+      feature_type?: string;
       place_formatted?: string;
       full_address?: string;
     }[];
@@ -71,7 +93,38 @@ export async function suggestPlaces(
     id: s.mapbox_id,
     name: s.name,
     context: s.place_formatted ?? s.full_address ?? "",
+    kind: kindOf(s.feature_type),
   }));
+}
+
+type SearchFeature = {
+  properties?: {
+    full_address?: string;
+    name?: string;
+    feature_type?: string;
+    context?: {
+      place?: { name?: string };
+      locality?: { name?: string };
+      country?: { country_code?: string };
+    };
+  };
+  geometry?: { coordinates?: [number, number] };
+};
+
+function toPlace(feature: SearchFeature | undefined): ResolvedPlace | null {
+  const point = feature?.geometry?.coordinates;
+  const props = feature?.properties;
+  const address = props?.full_address ?? props?.name;
+  if (!point || !address) return null;
+
+  const context = props?.context;
+  return {
+    address,
+    coords: { lng: point[0], lat: point[1] },
+    city: context?.place?.name ?? context?.locality?.name ?? null,
+    countryCode: context?.country?.country_code?.toUpperCase() ?? null,
+    poiName: props?.feature_type === "poi" ? (props.name ?? null) : null,
+  };
 }
 
 /** Turns a chosen suggestion into an address and a position. Same session token
@@ -85,20 +138,31 @@ export async function retrievePlace(
     access_token: TOKEN ?? "",
   });
 
-  const data = await get<{
-    features?: {
-      properties?: { full_address?: string; name?: string };
-      geometry?: { coordinates?: [number, number] };
-    }[];
-  }>(`${SEARCH}/retrieve/${encodeURIComponent(mapboxId)}?${params}`);
+  const data = await get<{ features?: SearchFeature[] }>(
+    `${SEARCH}/retrieve/${encodeURIComponent(mapboxId)}?${params}`,
+  );
+  return toPlace(data?.features?.[0]);
+}
 
-  const feature = data?.features?.[0];
-  const point = feature?.geometry?.coordinates;
-  const address =
-    feature?.properties?.full_address ?? feature?.properties?.name;
-  if (!point || !address) return null;
+/** The address under a dragged pin. Not session-billed, so no token to pass. */
+export async function reversePlace(
+  coords: Coords,
+  { language }: { language?: string } = {},
+): Promise<ResolvedPlace | null> {
+  const params = new URLSearchParams({
+    longitude: String(coords.lng),
+    latitude: String(coords.lat),
+    types: "address,street,place",
+    access_token: TOKEN ?? "",
+    ...(language ? { language } : {}),
+  });
 
-  return { address, coords: { lng: point[0], lat: point[1] } };
+  const data = await get<{ features?: SearchFeature[] }>(
+    `${SEARCH}/reverse?${params}`,
+  );
+  const place = toPlace(data?.features?.[0]);
+  // The pin is the truth; the reverse lookup only names it.
+  return place && { ...place, coords };
 }
 
 /** The trishaw is a bike, so the cycling profile is the honest one — both for the

@@ -20,6 +20,7 @@
 :root {
   --canvas: #ffffff;
   --canvas-deep: #f4f2ef; /* warm light grey — black 30/30/30 at ~5% */
+  --canvas-deeper: #e9e6e1; /* the same warm grey one step down — ink at ~10% */
   --paper: #ffffff;
   --ink: #2e2823; /* warm espresso (h27 s14% l16%) — the brand's black, warmed
                      for a lit screen. The single ink for every black mark. */
@@ -137,7 +138,7 @@
   --sidebar-foreground: hsl(27 13.6% 16%);
   --sidebar-primary: hsl(27 13.6% 16%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(27 14% 96%);
+  --sidebar-accent: var(--canvas-deeper);
   --sidebar-accent-foreground: hsl(27 13.6% 16%);
   --sidebar-border: hsl(27 14% 88%);
   --sidebar-ring: hsl(27 13.6% 16%);
@@ -196,6 +197,7 @@
 
   --color-canvas: var(--canvas);
   --color-canvas-deep: var(--canvas-deep);
+  --color-canvas-deeper: var(--canvas-deeper);
   --color-paper: var(--paper);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
@@ -209,6 +211,11 @@
   --color-red-tint: var(--red-tint);
   --color-grey-tint: var(--grey-tint);
   --font-display: var(--font-display);
+
+  /* Compact UI text (13px) — Linear's base size, for dense admin surfaces:
+     feeds, property columns, row actions. Body copy stays text-sm/base. */
+  --text-2sm: 0.8125rem;
+  --text-2sm--line-height: 1.25rem;
 }
 
 /* Headlines are Inter Bold (BRAND.md § Typography). --font-display and --font-sans
@@ -223,6 +230,23 @@
   h4 {
     font-family: var(--font-display);
     font-weight: 700;
+  }
+}
+
+/* text-wrap inherits, so two rules cover the app: body copy is `pretty` (no
+   orphans), headlines `balance` (even line lengths). A heading that is not an
+   h* element adds `text-balance` itself. */
+@layer base {
+  body {
+    text-wrap: pretty;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    text-wrap: balance;
   }
 }
 
@@ -525,4 +549,11 @@
   .art-ping {
     opacity: 0.28;
   }
+}
+
+/* The printable chapter poster (/join/[slug]/poster) is the app's only print
+   surface: A4 edge to edge, its own 16mm gutter drawn by the page itself. */
+@page {
+  size: A4;
+  margin: 0;
 }

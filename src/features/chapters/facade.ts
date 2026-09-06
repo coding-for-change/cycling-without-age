@@ -1,6 +1,16 @@
 import { distanceMeters, type Coords } from "@/lib/geo";
-import { chapterInput, chapterUpdateInput, countryInput } from "./schemas";
-import type { ChapterInput, ChapterUpdateInput, CountryInput } from "./schemas";
+import {
+  chapterInput,
+  chapterUpdateInput,
+  countryInput,
+  countryUpdateInput,
+} from "./schemas";
+import type {
+  ChapterInput,
+  ChapterUpdateInput,
+  CountryInput,
+  CountryUpdateInput,
+} from "./schemas";
 import {
   deleteCountryAdmin,
   findCountries,
@@ -10,11 +20,14 @@ import {
   findCountryById,
   insertCountry,
   insertCountryAdmin,
+  updateCountryById,
 } from "./services/countries";
 import {
+  deleteChapterById,
   findChapterById,
   findChapterBySlug,
   findChapterCountryId,
+  findChapterFootprint,
   findChapters,
   insertChapter,
   updateChapterById,
@@ -27,6 +40,15 @@ export const getCountryByCode = (code: string) =>
 
 export const createCountry = (input: CountryInput) =>
   insertCountry(countryInput.parse(input));
+
+export async function updateCountry(id: string, input: CountryUpdateInput) {
+  const data = countryUpdateInput.parse(input);
+  if (data.code) {
+    const clash = await findCountryByCode(data.code);
+    if (clash && clash.id !== id) throw new Error("Code already taken");
+  }
+  return updateCountryById(id, data);
+}
 
 export const listCountryAdmins = (countryId: string) =>
   findCountryAdmins(countryId);
@@ -48,6 +70,31 @@ export const getChapterBySlug = (slug: string) => findChapterBySlug(slug);
 export const getChapterCountryId = async (id: string) =>
   (await findChapterCountryId(id))?.countryId ?? null;
 
+export const isSlugAvailable = async (slug: string) =>
+  chapterInput.shape.slug.safeParse(slug).success &&
+  !(await findChapterBySlug(slug));
+
+export type ChapterFootprint = {
+  members: number;
+  passengers: number;
+  pendingApplications: number;
+};
+
+/** What goes with the chapter if it is deleted — the schema cascades all three. */
+export async function getChapterFootprint(
+  id: string,
+): Promise<ChapterFootprint | null> {
+  const row = await findChapterFootprint(id);
+  if (!row) return null;
+  return {
+    members: row._count.members,
+    passengers: row._count.passengers,
+    pendingApplications: row._count.applications,
+  };
+}
+
+export const deleteChapter = (id: string) => deleteChapterById(id);
+
 export async function createChapter(input: ChapterInput) {
   const data = chapterInput.parse(input);
   if (!(await findCountryById(data.countryId)))
@@ -57,14 +104,10 @@ export async function createChapter(input: ChapterInput) {
 }
 
 // A chapter belongs to exactly one country for life — moving it would silently
-// re-scope every country admin's authority over it, so countryId is not updatable.
-export async function updateChapter(id: string, input: ChapterUpdateInput) {
-  const data = chapterUpdateInput.parse(input);
-  if (data.slug) {
-    const clash = await findChapterBySlug(data.slug);
-    if (clash && clash.id !== id) throw new Error("Slug already taken");
-  }
-  return updateChapterById(id, data);
+// re-scope every country admin's authority over it — and the slug is printed on
+// posters, so neither is updatable.
+export function updateChapter(id: string, input: ChapterUpdateInput) {
+  return updateChapterById(id, chapterUpdateInput.parse(input));
 }
 
 export type NearestChapter = {

@@ -52,7 +52,7 @@ export async function AdminPageBody({ page }: { page: NavKey }) {
             variant="icon"
             className="bg-mint-tint text-ink"
           >
-            <Icon />
+            <Icon aria-hidden />
           </EmptyMedia>
           <EmptyDescription className="text-ink-soft">{body}</EmptyDescription>
         </EmptyHeader>
@@ -68,5 +68,22 @@ export function AdminPage({ page }: { page: NavKey }) {
         <AdminPageBody page={page} />
       </Suspense>
     </AdminPageShell>
+  );
+}
+
+export function AdminPageHeader({
+  title,
+  children,
+}: {
+  title: string;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <h1 className="text-2xl tracking-tight md:text-3xl">{title}</h1>
+      {children ? (
+        <div className="flex flex-wrap items-center gap-2">{children}</div>
+      ) : null}
+    </div>
   );
 }

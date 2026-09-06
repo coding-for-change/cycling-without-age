@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { membership } from "@/features/membership";
 
-jest.mock("@/lib/prisma", () => ({
-  prisma: {
+jest.mock("@/lib/prisma", () => {
+  const client: Record<string, unknown> = {
     member: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
       upsert: jest.fn(),
       deleteMany: jest.fn(),
     },
@@ -13,16 +14,25 @@ jest.mock("@/lib/prisma", () => ({
       upsert: jest.fn(),
       updateMany: jest.fn(),
     },
-  },
-}));
+    $queryRaw: jest.fn(),
+  };
+  client.$transaction = jest.fn((run: (tx: unknown) => unknown) => run(client));
+  return { prisma: client };
+});
 
 const db = prisma as unknown as {
-  member: { findUnique: jest.Mock; upsert: jest.Mock; deleteMany: jest.Mock };
+  member: {
+    findUnique: jest.Mock;
+    findMany: jest.Mock;
+    upsert: jest.Mock;
+    deleteMany: jest.Mock;
+  };
   chapterApplication: {
     findUnique: jest.Mock;
     upsert: jest.Mock;
     updateMany: jest.Mock;
   };
+  $queryRaw: jest.Mock;
 };
 
 const USER = "user-1";
@@ -35,8 +45,15 @@ const memberRow = (role: string | null) =>
 
 const roleWritten = () => db.member.upsert.mock.calls[0][0].update.role;
 
+// How many admins the chapter has besides whatever `memberRow` says.
+const admins = (count: number) =>
+  db.member.findMany.mockResolvedValue(
+    Array.from({ length: count }, () => ({ role: "admin" })),
+  );
+
 beforeEach(() => {
   jest.clearAllMocks();
+  admins(2);
   db.chapterApplication.updateMany.mockResolvedValue({ count: 1 });
 });
 
@@ -101,6 +118,47 @@ describe("revoking", () => {
     memberRow("passenger");
     await membership.revokeChapterRole(USER, CHAPTER, "admin");
     expect(roleWritten()).toBe("passenger");
+  });
+});
+
+describe("the last admin of a chapter", () => {
+  it("cannot be demoted", async () => {
+    memberRow("admin");
+    admins(1);
+    await expect(
+      membership.revokeChapterRole(USER, CHAPTER, "admin"),
+    ).rejects.toThrow("Last admin of the chapter");
+    expect(db.member.upsert).not.toHaveBeenCalled();
+    expect(db.member.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it("cannot be removed from the chapter", async () => {
+    memberRow("admin,pilot");
+    admins(1);
+    await expect(membership.removeFromChapter(USER, CHAPTER)).rejects.toThrow(
+      "Last admin of the chapter",
+    );
+    expect(db.member.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it("may step down once a second admin exists", async () => {
+    memberRow("admin,pilot");
+    admins(2);
+    await membership.revokeChapterRole(USER, CHAPTER, "admin");
+    expect(roleWritten()).toBe("pilot");
+  });
+
+  // Without the row lock two admins could both read "two admins" and both leave.
+  it("is counted behind a chapter lock taken before the write", async () => {
+    memberRow("admin,pilot");
+    await membership.revokeChapterRole(USER, CHAPTER, "admin");
+    expect(db.$queryRaw).toHaveBeenCalled();
+    expect(db.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+      db.member.findMany.mock.invocationCallOrder[0],
+    );
+    expect(db.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+      db.member.upsert.mock.invocationCallOrder[0],
+    );
   });
 });
 
@@ -170,11 +228,12 @@ describe("deciding an application", () => {
       ...over,
     });
 
-  const decide = (approve: boolean) =>
+  const decide = (approve: boolean, note?: string) =>
     membership.decideApplication({
       applicationId: "app-1",
       decidedByUserId: ADMIN,
       approve,
+      note,
     });
 
   it("grants the role and records who decided", async () => {
@@ -242,5 +301,26 @@ describe("deciding an application", () => {
       }),
     ).rejects.toThrow();
     expect(db.chapterApplication.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("keeps the decider's note with the decision", async () => {
+    application();
+    await decide(false, "Come back after the summer training");
+    expect(db.chapterApplication.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          decisionNote: "Come back after the summer training",
+        }),
+      }),
+    );
+  });
+});
+
+describe("acknowledging an approval", () => {
+  it("reports whether anything was actually stamped", async () => {
+    db.chapterApplication.updateMany.mockResolvedValue({ count: 0 });
+    expect(await membership.markApprovalsSeen(USER)).toBe(false);
+    db.chapterApplication.updateMany.mockResolvedValue({ count: 1 });
+    expect(await membership.markApprovalsSeen(USER)).toBe(true);
   });
 });

@@ -49,7 +49,6 @@ export function AdminNav({
                   asChild
                   isActive={active}
                   tooltip={itemLabel}
-                  className="data-[active=true]:bg-mint-tint data-[active=true]:text-ink"
                 >
                   <Link
                     href={href}

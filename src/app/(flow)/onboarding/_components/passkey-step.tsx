@@ -1,10 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { KeyRound } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { haptics } from "@/lib/native/haptics";
 import { useCharacter } from "@/components/character";
 import { Step, type StepProgress } from "../../_components/step";
@@ -16,17 +17,25 @@ type Strings = {
   create: string;
   skip: string;
   failed: string;
+  nameLabel: string;
+  namePlaceholder: string;
 };
 
 export function PasskeyStep({
   progress,
   strings,
+  requiredNext = null,
 }: {
   progress: StepProgress | null;
   strings: Strings;
+  /** Set when an admin is sent here by the enrolment gate: no skip, and success
+   *  returns to this path instead of the next onboarding step. */
+  requiredNext?: string | null;
 }) {
   const router = useRouter();
   const character = useCharacter();
+  const nameId = useId();
+  const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -38,18 +47,36 @@ export function PasskeyStep({
 
   const create = () =>
     startTransition(async () => {
-      const result = await authClient.passkey.addPasskey();
+      const result = await authClient.passkey.addPasskey({
+        name: name.trim() || undefined,
+      });
       if (result?.error) {
+        if (
+          "code" in result.error &&
+          result.error.code === "SESSION_NOT_FRESH"
+        ) {
+          await authClient.signOut();
+          router.replace(
+            requiredNext
+              ? `/sign-in?next=${encodeURIComponent(requiredNext)}`
+              : "/sign-in",
+          );
+          return;
+        }
         haptics.error();
         character.oops();
         character.say("triste");
         setError(strings.failed);
-        await markPasskeyAnswered();
+        if (!requiredNext) await markPasskeyAnswered();
         return;
       }
       haptics.success();
       character.say("heureux", 3000);
-      leave(await markPasskeyAnswered());
+      const answered = await markPasskeyAnswered();
+      // The client router still holds the redirect that sent an admin here, so a
+      // soft navigation to `next` would replay it. A full load asks the server again.
+      if (requiredNext) window.location.replace(requiredNext);
+      else leave(answered);
     });
 
   const skip = () =>
@@ -72,6 +99,23 @@ export function PasskeyStep({
               {error}
             </p>
           )}
+          <div className="mb-4 grid gap-2 text-left">
+            <label
+              htmlFor={nameId}
+              className="text-sm font-medium"
+            >
+              {strings.nameLabel}
+            </label>
+            <Input
+              id={nameId}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder={strings.namePlaceholder}
+              autoComplete="off"
+              maxLength={60}
+              className="h-12 rounded-full px-5"
+            />
+          </div>
           <Button
             size="lg"
             disabled={pending}
@@ -86,14 +130,16 @@ export function PasskeyStep({
               <KeyRound className="size-5" />
             </span>
           </Button>
-          <button
-            type="button"
-            disabled={pending}
-            onClick={skip}
-            className="mt-3 w-full rounded-full px-4 py-3 text-sm text-ink-soft transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none disabled:opacity-50"
-          >
-            {strings.skip}
-          </button>
+          {!requiredNext && (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={skip}
+              className="mt-3 w-full rounded-full px-4 py-3 text-sm text-ink-soft transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none disabled:opacity-50"
+            >
+              {strings.skip}
+            </button>
+          )}
         </>
       }
     >

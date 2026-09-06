@@ -37,6 +37,13 @@ model User {
   passkeyPromptedAt    DateTime?
   pilotNextStepsSeenAt DateTime?
   welcomeEmailSentAt DateTime?
+  createdByUserId String?
+  createdBy       User?   @relation("createdUsers", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdUsers    User[]  @relation("createdUsers")
+  claimedAt       DateTime?
+  helperName         String? @db.Text
+  helperRelationship String? @db.Text
+  helperContact      String? @db.Text
   sessions            Session[]
   accounts            Account[]
   passkeys            Passkey[]
@@ -47,9 +54,12 @@ model User {
   decidedApplications ChapterApplication[] @relation("decider")
   passengers          Passenger[]          @relation("manages")
   passengerProfile    Passenger?           @relation("self")
+  activityEvents      ActivityEvent[]      @relation("activitySubject")
+  activityActions     ActivityEvent[]      @relation("activityActor")
 
   @@unique([email])
   @@unique([phoneNumber])
+  @@index([createdByUserId])
   @@map("user")
 }
 
@@ -127,6 +137,7 @@ model Organization {
   name        String       @db.Text
   slug        String
   logo        String?      @db.Text
+  description String?      @db.Text
   createdAt   DateTime     @default(now())
   metadata    String?      @db.Text
   members     Member[]
@@ -141,6 +152,7 @@ model Organization {
   longitude    Float
   applications ChapterApplication[]
   passengers   Passenger[]
+  events       ActivityEvent[]
   serviceRadiusKm Int @default(10)
 
   @@unique([slug])
@@ -232,6 +244,8 @@ model ChapterApplication {
   decidedByUserId String?
   decidedBy       User?             @relation("decider", fields: [decidedByUserId], references: [id], onDelete: SetNull)
   decidedAt       DateTime?
+  decisionNote    String?           @db.Text
+  approvalSeenAt  DateTime?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
@@ -272,4 +286,39 @@ model Passenger {
   @@index([chapterId])
   @@index([managedByUserId])
   @@map("passenger")
+}
+
+enum ActivityType {
+  applicationSubmitted
+  applicationApproved
+  applicationRejected
+  roleGranted
+  roleRevoked
+  memberRemoved
+  emailSent
+  countryAdminAppointed
+  countryAdminRemoved
+  accountCreated
+  invited
+  accountClaimed
+  chapterCreated
+  chapterUpdated
+  chapterDeleted
+}
+
+model ActivityEvent {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation("activitySubject", fields: [userId], references: [id], onDelete: Cascade)
+  actorUserId String?
+  actor       User?         @relation("activityActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  chapterId   String?
+  chapter     Organization? @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  type        ActivityType
+  payload     Json?
+  createdAt   DateTime      @default(now())
+
+  @@index([userId, createdAt])
+  @@index([chapterId, createdAt])
+  @@map("activity_event")
 }

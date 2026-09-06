@@ -121,6 +121,43 @@ describe("scope-dependent destinations", () => {
   });
 });
 
+describe("create group", () => {
+  const ids = (scope: AdminScope) =>
+    inGroup(run(scope), "create").map((c) => c.id);
+
+  it("gives a superadmin both a new chapter and a new country", () => {
+    expect(ids(superadmin)).toEqual(
+      expect.arrayContaining(["new-chapter", "new-country"]),
+    );
+  });
+
+  it("gives a country admin a new chapter but not a new country", () => {
+    expect(ids(dkAdmin)).toContain("new-chapter");
+    expect(ids(dkAdmin)).not.toContain("new-country");
+  });
+
+  it("gives a chapter admin neither", () => {
+    expect(ids(berlinAdmin)).not.toContain("new-chapter");
+    expect(ids(berlinAdmin)).not.toContain("new-country");
+  });
+
+  it("opens the form on the page that owns it", () => {
+    const targets = inGroup(run(superadmin), "create").flatMap((c) =>
+      c.run.kind === "navigate" ? [[c.id, c.run.href]] : [],
+    );
+    expect(targets).toEqual(
+      expect.arrayContaining([
+        ["new-chapter", "/admin/chapters?new=1"],
+        ["new-country", "/admin/countries?new=1"],
+      ]),
+    );
+  });
+
+  it("stays out of the navigate group, so NAV parity is untouched", () => {
+    expect(hrefs(run(superadmin))).not.toContain("/admin/chapters?new=1");
+  });
+});
+
 describe("scope group", () => {
   it("is omitted for a single-chapter admin", () => {
     expect(inGroup(run(berlinAdmin), "scope")).toEqual([]);

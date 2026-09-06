@@ -26,6 +26,7 @@ type Strings = {
   gender: string;
   genders: Record<Gender, string>;
   forSomeoneElse: string;
+  relationship: { label: string; options: Record<string, string> };
   errors: Record<string, string>;
 };
 
@@ -52,6 +53,8 @@ export function ProfileStep({
   const [lastName, setLastName] = useState(defaults.lastName);
   const [birthDate, setBirthDate] = useState(defaults.birthDate);
   const [gender, setGender] = useState<Gender | null>(defaults.gender);
+  const [helping, setHelping] = useState(false);
+  const [relationship, setRelationship] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -59,9 +62,9 @@ export function ProfileStep({
     firstName.trim() && lastName.trim() && birthDate && gender,
   );
 
-  const send = (details: object | null) =>
+  const send = (details: object | null, helperRelationship?: string) =>
     startTransition(async () => {
-      const result = await submitProfile(details);
+      const result = await submitProfile(details, helperRelationship);
       if (!result.ok) {
         haptics.error();
         oops();
@@ -101,21 +104,57 @@ export function ProfileStep({
               mint, the caretaking colour, which is what this path is. Red stays
               with the one hero action. */}
           {role === "passenger" && (
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => {
-                haptics.tap();
-                send(null);
-              }}
-              className="mt-3 flex h-14 w-full items-center justify-center gap-2 rounded-full border border-mint bg-mint-tint px-4 text-base font-medium text-ink transition-colors hover:bg-mint focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none disabled:opacity-50"
-            >
-              {strings.forSomeoneElse}
-              <ArrowRight
-                className="size-4"
-                aria-hidden
-              />
-            </button>
+            <>
+              {helping && (
+                <div className="mt-4">
+                  <Label
+                    htmlFor="relationship"
+                    className="mb-1.5 text-sm font-medium text-ink-soft"
+                  >
+                    {strings.relationship.label}
+                  </Label>
+                  <select
+                    id="relationship"
+                    value={relationship}
+                    onChange={(event) => setRelationship(event.target.value)}
+                    className="h-12 w-full rounded-(--r-card) border border-line bg-canvas px-3 text-base text-ink focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none"
+                  >
+                    <option value="">—</option>
+                    {Object.entries(strings.relationship.options).map(
+                      ([key, label]) => (
+                        <option
+                          key={key}
+                          value={key}
+                        >
+                          {label}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </div>
+              )}
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => {
+                  haptics.tap();
+                  if (!helping) {
+                    setHelping(true);
+                    return;
+                  }
+                  send(null, relationship || undefined);
+                }}
+                className="mt-3 flex h-14 w-full items-center justify-center gap-2 rounded-full border border-mint bg-mint-tint px-4 text-base font-medium text-ink transition-colors hover:bg-mint focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none disabled:opacity-50"
+              >
+                {helping ? continueLabel : strings.forSomeoneElse}
+                {!helping && (
+                  <ArrowRight
+                    className="size-4"
+                    aria-hidden
+                  />
+                )}
+              </button>
+            </>
           )}
         </>
       }

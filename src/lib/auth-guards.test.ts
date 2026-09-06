@@ -1,15 +1,21 @@
 import { auth } from "@/lib/auth";
 import { chapters } from "@/features/chapters";
+import { profile } from "@/features/profile";
 import {
   getHighestRole,
   getSession,
+  homeOf,
   requireAdminScope,
   requireAuth,
   requireChapterAdmin,
   requireChapterRole,
   requireCountryAdmin,
+  requireCountryAdminOfChapter,
+  readNextPath,
+  requirePerspective,
   requireSuperAdmin,
 } from "@/lib/auth-guards";
+import { NEXT_COOKIE } from "@/lib/redirects";
 import type { Access } from "@/lib/access";
 
 jest.mock("react", () => ({
@@ -17,7 +23,20 @@ jest.mock("react", () => ({
   // No request scope in tests — dedupe would leak one test's session into the next.
   cache: (fn: unknown) => fn,
 }));
-jest.mock("next/headers", () => ({ headers: async () => new Headers() }));
+// Mutable, because `x-pathname` and the `cwa.next` cookie are exactly what the
+// redirect targets are read from.
+const requestHeaders = new Headers();
+const requestCookies = new Map<string, string>();
+
+jest.mock("next/headers", () => ({
+  headers: async () => requestHeaders,
+  cookies: async () => ({
+    get: (name: string) => {
+      const value = requestCookies.get(name);
+      return value === undefined ? undefined : { name, value };
+    },
+  }),
+}));
 jest.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT:${url}`);
@@ -29,6 +48,9 @@ jest.mock("next/navigation", () => ({
 jest.mock("@/lib/auth", () => ({
   auth: { api: { getSession: jest.fn() } },
 }));
+jest.mock("@/features/profile", () => ({
+  profile: { getProfile: jest.fn() },
+}));
 jest.mock("@/features/chapters", () => ({
   chapters: {
     getChapterCountryId: jest.fn(),
@@ -38,6 +60,7 @@ jest.mock("@/features/chapters", () => ({
 }));
 
 const getSessionMock = auth.api.getSession as unknown as jest.Mock;
+const getProfile = profile.getProfile as jest.Mock;
 const getChapterCountryId = chapters.getChapterCountryId as jest.Mock;
 const listCountries = chapters.listCountries as jest.Mock;
 const listChapters = chapters.listChapters as jest.Mock;
@@ -88,12 +111,20 @@ const AARHUS_SCOPE = {
 };
 const DE_SCOPE = { id: DE, code: "DE", name: "Deutschland" };
 
-const signedInAs = (access: Partial<Access>) =>
-  getSessionMock.mockResolvedValue({
+// One enrolled passkey by default: the admin MFA gate is a separate rule with
+// its own tests, and every other case would otherwise be answered by it.
+const signedInAs = (access: Partial<Access>, passkeys = 1) => {
+  getProfile.mockResolvedValue({ _count: { passkeys } });
+  return getSessionMock.mockResolvedValue({
     user: { id: "u1" },
     session: { id: "s1" },
     access: { role: null, countryAdminOf: [], memberships: [], ...access },
   });
+};
+
+const sessionWith = (access: Partial<Access>) => ({
+  access: { role: null, countryAdminOf: [], memberships: [], ...access },
+});
 
 const denied = (run: () => Promise<unknown>) =>
   expect(run()).rejects.toThrow("FORBIDDEN");
@@ -103,8 +134,20 @@ const denied = (run: () => Promise<unknown>) =>
 const sentToSignIn = (run: () => Promise<unknown>) =>
   expect(run()).rejects.toThrow("REDIRECT:/sign-in");
 
+// The exact target, so `/sign-in` and `/sign-in?next=…` cannot pass for each other.
+const redirectedTo = async (run: () => Promise<unknown>) => {
+  try {
+    await run();
+  } catch (error) {
+    return (error as Error).message.replace("REDIRECT:", "");
+  }
+  return "<no redirect>";
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
+  requestHeaders.delete("x-pathname");
+  requestCookies.clear();
   getChapterCountryId.mockImplementation(async (id: string) =>
     id === BERLIN ? DE : id === AARHUS ? DK : null,
   );
@@ -146,7 +189,17 @@ describe("a user who just signed up (no roles yet)", () => {
     await denied(() => requireChapterAdmin(BERLIN));
     await denied(() => requireChapterRole(BERLIN, "pilot"));
     await denied(() => requireChapterRole(BERLIN, "passenger"));
-    await denied(requireAdminScope);
+  });
+
+  // Never a 403 on a dashboard: they are lost, not intruding.
+  it("is sent to the dispatcher instead of the admin dashboard", async () => {
+    expect(await redirectedTo(requireAdminScope)).toBe("/onboarding");
+  });
+
+  // The pending applicant: no role yet, so the pilot status screen is theirs.
+  it("keeps the pilot perspective, having no home of its own", async () => {
+    await expect(requirePerspective("pilot")).resolves.toBeTruthy();
+    await expect(requirePerspective("passenger")).resolves.toBeTruthy();
   });
 });
 
@@ -165,9 +218,16 @@ describe("a passenger of Aarhus", () => {
     await denied(() => requireChapterAdmin(AARHUS));
   });
 
-  it("cannot open the admin dashboard", async () => {
-    await denied(requireAdminScope);
+  it("is sent to its own home instead of the admin dashboard", async () => {
+    expect(await redirectedTo(requireAdminScope)).toBe("/passenger");
     expect(listChapters).not.toHaveBeenCalled();
+  });
+
+  it("is sent home from a perspective that is not its own", async () => {
+    await expect(requirePerspective("passenger")).resolves.toBeTruthy();
+    expect(await redirectedTo(() => requirePerspective("pilot"))).toBe(
+      "/passenger",
+    );
   });
 });
 
@@ -187,9 +247,15 @@ describe("a pilot of Berlin", () => {
   });
 
   // The regression: /admin used to sit behind requireAuth alone, so a pilot got in.
-  it("cannot open the admin dashboard", async () => {
-    await denied(requireAdminScope);
+  it("is sent to /pilot instead of the admin dashboard", async () => {
+    expect(await redirectedTo(requireAdminScope)).toBe("/pilot");
     expect(listChapters).not.toHaveBeenCalled();
+  });
+
+  it("is sent home from the passenger perspective", async () => {
+    expect(await redirectedTo(() => requirePerspective("passenger"))).toBe(
+      "/pilot",
+    );
   });
 });
 
@@ -213,6 +279,11 @@ describe("an admin of Berlin", () => {
     await denied(() => requireChapterRole(AARHUS, "pilot"));
     await denied(() => requireCountryAdmin(DE));
     await denied(requireSuperAdmin);
+  });
+
+  // Editing the chapter record itself is the country admin's job, not theirs.
+  it("cannot edit its own chapter's record", async () => {
+    await denied(() => requireCountryAdminOfChapter(BERLIN));
   });
 
   it("opens the admin dashboard scoped to Berlin alone", async () => {
@@ -251,6 +322,12 @@ describe("a country admin of Germany", () => {
     await denied(() => requireChapterAdmin(UNKNOWN));
   });
 
+  it("edits the record of a chapter in its country, and of no other", async () => {
+    await expect(requireCountryAdminOfChapter(BERLIN)).resolves.toBeTruthy();
+    await denied(() => requireCountryAdminOfChapter(AARHUS));
+    await denied(() => requireCountryAdminOfChapter(UNKNOWN));
+  });
+
   it("opens the admin dashboard on Germany, without the countries view", async () => {
     const { scope } = await requireAdminScope();
     expect(scope).toEqual({
@@ -286,5 +363,98 @@ describe("a superadmin", () => {
       canSeeChapters: true,
       canSeeCountries: true,
     });
+  });
+});
+
+describe("coming back to where you were", () => {
+  beforeEach(() => getSessionMock.mockResolvedValue(null));
+
+  it("names the page they were on as the sign-in target", async () => {
+    requestHeaders.set("x-pathname", "/join/muenchen/ride");
+    expect(await redirectedTo(requireAuth)).toBe(
+      "/sign-in?next=%2Fjoin%2Fmuenchen%2Fride",
+    );
+  });
+
+  it("keeps the query string of that page", async () => {
+    requestHeaders.set("x-pathname", "/admin/members?chapter=berlin");
+    expect(await redirectedTo(requireAuth)).toBe(
+      "/sign-in?next=%2Fadmin%2Fmembers%3Fchapter%3Dberlin",
+    );
+  });
+
+  it("falls back to a bare sign-in when the header is not a safe path", async () => {
+    requestHeaders.set("x-pathname", "//evil.com");
+    expect(await redirectedTo(requireAuth)).toBe("/sign-in");
+  });
+
+  it("refuses to send anyone back into the flow they are already in", async () => {
+    requestHeaders.set("x-pathname", "/sign-in/code");
+    expect(await redirectedTo(requireAuth)).toBe("/sign-in");
+  });
+
+  it("reads the parked destination only when it is safe", async () => {
+    requestCookies.set(NEXT_COOKIE, "/pilot");
+    await expect(readNextPath()).resolves.toBe("/pilot");
+
+    requestCookies.set(NEXT_COOKIE, "https://evil.com");
+    await expect(readNextPath()).resolves.toBeNull();
+  });
+});
+
+describe("homeOf", () => {
+  it("answers with the home of the highest role", () => {
+    expect(homeOf(sessionWith({ role: "superadmin" }))).toBe("/admin");
+    expect(homeOf(sessionWith({ countryAdminOf: [DE] }))).toBe("/admin");
+    expect(
+      homeOf(
+        sessionWith({ memberships: [{ chapterId: BERLIN, roles: ["pilot"] }] }),
+      ),
+    ).toBe("/pilot");
+  });
+
+  it("sends someone with no role at all to the dispatcher", () => {
+    expect(homeOf(sessionWith({}))).toBe("/onboarding");
+  });
+});
+
+describe("the admin passkey gate", () => {
+  it("sends an admin without a passkey to enrol one, before any query runs", async () => {
+    signedInAs({ memberships: [{ chapterId: BERLIN, roles: ["admin"] }] }, 0);
+
+    expect(await redirectedTo(requireAdminScope)).toBe(
+      "/onboarding/passkey?required=1&next=%2Fadmin",
+    );
+    expect(await redirectedTo(() => requireChapterAdmin(BERLIN))).toBe(
+      "/onboarding/passkey?required=1&next=%2Fadmin",
+    );
+    expect(listChapters).not.toHaveBeenCalled();
+  });
+
+  it("comes back to the page the admin was actually on", async () => {
+    signedInAs({ role: "superadmin" }, 0);
+    requestHeaders.set("x-pathname", "/admin/countries");
+
+    expect(await redirectedTo(requireSuperAdmin)).toBe(
+      "/onboarding/passkey?required=1&next=%2Fadmin%2Fcountries",
+    );
+    expect(await redirectedTo(() => requireCountryAdmin(DE))).toBe(
+      "/onboarding/passkey?required=1&next=%2Fadmin%2Fcountries",
+    );
+  });
+
+  it("lets an enrolled admin through", async () => {
+    signedInAs({ memberships: [{ chapterId: BERLIN, roles: ["admin"] }] });
+
+    await expect(requireChapterAdmin(BERLIN)).resolves.toBeTruthy();
+    await expect(requireAdminScope()).resolves.toBeTruthy();
+  });
+
+  // A pilot passing a chapter-role check is not an admin and is never asked.
+  it("never asks a pilot for one", async () => {
+    signedInAs({ memberships: [{ chapterId: BERLIN, roles: ["pilot"] }] }, 0);
+
+    await expect(requireChapterRole(BERLIN, "pilot")).resolves.toBeTruthy();
+    expect(getProfile).not.toHaveBeenCalled();
   });
 });

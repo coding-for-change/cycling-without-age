@@ -26,3 +26,20 @@ export const findChapters = (countryId?: string) =>
     where: countryId ? { countryId } : undefined,
     orderBy: { name: "asc" },
   });
+
+export const deleteChapterById = (id: string) =>
+  prisma.organization.delete({ where: { id } });
+
+export const findChapterFootprint = (id: string) =>
+  prisma.organization.findUnique({
+    where: { id },
+    select: {
+      _count: {
+        select: {
+          members: true,
+          passengers: true,
+          applications: { where: { status: "pending" } },
+        },
+      },
+    },
+  });

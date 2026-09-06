@@ -53,7 +53,12 @@ export function IdentifierStep({
       try {
         if (!(await PublicKeyCredential.isConditionalMediationAvailable?.()))
           return;
-        if (!cancelled) await authClient.signIn.passkey({ autoFill: true });
+        if (cancelled) return;
+        const result = await authClient.signIn.passkey({ autoFill: true });
+        if (cancelled || result?.error) return;
+
+        haptics.success();
+        router.replace("/onboarding");
       } catch {
         // No passkey enrolled, or the browser declined. Typing still works.
       }
@@ -61,7 +66,7 @@ export function IdentifierStep({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [router]);
 
   const onChange = (next: string) => {
     setError(null);

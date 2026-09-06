@@ -112,6 +112,25 @@ export function collator(locale: string) {
   return value;
 }
 
+const listFormatters = new Map<Locale, Intl.ListFormat>();
+
+function listFormatter(locale: Locale) {
+  let formatter = listFormatters.get(locale);
+  if (!formatter) {
+    formatter = new Intl.ListFormat(locale, {
+      style: "long",
+      type: "conjunction",
+    });
+    listFormatters.set(locale, formatter);
+  }
+  return formatter;
+}
+
+/** `a pilot and a chapter admin` (en) · `Pilot und Ortsgruppen-Admin` (de) */
+export function formatList(items: string[], locale: Locale): string {
+  return listFormatter(locale).format(items);
+}
+
 /* -------------------------------------------------------------------------- */
 /* Calendar dates — no time, no zone                                          */
 /* -------------------------------------------------------------------------- */
@@ -204,6 +223,54 @@ export function formatDateTime(
     dateStyle: "short",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+const relativeTimeFormatters = new Map<string, Intl.RelativeTimeFormat>();
+
+// ponytail: 30-day months and 365-day years — this labels a feed line, it is not a
+// calendar. Switch to a date library if anyone needs "1 month ago" to be exact.
+const RELATIVE_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
+  ["year", 365 * 24 * 60 * 60],
+  ["month", 30 * 24 * 60 * 60],
+  ["week", 7 * 24 * 60 * 60],
+  ["day", 24 * 60 * 60],
+  ["hour", 60 * 60],
+  ["minute", 60],
+];
+
+/**
+ * `4d ago` (en-US) · `vor 4 Tagen` (de-DE) · `now` inside a minute. `now` is a
+ * parameter so one render uses one clock and a test can pin it.
+ */
+export function formatRelativeTime(
+  value: Date | string,
+  locale: Locale,
+  now: Date = new Date(),
+): string {
+  let formatter = relativeTimeFormatters.get(locale);
+  if (!formatter) {
+    formatter = new Intl.RelativeTimeFormat(locale, {
+      numeric: "auto",
+      style: "narrow",
+    });
+    relativeTimeFormatters.set(locale, formatter);
+  }
+  const seconds = Math.round(
+    (new Date(value).getTime() - now.getTime()) / 1000,
+  );
+  const unit = RELATIVE_UNITS.find(([, size]) => Math.abs(seconds) >= size);
+  if (!unit) return formatter.format(0, "second");
+  return formatter.format(Math.trunc(seconds / unit[1]), unit[0]);
+}
+
+/**
+ * Relative times and durations come out as words — "2 min ago", "vor 2 Min." —
+ * so they follow the language the UI is in, not the notation the browser asked
+ * for. "Saved jetzt" is the bug this prevents. Dates, numbers and distances keep
+ * using the notation locale from `resolveLocale`.
+ */
+export function wordsLocale(language: string): Locale {
+  return resolveLocale(language);
 }
 
 /* -------------------------------------------------------------------------- */

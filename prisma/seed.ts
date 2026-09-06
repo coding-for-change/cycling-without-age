@@ -17,6 +17,7 @@ type ChapterSeed = {
   city: string;
   address?: string;
   careHomeName?: string;
+  description: string;
   latitude: number;
   longitude: number;
   serviceRadiusKm?: number;
@@ -52,6 +53,8 @@ const CHAPTERS: ChapterSeed[] = [
     city: "München",
     address: "Sonnenstraße 12, 80331 München",
     careHomeName: "Seniorenheim Sonnenhof",
+    description:
+      "Zwei Trishaws stehen im Innenhof vom Sonnenhof, gleich hinter der Sonnenstraße. Wir fahren meist vormittags an der Isar entlang und halten unterwegs auf einen Kaffee.",
     latitude: 48.1361,
     longitude: 11.5647,
   },
@@ -62,6 +65,8 @@ const CHAPTERS: ChapterSeed[] = [
     city: "Hamburg",
     address: "Alsterufer 5, 20354 Hamburg",
     careHomeName: "Pflegeheim Alstergarten",
+    description:
+      "Unsere Trishaw steht im Alstergarten und wartet auf die nächste Runde um die Außenalster. Freitagnachmittags geht es zum Fischmarkt, wenn das Wetter mitspielt.",
     latitude: 53.5603,
     longitude: 9.9906,
     // Wider than the default, so the per-chapter radius is exercised rather
@@ -74,6 +79,8 @@ const CHAPTERS: ChapterSeed[] = [
     country: "DK",
     city: "København",
     address: "Nørrebrogade 40, 2200 København",
+    description:
+      "Vores to rickshaws holder på Nørrebrogade og kører en tur langs søerne næsten hver formiddag. Bagefter er der som regel kaffe på Jægersborggade.",
     latitude: 55.6884,
     longitude: 12.5527,
   },
@@ -140,19 +147,21 @@ async function seedChapters(countryIds: Map<string, string>) {
     const existing = await chapters.getChapterBySlug(chapter.slug);
     if (existing) {
       ids.set(chapter.slug, existing.id);
-      // Keep an already-seeded chapter's position and service radius in step
-      // with this file, so correcting either here is picked up by an existing
-      // database rather than needing a wipe.
+      // Keep an already-seeded chapter's position, service radius and blurb in
+      // step with this file, so correcting any of them here is picked up by an
+      // existing database rather than needing a wipe.
       const radius = chapter.serviceRadiusKm ?? existing.serviceRadiusKm;
       if (
         existing.latitude !== chapter.latitude ||
         existing.longitude !== chapter.longitude ||
-        existing.serviceRadiusKm !== radius
+        existing.serviceRadiusKm !== radius ||
+        existing.description !== chapter.description
       ) {
         await chapters.updateChapter(existing.id, {
           latitude: chapter.latitude,
           longitude: chapter.longitude,
           serviceRadiusKm: radius,
+          description: chapter.description,
         });
       }
       continue;

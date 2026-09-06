@@ -43,6 +43,42 @@ const da: EmailStrings = {
     footer:
       "Du modtager denne e-mail, fordi du har søgt om at være pilot i en Cycling Without Age-afdeling.",
   },
+  applicationApproved: {
+    subject: "Du er pilot i {chapter}",
+    preview: "Din afdeling siger ja",
+    heading: "Velkommen om bord",
+    intro:
+      "{chapter} har godkendt dig som pilot. Næste skridt: træningsvideoerne, en workshop med en af kaptajnerne — og så din første tur.",
+    noteHeading: "Fra din afdeling",
+    cta: "Åbn Cycling Without Age",
+    footer:
+      "Du modtager denne e-mail, fordi du har søgt om at være pilot i en Cycling Without Age-afdeling.",
+  },
+  applicationRejected: {
+    subject: "Om din pilotansøgning i {chapter}",
+    preview: "Et svar fra din afdeling",
+    heading: "Ikke denne gang",
+    intro:
+      "{chapter} kan ikke tage dig ind som pilot lige nu. Rickshawer, kaptajner og træningsdatoer skal passe sammen — en anden afdeling i nærheden har måske plads.",
+    noteHeading: "Fra din afdeling",
+    cta: "Find en anden afdeling",
+    footer:
+      "Du modtager denne e-mail, fordi du har søgt om at være pilot i en Cycling Without Age-afdeling.",
+  },
+  invite: {
+    subject: "Du er inviteret til {chapter}",
+    preview: "En afdeling venter på dig",
+    heading: "Du er inviteret",
+    intro: "{inviter} har inviteret dig til {chapter} som {role}.",
+    how: "Log ind med denne e-mailadresse, så sender vi dig en kode \u2014 du skal ikke finde på en adgangskode.",
+    cta: "Tag imod invitationen",
+    footer:
+      "Du modtager denne e-mail, fordi en afdelingsadmin i Cycling Without Age har inviteret din adresse.",
+  },
+  roles: {
+    admin: "afdelingsadmin",
+    pilot: "pilot",
+  },
 };
 
 export default da;

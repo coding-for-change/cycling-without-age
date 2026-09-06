@@ -46,6 +46,14 @@ export function parseIdentity(
     : { ok: false, problem: "invalidPhone" };
 }
 
+const PHONE_EMAIL_DOMAIN = "@phone.cwa.local";
+
+export const phoneTempEmail = (phone: string) =>
+  `${phone.replace(/\D/g, "")}${PHONE_EMAIL_DOMAIN}`;
+
+export const isPhoneTempEmail = (address: string) =>
+  address.endsWith(PHONE_EMAIL_DOMAIN);
+
 export const COUNTRIES = getCountries();
 
 export const dialCodeOf = (country: CountryCode) =>

@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { profile } from "@/features/profile";
 import { personalDetailsInput } from "@/features/profile";
-import { requireAuth } from "@/lib/auth-guards";
+import { readNextPath, requireAuth } from "@/lib/auth-guards";
 import { readJoinPreset } from "@/lib/join-preset";
 import { getLocale } from "@/lib/i18n";
 import { canViewStep, type OnboardingStep } from "@/lib/onboarding";
 import { acceptOnboardingConsent } from "@/use-cases/accept-onboarding-consent";
+import { claimAccount } from "@/use-cases/claim-account";
 import { completeOnboardingProfile } from "@/use-cases/complete-onboarding-profile";
 import {
   getOnboardingState,
@@ -35,7 +36,11 @@ const onward = async (
   session: Parameters<typeof resolveDestination>[0],
 ): Promise<StepResult> => ({
   ok: true,
-  next: await resolveDestination(session, await readJoinPreset()),
+  next: await resolveDestination(
+    session,
+    await readJoinPreset(),
+    await readNextPath(),
+  ),
 });
 
 const consentSchema = z.object({
@@ -66,6 +71,7 @@ export async function submitConsent(input: unknown): Promise<StepResult> {
           ? { chapterId: preset.chapterId, role: preset.role }
           : null,
     });
+    await claimAccount(at.userId);
 
     revalidatePath(ONBOARDING);
 
@@ -75,8 +81,20 @@ export async function submitConsent(input: unknown): Promise<StepResult> {
   }
 }
 
+const relationshipInput = z.enum([
+  "child",
+  "partner",
+  "relative",
+  "carer",
+  "friend",
+  "other",
+]);
+
 /** `null` details is the "booking for someone else" path — see the use case. */
-export async function submitProfile(input: unknown): Promise<StepResult> {
+export async function submitProfile(
+  input: unknown,
+  helperRelationship?: unknown,
+): Promise<StepResult> {
   const at = await atStep("profile");
   if (!at?.progress.role) return { ok: false, error: "generic" };
 
@@ -98,11 +116,14 @@ export async function submitProfile(input: unknown): Promise<StepResult> {
   }
 
   try {
+    const relationship = relationshipInput.safeParse(helperRelationship);
+
     await completeOnboardingProfile({
       userId: at.userId,
       role: at.progress.role,
       details,
       locale: await getLocale(),
+      helperRelationship: relationship.success ? relationship.data : undefined,
     });
     revalidatePath(ONBOARDING);
     return onward(at.session);
@@ -130,5 +151,9 @@ export async function finishPilotNextSteps(): Promise<StepResult> {
  *  action — that slice has no business knowing what onboarding looks like. */
 export async function nextOnboardingPath(): Promise<string> {
   const session = await requireAuth();
-  return resolveDestination(session, await readJoinPreset());
+  return resolveDestination(
+    session,
+    await readJoinPreset(),
+    await readNextPath(),
+  );
 }

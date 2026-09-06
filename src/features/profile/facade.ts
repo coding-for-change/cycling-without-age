@@ -10,11 +10,18 @@ import type {
   PersonalDetailsInput,
   Residence,
 } from "./schemas";
-import { findProfile, updateProfile } from "./services/profile";
+import {
+  findProfile,
+  findUserIdByEmail,
+  updateProfile,
+} from "./services/profile";
 
 export type Profile = NonNullable<Awaited<ReturnType<typeof findProfile>>>;
 
 export const getProfile = (userId: string) => findProfile(userId);
+
+export const getUserIdByEmail = async (email: string) =>
+  (await findUserIdByEmail(email.trim().toLowerCase()))?.id ?? null;
 
 export const setLocale = (userId: string, locale: string) =>
   updateProfile(userId, { locale });
@@ -98,8 +105,10 @@ export function setPersonalDetails(
   });
 }
 
-export const markManagesOthers = (userId: string) =>
-  updateProfile(userId, { managesOthers: true });
+export const markManagesOthers = (
+  userId: string,
+  helperRelationship?: string | null,
+) => updateProfile(userId, { managesOthers: true, helperRelationship });
 
 export const markPasskeyPrompted = (userId: string) =>
   updateProfile(userId, { passkeyPromptedAt: new Date() });

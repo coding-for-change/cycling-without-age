@@ -111,8 +111,10 @@ person administers (see [Admin shell](#admin-shell-cod-172)).
 ### Guards (`lib/auth-guards.ts`)
 
 `getSession`, `requireAuth`, `requireSuperAdmin`, `requireCountryAdmin(countryId)`,
-`requireChapterAdmin(chapterId)`, `requireChapterRole(chapterId, role)`,
-`requireAdminScope()`, `getHighestRole(session)`. Each higher guard satisfies the lower
+`requireChapterAdmin(chapterId)`, `requireCountryAdminOfChapter(chapterId)`,
+`requireChapterRole(chapterId, role)`, `requireAdminScope()`, `getHighestRole(session)`,
+`homeOf(session)`, `redirectIfElsewhere(session, perspective)`,
+`requirePerspective(perspective)`, `readNextPath()`. Each higher guard satisfies the lower
 ones: superadmin passes everything; a country admin passes chapter-admin checks for
 chapters **in their own country only**. The predicates behind them are pure and live in
 `lib/access.ts`, which imports nothing.
@@ -254,16 +256,25 @@ The pure half lives in `lib/access.ts`, which imports nothing:
   entry. `PERSPECTIVE_HOME` in `lib/redirects.ts` says where each hat lives; `HOME_BY_ROLE`
   next to it answers the different question of where an account belongs after sign-in.
 
-### `resolveActiveScope` returning `null` is the open thread
+### `readActiveScope` closes the `resolveActiveScope` thread (COD-170)
 
-`null` means the requested narrowing is outside the caller's authority. **No page consumes
-it yet** — the shell only renders the list of scopes the person is already allowed, so today
-a hand-typed param can at worst mislabel a breadcrumb. **The first page that reads real data
-through `?chapter=` / `?country=` must turn that `null` into `forbidden()`.** Reading the
-param and quietly falling back to the default scope instead would make it an escalation
-path: a chapter admin appending `?country=DK` would get a country-wide answer.
-`lib/access.test.ts` already pins every `null` case; the page-level handling is what does not
-exist yet.
+`resolveActiveScope` returning `null` means the requested narrowing is outside the caller's
+authority. Now that pages read real data through `?chapter=` / `?country=`, exactly one
+helper turns that `null` into a refusal: `src/app/admin/active-scope.ts`.
+
+```ts
+const { session, scope, active, chapters, chapterIds } =
+  await readActiveScope(searchParams);
+```
+
+It runs `requireAdminScope()`, resolves the params, and calls `forbidden()` when the answer
+is `null` — never a quiet fall back to the default scope, which is what would have made the
+param an escalation path (a chapter admin appending `?country=DK` getting a country-wide
+answer). `chapterIds` is `scopeChapters(scope, active)`, so every query underneath is
+already narrowed to what the viewer administers, and `active-scope.test.ts` pins the
+out-of-scope case. Every admin page that reads data goes through it; the `searchParams`
+promise is passed into the `<Suspense>` child and awaited there, never in the page
+function.
 
 ### Why the active scope is resolved in the browser
 
@@ -294,3 +305,235 @@ layout: it would make the ground dynamic to save a single frame of animation.
 `requireAdminScope` currently scans all countries and all chapters per request (deduped by
 `cache`). That is marked in the source as a known ceiling: at a few hundred chapters it
 should resolve only the scope's own rows instead.
+
+Every admin list renders through one client primitive, `DataTable`
+(`src/components/ui/data-table.tsx`, on `@tanstack/react-table`): search, column filters,
+column visibility, sortable headers, pagination and clickable rows. The server parent still
+does all the reading and hands it finished rows plus `dict.admin.table`; filtering and paging
+are client-side over the full scope list, which is the documented ceiling in that file.
+
+## Core loop (COD-170)
+
+### The org plugin's own permissions are locked shut
+
+BetterAuth's organization plugin exposes `/api/auth/organization/*` and checks those calls
+against its own access-control roles, not against our facades. With the default
+`orgAdminAc`, anyone holding the `admin` role in a chapter could call `updateMemberRole`,
+`removeMember`, the invitation endpoints and — worst — `updateOrganization`, which would let
+them rewrite a chapter's slug and break every printed poster pointing at it.
+
+`src/lib/auth.ts` therefore maps **every** organization role to `memberAc`:
+
+```ts
+export const organizationRoles = {
+  admin: orgMemberAc,
+  pilot: orgMemberAc,
+  passenger: orgMemberAc,
+};
+```
+
+`memberAc` has empty `organization` / `member` / `invitation` statements, so every org-plugin
+mutation is denied and the only way to change a role is `membership.withRoles`, where the
+last-admin rule and the chapter lock live. `src/lib/auth-org-access.test.ts` pins the
+configuration.
+
+### The last admin cannot be removed, and the check holds under concurrency
+
+`membership.withRoles` runs inside `withChapterLock(chapterId, fn)` —
+`prisma.$transaction` plus `` tx.$queryRaw`SELECT id FROM organization WHERE id = ${id} FOR UPDATE` ``
+before anything is read. Inside the lock, a change that drops `admin` from a member counts
+the chapter's remaining admins; at one or fewer it throws `Last admin of the chapter`.
+
+The lock is what makes it a rule rather than a suggestion: two admins demoting each other in
+the same second would both pass an unlocked count and leave the chapter orphaned.
+`removeFromChapter` is defined as `withRoles(…, () => [])` precisely so removal cannot
+sidestep the same check. Callbacks inside the lock stay DB-only — the decision email is sent
+by the use case afterwards, never inside the transaction.
+
+### Activity feed (`features/activity`)
+
+One append-only table, `activity_event`, records what happened to a person: applications
+submitted/approved/rejected, roles granted and revoked, members removed, emails sent, country
+admins appointed and removed. It is a slice of its own because recording an event always sits
+next to a mutation owned by a *different* feature, which is what makes those actions use
+cases (`decide-pilot-application`, `change-member-role`, `submit-pilot-applications`,
+`manage-country-admins`).
+
+It also solves a data problem: `ChapterApplication` keeps its `@@unique([userId, chapterId])`,
+so re-applying overwrites the previous decision. The events do not overwrite, so the history
+on `/admin/members/[userId]` survives a re-application. Events with a `chapterId` are chapter
+scoped and only visible to admins of that chapter; country-level events (country admins) carry
+no `chapterId` and surface only when the reader's scope is global —
+`activity.listForUser(userId, { chapterIds, includeGlobal })` defaults `includeGlobal` to
+`false` so a narrow read cannot leak them by omission.
+
+Labels live in the dictionary (`admin.history.<ActivityType>`) with a single `{actor}`
+placeholder, filled with the actor's name, "You", or "Someone" — the feed renders copy, the
+table stores facts.
+
+### `?next=` is carried by a cookie, not by the URL
+
+`proxy.ts` stamps `x-pathname` (pathname + search) on every matched request, which is the only
+way a Server Component can know where it is in Next 16 — `headers()` has no pathname. That is
+what lets `requireAuth()` redirect to `/sign-in?next=<here>` instead of a bare sign-in.
+
+The destination then moves into an httpOnly `cwa.next` cookie (1 hour), set by `proxy.ts` when
+`/sign-in?next=` is visited with a value `safeNextPath` accepts. A cookie survives the Google
+OAuth round-trip, a six-screen signup wizard and the Capacitor WebView, none of which would
+carry a query string all the way through. `resolveDestination` spends it, and an unfinished
+onboarding step always outranks it.
+
+`safeNextPath` (`lib/redirects.ts`) is the only thing that reaches `redirect()`: a value must
+be a non-empty, printable, ≤512-character path starting `/` and not `//` or `/\`, whose
+`new URL(raw, "http://x").origin` is unchanged, and which is not under `/sign-in`,
+`/onboarding`, `/location`, `/welcome` or `/api` — the loop killers.
+
+### Admins must have a passkey (enrollment gate)
+
+A private `ensureAdminPasskey(userId)` in `lib/auth-guards.ts` reads
+`profile.getProfile(id)._count.passkeys` (request-cached) and, at zero, redirects to
+`/onboarding/passkey?required=1&next=<current path or /admin>`. It runs in `requireAdminScope`,
+`requireSuperAdmin`, `requireCountryAdmin`, `requireChapterAdmin` and
+`requireCountryAdminOfChapter` — **after** the role check, so a pilot who satisfies
+`requireChapterRole` by role is never asked for one.
+
+It lives in the guards rather than only in the admin shell because a passkey-less admin could
+otherwise POST straight at a Server Action.
+
+Known ceiling: this proves the account *possesses* a passkey, not that *this session* used
+one. The upgrade path is session step-up — stamp `Session.passkeyVerifiedAt` from
+`databaseHooks.session.create.before` on `/passkey/verify-authentication` and require a fresh
+stamp — deliberately out of scope.
+
+`@better-auth/passkey`'s `verify-registration` runs behind `freshSessionMiddleware` (24h), so
+`addPasskey` fails with `SESSION_NOT_FRESH` on older sessions. With 90-day sessions that is
+normal, not exceptional: the account dialog and the onboarding passkey step both handle it by signing
+out and restarting at `/sign-in`. `freshAge` is deliberately not lowered.
+
+### Pilot status & celebration
+
+`/pilot` reads the facades rather than `session.access`, because a freshly approved pilot's
+session still says nothing — the page has to show the welcome on the very next request.
+It derives four things from the membership and application rows: `pilotChapterIds`, `pending`,
+`rejected` (rejected *and* not since joined), and `celebrate` (approved with
+`approvalSeenAt === null`). Nothing at all → `/onboarding`.
+
+`approvalSeenAt` is what makes the celebration fire exactly once. The banner acknowledges it
+on mount, and `acknowledgeApproval` deliberately does **not** revalidate `/pilot`: revalidating
+would re-render the banner away a few hundred milliseconds after it appeared. The banner is
+already on screen; the next natural request re-reads the column.
+
+## Growth: join links, assisted signup, the auth wall (COD-170 Phase 2)
+
+### `features/accounts` — provisioning an account someone else will claim
+
+The three growth flows (a chapter admin adding a passenger at the door, a chapter admin
+inviting a co-admin or pilot, and later a care home enrolling a resident) all need the same
+thing: *make a `User` row for a person who is not here right now.* That is a single feature —
+`src/features/accounts` — and every one of them goes through `accounts.provisionUser`.
+
+Provisioning is **idempotent on the contact**, not on the name: a lookup by lowercased email
+or E.164 phone comes first, and an existing account is returned as `{ userId, created: false }`
+with its provenance left untouched. Only `provisionUserStrict` turns that into the
+`"Already has an account"` error the passenger dialog surfaces as `exists`; the invite flow
+deliberately uses the lenient version, because "invite someone who already signed up" is a
+normal request and must still grant them the role.
+
+The row is created through BetterAuth's `auth.api.createUser` with **no password**, so no
+credential account exists, `emailVerified` stays `false`, and **no session is created**. A
+provisioned account is inert until its owner signs in with the same email or number and
+proves it with an OTP — the identity check is the existing sign-in, not a token we invent.
+A phone-only contact gets `phoneTempEmail(phone)` as its `email` (the same helper
+`lib/auth.ts` hands BetterAuth's `signUpOnVerification`), so the unique column stays
+satisfied without inventing a fake address the person could ever be mailed at.
+
+### The helper rule: who owns the account
+
+`Passenger.userId` is the rider's *own* account; `Passenger.managedByUserId` is the account
+that books for them. Which one the provisioned `User` becomes is decided by one comparison,
+in `use-cases/provision-assisted-passenger.ts`:
+
+> **the account belongs to the helper if, and only if, the helper's contact is the contact
+> given for the passenger.**
+
+Both sides run through the same `contact` schema first, so the comparison is between
+normalised values. Same contact → the account is the helper's: it is named after the helper,
+carries `managesOthers: true`, and the passenger row gets `userId: null` with
+`managedByUserId` pointing at it. Different contacts (or no helper at all) → the account is
+the passenger's own, and `userId` and `managedByUserId` are both that account. The helper
+columns (`helperName`, `helperRelationship`, `helperContact`) are written whenever a helper
+was named, in both branches — they are a note about who to call, not a claim of ownership.
+
+Either way `membership.joinAsPassenger` runs, so the account is a member of the chapter
+before anyone claims it. Without that, `onboarding-progress` would report `joined: false` and
+push a claiming helper back to the location step instead of straight to consent.
+
+### Claiming happens at the consent step, never by skipping it
+
+A provisioned account signs in like any other and lands in `/onboarding`. Consent is the one
+thing an admin cannot give on someone else's behalf, so it is **never pre-filled and never
+skipped** — `submitConsent` is what calls `claim-account`, which stamps `claimedAt` and
+records the `accountClaimed` event. Until then `accounts.getClaimBanner(userId)` returns the
+name of whoever set the account up, and the consent step says so in its description
+(`consent.setUpBy`), so the person understands why an account already exists. After the claim
+the banner is `null` and the account is indistinguishable from a self-signup.
+
+The `accountCreated` / `invited` / `accountClaimed` events on `ActivityType` are what make
+that legible afterwards on `/admin/members/[userId]`.
+
+### The join page and the immutable slug
+
+`/join/<slug>` is the public face of a chapter: name, care-home name or city, description and
+logo, and nothing else — no address, no coordinates, no member counts. It is one route with
+three states (member, signed-in non-member, anonymous) plus a Book-a-ride CTA, and
+`/join/<slug>/poster` is the same data on A4 with a QR code.
+
+Anonymous visitors do not get a Server Action; they get a plain link to
+`/join/<slug>/start?role=passenger|pilot`, a Route Handler that writes the join-preset cookie
+and redirects. A GET that mutates is fine here because the "mutation" is a cookie the visitor
+asked for, and the `sec-fetch-dest` check means a prefetch or an `<img>` cannot set it — only
+a real navigation.
+
+That URL is printed on posters, so **the slug is immutable**: `chapterUpdateInput` omits both
+`slug` and `countryId`, and the chapter page shows the slug read-only. A chapter that has to
+be renamed gets a new chapter, not a silently dead QR code on a noticeboard wall.
+
+### Chapters are placed, not typed; edited in place, not in a form
+
+`/admin/chapters?new=1` opens the create drawer (`AdminDrawer`, see AGENTS.md § UI). A name
+and an address are the only required input: the address search (`@/components/address-search`
+over `suggestChapterPlaces`/`resolveChapterPlace`) fills city, coordinates and country from
+Mapbox's context, a point-of-interest result pre-fills the care-home name, and the pin can be
+dragged with `reverseChapterPlace` naming the new spot. The slug derives from the name via
+`slugify` (same grammar as `chapterInput.slug`) and is checked live with `checkSlugAction`.
+Closing the drawer discards what was typed. Mapbox is reached only through these guarded
+Server Actions, rate-limited per user.
+
+`/admin/chapters/[chapterId]` is the edit surface. Every field is an `InlineField` that saves
+on Enter/blur through `updateChapterAction` with a partial `chapterUpdateInput` — optional text
+is `nullable` there so a cleared field clears the column — and offers Undo in its toast. The
+action delegates to `use-cases/manage-chapter`, which diffs the row before writing so each
+autosave becomes exactly the `chapterUpdated` history lines it deserves; the page reads them
+back through `activity.listForChapter`. Deleting asks for the word `DELETE` and shows the
+footprint (`chapters.getChapterFootprint`: members, passengers, pending applications) the
+schema will cascade; the `chapterDeleted` event is recorded without a `chapterId` so the
+cascade cannot take the audit line with it.
+
+The QR itself is `uqr` (zero dependencies) rendered as inline `<svg>` by
+`src/components/qr-code.tsx` — a pure function of its `value`, so it prerenders with the
+page and needs no client bundle, no canvas, and no image request. `border: 4` is the quiet
+zone the QR spec asks for; the default of 1 scans badly across a room.
+
+### The auth wall: drafts survive the sign-in detour
+
+`src/lib/auth-wall.ts` is the contract for "let someone fill something in, *then* ask them to
+sign in". `saveDraft(kind, payload)` puts a versioned, timestamped envelope in
+`sessionStorage`; `signInHref(target)` sends them to `/sign-in?next=<target>`; `useDraft(kind,
+schema)` reads it back on the far side and clears it on mount.
+
+`readDraft` is a pure function so it can be tested without a browser, and it is deliberately
+**silent** about every failure — wrong version, wrong kind, older than an hour, malformed
+JSON, or a payload that fails the caller's Zod schema all return `null` and the screen falls
+back to its no-draft copy. Nothing from `sessionStorage` is ever trusted as input to a write:
+the Book-a-ride confirmation only *displays* the draft. When ride requests become real rows,
+the draft stays a UI convenience and the Server Action re-validates from scratch.

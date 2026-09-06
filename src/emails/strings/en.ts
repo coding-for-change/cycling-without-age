@@ -54,6 +54,42 @@ const en = {
     footer:
       "You received this email because you asked to pilot for a Cycling Without Age chapter.",
   },
+  applicationApproved: {
+    subject: "You're a pilot at {chapter}",
+    preview: "Your chapter said yes",
+    heading: "Welcome aboard",
+    intro:
+      "{chapter} has approved you as a pilot. Next: the training videos, a workshop with one of the captains — and then your first ride.",
+    noteHeading: "From your chapter",
+    cta: "Open Cycling Without Age",
+    footer:
+      "You received this email because you asked to pilot for a Cycling Without Age chapter.",
+  },
+  applicationRejected: {
+    subject: "About your pilot request at {chapter}",
+    preview: "An answer from your chapter",
+    heading: "Not this time",
+    intro:
+      "{chapter} can't take you on as a pilot right now. Trishaws, captains and training dates all have to line up — another chapter nearby may well have room.",
+    noteHeading: "From your chapter",
+    cta: "Find another chapter",
+    footer:
+      "You received this email because you asked to pilot for a Cycling Without Age chapter.",
+  },
+  invite: {
+    subject: "You've been invited to {chapter}",
+    preview: "A chapter is waiting for you",
+    heading: "You've been invited",
+    intro: "{inviter} has invited you to {chapter} as {role}.",
+    how: "Sign in with this email address and we send you a code \u2014 no password to invent.",
+    cta: "Accept the invitation",
+    footer:
+      "You received this email because a Cycling Without Age chapter admin invited your address.",
+  },
+  roles: {
+    admin: "a chapter admin",
+    pilot: "a pilot",
+  },
 };
 
 export type EmailStrings = typeof en;

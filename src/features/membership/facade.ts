@@ -11,15 +11,18 @@ import type {
 } from "./schemas";
 import {
   deleteMember,
+  findAdminMembersOfChapter,
   findMember,
-  findMembersOfChapter,
+  findMembersOfChapters,
   findMembersOfUser,
   upsertMemberRole,
+  withChapterLock,
 } from "./services/members";
 import {
   findApplicationById,
-  findApplicationsOfChapter,
+  findApplicationsOfChapters,
   findApplicationsOfUser,
+  markApprovalsSeen as stampApprovalsSeen,
   setApplicationDecision,
   upsertPilotApplication,
 } from "./services/applications";
@@ -33,37 +36,58 @@ export const listMembershipsOfUser = async (
     roles: parseRoles(m.role),
   }));
 
-export const listMembersOfChapter = (chapterId: string) =>
-  findMembersOfChapter(chapterId);
+export const listMembersOfChapters = (chapterIds: string[]) =>
+  findMembersOfChapters(chapterIds);
+
+export const listChapterAdmins = async (chapterId: string) =>
+  (await findAdminMembersOfChapter(chapterId)).filter((m) =>
+    parseRoles(m.role).includes("admin"),
+  );
 
 export const getMemberRoles = async (userId: string, chapterId: string) =>
   parseRoles((await findMember(userId, chapterId))?.role);
 
 // Roles stack on one member row (BetterAuth stores them comma-separated).
-// ponytail: read-modify-write, no transaction — two admins racing on the same
-// member row is not a real scenario. Wrap in prisma.$transaction if it becomes one.
 async function withRoles(
   userId: string,
   chapterId: string,
   mutate: (roles: ChapterRole[]) => ChapterRole[],
 ) {
-  const current = parseRoles((await findMember(userId, chapterId))?.role);
-  const next = [...new Set(mutate(current))];
-  if (next.length === 0) return deleteMember(userId, chapterId);
-  return upsertMemberRole(userId, chapterId, next.join(","));
+  return withChapterLock(chapterId, async (db) => {
+    const current = parseRoles((await findMember(userId, chapterId, db))?.role);
+    const next = [...new Set(mutate(current))];
+
+    if (current.includes("admin") && !next.includes("admin")) {
+      const admins = (await findAdminMembersOfChapter(chapterId, db)).filter(
+        (m) => parseRoles(m.role).includes("admin"),
+      );
+      if (admins.length <= 1) throw new Error("Last admin of the chapter");
+    }
+
+    if (next.length === 0) return deleteMember(userId, chapterId, db);
+    return upsertMemberRole(userId, chapterId, next.join(","), db);
+  });
 }
 
 // Passengers are active the moment they join — no application, no approval.
 export const joinAsPassenger = (userId: string, chapterId: string) =>
   withRoles(userId, chapterId, (roles) => [...roles, "passenger"]);
 
+export function grantChapterRoles(
+  userId: string,
+  chapterId: string,
+  roles: ChapterRole[],
+) {
+  const granted = roles.map((role) => chapterRole.parse(role));
+  return withRoles(userId, chapterId, (current) => [...current, ...granted]);
+}
+
 export function grantChapterRole(
   userId: string,
   chapterId: string,
   role: ChapterRole,
 ) {
-  const granted = chapterRole.parse(role);
-  return withRoles(userId, chapterId, (roles) => [...roles, granted]);
+  return grantChapterRoles(userId, chapterId, [role]);
 }
 
 // Only existing members can be promoted — a chapter admin who is not in the
@@ -86,12 +110,14 @@ export function revokeChapterRole(
 }
 
 export const removeFromChapter = (userId: string, chapterId: string) =>
-  deleteMember(userId, chapterId);
+  withRoles(userId, chapterId, () => []);
 
 export const listApplications = (
-  chapterId: string,
+  chapterIds: string[],
   status?: ApplicationStatus,
-) => findApplicationsOfChapter(chapterId, status);
+) => findApplicationsOfChapters(chapterIds, status);
+
+export const getApplication = (id: string) => findApplicationById(id);
 
 export const listApplicationsOfUser = (userId: string) =>
   findApplicationsOfUser(userId);
@@ -108,7 +134,7 @@ export async function applyAsPilot(input: PilotApplicationInput) {
 }
 
 export async function decideApplication(input: ApplicationDecisionInput) {
-  const { applicationId, decidedByUserId, approve } =
+  const { applicationId, decidedByUserId, approve, note } =
     applicationDecisionInput.parse(input);
   const application = await findApplicationById(applicationId);
   if (!application) throw new Error("Unknown application");
@@ -120,10 +146,12 @@ export async function decideApplication(input: ApplicationDecisionInput) {
 
   // Decide first, and only against a still-pending row: two admins racing cannot
   // both win, and the role is granted only for a decision that was recorded.
+  const status = approve ? "approved" : "rejected";
   const { count } = await setApplicationDecision(
     applicationId,
-    approve ? "approved" : "rejected",
+    status,
     decidedByUserId,
+    note,
   );
   if (count === 0) throw new Error("Application already decided");
 
@@ -134,4 +162,16 @@ export async function decideApplication(input: ApplicationDecisionInput) {
       application.role,
     );
   }
+
+  return {
+    id: application.id,
+    userId: application.userId,
+    chapterId: application.chapterId,
+    role: application.role,
+    status,
+    decisionNote: note ?? null,
+  };
 }
+
+export const markApprovalsSeen = async (userId: string) =>
+  (await stampApprovalsSeen(userId)).count > 0;

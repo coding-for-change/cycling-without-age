@@ -138,10 +138,10 @@ export function defaultActiveScope(scope: AdminScope): ActiveScope {
 /**
  * `null` means the requested narrowing is outside this person's authority.
  *
- * ponytail: no page consumes this yet — every `/admin/*` page is a static empty
- * state, so there is nothing to leak. The first page that reads data for the
- * narrowed scope MUST turn a `null` here into `forbidden()`, or `?chapter=` and
- * `?country=` become an escalation path around the scope the sidebar offers.
+ * Every `/admin/*` page reads its scope through `readActiveScope`
+ * (`src/app/admin/active-scope.ts`), which turns a `null` here into
+ * `forbidden()` — without that, `?chapter=` and `?country=` would be an
+ * escalation path around the scope the sidebar offers.
  */
 export function resolveActiveScope(
   scope: AdminScope,
@@ -163,6 +163,16 @@ export function resolveActiveScope(
   }
 
   return defaultActiveScope(scope);
+}
+
+export function scopeChapters(
+  scope: AdminScope,
+  active: ActiveScope,
+): ScopeChapter[] {
+  if (active.kind === "chapter") return [active.chapter];
+  if (active.kind === "country")
+    return scope.chapters.filter((c) => c.countryId === active.country.id);
+  return scope.chapters;
 }
 
 export type Perspective = "admin" | "pilot" | "passenger";

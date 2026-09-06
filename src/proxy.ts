@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
+import { NEXT_COOKIE, NEXT_MAX_AGE, safeNextPath } from "@/lib/redirects";
 
 const NATIVE_UA = "CWA-Native";
 
@@ -16,16 +17,46 @@ const NATIVE_UA = "CWA-Native";
  * database. A stale cookie therefore sends someone to `/onboarding`, whose
  * `requireAuth()` validates properly and sends them on to `/sign-in`. That is
  * why `requireAuth` must not redirect back to `/`: it would loop against this.
+
  */
 export function proxy(request: NextRequest) {
+  const { pathname, search, searchParams } = request.nextUrl;
   const signedIn = Boolean(getSessionCookie(request));
-  const isNative = request.headers.get("user-agent")?.includes(NATIVE_UA);
 
-  const path = signedIn ? "/onboarding" : isNative ? "/welcome" : "/sign-in";
-  const destination = new URL(path, request.url);
+  if (pathname === "/") {
+    const isNative = request.headers.get("user-agent")?.includes(NATIVE_UA);
 
-  destination.search = request.nextUrl.search;
-  return NextResponse.redirect(destination);
+    const path = signedIn ? "/onboarding" : isNative ? "/welcome" : "/sign-in";
+    const destination = new URL(path, request.url);
+
+    destination.search = request.nextUrl.search;
+    return NextResponse.redirect(destination);
+  }
+
+  const headers = new Headers(request.headers);
+  headers.set("x-pathname", pathname + search);
+
+  const next =
+    pathname === "/sign-in" ? safeNextPath(searchParams.get("next")) : null;
+
+  // Already signed in with a destination in hand: the cookie is only readable on
+  // the NEXT request, so hand the dispatcher a fresh one rather than rendering
+  // a sign-in screen that would have to ignore it.
+  const response =
+    next && signedIn
+      ? NextResponse.redirect(new URL("/onboarding", request.url))
+      : NextResponse.next({ request: { headers } });
+
+  if (next)
+    response.cookies.set(NEXT_COOKIE, next, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: NEXT_MAX_AGE,
+    });
+
+  return response;
 }
 
-export const config = { matcher: "/" };
+export const config = { matcher: ["/((?!_next/|api/|.*\\..*).*)"] };

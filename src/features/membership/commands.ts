@@ -7,6 +7,14 @@ export const commands: CommandContributor = (dict) => [
     label: dict.admin.nav.members,
     icon: "members",
     run: { kind: "navigate", href: "/admin/members" },
-    keywords: ["pilots", "applications", "approve", "volunteers"],
+    keywords: [
+      "pilots",
+      "applications",
+      "approve",
+      "volunteers",
+      "requests",
+      "inbox",
+      "history",
+    ],
   },
 ];

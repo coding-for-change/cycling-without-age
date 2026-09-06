@@ -10,11 +10,13 @@ import {
   formatDistance,
   formatDuration,
   formatNumber,
+  wordsLocale,
   type Locale,
 } from "@/lib/format";
 import type { Coords } from "@/lib/geo";
 import { getPosition, type GeoFailure } from "@/lib/native/geolocation";
 import { haptics } from "@/lib/native/haptics";
+import { AddressSearch } from "@/components/address-search";
 import { Character, useCharacter } from "@/components/character";
 import { cn, fill } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -28,9 +30,9 @@ import {
   rememberGuestChapter,
   resolveHomeAddress,
   settlePassengerAt,
+  suggestAddresses,
   type HomeResolution,
 } from "../actions";
-import { AddressSearch } from "./address-search";
 import { rankChapters } from "./rank";
 
 const ChapterMap = dynamic(() => import("./chapter-map"), {
@@ -476,8 +478,9 @@ function HomePanel({
     return (
       <div className="px-2 pt-2">
         <AddressSearch
-          sessionToken={sessionToken}
-          language={language}
+          search={(query) =>
+            suggestAddresses({ query, sessionToken, language })
+          }
           strings={strings.home}
           onPick={onPick}
         />
@@ -515,7 +518,10 @@ function HomePanel({
           <p className="mt-2 text-sm text-ink">
             {home.route
               ? fill(strings.home.duration, {
-                  duration: formatDuration(home.route.durationSec, notation),
+                  duration: formatDuration(
+                    home.route.durationSec,
+                    wordsLocale(language),
+                  ),
                 })
               : fill(strings.distanceAway, { distance })}
           </p>

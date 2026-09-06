@@ -4,7 +4,11 @@ import { profile } from "@/features/profile";
 import { getHighestRole } from "@/lib/access";
 import type { Access } from "@/lib/access";
 import type { JoinPreset } from "@/lib/join-preset";
-import { nextOnboardingStep, STEP_PATH } from "@/lib/onboarding";
+import {
+  nextOnboardingStep,
+  PASSKEY_REPROMPT_MS,
+  STEP_PATH,
+} from "@/lib/onboarding";
 import type { OnboardingProgress, OnboardingRole } from "@/lib/onboarding";
 import { HOME_BY_ROLE } from "@/lib/redirects";
 
@@ -64,16 +68,25 @@ export async function getOnboardingState(
       consented: account?.consentDataAt != null,
       profiled,
       passkeyHandled:
-        account?.passkeyPromptedAt != null ||
-        (account?._count.passkeys ?? 0) > 0,
+        (account?._count.passkeys ?? 0) > 0 ||
+        (account?.passkeyPromptedAt != null &&
+          Date.now() - account.passkeyPromptedAt.getTime() <
+            PASSKEY_REPROMPT_MS),
       nextStepsSeen: account?.pilotNextStepsSeenAt != null,
     },
   };
 }
 
+/**
+ * `next` is the destination someone was heading for before they were asked to
+ * sign in (parked in a cookie by `proxy.ts`). It is spent only once there is
+ * nothing left to do — an unfinished wizard always wins, or the person would
+ * land on a page their account is not ready for.
+ */
 export async function resolveDestination(
   session: { user: { id: string }; access: Access },
   preset: JoinPreset,
+  next: string | null = null,
 ): Promise<string> {
   // An admin has no onboarding to do — asking a chapter admin whether they would
   // like to be a passenger or a pilot is a question a flow should never ask.
@@ -83,10 +96,11 @@ export async function resolveDestination(
     role === "countryAdmin" ||
     role === "chapterAdmin"
   ) {
-    return HOME_BY_ROLE[role];
+    return next ?? HOME_BY_ROLE[role];
   }
 
   const { progress } = await getOnboardingState(session.user.id, preset);
   const step = nextOnboardingStep(progress);
-  return step ? STEP_PATH[step] : HOME_BY_ROLE[progress.role ?? "passenger"];
+  if (step) return STEP_PATH[step];
+  return next ?? HOME_BY_ROLE[progress.role ?? "passenger"];
 }

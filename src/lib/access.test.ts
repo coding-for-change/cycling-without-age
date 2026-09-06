@@ -11,6 +11,7 @@ import {
   parseRoles,
   resolveActiveScope,
   resolveAdminScope,
+  scopeChapters,
 } from "@/lib/access";
 import type {
   Access,
@@ -390,6 +391,30 @@ describe("resolveActiveScope", () => {
       const scope = scopeOf(access);
       expect(resolveActiveScope(scope, {})).toEqual(defaultActiveScope(scope));
     }
+  });
+});
+
+describe("scopeChapters", () => {
+  const everything = scopeOf(superadmin);
+
+  it("narrows to the one active chapter", () => {
+    expect(
+      scopeChapters(everything, { kind: "chapter", chapter: HAMBURG }),
+    ).toEqual([HAMBURG]);
+  });
+
+  it("keeps only the chapters of the active country", () => {
+    expect(
+      scopeChapters(everything, { kind: "country", country: COUNTRIES[0] }),
+    ).toEqual([MUENCHEN, HAMBURG]);
+  });
+
+  // The unnarrowed view is still the person's own scope, never every chapter.
+  it("hands back the whole scope and nothing beyond it", () => {
+    expect(scopeChapters(everything, { kind: "all" })).toEqual(CHAPTERS);
+    expect(scopeChapters(scopeOf(muenchenAdmin), { kind: "all" })).toEqual([
+      MUENCHEN,
+    ]);
   });
 });
 

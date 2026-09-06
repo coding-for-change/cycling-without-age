@@ -3,6 +3,11 @@ import { prisma } from "@/lib/prisma";
 export const insertCountry = (data: { name: string; code: string }) =>
   prisma.country.create({ data });
 
+export const updateCountryById = (
+  id: string,
+  data: { name?: string; code?: string },
+) => prisma.country.update({ where: { id }, data });
+
 export const findCountries = () =>
   prisma.country.findMany({ orderBy: { name: "asc" } });
 

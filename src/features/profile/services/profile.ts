@@ -7,6 +7,8 @@ export const findProfile = (userId: string) =>
     select: {
       name: true,
       email: true,
+      image: true,
+      phoneNumber: true,
       locale: true,
       birthDate: true,
       gender: true,
@@ -28,3 +30,6 @@ export const findProfile = (userId: string) =>
 
 export const updateProfile = (userId: string, data: Prisma.UserUpdateInput) =>
   prisma.user.update({ where: { id: userId }, data });
+
+export const findUserIdByEmail = (email: string) =>
+  prisma.user.findUnique({ where: { email }, select: { id: true } });

@@ -99,7 +99,7 @@ export function ScopeSwitcher({
             <SidebarMenuButton
               size="lg"
               aria-label={strings.switchLabel}
-              className="data-[state=open]:bg-mint-tint"
+              className="data-[state=open]:bg-canvas-deeper"
             >
               {identity}
               <ChevronsUpDown
@@ -129,7 +129,10 @@ export function ScopeSwitcher({
                       asChild
                       className="gap-3 rounded-xl py-2.5"
                     >
-                      <Link href={option.href}>
+                      <Link
+                        href={option.href}
+                        aria-current={current ? "true" : undefined}
+                      >
                         <Icon
                           aria-hidden
                           className="size-4 text-ink-soft"
@@ -167,7 +170,10 @@ export function ScopeSwitcher({
                       asChild
                       className="gap-3 rounded-xl py-2.5"
                     >
-                      <Link href={scopeHref(pathname, option.arg)}>
+                      <Link
+                        href={scopeHref(pathname, option.arg)}
+                        aria-current={current ? "true" : undefined}
+                      >
                         <Icon
                           aria-hidden
                           className="size-4 text-ink-soft"

@@ -29,6 +29,9 @@ jest.mock("@/lib/prisma", () => ({
     member: { findMany: jest.fn() },
     countryAdmin: { findMany: jest.fn() },
     organization: { findUnique: jest.fn() },
+    // The admin passkey gate in auth-guards reads the enrolled count. Not a
+    // jest.fn() so `clearAllMocks` cannot strip the return value.
+    user: { findUnique: async () => ({ _count: { passkeys: 1 } }) },
   },
 }));
 
