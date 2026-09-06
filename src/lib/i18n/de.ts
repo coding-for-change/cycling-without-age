@@ -216,6 +216,122 @@ const de: Dictionary = {
     ],
     finish: "Weiter",
   },
+  admin: {
+    // du-Form: Das Admin-Dashboard richtet sich an Organisatoren und
+    // Ehrenamtliche der Ortsgruppen, siehe docs/BRAND.md § Voice & tone.
+    nav: {
+      overview: "Überblick",
+      rides: "Ausfahrten",
+      members: "Mitglieder",
+      passengers: "Passagiere",
+      bikes: "Rikschas",
+      chat: "Nachrichten",
+      reports: "Berichte",
+      chapters: "Ortsgruppen",
+      countries: "Länder",
+      settings: "Einstellungen",
+      help: "Hilfe holen",
+    },
+    navGroups: {
+      main: "Arbeit in der Ortsgruppe",
+      organisation: "Organisation",
+      footer: "Konto",
+    },
+    navLabel: "Admin-Bereiche",
+    newRide: "Neue Ausfahrt",
+    scope: {
+      switchLabel: "Perspektive oder Ortsgruppe wechseln",
+      label: "Bereich",
+      perspective: "Perspektive",
+      all: "Alle Ortsgruppen",
+      allInCountry: "Alle Ortsgruppen in {country}",
+    },
+    perspectives: {
+      admin: "Admin",
+      pilot: "Pilot",
+      passenger: "Passagier",
+    },
+    roles: {
+      superadmin: "Superadmin",
+      countryAdmin: "Länder-Admin",
+      chapterAdmin: "Ortsgruppen-Admin",
+      pilot: "Pilot",
+      passenger: "Passagier",
+    },
+    user: {
+      menuLabel: "Dein Konto",
+      account: "Konto",
+    },
+    commands: {
+      open: "Befehlsleiste öffnen",
+      hint: "für alles",
+      placeholder: "Nach einer Seite oder einer Aktion suchen",
+      empty: "Unter dem Namen gibt es nichts.",
+      dialogTitle: "Befehlsleiste",
+      dialogDescription:
+        "Spring zu einer Seite, wechsle die Perspektive oder starte eine Aktion über die Tastatur.",
+      newRide: "Neue Ausfahrt starten",
+      viewAsAdmin: "Als Admin ansehen",
+      viewAsPilot: "Als Pilot ansehen",
+      viewAsPassenger: "Als Passagier ansehen",
+      toggleSidebar: "Seitenleiste ein- oder ausblenden",
+      language: "Sprache: {name}",
+      signOut: "Abmelden",
+      groups: {
+        create: "Erstellen",
+        navigate: "Gehe zu",
+        perspective: "Perspektive",
+        scope: "Bereich",
+        account: "Konto",
+      },
+    },
+    pages: {
+      overview: {
+        title: "Überblick",
+        body: "Sobald Ausfahrten gebucht werden, landet hier die kommende Woche — die Fahrten von heute, die Piloten, die sie übernehmen, und alles, was noch auf dich wartet.",
+      },
+      rides: {
+        title: "Ausfahrten",
+        body: "Jede Fahrt, die deine Ortsgruppe gebucht hat, von der Anfrage bis zum Winken an der Tür. Noch ist nichts gebucht.",
+      },
+      members: {
+        title: "Mitglieder",
+        body: "Piloten, Ortsgruppen-Admins und die Leute, die auf ihre Freigabe warten. Freigeben kannst du sie genau hier.",
+      },
+      passengers: {
+        title: "Passagiere",
+        body: "Die Menschen, mit denen deine Ortsgruppe fährt — auch die, für die Angehörige oder Pflegekräfte buchen.",
+      },
+      bikes: {
+        title: "Rikschas",
+        body: "Jede Rikscha, um die sich deine Ortsgruppe kümmert, wer sie zuletzt draußen hatte und wann sie wieder zur Wartung muss.",
+      },
+      chat: {
+        title: "Nachrichten",
+        body: "Gespräche zwischen Piloten, Passagieren und der Ortsgruppe. Gesagt wurde noch nichts.",
+      },
+      reports: {
+        title: "Berichte",
+        body: "Gefahrene Ausfahrten, ehrenamtliche Stunden, zurückgelegte Kilometer — die Zahlen, die eine Ortsgruppe braucht, wenn jemand fragt, was sie eigentlich tut.",
+      },
+      chapters: {
+        title: "Ortsgruppen",
+        body: "Die Ortsgruppen, um die du dich kümmerst, und die, die du gründen kannst. Eine Ortsgruppe ist ein Ort, ein Pflegeheim und die Ehrenamtlichen drumherum.",
+      },
+      countries: {
+        title: "Länder",
+        body: "Jedes Land der Bewegung und die Admins, die es führen. Das sieht nur ein Superadmin.",
+      },
+      settings: {
+        title: "Einstellungen",
+        body: "Wie weit deine Ortsgruppe fährt, wer zu erreichen ist und was auf der eigenen Seite der Ortsgruppe steht.",
+      },
+      help: {
+        title: "Hilfe holen",
+        body: "Anleitungen für Ortsgruppen-Admins — und ein Weg zu einem Menschen, wenn eine Anleitung nicht reicht.",
+      },
+    },
+  },
   legal: {
     imprint: {
       title: "Impressum",
