@@ -1,5 +1,6 @@
 import { Button, Section, Text } from "@react-email/components";
 import { brand } from "@/lib/brand";
+import type { Locale } from "@/lib/i18n/locales";
 import { EmailLayout } from "./layout";
 
 export type ApplicationDecisionEmailStrings = {
@@ -12,11 +13,13 @@ export type ApplicationDecisionEmailStrings = {
 };
 
 export function ApplicationDecisionEmail({
+  locale,
   strings,
   chapterName,
   note,
   href,
 }: {
+  locale: Locale;
   strings: ApplicationDecisionEmailStrings;
   chapterName: string;
   note?: string | null;
@@ -24,6 +27,7 @@ export function ApplicationDecisionEmail({
 }) {
   return (
     <EmailLayout
+      locale={locale}
       preview={strings.preview}
       footer={strings.footer}
     >

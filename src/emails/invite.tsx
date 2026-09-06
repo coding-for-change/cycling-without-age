@@ -1,5 +1,6 @@
 import { Button, Section, Text } from "@react-email/components";
 import { brand } from "@/lib/brand";
+import type { Locale } from "@/lib/i18n/locales";
 import { EmailLayout } from "./layout";
 
 export type InviteEmailStrings = {
@@ -12,12 +13,14 @@ export type InviteEmailStrings = {
 };
 
 export function InviteEmail({
+  locale,
   strings,
   chapterName,
   inviterName,
   roleLabel,
   href,
 }: {
+  locale: Locale;
   strings: InviteEmailStrings;
   chapterName: string;
   inviterName: string;
@@ -26,6 +29,7 @@ export function InviteEmail({
 }) {
   return (
     <EmailLayout
+      locale={locale}
       preview={strings.preview}
       footer={strings.footer}
     >

@@ -4,7 +4,7 @@ import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { profile } from "@/features/profile";
 import { ApplicationDecisionEmail } from "@/emails/application-decision";
-import { getEmailStrings } from "@/emails/strings";
+import { getEmailStrings, resolveEmailLocale } from "@/emails/strings";
 import { APP_URL } from "@/lib/app-url";
 import { sendMail } from "@/lib/mailer";
 import { fill } from "@/lib/utils";
@@ -64,7 +64,8 @@ async function mailDecision({
     const account = await profile.getProfile(userId);
     if (!account?.email) return;
 
-    const strings = getEmailStrings(account.locale);
+    const emailLocale = resolveEmailLocale(account.locale);
+    const strings = getEmailStrings(emailLocale);
     const copy = approve
       ? strings.applicationApproved
       : strings.applicationRejected;
@@ -77,6 +78,7 @@ async function mailDecision({
       subject: fill(copy.subject, { chapter: chapterName }),
       text: `${copy.heading}\n\n${intro}${note ? `\n\n${copy.noteHeading}\n${note}` : ""}`,
       react: createElement(ApplicationDecisionEmail, {
+        locale: emailLocale,
         strings: copy,
         chapterName,
         note,

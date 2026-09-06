@@ -5,7 +5,7 @@ import { activity } from "@/features/activity";
 import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { profile } from "@/features/profile";
-import { getEmailStrings } from "@/emails/strings";
+import { getEmailStrings, resolveEmailLocale } from "@/emails/strings";
 import { InviteEmail } from "@/emails/invite";
 import { APP_URL } from "@/lib/app-url";
 import { formatList, wordsLocale } from "@/lib/format";
@@ -67,7 +67,8 @@ async function mailInvite({
     ]);
 
     const language = account?.locale ?? locale;
-    const strings = getEmailStrings(language);
+    const emailLocale = resolveEmailLocale(language);
+    const strings = getEmailStrings(emailLocale);
     const copy = strings.invite;
     const chapterName = chapter?.name ?? "Cycling Without Age";
     const roleLabel = formatList(
@@ -85,6 +86,7 @@ async function mailInvite({
       subject: fill(copy.subject, { chapter: chapterName }),
       text: `${copy.heading}\n\n${intro}\n\n${copy.how}`,
       react: createElement(InviteEmail, {
+        locale: emailLocale,
         strings: copy,
         chapterName,
         inviterName,
