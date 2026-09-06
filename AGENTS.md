@@ -85,3 +85,8 @@ The iOS/Android apps are thin Capacitor shells whose WebView loads https://cwa.c
   toast in the client component that receives the Server Action result; `haptics.tap` for
   significant direct interactions (send, destructive confirm); the selection trio for scrubbing.
   At most one haptic per user action — haptics mark moments, not every tap.
+- Geolocation goes through `@/lib/native/geolocation` (`getPosition`, `isNative`). It uses
+  plain `navigator.geolocation` on both platforms and needs **no Geolocation plugin** — only
+  the OS permission declarations already present: `NSLocationWhenInUseUsageDescription` in
+  `ios/App/App/Info.plist` and `ACCESS_COARSE_LOCATION` / `ACCESS_FINE_LOCATION` in
+  `android/app/src/main/AndroidManifest.xml`.

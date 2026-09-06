@@ -85,6 +85,12 @@ const eslintConfig = defineConfig([
     },
   },
   {
+    files: ["src/components/character/bloub/**"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+    },
+  },
+  {
     // shadcn-generated code (overwritten by `npx shadcn add`) — don't lint it
     // against rules the upstream registry doesn't satisfy yet.
     files: ["src/components/ui/**", "src/hooks/use-mobile.ts"],

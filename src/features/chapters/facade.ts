@@ -1,3 +1,4 @@
+import { distanceMeters, type Coords } from "@/lib/geo";
 import { chapterInput, chapterUpdateInput, countryInput } from "./schemas";
 import type { ChapterInput, ChapterUpdateInput, CountryInput } from "./schemas";
 import {
@@ -64,4 +65,31 @@ export async function updateChapter(id: string, input: ChapterUpdateInput) {
     if (clash && clash.id !== id) throw new Error("Slug already taken");
   }
   return updateChapterById(id, data);
+}
+
+export type NearestChapter = {
+  chapter: Awaited<ReturnType<typeof findChapterById>> & object;
+  distanceMeters: number;
+  inRange: boolean;
+};
+
+export async function nearestChapter(
+  here: Coords,
+): Promise<NearestChapter | null> {
+  const all = await findChapters();
+  let best: NearestChapter | null = null;
+
+  for (const chapter of all) {
+    const metres = distanceMeters(here, {
+      lat: chapter.latitude,
+      lng: chapter.longitude,
+    });
+    if (best && metres >= best.distanceMeters) continue;
+    best = {
+      chapter,
+      distanceMeters: metres,
+      inRange: metres <= chapter.serviceRadiusKm * 1000,
+    };
+  }
+  return best;
 }

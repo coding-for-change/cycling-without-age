@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { forbidden, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { chapters } from "@/features/chapters";
 import {
@@ -20,14 +20,12 @@ export const getSession = cache(async () =>
 
 export async function requireAuth() {
   const session = await getSession();
-  if (!session) redirect("/");
+  if (!session) redirect("/sign-in");
   return session;
 }
 
-// ponytail: authorization failures redirect home rather than rendering a 403.
-// Swap in Next's `forbidden()` once `authInterrupts` + forbidden.tsx land (COD-161).
 function deny(): never {
-  redirect("/");
+  forbidden();
 }
 
 export async function requireSuperAdmin() {

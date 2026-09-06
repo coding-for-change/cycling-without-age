@@ -25,6 +25,30 @@ npm run dev                  # http://localhost:3000
 
 A pre-commit hook (husky + lint-staged) formats staged files with Prettier.
 
+## Native apps (iOS / Android)
+
+`ios/` and `android/` are thin [Capacitor](https://capacitorjs.com) shells: the WebView loads the
+deployed site (`server.url` in [capacitor.config.ts](capacitor.config.ts)) — there is no static
+export. Rules for native code live in [AGENTS.md](AGENTS.md) §7.
+
+The Capacitor CLI needs Node ≥22; this repo's default is Node 20, so prefix cap commands:
+
+```bash
+PATH="/opt/homebrew/opt/node@22/bin:$PATH" npx cap sync
+open ios/App/App.xcodeproj          # or: npx cap open ios
+npx cap open android
+```
+### Testing local changes in the app
+
+`server.url` is baked into the native projects at `cap copy`/`cap sync` time, so pointing the app
+at your dev server means re-running copy with an override:
+
+```bash
+npm run dev                                                  # binds 0.0.0.0
+PATH="/opt/homebrew/opt/node@22/bin:$PATH" \
+  CAP_SERVER_URL=http://192.168.178.86:3000 npx cap copy ios  # your Mac's LAN IP
+```
+
 ## Architecture
 
 See [AGENTS.md](AGENTS.md) and [docs-internal/ARCHITECTURE.md](docs-internal/ARCHITECTURE.md). The layering is enforced by `eslint-plugin-boundaries`.
