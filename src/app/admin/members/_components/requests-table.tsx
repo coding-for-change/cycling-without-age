@@ -10,6 +10,7 @@ import {
   stopRowClick,
   type DataTableStrings,
 } from "@/components/ui/data-table";
+import { mutedColumn } from "../../_components/table-columns";
 import {
   DecisionDialog,
   type DecisionLabels,
@@ -89,33 +90,18 @@ export function RequestsTable({
         </div>
       ),
     },
-    {
-      id: "phone",
-      accessorFn: (row) => row.phone ?? "",
-      meta: { label: phoneColumn },
-      cell: ({ row }) => (
-        <span className="text-ink-soft">{row.original.phone}</span>
-      ),
-    },
-    {
-      id: "chapter",
-      accessorFn: (row) => row.chapterName,
-      meta: { label: labels.columns.chapter },
-      cell: ({ row }) => (
-        <span className="text-ink-soft">{row.original.chapterName}</span>
-      ),
-    },
-    {
-      id: "applied",
-      accessorFn: (row) => row.applied,
-      enableSorting: true,
-      sortingFn: (a, b) =>
-        a.original.appliedIso.localeCompare(b.original.appliedIso),
-      meta: { label: labels.columns.applied },
-      cell: ({ row }) => (
-        <span className="text-ink-soft">{row.original.applied}</span>
-      ),
-    },
+    mutedColumn<RequestRow>("phone", phoneColumn, (row) => row.phone),
+    mutedColumn<RequestRow>(
+      "chapter",
+      labels.columns.chapter,
+      (row) => row.chapterName,
+    ),
+    mutedColumn<RequestRow>(
+      "applied",
+      labels.columns.applied,
+      (row) => row.applied,
+      { isoOf: (row) => row.appliedIso },
+    ),
     {
       id: "actions",
       enableHiding: false,

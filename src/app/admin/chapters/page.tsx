@@ -1,10 +1,10 @@
 import { Suspense } from "react";
 import { headers } from "next/headers";
 import Link from "next/link";
-import { forbidden } from "next/navigation";
 import { List, Map as MapIcon, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { chapters as chapterFeature } from "@/features/chapters";
+import { CHAPTER_RADIUS_KM } from "@/features/chapters/schemas";
 import { joinUrl } from "@/lib/app-url";
 import { resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
@@ -19,8 +19,6 @@ import type { ChapterPin } from "./_components/chapters-map-view";
 import { ChaptersTable, type ChapterRow } from "./_components/chapters-table";
 
 type AdminSearchParams = Promise<Record<string, string | string[] | undefined>>;
-
-const DEFAULT_RADIUS_KM = 10;
 
 export default function ChaptersPage({
   searchParams,
@@ -41,8 +39,7 @@ async function Chapters({ searchParams }: { searchParams: AdminSearchParams }) {
     scope,
     active,
     chapters: inScope,
-  } = await readActiveScope(searchParams);
-  if (!scope.canSeeChapters) forbidden();
+  } = await readActiveScope(searchParams, "chapters");
 
   const [dict, language, params, head, all, countries] = await Promise.all([
     getDictionary(),
@@ -89,7 +86,7 @@ async function Chapters({ searchParams }: { searchParams: AdminSearchParams }) {
     city: chapter.city,
     logo: chapter.logo,
     coords: { lat: chapter.latitude, lng: chapter.longitude },
-    radiusKm: chapter.serviceRadiusKm ?? DEFAULT_RADIUS_KM,
+    radiusKm: chapter.serviceRadiusKm ?? CHAPTER_RADIUS_KM.default,
   }));
 
   const scopeParams = new URLSearchParams();
@@ -141,7 +138,8 @@ async function Chapters({ searchParams }: { searchParams: AdminSearchParams }) {
         </div>
         <Button
           asChild
-          className="min-h-11 bg-red text-white hover:bg-red-hover"
+          variant="brand"
+          className="min-h-11"
         >
           <Link href={href({ ...keepView, new: "1" })}>
             <Plus aria-hidden />
@@ -156,7 +154,7 @@ async function Chapters({ searchParams }: { searchParams: AdminSearchParams }) {
           name,
           code,
         }))}
-        canCreateCountry={scope.global}
+        canCreateCountry={scope.canCreateCountries}
         pins={pins}
         view={view}
         language={language}

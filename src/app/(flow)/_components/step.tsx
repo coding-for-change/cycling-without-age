@@ -60,6 +60,18 @@ export function Step({
   );
 }
 
+/** The error line above a step's action. Reserved space is the caller's job. */
+export function StepError({ children }: { children: ReactNode }) {
+  return (
+    <p
+      role="alert"
+      className="mb-2 text-center text-sm text-red"
+    >
+      {children}
+    </p>
+  );
+}
+
 export function StepDots({
   index,
   total,

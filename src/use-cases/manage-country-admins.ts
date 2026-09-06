@@ -1,4 +1,4 @@
-import { activity } from "@/features/activity";
+import { activity } from "@/lib/activity";
 import { chapters } from "@/features/chapters";
 import { profile } from "@/features/profile";
 

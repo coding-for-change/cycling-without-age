@@ -73,12 +73,24 @@ the two in full, with page references. Don't cite the book for a rule it doesn't
 - **Primitives**: build on the shadcn components already in `src/components/ui/`
   (`button`, `card`, `dialog`, `badge`, `table`, `tabs`, `sheet`, …) before writing a new
   one. Style is `new-york`, RSC on. Compose class names with `cn()` from `@/lib/utils`.
-  Anything genuinely shared and stateless that shadcn doesn't cover belongs in
-  `src/components/ui/`; anything domain-specific belongs in its feature slice.
+  Placement, from the inside out: a stateless primitive shadcn doesn't cover goes in
+  `src/components/ui/`; shared UI used across route groups that stands on `lib`
+  infrastructure and never on a feature goes flat in `src/components/`
+  (`sign-out-button`, `passkey-manager`, `language-picker`); domain UI that calls a
+  Facade or Action goes in its feature slice; UI used by one route only goes in that
+  route's `_components/`.
 - **Admin lists**: every admin table is `DataTable` from `src/components/ui/data-table.tsx`
   (search, filters, "Columns" visibility menu, sortable headers, pagination, clickable rows
   via `rowHref` — `stopRowClick` on any interactive cell). Never hand-roll a `<Table>` for a
   list: the server parent maps rows and passes `dict.admin.table` as `strings`.
+- **Brand buttons are variants, not class strings**: `buttonVariants`
+  (`src/components/ui/button.tsx`) carries `variant="brand"` (the one red action —
+  `bg-red text-white hover:bg-red-hover`) and `size="hero"` (the full-width, fully round
+  56px action at the foot of a `(flow)` screen). Reach for those instead of restating the
+  classes: 22 call sites used to spell them by hand and had already drifted apart on
+  `shadow-lift` and `disabled:`. Disabled styling is deliberately shadcn's default fade —
+  don't re-add a bespoke `disabled:` treatment. The dark-mint counterpart is
+  `MintPillButton` (`src/app/(flow)/_components/mint-pill-button.tsx`).
 - **Brand vs. shadcn**: shadcn ships its own neutral token set (`--foreground`,
   `--primary`, `--muted`, …) which decides what an unstyled component renders. Those
   have already been remapped onto `--ink` once, centrally, in `globals.css` — so a

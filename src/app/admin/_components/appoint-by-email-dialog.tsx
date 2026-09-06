@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useId, useState, useTransition, type FormEvent } from "react";
+import type { ReactNode } from "react";
 import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -22,6 +22,7 @@ export function AppointByEmailDialog({
   placeholder,
   labels,
   action,
+  trigger,
 }: {
   triggerLabel: string;
   title: string;
@@ -30,8 +31,8 @@ export function AppointByEmailDialog({
   placeholder?: string;
   labels: NotifyLabels;
   action: (email: string) => Promise<ActionResult>;
+  trigger?: (open: () => void) => ReactNode;
 }) {
-  const router = useRouter();
   const formId = useId();
   const inputId = useId();
   const [open, setOpen] = useState(false);
@@ -47,20 +48,23 @@ export function AppointByEmailDialog({
       if (!result.ok) return;
       setEmail("");
       setOpen(false);
-      router.refresh();
     });
   };
 
   return (
     <>
-      <Button
-        variant="outline"
-        className="min-h-11"
-        onClick={() => setOpen(true)}
-      >
-        <UserPlus aria-hidden />
-        {triggerLabel}
-      </Button>
+      {trigger ? (
+        trigger(() => setOpen(true))
+      ) : (
+        <Button
+          variant="outline"
+          className="min-h-11"
+          onClick={() => setOpen(true)}
+        >
+          <UserPlus aria-hidden />
+          {triggerLabel}
+        </Button>
+      )}
 
       <AdminDrawer
         open={open}
@@ -75,7 +79,8 @@ export function AppointByEmailDialog({
             type="submit"
             form={formId}
             disabled={pending || !email.trim()}
-            className="min-h-11 bg-red text-white hover:bg-red-hover"
+            variant="brand"
+            className="min-h-11"
           >
             {triggerLabel}
           </Button>

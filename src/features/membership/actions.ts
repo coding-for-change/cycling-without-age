@@ -2,10 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { Prisma } from "@/generated/prisma";
 import { MAX_PILOT_CHAPTERS, membership } from "@/features/membership";
 import { requireAuth } from "@/lib/auth-guards";
-import { submitPilotApplications } from "@/use-cases/submit-pilot-applications";
+import { domainCode } from "@/lib/domain-error";
 
 /**
  * The Boundary Layer for joining a chapter (AGENTS.md §2). Joining as a
@@ -27,13 +26,6 @@ const chapterId = z.string().min(1).max(64);
  *  create an unbounded number of applications. */
 const chapterIds = z.array(chapterId).min(1).max(MAX_PILOT_CHAPTERS);
 
-/** A chapter id that does not exist trips the foreign key rather than a lookup —
- *  the constraint already guarantees it, and calling the chapters facade here
- *  would drag a second feature in and force a Use Case for nothing. */
-const isUnknownChapter = (error: unknown) =>
-  error instanceof Prisma.PrismaClientKnownRequestError &&
-  error.code === "P2003";
-
 export async function joinChapterAsPassenger(
   id: string,
 ): Promise<MembershipActionResult> {
@@ -48,7 +40,8 @@ export async function joinChapterAsPassenger(
   } catch (error) {
     return {
       ok: false,
-      error: isUnknownChapter(error) ? "unknownChapter" : "generic",
+      error:
+        domainCode(error) === "unknownChapter" ? "unknownChapter" : "generic",
     };
   }
 }
@@ -61,7 +54,7 @@ export async function applyToChaptersAsPilot(
   if (!parsed.success) return { ok: false, error: "generic" };
 
   try {
-    await submitPilotApplications({
+    await membership.submitPilotApplications({
       userId: session.user.id,
       chapterIds: parsed.data,
     });
@@ -69,11 +62,11 @@ export async function applyToChaptersAsPilot(
     revalidatePath("/onboarding");
     return { ok: true };
   } catch (error) {
-    if (isUnknownChapter(error)) return { ok: false, error: "unknownChapter" };
     // The facade refuses an application from someone who is already a pilot
     // there. Harmless, but the person deserves to be told which it was.
-    if (error instanceof Error && error.message === membership.ALREADY_PILOT) {
-      return { ok: false, error: "alreadyPilot" };
+    const code = domainCode(error);
+    if (code === "unknownChapter" || code === "alreadyPilot") {
+      return { ok: false, error: code };
     }
     return { ok: false, error: "generic" };
   }

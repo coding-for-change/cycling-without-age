@@ -1,6 +1,6 @@
 import { accounts } from "@/features/accounts";
 import type { AssistedPassengerInput } from "@/features/accounts";
-import { activity } from "@/features/activity";
+import { activity } from "@/lib/activity";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
 

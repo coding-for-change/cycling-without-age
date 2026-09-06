@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import { Character } from "@/components/character";
 
 const HERO_ROUTES = new Set(["/welcome"]);
@@ -42,11 +36,10 @@ export function CharacterStage({
   children: ReactNode;
 }) {
   const [override, setOverride] = useState<CharacterPose | null>(null);
-  const setPose = useMemo(() => setOverride, []);
   const pose = override ?? (HERO_ROUTES.has(pathname) ? "hero" : "compact");
 
   return (
-    <PoseContext.Provider value={setPose}>
+    <PoseContext.Provider value={setOverride}>
       <div
         aria-hidden
         data-pose={pose}

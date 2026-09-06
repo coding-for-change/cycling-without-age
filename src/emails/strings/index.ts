@@ -11,8 +11,6 @@ export const resolveEmailLocale = (
   locale: string | null | undefined,
 ): Locale => (locale && hasLocale(locale) ? locale : defaultLocale);
 
-export function getEmailStrings(
-  locale: string | null | undefined,
-): EmailStrings {
-  return dictionaries[resolveEmailLocale(locale)];
+export function getEmailStrings(locale: Locale): EmailStrings {
+  return dictionaries[locale];
 }

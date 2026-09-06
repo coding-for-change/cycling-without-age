@@ -42,7 +42,7 @@ export function AdminTopBar({
   const searchParams = useSearchParams();
 
   const activeScope = readScopeArg(
-    new URLSearchParams(searchParams.toString()),
+    searchParams,
     scopes.map((s) => s.arg),
     defaultScope,
   );

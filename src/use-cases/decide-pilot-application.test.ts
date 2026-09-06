@@ -1,11 +1,11 @@
-import { activity } from "@/features/activity";
+import { activity } from "@/lib/activity";
 import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { profile } from "@/features/profile";
 import { sendMail } from "@/lib/mailer";
 import { decidePilotApplication } from "@/use-cases/decide-pilot-application";
 
-jest.mock("@/features/activity", () => ({ activity: { record: jest.fn() } }));
+jest.mock("@/lib/activity", () => ({ activity: { record: jest.fn() } }));
 jest.mock("@/features/chapters", () => ({
   chapters: { getChapter: jest.fn() },
 }));

@@ -11,7 +11,7 @@ import { haptics } from "@/lib/native/haptics";
 import { cn } from "@/lib/utils";
 import type { OnboardingRole } from "@/lib/onboarding";
 import type { StepDefaults } from "./step-page";
-import { Step, type StepProgress } from "../../_components/step";
+import { Step, StepError, type StepProgress } from "../../_components/step";
 import { submitProfile } from "../actions";
 
 type Gender = "female" | "male" | "other";
@@ -82,19 +82,12 @@ export function ProfileStep({
       progress={progress ?? undefined}
       action={
         <>
-          {error && (
-            <p
-              role="alert"
-              className="mb-2 text-center text-sm text-red"
-            >
-              {error}
-            </p>
-          )}
+          {error && <StepError>{error}</StepError>}
           <Button
-            size="lg"
             disabled={!complete || pending}
             onClick={() => send({ firstName, lastName, birthDate, gender })}
-            className="h-14 w-full rounded-full bg-red text-base text-white shadow-lift hover:bg-red-hover disabled:bg-grey-tint disabled:text-ink-faint disabled:shadow-none"
+            variant="brand"
+            size="hero"
           >
             {continueLabel}
           </Button>

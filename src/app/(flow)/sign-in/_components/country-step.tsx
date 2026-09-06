@@ -102,9 +102,9 @@ export function CountryStep({
       title={strings.title}
       action={
         <Button
-          size="lg"
           onClick={() => choose(active)}
-          className="h-14 w-full rounded-full bg-red text-base text-white hover:bg-red-hover"
+          variant="brand"
+          size="hero"
         >
           {common.continue}
         </Button>

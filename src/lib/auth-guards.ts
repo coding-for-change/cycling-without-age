@@ -127,8 +127,8 @@ export const requireAdminScope = cache(
     // the scope's own rows (`listChapters(countryId)` per administered country
     // plus the directly-administered ids).
     const [countries, allChapters] = await Promise.all([
-      chapters.listCountries(),
-      chapters.listChapters(),
+      chapters.listCountryScopes(),
+      chapters.listChapterScopes(),
     ]);
 
     return {

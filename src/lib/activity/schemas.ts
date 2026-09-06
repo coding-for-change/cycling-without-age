@@ -16,6 +16,7 @@ export const activityType = z.enum([
   "chapterCreated",
   "chapterUpdated",
   "chapterDeleted",
+  "countryDeleted",
 ]);
 export type ActivityType = z.infer<typeof activityType>;
 

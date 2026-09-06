@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { accounts } from "@/features/accounts";
 import { z } from "zod";
 import { profile } from "@/features/profile";
 import { personalDetailsInput } from "@/features/profile";
@@ -9,7 +10,6 @@ import { readJoinPreset } from "@/lib/join-preset";
 import { getLocale } from "@/lib/i18n";
 import { canViewStep, type OnboardingStep } from "@/lib/onboarding";
 import { acceptOnboardingConsent } from "@/use-cases/accept-onboarding-consent";
-import { claimAccount } from "@/use-cases/claim-account";
 import { completeOnboardingProfile } from "@/use-cases/complete-onboarding-profile";
 import {
   getOnboardingState,
@@ -71,7 +71,7 @@ export async function submitConsent(input: unknown): Promise<StepResult> {
           ? { chapterId: preset.chapterId, role: preset.role }
           : null,
     });
-    await claimAccount(at.userId);
+    await accounts.claimAccount(at.userId);
 
     revalidatePath(ONBOARDING);
 

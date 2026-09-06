@@ -5,10 +5,6 @@ import { defaultLocale, locales, LOCALE_COOKIE } from "@/lib/i18n";
 import { NativeBootstrap } from "@/lib/native/native-bootstrap";
 import "./globals.css";
 
-/* Inter is the one family, headlines and body alike, separated by weight only
-   (see docs/BRAND.md § Typography). `next/font` self-hosts it and inlines the
-   metrics, so there is no external request and no layout shift. The brand's
-   TacaPro is not bundled; see BRAND.md for why and how to put it back. */
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -23,18 +19,10 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  // `cover` lets content extend under the notch/home-indicator so that
-  // `env(safe-area-inset-*)` resolves to real values on mobile.
   viewportFit: "cover",
-  // Resize the layout viewport when the soft keyboard opens, so bottom
-  // sheets and sticky footers stay above it instead of being covered.
   interactiveWidget: "resizes-content",
 };
 
-// The shell is prerendered with the default locale (reading the cookie here
-// would block every route), so this pre-paint script corrects `lang` from the
-// cookie — falling back to the browser language — before anything renders.
-// See https://nextjs.org/docs/app/guides/preventing-flash-before-hydration
 const setLangScript = `(function(){try{var s=${JSON.stringify(locales)},m=document.cookie.match(/(?:^|; )${LOCALE_COOKIE}=([^;]*)/),l=m&&decodeURIComponent(m[1]);if(s.indexOf(l)<0){l=${JSON.stringify(defaultLocale)};var p=navigator.languages||[navigator.language];for(var i=0;i<p.length;i++){var c=(p[i]||"").slice(0,2).toLowerCase();if(s.indexOf(c)>=0){l=c;break}}}document.documentElement.lang=l}catch(e){}})()`;
 
 export default function RootLayout({

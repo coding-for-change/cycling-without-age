@@ -39,9 +39,6 @@ export function proxy(request: NextRequest) {
   const next =
     pathname === "/sign-in" ? safeNextPath(searchParams.get("next")) : null;
 
-  // Already signed in with a destination in hand: the cookie is only readable on
-  // the NEXT request, so hand the dispatcher a fresh one rather than rendering
-  // a sign-in screen that would have to ignore it.
   const response =
     next && signedIn
       ? NextResponse.redirect(new URL("/onboarding", request.url))
