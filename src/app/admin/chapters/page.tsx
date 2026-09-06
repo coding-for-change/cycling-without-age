@@ -1,19 +1,26 @@
 import { Suspense } from "react";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { forbidden } from "next/navigation";
-import { Plus } from "lucide-react";
+import { List, Map as MapIcon, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { chapters as chapterFeature } from "@/features/chapters";
-import { getDictionary } from "@/lib/i18n";
+import { joinUrl } from "@/lib/app-url";
+import { resolveLocale } from "@/lib/format";
+import { getDictionary, getLocale } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import {
   AdminPageFallback,
   AdminPageHeader,
   AdminPageShell,
 } from "../_components/admin-page";
 import { readActiveScope } from "../active-scope";
+import type { ChapterPin } from "./_components/chapters-map-view";
 import { ChaptersTable, type ChapterRow } from "./_components/chapters-table";
 
 type AdminSearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+const DEFAULT_RADIUS_KM = 10;
 
 export default function ChaptersPage({
   searchParams,
@@ -37,11 +44,17 @@ async function Chapters({ searchParams }: { searchParams: AdminSearchParams }) {
   } = await readActiveScope(searchParams);
   if (!scope.canSeeChapters) forbidden();
 
-  const [dict, all, countries] = await Promise.all([
+  const [dict, language, params, head, all, countries] = await Promise.all([
     getDictionary(),
+    getLocale(),
+    searchParams,
+    headers(),
     chapterFeature.listChapters(),
     chapterFeature.listCountries(),
   ]);
+
+  const notation = resolveLocale(head.get("accept-language"));
+  const view = params.view === "map" ? "map" : "list";
 
   const detail = new Map(all.map((chapter) => [chapter.id, chapter]));
   const countryName = new Map(countries.map((c) => [c.id, c.name]));
@@ -68,19 +81,69 @@ async function Chapters({ searchParams }: { searchParams: AdminSearchParams }) {
     ];
   });
 
-  const query = new URLSearchParams();
-  if (active.kind === "chapter") query.set("chapter", active.chapter.slug);
-  if (active.kind === "country") query.set("country", active.country.code);
-  query.set("new", "1");
+  // Every chapter, not just the ones in scope: an overlap warning is only
+  // useful if it can see the neighbour on the other side of the border.
+  const pins: ChapterPin[] = all.map((chapter) => ({
+    id: chapter.id,
+    name: chapter.name,
+    city: chapter.city,
+    logo: chapter.logo,
+    coords: { lat: chapter.latitude, lng: chapter.longitude },
+    radiusKm: chapter.serviceRadiusKm ?? DEFAULT_RADIUS_KM,
+  }));
+
+  const scopeParams = new URLSearchParams();
+  if (active.kind === "chapter")
+    scopeParams.set("chapter", active.chapter.slug);
+  if (active.kind === "country")
+    scopeParams.set("country", active.country.code);
+
+  const href = (extra: Record<string, string>) => {
+    const query = new URLSearchParams(scopeParams);
+    for (const [key, value] of Object.entries(extra)) query.set(key, value);
+    const search = query.toString();
+    return search ? `/admin/chapters?${search}` : "/admin/chapters";
+  };
+
+  const scopeQuery = scopeParams.toString() ? `?${scopeParams}` : "";
+  const keepView: Record<string, string> =
+    view === "map" ? { view: "map" } : {};
+
+  const tab = "flex min-h-9 items-center gap-1.5 rounded-full px-3 text-2sm";
+  const activeTab = "bg-canvas text-ink shadow-soft";
 
   return (
     <>
       <AdminPageHeader title={dict.admin.pages.chapters.title}>
+        <div className="flex items-center gap-1 rounded-full bg-grey-tint p-1">
+          <Link
+            href={href({})}
+            aria-current={view === "list" ? "page" : undefined}
+            className={cn(tab, view === "list" ? activeTab : "text-ink-soft")}
+          >
+            <List
+              className="size-4"
+              aria-hidden
+            />
+            {dict.admin.chapters.views.list}
+          </Link>
+          <Link
+            href={href({ view: "map" })}
+            aria-current={view === "map" ? "page" : undefined}
+            className={cn(tab, view === "map" ? activeTab : "text-ink-soft")}
+          >
+            <MapIcon
+              className="size-4"
+              aria-hidden
+            />
+            {dict.admin.chapters.views.map}
+          </Link>
+        </div>
         <Button
           asChild
           className="min-h-11 bg-red text-white hover:bg-red-hover"
         >
-          <Link href={`/admin/chapters?${query}`}>
+          <Link href={href({ ...keepView, new: "1" })}>
             <Plus aria-hidden />
             {dict.admin.chapters.new}
           </Link>
@@ -88,8 +151,22 @@ async function Chapters({ searchParams }: { searchParams: AdminSearchParams }) {
       </AdminPageHeader>
       <ChaptersTable
         rows={rows}
-        countries={scope.countries.map(({ id, name }) => ({ id, name }))}
-        labels={dict.admin.chapters}
+        countries={scope.countries.map(({ id, name, code }) => ({
+          id,
+          name,
+          code,
+        }))}
+        canCreateCountry={scope.global}
+        pins={pins}
+        view={view}
+        language={language}
+        notation={notation}
+        joinBase={joinUrl("")}
+        scopeQuery={scopeQuery}
+        labels={{
+          ...dict.admin.chapters,
+          joinLink: dict.admin.settings.joinLink,
+        }}
         table={dict.admin.table}
       />
     </>

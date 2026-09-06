@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition, type ReactNode } from "react";
+import { useId, useState, useTransition, type ReactNode } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useCharacter } from "@/components/character";
@@ -48,6 +48,7 @@ export function ConsentStep({
 }) {
   const router = useRouter();
   const { oops } = useCharacter();
+  const boxId = useId();
 
   const [ticked, setTicked] = useState<Record<Box, boolean>>({
     safety: defaults.safety,
@@ -153,9 +154,13 @@ export function ConsentStep({
             <Checkbox
               checked={ticked[box]}
               onCheckedChange={(next) => toggle(box, next === true)}
+              aria-labelledby={`${boxId}-${box}`}
               className="mt-0.5 size-5 rounded-[6px]"
             />
-            <span className="text-sm leading-relaxed text-ink">
+            <span
+              id={`${boxId}-${box}`}
+              className="text-sm leading-relaxed text-ink"
+            >
               {label[box]}
             </span>
           </label>

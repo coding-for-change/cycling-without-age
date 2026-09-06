@@ -51,3 +51,6 @@ export const markClaimed = (userId: string) =>
     where: { id: userId },
     data: { claimedAt: new Date() },
   });
+
+export const removeUser = (userId: string) =>
+  prisma.user.delete({ where: { id: userId } });

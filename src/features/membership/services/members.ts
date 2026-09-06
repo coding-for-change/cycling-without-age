@@ -52,7 +52,7 @@ export const findAdminMembersOfChapter = (
     select: {
       userId: true,
       role: true,
-      user: { select: { name: true, image: true } },
+      user: { select: { name: true, email: true, image: true } },
     },
   });
 

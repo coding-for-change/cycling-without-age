@@ -73,13 +73,21 @@ async function withRoles(
 export const joinAsPassenger = (userId: string, chapterId: string) =>
   withRoles(userId, chapterId, (roles) => [...roles, "passenger"]);
 
+export function grantChapterRoles(
+  userId: string,
+  chapterId: string,
+  roles: ChapterRole[],
+) {
+  const granted = roles.map((role) => chapterRole.parse(role));
+  return withRoles(userId, chapterId, (current) => [...current, ...granted]);
+}
+
 export function grantChapterRole(
   userId: string,
   chapterId: string,
   role: ChapterRole,
 ) {
-  const granted = chapterRole.parse(role);
-  return withRoles(userId, chapterId, (roles) => [...roles, granted]);
+  return grantChapterRoles(userId, chapterId, [role]);
 }
 
 // Only existing members can be promoted — a chapter admin who is not in the

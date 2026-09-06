@@ -23,9 +23,11 @@ import {
   updateCountryById,
 } from "./services/countries";
 import {
+  deleteChapterById,
   findChapterById,
   findChapterBySlug,
   findChapterCountryId,
+  findChapterFootprint,
   findChapters,
   insertChapter,
   updateChapterById,
@@ -67,6 +69,31 @@ export const getChapterBySlug = (slug: string) => findChapterBySlug(slug);
 
 export const getChapterCountryId = async (id: string) =>
   (await findChapterCountryId(id))?.countryId ?? null;
+
+export const isSlugAvailable = async (slug: string) =>
+  chapterInput.shape.slug.safeParse(slug).success &&
+  !(await findChapterBySlug(slug));
+
+export type ChapterFootprint = {
+  members: number;
+  passengers: number;
+  pendingApplications: number;
+};
+
+/** What goes with the chapter if it is deleted — the schema cascades all three. */
+export async function getChapterFootprint(
+  id: string,
+): Promise<ChapterFootprint | null> {
+  const row = await findChapterFootprint(id);
+  if (!row) return null;
+  return {
+    members: row._count.members,
+    passengers: row._count.passengers,
+    pendingApplications: row._count.applications,
+  };
+}
+
+export const deleteChapter = (id: string) => deleteChapterById(id);
 
 export async function createChapter(input: ChapterInput) {
   const data = chapterInput.parse(input);

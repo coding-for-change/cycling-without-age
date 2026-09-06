@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { Pencil, X } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
@@ -28,10 +28,7 @@ import {
   appointCountryAdminAction,
   removeCountryAdminAction,
 } from "../actions";
-import {
-  CountryFormDialog,
-  type CountryFormLabels,
-} from "./country-form-dialog";
+import { CountryDrawer, type CountryFormLabels } from "./country-drawer";
 
 type CountryAdmin = { userId: string; name: string; email: string };
 
@@ -97,7 +94,7 @@ function AdminChip({
           </button>
         </Badge>
       </AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent aria-describedby={undefined}>
         <AlertDialogHeader>
           <AlertDialogTitle>
             {fill(labels.confirmRemoveAdmin, { name: admin.name })}
@@ -123,29 +120,36 @@ function AdminChip({
 export function CountriesTable({
   rows,
   labels,
+  language,
   table,
 }: {
   rows: CountryRow[];
   labels: CountriesTableLabels;
+  language: string;
   table: DataTableStrings;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [editing, setEditing] = useState<CountryRow | null>(null);
 
   const creating = searchParams.get("new") === "1";
+  const editingId = searchParams.get("edit");
+  const editing = rows.find((row) => row.id === editingId) ?? null;
 
-  const close = () => {
-    setEditing(null);
-    if (!creating) return;
+  const go = (mutate: (params: URLSearchParams) => void) => {
     const params = new URLSearchParams(searchParams);
-    params.delete("new");
+    mutate(params);
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, {
       scroll: false,
     });
   };
+
+  const close = () =>
+    go((params) => {
+      params.delete("new");
+      params.delete("edit");
+    });
 
   const done = () => {
     close();
@@ -228,7 +232,7 @@ export function CountriesTable({
             size="icon"
             className="size-11"
             aria-label={labels.edit}
-            onClick={() => setEditing(row.original)}
+            onClick={() => go((params) => params.set("edit", row.original.id))}
           >
             <Pencil aria-hidden />
           </Button>
@@ -251,10 +255,11 @@ export function CountriesTable({
           getRowId={(row) => row.id}
         />
       )}
-      <CountryFormDialog
+      <CountryDrawer
         key={editing?.id ?? "new"}
         open={creating || editing !== null}
         country={editing}
+        language={language}
         labels={labels}
         onClose={close}
         onDone={done}

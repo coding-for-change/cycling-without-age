@@ -1,7 +1,7 @@
 import { Check } from "lucide-react";
 import { membership } from "@/features/membership";
 import { formatDate, type Locale } from "@/lib/format";
-import { avatarSvg } from "@/lib/avatar";
+import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { cn, fill } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
 import type { Dictionary } from "@/lib/i18n";
@@ -49,7 +49,7 @@ export async function PendingChapterCard({
               className="flex items-center gap-2"
             >
               <PersonAvatar
-                svg={avatarSvg(reviewer.userId)}
+                svg={avatarSvg(avatarSeed(reviewer.user.email))}
                 size="sm"
               />
               <span className="text-sm">{firstName(reviewer.user.name)}</span>

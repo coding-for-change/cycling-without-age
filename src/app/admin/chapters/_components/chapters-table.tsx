@@ -1,19 +1,15 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
-import { Pencil } from "lucide-react";
+import { startTransition, useOptimistic } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
+import { DataTable, type DataTableStrings } from "@/components/ui/data-table";
+import type { Locale } from "@/lib/format";
 import {
-  DataTable,
-  stopRowClick,
-  type DataTableStrings,
-} from "@/components/ui/data-table";
-import {
-  ChapterFormDialog,
-  type ChapterFormLabels,
-} from "./chapter-form-dialog";
+  ChapterCreateDrawer,
+  type ChapterCreateStrings,
+} from "./chapter-create-drawer";
+import { ChaptersMapView, type ChapterPin } from "./chapters-map-view";
 
 export type ChapterRow = {
   id: string;
@@ -31,26 +27,52 @@ export type ChapterRow = {
   serviceRadiusKm: number;
 };
 
+export type ChapterListStrings = ChapterCreateStrings & {
+  empty: string;
+  open: string;
+  fields: ChapterCreateStrings["fields"] & {
+    slug: string;
+    serviceRadiusKm: string;
+  };
+};
+
 export function ChaptersTable({
   rows,
   countries,
+  canCreateCountry,
+  pins,
+  view,
+  language,
+  notation,
+  joinBase,
+  scopeQuery,
   labels,
   table,
 }: {
   rows: ChapterRow[];
-  countries: { id: string; name: string }[];
-  labels: ChapterFormLabels & { empty: string };
+  countries: { id: string; name: string; code: string }[];
+  canCreateCountry: boolean;
+  pins: ChapterPin[];
+  view: "list" | "map";
+  language: string;
+  notation: Locale;
+  joinBase: string;
+  scopeQuery: string;
+  labels: ChapterListStrings;
   table: DataTableStrings;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [editing, setEditing] = useState<ChapterRow | null>(null);
+  const [optimisticRows, addOptimisticRow] = useOptimistic(
+    rows,
+    (state: ChapterRow[], row: ChapterRow) =>
+      [...state, row].sort((a, b) => a.name.localeCompare(b.name)),
+  );
 
   const creating = searchParams.get("new") === "1";
 
   const close = () => {
-    setEditing(null);
     if (!creating) return;
     const params = new URLSearchParams(searchParams);
     params.delete("new");
@@ -60,9 +82,11 @@ export function ChaptersTable({
     });
   };
 
-  const done = () => {
-    close();
-    router.refresh();
+  const created = (row: ChapterRow) => {
+    startTransition(() => {
+      addOptimisticRow(row);
+      router.refresh();
+    });
   };
 
   const columns: ColumnDef<ChapterRow, unknown>[] = [
@@ -111,38 +135,32 @@ export function ChaptersTable({
         <span className="text-ink-soft">{row.original.serviceRadiusKm}</span>
       ),
     },
-    {
-      id: "actions",
-      enableHiding: false,
-      cell: ({ row }) => (
-        <div
-          className="flex justify-end"
-          onClick={stopRowClick}
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-11"
-            aria-label={labels.edit}
-            onClick={() => setEditing(row.original)}
-          >
-            <Pencil aria-hidden />
-          </Button>
-        </div>
-      ),
-    },
   ];
 
   return (
     <>
-      {rows.length === 0 ? (
+      {view === "map" ? (
+        <ChaptersMapView
+          pins={pins}
+          notation={notation}
+          scopeQuery={scopeQuery}
+          strings={{
+            empty: labels.empty,
+            mapLabel: labels.mapLabel,
+            mapUnavailable: labels.mapUnavailable,
+            open: labels.open,
+            close: labels.cancel,
+            radiusValue: labels.create.radiusValue,
+          }}
+        />
+      ) : optimisticRows.length === 0 ? (
         <p className="rounded-2xl border border-line px-4 py-10 text-center text-sm text-ink-soft">
           {labels.empty}
         </p>
       ) : (
         <DataTable
           columns={columns}
-          data={rows}
+          data={optimisticRows}
           strings={table}
           filters={
             countries.length > 1
@@ -159,16 +177,25 @@ export function ChaptersTable({
               : []
           }
           getRowId={(row) => row.id}
+          rowHref={(row) => `/admin/chapters/${row.id}${scopeQuery}`}
         />
       )}
-      <ChapterFormDialog
-        key={editing?.id ?? "new"}
-        open={creating || editing !== null}
-        chapter={editing}
+
+      <ChapterCreateDrawer
+        key="new"
+        open={creating}
+        onOpenChange={(next) => {
+          if (!next) close();
+        }}
+        onCreated={created}
         countries={countries}
-        labels={labels}
-        onClose={close}
-        onDone={done}
+        canCreateCountry={canCreateCountry}
+        pins={pins}
+        language={language}
+        notation={notation}
+        joinBase={joinBase}
+        scopeQuery={scopeQuery}
+        strings={labels}
       />
     </>
   );

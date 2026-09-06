@@ -301,6 +301,9 @@ enum ActivityType {
   accountCreated
   invited
   accountClaimed
+  chapterCreated
+  chapterUpdated
+  chapterDeleted
 }
 
 model ActivityEvent {

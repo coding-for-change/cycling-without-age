@@ -29,6 +29,15 @@ export const commands: CommandContributor = (dict) => [
     visible: (scope) => scope.canSeeChapters,
   },
   {
+    id: "chapter-map",
+    group: "create",
+    label: dict.admin.commands.chapterMap,
+    icon: "chapters",
+    run: { kind: "navigate", href: "/admin/chapters?view=map" },
+    keywords: ["map", "overview", "where"],
+    visible: (scope) => scope.canSeeChapters,
+  },
+  {
     id: "new-country",
     group: "create",
     label: dict.admin.commands.newCountry,

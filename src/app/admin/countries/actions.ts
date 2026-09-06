@@ -15,7 +15,8 @@ import {
 } from "@/use-cases/manage-country-admins";
 
 export type CountryActionResult =
-  { ok: true } | { ok: false; error: "codeTaken" | "noAccount" | "generic" };
+  | { ok: true; id?: string }
+  | { ok: false; error: "codeTaken" | "noAccount" | "generic" };
 
 const id = z.string().min(1).max(64);
 const appointInput = z.object({ countryId: id, email: z.email() });
@@ -39,9 +40,9 @@ export async function createCountryAction(
   await requireSuperAdmin();
 
   try {
-    await chapters.createCountry(parsed.data);
+    const country = await chapters.createCountry(parsed.data);
     revalidatePath("/admin", "layout");
-    return { ok: true };
+    return { ok: true, id: country.id };
   } catch (error) {
     return failed(error);
   }

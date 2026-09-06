@@ -2,8 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { accounts } from "@/features/accounts";
 import { membership } from "@/features/membership";
-import { requireAuth, requireChapterAdmin } from "@/lib/auth-guards";
+import {
+  requireAuth,
+  requireChapterAdmin,
+  requireSuperAdmin,
+} from "@/lib/auth-guards";
 import { changeMemberRole, SELF_CHANGE } from "@/use-cases/change-member-role";
 import { decidePilotApplication } from "@/use-cases/decide-pilot-application";
 
@@ -27,6 +32,8 @@ const roleChangeInput = z.object({
   chapterId: id,
   change: z.enum(["promote", "demote", "remove"]),
 });
+
+const deleteUserInput = z.object({ userId: id });
 
 function failed(error: unknown): AdminActionResult {
   const message = error instanceof Error ? error.message : "";
@@ -86,5 +93,26 @@ export async function changeMemberRoleAction(
     return { ok: true };
   } catch (error) {
     return failed(error);
+  }
+}
+
+// Superadmin only: an account spans chapters, so no chapter or country admin can
+// see enough of it to take it away. A chapter admin removes people from the
+// chapter instead.
+export async function deleteUserAction(
+  input: z.input<typeof deleteUserInput>,
+): Promise<AdminActionResult> {
+  const parsed = deleteUserInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "generic" };
+  const session = await requireSuperAdmin();
+  if (session.user.id === parsed.data.userId)
+    return { ok: false, error: "self" };
+
+  try {
+    await accounts.deleteUser(parsed.data.userId);
+    revalidatePath("/admin", "layout");
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "generic" };
   }
 }

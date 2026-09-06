@@ -1,6 +1,10 @@
 import { recordEventInput } from "./schemas";
 import type { RecordEventInput } from "./schemas";
-import { findEventsOfUser, insertEvent } from "./services/events";
+import {
+  findEventsOfChapter,
+  findEventsOfUser,
+  insertEvent,
+} from "./services/events";
 
 export type ActivityEvent = Awaited<
   ReturnType<typeof findEventsOfUser>
@@ -25,3 +29,6 @@ export const listForUser = (
     includeGlobal = false,
   }: { chapterIds: string[]; includeGlobal?: boolean },
 ) => findEventsOfUser(userId, chapterIds, includeGlobal);
+
+export const listForChapter = (chapterId: string) =>
+  findEventsOfChapter(chapterId);

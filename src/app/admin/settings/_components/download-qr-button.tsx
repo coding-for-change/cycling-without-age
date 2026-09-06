@@ -4,6 +4,7 @@ import { Download } from "lucide-react";
 import { encode } from "uqr";
 import { haptics } from "@/lib/native/haptics";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const PX = 1024;
 
@@ -11,10 +12,12 @@ export function DownloadQrButton({
   value,
   fileName,
   label,
+  className,
 }: {
   value: string;
   fileName: string;
   label: string;
+  className?: string;
 }) {
   const download = () => {
     const canvas = document.createElement("canvas");
@@ -58,7 +61,7 @@ export function DownloadQrButton({
     <Button
       type="button"
       variant="outline"
-      className="min-h-11"
+      className={cn("min-h-11", className)}
       onClick={download}
     >
       <Download aria-hidden />

@@ -1,6 +1,6 @@
 import { createElement } from "react";
 import { accounts } from "@/features/accounts";
-import type { InviteInput } from "@/features/accounts";
+import type { InviteInput, InviteRole } from "@/features/accounts";
 import { activity } from "@/features/activity";
 import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
@@ -8,6 +8,7 @@ import { profile } from "@/features/profile";
 import { getEmailStrings } from "@/emails/strings";
 import { InviteEmail } from "@/emails/invite";
 import { APP_URL } from "@/lib/app-url";
+import { formatList, wordsLocale } from "@/lib/format";
 import { sendMail } from "@/lib/mailer";
 import { fill } from "@/lib/utils";
 
@@ -22,23 +23,23 @@ export async function inviteChapterUser({
   locale: string | null;
   input: InviteInput;
 }) {
-  const { chapterId, name, email, role } = input;
+  const { chapterId, name, email, roles } = input;
 
   const { userId, created } = await accounts.provisionUser({
     name,
     contact: email,
     createdByUserId: inviterUserId,
   });
-  await membership.grantChapterRole(userId, chapterId, role);
+  await membership.grantChapterRoles(userId, chapterId, roles);
 
-  await mailInvite({ userId, email, chapterId, inviterName, role, locale });
+  await mailInvite({ userId, email, chapterId, inviterName, roles, locale });
 
   await activity.record({
     userId,
     actorUserId: inviterUserId,
     chapterId,
     type: "invited",
-    payload: { role },
+    payload: { roles: roles.join(",") },
   });
 
   return { created };
@@ -49,14 +50,14 @@ async function mailInvite({
   email,
   chapterId,
   inviterName,
-  role,
+  roles,
   locale,
 }: {
   userId: string;
   email: string;
   chapterId: string;
   inviterName: string;
-  role: "admin" | "pilot";
+  roles: InviteRole[];
   locale: string | null;
 }) {
   try {
@@ -65,10 +66,14 @@ async function mailInvite({
       chapters.getChapter(chapterId),
     ]);
 
-    const strings = getEmailStrings(account?.locale ?? locale);
+    const language = account?.locale ?? locale;
+    const strings = getEmailStrings(language);
     const copy = strings.invite;
     const chapterName = chapter?.name ?? "Cycling Without Age";
-    const roleLabel = strings.roles[role];
+    const roleLabel = formatList(
+      roles.map((role) => strings.roles[role]),
+      wordsLocale(language ?? ""),
+    );
     const intro = fill(copy.intro, {
       inviter: inviterName,
       chapter: chapterName,
@@ -84,7 +89,7 @@ async function mailInvite({
         chapterName,
         inviterName,
         roleLabel,
-        href: `${APP_URL}/sign-in?next=${encodeURIComponent(role === "admin" ? "/admin" : "/pilot")}`,
+        href: `${APP_URL}/sign-in?next=${encodeURIComponent(roles.includes("admin") ? "/admin" : "/pilot")}`,
       }),
     });
 

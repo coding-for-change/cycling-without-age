@@ -7,6 +7,7 @@ import {
   findUserByEmail,
   findUserByPhone,
   markClaimed as markUserClaimed,
+  removeUser,
   setProvenance,
 } from "./services/users";
 
@@ -64,3 +65,8 @@ export async function getClaimBanner(userId: string) {
 }
 
 export const markClaimed = (userId: string) => markUserClaimed(userId);
+
+/** Hard delete. Sessions, passkeys, memberships, applications and history cascade
+ *  in the schema; rows that only point at this person (`createdBy`, event actor)
+ *  are nulled there too. */
+export const deleteUser = (userId: string) => removeUser(userId);

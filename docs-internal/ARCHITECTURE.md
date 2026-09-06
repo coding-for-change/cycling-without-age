@@ -495,8 +495,29 @@ asked for, and the `sec-fetch-dest` check means a prefetch or an `<img>` cannot 
 a real navigation.
 
 That URL is printed on posters, so **the slug is immutable**: `chapterUpdateInput` omits both
-`slug` and `countryId`, and the edit dialog renders the slug read-only. A chapter that has to
+`slug` and `countryId`, and the chapter page shows the slug read-only. A chapter that has to
 be renamed gets a new chapter, not a silently dead QR code on a noticeboard wall.
+
+### Chapters are placed, not typed; edited in place, not in a form
+
+`/admin/chapters?new=1` opens the create drawer (`AdminDrawer`, see AGENTS.md § UI). A name
+and an address are the only required input: the address search (`@/components/address-search`
+over `suggestChapterPlaces`/`resolveChapterPlace`) fills city, coordinates and country from
+Mapbox's context, a point-of-interest result pre-fills the care-home name, and the pin can be
+dragged with `reverseChapterPlace` naming the new spot. The slug derives from the name via
+`slugify` (same grammar as `chapterInput.slug`) and is checked live with `checkSlugAction`.
+Closing the drawer discards what was typed. Mapbox is reached only through these guarded
+Server Actions, rate-limited per user.
+
+`/admin/chapters/[chapterId]` is the edit surface. Every field is an `InlineField` that saves
+on Enter/blur through `updateChapterAction` with a partial `chapterUpdateInput` — optional text
+is `nullable` there so a cleared field clears the column — and offers Undo in its toast. The
+action delegates to `use-cases/manage-chapter`, which diffs the row before writing so each
+autosave becomes exactly the `chapterUpdated` history lines it deserves; the page reads them
+back through `activity.listForChapter`. Deleting asks for the word `DELETE` and shows the
+footprint (`chapters.getChapterFootprint`: members, passengers, pending applications) the
+schema will cascade; the `chapterDeleted` event is recorded without a `chapterId` so the
+cascade cannot take the audit line with it.
 
 The QR itself is `uqr` (zero dependencies) rendered as inline `<svg>` by
 `src/components/qr-code.tsx` — a pure function of its `value`, so it prerenders with the

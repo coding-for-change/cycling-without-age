@@ -14,7 +14,7 @@ jest.mock("@/features/chapters", () => ({
   chapters: { getChapter: jest.fn() },
 }));
 jest.mock("@/features/membership", () => ({
-  membership: { grantChapterRole: jest.fn() },
+  membership: { grantChapterRoles: jest.fn() },
 }));
 jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
 jest.mock("@/lib/mailer", () => ({ sendMail: jest.fn() }));
@@ -22,7 +22,7 @@ jest.mock("@/lib/mailer", () => ({ sendMail: jest.fn() }));
 const provisionUser = accounts.provisionUser as jest.Mock;
 const record = activity.record as jest.Mock;
 const getChapter = chapters.getChapter as jest.Mock;
-const grantChapterRole = membership.grantChapterRole as jest.Mock;
+const grantChapterRoles = membership.grantChapterRoles as jest.Mock;
 const getProfile = profile.getProfile as jest.Mock;
 const mail = sendMail as jest.Mock;
 
@@ -30,7 +30,7 @@ const INVITER = "user-anke";
 const INVITED = "user-new";
 const CHAPTER = "chapter-muenchen";
 
-const invite = (role: "admin" | "pilot" = "pilot") =>
+const invite = (roles: ("admin" | "pilot")[] = ["pilot"]) =>
   inviteChapterUser({
     inviterUserId: INVITER,
     inviterName: "Anke",
@@ -39,7 +39,7 @@ const invite = (role: "admin" | "pilot" = "pilot") =>
       chapterId: CHAPTER,
       name: "Pernille Holm",
       email: "p@example.com",
-      role,
+      roles,
     },
   });
 
@@ -54,7 +54,7 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks());
 
 describe("inviteChapterUser", () => {
-  it("provisions, grants the role, mails and records the invitation", async () => {
+  it("provisions, grants the roles, mails and records the invitation", async () => {
     await expect(invite()).resolves.toEqual({ created: true });
 
     expect(provisionUser).toHaveBeenCalledWith({
@@ -62,7 +62,7 @@ describe("inviteChapterUser", () => {
       contact: "p@example.com",
       createdByUserId: INVITER,
     });
-    expect(grantChapterRole).toHaveBeenCalledWith(INVITED, CHAPTER, "pilot");
+    expect(grantChapterRoles).toHaveBeenCalledWith(INVITED, CHAPTER, ["pilot"]);
     expect(mail).toHaveBeenCalledWith(
       expect.objectContaining({ to: "p@example.com" }),
     );
@@ -71,18 +71,38 @@ describe("inviteChapterUser", () => {
       actorUserId: INVITER,
       chapterId: CHAPTER,
       type: "invited",
-      payload: { role: "pilot" },
+      payload: { roles: "pilot" },
     });
   });
 
-  it("still grants the role and mails when the address already has an account", async () => {
+  it("still grants the roles and mails when the address already has an account", async () => {
     provisionUser.mockResolvedValue({ userId: "user-old", created: false });
 
-    await expect(invite("admin")).resolves.toEqual({ created: false });
+    await expect(invite(["admin"])).resolves.toEqual({ created: false });
 
-    expect(grantChapterRole).toHaveBeenCalledWith("user-old", CHAPTER, "admin");
+    expect(grantChapterRoles).toHaveBeenCalledWith("user-old", CHAPTER, [
+      "admin",
+    ]);
     expect(mail).toHaveBeenCalledTimes(1);
     expect(mail.mock.calls[0][0].react.props.href).toContain("next=%2Fadmin");
+  });
+
+  // Both roles at once: the mail names them in one sentence and lands the
+  // invitee on the admin side, the more capable of the two.
+  it("grants both roles, names both in the mail and points at /admin", async () => {
+    await invite(["pilot", "admin"]);
+
+    expect(grantChapterRoles).toHaveBeenCalledWith(INVITED, CHAPTER, [
+      "pilot",
+      "admin",
+    ]);
+    expect(mail.mock.calls[0][0].react.props.roleLabel).toBe(
+      "Pilot und Ortsgruppen-Admin",
+    );
+    expect(mail.mock.calls[0][0].react.props.href).toContain("next=%2Fadmin");
+    expect(record).toHaveBeenCalledWith(
+      expect.objectContaining({ payload: { roles: "pilot,admin" } }),
+    );
   });
 
   it("writes in the invitee's language when the account already has one", async () => {
@@ -95,12 +115,12 @@ describe("inviteChapterUser", () => {
     );
   });
 
-  it("survives a mail failure, keeping the role and the event", async () => {
+  it("survives a mail failure, keeping the roles and the event", async () => {
     mail.mockRejectedValue(new Error("Resend down"));
 
     await expect(invite()).resolves.toEqual({ created: true });
 
-    expect(grantChapterRole).toHaveBeenCalled();
+    expect(grantChapterRoles).toHaveBeenCalled();
     expect(record).toHaveBeenCalledWith(
       expect.objectContaining({ type: "invited" }),
     );

@@ -211,6 +211,11 @@
   --color-red-tint: var(--red-tint);
   --color-grey-tint: var(--grey-tint);
   --font-display: var(--font-display);
+
+  /* Compact UI text (13px) — Linear's base size, for dense admin surfaces:
+     feeds, property columns, row actions. Body copy stays text-sm/base. */
+  --text-2sm: 0.8125rem;
+  --text-2sm--line-height: 1.25rem;
 }
 
 /* Headlines are Inter Bold (BRAND.md § Typography). --font-display and --font-sans
@@ -225,6 +230,23 @@
   h4 {
     font-family: var(--font-display);
     font-weight: 700;
+  }
+}
+
+/* text-wrap inherits, so two rules cover the app: body copy is `pretty` (no
+   orphans), headlines `balance` (even line lengths). A heading that is not an
+   h* element adds `text-balance` itself. */
+@layer base {
+  body {
+    text-wrap: pretty;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    text-wrap: balance;
   }
 }
 

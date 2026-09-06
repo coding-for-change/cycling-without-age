@@ -1,14 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import {
-  EllipsisVertical,
-  History,
-  ShieldCheck,
-  UserMinus,
-} from "lucide-react";
+import { ShieldCheck, ShieldMinus, UserMinus } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,22 +14,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { fill } from "@/lib/utils";
 import { changeMemberRoleAction } from "../actions";
 import { notify, type NotifyLabels } from "../../_components/action-feedback";
 
 type Change = "promote" | "demote" | "remove";
 
-export type MemberMenuLabels = {
-  actions: string;
-  history: string;
+export type MemberActionLabels = {
   promote: string;
   demote: string;
   remove: string;
@@ -51,15 +36,15 @@ export type MemberMenuLabels = {
   errors: NotifyLabels["errors"];
 };
 
-export type MemberMenuTarget = {
+export type MemberActionTarget = {
   userId: string;
   chapterId: string;
   name: string;
   isAdmin: boolean;
-  isSelf?: boolean;
+  isSelf: boolean;
 };
 
-type TextKey = Exclude<keyof MemberMenuLabels, "errors">;
+type TextKey = Exclude<keyof MemberActionLabels, "errors">;
 
 const COPY: Record<Change, { title: TextKey; body: TextKey; done: TextKey }> = {
   promote: { title: "promoteTitle", body: "promoteBody", done: "promoted" },
@@ -67,16 +52,14 @@ const COPY: Record<Change, { title: TextKey; body: TextKey; done: TextKey }> = {
   remove: { title: "removeTitle", body: "removeBody", done: "removed" },
 };
 
-export function MemberMenu({
+export function MemberActions({
   target,
   labels,
   cancel,
-  historyHref,
 }: {
-  target: MemberMenuTarget;
-  labels: MemberMenuLabels;
+  target: MemberActionTarget;
+  labels: MemberActionLabels;
   cancel: string;
-  historyHref?: string;
 }) {
   const router = useRouter();
   const [change, setChange] = useState<Change | null>(null);
@@ -84,6 +67,12 @@ export function MemberMenu({
 
   const copy = change ? COPY[change] : null;
   const named = (key: TextKey) => fill(labels[key], { name: target.name });
+
+  // Promoting yourself is allowed (a country admin joining a chapter); taking
+  // your own rights or seat away is not — the use case refuses it too.
+  const canToggleAdmin = !(target.isSelf && target.isAdmin);
+  const canRemove = !target.isSelf;
+  if (!canToggleAdmin && !canRemove) return null;
 
   const confirm = () => {
     if (!change) return;
@@ -101,68 +90,36 @@ export function MemberMenu({
     });
   };
 
-  if (target.isSelf && target.isAdmin && !historyHref) return null;
-
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+      <div className="grid gap-1.25">
+        {canToggleAdmin ? (
           <Button
-            variant="ghost"
-            size="icon"
-            aria-label={named("actions")}
-            className="size-11"
+            variant="outline"
+            size="sm"
+            onClick={() => setChange(target.isAdmin ? "demote" : "promote")}
+            className="w-full justify-start border-line bg-canvas text-2sm text-ink-soft hover:border-ink-faint hover:bg-canvas hover:text-ink hover:shadow-soft"
           >
-            <EllipsisVertical aria-hidden />
+            {target.isAdmin ? (
+              <ShieldMinus aria-hidden />
+            ) : (
+              <ShieldCheck aria-hidden />
+            )}
+            {target.isAdmin ? labels.demote : labels.promote}
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end"
-          className="min-w-56 rounded-2xl border-line p-2"
-        >
-          {historyHref ? (
-            <>
-              <DropdownMenuItem
-                asChild
-                className="gap-3 rounded-xl py-2.5"
-              >
-                <Link href={historyHref}>
-                  <History
-                    aria-hidden
-                    className="size-4 text-ink-soft"
-                  />
-                  {labels.history}
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-line" />
-            </>
-          ) : null}
-          {!(target.isSelf && target.isAdmin) && (
-            <DropdownMenuItem
-              className="gap-3 rounded-xl py-2.5"
-              onSelect={() => setChange(target.isAdmin ? "demote" : "promote")}
-            >
-              <ShieldCheck
-                aria-hidden
-                className="size-4 text-ink-soft"
-              />
-              {target.isAdmin ? labels.demote : labels.promote}
-            </DropdownMenuItem>
-          )}
-          {!target.isSelf && (
-            <DropdownMenuItem
-              className="gap-3 rounded-xl py-2.5"
-              onSelect={() => setChange("remove")}
-            >
-              <UserMinus
-                aria-hidden
-                className="size-4 text-ink-soft"
-              />
-              {labels.remove}
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+        ) : null}
+        {canRemove ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setChange("remove")}
+            className="w-full justify-start border-line bg-canvas text-2sm text-ink-soft hover:border-ink-faint hover:bg-canvas hover:text-ink hover:shadow-soft"
+          >
+            <UserMinus aria-hidden />
+            {labels.remove}
+          </Button>
+        ) : null}
+      </div>
 
       <AlertDialog
         open={change !== null}

@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/empty";
 import { chapters as chapterFeature } from "@/features/chapters";
 import { passengers } from "@/features/passengers";
-import { avatarSvg } from "@/lib/avatar";
+import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { formatDate, resolveLocale } from "@/lib/format";
 import { getDictionary } from "@/lib/i18n";
 import {
@@ -24,7 +24,7 @@ import {
 } from "../_components/admin-page";
 import { ICONS } from "../_components/icons";
 import { readActiveScope } from "../active-scope";
-import { AddPassengerDialog } from "./_components/add-passenger-dialog";
+import { AddPassengerDrawer } from "./_components/add-passenger-drawer";
 import {
   PassengersTable,
   type PassengerRow,
@@ -86,7 +86,9 @@ async function Passengers({
         ? passenger.user.email
         : null,
     phone: passenger.user?.phoneNumber ?? null,
-    avatar: avatarSvg(passenger.userId ?? passenger.id),
+    avatar: avatarSvg(
+      passenger.user ? avatarSeed(passenger.user.email) : passenger.id,
+    ),
     born: formatDate(passenger.birthDate, notation),
     bornIso: passenger.birthDate.toISOString(),
     chapterName: passenger.chapter.name,
@@ -100,9 +102,10 @@ async function Passengers({
     <>
       <AdminPageHeader title={dict.admin.pages.passengers.title}>
         {active.kind === "chapter" ? (
-          <AddPassengerDialog
+          <AddPassengerDrawer
             chapterId={active.chapter.id}
             country={dialling}
+            scopeQuery={scopeQuery}
             labels={dict.admin.passengers.add}
             person={{
               firstName: dict.profile.firstName,
@@ -135,7 +138,7 @@ async function Passengers({
               variant="icon"
               className="bg-mint-tint text-ink"
             >
-              <PassengersIcon />
+              <PassengersIcon aria-hidden />
             </EmptyMedia>
             <EmptyDescription className="text-ink-soft">
               {dict.admin.passengers.empty}

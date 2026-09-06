@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { chapters } from "@/features/chapters";
 import { requireSuperAdmin } from "@/lib/auth-guards";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionary, getLocale } from "@/lib/i18n";
 import {
   AdminPageFallback,
   AdminPageHeader,
@@ -35,8 +35,9 @@ async function Countries({
 }) {
   await requireSuperAdmin();
 
-  const [dict, countries, params] = await Promise.all([
+  const [dict, language, countries, params] = await Promise.all([
     getDictionary(),
+    getLocale(),
     chapters.listCountries(),
     searchParams,
   ]);
@@ -77,6 +78,7 @@ async function Countries({
       </AdminPageHeader>
       <CountriesTable
         rows={rows}
+        language={language}
         labels={{
           ...dict.admin.countries,
           appointDialog: {

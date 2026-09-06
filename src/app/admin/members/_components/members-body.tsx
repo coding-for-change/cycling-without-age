@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/empty";
 import { membership } from "@/features/membership";
 import { parseRoles, type ChapterRole } from "@/lib/access";
-import { avatarSvg } from "@/lib/avatar";
+import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { formatDate, formatNumber, resolveLocale } from "@/lib/format";
 import { getDictionary } from "@/lib/i18n";
 import { fill } from "@/lib/utils";
@@ -51,7 +51,7 @@ export async function MembersBody({
     name: application.user.name,
     email: application.user.email,
     phone: application.user.phoneNumber,
-    avatar: avatarSvg(application.userId),
+    avatar: avatarSvg(avatarSeed(application.user.email)),
     message: application.message,
     chapterName: application.chapter.name,
     applied: formatDate(application.createdAt, notation),
@@ -69,7 +69,7 @@ export async function MembersBody({
       name: member.user.name,
       email: member.user.email,
       phone: member.user.phoneNumber,
-      avatar: avatarSvg(member.userId),
+      avatar: avatarSvg(avatarSeed(member.user.email)),
       roles: roles.map(roleLabel),
       isAdmin: roles.includes("admin"),
       since: formatDate(member.createdAt, notation),
@@ -125,7 +125,7 @@ export async function MembersBody({
                 variant="icon"
                 className="bg-mint-tint text-ink"
               >
-                <MembersIcon />
+                <MembersIcon aria-hidden />
               </EmptyMedia>
               <EmptyDescription className="text-ink-soft">
                 {dict.admin.members.empty}

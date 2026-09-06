@@ -18,5 +18,12 @@ export const findEventsOfUser = (
       ],
     },
     orderBy: { createdAt: "desc" },
-    include: { actor: { select: { name: true } } },
+    include: { actor: { select: { name: true, email: true } } },
+  });
+
+export const findEventsOfChapter = (chapterId: string) =>
+  prisma.activityEvent.findMany({
+    where: { chapterId },
+    orderBy: { createdAt: "desc" },
+    include: { actor: { select: { name: true, email: true } } },
   });

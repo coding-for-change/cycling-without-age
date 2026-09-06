@@ -32,10 +32,18 @@ export const assistedPassengerInput = z.object({
 });
 export type AssistedPassengerInput = z.infer<typeof assistedPassengerInput>;
 
+export const inviteRole = z.enum(["admin", "pilot"]);
+export type InviteRole = z.infer<typeof inviteRole>;
+
+// Roles stack: someone can run the chapter and pedal for it in the same breath.
 export const inviteInput = z.object({
   chapterId: z.string().min(1).max(64),
   name: z.string().trim().min(1).max(120),
   email,
-  role: z.enum(["admin", "pilot"]),
+  roles: z
+    .array(inviteRole)
+    .min(1)
+    .max(inviteRole.options.length)
+    .transform((roles) => [...new Set(roles)]),
 });
 export type InviteInput = z.infer<typeof inviteInput>;

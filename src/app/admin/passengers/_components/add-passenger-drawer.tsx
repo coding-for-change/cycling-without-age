@@ -1,22 +1,14 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useId, useMemo, useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UserPlus } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -33,10 +25,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { addAssistedPassenger } from "@/features/accounts/actions";
 import { assistedPassengerInput } from "@/features/accounts/schemas";
 import { parseIdentity, type CountryCode } from "@/lib/identity";
 import { fill } from "@/lib/utils";
+import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
 import { notify } from "../../_components/action-feedback";
 
 const GENDERS = assistedPassengerInput.shape.gender.options;
@@ -99,18 +93,22 @@ export type AddPassengerLabels = {
   helperContact: string;
   helperIsAccountHolder: string;
   submit: string;
+  another: string;
+  anotherHint: string;
   added: string;
   errors: { exists: string; invalid: string; generic: string };
 };
 
-export function AddPassengerDialog({
+export function AddPassengerDrawer({
   chapterId,
   country,
+  scopeQuery,
   labels,
   person,
 }: {
   chapterId: string;
   country: CountryCode;
+  scopeQuery: string;
   labels: AddPassengerLabels;
   person: {
     firstName: string;
@@ -121,12 +119,18 @@ export function AddPassengerDialog({
   };
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const formId = useId();
+  const anotherId = useId();
+  const [another, setAnother] = useState(false);
   const [pending, startTransition] = useTransition();
   const schema = useMemo(
     () => schemaOf(country, labels.errors.invalid),
     [country, labels.errors.invalid],
   );
+
+  const open = searchParams.get("new") === "1";
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -141,6 +145,16 @@ export function AddPassengerDialog({
       helperContact: "",
     },
   });
+
+  const close = () => {
+    form.reset();
+    const params = new URLSearchParams(searchParams);
+    params.delete("new");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
+  };
 
   const [withHelper, contact, helperContact, helperName, firstName, lastName] =
     useWatch({
@@ -187,40 +201,74 @@ export function AddPassengerDialog({
         errors: labels.errors,
       });
       if (!result.ok) return;
-      form.reset();
-      setOpen(false);
       router.refresh();
+      if (!another) {
+        close();
+        return;
+      }
+      form.reset();
+      form.setFocus("firstName");
     });
   });
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (!next) form.reset();
-      }}
-    >
-      <DialogTrigger asChild>
-        <Button className="min-h-11 bg-red text-white hover:bg-red-hover">
+    <>
+      <Button
+        asChild
+        className="min-h-11 bg-red text-white hover:bg-red-hover"
+      >
+        <Link href={`${pathname}${scopeQuery ? `${scopeQuery}&` : "?"}new=1`}>
           <UserPlus aria-hidden />
           {labels.open}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-xl">
+        </Link>
+      </Button>
+
+      <AdminDrawer
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) close();
+        }}
+        title={labels.title}
+        description={labels.body}
+        footer={
+          <>
+            <div className="mr-auto flex items-center gap-3">
+              <Switch
+                id={anotherId}
+                checked={another}
+                onCheckedChange={setAnother}
+              />
+              <label
+                htmlFor={anotherId}
+                className="grid gap-1"
+              >
+                <span className="text-sm leading-none font-medium">
+                  {labels.another}
+                </span>
+                <span className="text-2sm text-ink-soft">
+                  {labels.anotherHint}
+                </span>
+              </label>
+            </div>
+            <Button
+              type="submit"
+              form={formId}
+              disabled={pending}
+              className="min-h-11 bg-red text-white hover:bg-red-hover"
+            >
+              {labels.submit}
+            </Button>
+          </>
+        }
+      >
         <Form {...form}>
           <form
+            id={formId}
             onSubmit={submit}
+            onKeyDown={submitOnCmdEnter}
             aria-busy={pending}
             className="grid gap-5"
           >
-            <DialogHeader>
-              <DialogTitle>{labels.title}</DialogTitle>
-              <DialogDescription className="text-ink-soft">
-                {labels.body}
-              </DialogDescription>
-            </DialogHeader>
-
             <div className="grid gap-5 sm:grid-cols-2">
               <FormField
                 control={form.control}
@@ -231,6 +279,7 @@ export function AddPassengerDialog({
                     <FormControl>
                       <Input
                         {...field}
+                        autoFocus
                         autoComplete="off"
                         className="h-11 border-line text-base"
                       />
@@ -412,19 +461,9 @@ export function AddPassengerDialog({
                 ) : null}
               </div>
             ) : null}
-
-            <DialogFooter>
-              <Button
-                type="submit"
-                disabled={pending}
-                className="min-h-11"
-              >
-                {labels.submit}
-              </Button>
-            </DialogFooter>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </AdminDrawer>
+    </>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
@@ -71,9 +72,13 @@ export function RequestsTable({
         <div className="flex items-start gap-3">
           <PersonAvatar svg={row.original.avatar} />
           <div className="grid">
-            <span className="font-medium">
+            <Link
+              href={`/admin/members/${row.original.userId}${scopeQuery}`}
+              onClick={stopRowClick}
+              className="font-medium hover:underline"
+            >
               {row.original.name || row.original.email}
-            </span>
+            </Link>
             <span className="text-xs text-ink-soft">{row.original.email}</span>
             {row.original.message ? (
               <span className="mt-1 max-w-xs whitespace-normal text-ink-soft">

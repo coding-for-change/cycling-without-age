@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { chapters } from "@/features/chapters";
@@ -12,6 +13,17 @@ type Props = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const chapter = await chapters.getChapterBySlug(slug);
+  return {
+    title: chapter
+      ? `${chapter.name} · Cycling Without Age`
+      : "Cycling Without Age",
+    robots: { index: false },
+  };
+}
 
 export default function PosterPage(props: Props) {
   return (

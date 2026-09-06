@@ -3,18 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useId, useState, useTransition, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { fill } from "@/lib/utils";
 import { decideApplicationAction } from "../actions";
+import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
 import { notify, type NotifyLabels } from "../../_components/action-feedback";
 
 export type DecisionTarget = {
@@ -48,6 +41,7 @@ export function DecisionDialog({
   errors: NotifyLabels["errors"];
 }) {
   const router = useRouter();
+  const formId = useId();
   const noteId = useId();
   const [note, setNote] = useState("");
   const [pending, startTransition] = useTransition();
@@ -79,61 +73,57 @@ export function DecisionDialog({
     });
   };
 
+  if (!target) return null;
+
   return (
-    <Dialog
-      open={target !== null}
+    <AdminDrawer
+      open
       onOpenChange={(open) => {
         if (!open && !pending) close();
       }}
+      dismissible={!pending}
+      title={fill(target.approve ? labels.approveTitle : labels.rejectTitle, {
+        name: target.name,
+      })}
+      description={target.approve ? labels.approveBody : labels.rejectBody}
+      footer={
+        <Button
+          type="submit"
+          form={formId}
+          disabled={pending}
+          className={
+            target.approve
+              ? "min-h-11 bg-red text-white hover:bg-red-hover"
+              : "min-h-11"
+          }
+        >
+          {target.approve ? labels.approve : labels.reject}
+        </Button>
+      }
     >
-      {target ? (
-        <DialogContent>
-          <form
-            onSubmit={submit}
-            aria-busy={pending}
-            className="grid gap-4"
-          >
-            <DialogHeader>
-              <DialogTitle>
-                {fill(
-                  target.approve ? labels.approveTitle : labels.rejectTitle,
-                  { name: target.name },
-                )}
-              </DialogTitle>
-              <DialogDescription className="text-ink-soft">
-                {target.approve ? labels.approveBody : labels.rejectBody}
-              </DialogDescription>
-            </DialogHeader>
-            <Field>
-              <FieldLabel htmlFor={noteId}>
-                {fill(labels.noteLabel, { name: target.name })}
-              </FieldLabel>
-              <Textarea
-                id={noteId}
-                maxLength={500}
-                rows={3}
-                placeholder={labels.notePlaceholder}
-                value={note}
-                onChange={(event) => setNote(event.target.value)}
-                className="border-line"
-              />
-            </Field>
-            <DialogFooter>
-              <Button
-                type="submit"
-                disabled={pending}
-                className={
-                  target.approve
-                    ? "min-h-11 bg-red text-white hover:bg-red-hover"
-                    : "min-h-11"
-                }
-              >
-                {target.approve ? labels.approve : labels.reject}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      ) : null}
-    </Dialog>
+      <form
+        id={formId}
+        onSubmit={submit}
+        onKeyDown={submitOnCmdEnter}
+        aria-busy={pending}
+        className="grid gap-4"
+      >
+        <Field>
+          <FieldLabel htmlFor={noteId}>
+            {fill(labels.noteLabel, { name: target.name })}
+          </FieldLabel>
+          <Textarea
+            id={noteId}
+            autoFocus
+            maxLength={500}
+            rows={3}
+            placeholder={labels.notePlaceholder}
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            className="border-line"
+          />
+        </Field>
+      </form>
+    </AdminDrawer>
   );
 }

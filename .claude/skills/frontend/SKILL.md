@@ -121,6 +121,10 @@ the two in full, with page references. Don't cite the book for a rule it doesn't
 
     Note the last row: the currency stays EUR in both, only the notation moves. If a
     screen reads correctly in both locales it will hold everywhere else.
+  - **Words are not notation.** `Intl.RelativeTimeFormat` and unit durations come out as
+    words ("2 min ago", "vor 2 Min."), so `formatRelativeTime` and `formatDuration` take
+    `wordsLocale(uiLanguage)` (the `getLocale()` value passed down as `words`/`language`),
+    never the browser's notation locale — otherwise an English UI reads "Saved jetzt".
   - **Use `@/lib/format`** — `formatDate`, `formatDateTime`, `formatTime`,
     `formatNumber`, `formatCurrency`, plus `resolveLocale` and the ISO helpers. Every
     function takes the locale explicitly, and the instant-based ones require a
@@ -178,11 +182,52 @@ the two in full, with page references. Don't cite the book for a rule it doesn't
   (`className="text-mint"`) — it paints `currentColor`, so no hex reaches a component. It is
   mounted once in the `(flow)` layout and is `aria-hidden`: a decorative mascot, never a
   control.
-- **Avatars** are DiceBear "Gaze" characters, generated on the server from the user id by
-  `avatarSvg()` in `@/lib/avatar` and rendered by `PersonAvatar` (`@/components/person-avatar`).
+- **Avatars** are DiceBear "Gaze" characters, generated on the server from the person's
+  email address — `avatarSvg(avatarSeed(email))` in `@/lib/avatar` — and rendered by
+  `PersonAvatar` (`@/components/person-avatar`). The seed is the email, not the user id, so
+  an invite can draw the character before the account exists; `avatarSeed` also lives
+  dependency-free in `@/lib/avatar-seed` for Client Components, and a live preview goes
+  through the `previewAvatar` Server Action (see `invite-dialog.tsx`), never DiceBear itself.
   Pass the SVG string down as a prop — the library never ships to the browser. The animated
   variant is for the large "profile card" surfaces only (account dialog, person header, user
   menu popover); lists stay static. `User.image` is not shown anywhere.
+
+## Layout rhythm
+
+- **Text wrapping is a MUST**: headings `text-balance`, body `text-pretty`. `globals.css`
+  sets both once (`h1`–`h6` balance, `body` pretty; `text-wrap` inherits), so only a
+  heading that is not an `h*` element adds `text-balance` itself.
+- **Spacing**: MUST sit on the 4px grid, NEVER an arbitrary value (`gap-[7px]`). SHOULD
+  pick from the scale 5 · 11 · 12 · 13 · 14 · 16 · 19 · 20px (Tailwind v4 spacing
+  `1.25 · 2.75 · 3 · 3.25 · 3.5 · 4 · 4.75 · 5`), SHOULD default to 5px between sibling
+  elements, SHOULD keep padding consistent inside one container and element widths
+  consistent (52px).
+- **Detail pages read like Linear**: header (avatar, `h1`, contact line), a main column for
+  the story and an `18rem` properties column (`lg:grid-cols-[minmax(0,1fr)_18rem]`) for
+  roles, state and the destructive zone — see `admin/members/[userId]`. The main column
+  separates sections with an `h2` and `border-t border-line`, not cards; the properties
+  column stacks `SidePanel` boxes (`admin/_components/side-panel.tsx`: native
+  details/summary, `bg-canvas-deep`, open by default, one box per property group, an
+  optional `action` in the header). Actions are visible buttons beside what they act on,
+  never behind a `⋯` menu when there is room.
+- **Create/edit surfaces are drawers**: `AdminDrawer` (`src/app/admin/_components/admin-drawer.tsx`,
+  vaul) — right side on desktop, bottom sheet on mobile — never a centered `Dialog`. Open state
+  is in the URL (`?new=1`, `?edit=<id>`) and `submitOnCmdEnter` sits on the form. Closing a
+  drawer discards what was typed — there is no draft persistence, deliberately. Existing
+  records are edited in place on their detail page with `InlineField` (autosave + Undo
+  toast) under a `SaveStatusProvider`, so there is no "edit form" at all.
+  Address fields use `@/components/address-search` over a Mapbox Server Action; anything with
+  coordinates gets the map (`admin/chapters/_components/chapter-map.tsx`) beside it.
+- **Destructive actions** confirm in a dialog; deleting a whole record also asks for the
+  word `DELETE` to be typed (`delete-user-dialog.tsx`), and the confirm button is the one
+  red on the screen.
+- **Compact UI text is `text-2sm`** (13px/20px, a token in `globals.css`): Linear's base
+  size, for dense admin surfaces — feeds, property columns, row actions. Body copy stays
+  `text-sm`/`text-base`; nothing user-facing goes below `text-xs`.
+- **Activity feeds**: one line per event — a `w-4` rail column holding the actor's avatar
+  (a type icon for system events) and a hairline `bg-line` running down to the next event,
+  then the sentence, `·`, relative time from `formatRelativeTime` with the absolute date in
+  `title`. Notes hang under their event in a `bg-mint-tint` bubble.
 
 ## What is deliberately not here yet
 

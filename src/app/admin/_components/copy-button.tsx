@@ -4,15 +4,18 @@ import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { haptics } from "@/lib/native/haptics";
+import { cn } from "@/lib/utils";
 
 export function CopyButton({
   value,
   label,
   copiedLabel,
+  className,
 }: {
   value: string;
   label: string;
   copiedLabel: string;
+  className?: string;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -31,7 +34,7 @@ export function CopyButton({
     <Button
       type="button"
       variant="outline"
-      className="min-h-11"
+      className={cn("min-h-11", className)}
       onClick={copy}
     >
       {copied ? <Check aria-hidden /> : <Copy aria-hidden />}

@@ -58,7 +58,7 @@ async function Training() {
             variant="icon"
             className="bg-mint-tint text-ink"
           >
-            <GraduationCap />
+            <GraduationCap aria-hidden />
           </EmptyMedia>
           <EmptyDescription className="text-ink-soft">
             {strings.body}

@@ -33,6 +33,7 @@ graph TD
     U10[use-cases/provision-assisted-passenger]
     U11[use-cases/invite-chapter-user]
     U12[use-cases/claim-account]
+    U13[use-cases/manage-chapter]
   end
   subgraph Features
     F1[features/chapters facade]
@@ -103,9 +104,12 @@ graph TD
   ACT3 --> U12
   ACT1 --> U8
   ACT5 --> F2
+  ACT5 --> F6
   ACT5 --> U6
   ACT5 --> U7
   ACT6 --> F1
+  ACT6 --> U13
+  ACT6 --> MB
   ACT7 --> F1
   ACT7 --> U9
 
@@ -148,6 +152,8 @@ graph TD
   U11 --> ML
   U12 --> F5
   U12 --> F6
+  U13 --> F1
+  U13 --> F5
 
   F1 --> S1
   F2 --> S2
@@ -178,6 +184,7 @@ graph TD
 | `provision-assisted-passenger` | `accounts`, `membership`, `passengers`, `activity` | One "add a passenger at the door" makes the account, joins the chapter, creates the rider row and records who created it — four features, and the helper rule decides whether the rider row points at the new account or at nobody. |
 | `invite-chapter-user` | `accounts`, `chapters`, `membership`, `profile` (+ `activity`, `mailer`) | Provisioning the account, granting the chapter role, and mailing the invitation in the invitee's own locale (hence `profile`) are three features plus infrastructure. |
 | `claim-account` | `accounts`, `activity` | Stamping `claimedAt` and writing the `accountClaimed` line are two features, and the pair has to stay together — a claim nobody can see in the history is not an audit trail. |
+| `manage-chapter` | `chapters`, `activity` | Creating, editing or deleting a chapter is a `chapters` write plus the history line that makes it legible on the chapter's own page. `diffChapter` turns one autosave into one `chapterUpdated` event per field that actually changed (a moved pin and its new address fold into one `location` change), and the delete event is recorded *global* because the row it would point at is gone. |
 
 No use case was added for the admin shell. `G --> F1` now carries two guards:
 `requireChapterAdmin` (`chapters.getChapterCountryId`) and `requireAdminScope`
@@ -200,15 +207,20 @@ directly, and the passkey and pilot-next-steps actions call the profile facade d
 
 `features/accounts` (F6) has no UI of its own either — its Server Actions (ACT8) are imported
 straight into the admin passengers and members screens, because "provision a user" is not a
-page. `S6` is the only place outside `prisma/seed.ts` that calls BetterAuth's admin API
+page. `app/admin/members/actions` also calls `accounts.deleteUser` directly (`ACT5 --> F6`):
+the hard delete touches one feature — the schema cascades everything else — so it is an
+Action behind `requireSuperAdmin`, not a use case. `S6` is the only place outside `prisma/seed.ts` that calls BetterAuth's admin API
 (`auth.api.createUser`); everything else in that slice is ordinary Prisma. `U12` is reached
 from the onboarding consent action (ACT3), not from the admin shell: the account is claimed by
 the person who received it, at the one step nobody may take on their behalf.
 
 `features/activity` (F5) is a slice with no UI of its own: every write goes through a use
-case that pairs it with the mutation it records, and the only read is the person-history feed
-on `/admin/members/[userId]`, which calls the facade straight from the Server Component.
+case that pairs it with the mutation it records, and the only reads are the person-history feed
+on `/admin/members/[userId]` and the chapter history on `/admin/chapters/[chapterId]`, both of
+which call the facade straight from the Server Component.
 
 `lib/mapbox` and `lib/mailer` are cross-cutting infrastructure, callable from any layer — the
 same standing as `lib/prisma` and `lib/sms`. `lib/mapbox` is reached only from a Server Action
-so the secret token never enters a client bundle.
+so the secret token never enters a client bundle — the location flow's actions (ACT2) and the
+admin chapter actions (ACT6: suggest, retrieve and reverse-geocode behind `requireAdminScope`
+and a per-user rate limit) are its two callers.

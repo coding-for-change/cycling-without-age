@@ -52,7 +52,7 @@ export async function AdminPageBody({ page }: { page: NavKey }) {
             variant="icon"
             className="bg-mint-tint text-ink"
           >
-            <Icon />
+            <Icon aria-hidden />
           </EmptyMedia>
           <EmptyDescription className="text-ink-soft">{body}</EmptyDescription>
         </EmptyHeader>
