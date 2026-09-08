@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { ApplicationStatus } from "@/generated/prisma";
+import type { ApplicationStatus, Prisma } from "@/generated/prisma";
 
 export const upsertPilotApplication = (
   userId: string,
@@ -19,8 +19,10 @@ export const upsertPilotApplication = (
     },
   });
 
-export const findApplicationById = (id: string) =>
-  prisma.chapterApplication.findUnique({ where: { id } });
+export const findApplicationById = (
+  id: string,
+  db: Prisma.TransactionClient = prisma,
+) => db.chapterApplication.findUnique({ where: { id } });
 
 export const findApplicationsOfChapters = (
   chapterIds: string[],
@@ -54,8 +56,9 @@ export const setApplicationDecision = (
   status: Exclude<ApplicationStatus, "pending">,
   decidedByUserId: string,
   note?: string,
+  db: Prisma.TransactionClient = prisma,
 ) =>
-  prisma.chapterApplication.updateMany({
+  db.chapterApplication.updateMany({
     where: { id, status: "pending" },
     data: {
       status,

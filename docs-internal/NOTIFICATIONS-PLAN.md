@@ -24,6 +24,14 @@ starts pilot matching tomorrow without touching the code that emitted it.
 | Rendered in the recipient's language and culture                                                     | NFR 7, 8        |
 | A few thousand Danish users first, then global, possibly a US region                                 | product         |
 
+> **Status, 2026-09-07.** Phase 1 is in, minus the bell: Redis, BullMQ, the worker
+> container, `Event`/`Notification`/`Delivery`, the outbox, and `pilotApplication.decided`
+> wired end to end with `notify`, `recordActivity` and the decision email as listeners.
+> Not yet: the bell UI, devices and FCM, Resend webhooks, chapter settings, chat. How it
+> works and how to extend it: [EVENTS.md](EVENTS.md). Bull Board is mounted on the worker
+> at `/queues` as planned, with no port published in production. One correction to the
+> sketches below: a jobId may not contain `:`, so the separator is `-`.
+
 ## What exists today
 
 - Prod is one Docker container running Next.js standalone against MySQL 8. No Redis, no
@@ -231,8 +239,8 @@ jobs because lead-time changes and rescheduling need no cancellation logic.
 | `src/lib/events/emit.ts`                      | cross-cutting | `transaction(fn)`: runs the Prisma transaction, writes an `Event` row per `emit`, enqueues after commit     |
 | `src/lib/redis.ts`                            | cross-cutting | ioredis client, `globalThis` singleton like `lib/prisma.ts`                                                 |
 | `src/features/notifications/`                 | feature       | facade and services: create rows, list inbox, mark seen and read, register devices, record deliveries. No rules |
-| `src/use-cases/notifications/rules/<event>.ts` | orchestration | one file per event: category, recipients, render. Crosses features, so a use case                           |
-| `src/use-cases/notifications/notify.ts`       | orchestration | the generic listener: rule lookup, recipients, `Notification` rows, enqueue deliveries                       |
+| `src/use-cases/notifications/kinds/<event>.ts` | orchestration | one file per notification kind: event, category, channels, recipients, payload schema, message. Crosses features, so a use case |
+| `src/use-cases/notifications/notify.ts`       | orchestration | the generic listener: kind lookup, recipients, `Notification` rows, enqueue deliveries                       |
 | `src/worker/handlers.ts`                      | boundary      | the listener map, exhaustive over `EventType`                                                               |
 | `src/worker/index.ts`                         | boundary      | BullMQ workers: dispatcher, handler runner, delivery adapters, sweeper                                       |
 
@@ -429,7 +437,7 @@ new Worker(
 await eventsQueue.upsertJobScheduler("sweep", { every: 60_000 });
 ```
 
-`src/use-cases/notifications/rules/ride-requested.ts` ("define the event once" lives here)
+`src/use-cases/notifications/kinds/ride-requested.ts` ("define the event once" lives here)
 
 ```ts
 import type { Rule } from "./types";

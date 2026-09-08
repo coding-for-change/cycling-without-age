@@ -8,3 +8,47 @@ services:
       - "127.0.0.1:3002:3000"
     env_file:
       - .env
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  worker:
+    image: localhost:5000/cwa:latest
+    restart: unless-stopped
+    # Migrations belong to the app container; two of them racing is asking for it.
+    command: node worker.js
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:' + (process.env.WORKER_PORT ?? 3001) + '/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+
+volumes:
+  redis:

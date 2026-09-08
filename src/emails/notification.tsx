@@ -3,43 +3,38 @@ import { brand } from "@/lib/brand";
 import type { Locale } from "@/lib/i18n/locales";
 import { EmailLayout } from "./layout";
 
-export type ApplicationDecisionEmailStrings = {
-  preview: string;
+export type NotificationMessage = {
+  subject: string;
+  preview?: string;
   heading: string;
-  intro: string;
-  noteHeading: string;
+  body: string;
+  note?: { heading: string; text: string } | null;
   cta: string;
   footer: string;
 };
 
-export function ApplicationDecisionEmail({
+export function NotificationEmail({
   locale,
-  strings,
-  chapterName,
-  note,
+  message,
   href,
 }: {
   locale: Locale;
-  strings: ApplicationDecisionEmailStrings;
-  chapterName: string;
-  note?: string | null;
+  message: NotificationMessage;
   href: string;
 }) {
   return (
     <EmailLayout
       locale={locale}
-      preview={strings.preview}
-      footer={strings.footer}
+      preview={message.preview ?? message.heading}
+      footer={message.footer}
     >
-      <Text style={styles.heading}>{strings.heading}</Text>
-      <Text style={styles.text}>
-        {strings.intro.replace("{chapter}", chapterName)}
-      </Text>
+      <Text style={styles.heading}>{message.heading}</Text>
+      <Text style={styles.text}>{message.body}</Text>
 
-      {note ? (
+      {message.note ? (
         <Section style={styles.card}>
-          <Text style={styles.cardHeading}>{strings.noteHeading}</Text>
-          <Text style={styles.note}>{note}</Text>
+          <Text style={styles.cardHeading}>{message.note.heading}</Text>
+          <Text style={styles.note}>{message.note.text}</Text>
         </Section>
       ) : null}
 
@@ -47,7 +42,7 @@ export function ApplicationDecisionEmail({
         href={href}
         style={styles.button}
       >
-        {strings.cta}
+        {message.cta}
       </Button>
     </EmailLayout>
   );

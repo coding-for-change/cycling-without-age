@@ -1,4 +1,6 @@
+import type { Prisma } from "@/generated/prisma";
 import { DomainError, mapping } from "@/lib/domain-error";
+import { transaction } from "@/lib/events";
 import { activity } from "@/lib/activity";
 import type { ActivityType } from "@/lib/activity";
 import { parseRoles } from "@/lib/access";
@@ -55,21 +57,28 @@ async function withRoles(
   userId: string,
   chapterId: string,
   mutate: (roles: ChapterRole[]) => ChapterRole[],
+  tx?: Prisma.TransactionClient,
 ) {
-  return withChapterLock(chapterId, async (db) => {
-    const current = parseRoles((await findMember(userId, chapterId, db))?.role);
-    const next = [...new Set(mutate(current))];
-
-    if (current.includes("admin") && !next.includes("admin")) {
-      const admins = (await findAdminMembersOfChapter(chapterId, db)).filter(
-        (m) => parseRoles(m.role).includes("admin"),
+  return withChapterLock(
+    chapterId,
+    async (db) => {
+      const current = parseRoles(
+        (await findMember(userId, chapterId, db))?.role,
       );
-      if (admins.length <= 1) throw new DomainError("lastAdmin");
-    }
+      const next = [...new Set(mutate(current))];
 
-    if (next.length === 0) return deleteMember(userId, chapterId, db);
-    return upsertMemberRole(userId, chapterId, next.join(","), db);
-  });
+      if (current.includes("admin") && !next.includes("admin")) {
+        const admins = (await findAdminMembersOfChapter(chapterId, db)).filter(
+          (m) => parseRoles(m.role).includes("admin"),
+        );
+        if (admins.length <= 1) throw new DomainError("lastAdmin");
+      }
+
+      if (next.length === 0) return deleteMember(userId, chapterId, db);
+      return upsertMemberRole(userId, chapterId, next.join(","), db);
+    },
+    tx,
+  );
 }
 
 // Passengers are active the moment they join — no application, no approval.
@@ -85,17 +94,24 @@ export function grantChapterRoles(
   userId: string,
   chapterId: string,
   roles: ChapterRole[],
+  tx?: Prisma.TransactionClient,
 ) {
   const granted = roles.map((role) => chapterRole.parse(role));
-  return withRoles(userId, chapterId, (current) => [...current, ...granted]);
+  return withRoles(
+    userId,
+    chapterId,
+    (current) => [...current, ...granted],
+    tx,
+  );
 }
 
 export function grantChapterRole(
   userId: string,
   chapterId: string,
   role: ChapterRole,
+  tx?: Prisma.TransactionClient,
 ) {
-  return grantChapterRoles(userId, chapterId, [role]);
+  return grantChapterRoles(userId, chapterId, [role], tx);
 }
 
 // Only existing members can be promoted — a chapter admin who is not in the
@@ -202,43 +218,56 @@ export async function applyAsPilot(input: PilotApplicationInput) {
   });
 }
 
+
 export async function decideApplication(input: ApplicationDecisionInput) {
   const { applicationId, decidedByUserId, approve, note } =
     applicationDecisionInput.parse(input);
-  const application = await findApplicationById(applicationId);
-  if (!application) throw new DomainError("unknownApplication");
-  if (application.status !== "pending") throw new DomainError("alreadyDecided");
-  // Chapter admins are appointed by a country admin or promoted from the member
-  // list — approving an application must never be a path to admin.
-  if (application.role === "admin") throw new DomainError("adminNotApplied");
 
-  // Decide first, and only against a still-pending row: two admins racing cannot
-  // both win, and the role is granted only for a decision that was recorded.
-  const status = approve ? "approved" : "rejected";
-  const { count } = await setApplicationDecision(
-    applicationId,
-    status,
-    decidedByUserId,
-    note,
-  );
-  if (count === 0) throw new DomainError("alreadyDecided");
+  return transaction(async (tx, emit) => {
+    const application = await findApplicationById(applicationId, tx);
+    if (!application) throw new DomainError("unknownApplication");
+    if (application.status !== "pending")
+      throw new DomainError("alreadyDecided");
+    if (application.role === "admin") throw new DomainError("adminNotApplied");
 
-  if (approve) {
-    await grantChapterRole(
-      application.userId,
-      application.chapterId,
-      application.role,
+    const status = approve ? "approved" : "rejected";
+    const { count } = await setApplicationDecision(
+      applicationId,
+      status,
+      decidedByUserId,
+      note,
+      tx,
     );
-  }
+    if (count === 0) throw new DomainError("alreadyDecided");
 
-  return {
-    id: application.id,
-    userId: application.userId,
-    chapterId: application.chapterId,
-    role: application.role,
-    status,
-    decisionNote: note ?? null,
-  };
+    if (approve) {
+      await grantChapterRole(
+        application.userId,
+        application.chapterId,
+        application.role,
+        tx,
+      );
+    }
+
+    await emit({
+      type: "pilotApplication.decided",
+      applicationId: application.id,
+      chapterId: application.chapterId,
+      userId: application.userId,
+      actorUserId: decidedByUserId,
+      approved: approve,
+      note: note ?? null,
+    });
+
+    return {
+      id: application.id,
+      userId: application.userId,
+      chapterId: application.chapterId,
+      role: application.role,
+      status,
+      decisionNote: note ?? null,
+    };
+  });
 }
 
 export const markApprovalsSeen = async (userId: string) =>
