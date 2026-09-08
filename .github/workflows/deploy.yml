@@ -7,6 +7,14 @@ on:
 permissions:
   contents: read
 
+# Keys read out of .config/secrets.yml. All are masked in the logs; RUNTIME_KEYS
+# are written to the prod .env, and a key absent from the vault is omitted there.
+env:
+  BUILD_KEYS: REGISTRY_USERNAME REGISTRY_PASSWORD NEXT_PUBLIC_MAPBOX_TOKEN
+  RUNTIME_KEYS: >-
+    DATABASE_URL BETTER_AUTH_SECRET RESEND_API_KEY MAPBOX_TOKEN
+    GATEWAYAPI_TOKEN GATEWAYAPI_SENDER GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -36,13 +44,16 @@ jobs:
           ansible-playbook dump.yml --vault-password-file .vault_pass
 
           # Register secrets with GitHub Actions to dynamically mask them in the logs
-          echo "::add-mask::$(jq -r '.REGISTRY_USERNAME // empty' decrypted.json)"
-          echo "::add-mask::$(jq -r '.REGISTRY_PASSWORD // empty' decrypted.json)"
-          echo "::add-mask::$(jq -r '.DATABASE_URL // empty' decrypted.json)"
+          for key in $BUILD_KEYS $RUNTIME_KEYS; do
+            value=$(jq -r --arg k "$key" '.[$k] // empty' decrypted.json)
+            if [ -n "$value" ]; then echo "::add-mask::$value"; fi
+          done
       # 2. Build Docker image
       - name: Build Docker image
         run: |
           docker build \
+            --build-arg NEXT_PUBLIC_APP_URL=https://cwa.codingforchange.com \
+            --build-arg NEXT_PUBLIC_MAPBOX_TOKEN="$(jq -r '.NEXT_PUBLIC_MAPBOX_TOKEN // empty' decrypted.json)" \
             -t registry.infra.codingforchange.com/cwa:${{ github.sha }} \
             -t registry.infra.codingforchange.com/cwa:latest \
             .
@@ -83,10 +94,16 @@ jobs:
           $SCP Caddyfile ${SSH_TARGET}:/var/www/cwa/Caddyfile
 
           # Write .env from decrypted secrets and copy to VPS
-          printf '%s\n' \
-            "DATABASE_URL=$(jq -r '.DATABASE_URL // empty' decrypted.json)" \
-            "NEXT_PUBLIC_APP_URL=https://cwa.codingforchange.com" \
-            > /tmp/.env
+          {
+            echo "NEXT_PUBLIC_APP_URL=https://cwa.codingforchange.com"
+            echo "BETTER_AUTH_URL=https://cwa.codingforchange.com"
+            echo "REDIS_URL=redis://redis:6379"
+            echo "EMAIL_FROM=cwa@codingforchange.com"
+          } > /tmp/.env
+          for key in $RUNTIME_KEYS; do
+            value=$(jq -r --arg k "$key" '.[$k] // empty' decrypted.json)
+            if [ -n "$value" ]; then echo "$key=$value" >> /tmp/.env; fi
+          done
           $SCP /tmp/.env ${SSH_TARGET}:/var/www/cwa/.env
           rm -f /tmp/.env
 

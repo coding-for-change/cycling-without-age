@@ -13,6 +13,11 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
+ARG NEXT_PUBLIC_APP_URL="https://cwa.codingforchange.com"
+ARG NEXT_PUBLIC_MAPBOX_TOKEN=""
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_MAPBOX_TOKEN=$NEXT_PUBLIC_MAPBOX_TOKEN
+
 # Build Next.js (standalone output)
 RUN npm run build
 
