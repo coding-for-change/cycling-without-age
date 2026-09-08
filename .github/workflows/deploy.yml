@@ -86,6 +86,7 @@ jobs:
           printf '%s\n' \
             "DATABASE_URL=$(jq -r '.DATABASE_URL // empty' decrypted.json)" \
             "NEXT_PUBLIC_APP_URL=https://cwa.codingforchange.com" \
+            "REDIS_URL=redis://redis:6379" \
             > /tmp/.env
           $SCP /tmp/.env ${SSH_TARGET}:/var/www/cwa/.env
           rm -f /tmp/.env

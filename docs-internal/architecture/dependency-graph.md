@@ -10,6 +10,12 @@ logic sits in the facade that owns the domain rule (`membership.changeMemberRole
 "cannot change your own role" rule; `accounts.claimAccount` the claim), and the Action calls
 that facade directly.
 
+`decide-pilot-application` is gone for the same reason. Once the decision emitted
+`pilotApplication.decided` instead of calling the activity log and the mailer itself, it
+coordinated one facade and nothing else, so it collapsed into `membership.decideApplication`
+— which now owns the transaction the `Event` row commits in — and `app/admin/members/actions`
+calls that facade directly. Its old work is two listeners in the worker.
+
 > Newly qualifying for the same treatment: `manage-chapter` and `manage-country` now touch
 > only `chapters` plus the log, so both could collapse into their Actions or into the
 > `chapters` facade. Left as-is deliberately — the facade already exports thin
@@ -40,12 +46,18 @@ graph TD
     U3[use-cases/settle-passenger-location]
     U4[use-cases/accept-onboarding-consent]
     U5[use-cases/complete-onboarding-profile]
-    U6[use-cases/decide-pilot-application]
     U9[use-cases/manage-country-admins]
     U10[use-cases/provision-assisted-passenger]
     U11[use-cases/invite-chapter-user]
     U13[use-cases/manage-chapter]
     U14[use-cases/manage-country]
+    U15[use-cases/notifications/notify]
+    U16[use-cases/notifications/deliver-email]
+  end
+  subgraph Worker
+    W1["worker/index (dispatcher, sweeper, deliveries)"]
+    W2[worker/handlers registry]
+    W3[worker/listeners/record-activity]
   end
   subgraph Features
     F1[features/chapters facade]
@@ -53,6 +65,7 @@ graph TD
     F3[features/profile facade]
     F4[features/passengers facade]
     F6[features/accounts facade]
+    F7[features/notifications facade]
     CM1[features/chapters/commands]
     CM2[features/membership/commands]
     CM3[features/profile/commands]
@@ -64,10 +77,13 @@ graph TD
     S3[profile/services]
     S4[passengers/services]
     S6[accounts/services]
+    S7[notifications/services]
     DB[(MySQL via lib/prisma)]
   end
   subgraph Infrastructure
     F5[lib/activity]
+    EV[lib/events outbox]
+    Q[("Redis via BullMQ")]
     MB[lib/mapbox]
     ML[lib/mailer]
     BA[lib/auth BetterAuth admin API]
@@ -115,7 +131,6 @@ graph TD
   ACT8 --> U11
   ACT5 --> F2
   ACT5 --> F6
-  ACT5 --> U6
   ACT6 --> F1
   ACT6 --> U13
   ACT6 --> MB
@@ -137,11 +152,6 @@ graph TD
   U5 --> F3
   U5 --> F4
   U5 --> ML
-  U6 --> F1
-  U6 --> F2
-  U6 --> F3
-  U6 --> F5
-  U6 --> ML
   U9 --> F1
   U9 --> F3
   U9 --> F5
@@ -159,6 +169,24 @@ graph TD
   U13 --> F5
   U14 --> F1
   U14 --> F5
+  U15 --> F1
+  U15 --> F7
+  U15 --> Q
+  U16 --> F7
+  U16 --> F3
+  U16 --> F5
+  U16 --> ML
+
+  F2 --> EV
+  EV --> DB
+  EV --> Q
+  Q --> W1
+  W1 --> EV
+  W1 --> W2
+  W1 --> U16
+  W2 --> U15
+  W2 --> W3
+  W3 --> F5
 
   F1 --> S1
   F2 --> S2
@@ -168,6 +196,8 @@ graph TD
   F3 --> S3
   F4 --> S4
   F6 --> S6
+  F7 --> S7
+  S7 --> DB
   S1 --> DB
   S2 --> DB
   S3 --> DB
@@ -184,7 +214,8 @@ graph TD
 | `settle-passenger-location` | `membership`, `profile` | "Where do you live" and "which chapter serves you" are one answer given on one screen, but two features own the two halves. |
 | `accept-onboarding-consent` | `membership`, `profile` | Records consent and, when a QR preset skipped the location step, performs the join it would have done. |
 | `complete-onboarding-profile` | `chapters`, `membership`, `passengers`, `profile` | Writes the account's own details, creates the rider profile a ride will point at, resolves the chapter, and sends the welcome mail. |
-| `decide-pilot-application` | `activity`, `chapters`, `membership`, `profile` | One approval writes the decision, the granted role, the history events and the applicant's email — in the applicant's own locale, so the profile is read too. |
+| `notifications/notify` | `chapters`, `notifications` | The generic listener. A rule names the recipients and the parameters; this writes one inbox row each and queues the channels. Runs in the worker, from an event, with no session. |
+| `notifications/deliver-email` | `notifications`, `profile` (+ `activity`, `mailer`) | One email for one `Notification`, in the recipient's own locale (hence `profile`), with the attempt recorded on the `Delivery` row. |
 | `manage-country-admins` | `activity`, `chapters`, `profile` | Country-admin rows belong to `chapters`, the email lookup to `profile`, and the audit line to `activity`. |
 | `provision-assisted-passenger` | `accounts`, `membership`, `passengers`, `activity` | One "add a passenger at the door" makes the account, joins the chapter, creates the rider row and records who created it — four features, and the helper rule decides whether the rider row points at the new account or at nobody. |
 | `invite-chapter-user` | `accounts`, `chapters`, `membership`, `profile` (+ `activity`, `mailer`) | Provisioning the account, granting the chapter role, and mailing the invitation in the invitee's own locale (hence `profile`) are three features plus infrastructure. |

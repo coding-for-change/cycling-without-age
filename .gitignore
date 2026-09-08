@@ -19,6 +19,7 @@
 
 # production
 /build
+worker.js
 
 # misc
 .DS_Store

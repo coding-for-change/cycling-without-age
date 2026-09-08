@@ -14,11 +14,17 @@ jest.mock("@/lib/prisma", () => {
       upsert: jest.fn(),
       updateMany: jest.fn(),
     },
+    event: { create: jest.fn(async () => ({ id: "event-1" })) },
     $queryRaw: jest.fn(),
   };
   client.$transaction = jest.fn((run: (tx: unknown) => unknown) => run(client));
   return { prisma: client };
 });
+
+jest.mock("@/lib/events/queues", () => ({
+  QUEUE: { events: "events", handlers: "handlers", deliveries: "deliveries" },
+  queue: () => ({ add: jest.fn(), addBulk: jest.fn() }),
+}));
 
 const db = prisma as unknown as {
   member: {
@@ -32,6 +38,7 @@ const db = prisma as unknown as {
     upsert: jest.Mock;
     updateMany: jest.Mock;
   };
+  event: { create: jest.Mock };
   $queryRaw: jest.Mock;
 };
 
@@ -250,6 +257,35 @@ describe("deciding an application", () => {
         }),
       }),
     );
+  });
+
+  it("writes the event on the same transaction client as the decision", async () => {
+    application();
+    memberRow("passenger");
+    await decide(true, "Bring your own helmet.");
+
+    expect(db.event.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          type: "pilotApplication.decided",
+          chapterId: CHAPTER,
+          actorUserId: ADMIN,
+          payload: expect.objectContaining({
+            userId: USER,
+            approved: true,
+            note: "Bring your own helmet.",
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("writes no event when the decision is refused", async () => {
+    application();
+    memberRow("passenger");
+    db.chapterApplication.updateMany.mockResolvedValue({ count: 0 });
+    await expect(decide(true)).rejects.toThrow("alreadyDecided");
+    expect(db.event.create).not.toHaveBeenCalled();
   });
 
   it("grants nothing when another admin decided first", async () => {

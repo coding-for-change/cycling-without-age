@@ -10,7 +10,6 @@ import {
   requireSuperAdmin,
 } from "@/lib/auth-guards";
 import { membership } from "@/features/membership";
-import { decidePilotApplication } from "@/use-cases/decide-pilot-application";
 
 export type AdminActionResult =
   | { ok: true }
@@ -64,9 +63,9 @@ export async function decideApplicationAction(
   const session = await requireChapterAdmin(application.chapterId);
 
   try {
-    await decidePilotApplication({
+    await membership.decideApplication({
       applicationId: parsed.data.applicationId,
-      actorUserId: session.user.id,
+      decidedByUserId: session.user.id,
       approve: parsed.data.approve,
       note: parsed.data.note,
     });

@@ -9,53 +9,55 @@ datasource db {
 }
 
 model User {
-  id                  String    @id
-  name                String    @db.Text
-  email               String
-  emailVerified       Boolean   @default(false)
-  image               String?   @db.Text
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  phoneNumber         String?
-  phoneNumberVerified Boolean?
-  role                String?   @db.Text
-  banned              Boolean?  @default(false)
-  banReason           String?   @db.Text
-  banExpires          DateTime?
-  birthDate DateTime? @db.Date
-  gender    Gender?
-  locale    String?   @db.VarChar(5)
-  residence Residence?
-  address   String?    @db.Text
-  latitude  Float?
-  longitude Float?
-  managesOthers Boolean @default(false)
-  notifyEmail Boolean @default(false)
-  notifyPush  Boolean @default(false)
-  consentSafetyAt DateTime?
-  consentDataAt   DateTime?
+  id                   String               @id
+  name                 String               @db.Text
+  email                String
+  emailVerified        Boolean              @default(false)
+  image                String?              @db.Text
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  phoneNumber          String?
+  phoneNumberVerified  Boolean?
+  role                 String?              @db.Text
+  banned               Boolean?             @default(false)
+  banReason            String?              @db.Text
+  banExpires           DateTime?
+  birthDate            DateTime?            @db.Date
+  gender               Gender?
+  locale               String?              @db.VarChar(5)
+  residence            Residence?
+  address              String?              @db.Text
+  latitude             Float?
+  longitude            Float?
+  managesOthers        Boolean              @default(false)
+  notifyEmail          Boolean              @default(false)
+  notifyPush           Boolean              @default(false)
+  consentSafetyAt      DateTime?
+  consentDataAt        DateTime?
   passkeyPromptedAt    DateTime?
   pilotNextStepsSeenAt DateTime?
-  welcomeEmailSentAt DateTime?
-  createdByUserId String?
-  createdBy       User?   @relation("createdUsers", fields: [createdByUserId], references: [id], onDelete: SetNull)
-  createdUsers    User[]  @relation("createdUsers")
-  claimedAt       DateTime?
-  helperName         String? @db.Text
-  helperRelationship String? @db.Text
-  helperContact      String? @db.Text
-  sessions            Session[]
-  accounts            Account[]
-  passkeys            Passkey[]
-  members             Member[]
-  invitations         Invitation[]
-  countryAdminOf      CountryAdmin[]
-  applications        ChapterApplication[] @relation("applicant")
-  decidedApplications ChapterApplication[] @relation("decider")
-  passengers          Passenger[]          @relation("manages")
-  passengerProfile    Passenger?           @relation("self")
-  activityEvents      ActivityEvent[]      @relation("activitySubject")
-  activityActions     ActivityEvent[]      @relation("activityActor")
+  welcomeEmailSentAt   DateTime?
+  createdByUserId      String?
+  createdBy            User?                @relation("createdUsers", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdUsers         User[]               @relation("createdUsers")
+  claimedAt            DateTime?
+  helperName           String?              @db.Text
+  helperRelationship   String?              @db.Text
+  helperContact        String?              @db.Text
+  sessions             Session[]
+  accounts             Account[]
+  passkeys             Passkey[]
+  members              Member[]
+  invitations          Invitation[]
+  countryAdminOf       CountryAdmin[]
+  applications         ChapterApplication[] @relation("applicant")
+  decidedApplications  ChapterApplication[] @relation("decider")
+  passengers           Passenger[]          @relation("manages")
+  passengerProfile     Passenger?           @relation("self")
+  activityEvents       ActivityEvent[]      @relation("activitySubject")
+  activityActions      ActivityEvent[]      @relation("activityActor")
+  eventActions         Event[]              @relation("eventActor")
+  notifications        Notification[]       @relation("notificationRecipient")
 
   @@unique([email])
   @@unique([phoneNumber])
@@ -143,17 +145,18 @@ model Organization {
   members     Member[]
   invitations Invitation[]
 
-  countryId    String
-  country      Country              @relation(fields: [countryId], references: [id])
-  city         String               @db.Text
-  address      String?              @db.Text
-  careHomeName String?              @db.Text
-  latitude     Float
-  longitude    Float
-  applications ChapterApplication[]
-  passengers   Passenger[]
-  events       ActivityEvent[]
-  serviceRadiusKm Int @default(10)
+  countryId       String
+  country         Country              @relation(fields: [countryId], references: [id])
+  city            String               @db.Text
+  address         String?              @db.Text
+  careHomeName    String?              @db.Text
+  latitude        Float
+  longitude       Float
+  applications    ChapterApplication[]
+  passengers      Passenger[]
+  events          ActivityEvent[]
+  domainEvents    Event[]
+  serviceRadiusKm Int                  @default(10)
 
   @@unique([slug])
   @@index([countryId])
@@ -322,4 +325,76 @@ model ActivityEvent {
   @@index([userId, createdAt])
   @@index([chapterId, createdAt])
   @@map("activity_event")
+}
+
+model Event {
+  id          String        @id @default(cuid())
+  type        String
+  payload     Json
+  actorUserId String?
+  actor       User?         @relation("eventActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  chapterId   String?
+  chapter     Organization? @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  createdAt   DateTime      @default(now())
+  processedAt DateTime?
+
+  notifications Notification[]
+
+  @@index([processedAt, createdAt])
+  @@index([actorUserId])
+  @@index([chapterId, createdAt])
+  @@map("event")
+}
+
+model Notification {
+  id              String    @id @default(cuid())
+  recipientUserId String
+  recipient       User      @relation("notificationRecipient", fields: [recipientUserId], references: [id], onDelete: Cascade)
+  eventId         String
+  event           Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  category        String    @db.VarChar(64)
+  payload         Json
+  href            String    @db.Text
+  collapseKey     String?
+  seenAt          DateTime?
+  readAt          DateTime?
+  createdAt       DateTime  @default(now())
+
+  deliveries Delivery[]
+
+  @@unique([eventId, recipientUserId])
+  @@index([recipientUserId, createdAt])
+  @@index([recipientUserId, seenAt])
+  @@map("notification")
+}
+
+enum DeliveryChannel {
+  email
+  push
+}
+
+enum DeliveryStatus {
+  pending
+  sending
+  sent
+  failed
+  skipped
+}
+
+model Delivery {
+  id                String          @id @default(cuid())
+  notificationId    String
+  notification      Notification    @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  channel           DeliveryChannel
+  status            DeliveryStatus  @default(pending)
+  attempts          Int             @default(0)
+  providerMessageId String?
+  lastError         String?         @db.Text
+  sentAt            DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([notificationId, channel])
+  @@index([status, createdAt])
+  @@map("delivery")
 }

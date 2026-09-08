@@ -23,6 +23,17 @@ You must strictly adhere to these four layers. Imports may only flow downward.
 - **Role**: Infrastructure-specific code (Drizzle/Prisma queries, external API fetches).
 - **Law**: "Dumb" and reusable. Does not know about the user session or complex business workflows.
 
+### 5. The Worker (`src/worker/`)
+
+- **Role**: Runs domain events off the request path. A boundary layer like `actions.ts`:
+  no session, no HTTP, calls Use Cases and Facades but never Services.
+- **Law**: Ships in the same Docker image as the app, started with `node worker.js`
+  instead of `node server.js`. Never runs inside the Next.js server process.
+
+Business writes announce themselves by emitting a domain event inside their own
+transaction (`lib/events`, the transactional outbox), and listeners registered in
+`src/worker/handlers.ts` react to it. See [EVENTS.md](EVENTS.md).
+
 ## Folder Structure Definition
 
 ```text
@@ -42,7 +53,9 @@ src/
 │       └── schemas.ts    # Contracts: Zod schemas and TS types.
 ├── components/           # SHARED UI: cross-route components over `lib` infra.
 │   └── ui/               # ATOMIC UI: stateless shadcn primitives.
+├── worker/               # BOUNDARY: BullMQ workers. Same image, second command.
 ├── lib/                  # INFRA: DB clients, Auth config, Shared utils.
+│   └── events/           # Domain event catalog, outbox and queues.
 └── docs/                 # ARCHITECTURE: The system manifesto.
 ```
 
