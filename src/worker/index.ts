@@ -1,5 +1,6 @@
 import { Worker } from "bullmq";
 import type { Job } from "bullmq";
+import { notifications } from "@/features/notifications";
 import type { EventType } from "@/lib/events/catalog";
 import { QUEUE, closeQueues, queue } from "@/lib/events/queues";
 import {
@@ -17,6 +18,8 @@ import type { Listener } from "./handlers";
 const SWEEP_EVERY_MS = 60_000;
 const BOARD_PORT = Number(process.env.WORKER_PORT ?? 3001);
 const SWEEP_BATCH = 100;
+// Once a night, off-peak for every chapter between Japan and the US west coast.
+const PRUNE_DEVICES_CRON = "0 4 * * *";
 
 const RESEND_RATE_LIMIT = Number(process.env.RESEND_RATE_LIMIT ?? 8);
 
@@ -60,6 +63,17 @@ async function sweep() {
   );
 }
 
+/** The nightly half of token hygiene; the other half is FCM rejecting a token mid-send. */
+async function pruneDevices() {
+  const removed = await notifications.pruneStaleDevices();
+  if (removed > 0) console.info(`[worker] pruned ${removed} stale device(s)`);
+}
+
+const MAINTENANCE: Record<string, () => Promise<void>> = {
+  sweep,
+  "prune-devices": pruneDevices,
+};
+
 async function runListener(job: Job<{ eventId: string }>) {
   const event = await loadEvent(job.data.eventId);
   const listener = handlers[event.type][job.name] as
@@ -72,7 +86,7 @@ async function main() {
   const workers = [
     new Worker<{ id: string }>(
       QUEUE.events,
-      (job) => (job.name === "sweep" ? sweep() : dispatchEvent(job.data.id)),
+      (job) => MAINTENANCE[job.name]?.() ?? dispatchEvent(job.data.id),
       { connection: redisConnection },
     ),
     new Worker(QUEUE.handlers, runListener, {
@@ -101,6 +115,9 @@ async function main() {
 
   await queue(QUEUE.events).upsertJobScheduler("sweep", {
     every: SWEEP_EVERY_MS,
+  });
+  await queue(QUEUE.events).upsertJobScheduler("prune-devices", {
+    pattern: PRUNE_DEVICES_CRON,
   });
 
   const board = await startBoard(BOARD_PORT, () => checkHealth(workers));

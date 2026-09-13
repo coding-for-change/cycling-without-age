@@ -40,3 +40,8 @@ export const deleteDevicesByToken = (
   tokens: string[],
   db: Prisma.TransactionClient = prisma,
 ) => db.device.deleteMany({ where: { token: { in: tokens } } });
+
+export const deleteDevicesNotSeenSince = (
+  before: Date,
+  db: Prisma.TransactionClient = prisma,
+) => db.device.deleteMany({ where: { lastSeenAt: { lt: before } } });

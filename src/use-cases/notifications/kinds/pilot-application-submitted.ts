@@ -20,6 +20,9 @@ export const pilotApplicationSubmitted = defineKind({
     chapterName: (await chapters.getChapter(event.chapterId))?.name ?? null,
   }),
   href: (event) => `/admin/members/${event.userId}`,
+  chapterAllowsPush: async (chapterId) =>
+    chapterId === null ||
+    (await chapters.getSettings(chapterId)).applicationAlertPush,
   message: ({ applicantName, chapterName }, strings) => {
     const copy = strings.applicationSubmitted;
     const values = {

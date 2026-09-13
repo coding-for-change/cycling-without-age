@@ -1,5 +1,7 @@
+import { ZodError } from "zod";
 import { prisma } from "@/lib/prisma";
 import { chapters } from "@/features/chapters";
+import { DEFAULT_CHAPTER_SETTINGS } from "@/features/chapters/schemas";
 
 jest.mock("@/lib/prisma", () => {
   const client: Record<string, unknown> = {
@@ -10,6 +12,8 @@ jest.mock("@/lib/prisma", () => {
       deleteMany: jest.fn(),
     },
     event: { create: jest.fn(async () => ({ id: "event-1" })) },
+    organization: { findUnique: jest.fn() },
+    chapterSettings: { findUnique: jest.fn(), upsert: jest.fn() },
   };
   client.$transaction = jest.fn((run: (tx: unknown) => unknown) => run(client));
   return { prisma: client };
@@ -32,11 +36,14 @@ const db = prisma as unknown as {
     deleteMany: jest.Mock;
   };
   event: { create: jest.Mock };
+  organization: { findUnique: jest.Mock };
+  chapterSettings: { findUnique: jest.Mock; upsert: jest.Mock };
 };
 
 const USER = "user-pernille";
 const COUNTRY = "country-de";
 const ACTOR = "user-anke";
+const CHAPTER = "chapter-muenchen";
 
 const emitted = () => db.event.create.mock.calls[0][0].data;
 
@@ -45,6 +52,8 @@ beforeEach(() => {
   db.country.findUnique.mockResolvedValue({ id: COUNTRY, name: "Deutschland" });
   db.countryAdmin.findUnique.mockResolvedValue(null);
   db.countryAdmin.deleteMany.mockResolvedValue({ count: 1 });
+  db.organization.findUnique.mockResolvedValue({ countryId: COUNTRY });
+  db.chapterSettings.findUnique.mockResolvedValue(null);
 });
 
 describe("appointing a country admin", () => {
@@ -106,5 +115,65 @@ describe("removing a country admin", () => {
       chapters.removeCountryAdmin(USER, COUNTRY, ACTOR),
     ).resolves.toBe(false);
     expect(db.event.create).not.toHaveBeenCalled();
+  });
+});
+
+describe("reading a chapter's settings", () => {
+  // Callers never branch on a missing row: a chapter that changed nothing
+  // reads exactly like one whose row says the defaults.
+  it("answers with the defaults while there is no row", async () => {
+    await expect(chapters.getSettings(CHAPTER)).resolves.toEqual(
+      DEFAULT_CHAPTER_SETTINGS,
+    );
+  });
+
+  it("answers with the row once the chapter has one", async () => {
+    const row = { ...DEFAULT_CHAPTER_SETTINGS, notifyOnMemberJoined: false };
+    db.chapterSettings.findUnique.mockResolvedValue(row);
+
+    await expect(chapters.getSettings(CHAPTER)).resolves.toEqual(row);
+  });
+});
+
+describe("writing a chapter's settings", () => {
+  it("refuses a chapter that does not exist", async () => {
+    db.organization.findUnique.mockResolvedValue(null);
+
+    await expect(
+      chapters.updateSettings(CHAPTER, { notifyOnMemberJoined: false }),
+    ).rejects.toMatchObject({ name: "DomainError", code: "unknownChapter" });
+    expect(db.chapterSettings.upsert).not.toHaveBeenCalled();
+  });
+
+  it("stores the reply-to trimmed and lower-cased", async () => {
+    await chapters.updateSettings(CHAPTER, {
+      replyToEmail: "  Hej@Muenchen.Example  ",
+    });
+
+    expect(db.chapterSettings.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { chapterId: CHAPTER },
+        update: { replyToEmail: "hej@muenchen.example" },
+      }),
+    );
+  });
+
+  // An emptied note is a value, not an omission: null has to reach the column.
+  it("passes an emptied welcome note through to the row", async () => {
+    await chapters.updateSettings(CHAPTER, { welcomeNote: null });
+
+    expect(db.chapterSettings.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: { chapterId: CHAPTER, welcomeNote: null },
+        update: { welcomeNote: null },
+      }),
+    );
+  });
+
+  it("refuses an address that is not one", async () => {
+    await expect(
+      chapters.updateSettings(CHAPTER, { replyToEmail: "hej@" }),
+    ).rejects.toThrow(ZodError);
+    expect(db.chapterSettings.upsert).not.toHaveBeenCalled();
   });
 });

@@ -29,6 +29,7 @@ import {
 import {
   deleteDeviceOfUser,
   deleteDevicesByToken,
+  deleteDevicesNotSeenSince,
   findTokensOfUser,
   upsertDevice,
 } from "./services/devices";
@@ -98,3 +99,21 @@ export const removeDeviceTokens = async (tokens: string[]) => {
   if (tokens.length === 0) return 0;
   return (await deleteDevicesByToken(tokens)).count;
 };
+
+/**
+ * FCM itself expires a token after 270 days of inactivity, so this only clears
+ * rows FCM would reject anyway: a pilot who parks the trishaw for the winter
+ * still gets the spring push. `lastSeenAt` moves on every app open, so the
+ * cutoff means "no sign of this install for that long", not "no push sent to it".
+ */
+export const STALE_DEVICE_DAYS = 270;
+
+export const pruneStaleDevices = async (
+  now = new Date(),
+  days = STALE_DEVICE_DAYS,
+) =>
+  (
+    await deleteDevicesNotSeenSince(
+      new Date(now.getTime() - days * 24 * 60 * 60 * 1000),
+    )
+  ).count;

@@ -14,13 +14,17 @@ export const chapterMemberJoined = defineKind({
     chapterName: z.string().nullable(),
   }),
   // An admin who joins their own chapter, or who signs a passenger up, is not
-  // told about their own action.
-  recipients: async (event) =>
-    (await membership.listChapterAdmins(event.chapterId))
+  // told about their own action. A chapter that switched the card off gets no
+  // row at all rather than a skipped delivery.
+  recipients: async (event) => {
+    const settings = await chapters.getSettings(event.chapterId);
+    if (!settings.notifyOnMemberJoined) return [];
+    return (await membership.listChapterAdmins(event.chapterId))
       .map((m) => m.userId)
       .filter(
         (userId) => userId !== event.actorUserId && userId !== event.userId,
-      ),
+      );
+  },
   params: async (event) => ({
     memberName: (await profile.getProfile(event.userId))?.name ?? null,
     chapterName: (await chapters.getChapter(event.chapterId))?.name ?? null,

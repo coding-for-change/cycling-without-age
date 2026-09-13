@@ -1,6 +1,7 @@
 import { createElement } from "react";
 import { NotificationEmail } from "@/emails/notification";
 import { getEmailStrings, resolveEmailLocale } from "@/emails/strings";
+import { chapters } from "@/features/chapters";
 import { notifications } from "@/features/notifications";
 import { profile } from "@/features/profile";
 import { activity } from "@/lib/activity";
@@ -40,12 +41,14 @@ export async function deliverEmail(notificationId: string) {
       locale,
     );
     const href = `${APP_URL}${notification.href}`;
+    const replyTo = await replyToOf(notification.event.chapterId);
 
     await sendMail({
       to: account.email,
       subject: message.subject,
       text: plainText(message, href),
       react: createElement(NotificationEmail, { locale, message, href }),
+      ...(replyTo ? { replyTo } : {}),
     });
     await notifications.deliverySent(delivery.id, null);
     await activity.record({
@@ -84,6 +87,11 @@ async function reasonToSkip(
   const push = await notifications.getDelivery(notification.id, "push");
   return push?.status === "sent" ? "push delivered" : null;
 }
+
+// The mail comes from the platform, but a reply belongs to the chapter it was
+// about; an event without a chapter keeps the platform sender.
+const replyToOf = async (chapterId: string | null) =>
+  chapterId ? (await chapters.getSettings(chapterId)).replyToEmail : null;
 
 const plainText = (
   { heading, body, note, steps, cta }: Message,

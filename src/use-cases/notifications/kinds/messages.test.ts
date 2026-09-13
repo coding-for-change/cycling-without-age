@@ -1,5 +1,6 @@
 import { getEmailStrings } from "@/emails/strings";
 import { chapters } from "@/features/chapters";
+import { DEFAULT_CHAPTER_SETTINGS } from "@/features/chapters/schemas";
 import { membership } from "@/features/membership";
 import { profile } from "@/features/profile";
 import da from "@/lib/i18n/da";
@@ -11,7 +12,11 @@ import { kinds } from "@/use-cases/notifications/kinds";
 import type { Message } from "@/use-cases/notifications/kinds/types";
 
 jest.mock("@/features/chapters", () => ({
-  chapters: { getChapter: jest.fn(), getCountry: jest.fn() },
+  chapters: {
+    getChapter: jest.fn(),
+    getCountry: jest.fn(),
+    getSettings: jest.fn(),
+  },
 }));
 jest.mock("@/features/membership", () => ({
   membership: { listChapterAdmins: jest.fn() },
@@ -20,6 +25,7 @@ jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
 
 const getChapter = chapters.getChapter as jest.Mock;
 const getCountry = chapters.getCountry as jest.Mock;
+const getSettings = chapters.getSettings as jest.Mock;
 const listChapterAdmins = membership.listChapterAdmins as jest.Mock;
 const getProfile = profile.getProfile as jest.Mock;
 
@@ -121,6 +127,7 @@ const unknown = () => {
 beforeEach(() => {
   jest.clearAllMocks();
   listChapterAdmins.mockResolvedValue([{ userId: ACTOR }]);
+  getSettings.mockResolvedValue(DEFAULT_CHAPTER_SETTINGS);
   known();
 });
 

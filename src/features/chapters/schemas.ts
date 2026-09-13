@@ -93,3 +93,45 @@ export const chapterUpdateInput = chapterInput
   })
   .partial();
 export type ChapterUpdateInput = z.infer<typeof chapterUpdateInput>;
+
+/** Matches the column's own cap, and stays under the 1000 a notification payload value may hold. */
+export const CHAPTER_WELCOME_NOTE_MAX = 600;
+
+export type ChapterSettings = {
+  notifyOnMemberJoined: boolean;
+  applicationAlertPush: boolean;
+  replyToEmail: string | null;
+  welcomeNote: string | null;
+};
+
+// A chapter without a settings row behaves like one that never changed anything.
+export const DEFAULT_CHAPTER_SETTINGS: ChapterSettings = {
+  notifyOnMemberJoined: true,
+  applicationAlertPush: true,
+  replyToEmail: null,
+  welcomeNote: null,
+};
+
+export const chapterSettingsInput = z
+  .object({
+    notifyOnMemberJoined: z.boolean(),
+    applicationAlertPush: z.boolean(),
+    replyToEmail: z
+      .string()
+      .trim()
+      .pipe(
+        z
+          .email()
+          .max(254)
+          .transform((value) => value.toLowerCase()),
+      )
+      .nullable(),
+    welcomeNote: z
+      .string()
+      .trim()
+      .min(1)
+      .max(CHAPTER_WELCOME_NOTE_MAX)
+      .nullable(),
+  })
+  .partial();
+export type ChapterSettingsInput = z.infer<typeof chapterSettingsInput>;

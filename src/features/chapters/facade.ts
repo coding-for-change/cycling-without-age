@@ -3,12 +3,16 @@ import { transaction } from "@/lib/events";
 import { distanceMeters, type Coords } from "@/lib/geo";
 import {
   chapterInput,
+  chapterSettingsInput,
   chapterUpdateInput,
   countryInput,
   countryUpdateInput,
+  DEFAULT_CHAPTER_SETTINGS,
 } from "./schemas";
 import type {
   ChapterInput,
+  ChapterSettings,
+  ChapterSettingsInput,
   ChapterUpdateInput,
   CountryInput,
   CountryUpdateInput,
@@ -30,6 +34,10 @@ import {
   insertCountryAdmin,
   updateCountryById,
 } from "./services/countries";
+import {
+  findChapterSettings,
+  upsertChapterSettings,
+} from "./services/settings";
 import {
   deleteChapterById,
   findChapterById,
@@ -267,6 +275,21 @@ export async function createChapter(input: ChapterInput) {
 // posters, so neither is updatable.
 export function updateChapter(id: string, input: ChapterUpdateInput) {
   return updateChapterById(id, chapterUpdateInput.parse(input));
+}
+
+/** Defaults until the chapter changes something, so callers never branch on a missing row. */
+export const getSettings = async (
+  chapterId: string,
+): Promise<ChapterSettings> =>
+  (await findChapterSettings(chapterId)) ?? DEFAULT_CHAPTER_SETTINGS;
+
+export async function updateSettings(
+  chapterId: string,
+  input: ChapterSettingsInput,
+): Promise<ChapterSettings> {
+  if (!(await findChapterCountryId(chapterId)))
+    throw new DomainError("unknownChapter");
+  return upsertChapterSettings(chapterId, chapterSettingsInput.parse(input));
 }
 
 export type NearestChapter = {

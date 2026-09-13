@@ -1,6 +1,7 @@
 import { Suspense } from "react";
+import { chapters } from "@/features/chapters";
 import { joinUrl } from "@/lib/app-url";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionary, getLocale } from "@/lib/i18n";
 import {
   AdminPageFallback,
   AdminPageHeader,
@@ -8,6 +9,7 @@ import {
 } from "../_components/admin-page";
 import { readActiveScope } from "../active-scope";
 import { JoinLinkCard } from "./_components/join-link-card";
+import { NotificationSettingsCard } from "./_components/notification-settings-card";
 
 type AdminSearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -27,22 +29,41 @@ export default function SettingsPage({
 
 async function Settings({ searchParams }: { searchParams: AdminSearchParams }) {
   const { active } = await readActiveScope(searchParams);
-  const dict = await getDictionary();
+  const chapter = active.kind === "chapter" ? active.chapter : null;
+
+  const [dict, language, settings] = await Promise.all([
+    getDictionary(),
+    getLocale(),
+    chapter ? chapters.getSettings(chapter.id) : null,
+  ]);
+  const strings = dict.admin.settings;
+
+  if (!chapter || !settings)
+    return (
+      <>
+        <AdminPageHeader title={dict.admin.pages.settings.title} />
+        <p className="max-w-prose text-sm text-ink-soft">
+          {strings.pickChapter}
+        </p>
+      </>
+    );
 
   return (
     <>
       <AdminPageHeader title={dict.admin.pages.settings.title} />
-      {active.kind === "chapter" ? (
+      <div className="grid gap-6">
         <JoinLinkCard
-          url={joinUrl(active.chapter.slug)}
-          slug={active.chapter.slug}
-          labels={dict.admin.settings.joinLink}
+          url={joinUrl(chapter.slug)}
+          slug={chapter.slug}
+          labels={strings.joinLink}
         />
-      ) : (
-        <p className="max-w-prose text-sm text-ink-soft">
-          {dict.admin.settings.pickChapter}
-        </p>
-      )}
+        <NotificationSettingsCard
+          chapterId={chapter.id}
+          settings={settings}
+          language={language}
+          labels={strings.notifications}
+        />
+      </div>
     </>
   );
 }

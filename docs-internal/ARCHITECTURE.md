@@ -104,6 +104,28 @@ Consequences:
   `organization.update` body schema, so a chapter admin cannot move their chapter into
   another country (and thereby under another country admin) through the built-in API.
 
+### Chapter settings
+
+`ChapterSettings` is a 1:1 row on the chapter, owned by `features/chapters`. It is written
+lazily: `chapters.getSettings(chapterId)` answers with `DEFAULT_CHAPTER_SETTINGS` while
+there is no row, so nothing downstream ever branches on a missing one, and
+`chapters.updateSettings` upserts (refusing a chapter that does not exist with
+`DomainError("unknownChapter")`). Today it holds `notifyOnMemberJoined`,
+`applicationAlertPush`, `replyToEmail` and `welcomeNote`.
+
+Everything reads it through the facade, never the table: the notification kinds
+(`chapter.memberJoined` returns no recipients at all when the chapter switched the card
+off, `user.onboarded` carries the welcome note into its payload,
+`pilotApplication.submitted` answers `chapterAllowsPush` from it) and
+`use-cases/notifications/deliver-email`, which puts the chapter's reply-to on the mail. The
+admin edits the row on `/admin/settings` through `app/admin/settings/actions`, behind
+`requireChapterAdmin(chapterId)` — the guard that makes these a chapter's own switches.
+
+It is also the home for the per-chapter notification intervals the RFP asks for (how long
+before a ride a reminder goes out, how long an unanswered request waits): a column, a
+default in `DEFAULT_CHAPTER_SETTINGS`, and the kinds read it the same way. See
+[EVENTS.md](EVENTS.md) → *What a kind decides*.
+
 ### The hierarchy
 
 ```

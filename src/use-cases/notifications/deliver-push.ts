@@ -25,6 +25,13 @@ export async function deliverPush(notificationId: string) {
     await notifications.deliverySkipped(delivery.id, "opted out");
     return;
   }
+  if (
+    kind.chapterAllowsPush &&
+    !(await kind.chapterAllowsPush(notification.event.chapterId))
+  ) {
+    await notifications.deliverySkipped(delivery.id, "disabled by chapter");
+    return;
+  }
 
   const tokens = await notifications.listDeviceTokens(recipient);
   if (tokens.length === 0) {
