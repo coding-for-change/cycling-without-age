@@ -35,16 +35,18 @@ export function Step({
       <div
         className={cn(
           "mx-auto flex w-full max-w-md flex-1 flex-col",
-          "px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(5.5rem,calc(env(safe-area-inset-top)+4.5rem))]",
+          "px-6 pt-(--flow-top) pb-[max(1.5rem,env(safe-area-inset-bottom))]",
           "lg:px-10 lg:py-10",
         )}
       >
-        {progress && (
-          <StepDots
-            {...progress}
-            className="mb-6"
-          />
-        )}
+        <div
+          className={cn(
+            "mb-6 flex h-(--flow-bar) items-center justify-center lg:h-auto",
+            !progress && "lg:hidden",
+          )}
+        >
+          {progress && <StepDots {...progress} />}
+        </div>
         <h1 className="text-3xl leading-tight tracking-tight text-balance">
           {title}
         </h1>

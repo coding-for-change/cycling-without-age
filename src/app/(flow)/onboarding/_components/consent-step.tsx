@@ -73,7 +73,10 @@ export function ConsentStep({
     if (box === "notifications" && next) void requestNotificationPermission();
   };
 
-  const submit = () =>
+  const submit = () => {
+    // The box arrives pre-ticked for someone who answered before, so the
+    // toggle alone would never ask iOS; asking here covers that path too.
+    if (ticked.notifications) void requestNotificationPermission();
     startTransition(async () => {
       const result = await submitConsent({
         safety: ticked.safety,
@@ -89,6 +92,7 @@ export function ConsentStep({
       haptics.success();
       router.push(result.next, { transitionTypes: ["nav-forward"] });
     });
+  };
 
   const label: Record<Box, ReactNode> = {
     safety: strings.safety,

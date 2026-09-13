@@ -104,3 +104,10 @@ client-only: call them from client components; the wrappers are SSR-safe
   behind a dynamic import so the plugin never enters the web bundle. `<PushRegistrar />` in
   `src/app/layout.tsx` is the only caller that registers a token; a tapped push may only
   navigate to an app-relative `href`.
+- Passkeys go through `@/lib/native/passkey` (`@capgo/capacitor-passkey`): the shell's
+  WebView has no WebAuthn, so `@/lib/passkey-client` (`addPasskey`, `signInWithPasskey`)
+  runs the ceremony natively and feeds better-auth's own `/passkey/*` endpoints. UI never
+  calls `authClient.passkey.addPasskey` or `authClient.signIn.passkey` directly. The app is
+  tied to the site by the `webcredentials:` entitlement, the Android `asset_statements`
+  meta-data and `/.well-known/apple-app-site-association` + `/.well-known/assetlinks.json`
+  (`src/app/.well-known/*`, identifiers in `src/lib/native-app.ts`).

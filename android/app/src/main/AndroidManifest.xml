@@ -36,6 +36,12 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/cwa_notification" />
+
+        <!-- Passkeys: ties the app to the site's relying-party domain via
+             https://cwa.codingforchange.com/.well-known/assetlinks.json -->
+        <meta-data
+            android:name="asset_statements"
+            android:resource="@string/asset_statements" />
     </application>
 
     <!-- Permissions -->

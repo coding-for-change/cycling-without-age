@@ -23,6 +23,9 @@ const config: CapacitorConfig = {
     FirebaseMessaging: {
       presentationOptions: ["badge", "sound", "alert"],
     },
+    // The associated-domains entitlement and the Android asset statement are
+    // committed by hand, so the plugin's cap-sync hook stays off.
+    CapacitorPasskey: { autoShim: false },
   },
   experimental: {
     ios: {

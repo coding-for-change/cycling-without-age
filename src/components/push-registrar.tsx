@@ -42,15 +42,17 @@ function NativePushRegistrar() {
 
     let active = true;
 
-    // Registration is background work on a page the user is already on: a
-    // failure means the next launch tries again, never an error in their face.
+
     const remember = (device: PushDevice | null) => {
       if (!device || !active) return;
-      void registerDevice(device).catch(() => {});
+      void hasNotificationPermission()
+        .then((granted) => {
+          if (granted && active) return registerDevice(device);
+        })
+        .catch(() => {});
     };
 
-    void hasNotificationPermission()
-      .then((granted) => (granted ? getPushToken() : null))
+    void getPushToken()
       .then(remember)
       .catch(() => {});
 

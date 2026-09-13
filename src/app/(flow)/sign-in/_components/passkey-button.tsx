@@ -3,18 +3,21 @@
 import { useSyncExternalStore, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { KeyRound } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { haptics } from "@/lib/native/haptics";
+import { isNative } from "@/lib/native/platform";
+import { signInWithPasskey } from "@/lib/passkey-client";
 
 const NEVER_CHANGES = () => () => {};
-const hasWebAuthn = () => typeof window.PublicKeyCredential !== "undefined";
+// The shell has no WebAuthn but brings the OS passkey sheet instead.
+const hasPasskeys = () =>
+  isNative() || typeof window.PublicKeyCredential !== "undefined";
 
 export function PasskeyButton({ label }: { label: string }) {
   const router = useRouter();
   const available = useSyncExternalStore(
     NEVER_CHANGES,
-    hasWebAuthn,
+    hasPasskeys,
     () => false,
   );
   const [pending, startTransition] = useTransition();
@@ -27,9 +30,9 @@ export function PasskeyButton({ label }: { label: string }) {
       disabled={pending}
       onClick={() =>
         startTransition(async () => {
-          const result = await authClient.signIn.passkey();
+          const result = await signInWithPasskey();
 
-          if (result?.error) return;
+          if (result.error) return;
           haptics.success();
           router.replace("/onboarding");
         })

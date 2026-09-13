@@ -96,6 +96,7 @@ const eslintConfig = defineConfig([
               group: [
                 "@capacitor/*",
                 "@capacitor-firebase/*",
+                "@capgo/*",
                 "firebase",
                 "firebase/*",
               ],

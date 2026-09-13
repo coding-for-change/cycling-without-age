@@ -26,14 +26,14 @@ export function FlowChrome({
   return (
     <FlowStateProvider>
       <CharacterProvider>
-        <div className="relative flex min-h-dvh flex-col bg-canvas">
-          <div className="fixed left-4 top-[max(1rem,env(safe-area-inset-top))] z-30 flex items-center gap-4">
+        <div className="flow-shell relative flex min-h-dvh flex-col bg-canvas">
+          <div className="fixed top-(--flow-top) left-4 z-30 flex items-center gap-4">
             {showBack && (
               <button
                 type="button"
                 onClick={() => router.back()}
                 className={cn(
-                  "flex size-11 shrink-0 items-center justify-center rounded-full",
+                  "flex size-(--flow-bar) shrink-0 items-center justify-center rounded-full",
                   "bg-grey-tint text-ink transition-colors hover:bg-line",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2",
                 )}

@@ -208,6 +208,8 @@ const da: Dictionary = {
     admin: {
       title: "Admins logger ind med en adgangsnøgle",
       body: "Din enhed bliver din nøgle til dashboardet — fingeraftryk, ansigt eller PIN. Lav en for at åbne det.",
+      failed:
+        "Det virkede ikke — prøv igen. Du kan også lave din adgangsnøgle i en browser.",
     },
   },
   pilotNextSteps: {
