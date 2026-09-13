@@ -525,6 +525,12 @@ const da: Dictionary = {
         approval: "Godkendt",
         rejection: "Afvist",
         invite: "Invitation",
+        welcome: "Velkommen",
+        applicationSubmitted: "Ny ansøgning",
+        roleChanged: "Rolleændring",
+        memberJoined: "Nyt medlem",
+        countryAdminAppointed: "Landeadmin",
+        countryAdminRemoved: "Landeadmin trådt tilbage",
       },
       fields: {
         name: "navnet",
@@ -774,6 +780,22 @@ const da: Dictionary = {
     title: "Passagerens forside",
     browsing: "Du kigger på {chapter}",
     noChapter: "Du har ikke valgt en lokalafdeling endnu",
+  },
+  notifications: {
+    title: "Beskeder",
+    bell: "Beskeder",
+    bellWithCount: "Beskeder, {count} nye",
+    unread: "Ulæst",
+    empty: {
+      title: "Der er helt stille lige nu",
+      body: "I samme øjeblik der sker noget — en afdeling svarer, en tur bliver booket — lander det her.",
+    },
+    categories: {
+      application: "Ansøgning",
+      invitation: "Invitation",
+      welcome: "Velkommen",
+      membership: "Medlemskab",
+    },
   },
   account: {
     title: "Konto",

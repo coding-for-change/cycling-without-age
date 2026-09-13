@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand mint-deep. Tints the small icon and the app name in the shade;
+         mint itself is too light to read on the white notification ground. -->
+    <color name="cwa_notification">#28584E</color>
+</resources>

@@ -5,8 +5,9 @@ export const upsertPilotApplication = (
   userId: string,
   chapterId: string,
   message?: string,
+  db: Prisma.TransactionClient = prisma,
 ) =>
-  prisma.chapterApplication.upsert({
+  db.chapterApplication.upsert({
     where: { userId_chapterId: { userId, chapterId } },
     create: { userId, chapterId, message, role: "pilot", status: "pending" },
     update: {

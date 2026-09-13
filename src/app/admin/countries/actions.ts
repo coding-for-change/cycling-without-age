@@ -10,10 +10,7 @@ import {
 } from "@/features/chapters";
 import { requireSuperAdmin } from "@/lib/auth-guards";
 import { deleteCountry } from "@/use-cases/manage-country";
-import {
-  appointCountryAdminByEmail,
-  removeCountryAdmin,
-} from "@/use-cases/manage-country-admins";
+import { appointCountryAdminByEmail } from "@/use-cases/manage-country-admins";
 
 export type CountryActionResult =
   | { ok: true; id?: string }
@@ -114,11 +111,11 @@ export async function removeCountryAdminAction(
   const session = await requireSuperAdmin();
 
   try {
-    await removeCountryAdmin({
-      userId: parsed.data.userId,
-      countryId: parsed.data.countryId,
-      actorUserId: session.user.id,
-    });
+    await chapters.removeCountryAdmin(
+      parsed.data.userId,
+      parsed.data.countryId,
+      session.user.id,
+    );
     revalidatePath("/admin", "layout");
     return { ok: true };
   } catch {

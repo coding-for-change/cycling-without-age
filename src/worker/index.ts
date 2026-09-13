@@ -1,6 +1,5 @@
 import { Worker } from "bullmq";
 import type { Job } from "bullmq";
-import { deliverEmail } from "@/use-cases/notifications/deliver-email";
 import type { EventType } from "@/lib/events/catalog";
 import { QUEUE, closeQueues, queue } from "@/lib/events/queues";
 import {
@@ -10,6 +9,7 @@ import {
 } from "@/lib/events/store";
 import { redisConnection } from "@/lib/redis";
 import { startBoard } from "./board";
+import { runEmailDelivery, runPushDelivery } from "./deliveries";
 import { handlers } from "./handlers";
 import { checkHealth } from "./health";
 import type { Listener } from "./handlers";
@@ -17,6 +17,8 @@ import type { Listener } from "./handlers";
 const SWEEP_EVERY_MS = 60_000;
 const BOARD_PORT = Number(process.env.WORKER_PORT ?? 3001);
 const SWEEP_BATCH = 100;
+
+const RESEND_RATE_LIMIT = Number(process.env.RESEND_RATE_LIMIT ?? 8);
 
 /**
  * One event in, one job per listener out. The jobId pins each (event, listener)
@@ -66,11 +68,6 @@ async function runListener(job: Job<{ eventId: string }>) {
   await listener({ id: job.data.eventId, event });
 }
 
-async function runDelivery(job: Job<{ notificationId: string }>) {
-  if (job.name !== "email") throw new Error(`[worker] no channel ${job.name}`);
-  await deliverEmail(job.data.notificationId);
-}
-
 async function main() {
   const workers = [
     new Worker<{ id: string }>(
@@ -82,7 +79,12 @@ async function main() {
       connection: redisConnection,
       concurrency: 10,
     }),
-    new Worker(QUEUE.deliveries, runDelivery, {
+    new Worker(QUEUE.email, runEmailDelivery, {
+      connection: redisConnection,
+      limiter: { max: RESEND_RATE_LIMIT, duration: 1_000 },
+      concurrency: RESEND_RATE_LIMIT,
+    }),
+    new Worker(QUEUE.push, runPushDelivery, {
       connection: redisConnection,
       concurrency: 5,
     }),

@@ -545,6 +545,12 @@ const de: Dictionary = {
         approval: "Freigegeben",
         rejection: "Abgelehnt",
         invite: "Einladung",
+        welcome: "Willkommen",
+        applicationSubmitted: "Neue Anfrage",
+        roleChanged: "Rollenänderung",
+        memberJoined: "Neues Mitglied",
+        countryAdminAppointed: "Länder-Admin",
+        countryAdminRemoved: "Länder-Admin abgelöst",
       },
       fields: {
         name: "den Namen",
@@ -798,6 +804,23 @@ const de: Dictionary = {
     title: "Startseite für Passagiere",
     browsing: "Sie sehen {chapter}",
     noChapter: "Sie haben noch keine Ortsgruppe gewählt",
+  },
+  // Pronomenfrei: dieselbe Glocke hängt über Sie-Passagieren und du-Piloten.
+  notifications: {
+    title: "Benachrichtigungen",
+    bell: "Benachrichtigungen",
+    bellWithCount: "Benachrichtigungen, {count} neu",
+    unread: "Ungelesen",
+    empty: {
+      title: "Gerade ist alles ruhig",
+      body: "Sobald etwas passiert — eine Ortsgruppe antwortet, eine Ausfahrt wird gebucht — landet es genau hier.",
+    },
+    categories: {
+      application: "Bewerbung",
+      invitation: "Einladung",
+      welcome: "Willkommen",
+      membership: "Mitgliedschaft",
+    },
   },
   account: {
     // du-Form: Das Konto teilen sich Admins, Piloten und Passagiere; die

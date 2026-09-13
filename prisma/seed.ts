@@ -210,11 +210,19 @@ async function main() {
     return id;
   };
 
+
+  let superAdminId: string | null = null;
+
   for (const persona of PERSONAS) {
     const userId = await seedUser(persona);
+    if (persona.superadmin) superAdminId = userId;
 
     for (const code of persona.countryAdminOf ?? []) {
-      await chapters.appointCountryAdmin(userId, countryIds.get(code)!);
+      await chapters.appointCountryAdmin(
+        userId,
+        countryIds.get(code)!,
+        superAdminId ?? userId,
+      );
     }
     for (const [slug, roles] of Object.entries(persona.chapterRoles ?? {})) {
       for (const role of roles) {

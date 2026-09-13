@@ -1,30 +1,22 @@
 import { accounts } from "@/features/accounts";
-import { activity } from "@/lib/activity";
-import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { profile } from "@/features/profile";
-import { sendMail } from "@/lib/mailer";
 import { inviteChapterUser } from "@/use-cases/invite-chapter-user";
 
 jest.mock("@/features/accounts", () => ({
   accounts: { provisionUser: jest.fn() },
 }));
-jest.mock("@/lib/activity", () => ({ activity: { record: jest.fn() } }));
-jest.mock("@/features/chapters", () => ({
-  chapters: { getChapter: jest.fn() },
-}));
 jest.mock("@/features/membership", () => ({
-  membership: { grantChapterRoles: jest.fn() },
+  membership: { inviteMember: jest.fn() },
 }));
-jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
-jest.mock("@/lib/mailer", () => ({ sendMail: jest.fn() }));
+jest.mock("@/features/profile", () => ({
+  profile: { getProfile: jest.fn(), setLocale: jest.fn() },
+}));
 
 const provisionUser = accounts.provisionUser as jest.Mock;
-const record = activity.record as jest.Mock;
-const getChapter = chapters.getChapter as jest.Mock;
-const grantChapterRoles = membership.grantChapterRoles as jest.Mock;
+const inviteMember = membership.inviteMember as jest.Mock;
 const getProfile = profile.getProfile as jest.Mock;
-const mail = sendMail as jest.Mock;
+const setLocale = profile.setLocale as jest.Mock;
 
 const INVITER = "user-anke";
 const INVITED = "user-new";
@@ -33,7 +25,6 @@ const CHAPTER = "chapter-muenchen";
 const invite = (roles: ("admin" | "pilot")[] = ["pilot"]) =>
   inviteChapterUser({
     inviterUserId: INVITER,
-    inviterName: "Anke",
     locale: "de",
     input: {
       chapterId: CHAPTER,
@@ -45,16 +36,12 @@ const invite = (roles: ("admin" | "pilot")[] = ["pilot"]) =>
 
 beforeEach(() => {
   jest.clearAllMocks();
-  jest.spyOn(console, "error").mockImplementation(() => {});
   provisionUser.mockResolvedValue({ userId: INVITED, created: true });
-  getChapter.mockResolvedValue({ name: "München" });
   getProfile.mockResolvedValue({ email: "p@example.com", locale: null });
 });
 
-afterEach(() => jest.restoreAllMocks());
-
 describe("inviteChapterUser", () => {
-  it("provisions, grants the roles, mails and records the invitation", async () => {
+  it("provisions the account and hands the invitation to membership", async () => {
     await expect(invite()).resolves.toEqual({ created: true });
 
     expect(provisionUser).toHaveBeenCalledWith({
@@ -62,67 +49,50 @@ describe("inviteChapterUser", () => {
       contact: "p@example.com",
       createdByUserId: INVITER,
     });
-    expect(grantChapterRoles).toHaveBeenCalledWith(INVITED, CHAPTER, ["pilot"]);
-    expect(mail).toHaveBeenCalledWith(
-      expect.objectContaining({ to: "p@example.com" }),
-    );
-    expect(record).toHaveBeenCalledWith({
+    expect(inviteMember).toHaveBeenCalledWith({
       userId: INVITED,
-      actorUserId: INVITER,
       chapterId: CHAPTER,
-      type: "invited",
-      payload: { roles: "pilot" },
+      actorUserId: INVITER,
+      roles: ["pilot"],
     });
   });
 
-  it("still grants the roles and mails when the address already has an account", async () => {
+  // A brand-new account has no language of its own, so the mail the invitation
+  // triggers would otherwise go out in the default one.
+  it("seeds the inviter's language into a new account without asking", async () => {
+    await invite();
+
+    expect(setLocale).toHaveBeenCalledWith(INVITED, "de");
+    expect(getProfile).not.toHaveBeenCalled();
+  });
+
+  it("seeds it into an existing account that never chose one", async () => {
     provisionUser.mockResolvedValue({ userId: "user-old", created: false });
 
     await expect(invite(["admin"])).resolves.toEqual({ created: false });
 
-    expect(grantChapterRoles).toHaveBeenCalledWith("user-old", CHAPTER, [
-      "admin",
-    ]);
-    expect(mail).toHaveBeenCalledTimes(1);
-    expect(mail.mock.calls[0][0].react.props.href).toContain("next=%2Fadmin");
-  });
-
-  // Both roles at once: the mail names them in one sentence and lands the
-  // invitee on the admin side, the more capable of the two.
-  it("grants both roles, names both in the mail and points at /admin", async () => {
-    await invite(["pilot", "admin"]);
-
-    expect(grantChapterRoles).toHaveBeenCalledWith(INVITED, CHAPTER, [
-      "pilot",
-      "admin",
-    ]);
-    expect(mail.mock.calls[0][0].react.props.roleLabel).toBe(
-      "Pilot und Ortsgruppen-Admin",
-    );
-    expect(mail.mock.calls[0][0].react.props.href).toContain("next=%2Fadmin");
-    expect(record).toHaveBeenCalledWith(
-      expect.objectContaining({ payload: { roles: "pilot,admin" } }),
+    expect(setLocale).toHaveBeenCalledWith("user-old", "de");
+    expect(inviteMember).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "user-old", roles: ["admin"] }),
     );
   });
 
-  it("writes in the invitee's language when the account already has one", async () => {
+  // Their own choice outranks whatever language the inviter happens to browse in.
+  it("leaves an existing language alone", async () => {
+    provisionUser.mockResolvedValue({ userId: "user-old", created: false });
     getProfile.mockResolvedValue({ email: "p@example.com", locale: "en" });
 
     await invite();
 
-    expect(mail.mock.calls[0][0].subject).toBe(
-      "You've been invited to München",
-    );
+    expect(setLocale).not.toHaveBeenCalled();
+    expect(inviteMember).toHaveBeenCalled();
   });
 
-  it("survives a mail failure, keeping the roles and the event", async () => {
-    mail.mockRejectedValue(new Error("Resend down"));
+  it("passes both roles through in one invitation", async () => {
+    await invite(["pilot", "admin"]);
 
-    await expect(invite()).resolves.toEqual({ created: true });
-
-    expect(grantChapterRoles).toHaveBeenCalled();
-    expect(record).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "invited" }),
+    expect(inviteMember).toHaveBeenCalledWith(
+      expect.objectContaining({ roles: ["pilot", "admin"] }),
     );
   });
 });

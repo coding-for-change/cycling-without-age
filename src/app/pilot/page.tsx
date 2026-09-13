@@ -9,6 +9,8 @@ import {
   UserRound,
   XCircle,
 } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
+import { NotificationBellSkeleton } from "@/components/notifications/notification-bell-skeleton";
 import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { requirePerspective } from "@/lib/auth-guards";
@@ -25,7 +27,7 @@ import { PendingChapterCard } from "./_components/pending-chapter-card";
 
 export default function PilotHomePage() {
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
+    <main className="mx-auto w-full max-w-2xl flex-1 px-6 pt-[max(4rem,calc(env(safe-area-inset-top)+1rem))] pb-16">
       <Suspense fallback={<PilotHomeSkeleton />}>
         <PilotHome />
       </Suspense>
@@ -36,7 +38,10 @@ export default function PilotHomePage() {
 function PilotHomeSkeleton() {
   return (
     <div className="flex flex-col gap-6">
-      <Skeleton className="h-9 w-56" />
+      <div className="flex min-h-11 items-center justify-between gap-4">
+        <Skeleton className="h-9 w-56" />
+        <NotificationBellSkeleton className="size-11" />
+      </div>
       <Skeleton className="h-28 w-full rounded-xl" />
       <Skeleton className="h-44 w-full rounded-xl" />
     </div>
@@ -77,7 +82,12 @@ async function PilotHome() {
 
   return (
     <>
-      <h1 className="text-3xl tracking-tight">{home.title}</h1>
+      <div className="flex min-h-11 items-center justify-between gap-4">
+        <h1 className="text-3xl tracking-tight">{home.title}</h1>
+        <Suspense fallback={<NotificationBellSkeleton className="size-11" />}>
+          <NotificationBell className="size-11" />
+        </Suspense>
+      </div>
 
       {celebrate ? (
         <ApprovalCelebration

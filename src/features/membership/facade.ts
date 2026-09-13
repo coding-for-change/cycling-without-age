@@ -1,17 +1,17 @@
 import type { Prisma } from "@/generated/prisma";
 import { DomainError, mapping } from "@/lib/domain-error";
 import { transaction } from "@/lib/events";
-import { activity } from "@/lib/activity";
-import type { ActivityType } from "@/lib/activity";
 import { parseRoles } from "@/lib/access";
 import type { ChapterRole, Membership } from "@/lib/access";
 import {
   applicationDecisionInput,
   chapterRole,
+  inviteMemberInput,
   pilotApplicationInput,
 } from "./schemas";
 import type {
   ApplicationDecisionInput,
+  InviteMemberInput,
   PilotApplicationInput,
 } from "./schemas";
 import {
@@ -52,42 +52,65 @@ export const listChapterAdmins = async (chapterId: string) =>
 export const getMemberRoles = async (userId: string, chapterId: string) =>
   parseRoles((await findMember(userId, chapterId))?.role);
 
-// Roles stack on one member row (BetterAuth stores them comma-separated).
+/**
+ * Roles stack on one member row (BetterAuth stores them comma-separated).
+ * Returns both sides of the write so a caller can tell a real change from a
+ * repeat and emit its event only once.
+ */
 async function withRoles(
   userId: string,
   chapterId: string,
   mutate: (roles: ChapterRole[]) => ChapterRole[],
   tx?: Prisma.TransactionClient,
-) {
+): Promise<{ before: ChapterRole[]; roles: ChapterRole[] }> {
   return withChapterLock(
     chapterId,
     async (db) => {
-      const current = parseRoles(
+      const before = parseRoles(
         (await findMember(userId, chapterId, db))?.role,
       );
-      const next = [...new Set(mutate(current))];
+      const roles = [...new Set(mutate(before))];
 
-      if (current.includes("admin") && !next.includes("admin")) {
+      if (before.includes("admin") && !roles.includes("admin")) {
         const admins = (await findAdminMembersOfChapter(chapterId, db)).filter(
           (m) => parseRoles(m.role).includes("admin"),
         );
         if (admins.length <= 1) throw new DomainError("lastAdmin");
       }
 
-      if (next.length === 0) return deleteMember(userId, chapterId, db);
-      return upsertMemberRole(userId, chapterId, next.join(","), db);
+      if (roles.length === 0) await deleteMember(userId, chapterId, db);
+      else await upsertMemberRole(userId, chapterId, roles.join(","), db);
+
+      return { before, roles };
     },
     tx,
   );
 }
 
 // Passengers are active the moment they join — no application, no approval.
-export const joinAsPassenger = (userId: string, chapterId: string) =>
+export const joinAsPassenger = (
+  userId: string,
+  chapterId: string,
+  actorUserId: string | null = null,
+) =>
   mapping(
-    () => withRoles(userId, chapterId, (roles) => [...roles, "passenger"]),
-    {
-      missingRelation: "unknownChapter",
-    },
+    () =>
+      transaction(async (tx, emit) => {
+        const { before } = await withRoles(
+          userId,
+          chapterId,
+          (roles) => [...roles, "passenger"],
+          tx,
+        );
+        if (before.includes("passenger")) return;
+        await emit({
+          type: "chapter.memberJoined",
+          chapterId,
+          userId,
+          actorUserId,
+        });
+      }),
+    { missingRelation: "unknownChapter" },
   );
 
 export function grantChapterRoles(
@@ -116,33 +139,54 @@ export function grantChapterRole(
 
 // Only existing members can be promoted — a chapter admin who is not in the
 // chapter would be invisible to every member-facing list.
-export async function promoteToChapterAdmin(userId: string, chapterId: string) {
-  if (!(await findMember(userId, chapterId)))
+export async function promoteToChapterAdmin(
+  userId: string,
+  chapterId: string,
+  tx?: Prisma.TransactionClient,
+) {
+  if (!(await findMember(userId, chapterId, tx)))
     throw new DomainError("notChapterMember");
-  return grantChapterRole(userId, chapterId, "admin");
+  return grantChapterRole(userId, chapterId, "admin", tx);
 }
 
 export function revokeChapterRole(
   userId: string,
   chapterId: string,
   role: ChapterRole,
+  tx?: Prisma.TransactionClient,
 ) {
   const revoked = chapterRole.parse(role);
-  return withRoles(userId, chapterId, (roles) =>
-    roles.filter((r) => r !== revoked),
+  return withRoles(
+    userId,
+    chapterId,
+    (roles) => roles.filter((r) => r !== revoked),
+    tx,
   );
 }
 
-export const removeFromChapter = (userId: string, chapterId: string) =>
-  withRoles(userId, chapterId, () => []);
+export const removeFromChapter = (
+  userId: string,
+  chapterId: string,
+  tx?: Prisma.TransactionClient,
+) => withRoles(userId, chapterId, () => [], tx);
 
 export type MemberRoleChange = "promote" | "demote" | "remove";
 
-const ROLE_EVENT: Record<MemberRoleChange, ActivityType> = {
-  promote: "roleGranted",
-  demote: "roleRevoked",
-  remove: "memberRemoved",
-};
+/** An invitation is a membership plus the mail that tells them about it. */
+export function inviteMember(input: InviteMemberInput) {
+  const { userId, chapterId, actorUserId, roles } =
+    inviteMemberInput.parse(input);
+  return transaction(async (tx, emit) => {
+    await grantChapterRoles(userId, chapterId, roles, tx);
+    await emit({
+      type: "member.invited",
+      chapterId,
+      userId,
+      actorUserId,
+      roles,
+    });
+  });
+}
 
 /**
  * An admin may promote themselves no further and may not demote or remove
@@ -163,19 +207,22 @@ export async function changeMemberRole({
   if (userId === actorUserId && change !== "promote")
     throw new DomainError("selfChange");
 
-  if (change === "promote") {
-    await promoteToChapterAdmin(userId, chapterId);
-  } else if (change === "demote") {
-    await revokeChapterRole(userId, chapterId, "admin");
-  } else {
-    await removeFromChapter(userId, chapterId);
-  }
+  return transaction(async (tx, emit) => {
+    const { roles } =
+      change === "promote"
+        ? await promoteToChapterAdmin(userId, chapterId, tx)
+        : change === "demote"
+          ? await revokeChapterRole(userId, chapterId, "admin", tx)
+          : await removeFromChapter(userId, chapterId, tx);
 
-  await activity.record({
-    userId,
-    actorUserId,
-    chapterId,
-    type: ROLE_EVENT[change],
+    await emit({
+      type: "member.roleChanged",
+      chapterId,
+      userId,
+      actorUserId,
+      change,
+      roles,
+    });
   });
 }
 
@@ -199,12 +246,6 @@ export async function submitPilotApplications({
 }) {
   for (const chapterId of chapterIds) {
     await applyAsPilot({ userId, chapterId });
-    await activity.record({
-      userId,
-      actorUserId: userId,
-      chapterId,
-      type: "applicationSubmitted",
-    });
   }
 }
 
@@ -213,11 +254,27 @@ export async function applyAsPilot(input: PilotApplicationInput) {
   if ((await getMemberRoles(userId, chapterId)).includes("pilot")) {
     throw new DomainError("alreadyPilot");
   }
-  return mapping(() => upsertPilotApplication(userId, chapterId, message), {
-    missingRelation: "unknownChapter",
-  });
+  return mapping(
+    () =>
+      transaction(async (tx, emit) => {
+        const application = await upsertPilotApplication(
+          userId,
+          chapterId,
+          message,
+          tx,
+        );
+        await emit({
+          type: "pilotApplication.submitted",
+          applicationId: application.id,
+          chapterId,
+          userId,
+          actorUserId: userId,
+        });
+        return application;
+      }),
+    { missingRelation: "unknownChapter" },
+  );
 }
-
 
 export async function decideApplication(input: ApplicationDecisionInput) {
   const { applicationId, decidedByUserId, approve, note } =

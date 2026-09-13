@@ -1,7 +1,12 @@
 import { checkHealth } from "@/worker/health";
 
 jest.mock("@/lib/events/queues", () => ({
-  QUEUE: { events: "events", handlers: "handlers", deliveries: "deliveries" },
+  QUEUE: {
+    events: "events",
+    handlers: "handlers",
+    email: "email",
+    push: "push",
+  },
   queue: jest.fn(),
 }));
 
@@ -9,7 +14,12 @@ const worker = (name: string, running = true) => ({
   name,
   isRunning: () => running,
 });
-const workers = [worker("events"), worker("handlers"), worker("deliveries")];
+const workers = [
+  worker("events"),
+  worker("handlers"),
+  worker("email"),
+  worker("push"),
+];
 
 describe("checkHealth", () => {
   it("is healthy when every worker runs and Redis answers", async () => {
@@ -22,7 +32,7 @@ describe("checkHealth", () => {
     const ping = jest.fn();
 
     const result = await checkHealth(
-      [worker("events"), worker("handlers", false), worker("deliveries")],
+      [worker("events"), worker("handlers", false), worker("email")],
       { ping },
     );
 

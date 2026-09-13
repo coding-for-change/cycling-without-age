@@ -1,3 +1,6 @@
+import { Suspense } from "react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
+import { NotificationBellSkeleton } from "@/components/notifications/notification-bell-skeleton";
 import { requireAdminScope } from "@/lib/auth-guards";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { resolveNav } from "../nav";
@@ -21,6 +24,11 @@ export async function AdminChrome() {
       defaultScope={active}
       locale={locale}
       languageLabel={dict.common.language}
+      bell={
+        <Suspense fallback={<NotificationBellSkeleton className="size-9" />}>
+          <NotificationBell className="size-9" />
+        </Suspense>
+      }
     />
   );
 }

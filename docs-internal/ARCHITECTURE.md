@@ -34,6 +34,12 @@ Business writes announce themselves by emitting a domain event inside their own
 transaction (`lib/events`, the transactional outbox), and listeners registered in
 `src/worker/handlers.ts` react to it. See [EVENTS.md](EVENTS.md).
 
+Four queues, not one: `events` (dispatch + the 60 s sweeper), `handlers` (one job per
+listener), and two delivery queues — `email`, rate limited to Resend's budget and parked by
+`Worker.RateLimitError` when Resend answers `429`, and `push`, which sends through FCM
+(`lib/push.ts`, `firebase-admin`) at concurrency 5. Mail is throttled; push is not held
+behind it.
+
 ## Folder Structure Definition
 
 ```text
@@ -52,6 +58,7 @@ src/
 │       ├── index.ts      # PUBLIC API: Export ONLY the Facade and Components.
 │       └── schemas.ts    # Contracts: Zod schemas and TS types.
 ├── components/           # SHARED UI: cross-route components over `lib` infra.
+│   ├── notifications/    # The bell, shared by admin, pilot and passenger.
 │   └── ui/               # ATOMIC UI: stateless shadcn primitives.
 ├── worker/               # BOUNDARY: BullMQ workers. Same image, second command.
 ├── lib/                  # INFRA: DB clients, Auth config, Shared utils.
@@ -68,9 +75,12 @@ src/
 The iOS (`ios/`) and Android (`android/`) apps are thin Capacitor shells whose WebView loads the
 deployed site (remote-URL shell — the app is server-rendered and cannot be statically exported).
 Native plugin access is cross-cutting infrastructure and lives in `src/lib/native/*`
-(`haptics.ts`, `native-bootstrap.tsx`), same status as `lib/auth-guards`: any layer's client
-components may import the wrappers, but `@capacitor/*` is never imported outside `src/lib/native/`
-(lint-enforced). See AGENTS.md §7 for the operational rules.
+(`haptics.ts`, `push.ts`, `native-bootstrap.tsx`), same status as `lib/auth-guards`: any layer's
+client components may import the wrappers, but `@capacitor/*`, `@capacitor-firebase/*` and
+`firebase` are never imported outside `src/lib/native/` (lint-enforced). The server half of push
+is the mirror image: `firebase-admin` may only be imported by `src/lib/push.ts`, so the
+credentials have exactly one import site and cannot reach a browser bundle. See AGENTS.md §7 for
+the operational rules.
 
 ## Roles & Organisation Structure (COD-158)
 
@@ -373,8 +383,15 @@ admins appointed and removed.
 It is **infrastructure, not a feature** — the same standing as `lib/auth-guards` and
 `lib/mailer`. It owns no domain of its own and every workflow writes to it, so modelling it as
 a slice made every logged mutation look "cross-feature" and manufactured use cases for
-single-feature work. A facade may write its own history line: `membership.changeMemberRole`
-and `accounts.claimAccount` do, which is why neither needs a use case.
+single-feature work. A facade may write its own history line: `accounts.claimAccount` does,
+which is why it needs no use case.
+
+Most of it is now written by a listener, not by the facade that did the work:
+`src/worker/listeners/record-activity.ts` holds one builder per event type and turns the same
+facts the notifications are built from into a history line. The trade-off is deliberate — the
+feed for those kinds is **eventually consistent**, about a second behind the write, and an
+admin who reloads instantly may not see the line yet. `emailSent` still comes from
+`deliverEmail`, and `accounts.claimAccount` still writes its own line synchronously.
 
 It also solves a data problem: `ChapterApplication` keeps its `@@unique([userId, chapterId])`,
 so re-applying overwrites the previous decision. The events do not overwrite, so the history
@@ -387,6 +404,27 @@ no `chapterId` and surface only when the reader's scope is global —
 Labels live in the dictionary (`admin.history.<ActivityType>`) with a single `{actor}`
 placeholder, filled with the actor's name, "You", or "Someone" — the feed renders copy, the
 table stores facts.
+
+### Notification bell (`src/components/notifications`)
+
+The bell is not a feature slice and not an admin component. Three route groups show the same
+inbox — the admin top bar, `/pilot` and `/passenger` — so it lives in `src/components/` with
+the other cross-route UI, one server component (`notification-bell.tsx`) over the
+`listInbox`/`unseenCount` use case and one client popover (`notification-bell-menu.tsx`) that
+holds nothing but open state.
+
+Every call site wraps it in `<Suspense>`. The bell reads the session and the request headers,
+which under `cacheComponents` is a request-time read: outside a Suspense boundary it fails the
+build rather than the request. The fallback is a plain skeleton, `null` on `/passenger` so a
+signed-out visitor never sees a bell flash where there will be none.
+
+Its two actions — `markInboxSeen`, `markNotificationRead` — deliberately **do not**
+`revalidatePath`. A Server Action re-renders the route it was called from, and the badge and
+the row it just changed are exactly what the person is looking at, so a revalidate would
+repaint the popover out from under the click. The menu keeps the change in local state instead
+and the next navigation reads the truth from the server. `key` on the client menu derives from
+the server's own numbers (unseen count, row count, first id, unread count), so a genuinely new
+inbox resets that local state and an identical re-render leaves it alone.
 
 ### `?next=` is carried by a cookie, not by the URL
 

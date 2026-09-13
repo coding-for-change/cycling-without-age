@@ -1,4 +1,3 @@
-import { activity } from "@/lib/activity";
 import { chapters } from "@/features/chapters";
 import { profile } from "@/features/profile";
 
@@ -14,28 +13,6 @@ export async function appointCountryAdminByEmail({
   const userId = await profile.getUserIdByEmail(email);
   if (!userId) return "noAccount";
 
-  await chapters.appointCountryAdmin(userId, countryId);
-  await activity.record({
-    userId,
-    actorUserId,
-    type: "countryAdminAppointed",
-  });
+  await chapters.appointCountryAdmin(userId, countryId, actorUserId);
   return "ok";
-}
-
-export async function removeCountryAdmin({
-  userId,
-  countryId,
-  actorUserId,
-}: {
-  userId: string;
-  countryId: string;
-  actorUserId: string;
-}) {
-  await chapters.removeCountryAdmin(userId, countryId);
-  await activity.record({
-    userId,
-    actorUserId,
-    type: "countryAdminRemoved",
-  });
 }

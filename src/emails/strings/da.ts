@@ -13,6 +13,7 @@ const da: EmailStrings = {
   },
   welcomePassenger: {
     subject: "Velkommen til Cycling Without Age",
+    title: "Velkommen til {chapter}",
     preview: "Din plads forrest er klar",
     heading: "Vind i håret, når du har lyst",
     intro:
@@ -29,6 +30,7 @@ const da: EmailStrings = {
   },
   welcomePilot: {
     subject: "Velkommen om bord — tre skridt til din første tur",
+    title: "Velkommen til {chapter}",
     preview: "Din pilotansøgning er hos afdelingen",
     heading: "Velkommen om bord",
     intro:
@@ -75,9 +77,81 @@ const da: EmailStrings = {
     footer:
       "Du modtager denne e-mail, fordi en afdelingsadmin i Cycling Without Age har inviteret din adresse.",
   },
+  applicationSubmitted: {
+    subject: "{name} vil være pilot i {chapter}",
+    preview: "En ny pilotansøgning",
+    heading: "En ny pilotansøgning",
+    intro:
+      "{name} har søgt om at være pilot i {chapter}. Kig på den, og svar ja — eller ikke denne gang.",
+    cta: "Se ansøgningen",
+    footer:
+      "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling.",
+    anonymous: "Nogen",
+  },
+  rolePromoted: {
+    subject: "Du er afdelingsadmin i {chapter}",
+    preview: "Nyt ansvar i din afdeling",
+    heading: "Du er afdelingsadmin",
+    intro:
+      "{actor} har gjort dig til admin i {chapter}. Du kan invitere folk, svare på pilotansøgninger og holde afdelingens oplysninger i orden.",
+    cta: "Åbn afdelingen",
+    footer:
+      "Du modtager denne e-mail, fordi din rolle i en Cycling Without Age-afdeling er ændret.",
+  },
+  roleDemoted: {
+    subject: "Din adminrolle i {chapter} er slut",
+    preview: "En ændring af din rolle",
+    heading: "Ikke længere admin",
+    intro:
+      "{actor} har afsluttet din adminrolle i {chapter}. Alt andet er som før — du kører stadig med afdelingen.",
+    cta: "Åbn Cycling Without Age",
+    footer:
+      "Du modtager denne e-mail, fordi din rolle i en Cycling Without Age-afdeling er ændret.",
+  },
+  memberRemoved: {
+    subject: "Du er ikke længere med i {chapter}",
+    preview: "En ændring af dit medlemskab",
+    heading: "Du har forladt {chapter}",
+    intro:
+      "{actor} har fjernet dig fra {chapter}. Din konto er stadig din, og enhver afdeling må gerne tage dig ind igen.",
+    cta: "Find en afdeling",
+    footer:
+      "Du modtager denne e-mail, fordi dit medlemskab af en Cycling Without Age-afdeling er ændret.",
+  },
+  memberJoined: {
+    subject: "{name} er kommet med i {chapter}",
+    preview: "En ny passager",
+    heading: "En ny passager",
+    intro: "{name} er nu passager i {chapter}.",
+    cta: "Se medlemmet",
+    footer:
+      "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling.",
+    anonymous: "Nogen",
+  },
+  countryAdminAppointed: {
+    subject: "Du står for {country} nu",
+    preview: "Et land at tage vare på",
+    heading: "Du står for {country}",
+    intro:
+      "{actor} har gjort dig til landeadmin for {country}. Alle afdelinger i landet er dine at støtte fra nu af.",
+    cta: "Åbn dashboardet",
+    footer:
+      "Du modtager denne e-mail, fordi din rolle i Cycling Without Age er ændret.",
+  },
+  countryAdminRemoved: {
+    subject: "Din rolle som landeadmin for {country} er slut",
+    preview: "En ændring af din rolle",
+    heading: "Ikke længere landeadmin",
+    intro:
+      "{actor} har afsluttet din rolle som landeadmin for {country}. Det, du laver i dine egne afdelinger, er uændret.",
+    cta: "Åbn Cycling Without Age",
+    footer:
+      "Du modtager denne e-mail, fordi din rolle i Cycling Without Age er ændret.",
+  },
   roles: {
     admin: "afdelingsadmin",
     pilot: "pilot",
+    passenger: "passager",
   },
 };
 

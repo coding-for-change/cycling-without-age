@@ -9,6 +9,7 @@ export type NotificationMessage = {
   heading: string;
   body: string;
   note?: { heading: string; text: string } | null;
+  steps?: { heading?: string; items: string[] } | null;
   cta: string;
   footer: string;
 };
@@ -38,6 +39,8 @@ export function NotificationEmail({
         </Section>
       ) : null}
 
+      <Steps steps={message.steps} />
+
       <Button
         href={href}
         style={styles.button}
@@ -45,6 +48,28 @@ export function NotificationEmail({
         {message.cta}
       </Button>
     </EmailLayout>
+  );
+}
+
+function Steps({ steps }: { steps: NotificationMessage["steps"] }) {
+  if (!steps || steps.items.length === 0) return null;
+  return (
+    <Section style={styles.stepCard}>
+      {steps.heading ? (
+        <Text style={styles.stepCardHeading}>{steps.heading}</Text>
+      ) : null}
+      {steps.items.map((line, index) => (
+        <Text
+          key={line}
+          style={styles.step}
+        >
+          {steps.items.length > 1 ? (
+            <span style={styles.number}>{index + 1}</span>
+          ) : null}
+          {line}
+        </Text>
+      ))}
+    </Section>
   );
 }
 
@@ -84,6 +109,40 @@ const styles = {
     lineHeight: "24px",
     margin: 0,
     whiteSpace: "pre-wrap" as const,
+  },
+  stepCard: {
+    backgroundColor: brand.canvasDeep,
+    border: `1px solid ${brand.line}`,
+    borderRadius: brand.radiusCover,
+    margin: "24px 0",
+    padding: "20px 20px 8px",
+  },
+  stepCardHeading: {
+    color: brand.ink,
+    fontSize: "13px",
+    fontWeight: 700,
+    letterSpacing: "0.06em",
+    margin: "0 0 14px",
+    textTransform: "uppercase" as const,
+  },
+  step: {
+    color: brand.ink,
+    fontSize: "15px",
+    lineHeight: "24px",
+    margin: "0 0 14px",
+  },
+  number: {
+    backgroundColor: brand.mint,
+    borderRadius: "999px",
+    color: brand.ink,
+    display: "inline-block",
+    fontSize: "13px",
+    fontWeight: 700,
+    height: "22px",
+    lineHeight: "22px",
+    marginRight: "10px",
+    textAlign: "center" as const,
+    width: "22px",
   },
   button: {
     backgroundColor: brand.red,

@@ -20,6 +20,18 @@ const config: CapacitorConfig = {
       launchAutoHide: false,
       backgroundColor: "#92d2c6",
     },
+    FirebaseMessaging: {
+      presentationOptions: ["badge", "sound", "alert"],
+    },
+  },
+  experimental: {
+    ios: {
+      spm: {
+        packageOptions: {
+          "@capacitor-firebase/messaging": { symlink: true },
+        },
+      },
+    },
   },
 };
 
