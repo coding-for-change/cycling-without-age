@@ -5,7 +5,7 @@ import { notifications } from "@/features/notifications";
 import { profile } from "@/features/profile";
 import { activity } from "@/lib/activity";
 import { APP_URL } from "@/lib/app-url";
-import { sendMail } from "@/lib/mailer";
+import { MailRateLimitedError, sendMail } from "@/lib/mailer";
 import { kindOf } from "./kinds";
 import type { Message } from "./kinds/types";
 
@@ -26,11 +26,18 @@ export async function deliverEmail(notificationId: string) {
     return;
   }
 
+  const skip = await reasonToSkip(notification, kind.policy, account);
+  if (skip) {
+    await notifications.deliverySkipped(delivery.id, skip);
+    return;
+  }
+
   try {
     const locale = resolveEmailLocale(account.locale);
     const message = kind.message(
       kind.payload.parse(notification.payload),
       getEmailStrings(locale),
+      locale,
     );
     const href = `${APP_URL}${notification.href}`;
 
@@ -49,6 +56,9 @@ export async function deliverEmail(notificationId: string) {
       payload: { template: message.template ?? notification.category },
     });
   } catch (error) {
+    // A throttle is not a failed delivery: the row stays `sending` and
+    // `beginDelivery` re-claims it when the worker retries the job.
+    if (error instanceof MailRateLimitedError) throw error;
     await notifications.deliveryFailed(delivery.id, String(error));
     // Rethrow. A swallowed error is a job BullMQ believes succeeded, and the
     // mail is then lost for good instead of retried.
@@ -56,11 +66,41 @@ export async function deliverEmail(notificationId: string) {
   }
 }
 
-const plainText = ({ heading, body, note, cta }: Message, href: string) =>
+/**
+ * The run-time half of the policy. A delayed `ifNoPush` job wakes up two
+ * minutes after the push went out, so the questions it asks — did the push
+ * land, has the person already read it — can only be answered here.
+ */
+async function reasonToSkip(
+  notification: { id: string; readAt: Date | null },
+  policy: { email: "always" | "ifNoPush" | "never"; optional: boolean },
+  account: { notifyEmail: boolean },
+) {
+  if (policy.email === "never") return "email disabled for kind";
+  if (policy.optional && !account.notifyEmail) return "opted out";
+  if (policy.email !== "ifNoPush") return null;
+
+  if (notification.readAt) return "already read";
+  const push = await notifications.getDelivery(notification.id, "push");
+  return push?.status === "sent" ? "push delivered" : null;
+}
+
+const plainText = (
+  { heading, body, note, steps, cta }: Message,
+  href: string,
+) =>
   [
     heading,
     body,
     note ? `${note.heading}\n${note.text}` : null,
+    steps && steps.items.length > 0
+      ? [
+          steps.heading,
+          ...steps.items.map((item, index) => `${index + 1}. ${item}`),
+        ]
+          .filter(Boolean)
+          .join("\n")
+      : null,
     `${cta}: ${href}`,
   ]
     .filter(Boolean)

@@ -6,7 +6,7 @@ import { defineKind } from "./types";
 export const pilotApplicationDecided = defineKind({
   event: "pilotApplication.decided",
   category: "application",
-  channels: ["email"],
+  policy: { push: true, email: "always", optional: false },
   payload: z.object({
     chapterName: z.string().nullable(),
     approved: z.boolean(),

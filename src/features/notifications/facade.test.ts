@@ -11,6 +11,11 @@ jest.mock("@/lib/prisma", () => ({
       updateMany: jest.fn(),
     },
     delivery: { findUnique: jest.fn(), upsert: jest.fn(), update: jest.fn() },
+    device: {
+      upsert: jest.fn(),
+      deleteMany: jest.fn(),
+      findMany: jest.fn(),
+    },
   },
 }));
 
@@ -20,6 +25,7 @@ const db = prisma as unknown as {
     updateMany: jest.Mock;
   };
   delivery: { findUnique: jest.Mock; upsert: jest.Mock };
+  device: { upsert: jest.Mock; deleteMany: jest.Mock; findMany: jest.Mock };
 };
 
 const input = {
@@ -56,6 +62,9 @@ describe("notifications.create", () => {
     ).rejects.toThrow();
     await expect(
       notifications.create({ ...input, href: "//evil.example" }),
+    ).rejects.toThrow();
+    await expect(
+      notifications.create({ ...input, href: "/\\evil.example" }),
     ).rejects.toThrow();
     expect(db.notification.upsert).not.toHaveBeenCalled();
   });
@@ -102,6 +111,99 @@ describe("notifications.beginDelivery", () => {
         channel: "email",
       }),
     ).toBeNull();
+    expect(db.delivery.upsert).not.toHaveBeenCalled();
+  });
+});
+
+describe("notifications.registerDevice", () => {
+  // FCM hands the same token to whoever signs in on that phone next, so the
+  // row has to move rather than a second one pushing to the previous owner.
+  it("keys the row on the token and re-binds it to the current user", async () => {
+    await notifications.registerDevice({
+      userId: "user-pernille",
+      token: "token-a",
+      platform: "ios",
+    });
+
+    expect(db.device.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { token: "token-a" },
+        create: {
+          userId: "user-pernille",
+          token: "token-a",
+          platform: "ios",
+        },
+        update: expect.objectContaining({
+          userId: "user-pernille",
+          platform: "ios",
+        }),
+      }),
+    );
+  });
+
+  it("refuses a token past the column width and a platform we cannot push to", () => {
+    expect(() =>
+      notifications.registerDevice({
+        userId: "user-pernille",
+        token: "t".repeat(513),
+        platform: "ios",
+      }),
+    ).toThrow();
+    expect(() =>
+      notifications.registerDevice({
+        userId: "user-pernille",
+        token: "token-a",
+        platform: "web" as "ios",
+      }),
+    ).toThrow();
+    expect(db.device.upsert).not.toHaveBeenCalled();
+  });
+});
+
+describe("notifications.unregisterDevice", () => {
+  it("scopes the delete to the owner, so a stolen token stays registered", async () => {
+    db.device.deleteMany.mockResolvedValue({ count: 0 });
+
+    const removed = await notifications.unregisterDevice(
+      "user-pernille",
+      "token-a",
+    );
+
+    expect(db.device.deleteMany).toHaveBeenCalledWith({
+      where: { userId: "user-pernille", token: "token-a" },
+    });
+    expect(removed).toBe(false);
+  });
+});
+
+describe("notifications.removeDeviceTokens", () => {
+  // An empty `in` list matches nothing on MySQL, but the round trip is still
+  // paid for on every push that had no dead tokens.
+  it("makes no call when the send retired nothing", async () => {
+    expect(await notifications.removeDeviceTokens([])).toBe(0);
+    expect(db.device.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it("deletes by token, whoever they belong to now", async () => {
+    db.device.deleteMany.mockResolvedValue({ count: 2 });
+
+    expect(await notifications.removeDeviceTokens(["dead-a", "dead-b"])).toBe(
+      2,
+    );
+    expect(db.device.deleteMany).toHaveBeenCalledWith({
+      where: { token: { in: ["dead-a", "dead-b"] } },
+    });
+  });
+});
+
+describe("notifications.getDelivery", () => {
+  it("reads the sibling channel without claiming it", async () => {
+    db.delivery.findUnique.mockResolvedValue({ id: "d-1", status: "sent" });
+
+    expect(await notifications.getDelivery("notif-1", "push")).toEqual({
+      id: "d-1",
+      status: "sent",
+    });
     expect(db.delivery.upsert).not.toHaveBeenCalled();
   });
 });

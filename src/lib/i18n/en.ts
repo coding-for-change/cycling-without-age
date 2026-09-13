@@ -523,6 +523,12 @@ const en = {
         approval: "Approved",
         rejection: "Turned down",
         invite: "Invitation",
+        welcome: "Welcome",
+        applicationSubmitted: "New application",
+        roleChanged: "Role change",
+        memberJoined: "New member",
+        countryAdminAppointed: "Country admin",
+        countryAdminRemoved: "Country admin stepped down",
       },
       fields: {
         name: "the name",
@@ -775,6 +781,22 @@ const en = {
     title: "Passenger home",
     browsing: "Browsing {chapter}",
     noChapter: "No chapter chosen yet",
+  },
+  notifications: {
+    title: "Notifications",
+    bell: "Notifications",
+    bellWithCount: "Notifications, {count} new",
+    unread: "Unread",
+    empty: {
+      title: "All quiet for now",
+      body: "The moment something happens — a chapter answers, a ride is booked — it lands right here.",
+    },
+    categories: {
+      application: "Application",
+      invitation: "Invitation",
+      welcome: "Welcome",
+      membership: "Membership",
+    },
   },
   account: {
     title: "Account",

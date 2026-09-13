@@ -21,3 +21,11 @@ export const applicationDecisionInput = z.object({
   note: z.string().trim().max(500).optional(),
 });
 export type ApplicationDecisionInput = z.infer<typeof applicationDecisionInput>;
+
+export const inviteMemberInput = z.object({
+  userId: z.string().min(1),
+  chapterId: z.string().min(1),
+  actorUserId: z.string().min(1),
+  roles: z.array(chapterRole).min(1),
+});
+export type InviteMemberInput = z.infer<typeof inviteMemberInput>;

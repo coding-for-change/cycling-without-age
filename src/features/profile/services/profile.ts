@@ -23,13 +23,24 @@ export const findProfile = (userId: string) =>
       consentDataAt: true,
       passkeyPromptedAt: true,
       pilotNextStepsSeenAt: true,
-      welcomeEmailSentAt: true,
+      onboardedAt: true,
       _count: { select: { passkeys: true, passengers: true } },
     },
   });
 
 export const updateProfile = (userId: string, data: Prisma.UserUpdateInput) =>
   prisma.user.update({ where: { id: userId }, data });
+
+// A conditional write, so two submits of the same step cannot both count as
+// the first one.
+export const stampOnboarded = (
+  userId: string,
+  db: Prisma.TransactionClient = prisma,
+) =>
+  db.user.updateMany({
+    where: { id: userId, onboardedAt: null },
+    data: { onboardedAt: new Date() },
+  });
 
 export const findUserIdByEmail = (email: string) =>
   prisma.user.findUnique({ where: { email }, select: { id: true } });

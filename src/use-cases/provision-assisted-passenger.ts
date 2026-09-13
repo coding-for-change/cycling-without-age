@@ -23,7 +23,7 @@ export async function provisionAssistedPassenger({
     ...(owner ? { managesOthers: true } : {}),
   });
 
-  await membership.joinAsPassenger(userId, chapterId);
+  await membership.joinAsPassenger(userId, chapterId, adminUserId);
   await passengers.addPassenger({
     chapterId,
     managedByUserId: userId,

@@ -1,4 +1,6 @@
 import { DomainError } from "@/lib/domain-error";
+import { transaction } from "@/lib/events";
+import type { OnboardingRole } from "@/lib/onboarding";
 import {
   consentInput,
   homeInput,
@@ -14,6 +16,7 @@ import type {
 import {
   findProfile,
   findUserIdByEmail,
+  stampOnboarded,
   updateProfile,
 } from "./services/profile";
 
@@ -79,17 +82,19 @@ export async function recordConsent(userId: string, input: ConsentInput) {
   });
 }
 
-/** True the first time only, so the welcome mail survives a re-submitted step. */
-export async function claimWelcomeEmail(userId: string) {
-  const existing = await findProfile(userId);
-  if (existing?.welcomeEmailSentAt) return false;
-  await updateProfile(userId, { welcomeEmailSentAt: new Date() });
-  return true;
+/** True the first time only, so the welcome lands once however often the last
+ *  onboarding step is submitted. */
+export function completeOnboarding(
+  userId: string,
+  { chapterId, role }: { chapterId: string | null; role: OnboardingRole },
+) {
+  return transaction(async (tx, emit) => {
+    const { count } = await stampOnboarded(userId, tx);
+    if (count !== 1) return false;
+    await emit({ type: "user.onboarded", userId, chapterId, role });
+    return true;
+  });
 }
-
-/** Undoes `claimWelcomeEmail` after a failed send, so the next attempt may retry. */
-export const releaseWelcomeEmail = (userId: string) =>
-  updateProfile(userId, { welcomeEmailSentAt: null });
 
 export function setPersonalDetails(
   userId: string,

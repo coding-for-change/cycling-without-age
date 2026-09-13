@@ -36,7 +36,7 @@ model User {
   consentDataAt        DateTime?
   passkeyPromptedAt    DateTime?
   pilotNextStepsSeenAt DateTime?
-  welcomeEmailSentAt   DateTime?
+  onboardedAt          DateTime?
   createdByUserId      String?
   createdBy            User?                @relation("createdUsers", fields: [createdByUserId], references: [id], onDelete: SetNull)
   createdUsers         User[]               @relation("createdUsers")
@@ -58,6 +58,7 @@ model User {
   activityActions      ActivityEvent[]      @relation("activityActor")
   eventActions         Event[]              @relation("eventActor")
   notifications        Notification[]       @relation("notificationRecipient")
+  devices              Device[]
 
   @@unique([email])
   @@unique([phoneNumber])
@@ -397,4 +398,23 @@ model Delivery {
   @@unique([notificationId, channel])
   @@index([status, createdAt])
   @@map("delivery")
+}
+
+enum DevicePlatform {
+  ios
+  android
+}
+
+model Device {
+  id         String         @id @default(cuid())
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform   DevicePlatform
+  token      String         @db.VarChar(512)
+  lastSeenAt DateTime       @default(now())
+  createdAt  DateTime       @default(now())
+
+  @@unique([token])
+  @@index([userId])
+  @@map("device")
 }

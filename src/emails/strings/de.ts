@@ -16,6 +16,7 @@ const de: EmailStrings = {
   },
   welcomePassenger: {
     subject: "Willkommen bei Cycling Without Age",
+    title: "Willkommen bei {chapter}",
     preview: "Ihr Platz vorne ist bereit",
     heading: "Wind im Haar, wann immer Sie mögen",
     intro:
@@ -32,6 +33,7 @@ const de: EmailStrings = {
   },
   welcomePilot: {
     subject: "Willkommen an Bord — drei Schritte bis zur ersten Ausfahrt",
+    title: "Willkommen bei {chapter}",
     preview: "Deine Pilotanfrage liegt beim Chapter",
     heading: "Willkommen an Bord",
     intro:
@@ -78,9 +80,81 @@ const de: EmailStrings = {
     footer:
       "Du erhältst diese E-Mail, weil dich eine Admin einer Cycling-Without-Age-Ortsgruppe eingeladen hat.",
   },
+  applicationSubmitted: {
+    subject: "{name} möchte bei {chapter} pilotieren",
+    preview: "Eine neue Pilotanfrage",
+    heading: "Eine neue Pilotanfrage",
+    intro:
+      "{name} hat angefragt, für {chapter} zu pilotieren. Schau sie dir an und antworte ja — oder diesmal nicht.",
+    cta: "Anfrage ansehen",
+    footer:
+      "Du erhältst diese E-Mail, weil du eine Cycling-Without-Age-Ortsgruppe mit betreust.",
+    anonymous: "Jemand",
+  },
+  rolePromoted: {
+    subject: "Du bist Admin bei {chapter}",
+    preview: "Neue Verantwortung in deiner Ortsgruppe",
+    heading: "Du bist Ortsgruppen-Admin",
+    intro:
+      "{actor} hat dich zur Admin von {chapter} gemacht. Du kannst Leute einladen, Pilotanfragen beantworten und die Angaben der Ortsgruppe pflegen.",
+    cta: "Ortsgruppe öffnen",
+    footer:
+      "Du erhältst diese E-Mail, weil sich deine Rolle in einer Cycling-Without-Age-Ortsgruppe geändert hat.",
+  },
+  roleDemoted: {
+    subject: "Deine Adminrolle bei {chapter} ist beendet",
+    preview: "Eine Änderung an deiner Rolle",
+    heading: "Nicht mehr Admin",
+    intro:
+      "{actor} hat deine Adminrolle bei {chapter} beendet. Sonst bleibt alles, wie es war — du fährst weiter mit der Ortsgruppe.",
+    cta: "Cycling Without Age öffnen",
+    footer:
+      "Du erhältst diese E-Mail, weil sich deine Rolle in einer Cycling-Without-Age-Ortsgruppe geändert hat.",
+  },
+  memberRemoved: {
+    subject: "Du bist nicht mehr bei {chapter}",
+    preview: "Eine Änderung an deiner Mitgliedschaft",
+    heading: "Du hast {chapter} verlassen",
+    intro:
+      "{actor} hat dich aus {chapter} entfernt. Dein Konto bleibt deins, und jede Ortsgruppe darf dich wieder aufnehmen.",
+    cta: "Ortsgruppe finden",
+    footer:
+      "Du erhältst diese E-Mail, weil sich deine Mitgliedschaft in einer Cycling-Without-Age-Ortsgruppe geändert hat.",
+  },
+  memberJoined: {
+    subject: "{name} ist jetzt bei {chapter}",
+    preview: "Neu dabei",
+    heading: "Neu dabei",
+    intro: "{name} ist jetzt Passagier bei {chapter}.",
+    cta: "Mitglied ansehen",
+    footer:
+      "Du erhältst diese E-Mail, weil du eine Cycling-Without-Age-Ortsgruppe mit betreust.",
+    anonymous: "Jemand",
+  },
+  countryAdminAppointed: {
+    subject: "Du betreust jetzt {country}",
+    preview: "Ein Land zum Betreuen",
+    heading: "Du betreust {country}",
+    intro:
+      "{actor} hat dich zur Länder-Admin für {country} gemacht. Jede Ortsgruppe dort kannst du ab sofort unterstützen.",
+    cta: "Dashboard öffnen",
+    footer:
+      "Du erhältst diese E-Mail, weil sich deine Rolle bei Cycling Without Age geändert hat.",
+  },
+  countryAdminRemoved: {
+    subject: "Deine Rolle als Länder-Admin für {country} ist beendet",
+    preview: "Eine Änderung an deiner Rolle",
+    heading: "Nicht mehr Länder-Admin",
+    intro:
+      "{actor} hat deine Rolle als Länder-Admin für {country} beendet. In deinen eigenen Ortsgruppen ändert sich nichts.",
+    cta: "Cycling Without Age öffnen",
+    footer:
+      "Du erhältst diese E-Mail, weil sich deine Rolle bei Cycling Without Age geändert hat.",
+  },
   roles: {
     admin: "Ortsgruppen-Admin",
     pilot: "Pilot",
+    passenger: "Passagier",
   },
 };
 

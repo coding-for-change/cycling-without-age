@@ -1,4 +1,5 @@
 import { Suspense, type ReactNode } from "react";
+import { NotificationBellSkeleton } from "@/components/notifications/notification-bell-skeleton";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminChrome } from "./_components/admin-chrome";
@@ -32,7 +33,10 @@ function ChromeFallback() {
     <div className="flex h-16 shrink-0 items-center gap-3 px-4 pt-[env(safe-area-inset-top)] lg:px-6">
       <Skeleton className="size-7 rounded-md" />
       <Skeleton className="h-4 w-32" />
-      <Skeleton className="ml-auto h-9 w-20 rounded-full" />
+      <div className="ml-auto flex items-center gap-2">
+        <NotificationBellSkeleton className="size-9" />
+        <Skeleton className="h-9 w-20 rounded-full" />
+      </div>
     </div>
   );
 }

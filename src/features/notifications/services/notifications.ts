@@ -36,6 +36,7 @@ export const findNotificationsOfUser = (
     where: { recipientUserId },
     orderBy: { createdAt: "desc" },
     take,
+    include: { event: { select: { type: true } } },
   });
 
 export const countUnseenOfUser = (

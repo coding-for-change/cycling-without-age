@@ -29,16 +29,25 @@ export async function transaction<T>(
   return result;
 }
 
+const ENQUEUE_TIMEOUT_MS = 2_000;
+
 /**
  * Fast path only. A dead Redis must not fail a request that already committed:
  * the sweeper re-enqueues anything still unprocessed a minute later.
+ *
+ * The timeout is what makes that true. ioredis runs with
+ * `maxRetriesPerRequest: null`, so an unreachable Redis parks the command
+ * forever instead of rejecting it, and the request would hang after the commit.
  */
 export async function dispatch(eventIds: string[]) {
   if (eventIds.length === 0) return;
 
   const enqueued = await Promise.allSettled(
     eventIds.map((id) =>
-      queue(QUEUE.events).add("dispatch", { id }, { jobId: id }),
+      withTimeout(
+        queue(QUEUE.events).add("dispatch", { id }, { jobId: id }),
+        ENQUEUE_TIMEOUT_MS,
+      ),
     ),
   );
 
@@ -50,4 +59,23 @@ export async function dispatch(eventIds: string[]) {
       );
     }
   }
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number) {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`no answer within ${ms}ms`)),
+      ms,
+    );
+    Promise.resolve(promise).then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
 }

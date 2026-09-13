@@ -93,8 +93,30 @@ const eslintConfig = defineConfig([
         {
           patterns: [
             {
-              group: ["@capacitor/*"],
+              group: [
+                "@capacitor/*",
+                "@capacitor-firebase/*",
+                "firebase",
+                "firebase/*",
+              ],
               message: "Access native APIs via @/lib/native/* wrappers.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/lib/push.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["firebase-admin", "firebase-admin/*"],
+              message: "Send push through @/lib/push.",
             },
           ],
         },
