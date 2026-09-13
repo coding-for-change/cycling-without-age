@@ -5,6 +5,7 @@ import {
   getHighestRole,
   getSession,
   homeOf,
+  perspectiveViewerSession,
   requireAdminScope,
   requireAuth,
   requireChapterAdmin,
@@ -424,6 +425,28 @@ describe("homeOf", () => {
 
   it("sends someone with no role at all to the dispatcher", () => {
     expect(homeOf(sessionWith({}))).toBe("/onboarding");
+  });
+});
+
+describe("perspectiveViewerSession", () => {
+  // The passenger home is the one member surface a visitor may look at: no
+  // session is an answer there, not a failure. Every pilot surface still walls.
+  it("lets a guest look at the passenger home, and nowhere else", async () => {
+    getSessionMock.mockResolvedValue(null);
+
+    await expect(perspectiveViewerSession("passenger")).resolves.toBeNull();
+    await sentToSignIn(() => perspectiveViewerSession("pilot"));
+  });
+
+  it("keeps a pilot on its own side of the shell", async () => {
+    signedInAs({ memberships: [{ chapterId: BERLIN, roles: ["pilot"] }] });
+
+    await expect(perspectiveViewerSession("pilot")).resolves.toMatchObject({
+      user: { id: "u1" },
+    });
+    expect(
+      await redirectedTo(() => perspectiveViewerSession("passenger")),
+    ).toBe("/pilot");
   });
 });
 

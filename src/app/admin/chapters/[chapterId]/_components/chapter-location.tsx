@@ -13,8 +13,8 @@ import { DetailSection } from "../../../_components/detail-page";
 import { CHAPTER_RADIUS_KM } from "@/features/chapters/schemas";
 import { haptics } from "@/lib/native/haptics";
 import { cn, fill } from "@/lib/utils";
-import { reportSave } from "../../../_components/action-feedback";
-import { useSaveStatus } from "../../../_components/save-status";
+import { reportSave } from "@/components/action-feedback";
+import { useSaveStatus } from "@/components/save-status";
 import type { MapPin } from "../../_components/chapter-map";
 import {
   resolveChapterPlace,

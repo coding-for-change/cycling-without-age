@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { fill } from "@/lib/utils";
 import { changeMemberRoleAction } from "../actions";
-import { notify, type NotifyLabels } from "../../_components/action-feedback";
+import { notify, type NotifyLabels } from "@/components/action-feedback";
 
 type Change = "promote" | "demote" | "remove";
 

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Pencil, Trash2, UserPlus, X } from "lucide-react";
 import { AdminEmpty } from "../../_components/admin-empty";
-import { ICONS } from "../../_components/icons";
+import { ICONS } from "@/components/icons";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   AlertDialog,
@@ -25,12 +25,12 @@ import {
 } from "@/components/ui/data-table";
 import { fill } from "@/lib/utils";
 import { AppointByEmailDialog } from "../../_components/appoint-by-email-dialog";
-import { notify } from "../../_components/action-feedback";
+import { notify } from "@/components/action-feedback";
 import { useDrawerParam } from "../../_components/use-drawer-param";
 import {
   ConfirmDeleteDialog,
   type ConfirmDeleteLabels,
-} from "../../_components/confirm-delete-dialog";
+} from "@/components/confirm-delete-dialog";
 import {
   appointCountryAdminAction,
   deleteCountryAction,

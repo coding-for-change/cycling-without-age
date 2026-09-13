@@ -7,7 +7,7 @@ import { formatDate, formatNumber, resolveLocale } from "@/lib/format";
 import { getDictionary } from "@/lib/i18n";
 import { fill } from "@/lib/utils";
 import { AdminPageHeader } from "../../_components/admin-page";
-import { ICONS } from "../../_components/icons";
+import { ICONS } from "@/components/icons";
 import { readActiveScope } from "../../active-scope";
 import { InviteDialog } from "./invite-dialog";
 import { MembersTable, type MemberRow } from "./members-table";

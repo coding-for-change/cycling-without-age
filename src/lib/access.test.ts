@@ -1,6 +1,7 @@
 import {
   adminChapterIds,
   availablePerspectives,
+  canDeleteOwnAccount,
   defaultActiveScope,
   getHighestRole,
   hasAnyAdminScope,
@@ -253,6 +254,37 @@ describe("hasAnyAdminScope", () => {
     expect(hasAnyAdminScope(aarhusPassenger)).toBe(false);
     expect(hasAnyAdminScope(none)).toBe(false);
     expect(hasAnyAdminScope({ ...none, role: "user" })).toBe(false);
+  });
+});
+
+describe("canDeleteOwnAccount", () => {
+  it("lets someone who only rides or pedals close their own account", () => {
+    expect(canDeleteOwnAccount(berlinPilot)).toBe(true);
+    expect(canDeleteOwnAccount(twoChapterPilot)).toBe(true);
+    expect(canDeleteOwnAccount(aarhusPassenger)).toBe(true);
+    expect(canDeleteOwnAccount(none)).toBe(true);
+  });
+
+  // The chapter would be left without an admin, so the hand-over comes first.
+  it("holds back anyone who still administers something", () => {
+    expect(canDeleteOwnAccount(superadmin)).toBe(false);
+    expect(canDeleteOwnAccount(deAdmin)).toBe(false);
+    expect(canDeleteOwnAccount(berlinAdmin)).toBe(false);
+    expect(canDeleteOwnAccount(muenchenAdmin)).toBe(false);
+  });
+
+  // A stacked pilot+admin row is still an admin row: the pilot hat does not
+  // unlock the button.
+  it("reads admin out of a stacked membership", () => {
+    expect(canDeleteOwnAccount(multi)).toBe(false);
+    expect(
+      canDeleteOwnAccount({
+        ...none,
+        memberships: [
+          { chapterId: HAMBURG.id, roles: parseRoles("pilot,admin") },
+        ],
+      }),
+    ).toBe(false);
   });
 });
 

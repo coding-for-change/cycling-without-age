@@ -28,3 +28,9 @@ export function fill(
     key in values ? String(values[key]) : match,
   );
 }
+
+/**
+ * The name to greet someone by. Whatever the profile holds is a full name; a
+ * greeting wants only the first word of it.
+ */
+export const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? name;

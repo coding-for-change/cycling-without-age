@@ -48,3 +48,8 @@ export const findPassengersOfChapters = (chapterIds: string[]) =>
 
 export const countPassengersManagedBy = (managedByUserId: string) =>
   prisma.passenger.count({ where: { managedByUserId } });
+
+export const updatePassengerOfUser = (
+  userId: string,
+  data: Prisma.PassengerUpdateManyMutationInput,
+) => prisma.passenger.updateMany({ where: { userId }, data });

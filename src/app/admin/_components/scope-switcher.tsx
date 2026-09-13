@@ -19,7 +19,7 @@ import {
 import { getInitials } from "@/lib/utils";
 import type { Perspective } from "@/lib/access";
 import type { IconKey, ScopeArg } from "@/lib/commands";
-import { ICONS } from "./icons";
+import { ICONS } from "@/components/icons";
 import { readScopeArg, scopeHref } from "./scope-url";
 
 export type PerspectiveOption = {

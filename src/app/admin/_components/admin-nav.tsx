@@ -11,7 +11,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import type { ResolvedNavItem } from "../nav";
-import { ICONS } from "./icons";
+import { ICONS } from "@/components/icons";
 
 /**
  * `/admin` is a prefix of every other destination, so the overview only lights

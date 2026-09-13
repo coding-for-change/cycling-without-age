@@ -9,6 +9,9 @@ import type { Dictionary } from "@/lib/i18n";
  */
 export type IconKey =
   | "overview"
+  | "home"
+  | "calendar"
+  | "training"
   | "rides"
   | "members"
   | "passengers"

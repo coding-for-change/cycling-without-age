@@ -26,7 +26,7 @@ import { countryInput, type CountryInput } from "@/features/chapters/schemas";
 import { REGION_CODES, regionName } from "@/lib/countries";
 import { fill } from "@/lib/utils";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
-import { notify, type NotifyLabels } from "../../_components/action-feedback";
+import { notify, type NotifyLabels } from "@/components/action-feedback";
 import { createCountryAction, updateCountryAction } from "../actions";
 import type { CountryRow } from "./countries-table";
 

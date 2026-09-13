@@ -13,7 +13,7 @@ import { unregisterDevice } from "@/features/notifications/actions";
  * this person's notifications to whoever signs in on the phone next. Best
  * effort: sign-out never waits on a network that may already be gone.
  */
-async function forgetDevice() {
+export async function forgetDevice() {
   try {
     const device = await getPushToken();
     if (device) await unregisterDevice({ token: device.token });
@@ -21,6 +21,27 @@ async function forgetDevice() {
   } catch {
     // Web, or FCM unreachable. The session cookie is the part that matters.
   }
+}
+
+/**
+ * The tail of every way out of the account: clear the cookie, drop what this tab
+ * cached, then leave with a full page load so nothing rendered for the old
+ * session survives. `signOut` is tolerated failing — after an account deletion
+ * the session row it wants to revoke is already gone, and the cookie it sets is
+ * written on the response either way.
+ */
+export async function finishSignOut() {
+  try {
+    await authClient.signOut();
+  } catch {
+    // Already signed out, or the network is gone. The navigation still has to happen.
+  }
+  try {
+    sessionStorage.clear();
+  } catch {
+    // Private mode. The cookie is already gone, which is the part that matters.
+  }
+  window.location.href = "/sign-in";
 }
 
 export function useSignOut() {
@@ -31,13 +52,7 @@ export function useSignOut() {
       startTransition(async () => {
         haptics.tap();
         await forgetDevice();
-        await authClient.signOut();
-        try {
-          sessionStorage.clear();
-        } catch {
-          // Private mode. The cookie is already gone, which is the part that matters.
-        }
-        window.location.href = "/sign-in";
+        await finishSignOut();
       }),
     [],
   );

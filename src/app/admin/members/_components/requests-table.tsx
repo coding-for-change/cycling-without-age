@@ -17,7 +17,7 @@ import {
   type DecisionTarget,
 } from "./decision-dialog";
 import { PersonAvatar } from "@/components/person-avatar";
-import type { NotifyLabels } from "../../_components/action-feedback";
+import type { NotifyLabels } from "@/components/action-feedback";
 
 export type RequestRow = {
   applicationId: string;

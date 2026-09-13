@@ -104,6 +104,21 @@ client-only: call them from client components; the wrappers are SSR-safe
   behind a dynamic import so the plugin never enters the web bundle. `<PushRegistrar />` in
   `src/app/layout.tsx` is the only caller that registers a token; a tapped push may only
   navigate to an app-relative `href`.
+- App lifecycle goes through `@/lib/native/app` (`onBackButton`, `minimizeApp`, `exitApp`),
+  which wraps `@capacitor/app` behind a dynamic import so the plugin never enters the web
+  bundle. Registering a `backButton` listener switches Android's own back handling off, so
+  exactly one subscriber may exist: `<NativeBackHandler />` in `src/app/layout.tsx`. What a
+  back press does is the pure `decideBack` in `@/lib/native/back-policy` (open overlay →
+  synthetic Escape; history depth → `router.back()`; a member tab → `router.replace(home)`;
+  otherwise `minimizeApp()`, never `exitApp()`).
+- The keyboard goes through `@/lib/native/keyboard` (`useKeyboardOpen`), a
+  `useSyncExternalStore` over `@capacitor/keyboard`'s `keyboardWillShow`/`keyboardWillHide`
+  behind the same dynamic import; listeners attach on the first subscriber. It is `false` on
+  the server and on the web, where the browser already shrinks the layout viewport — so
+  fixed bottom chrome (the member tab bar) hides itself on native only.
+- Haptics for navigation: switching to another tab is `haptics.tap()` (nothing when the
+  active tab is re-tapped), rotating perspective on the avatar is `haptics.tap("medium")`.
+  Opening a sheet and the Android back button stay silent.
 - Passkeys go through `@/lib/native/passkey` (`@capgo/capacitor-passkey`): the shell's
   WebView has no WebAuthn, so `@/lib/passkey-client` (`addPasskey`, `signInWithPasskey`)
   runs the ceremony natively and feeds better-auth's own `/passkey/*` endpoints. UI never

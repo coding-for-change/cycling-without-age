@@ -30,7 +30,7 @@ import { assistedPassengerInput } from "@/features/accounts/schemas";
 import { parseIdentity, type CountryCode } from "@/lib/identity";
 import { fill } from "@/lib/utils";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
-import { notify } from "../../_components/action-feedback";
+import { notify } from "@/components/action-feedback";
 import { useDrawerParam } from "../../_components/use-drawer-param";
 import { TextField } from "../../_components/text-field";
 

@@ -6,7 +6,7 @@ import { useState } from "react";
 import { MapUnavailable } from "@/components/map-unavailable";
 import { X } from "lucide-react";
 import { AdminEmpty } from "../../_components/admin-empty";
-import { ICONS } from "../../_components/icons";
+import { ICONS } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistance, type Locale } from "@/lib/format";

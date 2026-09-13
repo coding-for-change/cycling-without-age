@@ -88,6 +88,10 @@ export const hasAnyAdminScope = (access: Access) =>
   access.countryAdminOf.length > 0 ||
   access.memberships.some((m) => m.roles.includes("admin"));
 
+
+export const canDeleteOwnAccount = (access: Access) =>
+  !hasAnyAdminScope(access);
+
 export const adminChapterIds = (access: Access) =>
   access.memberships
     .filter((m) => m.roles.includes("admin"))

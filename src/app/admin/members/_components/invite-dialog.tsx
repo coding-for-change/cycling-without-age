@@ -20,7 +20,7 @@ import { inviteInput, inviteRole } from "@/features/accounts/schemas";
 import { avatarSeed } from "@/lib/avatar-seed";
 import { fill } from "@/lib/utils";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
-import { notify, type NotifyLabels } from "../../_components/action-feedback";
+import { notify, type NotifyLabels } from "@/components/action-feedback";
 import { TextField } from "../../_components/text-field";
 
 const schema = inviteInput.omit({ chapterId: true });

@@ -4,11 +4,13 @@ import { revalidatePath } from "next/cache";
 import { domainCode } from "@/lib/domain-error";
 import { z } from "zod";
 import { requireAuth, requireChapterAdmin } from "@/lib/auth-guards";
+import { canDeleteOwnAccount } from "@/lib/access";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { getLocale } from "@/lib/i18n";
 import { withinRateLimit } from "@/lib/rate-limit";
 import { inviteChapterUser as invite } from "@/use-cases/invite-chapter-user";
 import { provisionAssistedPassenger } from "@/use-cases/provision-assisted-passenger";
+import { accounts } from "./index";
 import { assistedPassengerInput, inviteInput } from "./schemas";
 
 export type AccountActionResult =
@@ -16,6 +18,10 @@ export type AccountActionResult =
 
 export type InviteActionResult =
   { ok: true } | { ok: false; error: "invalid" | "generic" };
+
+export type DeleteOwnAccountResult =
+  | { ok: true }
+  | { ok: false; error: "handOverAdmin" | "rateLimited" | "generic" };
 
 export async function addAssistedPassenger(
   input: unknown,
@@ -74,4 +80,31 @@ export async function previewAvatar(email: unknown): Promise<string | null> {
   if (!allowed) return null;
 
   return avatarSvg(avatarSeed(parsed.data));
+}
+
+/**
+ * Takes no input and only ever deletes the account behind the session — there is
+ * no id on the wire, so there is nothing to point at someone else. The admin
+ * check is re-run here rather than trusted from the disabled button, and the
+ * rate limit covers a client looping the confirm dialog.
+ */
+export async function deleteOwnAccountAction(): Promise<DeleteOwnAccountResult> {
+  const session = await requireAuth();
+
+  if (!canDeleteOwnAccount(session.access))
+    return { ok: false, error: "handOverAdmin" };
+
+  const allowed = withinRateLimit(`delete-account:${session.user.id}`, {
+    max: 3,
+    windowMs: 60_000,
+  });
+  if (!allowed) return { ok: false, error: "rateLimited" };
+
+  try {
+    await accounts.deleteUser(session.user.id);
+    revalidatePath("/admin", "layout");
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "generic" };
+  }
 }
