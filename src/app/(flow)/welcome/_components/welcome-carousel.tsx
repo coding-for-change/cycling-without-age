@@ -210,8 +210,8 @@ export function WelcomeCarousel({
             <div className="space-y-2 lg:mt-8">
               <Button
                 asChild
-                size="lg"
-                className="h-14 w-full rounded-full bg-red text-base text-white hover:bg-red-hover"
+                variant="brand"
+                size="hero"
               >
                 <Link
                   href="/sign-in"

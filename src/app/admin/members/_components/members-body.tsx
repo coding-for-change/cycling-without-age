@@ -1,10 +1,5 @@
 import { headers } from "next/headers";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-} from "@/components/ui/empty";
+import { AdminEmpty } from "../../_components/admin-empty";
 import { membership } from "@/features/membership";
 import { parseRoles, type ChapterRole } from "@/lib/access";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
@@ -23,7 +18,8 @@ export async function MembersBody({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { active, chapters, chapterIds } = await readActiveScope(searchParams);
+  const { active, scopeQuery, chapters, chapterIds } =
+    await readActiveScope(searchParams);
 
   const [pending, members, dict, head] = await Promise.all([
     membership.listApplications(chapterIds, "pending"),
@@ -37,13 +33,6 @@ export async function MembersBody({
   const chapterNames = new Map(chapters.map((c) => [c.id, c.name]));
   const roleLabel = (role: ChapterRole) =>
     role === "admin" ? dict.admin.roles.chapterAdmin : dict.admin.roles[role];
-
-  const scopeQuery =
-    active.kind === "chapter"
-      ? `?chapter=${encodeURIComponent(active.chapter.slug)}`
-      : active.kind === "country"
-        ? `?country=${encodeURIComponent(active.country.code)}`
-        : "";
 
   const requests: RequestRow[] = pending.map((application) => ({
     applicationId: application.id,
@@ -119,19 +108,7 @@ export async function MembersBody({
             table={dict.admin.table}
           />
         ) : (
-          <Empty className="rounded-2xl border border-line">
-            <EmptyHeader>
-              <EmptyMedia
-                variant="icon"
-                className="bg-mint-tint text-ink"
-              >
-                <MembersIcon aria-hidden />
-              </EmptyMedia>
-              <EmptyDescription className="text-ink-soft">
-                {dict.admin.members.empty}
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
+          <AdminEmpty icon={MembersIcon}>{dict.admin.members.empty}</AdminEmpty>
         )}
       </section>
     </>

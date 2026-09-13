@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { activity } from "@/features/activity";
+import { activity } from "@/lib/activity";
 
 jest.mock("@/lib/prisma", () => ({
   prisma: { activityEvent: { create: jest.fn(), findMany: jest.fn() } },

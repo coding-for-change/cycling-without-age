@@ -1,14 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { domainCode, isUniqueViolation } from "@/lib/domain-error";
 import { z } from "zod";
-import { Prisma } from "@/generated/prisma";
 import {
   chapters,
   countryInput,
   countryUpdateInput,
 } from "@/features/chapters";
 import { requireSuperAdmin } from "@/lib/auth-guards";
+import { deleteCountry } from "@/use-cases/manage-country";
 import {
   appointCountryAdminByEmail,
   removeCountryAdmin,
@@ -22,13 +23,8 @@ const id = z.string().min(1).max(64);
 const appointInput = z.object({ countryId: id, email: z.email() });
 const removeInput = z.object({ countryId: id, userId: id });
 
-const duplicate = (error: unknown) =>
-  error instanceof Prisma.PrismaClientKnownRequestError &&
-  error.code === "P2002";
-
 const failed = (error: unknown): CountryActionResult =>
-  duplicate(error) ||
-  (error instanceof Error && error.message.includes("Code already taken"))
+  domainCode(error) === "codeTaken"
     ? { ok: false, error: "codeTaken" }
     : { ok: false, error: "generic" };
 
@@ -67,6 +63,25 @@ export async function updateCountryAction(
   }
 }
 
+export async function deleteCountryAction(
+  countryId: string,
+): Promise<CountryActionResult> {
+  const parsedId = id.safeParse(countryId);
+  if (!parsedId.success) return { ok: false, error: "generic" };
+  const session = await requireSuperAdmin();
+
+  try {
+    await deleteCountry({
+      countryId: parsedId.data,
+      actorUserId: session.user.id,
+    });
+    revalidatePath("/admin", "layout");
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "generic" };
+  }
+}
+
 export async function appointCountryAdminAction(
   input: z.input<typeof appointInput>,
 ): Promise<CountryActionResult> {
@@ -86,7 +101,7 @@ export async function appointCountryAdminAction(
   } catch (error) {
     // Appointing someone who already runs the country asks for a state that is
     // already true.
-    if (duplicate(error)) return { ok: true };
+    if (isUniqueViolation(error)) return { ok: true };
     return { ok: false, error: "generic" };
   }
 }

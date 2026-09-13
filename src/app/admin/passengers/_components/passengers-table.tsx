@@ -7,6 +7,7 @@ import {
   stopRowClick,
   type DataTableStrings,
 } from "@/components/ui/data-table";
+import { mutedColumn } from "../../_components/table-columns";
 import { PersonAvatar } from "@/components/person-avatar";
 
 export type PassengerRow = {
@@ -80,47 +81,22 @@ export function PassengersTable({
         );
       },
     },
-    {
-      id: "born",
-      accessorFn: (row) => row.born,
-      enableSorting: true,
-      sortingFn: (a, b) => a.original.bornIso.localeCompare(b.original.bornIso),
-      meta: { label: labels.born },
-      cell: ({ row }) => (
-        <span className="text-ink-soft">{row.original.born}</span>
-      ),
-    },
-    {
-      id: "phone",
-      accessorFn: (row) => row.phone ?? "",
-      meta: { label: phoneColumn },
-      cell: ({ row }) => (
-        <span className="text-ink-soft">{row.original.phone}</span>
-      ),
-    },
+    mutedColumn<PassengerRow>("born", labels.born, (row) => row.born, {
+      isoOf: (row) => row.bornIso,
+    }),
+    mutedColumn<PassengerRow>("phone", phoneColumn, (row) => row.phone),
     ...(showChapter
       ? [
-          {
-            id: "chapter",
-            accessorFn: (row: PassengerRow) => row.chapterName,
-            meta: { label: labels.chapter },
-            cell: ({ row }) => (
-              <span className="text-ink-soft">{row.original.chapterName}</span>
-            ),
-          } satisfies ColumnDef<PassengerRow, unknown>,
+          mutedColumn<PassengerRow>(
+            "chapter",
+            labels.chapter,
+            (row) => row.chapterName,
+          ),
         ]
       : []),
-    {
-      id: "joined",
-      accessorFn: (row) => row.joined,
-      enableSorting: true,
-      sortingFn: (a, b) =>
-        a.original.joinedIso.localeCompare(b.original.joinedIso),
-      meta: { label: labels.joined },
-      cell: ({ row }) => (
-        <span className="text-ink-soft">{row.original.joined}</span>
-      ),
-    },
+    mutedColumn<PassengerRow>("joined", labels.joined, (row) => row.joined, {
+      isoOf: (row) => row.joinedIso,
+    }),
   ];
 
   return (

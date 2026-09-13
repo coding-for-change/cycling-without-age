@@ -3,12 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useId, useState, useTransition } from "react";
 import { KeyRound } from "lucide-react";
+import { MintPillButton } from "../../_components/mint-pill-button";
 import { authClient } from "@/lib/auth-client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { haptics } from "@/lib/native/haptics";
 import { useCharacter } from "@/components/character";
-import { Step, type StepProgress } from "../../_components/step";
+import { Step, StepError, type StepProgress } from "../../_components/step";
 import { markPasskeyAnswered } from "../actions";
 
 type Strings = {
@@ -91,14 +91,7 @@ export function PasskeyStep({
       progress={progress ?? undefined}
       action={
         <>
-          {error && (
-            <p
-              role="alert"
-              className="mb-2 text-center text-sm text-red"
-            >
-              {error}
-            </p>
-          )}
+          {error && <StepError>{error}</StepError>}
           <div className="mb-4 grid gap-2 text-left">
             <label
               htmlFor={nameId}
@@ -116,20 +109,12 @@ export function PasskeyStep({
               className="h-12 rounded-full px-5"
             />
           </div>
-          <Button
-            size="lg"
+          <MintPillButton
+            label={strings.create}
+            icon={KeyRound}
             disabled={pending}
             onClick={create}
-            className="relative h-16 w-full justify-start rounded-full bg-mint-deep pr-20 pl-7 text-base font-bold text-white shadow-lift hover:bg-mint-deep/90"
-          >
-            {strings.create}
-            <span
-              aria-hidden
-              className="absolute top-1/2 right-2 grid size-12 -translate-y-1/2 place-items-center rounded-full bg-white/15"
-            >
-              <KeyRound className="size-5" />
-            </span>
-          </Button>
+          />
           {!requiredNext && (
             <button
               type="button"

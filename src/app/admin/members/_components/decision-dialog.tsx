@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useId, useState, useTransition, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -40,7 +39,6 @@ export function DecisionDialog({
   labels: DecisionLabels;
   errors: NotifyLabels["errors"];
 }) {
-  const router = useRouter();
   const formId = useId();
   const noteId = useId();
   const [note, setNote] = useState("");
@@ -69,7 +67,6 @@ export function DecisionDialog({
       });
       if (!result.ok) return;
       close();
-      router.refresh();
     });
   };
 
@@ -91,11 +88,8 @@ export function DecisionDialog({
           type="submit"
           form={formId}
           disabled={pending}
-          className={
-            target.approve
-              ? "min-h-11 bg-red text-white hover:bg-red-hover"
-              : "min-h-11"
-          }
+          variant={target.approve ? "brand" : "default"}
+          className="min-h-11"
         >
           {target.approve ? labels.approve : labels.reject}
         </Button>

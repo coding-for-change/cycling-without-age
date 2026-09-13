@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { domainCode } from "@/lib/domain-error";
 import { z } from "zod";
 import { requireAuth, requireChapterAdmin } from "@/lib/auth-guards";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
@@ -32,8 +33,7 @@ export async function addAssistedPassenger(
     revalidatePath("/admin", "layout");
     return { ok: true };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "";
-    if (message.includes("Already has an account"))
+    if (domainCode(error) === "alreadyHasAccount")
       return { ok: false, error: "exists" };
     return { ok: false, error: "generic" };
   }

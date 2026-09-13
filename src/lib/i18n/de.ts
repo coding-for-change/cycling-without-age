@@ -22,7 +22,6 @@ const de: Dictionary = {
     next: "Weiter",
     skip: "Erst mal überspringen",
     stepProgress: "Schritt {current} von {total}",
-    characterLabel: "Animierter Cycling-Without-Age-Begleiter",
     language: "Sprache ändern",
     signOut: "Abmelden",
   },
@@ -94,7 +93,6 @@ const de: Dictionary = {
       errors: {
         invalid:
           "Dieser Code stimmt nicht. Prüfen Sie ihn und versuchen Sie es erneut.",
-        expired: "Dieser Code ist abgelaufen. Fordern Sie einen neuen an.",
         rateLimited:
           "Zu viele Versuche. Versuchen Sie es in einer Minute erneut.",
         generic: "Da ist etwas schiefgelaufen. Versuchen Sie es erneut.",
@@ -126,7 +124,6 @@ const de: Dictionary = {
     mapUnavailable:
       "Die Karte ist gerade nicht verfügbar. Die Liste funktioniert weiterhin.",
     mapLabel: "Karte der Cycling-Without-Age-Ortsgruppen",
-    retry: "Meinen Standort verwenden",
     pending: "Einen Moment …",
     next: "Weiter",
     request: "Beitritt anfragen",
@@ -333,6 +330,7 @@ const de: Dictionary = {
       next: "Weiter",
       all: "Alle",
       sortAria: "Nach {column} sortieren",
+      filterAria: "Nach {column} filtern",
     },
     user: {
       menuLabel: "Dein Konto",
@@ -420,7 +418,6 @@ const de: Dictionary = {
         chapter: "Ortsgruppe",
         applied: "Gefragt",
       },
-      review: "Ansehen",
       approve: "Freigeben",
       reject: "Absagen",
       approveTitle: "{name} an Bord holen?",
@@ -539,6 +536,7 @@ const de: Dictionary = {
       chapterCreated: "{actor} hat die Ortsgruppe auf die Karte gesetzt",
       chapterUpdated: "{actor} hat {field} geändert",
       chapterDeleted: "{actor} hat die Ortsgruppe {name} gelöscht",
+      countryDeleted: "{actor} hat das Land {name} gelöscht",
       change: "{from} \u2192 {to}",
       nothing: "nichts",
       you: "Du",
@@ -677,14 +675,25 @@ const de: Dictionary = {
         code: "Ländercode",
       },
       admins: "Länder-Admins",
-      noAdmins: "Noch kein Admin",
       appoint: "Länder-Admin hinzufügen",
+      appointShort: "Admin hinzufügen",
       appointLabel: "E-Mail-Adresse",
       appointBody: "Die Person muss sich einmal angemeldet haben.",
       appointPlaceholder: "name@beispiel.de",
       appointed: "{email} verantwortet jetzt dieses Land.",
       removeAdmin: "{name} entfernen",
       confirmRemoveAdmin: "{name} als Länder-Admin entfernen?",
+      delete: {
+        open: "Land löschen",
+        title: "{name} endgültig löschen?",
+        body: "Jede Ortsgruppe in diesem Land geht mit \u2014 samt Mitgliedern, Fahrgästen und offenen Anfragen. Bereits gefahrene Fahrten bleiben erhalten.",
+        footprint:
+          "{chapters} Ortsgruppen \u00b7 {members} Mitglieder \u00b7 {passengers} Fahrgäste",
+        label: "Tipp {word} zur Bestätigung",
+        word: "DELETE",
+        submit: "Land löschen",
+        done: "{name} ist weg.",
+      },
       pick: {
         label: "Land",
         placeholder: "Land eintippen",

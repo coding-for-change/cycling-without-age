@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { ArrowRight, Bike, Play, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { MintPillButton } from "../../_components/mint-pill-button";
 import { haptics } from "@/lib/native/haptics";
 import { Step, type StepProgress } from "../../_components/step";
 import { finishPilotNextSteps } from "../actions";
@@ -36,20 +36,12 @@ export function PilotNextSteps({
       title={strings.title}
       progress={progress ?? undefined}
       action={
-        <Button
-          size="lg"
+        <MintPillButton
+          label={strings.finish}
+          icon={ArrowRight}
           disabled={pending}
           onClick={finish}
-          className="relative h-16 w-full justify-start rounded-full bg-mint-deep pr-20 pl-7 text-base font-bold text-white shadow-lift hover:bg-mint-deep/90"
-        >
-          {strings.finish}
-          <span
-            aria-hidden
-            className="absolute top-1/2 right-2 grid size-12 -translate-y-1/2 place-items-center rounded-full bg-white/15"
-          >
-            <ArrowRight className="size-5" />
-          </span>
-        </Button>
+        />
       }
     >
       <ol className="space-y-3">

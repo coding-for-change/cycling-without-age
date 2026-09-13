@@ -16,7 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { PersonAvatar } from "@/components/person-avatar";
-import type { ActivityType } from "@/features/activity";
+import type { ActivityType } from "@/lib/activity";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import {
   formatDate,
@@ -60,6 +60,7 @@ const ICON: Record<ActivityType, LucideIcon> = {
   chapterCreated: MapPinned,
   chapterUpdated: Pencil,
   chapterDeleted: Trash2,
+  countryDeleted: Trash2,
 };
 
 const strings = (payload: unknown): Record<string, string> =>

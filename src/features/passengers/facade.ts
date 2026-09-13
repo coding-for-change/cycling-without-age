@@ -1,4 +1,5 @@
 import { passengerInput } from "./schemas";
+import { DomainError } from "@/lib/domain-error";
 import type { PassengerInput } from "./schemas";
 import {
   countPassengersManagedBy,
@@ -23,10 +24,10 @@ export async function addPassenger(input: PassengerInput) {
   const data = passengerInput.parse(input);
   const [existing] = await findPassengersManagedBy(data.managedByUserId);
   if (existing && existing.chapterId !== data.chapterId) {
-    throw new Error("Passengers of one account must share a chapter");
+    throw new DomainError("passengerChapterMismatch");
   }
   if (data.userId && (await findPassengerOfUser(data.userId))) {
-    throw new Error("Already has a passenger profile");
+    throw new DomainError("alreadyHasPassenger");
   }
   return insertPassenger({ ...data, userId: data.userId ?? null });
 }
@@ -36,8 +37,7 @@ export const countPassengers = (userId: string) =>
 
 export async function saveOwnPassenger(input: PassengerInput) {
   const data = passengerInput.parse(input);
-  if (!data.userId)
-    throw new Error("saveOwnPassenger needs the account's own id");
+  if (!data.userId) throw new DomainError("notOwnAccount");
 
   const existing = await findPassengerOfUser(data.userId);
   if (!existing) return addPassenger(data);

@@ -49,7 +49,7 @@ describe("provisioning an account", () => {
   it("refuses the strict variant when the contact is taken", async () => {
     byEmail.mockResolvedValue({ id: "user-old" });
     await expect(accounts.provisionUserStrict(input)).rejects.toThrow(
-      "Already has an account",
+      "alreadyHasAccount",
     );
   });
 

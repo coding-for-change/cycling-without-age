@@ -1,9 +1,13 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { startTransition, useOptimistic } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable, type DataTableStrings } from "@/components/ui/data-table";
+import { AdminEmpty } from "../../_components/admin-empty";
+import { ICONS } from "../../_components/icons";
+import { mutedColumn } from "../../_components/table-columns";
+import { useDrawerParam } from "../../_components/use-drawer-param";
 import type { Locale } from "@/lib/format";
 import {
   ChapterCreateDrawer,
@@ -62,25 +66,12 @@ export function ChaptersTable({
   table: DataTableStrings;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const { creating, close } = useDrawerParam();
   const [optimisticRows, addOptimisticRow] = useOptimistic(
     rows,
     (state: ChapterRow[], row: ChapterRow) =>
       [...state, row].sort((a, b) => a.name.localeCompare(b.name)),
   );
-
-  const creating = searchParams.get("new") === "1";
-
-  const close = () => {
-    if (!creating) return;
-    const params = new URLSearchParams(searchParams);
-    params.delete("new");
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, {
-      scroll: false,
-    });
-  };
 
   const created = (row: ChapterRow) => {
     startTransition(() => {
@@ -110,31 +101,19 @@ export function ChaptersTable({
         </span>
       ),
     },
-    {
-      id: "city",
-      accessorFn: (row) => row.city,
-      meta: { label: labels.fields.city },
-      cell: ({ row }) => (
-        <span className="text-ink-soft">{row.original.city}</span>
-      ),
-    },
-    {
-      id: "country",
-      accessorFn: (row) => row.countryName,
-      meta: { label: labels.fields.country },
-      cell: ({ row }) => (
-        <span className="text-ink-soft">{row.original.countryName}</span>
-      ),
-    },
-    {
-      id: "serviceRadiusKm",
-      accessorFn: (row) => row.serviceRadiusKm,
-      enableSorting: true,
-      meta: { label: labels.fields.serviceRadiusKm },
-      cell: ({ row }) => (
-        <span className="text-ink-soft">{row.original.serviceRadiusKm}</span>
-      ),
-    },
+    mutedColumn<ChapterRow>("city", labels.fields.city, (row) => row.city),
+    mutedColumn<ChapterRow>(
+      "country",
+      labels.fields.country,
+      (row) => row.countryName,
+      { filterFn: "equalsString" },
+    ),
+    mutedColumn<ChapterRow>(
+      "serviceRadiusKm",
+      labels.fields.serviceRadiusKm,
+      (row) => row.serviceRadiusKm,
+      { sortable: true },
+    ),
   ];
 
   return (
@@ -154,9 +133,7 @@ export function ChaptersTable({
           }}
         />
       ) : optimisticRows.length === 0 ? (
-        <p className="rounded-2xl border border-line px-4 py-10 text-center text-sm text-ink-soft">
-          {labels.empty}
-        </p>
+        <AdminEmpty icon={ICONS.chapters}>{labels.empty}</AdminEmpty>
       ) : (
         <DataTable
           columns={columns}

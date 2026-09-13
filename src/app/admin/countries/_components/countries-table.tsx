@@ -1,8 +1,10 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { Pencil, X } from "lucide-react";
+import { Pencil, Trash2, UserPlus, X } from "lucide-react";
+import { AdminEmpty } from "../../_components/admin-empty";
+import { ICONS } from "../../_components/icons";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   AlertDialog,
@@ -24,8 +26,14 @@ import {
 import { fill } from "@/lib/utils";
 import { AppointByEmailDialog } from "../../_components/appoint-by-email-dialog";
 import { notify } from "../../_components/action-feedback";
+import { useDrawerParam } from "../../_components/use-drawer-param";
+import {
+  ConfirmDeleteDialog,
+  type ConfirmDeleteLabels,
+} from "../../_components/confirm-delete-dialog";
 import {
   appointCountryAdminAction,
+  deleteCountryAction,
   removeCountryAdminAction,
 } from "../actions";
 import { CountryDrawer, type CountryFormLabels } from "./country-drawer";
@@ -37,17 +45,19 @@ export type CountryRow = {
   name: string;
   code: string;
   admins: CountryAdmin[];
+  footprint: { chapters: number; members: number; passengers: number };
 };
 
 export type CountriesTableLabels = CountryFormLabels & {
   empty: string;
   admins: string;
-  noAdmins: string;
   appoint: string;
+  appointShort: string;
   appointed: string;
   removeAdmin: string;
   confirmRemoveAdmin: string;
   appointDialog: { emailLabel: string; hint: string; placeholder: string };
+  delete: ConfirmDeleteLabels & { footprint: string };
 };
 
 function AdminChip({
@@ -59,7 +69,6 @@ function AdminChip({
   admin: CountryAdmin;
   labels: CountriesTableLabels;
 }) {
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const label = fill(labels.removeAdmin, { name: admin.name });
 
@@ -73,7 +82,6 @@ function AdminChip({
         done: labels.saved,
         errors: labels.errors,
       });
-      if (result.ok) router.refresh();
     });
 
   return (
@@ -82,7 +90,7 @@ function AdminChip({
         <Badge
           asChild
           variant="outline"
-          className="min-h-11 gap-1.5 border-line px-3 text-sm hover:bg-mint-tint"
+          className="h-7 gap-1 border-line px-2.5 text-2sm hover:bg-mint-tint"
         >
           <button
             type="button"
@@ -129,32 +137,10 @@ export function CountriesTable({
   table: DataTableStrings;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const creating = searchParams.get("new") === "1";
-  const editingId = searchParams.get("edit");
+  const { creating, editingId, close, go } = useDrawerParam();
   const editing = rows.find((row) => row.id === editingId) ?? null;
 
-  const go = (mutate: (params: URLSearchParams) => void) => {
-    const params = new URLSearchParams(searchParams);
-    mutate(params);
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, {
-      scroll: false,
-    });
-  };
-
-  const close = () =>
-    go((params) => {
-      params.delete("new");
-      params.delete("edit");
-    });
-
-  const done = () => {
-    close();
-    router.refresh();
-  };
+  const done = close;
 
   const columns: ColumnDef<CountryRow, unknown>[] = [
     {
@@ -190,32 +176,17 @@ export function CountriesTable({
       },
       cell: ({ row }) => (
         <div
-          className="flex flex-wrap items-center gap-2"
+          className="flex flex-wrap items-center gap-1.5"
           onClick={stopRowClick}
         >
-          {row.original.admins.length === 0 ? (
-            <span className="text-sm text-ink-soft">{labels.noAdmins}</span>
-          ) : (
-            row.original.admins.map((admin) => (
-              <AdminChip
-                key={admin.userId}
-                countryId={row.original.id}
-                admin={admin}
-                labels={labels}
-              />
-            ))
-          )}
-        </div>
-      ),
-    },
-    {
-      id: "actions",
-      enableHiding: false,
-      cell: ({ row }) => (
-        <div
-          className="flex items-center justify-end gap-2"
-          onClick={stopRowClick}
-        >
+          {row.original.admins.map((admin) => (
+            <AdminChip
+              key={admin.userId}
+              countryId={row.original.id}
+              admin={admin}
+              labels={labels}
+            />
+          ))}
           <AppointByEmailDialog
             triggerLabel={labels.appoint}
             title={labels.appoint}
@@ -226,16 +197,61 @@ export function CountriesTable({
             action={(email) =>
               appointCountryAdminAction({ countryId: row.original.id, email })
             }
+            trigger={(open) => (
+              <Badge
+                asChild
+                variant="outline"
+                className="h-7 gap-1 border-dashed border-line px-2.5 text-2sm text-ink-soft hover:bg-mint-tint hover:text-ink"
+              >
+                <button
+                  type="button"
+                  onClick={open}
+                >
+                  <UserPlus aria-hidden />
+                  {labels.appointShort}
+                </button>
+              </Badge>
+            )}
           />
+        </div>
+      ),
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => (
+        <div
+          className="flex items-center justify-end gap-1"
+          onClick={stopRowClick}
+        >
           <Button
             variant="ghost"
             size="icon"
-            className="size-11"
+            className="size-8"
             aria-label={labels.edit}
             onClick={() => go((params) => params.set("edit", row.original.id))}
           >
             <Pencil aria-hidden />
           </Button>
+          <ConfirmDeleteDialog
+            name={row.original.name}
+            footprint={fill(labels.delete.footprint, row.original.footprint)}
+            labels={labels.delete}
+            cancel={labels.cancel}
+            errors={labels.errors}
+            action={() => deleteCountryAction(row.original.id)}
+            onDone={() => router.refresh()}
+            trigger={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 text-red hover:bg-red-tint hover:text-red"
+                aria-label={labels.delete.open}
+              >
+                <Trash2 aria-hidden />
+              </Button>
+            }
+          />
         </div>
       ),
     },
@@ -244,9 +260,7 @@ export function CountriesTable({
   return (
     <>
       {rows.length === 0 ? (
-        <p className="rounded-2xl border border-line px-4 py-10 text-center text-sm text-ink-soft">
-          {labels.empty}
-        </p>
+        <AdminEmpty icon={ICONS.countries}>{labels.empty}</AdminEmpty>
       ) : (
         <DataTable
           columns={columns}

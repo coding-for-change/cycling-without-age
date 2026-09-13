@@ -33,7 +33,7 @@ starts pilot matching tomorrow without touching the code that emitted it.
 - `@capacitor/push-notifications` is installed. `lib/native/push.ts` only requests
   permission. No device token storage, no sender.
 - `User` already has `locale`, `notifyEmail`, `notifyPush`.
-- `features/activity` records `ActivityEvent` rows from use cases. It is already a
+- `lib/activity` records `ActivityEvent` rows from facades and use cases. It is already a
   domain-event log with a single consumer, the member activity feed.
 
 ## Decisions taken

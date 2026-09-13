@@ -1,19 +1,18 @@
 import Link from "next/link";
 import { headers } from "next/headers";
-import { forbidden, notFound } from "next/navigation";
-import { Armchair, ArrowLeft, Inbox, Printer, Users } from "lucide-react";
+import { notFound } from "next/navigation";
+import { Armchair, Inbox, Users } from "lucide-react";
 import { QrCode } from "@/components/qr-code";
-import { Button } from "@/components/ui/button";
-import { activity } from "@/features/activity";
+import { BackLink, DetailSection } from "../../../_components/detail-page";
+import { JoinLinkActions } from "../../../_components/join-link-actions";
+import { activity } from "@/lib/activity";
 import { chapters } from "@/features/chapters";
 import { joinUrl } from "@/lib/app-url";
 import { formatDate, resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { fill } from "@/lib/utils";
-import { CopyButton } from "../../../_components/copy-button";
 import { readActiveScope } from "../../../active-scope";
 import { ActivityFeed } from "../../../members/[userId]/_components/activity-feed";
-import { DownloadQrButton } from "../../../settings/_components/download-qr-button";
 import { ChapterEditor } from "./chapter-editor";
 import { DeleteChapterDialog } from "./delete-chapter-dialog";
 
@@ -24,9 +23,8 @@ export async function ChapterBody({
   params: Promise<{ chapterId: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const [{ session, scope, active, chapters: inScope }, { chapterId }] =
-    await Promise.all([readActiveScope(searchParams), params]);
-  if (!scope.canSeeChapters) forbidden();
+  const [{ session, scopeQuery, chapters: inScope }, { chapterId }] =
+    await Promise.all([readActiveScope(searchParams, "chapters"), params]);
   if (!inScope.some((entry) => entry.id === chapterId)) notFound();
 
   const [chapter, footprint, events, all, dict, language, head] =
@@ -47,12 +45,6 @@ export async function ChapterBody({
   const strings = dict.admin.chapters;
   const detail = strings.detail;
 
-  const scopeQuery =
-    active.kind === "chapter"
-      ? `?chapter=${encodeURIComponent(active.chapter.slug)}`
-      : active.kind === "country"
-        ? `?country=${encodeURIComponent(active.country.code)}`
-        : "";
   const backHref = `/admin/chapters${scopeQuery}`;
   const url = joinUrl(chapter.slug);
   const chapterQuery = `?chapter=${encodeURIComponent(chapter.slug)}`;
@@ -102,34 +94,13 @@ export async function ChapterBody({
           />
         </div>
         <p className="font-mono break-all text-ink-soft">{url}</p>
-        <div className="grid gap-1">
-          <CopyButton
-            value={url}
-            label={dict.admin.settings.joinLink.copy}
-            copiedLabel={dict.admin.settings.joinLink.copied}
-            className={compact}
-          />
-          <Button
-            asChild
-            variant="outline"
-            className={compact}
-          >
-            <a
-              href={`/join/${chapter.slug}/poster?print=1`}
-              target="_blank"
-              rel="noopener"
-            >
-              <Printer aria-hidden />
-              {dict.admin.settings.joinLink.poster}
-            </a>
-          </Button>
-          <DownloadQrButton
-            value={url}
-            fileName={`${chapter.slug}-qr.png`}
-            label={dict.admin.settings.joinLink.downloadPng}
-            className={compact}
-          />
-        </div>
+        <JoinLinkActions
+          url={url}
+          slug={chapter.slug}
+          labels={dict.admin.settings.joinLink}
+          className="grid gap-1"
+          buttonClassName={compact}
+        />
       </section>
 
       <section className="grid gap-2">
@@ -183,8 +154,7 @@ export async function ChapterBody({
   );
 
   const history = (
-    <section className="grid gap-4 border-t border-line pt-6">
-      <h2 className="text-base font-medium">{detail.history}</h2>
+    <DetailSection title={detail.history}>
       <ActivityFeed
         events={events}
         viewerId={session.user.id}
@@ -193,21 +163,15 @@ export async function ChapterBody({
         notation={notation}
         words={language}
       />
-    </section>
+    </DetailSection>
   );
 
   return (
     <>
-      <Link
+      <BackLink
         href={backHref}
-        className="inline-flex min-h-11 w-fit items-center gap-2 text-2sm text-ink-soft hover:text-ink"
-      >
-        <ArrowLeft
-          aria-hidden
-          className="size-4"
-        />
-        {detail.back}
-      </Link>
+        label={detail.back}
+      />
 
       <ChapterEditor
         id={chapter.id}

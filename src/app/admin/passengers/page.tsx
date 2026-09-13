@@ -1,11 +1,6 @@
 import { Suspense } from "react";
 import { headers } from "next/headers";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-} from "@/components/ui/empty";
+import { AdminEmpty } from "../_components/admin-empty";
 import { chapters as chapterFeature } from "@/features/chapters";
 import { passengers } from "@/features/passengers";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
@@ -51,7 +46,8 @@ async function Passengers({
 }: {
   searchParams: AdminSearchParams;
 }) {
-  const { active, chapters, chapterIds } = await readActiveScope(searchParams);
+  const { active, scopeQuery, chapters, chapterIds } =
+    await readActiveScope(searchParams);
 
   const [list, dict, head, country] = await Promise.all([
     passengers.listPassengersOfChapters(chapterIds),
@@ -68,13 +64,6 @@ async function Passengers({
     code && COUNTRIES.includes(code as CountryCode)
       ? (code as CountryCode)
       : defaultCountryFor(notation);
-
-  const scopeQuery =
-    active.kind === "chapter"
-      ? `?chapter=${encodeURIComponent(active.chapter.slug)}`
-      : active.kind === "country"
-        ? `?country=${encodeURIComponent(active.country.code)}`
-        : "";
 
   const rows: PassengerRow[] = list.map((passenger) => ({
     id: passenger.id,
@@ -105,7 +94,6 @@ async function Passengers({
           <AddPassengerDrawer
             chapterId={active.chapter.id}
             country={dialling}
-            scopeQuery={scopeQuery}
             labels={dict.admin.passengers.add}
             person={{
               firstName: dict.profile.firstName,
@@ -132,19 +120,9 @@ async function Passengers({
           table={dict.admin.table}
         />
       ) : (
-        <Empty className="rounded-2xl border border-line">
-          <EmptyHeader>
-            <EmptyMedia
-              variant="icon"
-              className="bg-mint-tint text-ink"
-            >
-              <PassengersIcon aria-hidden />
-            </EmptyMedia>
-            <EmptyDescription className="text-ink-soft">
-              {dict.admin.passengers.empty}
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <AdminEmpty icon={PassengersIcon}>
+          {dict.admin.passengers.empty}
+        </AdminEmpty>
       )}
     </>
   );

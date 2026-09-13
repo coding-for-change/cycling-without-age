@@ -2,6 +2,20 @@
 
 Which Use Cases call which Facades. Update this whenever a feature or use case is added.
 
+The audit log is **infrastructure**, not a feature: it lives in `src/lib/activity` beside
+`lib/auth-guards` and `lib/mailer`, so any layer may write a history line. That is why
+`change-member-role`, `submit-pilot-applications` and `claim-account` are gone — each
+coordinated exactly one feature plus the log, which AGENTS.md says is not a use case. Their
+logic sits in the facade that owns the domain rule (`membership.changeMemberRole` carries the
+"cannot change your own role" rule; `accounts.claimAccount` the claim), and the Action calls
+that facade directly.
+
+> Newly qualifying for the same treatment: `manage-chapter` and `manage-country` now touch
+> only `chapters` plus the log, so both could collapse into their Actions or into the
+> `chapters` facade. Left as-is deliberately — the facade already exports thin
+> `createChapter`/`updateChapter`/`deleteChapter` wrappers, so merging them is a naming
+> decision rather than a mechanical move.
+
 ```mermaid
 graph TD
   subgraph Presentation
@@ -27,20 +41,17 @@ graph TD
     U4[use-cases/accept-onboarding-consent]
     U5[use-cases/complete-onboarding-profile]
     U6[use-cases/decide-pilot-application]
-    U7[use-cases/change-member-role]
-    U8[use-cases/submit-pilot-applications]
     U9[use-cases/manage-country-admins]
     U10[use-cases/provision-assisted-passenger]
     U11[use-cases/invite-chapter-user]
-    U12[use-cases/claim-account]
     U13[use-cases/manage-chapter]
+    U14[use-cases/manage-country]
   end
   subgraph Features
     F1[features/chapters facade]
     F2[features/membership facade]
     F3[features/profile facade]
     F4[features/passengers facade]
-    F5[features/activity facade]
     F6[features/accounts facade]
     CM1[features/chapters/commands]
     CM2[features/membership/commands]
@@ -52,11 +63,11 @@ graph TD
     S2[membership/services]
     S3[profile/services]
     S4[passengers/services]
-    S5[activity/services]
     S6[accounts/services]
     DB[(MySQL via lib/prisma)]
   end
   subgraph Infrastructure
+    F5[lib/activity]
     MB[lib/mapbox]
     ML[lib/mailer]
     BA[lib/auth BetterAuth admin API]
@@ -83,6 +94,7 @@ graph TD
   A --> ACT2
   A --> ACT3
   ACT1 --> F2
+  ACT3 --> F6
   ACT2 --> F1
   ACT2 --> U3
   ACT2 --> MB
@@ -101,17 +113,15 @@ graph TD
   ADM --> ACT8
   ACT8 --> U10
   ACT8 --> U11
-  ACT3 --> U12
-  ACT1 --> U8
   ACT5 --> F2
   ACT5 --> F6
   ACT5 --> U6
-  ACT5 --> U7
   ACT6 --> F1
   ACT6 --> U13
   ACT6 --> MB
   ACT7 --> F1
   ACT7 --> U9
+  ACT7 --> U14
 
   U1 --> F1
   U1 --> F2
@@ -132,11 +142,6 @@ graph TD
   U6 --> F3
   U6 --> F5
   U6 --> ML
-  U7 --> F2
-  U7 --> F3
-  U7 --> F5
-  U8 --> F2
-  U8 --> F5
   U9 --> F1
   U9 --> F3
   U9 --> F5
@@ -150,22 +155,24 @@ graph TD
   U11 --> F5
   U11 --> F6
   U11 --> ML
-  U12 --> F5
-  U12 --> F6
   U13 --> F1
   U13 --> F5
+  U14 --> F1
+  U14 --> F5
 
   F1 --> S1
   F2 --> S2
+  F2 --> F5
+  F6 --> F5
+  F1 --> F5
   F3 --> S3
   F4 --> S4
-  F5 --> S5
   F6 --> S6
   S1 --> DB
   S2 --> DB
   S3 --> DB
   S4 --> DB
-  S5 --> DB
+  F5 --> DB
   S6 --> DB
   S6 --> BA
 ```
@@ -178,13 +185,11 @@ graph TD
 | `accept-onboarding-consent` | `membership`, `profile` | Records consent and, when a QR preset skipped the location step, performs the join it would have done. |
 | `complete-onboarding-profile` | `chapters`, `membership`, `passengers`, `profile` | Writes the account's own details, creates the rider profile a ride will point at, resolves the chapter, and sends the welcome mail. |
 | `decide-pilot-application` | `activity`, `chapters`, `membership`, `profile` | One approval writes the decision, the granted role, the history events and the applicant's email — in the applicant's own locale, so the profile is read too. |
-| `change-member-role` | `activity`, `membership`, `profile` | A promote/demote/remove is a membership write plus a history event; appointing by email resolves the address through `profile` first. |
-| `submit-pilot-applications` | `activity`, `membership` | The application rows are upserted, so the "asked to pilot" line has to live in `activity` to survive a re-application. |
 | `manage-country-admins` | `activity`, `chapters`, `profile` | Country-admin rows belong to `chapters`, the email lookup to `profile`, and the audit line to `activity`. |
 | `provision-assisted-passenger` | `accounts`, `membership`, `passengers`, `activity` | One "add a passenger at the door" makes the account, joins the chapter, creates the rider row and records who created it — four features, and the helper rule decides whether the rider row points at the new account or at nobody. |
 | `invite-chapter-user` | `accounts`, `chapters`, `membership`, `profile` (+ `activity`, `mailer`) | Provisioning the account, granting the chapter role, and mailing the invitation in the invitee's own locale (hence `profile`) are three features plus infrastructure. |
-| `claim-account` | `accounts`, `activity` | Stamping `claimedAt` and writing the `accountClaimed` line are two features, and the pair has to stay together — a claim nobody can see in the history is not an audit trail. |
-| `manage-chapter` | `chapters`, `activity` | Creating, editing or deleting a chapter is a `chapters` write plus the history line that makes it legible on the chapter's own page. `diffChapter` turns one autosave into one `chapterUpdated` event per field that actually changed (a moved pin and its new address fold into one `location` change), and the delete event is recorded *global* because the row it would point at is gone. |
+| `manage-chapter` | `chapters`, `activity` | Creating, editing or deleting a chapter is a `chapters` write plus the history line that makes it legible on the chapter's own page. `chapters.diffChapter` turns one autosave into one `chapterUpdated` event per field that actually changed (a moved pin and its new address fold into one `location` change), and the delete event is recorded *global* because the row it would point at is gone. |
+| `manage-country` | `chapters`, `activity` | Deleting a country takes every chapter under it (the relation restricts, so the service deletes both in one transaction) and writes the history: one `countryDeleted` line plus a `chapterDeleted` line per chapter, all recorded *global* because the rows they would point at are gone. |
 
 No use case was added for the admin shell. `G --> F1` now carries two guards:
 `requireChapterAdmin` (`chapters.getChapterCountryId`) and `requireAdminScope`
@@ -210,14 +215,16 @@ straight into the admin passengers and members screens, because "provision a use
 page. `app/admin/members/actions` also calls `accounts.deleteUser` directly (`ACT5 --> F6`):
 the hard delete touches one feature — the schema cascades everything else — so it is an
 Action behind `requireSuperAdmin`, not a use case. `S6` is the only place outside `prisma/seed.ts` that calls BetterAuth's admin API
-(`auth.api.createUser`); everything else in that slice is ordinary Prisma. `U12` is reached
-from the onboarding consent action (ACT3), not from the admin shell: the account is claimed by
-the person who received it, at the one step nobody may take on their behalf.
+(`auth.api.createUser`); everything else in that slice is ordinary Prisma.
+`accounts.claimAccount` is called from the onboarding consent action (ACT3), not from the
+admin shell: the account is claimed by the person who received it, at the one step nobody may
+take on their behalf.
 
-`features/activity` (F5) is a slice with no UI of its own: every write goes through a use
-case that pairs it with the mutation it records, and the only reads are the person-history feed
-on `/admin/members/[userId]` and the chapter history on `/admin/chapters/[chapterId]`, both of
-which call the facade straight from the Server Component.
+`lib/activity` (F5) is cross-cutting infrastructure, the same standing as `lib/auth-guards`
+and `lib/mailer`: a facade, a use case or a Server Component may write a history line, and it
+owns no domain of its own. Writes sit next to the mutation they record; the only reads are the
+person-history feed on `/admin/members/[userId]` and the chapter history on
+`/admin/chapters/[chapterId]`, both straight from the Server Component.
 
 `lib/mapbox` and `lib/mailer` are cross-cutting infrastructure, callable from any layer — the
 same standing as `lib/prisma` and `lib/sms`. `lib/mapbox` is reached only from a Server Action

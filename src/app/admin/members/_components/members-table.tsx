@@ -8,6 +8,7 @@ import {
   stopRowClick,
   type DataTableStrings,
 } from "@/components/ui/data-table";
+import { mutedColumn } from "../../_components/table-columns";
 import { PersonAvatar } from "@/components/person-avatar";
 
 export type MemberRow = {
@@ -88,33 +89,16 @@ export function MembersTable({
         </div>
       ),
     },
-    {
-      id: "phone",
-      accessorFn: (row) => row.phone ?? "",
-      meta: { label: labels.columns.phone },
-      cell: ({ row }) => (
-        <span className="text-ink-soft">{row.original.phone}</span>
-      ),
-    },
-    {
-      id: "chapter",
-      accessorFn: (row) => row.chapterName,
-      meta: { label: chapterColumn },
-      cell: ({ row }) => (
-        <span className="text-ink-soft">{row.original.chapterName}</span>
-      ),
-    },
-    {
-      id: "joined",
-      accessorFn: (row) => row.since,
-      enableSorting: true,
-      sortingFn: (a, b) =>
-        a.original.sinceIso.localeCompare(b.original.sinceIso),
-      meta: { label: labels.columns.joined },
-      cell: ({ row }) => (
-        <span className="text-ink-soft">{row.original.since}</span>
-      ),
-    },
+    mutedColumn<MemberRow>("phone", labels.columns.phone, (row) => row.phone),
+    mutedColumn<MemberRow>("chapter", chapterColumn, (row) => row.chapterName),
+    mutedColumn<MemberRow>(
+      "joined",
+      labels.columns.joined,
+      (row) => row.since,
+      {
+        isoOf: (row) => row.sinceIso,
+      },
+    ),
   ];
 
   return (

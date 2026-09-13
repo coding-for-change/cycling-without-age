@@ -4,6 +4,11 @@ import type { ReactNode } from "react";
 import type { AddressSearchStrings } from "@/components/address-search";
 import type { Locale } from "@/lib/format";
 import type { Coords } from "@/lib/geo";
+import { DetailSection } from "../../../_components/detail-page";
+import {
+  CHAPTER_DESCRIPTION_MAX,
+  isHttpUrl,
+} from "@/features/chapters/schemas";
 import {
   InlineField,
   type InlineFieldLabels,
@@ -59,8 +64,6 @@ export type ChapterEditorProps = {
   history: ReactNode;
   properties: ReactNode;
 };
-
-const isUrl = (value: string) => /^https?:\/\//.test(value);
 
 export function ChapterEditor({
   id,
@@ -129,8 +132,7 @@ export function ChapterEditor({
             labels={labels}
           />
 
-          <section className="grid gap-4 border-t border-line pt-6">
-            <h2 className="text-base font-medium">{labels.about}</h2>
+          <DetailSection title={labels.about}>
             <dl className="grid gap-4">
               <div className="grid gap-1 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-4">
                 <dt className="pt-2 text-2sm text-ink-soft">
@@ -155,7 +157,7 @@ export function ChapterEditor({
                 <dd>
                   <InlineField
                     multiline
-                    maxLength={600}
+                    maxLength={CHAPTER_DESCRIPTION_MAX}
                     value={description}
                     label={labels.fields.description}
                     placeholder={labels.placeholders.description}
@@ -182,7 +184,7 @@ export function ChapterEditor({
                     value={logo}
                     label={labels.fields.logo}
                     placeholder={labels.placeholders.logo}
-                    validate={isUrl}
+                    validate={isHttpUrl}
                     onSave={(next) => updateChapterAction(id, { logo: next })}
                     labels={labels.field}
                     className="min-w-0 flex-1 font-mono text-2sm break-all"
@@ -190,7 +192,7 @@ export function ChapterEditor({
                 </dd>
               </div>
             </dl>
-          </section>
+          </DetailSection>
 
           {history}
         </div>

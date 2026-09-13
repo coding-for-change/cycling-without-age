@@ -1,15 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { domainCode } from "@/lib/domain-error";
 import { z } from "zod";
 import { accounts } from "@/features/accounts";
-import { membership } from "@/features/membership";
 import {
   requireAuth,
   requireChapterAdmin,
   requireSuperAdmin,
 } from "@/lib/auth-guards";
-import { changeMemberRole, SELF_CHANGE } from "@/use-cases/change-member-role";
+import { membership } from "@/features/membership";
 import { decidePilotApplication } from "@/use-cases/decide-pilot-application";
 
 export type AdminActionResult =
@@ -36,14 +36,16 @@ const roleChangeInput = z.object({
 const deleteUserInput = z.object({ userId: id });
 
 function failed(error: unknown): AdminActionResult {
-  const message = error instanceof Error ? error.message : "";
-  if (message.includes("Last admin of the chapter"))
-    return { ok: false, error: "lastAdmin" };
-  if (message.includes("Application already decided"))
-    return { ok: false, error: "alreadyDecided" };
-  if (error instanceof Error && error.message === SELF_CHANGE)
-    return { ok: false, error: "self" };
-  return { ok: false, error: "generic" };
+  switch (domainCode(error)) {
+    case "lastAdmin":
+      return { ok: false, error: "lastAdmin" };
+    case "alreadyDecided":
+      return { ok: false, error: "alreadyDecided" };
+    case "selfChange":
+      return { ok: false, error: "self" };
+    default:
+      return { ok: false, error: "generic" };
+  }
 }
 
 export async function decideApplicationAction(
@@ -83,7 +85,7 @@ export async function changeMemberRoleAction(
   const session = await requireChapterAdmin(parsed.data.chapterId);
 
   try {
-    await changeMemberRole({
+    await membership.changeMemberRole({
       userId: parsed.data.userId,
       chapterId: parsed.data.chapterId,
       change: parsed.data.change,

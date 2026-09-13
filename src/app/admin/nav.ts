@@ -77,6 +77,16 @@ export type ResolvedNavItem = {
 export const navFor = (scope: AdminScope): NavItem[] =>
   NAV.filter((item) => item.visible?.(scope) ?? true);
 
+/**
+ * Whether this scope may reach the surface behind a `NAV` row. The row is the
+ * single declaration of that: the sidebar hides what this returns false for and
+ * `readActiveScope` refuses it, so the two cannot drift.
+ */
+export const canReach = (scope: AdminScope, key: NavKey): boolean => {
+  const item = NAV.find((row) => row.key === key);
+  return item ? (item.visible?.(scope) ?? true) : false;
+};
+
 export const resolveNav = (
   scope: AdminScope,
   labels: Dictionary["admin"]["nav"],

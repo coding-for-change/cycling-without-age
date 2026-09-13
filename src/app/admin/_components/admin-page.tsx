@@ -1,10 +1,5 @@
 import { Suspense, type ReactNode } from "react";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-} from "@/components/ui/empty";
+import { AdminEmpty } from "./admin-empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireAdminScope } from "@/lib/auth-guards";
 import { getDictionary } from "@/lib/i18n";
@@ -46,17 +41,12 @@ export async function AdminPageBody({ page }: { page: NavKey }) {
   return (
     <>
       <h1 className="text-2xl tracking-tight md:text-3xl">{title}</h1>
-      <Empty className="flex-1 justify-start pt-16">
-        <EmptyHeader>
-          <EmptyMedia
-            variant="icon"
-            className="bg-mint-tint text-ink"
-          >
-            <Icon aria-hidden />
-          </EmptyMedia>
-          <EmptyDescription className="text-ink-soft">{body}</EmptyDescription>
-        </EmptyHeader>
-      </Empty>
+      <AdminEmpty
+        icon={Icon}
+        className="flex-1 justify-start rounded-none border-none pt-16"
+      >
+        {body}
+      </AdminEmpty>
     </>
   );
 }

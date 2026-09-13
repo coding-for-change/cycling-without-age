@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import { MapUnavailable } from "@/components/map-unavailable";
 import {
   useCallback,
   useEffect,
@@ -19,14 +20,13 @@ import {
   CircleCheckBig,
   Loader2,
   MapPin,
-  MapPinOff,
   Pencil,
-  Printer,
   X,
 } from "lucide-react";
 import { QrCode } from "@/components/qr-code";
 import { AddressSearch } from "@/components/address-search";
 import { Button } from "@/components/ui/button";
+import { JoinLinkActions } from "../../_components/join-link-actions";
 import {
   Form,
   FormControl,
@@ -48,20 +48,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  CHAPTER_DESCRIPTION_MAX,
+  CHAPTER_RADIUS_KM,
   chapterInput,
+  isHttpUrl,
   slugify,
   type ChapterInput,
 } from "@/features/chapters/schemas";
 import { formatDistance, type Locale } from "@/lib/format";
-import { distanceMeters, type Coords } from "@/lib/geo";
+import { nearestOverlap, type Coords } from "@/lib/geo";
 import { regionName } from "@/lib/countries";
 import type { ResolvedPlace } from "@/lib/mapbox";
 import { haptics } from "@/lib/native/haptics";
 import { cn, fill } from "@/lib/utils";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
-import { CopyButton } from "../../_components/copy-button";
 import { notify, type NotifyLabels } from "../../_components/action-feedback";
-import { DownloadQrButton } from "../../settings/_components/download-qr-button";
+import { TextField } from "../../_components/text-field";
 import { createCountryAction } from "../../countries/actions";
 import {
   checkSlugAction,
@@ -79,10 +81,6 @@ const ChapterMap = dynamic(() => import("./chapter-map"), {
   loading: () => <Skeleton className="size-full rounded-none" />,
 });
 
-const DEFAULT_RADIUS_KM = 10;
-const MIN_RADIUS_KM = 1;
-const MAX_RADIUS_KM = 60;
-const DESCRIPTION_MAX = 600;
 const SLUG_DEBOUNCE_MS = 300;
 
 const EMPTY: DefaultValues<ChapterInput> = {
@@ -96,7 +94,7 @@ const EMPTY: DefaultValues<ChapterInput> = {
   logo: undefined,
   latitude: undefined,
   longitude: undefined,
-  serviceRadiusKm: DEFAULT_RADIUS_KM,
+  serviceRadiusKm: CHAPTER_RADIUS_KM.default,
 };
 
 export type ChapterCreateStrings = {
@@ -159,9 +157,6 @@ type SlugState = "idle" | "checking" | "free" | "taken";
 type Detected = { code: string; known: boolean };
 type Created = { id: string; slug: string; name: string };
 
-const isHttpUrl = (value: string | undefined | null) =>
-  Boolean(value && /^https?:\/\//i.test(value));
-
 /**
  * Name it, place it. Everything the schema needs beyond those two is either
  * derived (the slug from the name, the country from the address) or optional,
@@ -221,7 +216,7 @@ export function ChapterCreateDrawer({
 
   const values = useWatch({ control: form.control });
   const slug = values.slug ?? "";
-  const radiusKm = values.serviceRadiusKm ?? DEFAULT_RADIUS_KM;
+  const radiusKm = values.serviceRadiusKm ?? CHAPTER_RADIUS_KM.default;
   const { latitude, longitude } = values;
   const center = useMemo<Coords | null>(
     () =>
@@ -343,18 +338,13 @@ export function ChapterCreateDrawer({
           errors: strings.errors,
         },
       );
-      router.refresh();
     });
   };
 
-  const overlap = useMemo(() => {
-    if (!center) return null;
-    const near = pins
-      .map((pin) => ({ pin, meters: distanceMeters(center, pin.coords) }))
-      .filter(({ pin, meters }) => meters < (radiusKm + pin.radiusKm) * 1000)
-      .sort((a, b) => a.meters - b.meters);
-    return near[0] ?? null;
-  }, [center, pins, radiusKm]);
+  const overlap = useMemo(
+    () => (center ? nearestOverlap(center, radiusKm, pins) : null),
+    [center, pins, radiusKm],
+  );
 
   const resetToEmpty = () => {
     form.reset(EMPTY);
@@ -394,7 +384,7 @@ export function ChapterCreateDrawer({
         logo: input.logo || null,
         latitude: input.latitude,
         longitude: input.longitude,
-        serviceRadiusKm: input.serviceRadiusKm ?? DEFAULT_RADIUS_KM,
+        serviceRadiusKm: input.serviceRadiusKm ?? CHAPTER_RADIUS_KM.default,
       });
       setCreated({ id: result.id, slug: result.slug, name: result.name });
     });
@@ -441,7 +431,8 @@ export function ChapterCreateDrawer({
             </Button>
             <Button
               type="button"
-              className="min-h-11 bg-red text-white hover:bg-red-hover"
+              variant="brand"
+              className="min-h-11"
               onClick={() =>
                 router.push(`/admin/chapters/${created.id}${scopeQuery}`)
               }
@@ -463,7 +454,8 @@ export function ChapterCreateDrawer({
               type="submit"
               form={formId}
               disabled={!ready || pending}
-              className="min-h-11 bg-red text-white hover:bg-red-hover"
+              variant="brand"
+              className="min-h-11"
             >
               {pending ? strings.create.pending : strings.create.submit}
               <Kbd className="hidden bg-white/20 text-white sm:inline-flex">
@@ -687,10 +679,10 @@ export function ChapterCreateDrawer({
                     <FormLabel>{strings.create.radius}</FormLabel>
                     <FormControl>
                       <Slider
-                        min={MIN_RADIUS_KM}
-                        max={MAX_RADIUS_KM}
+                        min={CHAPTER_RADIUS_KM.min}
+                        max={CHAPTER_RADIUS_KM.sliderMax}
                         step={1}
-                        value={[field.value ?? DEFAULT_RADIUS_KM]}
+                        value={[field.value ?? CHAPTER_RADIUS_KM.default]}
                         onValueChange={([next]) => field.onChange(next)}
                         aria-label={strings.create.radius}
                         data-vaul-no-drag
@@ -711,7 +703,7 @@ export function ChapterCreateDrawer({
                         <span>
                           {fill(strings.create.overlap, {
                             name: overlap.pin.name,
-                            distance: formatDistance(overlap.meters, notation),
+                            distance: formatDistance(overlap.metres, notation),
                           })}
                         </span>
                       </p>
@@ -726,23 +718,11 @@ export function ChapterCreateDrawer({
                   {strings.create.optional}
                 </h3>
 
-                <FormField
+                <TextField
                   control={form.control}
                   name="careHomeName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{strings.fields.careHomeName}</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          value={field.value ?? ""}
-                          autoComplete="off"
-                          className="h-11 border-line text-base"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label={strings.fields.careHomeName}
+                  autoComplete="off"
                 />
 
                 <FormField
@@ -755,7 +735,7 @@ export function ChapterCreateDrawer({
                         <Textarea
                           {...field}
                           value={field.value ?? ""}
-                          maxLength={DESCRIPTION_MAX}
+                          maxLength={CHAPTER_DESCRIPTION_MAX}
                           rows={3}
                           className="border-line text-base"
                         />
@@ -763,7 +743,7 @@ export function ChapterCreateDrawer({
                       <p className="text-right text-xs tabular-nums text-ink-faint">
                         {fill(strings.create.counter, {
                           count: (field.value ?? "").length,
-                          max: DESCRIPTION_MAX,
+                          max: CHAPTER_DESCRIPTION_MAX,
                         })}
                       </p>
                       <FormMessage />
@@ -825,13 +805,7 @@ export function ChapterCreateDrawer({
               </div>
             ) : (
               <div className="grid h-56 place-items-center rounded-(--r-tile) bg-canvas-deep p-6 text-center md:h-full">
-                <p className="max-w-xs text-sm text-ink-soft">
-                  <MapPinOff
-                    className="mx-auto mb-3 size-6"
-                    aria-hidden
-                  />
-                  {strings.mapUnavailable}
-                </p>
+                <MapUnavailable label={strings.mapUnavailable} />
               </div>
             )}
           </div>
@@ -973,32 +947,12 @@ function DonePanel({
       </div>
       <p className="font-mono text-2sm break-all text-ink-soft">{url}</p>
 
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        <CopyButton
-          value={url}
-          label={strings.joinLink.copy}
-          copiedLabel={strings.joinLink.copied}
-        />
-        <Button
-          asChild
-          variant="outline"
-          className="min-h-11"
-        >
-          <a
-            href={`/join/${slug}/poster?print=1`}
-            target="_blank"
-            rel="noopener"
-          >
-            <Printer aria-hidden />
-            {strings.joinLink.poster}
-          </a>
-        </Button>
-        <DownloadQrButton
-          value={url}
-          fileName={`${slug}-qr.png`}
-          label={strings.joinLink.downloadPng}
-        />
-      </div>
+      <JoinLinkActions
+        url={url}
+        slug={slug}
+        labels={strings.joinLink}
+        className="flex flex-wrap items-center justify-center gap-2"
+      />
     </div>
   );
 }

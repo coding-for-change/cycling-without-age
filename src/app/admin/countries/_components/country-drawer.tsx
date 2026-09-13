@@ -121,7 +121,8 @@ export function CountryDrawer({
             type="submit"
             form={formId}
             disabled={pending}
-            className="min-h-11 bg-red text-white hover:bg-red-hover"
+            variant="brand"
+            className="min-h-11"
           >
             {labels.save}
           </Button>

@@ -24,7 +24,6 @@ export function PasskeyButton({ label }: { label: string }) {
   return (
     <Button
       variant="outline"
-      size="lg"
       disabled={pending}
       onClick={() =>
         startTransition(async () => {
@@ -35,7 +34,8 @@ export function PasskeyButton({ label }: { label: string }) {
           router.replace("/onboarding");
         })
       }
-      className="h-14 w-full gap-3 rounded-full border-line text-base"
+      size="hero"
+      className="gap-3 border-line"
     >
       <KeyRound
         className="size-5"

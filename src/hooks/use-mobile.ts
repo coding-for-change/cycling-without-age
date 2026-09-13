@@ -12,13 +12,6 @@ const subscribe = (onChange: () => void) => {
   return () => mql.removeEventListener("change", onChange);
 };
 
-/**
- * `useSyncExternalStore`, not `useState` + an effect: the server has no viewport,
- * so it always reports desktop, and a consumer that hydrates late — anything
- * streamed in behind `<Suspense>` — would otherwise be reconciled against
- * already-mobile client state and throw a hydration mismatch. This hook hands
- * React the server snapshot to hydrate against and lets it swap afterwards.
- */
 export function useIsMobile() {
   return React.useSyncExternalStore(
     subscribe,

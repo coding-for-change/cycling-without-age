@@ -10,7 +10,7 @@ import { requestNotificationPermission } from "@/lib/native/push";
 import { cn, fill } from "@/lib/utils";
 import type { OnboardingRole } from "@/lib/onboarding";
 import type { StepDefaults } from "./step-page";
-import { Step, type StepProgress } from "../../_components/step";
+import { Step, StepError, type StepProgress } from "../../_components/step";
 import { submitConsent } from "../actions";
 
 type Strings = {
@@ -116,12 +116,7 @@ export function ConsentStep({
       action={
         <>
           {error ? (
-            <p
-              role="alert"
-              className="mb-2 text-center text-sm text-red"
-            >
-              {error}
-            </p>
+            <StepError>{error}</StepError>
           ) : (
             !complete && (
               <p className="mb-2 text-center text-sm text-ink-soft">
@@ -130,10 +125,10 @@ export function ConsentStep({
             )
           )}
           <Button
-            size="lg"
             disabled={!complete || pending}
             onClick={submit}
-            className="h-14 w-full rounded-full bg-red text-base text-white shadow-lift hover:bg-red-hover disabled:bg-grey-tint disabled:text-ink-faint disabled:shadow-none"
+            variant="brand"
+            size="hero"
           >
             {continueLabel}
           </Button>

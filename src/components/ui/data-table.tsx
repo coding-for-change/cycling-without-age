@@ -15,6 +15,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  type Column,
   type ColumnDef,
   type ColumnFiltersState,
   type FilterFn,
@@ -27,6 +28,7 @@ import {
   ArrowUp,
   ArrowUpDown,
   Columns3,
+  ListFilter,
   Search,
   X,
 } from "lucide-react";
@@ -35,6 +37,8 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -47,13 +51,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -82,6 +79,7 @@ export type DataTableStrings = {
   next: string;
   all: string;
   sortAria: string;
+  filterAria: string;
 };
 
 export type DataTableFilter = {
@@ -107,6 +105,103 @@ const pageList = (current: number, count: number) => {
     index > 0 && page - shown[index - 1] > 1 ? [GAP, page] : [page],
   );
 };
+
+function ColumnsMenu<TData>({
+  columns,
+  strings,
+}: {
+  columns: Column<TData, unknown>[];
+  strings: DataTableStrings;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={strings.columns}
+          className="ml-auto size-8 text-ink-soft"
+        >
+          <Columns3 aria-hidden />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="min-w-48 rounded-2xl border-line p-2"
+      >
+        {columns.map((column) => (
+          <DropdownMenuCheckboxItem
+            key={column.id}
+            checked={column.getIsVisible()}
+            onCheckedChange={(value) => {
+              if (!value) column.setFilterValue(undefined);
+              column.toggleVisibility(!!value);
+            }}
+            className="rounded-xl py-2.5"
+          >
+            {column.columnDef.meta?.label ?? column.id}
+          </DropdownMenuCheckboxItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function HeaderFilter({
+  filter,
+  value,
+  onChange,
+  strings,
+}: {
+  filter: DataTableFilter;
+  value: string;
+  onChange: (value: string) => void;
+  strings: DataTableStrings;
+}) {
+  const active = value !== ALL;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={fill(strings.filterAria, { column: filter.label })}
+          className={cn(
+            "size-8 text-ink-soft",
+            active && "bg-mint text-ink hover:bg-mint",
+          )}
+        >
+          <ListFilter aria-hidden />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        className="min-w-48 rounded-2xl border-line p-2"
+      >
+        <DropdownMenuRadioGroup
+          value={value}
+          onValueChange={onChange}
+        >
+          <DropdownMenuRadioItem
+            value={ALL}
+            className="rounded-xl py-2.5"
+          >
+            {strings.all}
+          </DropdownMenuRadioItem>
+          {filter.options.map((option) => (
+            <DropdownMenuRadioItem
+              key={option.value}
+              value={option.value}
+              className="rounded-xl py-2.5"
+            >
+              {option.label}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 // ponytail: client-side paging over the full scope list; move filtering/paging to the service when a chapter exceeds a few thousand rows.
 export function DataTable<TData>({
@@ -183,6 +278,10 @@ export function DataTable<TData>({
   const from = total === 0 ? 0 : pageIndex * PAGE_SIZE + 1;
   const to = Math.min(total, (pageIndex + 1) * PAGE_SIZE);
   const hideable = table.getAllLeafColumns().filter((c) => c.getCanHide());
+  const filterByColumn = useMemo(
+    () => new Map(filters.map((filter) => [filter.columnId, filter])),
+    [filters],
+  );
 
   const closeSearch = () => {
     setGlobalFilter("");
@@ -191,41 +290,6 @@ export function DataTable<TData>({
 
   return (
     <div className="grid gap-3">
-      {filters.length > 0 ? (
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {filters.map((filter) => {
-            const column = table.getColumn(filter.columnId);
-            return (
-              <Select
-                key={filter.columnId}
-                value={(column?.getFilterValue() as string) ?? ALL}
-                onValueChange={(value) =>
-                  column?.setFilterValue(value === ALL ? undefined : value)
-                }
-              >
-                <SelectTrigger
-                  aria-label={filter.label}
-                  className="min-h-11 border-line"
-                >
-                  <SelectValue placeholder={filter.label} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL}>{strings.all}</SelectItem>
-                  {filter.options.map((option) => (
-                    <SelectItem
-                      key={option.value}
-                      value={option.value}
-                    >
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            );
-          })}
-        </div>
-      ) : null}
-
       <div className="overflow-hidden rounded-2xl border border-line">
         <Table>
           <TableHeader>
@@ -239,6 +303,9 @@ export function DataTable<TData>({
                   const label = header.column.columnDef.meta?.label ?? "";
                   const sortable = header.column.getCanSort();
                   const withSearch = searchable && index === 0;
+                  const filter = filterByColumn.get(header.column.id);
+                  const withColumns =
+                    hideable.length > 0 && index === group.headers.length - 1;
                   return (
                     <TableHead
                       key={header.id}
@@ -333,43 +400,30 @@ export function DataTable<TData>({
                             ) : null}
                           </>
                         ) : null}
+                        {filter ? (
+                          <HeaderFilter
+                            filter={filter}
+                            value={
+                              (header.column.getFilterValue() as string) ?? ALL
+                            }
+                            onChange={(value) =>
+                              header.column.setFilterValue(
+                                value === ALL ? undefined : value,
+                              )
+                            }
+                            strings={strings}
+                          />
+                        ) : null}
+                        {withColumns ? (
+                          <ColumnsMenu
+                            columns={hideable}
+                            strings={strings}
+                          />
+                        ) : null}
                       </div>
                     </TableHead>
                   );
                 })}
-                {hideable.length > 0 ? (
-                  <TableHead className="w-10 px-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={strings.columns}
-                          className="size-8 text-ink-soft"
-                        >
-                          <Columns3 aria-hidden />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="end"
-                        className="min-w-48 rounded-2xl border-line p-2"
-                      >
-                        {hideable.map((column) => (
-                          <DropdownMenuCheckboxItem
-                            key={column.id}
-                            checked={column.getIsVisible()}
-                            onCheckedChange={(value) =>
-                              column.toggleVisibility(!!value)
-                            }
-                            className="rounded-xl py-2.5"
-                          >
-                            {column.columnDef.meta?.label ?? column.id}
-                          </DropdownMenuCheckboxItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableHead>
-                ) : null}
               </TableRow>
             ))}
           </TableHeader>
@@ -377,10 +431,7 @@ export function DataTable<TData>({
             {rows.length === 0 ? (
               <TableRow className="hover:bg-transparent">
                 <TableCell
-                  colSpan={
-                    table.getVisibleLeafColumns().length +
-                    (hideable.length > 0 ? 1 : 0)
-                  }
+                  colSpan={table.getVisibleLeafColumns().length}
                   className="px-4 py-10 text-center text-ink-soft"
                 >
                   {strings.noResults}
@@ -416,9 +467,6 @@ export function DataTable<TData>({
                         )}
                       </TableCell>
                     ))}
-                    {hideable.length > 0 ? (
-                      <TableCell className="w-10" />
-                    ) : null}
                   </TableRow>
                 );
               })

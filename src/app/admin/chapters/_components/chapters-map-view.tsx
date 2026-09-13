@@ -3,7 +3,10 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState } from "react";
-import { MapPinOff, X } from "lucide-react";
+import { MapUnavailable } from "@/components/map-unavailable";
+import { X } from "lucide-react";
+import { AdminEmpty } from "../../_components/admin-empty";
+import { ICONS } from "../../_components/icons";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistance, type Locale } from "@/lib/format";
@@ -42,22 +45,12 @@ export function ChaptersMapView({
   const selected = pins.find((pin) => pin.id === selectedId) ?? null;
 
   if (pins.length === 0)
-    return (
-      <p className="rounded-2xl border border-line px-4 py-10 text-center text-sm text-ink-soft">
-        {strings.empty}
-      </p>
-    );
+    return <AdminEmpty icon={ICONS.chapters}>{strings.empty}</AdminEmpty>;
 
   if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN)
     return (
       <div className="grid h-[70svh] place-items-center rounded-(--r-tile) bg-canvas-deep p-6 text-center">
-        <p className="max-w-xs text-sm text-ink-soft">
-          <MapPinOff
-            className="mx-auto mb-3 size-6"
-            aria-hidden
-          />
-          {strings.mapUnavailable}
-        </p>
+        <MapUnavailable label={strings.mapUnavailable} />
       </div>
     );
 

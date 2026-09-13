@@ -40,7 +40,8 @@ src/
 │       ├── commands.ts   # ⌘K entries this slice contributes to the admin palette.
 │       ├── index.ts      # PUBLIC API: Export ONLY the Facade and Components.
 │       └── schemas.ts    # Contracts: Zod schemas and TS types.
-├── components/           # ATOMIC UI: Shared, stateless shadcn components.
+├── components/           # SHARED UI: cross-route components over `lib` infra.
+│   └── ui/               # ATOMIC UI: stateless shadcn primitives.
 ├── lib/                  # INFRA: DB clients, Auth config, Shared utils.
 └── docs/                 # ARCHITECTURE: The system manifesto.
 ```
@@ -350,14 +351,17 @@ the same second would both pass an unlocked count and leave the chapter orphaned
 sidestep the same check. Callbacks inside the lock stay DB-only — the decision email is sent
 by the use case afterwards, never inside the transaction.
 
-### Activity feed (`features/activity`)
+### Activity feed (`lib/activity`)
 
 One append-only table, `activity_event`, records what happened to a person: applications
 submitted/approved/rejected, roles granted and revoked, members removed, emails sent, country
-admins appointed and removed. It is a slice of its own because recording an event always sits
-next to a mutation owned by a *different* feature, which is what makes those actions use
-cases (`decide-pilot-application`, `change-member-role`, `submit-pilot-applications`,
-`manage-country-admins`).
+admins appointed and removed.
+
+It is **infrastructure, not a feature** — the same standing as `lib/auth-guards` and
+`lib/mailer`. It owns no domain of its own and every workflow writes to it, so modelling it as
+a slice made every logged mutation look "cross-feature" and manufactured use cases for
+single-feature work. A facade may write its own history line: `membership.changeMemberRole`
+and `accounts.claimAccount` do, which is why neither needs a use case.
 
 It also solves a data problem: `ChapterApplication` keeps its `@@unique([userId, chapterId])`,
 so re-applying overwrites the previous decision. The events do not overwrite, so the history

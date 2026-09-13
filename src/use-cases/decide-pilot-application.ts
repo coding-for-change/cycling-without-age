@@ -1,10 +1,11 @@
 import { createElement } from "react";
-import { activity } from "@/features/activity";
+import { activity } from "@/lib/activity";
 import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { profile } from "@/features/profile";
 import { ApplicationDecisionEmail } from "@/emails/application-decision";
 import { getEmailStrings, resolveEmailLocale } from "@/emails/strings";
+import { afterResponse } from "@/lib/after-response";
 import { APP_URL } from "@/lib/app-url";
 import { sendMail } from "@/lib/mailer";
 import { fill } from "@/lib/utils";
@@ -43,7 +44,9 @@ export async function decidePilotApplication({
       : {}),
   });
 
-  await mailDecision({ ...subject, approve, note: decided.decisionNote });
+  await afterResponse(() =>
+    mailDecision({ ...subject, approve, note: decided.decisionNote }),
+  );
   return decided;
 }
 

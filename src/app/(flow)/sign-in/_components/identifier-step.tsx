@@ -7,7 +7,7 @@ import { authClient } from "@/lib/auth-client";
 import { useCharacter } from "@/components/character";
 import { dialCodeOf, looksLikePhone, parseIdentity } from "@/lib/identity";
 import { haptics } from "@/lib/native/haptics";
-import { cn } from "@/lib/utils";
+import { cn, fill } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Step } from "../../_components/step";
 import { useFlow } from "../../_components/flow-state";
@@ -84,10 +84,9 @@ export function IdentifierStep({
       say("confus");
       setError(
         result.problem === "invalidPhone"
-          ? strings.errors.invalidPhone.replace(
-              "{country}",
-              dialCodeOf(country),
-            )
+          ? fill(strings.errors.invalidPhone, {
+              country: dialCodeOf(country),
+            })
           : strings.errors[result.problem],
       );
       input.current?.focus();
@@ -127,14 +126,13 @@ export function IdentifierStep({
       action={
         <div className="space-y-4">
           <Button
-            size="lg"
             disabled={pending || value.trim().length === 0}
             onClick={submit}
-            className="h-14 w-full rounded-full bg-red text-base text-white hover:bg-red-hover disabled:bg-grey-tint disabled:text-ink-faint"
+            variant="brand"
+            size="hero"
           >
             {common.continue}
           </Button>
-          {}
           <div className="space-y-3 empty:hidden">
             <p className="text-center text-sm text-ink-faint">
               {strings.separator}

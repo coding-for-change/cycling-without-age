@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useId, useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle, Send, UserRound } from "lucide-react";
@@ -11,19 +10,18 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
-  FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { inviteChapterUser, previewAvatar } from "@/features/accounts/actions";
 import { inviteInput, inviteRole } from "@/features/accounts/schemas";
 import { avatarSeed } from "@/lib/avatar-seed";
 import { fill } from "@/lib/utils";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
 import { notify, type NotifyLabels } from "../../_components/action-feedback";
+import { TextField } from "../../_components/text-field";
 
 const schema = inviteInput.omit({ chapterId: true });
 type FormValues = z.infer<typeof schema>;
@@ -59,7 +57,6 @@ export function InviteDialog({
   roleLabel: string;
   labels: InviteLabels;
 }) {
-  const router = useRouter();
   const formId = useId();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -81,7 +78,6 @@ export function InviteDialog({
       if (!result.ok) return;
       form.reset();
       setOpen(false);
-      router.refresh();
     });
   });
 
@@ -118,7 +114,8 @@ export function InviteDialog({
               type="submit"
               form={formId}
               disabled={pending || roles.length === 0}
-              className="min-h-11 bg-red text-white hover:bg-red-hover"
+              variant="brand"
+              className="min-h-11"
             >
               {pending ? (
                 <LoaderCircle
@@ -144,46 +141,24 @@ export function InviteDialog({
             <div className="grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-4">
               <AvatarPreview email={email} />
               <div className="grid gap-3.5">
-                <FormField
+                <TextField
                   control={form.control}
                   name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{labels.name}</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          autoFocus
-                          autoComplete="off"
-                          placeholder={labels.namePlaceholder}
-                          className="h-11 border-line text-base"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label={labels.name}
+                  autoFocus
+                  autoComplete="off"
+                  placeholder={labels.namePlaceholder}
                 />
-                <FormField
+                <TextField
                   control={form.control}
                   name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{labels.email}</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="email"
-                          inputMode="email"
-                          autoComplete="off"
-                          autoCapitalize="none"
-                          spellCheck={false}
-                          placeholder={labels.emailPlaceholder}
-                          className="h-11 border-line text-base"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label={labels.email}
+                  type="email"
+                  inputMode="email"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  placeholder={labels.emailPlaceholder}
                 />
               </div>
             </div>

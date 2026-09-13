@@ -1,9 +1,7 @@
 import { Suspense, type ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { accounts } from "@/features/accounts";
-import { chapters } from "@/features/chapters";
 import { passengers } from "@/features/passengers";
-import { profile } from "@/features/profile";
 import { readNextPath, requireAuth } from "@/lib/auth-guards";
 import { hasAnyAdminScope } from "@/lib/access";
 import { readJoinPreset } from "@/lib/join-preset";
@@ -75,23 +73,19 @@ async function Resolve({
   const session = await requireAuth();
   const preset = await readJoinPreset();
 
-  const [state, dict, account, rider, claimBanner] = await Promise.all([
+  const [state, dict, rider, claimBanner] = await Promise.all([
     getOnboardingState(session.user.id, preset),
     getDictionary(),
-    profile.getProfile(session.user.id),
     passengers.getOwnPassenger(session.user.id),
     accounts.getClaimBanner(session.user.id),
   ]);
-  const { progress } = state;
+  const { progress, account } = state;
 
   if (!canViewStep(progress, step) && !hasAnyAdminScope(session.access)) {
     redirect(await resolveDestination(session, preset, await readNextPath()));
   }
 
-  const presetChapterName =
-    state.preset.chapterId && state.preset.role
-      ? ((await chapters.getChapter(state.preset.chapterId))?.name ?? null)
-      : null;
+  const presetChapterName = state.preset.role ? state.preset.chapterName : null;
 
   const name = rider ?? {
     firstName: account?.name?.split(" ")[0] ?? "",

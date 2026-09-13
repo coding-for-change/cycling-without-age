@@ -1,61 +1,7 @@
-import { activity } from "@/features/activity";
+import { activity } from "@/lib/activity";
+import { DomainError } from "@/lib/domain-error";
 import { chapters } from "@/features/chapters";
 import type { ChapterInput, ChapterUpdateInput } from "@/features/chapters";
-
-type Chapter = NonNullable<Awaited<ReturnType<typeof chapters.getChapter>>>;
-
-/** Latitude, longitude and the address they name are one move on the map. */
-const LOCATION = ["latitude", "longitude", "address"] as const;
-const VALUE_MAX = 120;
-
-const shown = (value: unknown): string => {
-  if (value === null || value === undefined || value === "") return "";
-  const text = typeof value === "number" ? String(value) : String(value);
-  return text.length > VALUE_MAX ? `${text.slice(0, VALUE_MAX - 1)}…` : text;
-};
-
-const locationText = (row: {
-  address?: string | null;
-  latitude?: number;
-  longitude?: number;
-}) =>
-  row.address ||
-  (row.latitude !== undefined && row.longitude !== undefined
-    ? `${row.latitude.toFixed(5)}, ${row.longitude.toFixed(5)}`
-    : "");
-
-/**
- * One history line per field that actually changed. A whole form re-submitted
- * with one edit reads as one edit, and a save that changed nothing is silent.
- */
-export function diffChapter(
-  before: Chapter,
-  input: ChapterUpdateInput,
-): { field: string; from: string; to: string }[] {
-  const changes: { field: string; from: string; to: string }[] = [];
-  const moved = LOCATION.some(
-    (key) => input[key] !== undefined && input[key] !== before[key],
-  );
-  if (moved) {
-    changes.push({
-      field: "location",
-      from: locationText(before),
-      to: locationText({
-        address: input.address === undefined ? before.address : input.address,
-        latitude: input.latitude ?? before.latitude,
-        longitude: input.longitude ?? before.longitude,
-      }),
-    });
-  }
-  for (const [field, next] of Object.entries(input)) {
-    if (next === undefined) continue;
-    if ((LOCATION as readonly string[]).includes(field)) continue;
-    const previous = before[field as keyof Chapter];
-    if (shown(previous) === shown(next)) continue;
-    changes.push({ field, from: shown(previous), to: shown(next) });
-  }
-  return changes;
-}
 
 export async function createChapter({
   input,
@@ -85,9 +31,9 @@ export async function updateChapter({
   actorUserId: string;
 }) {
   const before = await chapters.getChapter(chapterId);
-  if (!before) throw new Error("Unknown chapter");
+  if (!before) throw new DomainError("unknownChapter");
 
-  const changes = diffChapter(before, input);
+  const changes = chapters.diffChapter(before, input);
   const after = await chapters.updateChapter(chapterId, input);
   for (const change of changes) {
     await activity.record({
@@ -113,7 +59,7 @@ export async function deleteChapter({
   actorUserId: string;
 }) {
   const chapter = await chapters.getChapter(chapterId);
-  if (!chapter) throw new Error("Unknown chapter");
+  if (!chapter) throw new DomainError("unknownChapter");
 
   await chapters.deleteChapter(chapterId);
   await activity.record({

@@ -30,6 +30,9 @@ const scope: AdminScope = {
   chapters: [BERLIN, HAMBURG],
   canSeeChapters: true,
   canSeeCountries: false,
+  canCreateCountries: false,
+  canDeleteAccounts: false,
+  canSeeGlobalEvents: false,
 };
 
 const read = (params: Record<string, string | string[] | undefined>) =>

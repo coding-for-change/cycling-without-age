@@ -1,4 +1,4 @@
-"use client"; // Error boundaries must be Client Components
+"use client";
 
 // global-error replaces the root layout, so it must render its own
 // <html>/<body> and import global styles itself.

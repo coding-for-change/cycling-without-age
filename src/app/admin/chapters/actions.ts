@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { domainCode } from "@/lib/domain-error";
 import { z } from "zod";
-import { Prisma } from "@/generated/prisma";
 import {
   chapters,
   chapterInput,
@@ -39,9 +39,7 @@ const chapterId = z.string().min(1).max(64);
 const failed = (
   error: unknown,
 ): { ok: false; error: "slugTaken" | "generic" } =>
-  (error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === "P2002") ||
-  (error instanceof Error && error.message.includes("Slug already taken"))
+  domainCode(error) === "slugTaken"
     ? { ok: false, error: "slugTaken" }
     : { ok: false, error: "generic" };
 

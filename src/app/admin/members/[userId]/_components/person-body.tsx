@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Building2, Mail, Phone } from "lucide-react";
+import { Building2, Mail, Phone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PersonAvatar } from "@/components/person-avatar";
-import { activity } from "@/features/activity";
+import { BackLink, DetailSection } from "../../../_components/detail-page";
+import { activity } from "@/lib/activity";
 import { membership } from "@/features/membership";
 import { profile } from "@/features/profile";
 import type { ChapterRole } from "@/lib/access";
@@ -25,7 +25,7 @@ export async function PersonBody({
   params: Promise<{ userId: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const [{ session, scope, active, chapters, chapterIds }, { userId }] =
+  const [{ session, scope, scopeQuery, chapters, chapterIds }, { userId }] =
     await Promise.all([readActiveScope(searchParams), params]);
 
   const [person, memberships, applications, events, dict, head] =
@@ -35,7 +35,7 @@ export async function PersonBody({
       membership.listApplicationsOfUser(userId),
       activity.listForUser(userId, {
         chapterIds,
-        includeGlobal: scope.global,
+        includeGlobal: scope.canSeeGlobalEvents,
       }),
       getDictionary(),
       headers(),
@@ -56,12 +56,6 @@ export async function PersonBody({
   const roleLabel = (role: ChapterRole) =>
     role === "admin" ? dict.admin.roles.chapterAdmin : dict.admin.roles[role];
 
-  const scopeQuery =
-    active.kind === "chapter"
-      ? `?chapter=${encodeURIComponent(active.chapter.slug)}`
-      : active.kind === "country"
-        ? `?country=${encodeURIComponent(active.country.code)}`
-        : "";
   const backHref = `/admin/members${scopeQuery}`;
 
   const name = person.name || person.email;
@@ -69,16 +63,10 @@ export async function PersonBody({
 
   return (
     <>
-      <Link
+      <BackLink
         href={backHref}
-        className="inline-flex min-h-11 w-fit items-center gap-2 text-2sm text-ink-soft hover:text-ink"
-      >
-        <ArrowLeft
-          aria-hidden
-          className="size-4"
-        />
-        {dict.admin.person.back}
-      </Link>
+        label={dict.admin.person.back}
+      />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-x-12">
         <header className="flex flex-wrap items-center gap-4">
@@ -154,7 +142,7 @@ export async function PersonBody({
             )}
           </SidePanel>
 
-          {scope.global && !isSelf ? (
+          {scope.canDeleteAccounts && !isSelf ? (
             <DeleteUserDialog
               userId={userId}
               name={name}
@@ -204,10 +192,7 @@ export async function PersonBody({
             </ul>
           ) : null}
 
-          <section className="grid gap-4 border-t border-line pt-6">
-            <h2 className="text-base font-medium">
-              {dict.admin.person.history}
-            </h2>
+          <DetailSection title={dict.admin.person.history}>
             <ActivityFeed
               events={events}
               viewerId={session.user.id}
@@ -216,7 +201,7 @@ export async function PersonBody({
               notation={notation}
               words={words}
             />
-          </section>
+          </DetailSection>
         </div>
       </div>
     </>

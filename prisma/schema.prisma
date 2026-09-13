@@ -304,6 +304,7 @@ enum ActivityType {
   chapterCreated
   chapterUpdated
   chapterDeleted
+  countryDeleted
 }
 
 model ActivityEvent {

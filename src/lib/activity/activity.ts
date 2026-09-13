@@ -1,10 +1,6 @@
 import { recordEventInput } from "./schemas";
 import type { RecordEventInput } from "./schemas";
-import {
-  findEventsOfChapter,
-  findEventsOfUser,
-  insertEvent,
-} from "./services/events";
+import { findEventsOfChapter, findEventsOfUser, insertEvent } from "./events";
 
 export type ActivityEvent = Awaited<
   ReturnType<typeof findEventsOfUser>
