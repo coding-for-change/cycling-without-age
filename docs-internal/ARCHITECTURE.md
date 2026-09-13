@@ -465,6 +465,18 @@ stamp — deliberately out of scope.
 normal, not exceptional: the account dialog and the onboarding passkey step both handle it by signing
 out and restarting at `/sign-in`. `freshAge` is deliberately not lowered.
 
+Inside the native shell the WKWebView has no WebAuthn, so `@/lib/passkey-client` runs the same
+two ceremonies through `@capgo/capacitor-passkey` (`@/lib/native/passkey`): it fetches
+`/passkey/generate-*-options`, hands the JSON to the platform authenticator and posts the
+credential to `/passkey/verify-*`. The server does not change — better-auth verifies
+`clientDataJSON.origin` against the request's `Origin`, which the shell shares with the site.
+Android reports `android:apk-key-hash:…` instead, so `PASSKEY_ANDROID_ORIGINS` widens the
+accepted origins when set. The app is bound to the relying party by the `webcredentials:`
+entitlement, the Android `asset_statements` meta-data and by
+`/.well-known/apple-app-site-association` and `/.well-known/assetlinks.json`
+(`src/app/.well-known/*`, identifiers in `src/lib/native-app.ts`). On `localhost` there is
+nothing to associate, so native passkeys only work against the deployed domain.
+
 ### Pilot status & celebration
 
 `/pilot` reads the facades rather than `session.access`, because a freshly approved pilot's

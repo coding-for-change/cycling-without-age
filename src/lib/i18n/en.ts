@@ -206,6 +206,8 @@ const en = {
     admin: {
       title: "Admins sign in with a passkey",
       body: "Your device becomes your key to the dashboard — a fingerprint, a face, a PIN. Set one up to open it.",
+      failed:
+        "That didn't work — try again. You can also set your passkey up in a browser.",
     },
   },
   pilotNextSteps: {

@@ -12,6 +12,7 @@ import { adminAc, userAc } from "better-auth/plugins/admin/access";
 import { memberAc as orgMemberAc } from "better-auth/plugins/organization/access";
 import { passkey } from "@better-auth/passkey";
 import { prisma } from "@/lib/prisma";
+import { APP_URL } from "@/lib/app-url";
 import { createElement } from "react";
 import { sendMail } from "@/lib/mailer";
 import { getLocale } from "@/lib/i18n";
@@ -44,6 +45,14 @@ export const organizationRoles = {
   pilot: orgMemberAc,
   passenger: orgMemberAc,
 };
+
+// Android passkeys report the app signature (`android:apk-key-hash:…`) as
+// their origin, not the site. Naming any origin here replaces the request's
+// Origin header for every check, so the site's own origin comes along.
+const passkeyOrigins = (process.env.PASSKEY_ANDROID_ORIGINS ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 export const auth = betterAuth({
   appName: "Cycling Without Age",
@@ -93,7 +102,12 @@ export const auth = betterAuth({
       },
       signUpOnVerification: { getTempEmail: phoneTempEmail },
     }),
-    passkey({ rpName: "Cycling Without Age" }),
+    passkey({
+      rpName: "Cycling Without Age",
+      ...(passkeyOrigins.length > 0
+        ? { origin: [new URL(APP_URL).origin, ...passkeyOrigins] }
+        : {}),
+    }),
     admin({
       adminRoles: ["superadmin"],
       roles: { superadmin: adminAc, user: userAc },

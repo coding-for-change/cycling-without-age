@@ -95,6 +95,7 @@
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
 				F1A2432E168FF132F2BCA271 /* Strip ATS exception (Release) */,
+				B5D3F0A1C2E4468B9A7D1E2F /* Strip Finder metadata */,
 			);
 			buildRules = (
 			);
@@ -185,6 +186,25 @@
 			shellPath = /bin/sh;
 			shellScript = "# Dev builds load the Next dev server over plain http from a LAN IP, which\n# needs the NSAppTransportSecurity exception in Info.plist. Release builds\n# only ever talk to https://cwa.codingforchange.com, so it is dropped here.\nPLIST=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\nif [ \"${CONFIGURATION}\" = \"Release\" ] && /usr/libexec/PlistBuddy -c \"Print :NSAppTransportSecurity\" \"$PLIST\" >/dev/null 2>&1; then\n  /usr/libexec/PlistBuddy -c \"Delete :NSAppTransportSecurity\" \"$PLIST\"\nfi\n";
 		};
+		B5D3F0A1C2E4468B9A7D1E2F /* Strip Finder metadata */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Strip Finder metadata";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# iCloud Drive (Desktop & Documents sync) and the simulator install both stamp\n# .app and .bundle folders with Finder flags, which codesign rejects as\n# \"resource fork, Finder information, or similar detritus not allowed\".\nxattr -cr \"${CODESIGNING_FOLDER_PATH}\"\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -257,7 +277,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -319,7 +339,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;

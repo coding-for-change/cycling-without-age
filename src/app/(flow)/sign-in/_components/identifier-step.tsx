@@ -7,6 +7,7 @@ import { authClient } from "@/lib/auth-client";
 import { useCharacter } from "@/components/character";
 import { dialCodeOf, looksLikePhone, parseIdentity } from "@/lib/identity";
 import { haptics } from "@/lib/native/haptics";
+import { isNative } from "@/lib/native/platform";
 import { cn, fill } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Step } from "../../_components/step";
@@ -51,6 +52,8 @@ export function IdentifierStep({
     let cancelled = false;
     void (async () => {
       try {
+        // The shell's WebView has no autofill passkeys; the button covers it.
+        if (isNative()) return;
         if (!(await PublicKeyCredential.isConditionalMediationAvailable?.()))
           return;
         if (cancelled) return;

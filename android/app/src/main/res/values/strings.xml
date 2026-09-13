@@ -4,4 +4,5 @@
     <string name="title_activity_main">Cycling Without Age</string>
     <string name="package_name">com.codingforchange.cwa</string>
     <string name="custom_url_scheme">com.codingforchange.cwa</string>
+    <string name="asset_statements" translatable="false">[{\"include\": \"https://cwa.codingforchange.com/.well-known/assetlinks.json\"}]</string>
 </resources>

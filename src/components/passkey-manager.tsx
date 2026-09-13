@@ -4,6 +4,7 @@ import { useId, useState, useTransition, type FormEvent } from "react";
 import { KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { addPasskey } from "@/lib/passkey-client";
 import { haptics } from "@/lib/native/haptics";
 import { formatDate, type Locale } from "@/lib/format";
 import { fill } from "@/lib/utils";
@@ -60,17 +61,13 @@ export function PasskeyManager({
   const add = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     startTransition(async () => {
-      const result = await authClient.passkey.addPasskey({
-        name: name.trim() || undefined,
-      });
-      if (result?.error) {
+      const result = await addPasskey({ name: name.trim() || undefined });
+      if (result.error) {
         haptics.error();
         // Enrolment needs a session younger than a day (BetterAuth freshness)
         // and ours last 90 — signing in again is the whole fix.
         setError(
-          "code" in result.error && result.error.code === "SESSION_NOT_FRESH"
-            ? "stale"
-            : "failed",
+          result.error.code === "SESSION_NOT_FRESH" ? "stale" : "failed",
         );
         return;
       }

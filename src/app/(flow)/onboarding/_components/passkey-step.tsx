@@ -5,6 +5,7 @@ import { useId, useState, useTransition } from "react";
 import { KeyRound } from "lucide-react";
 import { MintPillButton } from "../../_components/mint-pill-button";
 import { authClient } from "@/lib/auth-client";
+import { addPasskey } from "@/lib/passkey-client";
 import { Input } from "@/components/ui/input";
 import { haptics } from "@/lib/native/haptics";
 import { useCharacter } from "@/components/character";
@@ -47,14 +48,9 @@ export function PasskeyStep({
 
   const create = () =>
     startTransition(async () => {
-      const result = await authClient.passkey.addPasskey({
-        name: name.trim() || undefined,
-      });
-      if (result?.error) {
-        if (
-          "code" in result.error &&
-          result.error.code === "SESSION_NOT_FRESH"
-        ) {
+      const result = await addPasskey({ name: name.trim() || undefined });
+      if (result.error) {
+        if (result.error.code === "SESSION_NOT_FRESH") {
           await authClient.signOut();
           router.replace(
             requiredNext

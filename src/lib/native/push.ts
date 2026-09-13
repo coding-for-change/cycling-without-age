@@ -9,10 +9,9 @@ export type Unsubscribe = () => void;
 
 const NOOP: Unsubscribe = () => {};
 
-// Imported lazily so the Firebase web SDK the plugin pulls in never reaches the
-// browser bundle: every caller below is already behind isNativePlatform().
-const messaging = async () =>
-  (await import("@capacitor-firebase/messaging")).FirebaseMessaging;
+const tokenListeners = new Set<(device: PushDevice) => void>();
+
+const messaging = () => import("@capacitor-firebase/messaging");
 
 const nativePlatform = (): PushPlatform | null => {
   if (!Capacitor.isNativePlatform()) return null;
@@ -52,13 +51,18 @@ const subscribe = (open: () => Promise<PluginListenerHandle>): Unsubscribe => {
   };
 };
 
-export const isNative = () => Capacitor.isNativePlatform();
+export { isNative } from "./platform";
 
 export async function requestNotificationPermission(): Promise<boolean> {
   try {
     if (Capacitor.isNativePlatform()) {
-      const { receive } = await (await messaging()).requestPermissions();
-      return receive === "granted";
+      const { receive } = await (await messaging()).FirebaseMessaging.requestPermissions();
+      const granted = receive === "granted";
+      if (granted) {
+        const device = await getPushToken();
+        if (device) tokenListeners.forEach((listener) => listener(device));
+      }
+      return granted;
     }
     if (typeof Notification === "undefined") return false;
     return (await Notification.requestPermission()) === "granted";
@@ -70,7 +74,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
 export async function hasNotificationPermission(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false;
   try {
-    const { receive } = await (await messaging()).checkPermissions();
+    const { receive } = await (await messaging()).FirebaseMessaging.checkPermissions();
     return receive === "granted";
   } catch {
     return false;
@@ -81,7 +85,7 @@ export async function getPushToken(): Promise<PushDevice | null> {
   const platform = nativePlatform();
   if (!platform) return null;
   try {
-    const { token } = await (await messaging()).getToken();
+    const { token } = await (await messaging()).FirebaseMessaging.getToken();
     return token ? { token, platform } : null;
   } catch {
     return null;
@@ -91,7 +95,7 @@ export async function getPushToken(): Promise<PushDevice | null> {
 export async function deletePushToken(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
   try {
-    await (await messaging()).deleteToken();
+    await (await messaging()).FirebaseMessaging.deleteToken();
   } catch {
     // Signing out must not depend on FCM being reachable.
   }
@@ -100,17 +104,22 @@ export async function deletePushToken(): Promise<void> {
 export function onPushToken(cb: (device: PushDevice) => void): Unsubscribe {
   const platform = nativePlatform();
   if (!platform) return NOOP;
-  return subscribe(async () =>
-    (await messaging()).addListener("tokenReceived", ({ token }) => {
+  tokenListeners.add(cb);
+  const stop = subscribe(async () =>
+    (await messaging()).FirebaseMessaging.addListener("tokenReceived", ({ token }) => {
       if (token) cb({ token, platform });
     }),
   );
+  return () => {
+    tokenListeners.delete(cb);
+    stop();
+  };
 }
 
 export function onPushReceived(cb: (push: PushPayload) => void): Unsubscribe {
   if (!Capacitor.isNativePlatform()) return NOOP;
   return subscribe(async () =>
-    (await messaging()).addListener(
+    (await messaging()).FirebaseMessaging.addListener(
       "notificationReceived",
       ({ notification }) => {
         cb({
@@ -126,7 +135,7 @@ export function onPushReceived(cb: (push: PushPayload) => void): Unsubscribe {
 export function onPushOpened(cb: (href: string) => void): Unsubscribe {
   if (!Capacitor.isNativePlatform()) return NOOP;
   return subscribe(async () =>
-    (await messaging()).addListener(
+    (await messaging()).FirebaseMessaging.addListener(
       "notificationActionPerformed",
       ({ notification }) => {
         const href = appPath(notification.data);

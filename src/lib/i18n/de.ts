@@ -220,6 +220,8 @@ const de: Dictionary = {
     admin: {
       title: "Admins melden sich mit einem Passkey an",
       body: "Dein Gerät wird dein Schlüssel zum Dashboard — Fingerabdruck, Gesicht oder PIN. Leg einen an, um es zu öffnen.",
+      failed:
+        "Das hat nicht geklappt — versuch es noch einmal. Deinen Passkey kannst du auch im Browser anlegen.",
     },
   },
   pilotNextSteps: {
