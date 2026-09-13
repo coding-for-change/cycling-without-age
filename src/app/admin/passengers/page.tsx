@@ -17,7 +17,7 @@ import {
   AdminPageHeader,
   AdminPageShell,
 } from "../_components/admin-page";
-import { ICONS } from "../_components/icons";
+import { ICONS } from "@/components/icons";
 import { readActiveScope } from "../active-scope";
 import { AddPassengerDrawer } from "./_components/add-passenger-drawer";
 import {

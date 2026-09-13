@@ -4,12 +4,16 @@ import type { OnboardingRole } from "@/lib/onboarding";
 import {
   consentInput,
   homeInput,
+  notificationPreferences as notificationPreferencesSchema,
+  ownDetailsPatch,
   personalDetailsInput,
   residence as residenceSchema,
 } from "./schemas";
 import type {
   ConsentInput,
   HomeInput,
+  NotificationPreferences,
+  OwnDetailsPatchInput,
   PersonalDetailsInput,
   Residence,
 } from "./schemas";
@@ -108,6 +112,34 @@ export function setPersonalDetails(
     name: `${firstName} ${lastName}`,
     birthDate,
     gender,
+  });
+}
+
+/**
+ * Self-service edits arrive one field at a time, so only the keys the patch
+ * actually carries are written — spreading the rest as `undefined` would be a
+ * Prisma no-op today and an accidental blanking the day a field becomes nullable.
+ */
+export async function updateOwnDetails(
+  userId: string,
+  patch: OwnDetailsPatchInput,
+) {
+  const { name, birthDate, gender } = ownDetailsPatch.parse(patch);
+  return updateProfile(userId, {
+    ...(name === undefined ? {} : { name }),
+    ...(birthDate === undefined ? {} : { birthDate }),
+    ...(gender === undefined ? {} : { gender }),
+  });
+}
+
+export async function setNotificationPreferences(
+  userId: string,
+  prefs: NotificationPreferences,
+) {
+  const { push, email } = notificationPreferencesSchema.parse(prefs);
+  return updateProfile(userId, {
+    ...(push === undefined ? {} : { notifyPush: push }),
+    ...(email === undefined ? {} : { notifyEmail: email }),
   });
 }
 

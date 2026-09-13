@@ -39,11 +39,7 @@
   --r-card: 0.75rem;
   --r-tile: 1.5rem;
   --r-cover: 1.125rem;
-
-  --shadow-soft:
-    0 2px 4px -2px rgb(0 0 0 / 0.05), 0 8px 20px -8px rgb(0 0 0 / 0.09);
-  --shadow-lift:
-    0 4px 8px -4px rgb(0 0 0 / 0.09), 0 18px 36px -14px rgb(0 0 0 / 0.16);
+  --tabbar-h: 3.5rem;
 
   --font-display:
     var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -212,10 +208,40 @@
   --color-grey-tint: var(--grey-tint);
   --font-display: var(--font-display);
 
+  /* These have to live in @theme, not :root: the `shadow-soft` / `shadow-lift`
+     utilities only exist because Tailwind generates them from --shadow-*. */
+  --shadow-soft:
+    0 2px 4px -2px rgb(0 0 0 / 0.05), 0 8px 20px -8px rgb(0 0 0 / 0.09);
+  --shadow-lift:
+    0 4px 8px -4px rgb(0 0 0 / 0.09), 0 18px 36px -14px rgb(0 0 0 / 0.16);
+
   /* Compact UI text (13px) — Linear's base size, for dense admin surfaces:
      feeds, property columns, row actions. Body copy stays text-sm/base. */
   --text-2sm: 0.8125rem;
   --text-2sm--line-height: 1.25rem;
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility pb-tabbar {
+  padding-bottom: calc(
+    var(--tabbar-h) + max(0.75rem, env(safe-area-inset-bottom)) + 1rem
+  );
+}
+
+/* The document is the scroll container. Without this, iOS rubber-bands the
+   whole page behind the fixed tab bar and the app stops feeling native. */
+@layer base {
+  html {
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 /* Headlines are Inter Bold (BRAND.md § Typography). --font-display and --font-sans
@@ -300,7 +326,6 @@
   --ch-y: 21.5svh;
 }
 
-
 .character-stage[data-pose="compact"] {
   --ch-scale: 0.2;
   --ch-x: calc(100vw - 1rem - var(--ch-scale) * 20rem);
@@ -369,6 +394,22 @@
   }
   to {
     translate: 0;
+  }
+}
+
+::view-transition-old(.tab-out) {
+  animation: 120ms ease-in both member-fade reverse;
+}
+::view-transition-new(.tab-in) {
+  animation: 180ms ease-out both member-fade;
+}
+
+@keyframes member-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 

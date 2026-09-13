@@ -62,7 +62,7 @@ import type { ResolvedPlace } from "@/lib/mapbox";
 import { haptics } from "@/lib/native/haptics";
 import { cn, fill } from "@/lib/utils";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
-import { notify, type NotifyLabels } from "../../_components/action-feedback";
+import { notify, type NotifyLabels } from "@/components/action-feedback";
 import { TextField } from "../../_components/text-field";
 import { createCountryAction } from "../../countries/actions";
 import {

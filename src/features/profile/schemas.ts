@@ -35,3 +35,29 @@ export const consentInput = z.object({
   data: z.boolean(),
 });
 export type ConsentInput = z.infer<typeof consentInput>;
+
+const nonEmpty = (patch: Record<string, unknown>) =>
+  Object.values(patch).some((value) => value !== undefined);
+
+/**
+ * The self-service counterpart to `personalDetailsInput`: every field optional,
+ * because the account surface saves one field at a time. An empty patch is an
+ * error rather than a no-op — it means the caller lost the field it meant to send.
+ */
+export const ownDetailsPatch = z
+  .object({
+    name: z.string().trim().min(1).max(120).optional(),
+    birthDate: birthDate.optional(),
+    gender: gender.optional(),
+  })
+  .refine(nonEmpty);
+export type OwnDetailsPatch = z.infer<typeof ownDetailsPatch>;
+export type OwnDetailsPatchInput = z.input<typeof ownDetailsPatch>;
+
+export const notificationPreferences = z
+  .object({
+    push: z.boolean().optional(),
+    email: z.boolean().optional(),
+  })
+  .refine(nonEmpty);
+export type NotificationPreferences = z.infer<typeof notificationPreferences>;

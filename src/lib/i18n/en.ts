@@ -784,7 +784,6 @@ const en = {
         body: "{chapter} says welcome. Watch the training videos, then meet a captain for your first ride.",
         dismiss: "Got it",
       },
-      account: "Account",
     },
     status: {
       pendingTitle: "Your request is with {chapter}",
@@ -807,14 +806,102 @@ const en = {
     training: {
       title: "Training while you wait",
       body: "The videos are still being filmed. The moment they're ready they show up here — about 20 minutes, then a workshop with one of the captains.",
-      back: "Back to pilot home",
     },
   },
   passenger: {
-    account: "Account",
-    title: "Passenger home",
     browsing: "Browsing {chapter}",
     noChapter: "No chapter chosen yet",
+  },
+  member: {
+    nav: {
+      home: "Home",
+      rides: "My rides",
+      calendar: "Calendar",
+      chat: "Chat",
+      training: "Training",
+    },
+    navLabel: "Sections",
+    tabBarLabel: "Main",
+    action: { pilot: "Find open rides", passenger: "Book a ride" },
+    perspective: {
+      switchLabel: "Switch perspective",
+      label: "Perspective",
+      chapters: "{count} chapters",
+      noChapter: "No chapter yet",
+    },
+    user: {
+      pilot: { menuLabel: "Your account", account: "Account" },
+      passenger: { menuLabel: "Your account", account: "Account" },
+    },
+    topBar: {
+      pilot: {
+        account: "Your account",
+        switchHint: "Double-tap to switch perspective",
+      },
+      passenger: {
+        account: "Your account",
+        switchHint: "Double-tap to switch perspective",
+      },
+    },
+    guest: {
+      subtitle: "Looking around",
+      signIn: "Sign in",
+      hero: "Create your account",
+      heroHint: "Booking a ride takes an email or a phone number. That's all.",
+      greeting: "Welcome",
+      tagline:
+        "Have a look around first — the chapter you picked is right here.",
+    },
+    home: {
+      greeting: "Hi {name}",
+      pilot: { tagline: "Ready when you are." },
+      passenger: {
+        tagline: "Your next ride starts here.",
+        chooseChapter: "Choose a chapter",
+      },
+      nextRide: {
+        title: "Next ride",
+        pilot: {
+          empty:
+            "Nothing on your list yet. When your chapter posts open rides, the next one you take shows up here — date, passenger, meeting point.",
+        },
+        passenger: {
+          empty:
+            "Nothing booked yet. When you book a ride, the day, the time and the pilot who's coming to collect you land here.",
+        },
+      },
+      yourChapters: "Your chapters",
+      yourChapter: "Your chapter",
+    },
+    pages: {
+      rides: {
+        title: "My rides",
+        pilot: {
+          body: "Your first ride isn't on the list yet. When your chapter posts open rides, the ones that need a pilot appear here — pick one, and the trishaw is yours for the afternoon.",
+        },
+        passenger: {
+          body: "Nothing booked yet. Once your chapter opens booking, this is where your rides wait — the day, the time, and the pilot who rings the bell.",
+        },
+      },
+      calendar: {
+        title: "Calendar",
+        pilot: {
+          body: "An empty week, for now. Your rides, training dates and chapter meet-ups will line up here.",
+        },
+        passenger: {
+          body: "Nothing planned yet. Your upcoming rides appear here, with the date and the time your pilot arrives.",
+        },
+      },
+      chat: {
+        title: "Chat",
+        pilot: {
+          body: "Quiet so far. Once chat opens you'll hear from your captain and the other pilots here — who's riding Saturday, who needs a stand-in.",
+        },
+        passenger: {
+          body: "Quiet so far. When messaging opens, this is where your chapter says hello — and where you can ask for an extra blanket on a cold day.",
+        },
+      },
+    },
   },
   notifications: {
     title: "Notifications",
@@ -834,25 +921,84 @@ const en = {
   },
   account: {
     title: "Account",
-    passkeys: "Passkeys",
-    passkeysBody:
-      "A passkey lets your own device sign you in — a fingerprint, a face, a PIN. Nothing to remember, nothing to type.",
-    add: "Add a passkey",
-    nameLabel: "Name this passkey (optional)",
-    namePlaceholder: "Work laptop",
-    unnamed: "Passkey",
-    thisDevice: "This device",
-    synced: "Synced",
-    added: "Passkey added.",
-    remove: "Remove",
-    removeConfirm: "Remove {name}?",
-    removeBody:
-      "To sign in on that device you'll need another passkey, or a code by email or text.",
-    empty: "No passkeys yet. Add one and this device remembers you.",
-    failed: "That didn't work. Try again.",
-    signInAgain: "It's been a while. Sign in again before adding a passkey.",
-    signInAgainAction: "Sign in again",
-    back: "Back",
+    description:
+      "Your details, your language, how we reach you, and how you sign in.",
+    status: { saving: "Saving", saved: "Saved {when}" },
+    field: {
+      edit: "Edit",
+      saved: "Saved.",
+      undo: "Undo",
+      undone: "Put back.",
+      invalid: "That doesn't look right.",
+      errors: { generic: "That didn't work. Try again." },
+    },
+    perspective: { title: "Viewing as" },
+    profile: {
+      title: "Profile",
+      name: "Name",
+      namePlaceholder: "Your name",
+      birthDate: "Birthday",
+      birthDatePlaceholder: "Add your birthday",
+      invalidBirthDate: "That birthday doesn't look right. Check the year.",
+      gender: "Gender",
+      genderPlaceholder: "Not set",
+      genders: { female: "Female", male: "Male", other: "Other" },
+    },
+    language: {
+      title: "Language",
+      body: "Emails and notifications come in this language too.",
+    },
+    notifications: {
+      title: "Notifications",
+      body: "The essentials — a ride confirmed, a chapter answering — always reach you. These are the extras.",
+      push: {
+        label: "Push",
+        hint: "A tap on your phone when something happens.",
+      },
+      email: { label: "Email", hint: "The same news, in your inbox." },
+      permissionDenied:
+        "Your phone is blocking notifications. Allow them in Settings, then try again.",
+    },
+    passkeys: {
+      title: "Passkeys",
+      body: "A passkey lets your own device sign you in — a fingerprint, a face, a PIN. Nothing to remember, nothing to type.",
+      add: "Add a passkey",
+      nameLabel: "Name this passkey (optional)",
+      namePlaceholder: "Work laptop",
+      unnamed: "Passkey",
+      thisDevice: "This device",
+      synced: "Synced",
+      added: "Passkey added.",
+      remove: "Remove",
+      removeConfirm: "Remove {name}?",
+      removeBody:
+        "To sign in on that device you'll need another passkey, or a code by email or text.",
+      empty: "No passkeys yet. Add one and this device remembers you.",
+      failed: "That didn't work. Try again.",
+      signInAgain: "It's been a while. Sign in again before adding a passkey.",
+      signInAgainAction: "Sign in again",
+      back: "Back",
+    },
+    danger: {
+      title: "Sign out or delete",
+      body: "Signing out keeps everything. Deleting takes your account, your chapters and your history with it — rides already ridden stay on the record.",
+      delete: {
+        open: "Delete account",
+        title: "Delete your account for good?",
+        body: "Your account, roles, requests and history go with it. Rides already ridden stay on the record.",
+        label: "Type {word} to confirm",
+        word: "DELETE",
+        submit: "Delete account",
+        done: "Your account is gone. Thank you for the wind in our hair.",
+        blocked:
+          "You still run a chapter or a country. Hand that over to someone else first — then this button is yours.",
+        errors: {
+          handOverAdmin: "Hand over your admin role first.",
+          rateLimited: "Give it a moment and try again.",
+          generic: "That didn't work. Try again.",
+        },
+      },
+    },
   },
   legal: {
     imprint: {

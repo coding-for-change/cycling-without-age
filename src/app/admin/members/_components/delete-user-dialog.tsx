@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import type { NotifyLabels } from "../../_components/action-feedback";
+import type { NotifyLabels } from "@/components/action-feedback";
 import {
   ConfirmDeleteDialog,
   type ConfirmDeleteLabels,
-} from "../../_components/confirm-delete-dialog";
+} from "@/components/confirm-delete-dialog";
 import { deleteUserAction } from "../actions";
 
 export type DeleteUserLabels = ConfirmDeleteLabels & {

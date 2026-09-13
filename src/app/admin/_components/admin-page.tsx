@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { requireAdminScope } from "@/lib/auth-guards";
 import { getDictionary } from "@/lib/i18n";
 import type { NavKey } from "../nav";
-import { ICONS } from "./icons";
+import { ICONS } from "@/components/icons";
 
 export function AdminPageShell({ children }: { children: ReactNode }) {
   return (

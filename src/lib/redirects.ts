@@ -19,6 +19,8 @@ export const PERSPECTIVE_HOME: Record<Perspective, string> = {
   passenger: "/passenger",
 };
 
+export type MemberPerspective = Exclude<Perspective, "admin">;
+
 export const NEXT_COOKIE = "cwa.next";
 export const NEXT_MAX_AGE = 60 * 60;
 

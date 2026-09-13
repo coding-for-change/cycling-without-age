@@ -5,7 +5,7 @@ import { startTransition, useOptimistic } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable, type DataTableStrings } from "@/components/ui/data-table";
 import { AdminEmpty } from "../../_components/admin-empty";
-import { ICONS } from "../../_components/icons";
+import { ICONS } from "@/components/icons";
 import { mutedColumn } from "../../_components/table-columns";
 import { useDrawerParam } from "../../_components/use-drawer-param";
 import type { Locale } from "@/lib/format";

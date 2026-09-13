@@ -21,7 +21,7 @@ import type {
   ScopeArg,
 } from "@/lib/commands";
 import { setLocale } from "@/app/actions";
-import { ICONS } from "./icons";
+import { ICONS } from "@/components/icons";
 import { scopeHref } from "./scope-url";
 
 export type CommandBarStrings = {

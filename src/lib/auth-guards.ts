@@ -15,6 +15,7 @@ import {
   resolveAdminScope,
 } from "@/lib/access";
 import { HOME_BY_ROLE, NEXT_COOKIE, safeNextPath } from "@/lib/redirects";
+import type { MemberPerspective } from "@/lib/redirects";
 import type {
   Access,
   AdminScope,
@@ -174,5 +175,15 @@ export function redirectIfElsewhere(
 export async function requirePerspective(perspective: Perspective) {
   const session = await requireAuth();
   redirectIfElsewhere(session, perspective);
+  return session;
+}
+
+export async function perspectiveViewerSession(
+  perspective: MemberPerspective,
+): Promise<Session | null> {
+  if (perspective === "pilot") return requirePerspective("pilot");
+
+  const session = await getSession();
+  if (session) redirectIfElsewhere(session, "passenger");
   return session;
 }

@@ -25,7 +25,10 @@ export async function AdminChrome() {
       locale={locale}
       languageLabel={dict.common.language}
       bell={
-        <Suspense fallback={<NotificationBellSkeleton className="size-9" />}>
+        <Suspense
+          key="bell"
+          fallback={<NotificationBellSkeleton className="size-9" />}
+        >
           <NotificationBell className="size-9" />
         </Suspense>
       }
