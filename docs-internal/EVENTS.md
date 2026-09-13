@@ -95,12 +95,30 @@ type DeliveryPolicy = {
 - Every preference and reachability check runs **at delivery time**, in the delivery use
   case, so every outcome is a `Delivery` row rather than a silence: `"opted out"`,
   `"no email address"`, `"no device"`, `"push not configured"`,
-  `"email disabled for kind"`.
+  `"email disabled for kind"`, `"disabled by chapter"`.
 - The fallback rule lives in `deliverEmail`. When the delayed `ifNoPush` job wakes up it
   skips with `"already read"` if the notification has a `readAt`, and with
   `"push delivered"` if the sibling `push` delivery is `sent`. Otherwise the mail goes out.
 - `collapseKey?(event)` is optional and lands on the `Notification` row. It is the handle
   for "five ride requests become one card" later; no kind sets it today.
+- `chapterAllowsPush?(chapterId)` is optional too: the **chapter's** say on the push
+  channel, read in `deliverPush` right after the recipient's own preference, so a chapter
+  that switched the alert off still leaves a `Delivery` row — `"disabled by chapter"` —
+  instead of a silence. A kind without the hook has no chapter switch.
+  `pilotApplication.submitted` answers it from
+  `chapters.getSettings(chapterId).applicationAlertPush`; an event with `chapterId: null`
+  always passes, because there is no chapter to ask.
+- A kind may instead consult `chapters.getSettings` in **`recipients`** and suppress itself
+  entirely: `chapter.memberJoined` returns `[]` when the chapter turned
+  `notifyOnMemberJoined` off, so no inbox row is written at all. Use that when the chapter
+  is switching off *the notification*, and `chapterAllowsPush` when it is switching off
+  *one channel* and the bell should still fill.
+- `deliverEmail` looks up `replyToEmail` for the event's chapter and sets the mail's
+  `Reply-To` when the chapter named one, so a reply reaches the chapter rather than the
+  platform sender. An event with no chapter keeps the platform sender.
+- All three read `features/chapters`' `ChapterSettings` row through the facade, which
+  answers with the defaults while the chapter has no row. See
+  [ARCHITECTURE.md](ARCHITECTURE.md) → *Chapter settings*.
 - `Message` is email-shaped. `heading` and `body` carry the mail; `title` is the shorter
   line the bell and the push banner use when a kind sets it (the welcome card reads
   "Welcome to München" while the mail keeps its heading). `steps` renders the numbered
@@ -125,6 +143,25 @@ the wait Resend named; `runEmailDelivery` parks the whole email worker with
 `queue.rateLimit(ms)` and throws `Worker.RateLimitError()`, which returns the job to
 waiting without spending one of its five attempts. `deliverEmail` lets that error through
 untouched, so a throttle never shows up as a failed delivery.
+
+## Maintenance jobs
+
+The `events` queue also carries the jobs nobody emitted. `worker/index` routes them through
+a `MAINTENANCE` map keyed by job name and falls back to the dispatcher, so a maintenance job
+can never be mistaken for an event id:
+
+| Scheduler       | When                    | What it does                                                                   |
+| --------------- | ----------------------- | ------------------------------------------------------------------------------ |
+| `sweep`         | every 60 s              | re-queues `Event` rows Redis never heard about                                  |
+| `prune-devices` | `0 4 * * *` (04:00 UTC) | deletes `Device` rows whose `lastSeenAt` is older than `STALE_DEVICE_DAYS` (270) |
+
+`notifications.registerDevice` bumps `lastSeenAt` on every app open, so the cutoff means
+"no sign of this install for nine months", not "no push has been sent to it". 270 days is
+FCM's own expiry for an inactive token, so the prune only removes rows FCM would reject
+anyway — a volunteer who does not open the app over the winter keeps their push. That is one
+half of token hygiene; the other half is FCM answering a send with *not registered*, which
+`deliverPush` turns into `notifications.removeDeviceTokens` on the spot. Both schedulers are
+registered with `upsertJobScheduler`, so restarting the worker does not stack them up.
 
 ## Watching the queues
 

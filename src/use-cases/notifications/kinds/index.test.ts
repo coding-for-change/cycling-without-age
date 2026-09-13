@@ -1,10 +1,17 @@
+import { chapters } from "@/features/chapters";
+import { DEFAULT_CHAPTER_SETTINGS } from "@/features/chapters/schemas";
 import { membership } from "@/features/membership";
 import { chapterMemberJoined } from "@/use-cases/notifications/kinds/chapter-member-joined";
 import { kindOf, kinds } from "@/use-cases/notifications/kinds";
 import { handlers } from "@/worker/handlers";
+import type { EventOf } from "@/lib/events/catalog";
 
 jest.mock("@/features/chapters", () => ({
-  chapters: { getChapter: jest.fn(), getCountry: jest.fn() },
+  chapters: {
+    getChapter: jest.fn(),
+    getCountry: jest.fn(),
+    getSettings: jest.fn(),
+  },
 }));
 jest.mock("@/features/membership", () => ({
   membership: { listChapterAdmins: jest.fn() },
@@ -41,23 +48,47 @@ describe("kinds", () => {
 
 describe("chapter.memberJoined recipients", () => {
   const listChapterAdmins = membership.listChapterAdmins as jest.Mock;
+  const getSettings = chapters.getSettings as jest.Mock;
+
+  const joined = (
+    actorUserId: string | null,
+    userId: string,
+  ): EventOf<"chapter.memberJoined"> => ({
+    type: "chapter.memberJoined",
+    chapterId: "chapter-muenchen",
+    userId,
+    actorUserId,
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    getSettings.mockResolvedValue(DEFAULT_CHAPTER_SETTINGS);
+    listChapterAdmins.mockResolvedValue([
+      { userId: "admin-anke" },
+      { userId: "admin-bo" },
+    ]);
+  });
 
   it.each([
     ["the admin who signed the passenger up", "admin-anke", "user-pernille"],
     ["the admin who joined their own chapter", null, "admin-anke"],
   ])("leaves out %s", async (_label, actorUserId, userId) => {
-    listChapterAdmins.mockResolvedValue([
-      { userId: "admin-anke" },
-      { userId: "admin-bo" },
-    ]);
+    await expect(
+      chapterMemberJoined.recipients(joined(actorUserId, userId)),
+    ).resolves.toEqual(["admin-bo"]);
+  });
+
+  // A chapter that switched the card off gets no inbox row at all, so the
+  // admin list is never even read.
+  it("tells nobody when the chapter switched the card off", async () => {
+    getSettings.mockResolvedValue({
+      ...DEFAULT_CHAPTER_SETTINGS,
+      notifyOnMemberJoined: false,
+    });
 
     await expect(
-      chapterMemberJoined.recipients({
-        type: "chapter.memberJoined",
-        chapterId: "chapter-muenchen",
-        userId,
-        actorUserId,
-      }),
-    ).resolves.toEqual(["admin-bo"]);
+      chapterMemberJoined.recipients(joined("admin-anke", "user-pernille")),
+    ).resolves.toEqual([]);
+    expect(listChapterAdmins).not.toHaveBeenCalled();
   });
 });

@@ -158,6 +158,7 @@ model Organization {
   events          ActivityEvent[]
   domainEvents    Event[]
   serviceRadiusKm Int                  @default(10)
+  settings        ChapterSettings?
 
   @@unique([slug])
   @@index([countryId])
@@ -234,6 +235,18 @@ model CountryAdmin {
   @@unique([userId, countryId])
   @@index([countryId])
   @@map("country_admin")
+}
+
+model ChapterSettings {
+  chapterId            String       @id
+  chapter              Organization @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  notifyOnMemberJoined Boolean      @default(true)
+  applicationAlertPush Boolean      @default(true)
+  replyToEmail         String?      @db.VarChar(254)
+  welcomeNote          String?      @db.Text
+  updatedAt            DateTime     @updatedAt
+
+  @@map("chapter_settings")
 }
 
 model ChapterApplication {
@@ -416,5 +429,6 @@ model Device {
 
   @@unique([token])
   @@index([userId])
+  @@index([lastSeenAt])
   @@map("device")
 }

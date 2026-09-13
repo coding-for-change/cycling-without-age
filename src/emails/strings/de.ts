@@ -21,6 +21,7 @@ const de: EmailStrings = {
     heading: "Wind im Haar, wann immer Sie mögen",
     intro:
       "Ihr Konto ist fertig. {chapter} hat Ihre Angaben, und ein Pilot wartet schon aufs Treten.",
+    noteHeading: "Ein paar Zeilen von {chapter}",
     howHeading: "So läuft eine Ausfahrt",
     how: [
       "Fragen Sie in der App nach einer Ausfahrt — Tag und Uhrzeit wählen Sie.",
@@ -38,6 +39,7 @@ const de: EmailStrings = {
     heading: "Willkommen an Bord",
     intro:
       "Deine Anfrage, für {chapter} zu pilotieren, ist da. Eine Chapter-Admin schaut sie sich an — meist innerhalb weniger Tage.",
+    noteHeading: "Ein paar Zeilen von {chapter}",
     howHeading: "So wirst du Pilot",
     how: [
       "Schau die Trainingsvideos — rund 20 Minuten, direkt in der App.",

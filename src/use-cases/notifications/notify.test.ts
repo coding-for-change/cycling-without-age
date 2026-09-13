@@ -1,4 +1,5 @@
 import { chapters } from "@/features/chapters";
+import { DEFAULT_CHAPTER_SETTINGS } from "@/features/chapters/schemas";
 import { membership } from "@/features/membership";
 import { notifications } from "@/features/notifications";
 import { profile } from "@/features/profile";
@@ -8,7 +9,11 @@ import { notify } from "@/use-cases/notifications/notify";
 import type { Envelope } from "@/lib/events/catalog";
 
 jest.mock("@/features/chapters", () => ({
-  chapters: { getChapter: jest.fn(), getCountry: jest.fn() },
+  chapters: {
+    getChapter: jest.fn(),
+    getCountry: jest.fn(),
+    getSettings: jest.fn(),
+  },
 }));
 jest.mock("@/features/membership", () => ({
   membership: { listChapterAdmins: jest.fn() },
@@ -41,6 +46,7 @@ jest.mock("@/use-cases/notifications/kinds", () => {
 });
 
 const getChapter = chapters.getChapter as jest.Mock;
+const getSettings = chapters.getSettings as jest.Mock;
 const listChapterAdmins = membership.listChapterAdmins as jest.Mock;
 const create = notifications.create as jest.Mock;
 const getProfile = profile.getProfile as jest.Mock;
@@ -85,6 +91,7 @@ const joined: Envelope = {
 beforeEach(() => {
   jest.clearAllMocks();
   getChapter.mockResolvedValue({ name: "München" });
+  getSettings.mockResolvedValue(DEFAULT_CHAPTER_SETTINGS);
   getProfile.mockResolvedValue({ name: "Pernille Holm" });
   listChapterAdmins.mockResolvedValue([{ userId: "user-anke" }]);
   create.mockResolvedValue({ id: "notif-1" });

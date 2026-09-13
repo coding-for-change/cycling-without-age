@@ -18,6 +18,7 @@ const da: EmailStrings = {
     heading: "Vind i håret, når du har lyst",
     intro:
       "Din konto er klar. {chapter} har dine oplysninger, og en pilot står klar til at træde i pedalerne.",
+    noteHeading: "En hilsen fra {chapter}",
     howHeading: "Sådan foregår en tur",
     how: [
       "Bed om en tur i appen — vælg en dag og et tidspunkt, der passer dig.",
@@ -35,6 +36,7 @@ const da: EmailStrings = {
     heading: "Velkommen om bord",
     intro:
       "Din ansøgning om at være pilot for {chapter} er sendt. En afdelingsadministrator kigger på den — som regel inden for et par dage.",
+    noteHeading: "En hilsen fra {chapter}",
     howHeading: "Sådan bliver du pilot",
     how: [
       "Se træningsvideoerne — cirka 20 minutter, direkte i appen.",

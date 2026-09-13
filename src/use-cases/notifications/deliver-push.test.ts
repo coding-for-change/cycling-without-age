@@ -1,3 +1,5 @@
+import { chapters } from "@/features/chapters";
+import { DEFAULT_CHAPTER_SETTINGS } from "@/features/chapters/schemas";
 import { notifications } from "@/features/notifications";
 import { profile } from "@/features/profile";
 import { isPushConfigured, sendPush } from "@/lib/push";
@@ -16,6 +18,9 @@ jest.mock("@/features/notifications", () => ({
   },
 }));
 jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
+jest.mock("@/features/chapters", () => ({
+  chapters: { getChapter: jest.fn(), getSettings: jest.fn() },
+}));
 jest.mock("@/lib/push", () => ({
   isPushConfigured: jest.fn(),
   sendPush: jest.fn(),
@@ -30,6 +35,7 @@ const listDeviceTokens = notifications.listDeviceTokens as jest.Mock;
 const removeDeviceTokens = notifications.removeDeviceTokens as jest.Mock;
 const unseenCount = notifications.unseenCount as jest.Mock;
 const getProfile = profile.getProfile as jest.Mock;
+const getSettings = chapters.getSettings as jest.Mock;
 const configured = isPushConfigured as jest.Mock;
 const push = sendPush as jest.Mock;
 
@@ -71,6 +77,7 @@ beforeEach(() => {
   get.mockResolvedValue(decided());
   beginDelivery.mockResolvedValue({ id: "delivery-1" });
   getProfile.mockResolvedValue({ locale: "de", notifyPush: true });
+  getSettings.mockResolvedValue(DEFAULT_CHAPTER_SETTINGS);
   listDeviceTokens.mockResolvedValue(["token-a"]);
   unseenCount.mockResolvedValue(3);
   configured.mockReturnValue(true);
@@ -176,5 +183,39 @@ describe("deliverPush", () => {
       "delivery-1",
       expect.stringContaining("FCM down"),
     );
+  });
+});
+
+describe("deliverPush and the chapter's own switch", () => {
+  beforeEach(() => get.mockResolvedValue(submitted()));
+
+  // The chapter's say is read like the recipient's own preference, so a
+  // switched-off alert still leaves a Delivery row behind.
+  it("skips an alert the chapter turned off", async () => {
+    getSettings.mockResolvedValue({
+      ...DEFAULT_CHAPTER_SETTINGS,
+      applicationAlertPush: false,
+    });
+
+    await deliverPush("notif-2");
+
+    expect(push).not.toHaveBeenCalled();
+    expect(skipped).toHaveBeenCalledWith("delivery-1", "disabled by chapter");
+  });
+
+  it("pushes as before while the chapter leaves the alert on", async () => {
+    await deliverPush("notif-2");
+
+    expect(push).toHaveBeenCalled();
+    expect(sent).toHaveBeenCalledWith("delivery-1", null);
+  });
+
+  it("asks nothing for a kind the chapter has no switch for", async () => {
+    get.mockResolvedValue(decided());
+
+    await deliverPush("notif-1");
+
+    expect(getSettings).not.toHaveBeenCalled();
+    expect(push).toHaveBeenCalled();
   });
 });

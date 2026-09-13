@@ -147,4 +147,24 @@ describe("sendMail outside production", () => {
       expect.objectContaining({ method: "POST" }),
     );
   });
+
+  // A notification about a chapter is answered by that chapter, not by us.
+  it("carries a reply-to into the Mailpit body, and omits it when there is none", async () => {
+    process.env = { ...process.env, NODE_ENV: "development" };
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValue({ ok: true, status: 200, text: async () => "" });
+    global.fetch = fetchMock as unknown as typeof fetch;
+    jest.spyOn(console, "info").mockImplementation(() => {});
+
+    const { sendMail } = await loadMailer();
+    await sendMail({ ...message, replyTo: "hej@muenchen.example" });
+    await sendMail(message);
+
+    const bodies = fetchMock.mock.calls.map(
+      ([, init]: [string, { body: string }]) => JSON.parse(init.body),
+    );
+    expect(bodies[0].ReplyTo).toEqual([{ Email: "hej@muenchen.example" }]);
+    expect(bodies[1].ReplyTo).toBeUndefined();
+  });
 });

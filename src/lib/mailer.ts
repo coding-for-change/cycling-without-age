@@ -18,6 +18,7 @@ type MailOptions = {
   subject: string;
   text?: string;
   react?: ReactElement;
+  replyTo?: string;
 };
 
 export async function sendMail(options: MailOptions) {
@@ -89,6 +90,7 @@ async function sendToMailpit(url: string, options: MailOptions) {
       body: JSON.stringify({
         From: { Email: process.env.EMAIL_FROM ?? "dev@localhost" },
         To: [{ Email: options.to }],
+        ReplyTo: options.replyTo ? [{ Email: options.replyTo }] : undefined,
         Subject: options.subject,
         Text: options.text,
         HTML: options.react ? await render(options.react) : undefined,

@@ -43,6 +43,12 @@ export type Kind<
   params: (event: EventOf<K>) => Promise<z.infer<P>>;
   href: (event: EventOf<K>) => string;
   collapseKey?: (event: EventOf<K>) => string;
+  /**
+   * The chapter's say on the push channel, read at delivery time like the
+   * recipient's own preference so a switched-off push still leaves a
+   * `Delivery` row. Absent means the chapter has no switch for this kind.
+   */
+  chapterAllowsPush?: (chapterId: string | null) => Promise<boolean>;
   message: (
     params: z.infer<P>,
     strings: EmailStrings,
@@ -66,6 +72,7 @@ export type AnyKind = {
   params(event: DomainEvent): Promise<NotificationPayload>;
   href(event: DomainEvent): string;
   collapseKey?(event: DomainEvent): string;
+  chapterAllowsPush?(chapterId: string | null): Promise<boolean>;
   message(
     params: NotificationPayload,
     strings: EmailStrings,

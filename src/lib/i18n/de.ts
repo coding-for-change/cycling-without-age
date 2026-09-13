@@ -243,7 +243,7 @@ const de: Dictionary = {
     },
     pilot: {
       title: "In die Pedale treten",
-      body: "Piloten nehmen Nachbarn für eine Stunde mit. Fragen Sie an, und ein Admin der Ortsgruppe meldet sich \u2014 meist innerhalb weniger Tage.",
+      body: "Piloten nehmen Nachbarn für eine Stunde mit. Fragen Sie an, und ein Admin der Ortsgruppe meldet sich — meist innerhalb weniger Tage.",
       cta: "Hier als Pilot anfragen",
       pending: "Ihre Anfrage liegt bei der Ortsgruppe.",
     },
@@ -275,7 +275,7 @@ const de: Dictionary = {
       summary: "Sie möchten mit {chapter} fahren, {when}.",
       noDraft:
         "Wir haben Ihre Auswahl verloren. Wählen Sie auf der Seite der Ortsgruppe noch einmal eine Zeit.",
-      note: "Die Buchung kommt bald \u2014 abgeschickt wurde noch nichts.",
+      note: "Die Buchung kommt bald — abgeschickt wurde noch nichts.",
       back: "Zurück zu {chapter}",
     },
   },
@@ -694,7 +694,7 @@ const de: Dictionary = {
       delete: {
         open: "Land löschen",
         title: "{name} endgültig löschen?",
-        body: "Jede Ortsgruppe in diesem Land geht mit \u2014 samt Mitgliedern, Fahrgästen und offenen Anfragen. Bereits gefahrene Fahrten bleiben erhalten.",
+        body: "Jede Ortsgruppe in diesem Land geht mit — samt Mitgliedern, Fahrgästen und offenen Anfragen. Bereits gefahrene Fahrten bleiben erhalten.",
         footprint:
           "{chapters} Ortsgruppen \u00b7 {members} Mitglieder \u00b7 {passengers} Fahrgäste",
         label: "Tipp {word} zur Bestätigung",
@@ -737,7 +737,7 @@ const de: Dictionary = {
         added: "{name} steht auf der Liste.",
         errors: {
           exists: "Zu dieser E-Mail oder Nummer gibt es schon ein Konto.",
-          invalid: "Prüf die Angaben \u2014 da stimmt etwas nicht.",
+          invalid: "Prüf die Angaben — da stimmt etwas nicht.",
           generic: "Das hat nicht geklappt. Versuch es noch mal.",
         },
       },
@@ -762,6 +762,39 @@ const de: Dictionary = {
         copied: "Link kopiert.",
         poster: "Plakat drucken",
         downloadPng: "QR-Code als PNG speichern",
+      },
+      notifications: {
+        title: "Benachrichtigungen",
+        body: "Wer von einem neuen Gesicht erfährt — und was in der Post deiner Ortsgruppe steht, wenn sie ankommt.",
+        memberJoined: {
+          label: "Jemand tritt der Ortsgruppe bei",
+          hint: "Eine Karte wartet im Admin-Posteingang, sobald ein neuer Passagier dazukommt.",
+        },
+        applicationPush: {
+          label: "Pilotanfragen brummen aufs Handy",
+          hint: "Schalt es aus, dann wartet die Karte trotzdem im Posteingang — die E-Mail folgt zwei Minuten später, falls sie niemand vorher in der App gelesen hat.",
+        },
+        replyTo: {
+          label: "Antwortadresse",
+          hint: "Antwortet jemand auf eine Mail der Ortsgruppe, landet die Antwort hier.",
+          placeholder: "hallo@beispiel.de",
+          invalid: "Das ist keine E-Mail-Adresse.",
+        },
+        welcomeNote: {
+          label: "Ein paar Willkommensworte",
+          hint: "Ein paar Zeilen von dir, hervorgehoben in der Willkommensmail, die jede neue Pilotin und jeder neue Passagier bekommt.",
+          placeholder:
+            "Wir fahren dienstags um zwei, und Kuchen gibt es immer.",
+        },
+        status: { saving: "Speichert", saved: "Gespeichert {when}" },
+        field: {
+          edit: "Bearbeiten",
+          saved: "Gespeichert.",
+          undo: "Rückgängig",
+          undone: "Zurückgesetzt.",
+          invalid: "Das sieht nicht richtig aus.",
+          errors: { generic: "Das hat nicht geklappt. Versuch es noch mal." },
+        },
       },
     },
   },

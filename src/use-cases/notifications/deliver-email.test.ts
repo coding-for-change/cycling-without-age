@@ -1,3 +1,5 @@
+import { chapters } from "@/features/chapters";
+import { DEFAULT_CHAPTER_SETTINGS } from "@/features/chapters/schemas";
 import { notifications } from "@/features/notifications";
 import { profile } from "@/features/profile";
 import { activity } from "@/lib/activity";
@@ -15,6 +17,13 @@ jest.mock("@/features/notifications", () => ({
   },
 }));
 jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
+jest.mock("@/features/chapters", () => ({
+  chapters: {
+    getChapter: jest.fn(),
+    getCountry: jest.fn(),
+    getSettings: jest.fn(),
+  },
+}));
 jest.mock("@/lib/activity", () => ({ activity: { record: jest.fn() } }));
 jest.mock("@/lib/mailer", () => ({
   ...jest.requireActual("@/lib/mailer"),
@@ -27,6 +36,8 @@ const sent = notifications.deliverySent as jest.Mock;
 const failed = notifications.deliveryFailed as jest.Mock;
 const skipped = notifications.deliverySkipped as jest.Mock;
 const getProfile = profile.getProfile as jest.Mock;
+const getSettings = chapters.getSettings as jest.Mock;
+const getCountry = chapters.getCountry as jest.Mock;
 const getDelivery = notifications.getDelivery as jest.Mock;
 const record = activity.record as jest.Mock;
 const mail = sendMail as jest.Mock;
@@ -66,6 +77,21 @@ const fallbackNotification = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
+// A country admin's appointment belongs to no chapter at all.
+const appointment = () => ({
+  id: "notif-4",
+  recipientUserId: ACTOR,
+  category: "membership",
+  href: "/admin",
+  readAt: null,
+  payload: { countryName: "Deutschland", actorName: "Pernille Holm" },
+  event: {
+    type: "countryAdmin.appointed",
+    actorUserId: APPLICANT,
+    chapterId: null,
+  },
+});
+
 const welcomeNotification = () => ({
   id: "notif-3",
   recipientUserId: APPLICANT,
@@ -85,6 +111,8 @@ beforeEach(() => {
   get.mockResolvedValue(notification());
   getDelivery.mockResolvedValue(null);
   beginDelivery.mockResolvedValue({ id: "delivery-1" });
+  getSettings.mockResolvedValue(DEFAULT_CHAPTER_SETTINGS);
+  getCountry.mockResolvedValue({ name: "Deutschland" });
   getProfile.mockResolvedValue({
     email: "pernille@example.com",
     locale: "de",
@@ -274,5 +302,34 @@ describe("deliverEmail and the recipient's preference", () => {
       "delivery-1",
       "email disabled for kind",
     );
+  });
+});
+
+describe("deliverEmail and the chapter's reply-to", () => {
+  it("sends a reply back to the chapter that named an address", async () => {
+    getSettings.mockResolvedValue({
+      ...DEFAULT_CHAPTER_SETTINGS,
+      replyToEmail: "hej@muenchen.example",
+    });
+
+    await deliverEmail("notif-1");
+
+    expect(mail.mock.calls[0][0].replyTo).toBe("hej@muenchen.example");
+  });
+
+  // No address means the platform sender answers, not an empty Reply-To header.
+  it("leaves the header off when the chapter named none", async () => {
+    await deliverEmail("notif-1");
+
+    expect(mail.mock.calls[0][0]).not.toHaveProperty("replyTo");
+  });
+
+  it("asks no chapter about an event that belongs to none", async () => {
+    get.mockResolvedValue(appointment());
+
+    await deliverEmail("notif-4");
+
+    expect(getSettings).not.toHaveBeenCalled();
+    expect(mail.mock.calls[0][0]).not.toHaveProperty("replyTo");
   });
 });

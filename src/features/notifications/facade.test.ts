@@ -207,3 +207,18 @@ describe("notifications.getDelivery", () => {
     expect(db.delivery.upsert).not.toHaveBeenCalled();
   });
 });
+
+describe("notifications.pruneStaleDevices", () => {
+  // 270 days is FCM's own expiry, so the prune never removes a token FCM
+  // would still deliver to — a winter break does not cost a pilot their push.
+  it("deletes the installs FCM itself has given up on", async () => {
+    db.device.deleteMany.mockResolvedValue({ count: 4 });
+
+    expect(
+      await notifications.pruneStaleDevices(new Date("2026-09-13T04:00:00Z")),
+    ).toBe(4);
+    expect(db.device.deleteMany).toHaveBeenCalledWith({
+      where: { lastSeenAt: { lt: new Date("2025-12-17T04:00:00Z") } },
+    });
+  });
+});

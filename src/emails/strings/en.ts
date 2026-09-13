@@ -29,6 +29,7 @@ const en = {
     heading: "Wind in your hair, whenever you like",
     intro:
       "Your account is ready. {chapter} has your details, and a pilot is waiting to pedal.",
+    noteHeading: "A note from {chapter}",
     howHeading: "How a ride works",
     how: [
       "Ask for a ride in the app — pick a day and a time that suits you.",
@@ -46,6 +47,7 @@ const en = {
     heading: "Welcome aboard",
     intro:
       "Your request to pilot for {chapter} is in. A chapter admin looks at it — usually within a few days.",
+    noteHeading: "A note from {chapter}",
     howHeading: "How you become a pilot",
     how: [
       "Watch the training videos — about 20 minutes, right in the app.",
