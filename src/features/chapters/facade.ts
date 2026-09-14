@@ -1,3 +1,4 @@
+import { resolveTimeZone } from "@/lib/time-zone";
 import { DomainError, mapping } from "@/lib/domain-error";
 import { distanceMeters, type Coords } from "@/lib/geo";
 import {
@@ -32,6 +33,7 @@ import {
   deleteChapterById,
   findChapterById,
   findChapterBySlug,
+  findChapterTimeZones,
   findChapterCountryId,
   findChapterFootprint,
   findChapters,
@@ -222,11 +224,17 @@ export const deleteChapter = (id: string) => deleteChapterById(id);
 
 export async function createChapter(input: ChapterInput) {
   const data = chapterInput.parse(input);
-  if (!(await findCountryById(data.countryId)))
-    throw new DomainError("unknownCountry");
+  const country = await findCountryById(data.countryId);
+  if (!country) throw new DomainError("unknownCountry");
   if (await findChapterBySlug(data.slug)) throw new DomainError("slugTaken");
+  // Ride times render in the chapter's zone, so the column is NOT NULL. Most of
+  // CWA's markets have exactly one zone; the rest land on UTC and the admin
+  // corrects it on the chapter page.
+  const timeZone = data.timeZone ?? resolveTimeZone(country.code);
   // The pre-check loses a race; the unique index does not.
-  return mapping(() => insertChapter(data), { unique: "slugTaken" });
+  return mapping(() => insertChapter({ ...data, timeZone }), {
+    unique: "slugTaken",
+  });
 }
 
 // A chapter belongs to exactly one country for life — moving it would silently
@@ -262,3 +270,11 @@ export async function nearestChapter(
   }
   return best;
 }
+
+/**
+ * The zones the chapters in scope keep. A calendar spanning several chapters
+ * has no single right clock, so the caller renders in the common zone when
+ * they agree and names the one it picked when they do not.
+ */
+export const getChapterTimeZones = (ids: string[]) =>
+  ids.length ? findChapterTimeZones(ids) : Promise.resolve([]);

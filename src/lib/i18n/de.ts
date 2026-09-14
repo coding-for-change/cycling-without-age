@@ -799,6 +799,45 @@ const de: Dictionary = {
     browsing: "Sie sehen {chapter}",
     noChapter: "Sie haben noch keine Ortsgruppe gewählt",
   },
+  calendar: {
+    today: "Heute",
+    thisWeek: "Diese Woche",
+    previousWeek: "Vorige Woche",
+    nextWeek: "Nächste Woche",
+    weekOf: "Woche ab {date}",
+    upcoming: "Demnächst",
+    agendaEmpty:
+      "Noch nichts gebucht. Sobald eine Fahrt eingeplant ist, steht sie hier.",
+    weekEmpty: "Diese Woche keine Fahrten.",
+    trishaw: "Rikscha",
+    noTrishaws: "Noch keine Rikschas eingetragen.",
+    riders: { one: "{count} Fahrgast", other: "{count} Fahrgäste" },
+    noRiders: "Noch keine Fahrgäste",
+    pilotNeeded: "Pilot gesucht",
+    noTrishaw: "Noch keine Rikscha",
+    cancelledOn: "Abgesagt",
+    via: "nach",
+    models: {
+      event: "Gruppenfahrt",
+      pleasure: "Ausfahrt",
+      functional: "Zweckfahrt",
+    },
+    statuses: {
+      scheduled: "Geplant",
+      cancelled: "Abgesagt",
+      completed: "Gefahren",
+    },
+    roles: {
+      pilot: "Pilot",
+      ambassador: "Begleitung",
+      transporter: "Transport",
+    },
+    trishawStatuses: {
+      active: "Bereit",
+      maintenance: "In der Werkstatt",
+      retired: "Ausgemustert",
+    },
+  },
   account: {
     // du-Form: Das Konto teilen sich Admins, Piloten und Passagiere; die
     // Sicherheitstexte richten sich an Aktive.
