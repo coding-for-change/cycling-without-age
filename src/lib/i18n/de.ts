@@ -629,6 +629,9 @@ const de: Dictionary = {
       detail: {
         back: "Zurück zu den Ortsgruppen",
         location: "Standort",
+        timeZone: "Zeitzone",
+        timeZoneHint:
+          "Fahrzeiten werden in dieser Zone angezeigt. Sie folgt der Stecknadel, solange du sie hier nicht festlegst.",
         about: "Über die Ortsgruppe",
         history: "Verlauf",
         historyEmpty:

@@ -579,11 +579,34 @@ nothing enforces it yet.
 Lifecycle phase 2C commits resources: a scheduled ride holds **each** of its trishaws for its
 window, and they are "no longer available to others". `rides.scheduleRide` and
 `rides.rescheduleRide` enforce that in the facade over the whole set — `trishawReserved` when
-any of them is already out in an overlapping window, `trishawNotInChapter` when one belongs to
-another chapter, `trishawUnavailable` when one is in for service. Rescheduling **replaces**
-the reservation set rather than merging into it. Cancelling **releases** the equipment but
-keeps the ride on the calendar, because the glossary says cancellation does not free the
-square.
+any of them is already out in an overlapping window, `trishawNotInChapter` when the scheduling
+chapter cannot reach it, `trishawUnavailable` when one is in for service. Rescheduling
+**replaces** the reservation set rather than merging into it. Cancelling **releases** the
+equipment but keeps the ride on the calendar, because the glossary says cancellation does not
+free the square.
+
+### Storage locations: a bike lives at a place, not at a chapter
+
+A trishaw is often kept somewhere shared — a care home or depot that serves more than one
+chapter — so **owning** a bike and **reaching** it are two different questions, and the schema
+answers them separately.
+
+`Trishaw.chapterId` stays what it always was: the owning chapter, who bought the bike and who
+reports on it. `Trishaw.storageLocationId` is new and nullable — null means the bike sits at
+its owning chapter's own address, and a row means it lives at a `StorageLocation`.
+`StorageLocationChapter` links a site to **one or more** chapters, because a single care home
+serving two neighbouring chapters is the case that a column could not express.
+
+Reachability follows from that, in `rides.reachableFrom`: a chapter may schedule a trishaw it
+owns, **or** one parked at a site it shares. `findTrishawsOfChapters` is the same rule as a
+query — an `OR` over owner and shared site, not a filter on `chapterId` — so `/admin/bikes`
+lists a shared bike for every chapter entitled to it. Sharing the shed does not override the
+other two checks: a bike in for service is still `trishawUnavailable`, and the window is still
+reserved inside the write's transaction.
+
+There is **no admin surface for storage locations yet** — no create, edit or link screen, and
+`prisma/seed.ts` is the only thing that writes one. Until there is, a shared site has to be
+created by hand. That is the missing piece, not a design gap.
 
 ### Time zones: the chapter's clock, never the server's or the reader's
 
@@ -599,10 +622,29 @@ else — `startOfDay`, `addDays`, `startOfWeek`, `weekDays`, `lanes` — is buil
 45-minute offset (Kathmandu) and a date-line crossing, because those are the cases a naive
 `setDate` gets wrong.
 
-A new chapter's zone comes from `resolveTimeZone(country.code)` in `src/lib/time-zone.ts`,
-which knows the single-zone markets in CWA's rollout and returns `UTC` for the rest —
-US, CA, AU, ES, PT and NZ span several zones and there is no right answer to guess. Those
-chapters need their zone corrected after creation.
+A new chapter's zone comes from its **pin**, via `resolveChapterTimeZone` in
+`src/lib/time-zone.ts` (`@photostructure/tz-lookup`, zero dependencies, CC0). A country is
+the wrong unit for this question — the US, Canada and Australia span several zones, and
+Spain and Portugal each keep a second one offshore (`Atlantic/Canary`, `Atlantic/Azores`) —
+and a chapter always has coordinates, because the address search fills them in. The country
+map survives only as a fallback for a caller with no pin, and `UTC` below that, so chapter
+creation can never fail on this.
+
+Moving the pin re-derives the zone (`chapters.withDerivedTimeZone`, applied by
+`use-cases/manage-chapter` before it diffs). This is **not** about a chapter relocating —
+a chapter cannot change country or slug, so one that moves is a new chapter, not an edited
+one. It is about a chapter first pinned on the wrong side of a border: the pin decides the
+zone, so the two are not allowed to disagree. The change gets its own line in the chapter's
+history, so it is never silent.
+
+**There is no field for editing the zone directly yet.** `chapterUpdateInput` accepts one
+and it wins over the pin when supplied, but no screen supplies it — so today, correcting a
+chapter's zone means correcting its pin. A zone picker on the chapter page is the missing
+piece.
+
+The lookup is a compressed raster, so a pin within a kilometre or two of a zone border can
+land on the wrong side. That is why the zone is a stored, correctable column rather than
+something derived on every read.
 
 When an admin's scope spans chapters in different zones, `app/admin/calendar-scope.ts` picks
 the first and **names it on screen**, rather than drawing times that are quietly wrong for

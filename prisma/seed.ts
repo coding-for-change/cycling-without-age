@@ -253,6 +253,30 @@ async function seedRides(
     }
   }
 
+  // Where München keeps its bikes. The case the model exists for is one site
+  // shared by several chapters, but no two seeded chapters are in the same
+  // city, so that path is covered in `features/rides/facade.test.ts` instead.
+  const site = await prisma.storageLocation.upsert({
+    where: { id: "seed-site-sonnenhof" },
+    update: {},
+    create: {
+      id: "seed-site-sonnenhof",
+      name: "Seniorenheim Sonnenhof",
+      address: "Sonnenstraße 12, 80331 München",
+      latitude: 48.1371,
+      longitude: 11.5654,
+      chapters: { create: [{ chapterId: chapterId("muenchen") }] },
+    },
+  });
+  await prisma.trishaw.updateMany({
+    where: {
+      id: {
+        in: TRISHAWS.muenchen.map((t) => trishawIds.get(`muenchen/${t.name}`)!),
+      },
+    },
+    data: { storageLocationId: site.id },
+  });
+
   const today = startOfToday();
   const pilot = userIds.get("pilot@cwa.local")!;
   const multi = userIds.get("multi@cwa.local")!;

@@ -60,7 +60,21 @@ export const listTrishaws = (chapterIds: string[]) =>
  * conflict query rather than filtered here.
  */
 /**
- * Which chapter a trishaw belongs to and whether it is roadworthy are stable
+ * A chapter may schedule a trishaw it owns, and one parked at a storage site it
+ * shares — a care home or depot can serve several chapters, and the bike lives
+ * at the place rather than at the chapter. Ownership is still its own column,
+ * because who bought the bike and who reports on it does not change because it
+ * is parked somewhere shared.
+ */
+function reachableFrom(trishaw: TrishawRow, chapterId: string) {
+  if (trishaw.chapterId === chapterId) return true;
+  return (trishaw.storageLocation?.chapters ?? []).some(
+    (link) => link.chapterId === chapterId,
+  );
+}
+
+/**
+ * Which chapters can reach a trishaw and whether it is roadworthy are stable
  * facts, so they are checked here. Whether its window is free is not — that
  * check has to happen inside the write's own transaction, or two schedulers
  * both pass it. See `insertRideReserving`.
@@ -69,7 +83,7 @@ async function assertTrishawsUsable(trishawIds: string[], chapterId: string) {
   for (const trishawId of trishawIds) {
     const trishaw = await findTrishawById(trishawId);
     if (!trishaw) throw new DomainError("unknownTrishaw");
-    if (trishaw.chapterId !== chapterId)
+    if (!reachableFrom(trishaw, chapterId))
       throw new DomainError("trishawNotInChapter");
     if (trishaw.status !== "active")
       throw new DomainError("trishawUnavailable");

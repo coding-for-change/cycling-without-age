@@ -1,4 +1,7 @@
-import { resolveTimeZone } from "@/lib/time-zone";
+import {
+  resolveChapterTimeZone,
+  timeZoneForCoordinates,
+} from "@/lib/time-zone";
 import { DomainError, mapping } from "@/lib/domain-error";
 import { distanceMeters, type Coords } from "@/lib/geo";
 import {
@@ -227,14 +230,41 @@ export async function createChapter(input: ChapterInput) {
   const country = await findCountryById(data.countryId);
   if (!country) throw new DomainError("unknownCountry");
   if (await findChapterBySlug(data.slug)) throw new DomainError("slugTaken");
-  // Ride times render in the chapter's zone, so the column is NOT NULL. Most of
-  // CWA's markets have exactly one zone; the rest land on UTC and the admin
-  // corrects it on the chapter page.
-  const timeZone = data.timeZone ?? resolveTimeZone(country.code);
+  // Ride times render in the chapter's zone, so the column is NOT NULL. The pin
+  // decides it — a country is the wrong unit, since the US, Canada, Australia,
+  // Spain and Portugal all span more than one zone.
+  const timeZone =
+    data.timeZone ??
+    resolveChapterTimeZone({
+      latitude: data.latitude,
+      longitude: data.longitude,
+      countryCode: country.code,
+    });
   // The pre-check loses a race; the unique index does not.
   return mapping(() => insertChapter({ ...data, timeZone }), {
     unique: "slugTaken",
   });
+}
+
+/**
+ * The pin decides the zone, so moving the pin re-derives it. Almost every pin
+ * move is a small correction inside one zone, where this changes nothing; the
+ * case it exists for is a chapter first pinned on the wrong side of a border.
+ *
+ * An explicit `timeZone` in the input always wins — that is an admin
+ * overruling the map, which is the whole reason the column is editable. The
+ * change is never silent either way: `diffChapter` gives it its own line in the
+ * chapter's history.
+ */
+export function withDerivedTimeZone(
+  input: ChapterUpdateInput,
+): ChapterUpdateInput {
+  if (input.timeZone !== undefined) return input;
+  if (input.latitude === undefined || input.longitude === undefined)
+    return input;
+
+  const timeZone = timeZoneForCoordinates(input.latitude, input.longitude);
+  return timeZone ? { ...input, timeZone } : input;
 }
 
 // A chapter belongs to exactly one country for life — moving it would silently

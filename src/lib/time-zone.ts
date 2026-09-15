@@ -5,14 +5,15 @@
  * viewer and not to the server.
  */
 
+import tzLookup from "@photostructure/tz-lookup";
+
 export const FALLBACK_TIME_ZONE = "UTC";
 
 /**
- * CWA's rollout markets that have exactly one civil time zone, so a new
- * chapter's zone can be resolved from its country without asking. The
- * multi-zone markets in scope — US, CA, AU, ES, PT, NZ — are deliberately
- * absent: there is no right answer to guess, so they fall back and the admin
- * corrects the chapter. See `.agents/skills/cwa-context/references/10-languages-and-markets.md`.
+ * CWA's rollout markets that have exactly one civil time zone. Only a fallback
+ * now that coordinates answer the question properly — a chapter always has a
+ * pin, but this keeps a country-only caller honest.
+ * See `.agents/skills/cwa-context/references/10-languages-and-markets.md`.
  */
 const SINGLE_ZONE_MARKETS: Record<string, string> = {
   AT: "Europe/Vienna",
@@ -64,4 +65,46 @@ export function supportedTimeZones(): string[] {
   const supported = Intl.supportedValuesOf?.("timeZone") ?? [];
   cachedZones = supported.length ? [...supported] : [FALLBACK_TIME_ZONE];
   return cachedZones;
+}
+
+/**
+ * The zone in force at a point on the map.
+ *
+ * A country is the wrong unit for this: the US, Canada and Australia span
+ * several zones, and Spain and Portugal each keep a second one offshore
+ * (Atlantic/Canary, Atlantic/Azores). A chapter always has a pin — the address
+ * search fills it in — so the pin is what decides.
+ *
+ * The lookup is a compressed raster, so a point within a kilometre or two of a
+ * zone border can land on the wrong side. That is why the chapter keeps an
+ * editable column rather than deriving the zone on every read.
+ */
+export function timeZoneForCoordinates(
+  latitude: number,
+  longitude: number,
+): string | null {
+  try {
+    const zone = tzLookup(latitude, longitude);
+    return isValidTimeZone(zone) ? zone : null;
+  } catch {
+    // Out-of-range coordinates, or a zone this runtime's ICU data predates.
+    return null;
+  }
+}
+
+/**
+ * The zone to store for a new chapter: its pin first, its country second, UTC
+ * last. Never throws — a chapter must be creatable even from a bad pin.
+ */
+export function resolveChapterTimeZone(input: {
+  latitude?: number | null;
+  longitude?: number | null;
+  countryCode?: string | null;
+}): string {
+  const { latitude, longitude, countryCode } = input;
+  if (typeof latitude === "number" && typeof longitude === "number") {
+    const fromPin = timeZoneForCoordinates(latitude, longitude);
+    if (fromPin) return fromPin;
+  }
+  return countryCode ? resolveTimeZone(countryCode) : FALLBACK_TIME_ZONE;
 }

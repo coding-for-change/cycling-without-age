@@ -53,6 +53,7 @@ const trishawRow = (over: Record<string, unknown> = {}) =>
     type: "Triobike Taxi",
     seats: 2,
     status: "active",
+    storageLocation: null,
     ...over,
   });
 
@@ -123,6 +124,52 @@ describe("scheduleRide", () => {
       await codeOf(rides.scheduleRide({ ...base, trishawIds: [TRISHAW] })),
     ).toBe("trishawNotInChapter");
     expect(db.ride.create).not.toHaveBeenCalled();
+  });
+
+  // A care home can serve two chapters, and the bike lives at the home rather
+  // than at either chapter — so owning it is not the only way to reach it.
+  it("accepts another chapter's trishaw parked at a site we share", async () => {
+    trishawRow({
+      chapterId: "chapter-hamburg",
+      storageLocation: {
+        id: "site-seniorenheim",
+        name: "Seniorenheim Sonnenhof",
+        chapters: [{ chapterId: "chapter-hamburg" }, { chapterId: CHAPTER }],
+      },
+    });
+    await rides.scheduleRide({ ...base, trishawIds: [TRISHAW] });
+    expect(db.ride.create).toHaveBeenCalled();
+  });
+
+  it("refuses a trishaw at a site we do not share", async () => {
+    trishawRow({
+      chapterId: "chapter-hamburg",
+      storageLocation: {
+        id: "site-hafen",
+        name: "Hafendepot",
+        chapters: [{ chapterId: "chapter-hamburg" }],
+      },
+    });
+    expect(
+      await codeOf(rides.scheduleRide({ ...base, trishawIds: [TRISHAW] })),
+    ).toBe("trishawNotInChapter");
+    expect(db.ride.create).not.toHaveBeenCalled();
+  });
+
+  // Sharing the shed does not make a broken bike rideable.
+  it("still refuses a shared trishaw that is in for service", async () => {
+    trishawRow({
+      chapterId: "chapter-hamburg",
+      status: "maintenance",
+      storageLocation: {
+        id: "site-seniorenheim",
+        name: "Seniorenheim Sonnenhof",
+        chapters: [{ chapterId: CHAPTER }],
+      },
+    });
+    expect(
+      await codeOf(rides.scheduleRide({ ...base, trishawIds: [TRISHAW] })),
+    ).toBe("trishawUnavailable");
   });
 
   it("refuses a trishaw that is in for service", async () => {

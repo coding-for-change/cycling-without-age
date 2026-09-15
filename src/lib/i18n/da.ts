@@ -609,6 +609,9 @@ const da: Dictionary = {
       detail: {
         back: "Tilbage til afdelinger",
         location: "Placering",
+        timeZone: "Tidszone",
+        timeZoneHint:
+          "Turenes tidspunkter vises i denne zone. Den følger nålen, medmindre du vælger den her.",
         about: "Om afdelingen",
         history: "Historik",
         historyEmpty:

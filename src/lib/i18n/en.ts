@@ -607,6 +607,9 @@ const en = {
       detail: {
         back: "Back to chapters",
         location: "Location",
+        timeZone: "Time zone",
+        timeZoneHint:
+          "Ride times are shown in this zone. It follows the pin unless you set it here.",
         about: "About",
         history: "History",
         historyEmpty:

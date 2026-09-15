@@ -158,6 +158,7 @@ model Organization {
   timeZone        String               @db.VarChar(64)
   trishaws        Trishaw[]
   rides           Ride[]
+  storageSites    StorageLocationChapter[]
 
   @@unique([slug])
   @@index([countryId])
@@ -354,6 +355,41 @@ enum TrishawStatus {
   retired
 }
 
+/**
+ * Where trishaws are kept. A care home or depot can serve more than one chapter
+ * — the equipment lives at the place, not at the chapter — so the link to
+ * chapters is a join table rather than a column. This is separate from a
+ * trishaw's owning chapter: who bought it and who reports on it does not change
+ * because it is parked somewhere shared.
+ */
+model StorageLocation {
+  id        String  @id @default(cuid())
+  name      String  @db.Text
+  address   String? @db.Text
+  latitude  Float?
+  longitude Float?
+
+  chapters  StorageLocationChapter[]
+  trishaws  Trishaw[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("storage_location")
+}
+
+model StorageLocationChapter {
+  id                String          @id @default(cuid())
+  storageLocationId String
+  storageLocation   StorageLocation @relation(fields: [storageLocationId], references: [id], onDelete: Cascade)
+  chapterId         String
+  chapter           Organization    @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  createdAt         DateTime        @default(now())
+
+  @@unique([storageLocationId, chapterId])
+  @@index([chapterId])
+  @@map("storage_location_chapter")
+}
+
 model Trishaw {
   id        String        @id @default(cuid())
   chapterId String
@@ -362,11 +398,18 @@ model Trishaw {
   type      String?       @db.Text
   seats     Int           @default(2)
   status    TrishawStatus @default(active)
+
+  /// Null means the bike sits at its owning chapter's own address; a row here
+  /// is a shared site, and every chapter linked to it may schedule the bike.
+  storageLocationId String?
+  storageLocation   StorageLocation? @relation(fields: [storageLocationId], references: [id], onDelete: SetNull)
+
   rides     RideTrishaw[]
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
   @@index([chapterId, status])
+  @@index([storageLocationId])
   @@map("trishaw")
 }
 
