@@ -31,6 +31,7 @@ export type ConfirmDeleteLabels = {
   word: string;
   submit: string;
   done: string;
+  errors: NotifyLabels["errors"];
 };
 
 export function ConfirmDeleteDialog({
@@ -38,7 +39,6 @@ export function ConfirmDeleteDialog({
   footprint,
   labels,
   cancel,
-  errors,
   action,
   onDone,
   trigger,
@@ -47,7 +47,6 @@ export function ConfirmDeleteDialog({
   footprint?: string;
   labels: ConfirmDeleteLabels;
   cancel: string;
-  errors: NotifyLabels["errors"];
   action: () => Promise<ActionResult>;
   onDone?: () => void;
   trigger?: ReactNode;
@@ -63,7 +62,10 @@ export function ConfirmDeleteDialog({
     if (!armed) return;
     startTransition(async () => {
       const result = await action();
-      notify(result, { done: fill(labels.done, { name }), errors });
+      notify(result, {
+        done: fill(labels.done, { name }),
+        errors: labels.errors,
+      });
       if (!result.ok) return;
       setOpen(false);
       setTyped("");

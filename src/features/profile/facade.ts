@@ -34,11 +34,6 @@ export const getUserIdByEmail = async (email: string) =>
 export const setLocale = (userId: string, locale: string) =>
   updateProfile(userId, { locale });
 
-/**
- * The care-home path clears any address on purpose: the chapter's own position is
- * the pickup point, and a stale home address left behind would quietly become the
- * one a ride is planned from.
- */
 export async function setResidence(
   userId: string,
   residence: Residence,
@@ -62,16 +57,6 @@ export async function setResidence(
   });
 }
 
-/**
- * Consent is stamped, never unstamped: withdrawing it is an account deletion,
- * which is a different flow with different obligations.
- *
- * The timestamps record when they FIRST agreed and are not moved by a later
- * visit — someone stepping back through the flow to change their notification
- * preference has not re-consented, and a consent date that drifts forward is
- * worse than useless in a data-protection request. The preferences themselves
- * are a live setting and do follow the latest answer.
- */
 export async function recordConsent(userId: string, input: ConsentInput) {
   const { safety, notifications, data } = consentInput.parse(input);
   if (!data) throw new DomainError("consentRequired");
@@ -86,8 +71,6 @@ export async function recordConsent(userId: string, input: ConsentInput) {
   });
 }
 
-/** True the first time only, so the welcome lands once however often the last
- *  onboarding step is submitted. */
 export function completeOnboarding(
   userId: string,
   { chapterId, role }: { chapterId: string | null; role: OnboardingRole },
@@ -106,8 +89,6 @@ export function setPersonalDetails(
 ) {
   const { firstName, lastName, birthDate, gender } =
     personalDetailsInput.parse(input);
-  // `name` is BetterAuth's own column and what every member list renders, so it
-  // is kept in step rather than left as whatever the OAuth provider supplied.
   return updateProfile(userId, {
     name: `${firstName} ${lastName}`,
     birthDate,
@@ -115,11 +96,6 @@ export function setPersonalDetails(
   });
 }
 
-/**
- * Self-service edits arrive one field at a time, so only the keys the patch
- * actually carries are written — spreading the rest as `undefined` would be a
- * Prisma no-op today and an accidental blanking the day a field becomes nullable.
- */
 export async function updateOwnDetails(
   userId: string,
   patch: OwnDetailsPatchInput,

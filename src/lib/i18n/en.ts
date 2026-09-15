@@ -1,5 +1,3 @@
-// Source of truth for the dictionary shape. Every other locale must
-// implement `Dictionary`, so a missing or extra key is a type error.
 const en = {
   home: {
     title: "Hello World",

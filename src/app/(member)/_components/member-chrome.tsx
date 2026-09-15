@@ -9,7 +9,7 @@ import { getDictionary, getLocale } from "@/lib/i18n";
 import { PERSPECTIVE_HOME, safeNextPath } from "@/lib/redirects";
 import { resolveMemberNav, type MemberPerspective } from "../nav";
 import { MemberTopBar } from "./member-top-bar";
-import { signInHref } from "./sign-in-href";
+import { signInHref } from "@/lib/redirects";
 
 export async function MemberChrome({
   perspective,

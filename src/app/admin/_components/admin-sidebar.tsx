@@ -17,12 +17,8 @@ import { getDictionary } from "@/lib/i18n";
 import { loadAccount } from "@/components/account/load-account";
 import { UserMenu } from "@/components/user-menu";
 import { resolveNav } from "../nav";
-import {
-  defaultScopeArg,
-  perspectiveChoices,
-  roleLabel,
-  scopeChoices,
-} from "../scopes";
+import { perspectiveChoices, roleLabel } from "@/lib/perspectives";
+import { defaultScopeArg, scopeChoices } from "../scopes";
 import { AdminNav } from "./admin-nav";
 import { CommandHint } from "./command-hint";
 import { ScopeSwitcher } from "./scope-switcher";

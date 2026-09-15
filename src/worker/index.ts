@@ -18,16 +18,11 @@ import type { Listener } from "./handlers";
 const SWEEP_EVERY_MS = 60_000;
 const BOARD_PORT = Number(process.env.WORKER_PORT ?? 3001);
 const SWEEP_BATCH = 100;
-// Once a night, off-peak for every chapter between Japan and the US west coast.
 const PRUNE_DEVICES_CRON = "0 4 * * *";
 
 const RESEND_RATE_LIMIT = Number(process.env.RESEND_RATE_LIMIT ?? 8);
 
-/**
- * One event in, one job per listener out. The jobId pins each (event, listener)
- * pair, so re-dispatching the same event is free. It may not contain a colon:
- * BullMQ builds its Redis keys as `bull:<queue>:<jobId>`.
- */
+// A jobId may not contain a colon: BullMQ keys are `bull:<queue>:<jobId>`.
 async function dispatchEvent(eventId: string) {
   const event = await loadEvent(eventId);
   const listeners = Object.keys(handlers[event.type]);
@@ -42,10 +37,6 @@ async function dispatchEvent(eventId: string) {
   await markEventProcessed(eventId);
 }
 
-/**
- * The safety net for everything Redis never heard about: an enqueue that failed,
- * a Redis that was down, a process that died between commit and add.
- */
 async function sweep() {
   const stale = await findUnprocessedEvents(
     new Date(Date.now() - SWEEP_EVERY_MS),
@@ -63,7 +54,6 @@ async function sweep() {
   );
 }
 
-/** The nightly half of token hygiene; the other half is FCM rejecting a token mid-send. */
 async function pruneDevices() {
   const removed = await notifications.pruneStaleDevices();
   if (removed > 0) console.info(`[worker] pruned ${removed} stale device(s)`);

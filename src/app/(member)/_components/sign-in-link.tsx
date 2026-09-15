@@ -3,10 +3,6 @@ import { LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-/**
- * What a guest gets where a signed-in person gets their face. Outline, never
- * red: the one red action on the passenger home is the hero underneath it.
- */
 export function SignInLink({
   href,
   label,

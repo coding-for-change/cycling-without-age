@@ -38,12 +38,6 @@ type Place = {
 const keyOf = (place: Place) =>
   `${place.coords.lat}|${place.coords.lng}|${place.address}|${place.city}|${place.radiusKm}`;
 
-/**
- * Where the chapter sits and how far it rides. The address box above the map
- * holds the address on record; typing a new one searches Mapbox, and picking a
- * result writes address, town and coordinates in one save — one history line,
- * one Undo. The pin itself only shows.
- */
 export function ChapterLocation({
   id,
   server,

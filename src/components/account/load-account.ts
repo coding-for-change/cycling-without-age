@@ -1,20 +1,14 @@
 import { cache } from "react";
 import { headers } from "next/headers";
-import { availablePerspectives, canDeleteOwnAccount } from "@/lib/access";
+import { canDeleteOwnAccount } from "@/lib/access";
 import { getSession } from "@/lib/auth-guards";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { profile as profileFacade } from "@/features/profile";
 import { resolveLocale, toIsoDateUtc } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
-import { PERSPECTIVE_HOME } from "@/lib/redirects";
+import { perspectiveChoices } from "@/lib/perspectives";
 import type { AccountData } from "./types";
 
-/**
- * The one read behind every account surface — the sidebar footer, the member
- * chrome and the sheet all await it and `cache()` collapses that into a single
- * query per request. `null` means nobody is signed in, which is a state the
- * passenger shell has (guests) rather than an error.
- */
 export const loadAccount = cache(async (): Promise<AccountData | null> => {
   const session = await getSession();
   if (!session) return null;
@@ -31,7 +25,6 @@ export const loadAccount = cache(async (): Promise<AccountData | null> => {
 
   return {
     strings: dict.account,
-    perspectiveLabels: dict.admin.perspectives,
     notation: resolveLocale(head.get("accept-language")),
     language,
     profile: {
@@ -42,11 +35,7 @@ export const loadAccount = cache(async (): Promise<AccountData | null> => {
       birthDate: person?.birthDate ? toIsoDateUtc(person.birthDate) : null,
       gender: person?.gender ?? null,
     },
-    perspectives: availablePerspectives(session.access).map((perspective) => ({
-      perspective,
-      label: dict.admin.perspectives[perspective],
-      href: PERSPECTIVE_HOME[perspective],
-    })),
+    perspectives: perspectiveChoices(session.access, dict),
     canDeleteAccount: canDeleteOwnAccount(session.access),
     notifications: {
       push: person?.notifyPush ?? false,

@@ -73,6 +73,23 @@ function Steps({ steps }: { steps: NotificationMessage["steps"] }) {
   );
 }
 
+const card = {
+  backgroundColor: brand.canvasDeep,
+  border: `1px solid ${brand.line}`,
+  borderRadius: brand.radiusCover,
+  margin: "24px 0",
+  padding: "20px",
+};
+
+const cardHeading = {
+  color: brand.ink,
+  fontSize: "13px",
+  fontWeight: 700,
+  letterSpacing: "0.06em",
+  margin: "0 0 10px",
+  textTransform: "uppercase" as const,
+};
+
 const styles = {
   heading: {
     color: brand.ink,
@@ -88,21 +105,8 @@ const styles = {
     lineHeight: "24px",
     margin: "0 0 16px",
   },
-  card: {
-    backgroundColor: brand.canvasDeep,
-    border: `1px solid ${brand.line}`,
-    borderRadius: brand.radiusCover,
-    margin: "24px 0",
-    padding: "20px",
-  },
-  cardHeading: {
-    color: brand.ink,
-    fontSize: "13px",
-    fontWeight: 700,
-    letterSpacing: "0.06em",
-    margin: "0 0 10px",
-    textTransform: "uppercase" as const,
-  },
+  card,
+  cardHeading,
   note: {
     color: brand.ink,
     fontSize: "15px",
@@ -110,21 +114,8 @@ const styles = {
     margin: 0,
     whiteSpace: "pre-wrap" as const,
   },
-  stepCard: {
-    backgroundColor: brand.canvasDeep,
-    border: `1px solid ${brand.line}`,
-    borderRadius: brand.radiusCover,
-    margin: "24px 0",
-    padding: "20px 20px 8px",
-  },
-  stepCardHeading: {
-    color: brand.ink,
-    fontSize: "13px",
-    fontWeight: 700,
-    letterSpacing: "0.06em",
-    margin: "0 0 14px",
-    textTransform: "uppercase" as const,
-  },
+  stepCard: { ...card, padding: "20px 20px 8px" },
+  stepCardHeading: { ...cardHeading, margin: "0 0 14px" },
   step: {
     color: brand.ink,
     fontSize: "15px",

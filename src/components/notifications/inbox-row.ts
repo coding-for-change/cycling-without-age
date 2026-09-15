@@ -7,11 +7,9 @@ import {
   type Locale,
 } from "@/lib/format";
 
-export type InboxCategory = NotificationCategory;
-
 export type InboxRow = {
   id: string;
-  category: InboxCategory;
+  category: NotificationCategory;
   title: string;
   body: string;
   href: string;
@@ -21,11 +19,6 @@ export type InboxRow = {
   whenExact: string;
 };
 
-/**
- * Both times are computed here, on the server: `react-hooks/purity` forbids
- * `new Date()` during a client render, and a clock read there would format
- * differently than the one the server already sent.
- */
 export function toInboxRow(
   item: InboxItem,
   { words, notation, now }: { words: string; notation: Locale; now: Date },
@@ -45,7 +38,6 @@ export function toInboxRow(
 
 const BADGE_CAP = 9;
 
-/** `null` at zero — the badge is absent, not a nought. */
 export function formatBadge(count: number): string | null {
   if (count <= 0) return null;
   return count > BADGE_CAP ? `${BADGE_CAP}+` : String(count);

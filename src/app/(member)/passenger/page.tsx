@@ -8,12 +8,6 @@ import {
 import { NextRideCard } from "../_components/home/next-ride-card";
 import { MemberPageShell } from "../_components/member-page";
 
-/**
- * The one member page a guest may read: somebody who picked a chapter on the
- * map lands here before they have an account. Each section calls
- * `perspectiveViewerSession`, which hands back `null` rather than redirecting —
- * a signed-in person whose home is elsewhere is still sent to it.
- */
 export default function PassengerHomePage() {
   return (
     <MemberPageShell>

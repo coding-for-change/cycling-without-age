@@ -18,10 +18,6 @@ import type { AccountData, AccountStrings } from "./types";
 export type AccountSectionKey =
   "profile" | "language" | "notifications" | "passkeys" | "danger";
 
-/**
- * One list, two chromes: the dialog walks it as a left nav and shows one
- * section, the sheet stacks all five. Order is the reading order of the sheet.
- */
 export const ACCOUNT_SECTIONS: {
   key: AccountSectionKey;
   icon: LucideIcon;

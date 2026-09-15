@@ -1,10 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-/**
- * Fixed sizes, no randomness: these are Suspense fallbacks and get prerendered
- * into the static shell. Each one stands in for exactly one section of the home
- * screen, so nothing on the page moves once the data lands.
- */
 export function GreetingFallback() {
   return (
     <section className="flex flex-col gap-3">

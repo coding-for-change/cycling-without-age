@@ -32,12 +32,6 @@ export type CommandBarStrings = {
   groups: Record<Group, string>;
 };
 
-/**
- * Every entry here is an accelerator, never the only way to reach something —
- * the sidebar, the switcher, the language picker and the user menu each still
- * offer their own. That is what lets the palette be keyboard-only without
- * stranding anyone who is not using a keyboard.
- */
 export function CommandBar({
   commands,
   strings,

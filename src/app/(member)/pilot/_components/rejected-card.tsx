@@ -4,10 +4,6 @@ import { fill } from "@/lib/utils";
 
 type StatusStrings = Dictionary["pilot"]["status"];
 
-/**
- * A chapter said no. The note they left is quoted rather than paraphrased —
- * this is the one place a pilot hears from them directly.
- */
 export function RejectedCard({
   chapterName,
   note,

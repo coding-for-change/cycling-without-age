@@ -60,8 +60,6 @@ const notification = (approved = true, note: string | null = null) => ({
   },
 });
 
-// An admin hearing that someone applied: optional, and the mail only goes out
-// when the push did not.
 const fallbackNotification = (over: Record<string, unknown> = {}) => ({
   id: "notif-2",
   recipientUserId: ACTOR,
@@ -77,7 +75,6 @@ const fallbackNotification = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-// A country admin's appointment belongs to no chapter at all.
 const appointment = () => ({
   id: "notif-4",
   recipientUserId: ACTOR,
@@ -122,8 +119,6 @@ beforeEach(() => {
 });
 
 describe("deliverEmail", () => {
-  // The decision is written by an admin whose own language is irrelevant to the
-  // person reading the mail.
   it("writes in the recipient's language, not the decider's", async () => {
     await deliverEmail("notif-1");
 
@@ -189,7 +184,6 @@ describe("deliverEmail", () => {
     expect(record).not.toHaveBeenCalled();
   });
 
-  // Swallowing this would mark the job complete and lose the mail for good.
   it("records the failure and rethrows so the job retries", async () => {
     mail.mockRejectedValue(new Error("Resend down"));
 
@@ -211,8 +205,6 @@ describe("deliverEmail", () => {
     expect(mail).not.toHaveBeenCalled();
   });
 
-  // A throttle is Resend asking us to wait, not a delivery that failed: the row
-  // stays claimed and the worker parks the job.
   it("rethrows a rate limit without marking the delivery failed", async () => {
     mail.mockRejectedValue(new MailRateLimitedError("slow down", 1_500));
 
@@ -317,7 +309,6 @@ describe("deliverEmail and the chapter's reply-to", () => {
     expect(mail.mock.calls[0][0].replyTo).toBe("hej@muenchen.example");
   });
 
-  // No address means the platform sender answers, not an empty Reply-To header.
   it("leaves the header off when the chapter named none", async () => {
     await deliverEmail("notif-1");
 

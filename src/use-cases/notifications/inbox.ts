@@ -2,7 +2,7 @@ import { getEmailStrings } from "@/emails/strings";
 import { notifications } from "@/features/notifications";
 import type { NotificationCategory } from "@/features/notifications";
 import type { Locale } from "@/lib/i18n/locales";
-import { kinds } from "./kinds";
+import { findKind } from "./kinds";
 
 export type InboxItem = {
   id: string;
@@ -15,10 +15,6 @@ export type InboxItem = {
   seenAt: Date | null;
 };
 
-// Its own lookup, not `kindOf`: a kind retired after its rows were written
-// must leave a gap in the bell, never an exception in front of it.
-const byEvent = new Map(kinds.map((kind) => [kind.event as string, kind]));
-
 export async function listInbox(
   userId: string,
   locale: Locale,
@@ -27,7 +23,7 @@ export async function listInbox(
   const strings = getEmailStrings(locale);
 
   return rows.flatMap((row) => {
-    const kind = byEvent.get(row.event.type);
+    const kind = findKind(row.event.type);
     if (!kind) return [];
 
     const params = kind.payload.safeParse(row.payload);
@@ -48,6 +44,3 @@ export async function listInbox(
     ];
   });
 }
-
-export const unseenCount = (userId: string) =>
-  notifications.unseenCount(userId);

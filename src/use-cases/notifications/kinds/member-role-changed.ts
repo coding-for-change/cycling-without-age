@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { chapters } from "@/features/chapters";
-import { profile } from "@/features/profile";
 import { fill } from "@/lib/utils";
+import { nameOfChapter, nameOfPerson } from "./lookups";
 import { defineKind } from "./types";
+import { ORG_NAME } from "@/lib/brand";
+import { PERSPECTIVE_HOME } from "@/lib/redirects";
 
 const COPY = {
   promote: "rolePromoted",
@@ -21,23 +22,29 @@ export const memberRoleChanged = defineKind({
     roles: z.string(),
   }),
   recipients: async (event) => [event.userId],
-  params: async (event) => ({
-    chapterName: (await chapters.getChapter(event.chapterId))?.name ?? null,
-    actorName: (await profile.getProfile(event.actorUserId))?.name ?? null,
-    change: event.change,
-    roles: event.roles.join(","),
-  }),
+  params: async (event) => {
+    const [chapterName, actorName] = await Promise.all([
+      nameOfChapter(event.chapterId),
+      nameOfPerson(event.actorUserId),
+    ]);
+    return {
+      chapterName,
+      actorName,
+      change: event.change,
+      roles: event.roles.join(","),
+    };
+  },
   href: (event) => {
-    if (event.roles.includes("admin")) return "/admin";
-    if (event.roles.includes("pilot")) return "/pilot";
-    if (event.roles.includes("passenger")) return "/passenger";
+    if (event.roles.includes("admin")) return PERSPECTIVE_HOME.admin;
+    if (event.roles.includes("pilot")) return PERSPECTIVE_HOME.pilot;
+    if (event.roles.includes("passenger")) return PERSPECTIVE_HOME.passenger;
     return "/location";
   },
   message: ({ chapterName, actorName, change }, strings) => {
     const copy = strings[COPY[change]];
     const values = {
-      chapter: chapterName ?? "Cycling Without Age",
-      actor: actorName ?? "Cycling Without Age",
+      chapter: chapterName ?? ORG_NAME,
+      actor: actorName ?? ORG_NAME,
     };
     return {
       subject: fill(copy.subject, values),

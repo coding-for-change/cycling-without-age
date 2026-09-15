@@ -9,7 +9,6 @@ import { isNative } from "@/lib/native/platform";
 import { signInWithPasskey } from "@/lib/passkey-client";
 
 const NEVER_CHANGES = () => () => {};
-// The shell has no WebAuthn but brings the OS passkey sheet instead.
 const hasPasskeys = () =>
   isNative() || typeof window.PublicKeyCredential !== "undefined";
 

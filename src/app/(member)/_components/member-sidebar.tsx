@@ -29,7 +29,7 @@ import {
 } from "../nav";
 import { MemberNav } from "./member-nav";
 import { PerspectiveSwitcher } from "./perspective-switcher";
-import { signInHref } from "./sign-in-href";
+import { signInHref } from "@/lib/redirects";
 
 export async function MemberSidebar({
   perspective,
@@ -44,22 +44,11 @@ export async function MemberSidebar({
   ]);
 
   const home = session ? await getMemberHome(session.user.id) : null;
-  const chapterNames = (home?.memberships ?? [])
-    .map(
-      (member) =>
-        home?.chapters.find((chapter) => chapter.id === member.chapterId)?.name,
-    )
-    .filter((name) => name !== undefined);
+  const chapterNames = home?.chapters.map((chapter) => chapter.name) ?? [];
 
-  const subtitle = !session
-    ? dict.member.guest.subtitle
-    : chapterNames.length === 1
-      ? chapterNames[0]
-      : chapterNames.length > 1
-        ? fill(dict.member.perspective.chapters, {
-            count: chapterNames.length,
-          })
-        : dict.member.perspective.noChapter;
+  const subtitle = session
+    ? chapterSubtitle(chapterNames, dict.member.perspective)
+    : dict.member.guest.subtitle;
 
   const action = primaryAction(perspective);
   const ActionIcon = ICONS[action.icon];
@@ -140,4 +129,13 @@ export async function MemberSidebar({
       <SidebarRail />
     </Sidebar>
   );
+}
+
+function chapterSubtitle(
+  names: string[],
+  strings: { chapters: string; noChapter: string },
+) {
+  if (names.length === 0) return strings.noChapter;
+  if (names.length === 1) return names[0];
+  return fill(strings.chapters, { count: names.length });
 }

@@ -1,13 +1,10 @@
 import { Capacitor } from "@capacitor/core";
 import { isAppPath } from "@/lib/app-path";
-import type { PluginListenerHandle } from "@capacitor/core";
 
 export type PushPlatform = "ios" | "android";
 export type PushDevice = { token: string; platform: PushPlatform };
 export type PushPayload = { title: string; body: string; href: string | null };
-export type Unsubscribe = () => void;
 
-const NOOP: Unsubscribe = () => {};
 
 const tokenListeners = new Set<(device: PushDevice) => void>();
 
@@ -19,38 +16,12 @@ const nativePlatform = (): PushPlatform | null => {
   return platform === "ios" || platform === "android" ? platform : null;
 };
 
-/**
- * The href travels inside the push payload, so it is only as trustworthy as
- * whoever sent it: anything but an app-relative path would be an open redirect.
- */
 const appPath = (data: unknown): string | null => {
   const href = (data as { href?: unknown } | null | undefined)?.href;
   return isAppPath(href) ? href : null;
 };
 
-/**
- * `addListener` resolves a round trip later. An effect that unmounts before
- * that would never see the handle, so the unsubscribe closes over a flag and
- * the promise removes the handle it just received.
- */
-const subscribe = (open: () => Promise<PluginListenerHandle>): Unsubscribe => {
-  let handle: PluginListenerHandle | null = null;
-  let cancelled = false;
-
-  open()
-    .then((opened) => {
-      handle = opened;
-      if (cancelled) void handle.remove();
-    })
-    .catch(() => {});
-
-  return () => {
-    cancelled = true;
-    void handle?.remove();
-    handle = null;
-  };
-};
-
+import { NOOP, subscribe, type Unsubscribe } from "./platform";
 export { isNative } from "./platform";
 
 export async function requestNotificationPermission(): Promise<boolean> {
@@ -96,9 +67,7 @@ export async function deletePushToken(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
   try {
     await (await messaging()).FirebaseMessaging.deleteToken();
-  } catch {
-    // Signing out must not depend on FCM being reachable.
-  }
+  } catch {}
 }
 
 export function onPushToken(cb: (device: PushDevice) => void): Unsubscribe {

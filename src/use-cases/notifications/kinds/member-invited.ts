@@ -1,9 +1,10 @@
 import { z } from "zod";
-import { chapters } from "@/features/chapters";
-import { profile } from "@/features/profile";
 import { formatList, wordsLocale } from "@/lib/format";
 import { fill } from "@/lib/utils";
+import { nameOfChapter, nameOfPerson } from "./lookups";
 import { defineKind } from "./types";
+import { ORG_NAME } from "@/lib/brand";
+import { PERSPECTIVE_HOME, signInHref } from "@/lib/redirects";
 
 export const memberInvited = defineKind({
   event: "member.invited",
@@ -15,18 +16,22 @@ export const memberInvited = defineKind({
     roles: z.string(),
   }),
   recipients: async (event) => [event.userId],
-  params: async (event) => ({
-    chapterName: (await chapters.getChapter(event.chapterId))?.name ?? null,
-    inviterName: (await profile.getProfile(event.actorUserId))?.name ?? null,
-    roles: event.roles.join(","),
-  }),
+  params: async (event) => {
+    const [chapterName, inviterName] = await Promise.all([
+      nameOfChapter(event.chapterId),
+      nameOfPerson(event.actorUserId),
+    ]);
+    return { chapterName, inviterName, roles: event.roles.join(",") };
+  },
   href: (event) =>
-    event.roles.includes("admin")
-      ? "/sign-in?next=%2Fadmin"
-      : "/sign-in?next=%2Fpilot",
+    signInHref(
+      event.roles.includes("admin")
+        ? PERSPECTIVE_HOME.admin
+        : PERSPECTIVE_HOME.pilot,
+    ),
   message: ({ chapterName, inviterName, roles }, strings, locale) => {
     const copy = strings.invite;
-    const chapter = chapterName ?? "Cycling Without Age";
+    const chapter = chapterName ?? ORG_NAME;
     const role = formatList(
       roles
         .split(",")
@@ -41,7 +46,7 @@ export const memberInvited = defineKind({
       preview: copy.preview,
       heading: copy.heading,
       body: fill(copy.intro, {
-        inviter: inviterName ?? "Cycling Without Age",
+        inviter: inviterName ?? ORG_NAME,
         chapter,
         role,
       }),

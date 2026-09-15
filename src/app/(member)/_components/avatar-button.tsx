@@ -10,7 +10,6 @@ import { haptics } from "@/lib/native/haptics";
 import { cn } from "@/lib/utils";
 import { nextPerspective } from "../nav";
 
-/** How long a tap waits to see whether a second one is coming. */
 const DOUBLE_TAP_MS = 250;
 
 export function AvatarButton({

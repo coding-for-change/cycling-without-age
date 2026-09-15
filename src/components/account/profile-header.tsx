@@ -1,7 +1,6 @@
 import { PersonAvatar } from "@/components/person-avatar";
 import { cn } from "@/lib/utils";
 
-/** The person, once, at the top of whichever chrome is showing. */
 export function ProfileHeader({
   name,
   email,

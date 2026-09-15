@@ -22,9 +22,7 @@ export async function setLocale(locale: string) {
   if (session) {
     try {
       await profile.setLocale(session.user.id, locale);
-    } catch {
-      // A DB hiccup only costs the next email its language; the cookie switched.
-    }
+    } catch {}
   }
 
   revalidatePath("/", "layout");

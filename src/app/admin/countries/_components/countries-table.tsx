@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Pencil, Trash2, UserPlus, X } from "lucide-react";
-import { AdminEmpty } from "../../_components/admin-empty";
+import { EmptyState } from "@/components/empty-state";
 import { ICONS } from "@/components/icons";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
@@ -57,7 +57,7 @@ export type CountriesTableLabels = CountryFormLabels & {
   removeAdmin: string;
   confirmRemoveAdmin: string;
   appointDialog: { emailLabel: string; hint: string; placeholder: string };
-  delete: ConfirmDeleteLabels & { footprint: string };
+  delete: Omit<ConfirmDeleteLabels, "errors"> & { footprint: string };
 };
 
 function AdminChip({
@@ -236,9 +236,8 @@ export function CountriesTable({
           <ConfirmDeleteDialog
             name={row.original.name}
             footprint={fill(labels.delete.footprint, row.original.footprint)}
-            labels={labels.delete}
+            labels={{ ...labels.delete, errors: labels.errors }}
             cancel={labels.cancel}
-            errors={labels.errors}
             action={() => deleteCountryAction(row.original.id)}
             onDone={() => router.refresh()}
             trigger={
@@ -260,7 +259,7 @@ export function CountriesTable({
   return (
     <>
       {rows.length === 0 ? (
-        <AdminEmpty icon={ICONS.countries}>{labels.empty}</AdminEmpty>
+        <EmptyState icon={ICONS.countries}>{labels.empty}</EmptyState>
       ) : (
         <DataTable
           columns={columns}

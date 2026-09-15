@@ -12,21 +12,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-/**
- * The admin drawers' one text input: label, control, message. Anything passed
- * beyond `control`/`name`/`label` lands on the `Input`, so a date or an
- * autofocused first field stays a one-line difference rather than a copy.
- */
 export function TextField<T extends FieldValues>({
   control,
   name,
   label,
+  hint,
   className,
   ...input
 }: {
   control: Control<T>;
   name: FieldPath<T>;
   label: string;
+  hint?: string;
 } & Omit<ComponentProps<typeof Input>, "name" | "form">) {
   return (
     <FormField
@@ -43,6 +40,7 @@ export function TextField<T extends FieldValues>({
               className={cn("h-11 border-line text-base", className)}
             />
           </FormControl>
+          {hint ? <p className="text-2sm text-ink-soft">{hint}</p> : null}
           <FormMessage />
         </FormItem>
       )}

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { startTransition, useOptimistic } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable, type DataTableStrings } from "@/components/ui/data-table";
-import { AdminEmpty } from "../../_components/admin-empty";
+import { EmptyState } from "@/components/empty-state";
 import { ICONS } from "@/components/icons";
 import { mutedColumn } from "../../_components/table-columns";
 import { useDrawerParam } from "../../_components/use-drawer-param";
@@ -133,7 +133,7 @@ export function ChaptersTable({
           }}
         />
       ) : optimisticRows.length === 0 ? (
-        <AdminEmpty icon={ICONS.chapters}>{labels.empty}</AdminEmpty>
+        <EmptyState icon={ICONS.chapters}>{labels.empty}</EmptyState>
       ) : (
         <DataTable
           columns={columns}

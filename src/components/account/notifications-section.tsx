@@ -9,8 +9,6 @@ import type { AccountData } from "./types";
 export function NotificationsSection({ data }: { data: AccountData }) {
   const strings = data.strings;
 
-  // A refused OS prompt is reported through the same toast-and-haptic path as a
-  // failed save, which is also what puts the switch back where it was.
   const pushLabels = {
     ...strings.field,
     errors: {

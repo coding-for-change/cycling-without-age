@@ -66,8 +66,6 @@ export function MemberActions({
   const copy = change ? COPY[change] : null;
   const named = (key: TextKey) => fill(labels[key], { name: target.name });
 
-  // Promoting yourself is allowed (a country admin joining a chapter); taking
-  // your own rights or seat away is not — the use case refuses it too.
   const canToggleAdmin = !(target.isSelf && target.isAdmin);
   const canRemove = !target.isSelf;
   if (!canToggleAdmin && !canRemove) return null;

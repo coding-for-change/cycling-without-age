@@ -13,7 +13,6 @@ import {
   type ResolvedMemberNavItem,
 } from "../nav";
 
-/** The tab tapped last and the page it was tapped from. */
 type Intent = { key: MemberNavKey; from: string };
 
 export function MobileTabBar({

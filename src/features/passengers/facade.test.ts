@@ -39,8 +39,6 @@ describe("updateOwnRiderDetails", () => {
     });
   });
 
-  // The account fans a name-only edit out to here too; nothing to mirror means
-  // no write rather than an empty `data` Prisma would reject.
   it("writes nothing when the patch carries neither field", async () => {
     await expect(passengers.updateOwnRiderDetails(USER, {})).resolves.toEqual({
       count: 0,

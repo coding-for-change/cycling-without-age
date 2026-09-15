@@ -8,13 +8,6 @@ import type { Health } from "./health";
 
 const BASE_PATH = "/queues";
 
-/**
- * The queue dashboard, mounted on the worker and never on the public app: it
- * shows raw job payloads and carries no auth of its own. In production the
- * worker publishes no port, so it is reachable only from inside the compose
- * network or through an SSH tunnel. The same server answers `/health` for the
- * container probe.
- */
 export function startBoard(port: number, health: () => Promise<Health>) {
   const serverAdapter = new ExpressAdapter();
   serverAdapter.setBasePath(BASE_PATH);

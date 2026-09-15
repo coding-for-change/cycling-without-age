@@ -13,8 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { haptics } from "@/lib/native/haptics";
 import { cn } from "@/lib/utils";
-import { useSaveStatus } from "@/components/save-status";
-import { reportSave, type ActionResult } from "@/components/action-feedback";
+import type { ActionResult } from "@/components/action-feedback";
+import { useOptimisticSave } from "@/components/use-optimistic-save";
 
 export type InlineFieldLabels = {
   edit: string;
@@ -27,16 +27,6 @@ export type InlineFieldLabels = {
 
 type Value = string | null;
 
-/**
- * A value that turns into its own input when clicked. Enter (⌘↵ in a
- * textarea) or leaving the field saves, Escape puts the old value back, and
- * every save comes with an Undo in its toast. The shown value is optimistic
- * until the server refresh catches up, then the prop takes over again.
- *
- * `type="date"` keeps the stored value ISO (`YYYY-MM-DD`, what the native
- * picker reads and writes) and leaves the reading to `display`, so the field
- * shows a localised date and saves a locale-independent one.
- */
 export function InlineField({
   value,
   label,
@@ -59,10 +49,8 @@ export function InlineField({
   placeholder: string;
   multiline?: boolean;
   maxLength?: number;
-  /** An emptied required field is put back rather than saved as nothing. */
   required?: boolean;
   type?: "text" | "url" | "email" | "date";
-  /** `type="date"` only: the latest date the picker will accept (ISO). */
   max?: string;
   inputMode?: "text" | "url" | "email";
   validate?: (next: string) => boolean;
@@ -72,33 +60,15 @@ export function InlineField({
   className?: string;
   inputClassName?: string;
 }) {
-  const report = useSaveStatus();
   const id = useId();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
-  const [override, setOverride] = useState<{ from: Value; to: Value } | null>(
-    null,
-  );
   const cancelled = useRef(false);
-
-  // The optimistic value holds only while the server still shows what we
-  // replaced; once the refresh lands, `value` is the truth again.
-  const shown = override && override.from === value ? override.to : value;
+  const { shown, persist } = useOptimisticSave(value, onSave, labels);
 
   const open = () => {
     setDraft(shown ?? "");
     setEditing(true);
-  };
-
-  const persist = async (next: Value, previous: Value, undoable: boolean) => {
-    setOverride({ from: previous, to: next });
-    report("saving");
-    const ok = reportSave(await onSave(next, previous), {
-      report,
-      labels,
-      undo: undoable ? () => void persist(previous, next, false) : undefined,
-    });
-    if (!ok) setOverride(null);
   };
 
   const commit = () => {
@@ -120,7 +90,7 @@ export function InlineField({
     }
     setEditing(false);
     if (next === shown) return;
-    void persist(next, shown, true);
+    void persist(next, shown);
   };
 
   const cancel = () => {

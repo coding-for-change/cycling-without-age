@@ -18,11 +18,6 @@ export function DangerSection({ data }: { data: AccountData }) {
   const { signOut, pending } = useSignOut();
   const labels = data.strings.danger.delete;
 
-  /**
-   * The push token has to go while the session that authorises unregistering it
-   * is still there, so it goes first; the sign-out at the end only has a cookie
-   * left to clear.
-   */
   const remove = async () => {
     await forgetDevice();
     return deleteOwnAccountAction();
@@ -50,7 +45,6 @@ export function DangerSection({ data }: { data: AccountData }) {
           name={data.profile.name}
           labels={labels}
           cancel={data.cancelLabel}
-          errors={labels.errors}
           action={remove}
           onDone={() => void finishSignOut()}
           trigger={

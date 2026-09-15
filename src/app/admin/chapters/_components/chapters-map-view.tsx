@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { MapUnavailable } from "@/components/map-unavailable";
 import { X } from "lucide-react";
-import { AdminEmpty } from "../../_components/admin-empty";
+import { EmptyState } from "@/components/empty-state";
 import { ICONS } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,7 +45,7 @@ export function ChaptersMapView({
   const selected = pins.find((pin) => pin.id === selectedId) ?? null;
 
   if (pins.length === 0)
-    return <AdminEmpty icon={ICONS.chapters}>{strings.empty}</AdminEmpty>;
+    return <EmptyState icon={ICONS.chapters}>{strings.empty}</EmptyState>;
 
   if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN)
     return (

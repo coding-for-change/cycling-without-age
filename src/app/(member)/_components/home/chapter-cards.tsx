@@ -25,11 +25,7 @@ export async function ChapterCards({
   ]);
   const home = session ? await getMemberHome(session.user.id) : null;
 
-  const mine = (home?.memberships ?? [])
-    .map((member) =>
-      home?.chapters.find((chapter) => chapter.id === member.chapterId),
-    )
-    .filter((chapter) => chapter !== undefined);
+  const mine = home?.chapters ?? [];
 
   const heading =
     mine.length > 1
@@ -62,9 +58,6 @@ export async function ChapterCards({
       </section>
     );
 
-  // An application is already on its way: the card telling them so says
-  // everything this one would, and a second "no chapter yet" reads as a
-  // contradiction.
   if ((home?.applications.length ?? 0) > 0) return null;
 
   const guestChapterId = await readGuestChapterId();

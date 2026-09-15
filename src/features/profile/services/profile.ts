@@ -31,8 +31,6 @@ export const findProfile = (userId: string) =>
 export const updateProfile = (userId: string, data: Prisma.UserUpdateInput) =>
   prisma.user.update({ where: { id: userId }, data });
 
-// A conditional write, so two submits of the same step cannot both count as
-// the first one.
 export const stampOnboarded = (
   userId: string,
   db: Prisma.TransactionClient = prisma,

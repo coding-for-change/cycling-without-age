@@ -1,9 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-/**
- * The bar's own geometry, so the pill does not jump into place once the
- * dictionary arrives. Mobile only, like the bar itself.
- */
 export function TabBarSkeleton() {
   return (
     <div

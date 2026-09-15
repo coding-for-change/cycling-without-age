@@ -55,7 +55,6 @@ describe("notifications.create", () => {
     );
   });
 
-  // An absolute URL in the bell is an open redirect.
   it("refuses an href that leaves the app", async () => {
     await expect(
       notifications.create({ ...input, href: "https://evil.example/pilot" }),
@@ -116,8 +115,6 @@ describe("notifications.beginDelivery", () => {
 });
 
 describe("notifications.registerDevice", () => {
-  // FCM hands the same token to whoever signs in on that phone next, so the
-  // row has to move rather than a second one pushing to the previous owner.
   it("keys the row on the token and re-binds it to the current user", async () => {
     await notifications.registerDevice({
       userId: "user-pernille",
@@ -177,8 +174,6 @@ describe("notifications.unregisterDevice", () => {
 });
 
 describe("notifications.removeDeviceTokens", () => {
-  // An empty `in` list matches nothing on MySQL, but the round trip is still
-  // paid for on every push that had no dead tokens.
   it("makes no call when the send retired nothing", async () => {
     expect(await notifications.removeDeviceTokens([])).toBe(0);
     expect(db.device.deleteMany).not.toHaveBeenCalled();
@@ -209,8 +204,6 @@ describe("notifications.getDelivery", () => {
 });
 
 describe("notifications.pruneStaleDevices", () => {
-  // 270 days is FCM's own expiry, so the prune never removes a token FCM
-  // would still deliver to — a winter break does not cost a pilot their push.
   it("deletes the installs FCM itself has given up on", async () => {
     db.device.deleteMany.mockResolvedValue({ count: 4 });
 

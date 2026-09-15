@@ -21,11 +21,6 @@ import {
 } from "lucide-react";
 import type { IconKey } from "@/lib/commands";
 
-/**
- * The client half of the icon contract. `Record<IconKey, …>` is the point: a new
- * `IconKey` that nobody drew is a type error here rather than a blank square in
- * the sidebar.
- */
 export const ICONS: Record<IconKey, LucideIcon> = {
   overview: LayoutDashboard,
   home: House,

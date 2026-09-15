@@ -20,11 +20,6 @@ import { AccountSurface } from "@/components/account/account-surface";
 import type { AccountData } from "@/components/account/types";
 import type { Perspective } from "@/lib/access";
 
-/**
- * The sidebar footer on every desk shell — admin today, the member shell next
- * to it. The static character sits in the trigger and the animated one in the
- * panel, so a list of rows never pays for an animation nobody is looking at.
- */
 export function UserMenu({
   data,
   activePerspective,
