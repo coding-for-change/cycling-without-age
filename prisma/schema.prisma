@@ -9,53 +9,54 @@ datasource db {
 }
 
 model User {
-  id                  String    @id
-  name                String    @db.Text
-  email               String
-  emailVerified       Boolean   @default(false)
-  image               String?   @db.Text
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  phoneNumber         String?
-  phoneNumberVerified Boolean?
-  role                String?   @db.Text
-  banned              Boolean?  @default(false)
-  banReason           String?   @db.Text
-  banExpires          DateTime?
-  birthDate DateTime? @db.Date
-  gender    Gender?
-  locale    String?   @db.VarChar(5)
-  residence Residence?
-  address   String?    @db.Text
-  latitude  Float?
-  longitude Float?
-  managesOthers Boolean @default(false)
-  notifyEmail Boolean @default(false)
-  notifyPush  Boolean @default(false)
-  consentSafetyAt DateTime?
-  consentDataAt   DateTime?
+  id                   String               @id
+  name                 String               @db.Text
+  email                String
+  emailVerified        Boolean              @default(false)
+  image                String?              @db.Text
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  phoneNumber          String?
+  phoneNumberVerified  Boolean?
+  role                 String?              @db.Text
+  banned               Boolean?             @default(false)
+  banReason            String?              @db.Text
+  banExpires           DateTime?
+  birthDate            DateTime?            @db.Date
+  gender               Gender?
+  locale               String?              @db.VarChar(5)
+  residence            Residence?
+  address              String?              @db.Text
+  latitude             Float?
+  longitude            Float?
+  managesOthers        Boolean              @default(false)
+  notifyEmail          Boolean              @default(false)
+  notifyPush           Boolean              @default(false)
+  consentSafetyAt      DateTime?
+  consentDataAt        DateTime?
   passkeyPromptedAt    DateTime?
   pilotNextStepsSeenAt DateTime?
-  welcomeEmailSentAt DateTime?
-  createdByUserId String?
-  createdBy       User?   @relation("createdUsers", fields: [createdByUserId], references: [id], onDelete: SetNull)
-  createdUsers    User[]  @relation("createdUsers")
-  claimedAt       DateTime?
-  helperName         String? @db.Text
-  helperRelationship String? @db.Text
-  helperContact      String? @db.Text
-  sessions            Session[]
-  accounts            Account[]
-  passkeys            Passkey[]
-  members             Member[]
-  invitations         Invitation[]
-  countryAdminOf      CountryAdmin[]
-  applications        ChapterApplication[] @relation("applicant")
-  decidedApplications ChapterApplication[] @relation("decider")
-  passengers          Passenger[]          @relation("manages")
-  passengerProfile    Passenger?           @relation("self")
-  activityEvents      ActivityEvent[]      @relation("activitySubject")
-  activityActions     ActivityEvent[]      @relation("activityActor")
+  welcomeEmailSentAt   DateTime?
+  createdByUserId      String?
+  createdBy            User?                @relation("createdUsers", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdUsers         User[]               @relation("createdUsers")
+  claimedAt            DateTime?
+  helperName           String?              @db.Text
+  helperRelationship   String?              @db.Text
+  helperContact        String?              @db.Text
+  sessions             Session[]
+  accounts             Account[]
+  passkeys             Passkey[]
+  members              Member[]
+  invitations          Invitation[]
+  countryAdminOf       CountryAdmin[]
+  applications         ChapterApplication[] @relation("applicant")
+  decidedApplications  ChapterApplication[] @relation("decider")
+  passengers           Passenger[]          @relation("manages")
+  passengerProfile     Passenger?           @relation("self")
+  activityEvents       ActivityEvent[]      @relation("activitySubject")
+  activityActions      ActivityEvent[]      @relation("activityActor")
+  rideAssignments      RideAssignment[]
 
   @@unique([email])
   @@unique([phoneNumber])
@@ -143,17 +144,21 @@ model Organization {
   members     Member[]
   invitations Invitation[]
 
-  countryId    String
-  country      Country              @relation(fields: [countryId], references: [id])
-  city         String               @db.Text
-  address      String?              @db.Text
-  careHomeName String?              @db.Text
-  latitude     Float
-  longitude    Float
-  applications ChapterApplication[]
-  passengers   Passenger[]
-  events       ActivityEvent[]
-  serviceRadiusKm Int @default(10)
+  countryId       String
+  country         Country              @relation(fields: [countryId], references: [id])
+  city            String               @db.Text
+  address         String?              @db.Text
+  careHomeName    String?              @db.Text
+  latitude        Float
+  longitude       Float
+  applications    ChapterApplication[]
+  passengers      Passenger[]
+  events          ActivityEvent[]
+  serviceRadiusKm Int                  @default(10)
+  timeZone        String               @db.VarChar(64)
+  trishaws        Trishaw[]
+  rides           Ride[]
+  storageSites    StorageLocationChapter[]
 
   @@unique([slug])
   @@index([countryId])
@@ -283,6 +288,8 @@ model Passenger {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  rideRoster RideRosterEntry[]
+
   @@index([chapterId])
   @@index([managedByUserId])
   @@map("passenger")
@@ -322,4 +329,176 @@ model ActivityEvent {
   @@index([userId, createdAt])
   @@index([chapterId, createdAt])
   @@map("activity_event")
+}
+
+enum RideModel {
+  event
+  pleasure
+  functional
+}
+
+enum RideStatus {
+  scheduled
+  cancelled
+  completed
+}
+
+enum RideRole {
+  pilot
+  ambassador
+  transporter
+}
+
+enum TrishawStatus {
+  active
+  maintenance
+  retired
+}
+
+/**
+ * Where trishaws are kept. A care home or depot can serve more than one chapter
+ * — the equipment lives at the place, not at the chapter — so the link to
+ * chapters is a join table rather than a column. This is separate from a
+ * trishaw's owning chapter: who bought it and who reports on it does not change
+ * because it is parked somewhere shared.
+ */
+model StorageLocation {
+  id        String  @id @default(cuid())
+  name      String  @db.Text
+  address   String? @db.Text
+  latitude  Float?
+  longitude Float?
+
+  chapters  StorageLocationChapter[]
+  trishaws  Trishaw[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("storage_location")
+}
+
+model StorageLocationChapter {
+  id                String          @id @default(cuid())
+  storageLocationId String
+  storageLocation   StorageLocation @relation(fields: [storageLocationId], references: [id], onDelete: Cascade)
+  chapterId         String
+  chapter           Organization    @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  createdAt         DateTime        @default(now())
+
+  @@unique([storageLocationId, chapterId])
+  @@index([chapterId])
+  @@map("storage_location_chapter")
+}
+
+model Trishaw {
+  id        String        @id @default(cuid())
+  chapterId String
+  chapter   Organization  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  name      String        @db.Text
+  type      String?       @db.Text
+  seats     Int           @default(2)
+  status    TrishawStatus @default(active)
+
+  /// Null means the bike sits at its owning chapter's own address; a row here
+  /// is a shared site, and every chapter linked to it may schedule the bike.
+  storageLocationId String?
+  storageLocation   StorageLocation? @relation(fields: [storageLocationId], references: [id], onDelete: SetNull)
+
+  rides     RideTrishaw[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([chapterId, status])
+  @@index([storageLocationId])
+  @@map("trishaw")
+}
+
+model Ride {
+  id        String       @id @default(cuid())
+  chapterId String
+  chapter   Organization @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  model     RideModel    @default(event)
+  status    RideStatus   @default(scheduled)
+
+  startsAt DateTime
+  endsAt   DateTime
+
+  locationName    String? @db.Text
+  locationAddress String? @db.Text
+  latitude        Float?
+  longitude       Float?
+
+  destinationName      String? @db.Text
+  destinationAddress   String? @db.Text
+  destinationLatitude  Float?
+  destinationLongitude Float?
+
+  returnLegOfId String? @unique
+  returnLegOf   Ride?   @relation("roundTrip", fields: [returnLegOfId], references: [id], onDelete: SetNull)
+  returnLeg     Ride?   @relation("roundTrip")
+
+  cancelledAt        DateTime?
+  cancellationReason String?   @db.Text
+
+  trishaws    RideTrishaw[]
+  assignments RideAssignment[]
+  roster      RideRosterEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([chapterId, startsAt])
+  @@index([status, startsAt])
+  @@map("ride")
+}
+
+/**
+ * One trishaw committed to one ride. A request may be for "a single trishaw or
+ * multiple trishaws" (lifecycle 1C) and a Multiple Ride Event can involve
+ * several at once, so the reservation is a row, not a column on `Ride`.
+ * Trailers, wheelchair bikes and transport vehicles are reserved the same way
+ * once they have models of their own.
+ */
+model RideTrishaw {
+  id        String   @id @default(cuid())
+  rideId    String
+  ride      Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  trishawId String
+  trishaw   Trishaw  @relation(fields: [trishawId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([rideId, trishawId])
+  @@index([trishawId])
+  @@map("ride_trishaw")
+}
+
+model RideAssignment {
+  id        String   @id @default(cuid())
+  rideId    String
+  ride      Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      RideRole @default(pilot)
+  createdAt DateTime @default(now())
+
+  @@unique([rideId, userId, role])
+  @@index([userId])
+  @@index([rideId])
+  @@map("ride_assignment")
+}
+
+model RideRosterEntry {
+  id          String    @id @default(cuid())
+  rideId      String
+  ride        Ride      @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  passengerId String
+  passenger   Passenger @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  position    Int       @default(0)
+  checkedInAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([rideId, passengerId])
+  @@index([passengerId])
+  @@index([rideId, position])
+  @@map("ride_roster_entry")
 }

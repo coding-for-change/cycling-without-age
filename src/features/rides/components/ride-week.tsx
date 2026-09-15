@@ -1,0 +1,291 @@
+import {
+  calendarDate,
+  dayKey,
+  daySegment,
+  instantAt,
+  lanes,
+  MINUTES_IN_DAY,
+  nextDay,
+  startOfDay,
+  wallClock,
+  weekDays,
+} from "@/lib/calendar";
+import {
+  formatPlural,
+  formatShortDateWithWeekday,
+  formatTime,
+  type Locale,
+} from "@/lib/format";
+import { cn } from "@/lib/utils";
+import type { RideCalendarRow } from "../facade";
+import {
+  ridePilots,
+  rideTone,
+  rideTrishawNames,
+  rideWhere,
+  type CalendarStrings,
+} from "./ride-presentation";
+
+type Props = {
+  rides: RideCalendarRow[];
+  /** Any instant inside the week to draw. */
+  anchor: Date;
+  timeZone: string;
+  weekStartsOn: number;
+  strings: CalendarStrings;
+  locale: Locale;
+  words: Locale;
+  now?: Date;
+};
+
+/** 56px an hour — dense enough for a working week, tall enough to read. */
+const HOUR_REM = 3.5;
+const DEFAULT_BAND = { from: 8, to: 18 };
+
+type Segment = { from: number; to: number };
+
+type Column = {
+  key: string;
+  day: Date;
+  rides: RideCalendarRow[];
+  segments: Segment[];
+};
+
+/**
+ * The Chapter Operating Calendar: the week the chapter is delivering rides in.
+ *
+ * Hours are trimmed to what the week actually uses, so a chapter that only
+ * rides in the afternoon does not scroll past an empty morning. Navigation
+ * lives in the URL, so this stays a Server Component and the week changes
+ * without shipping a calendar to the browser.
+ */
+export function RideWeek({
+  rides,
+  anchor,
+  timeZone,
+  weekStartsOn,
+  strings,
+  locale,
+  words,
+  now,
+}: Props) {
+  const columns = buildColumns(rides, anchor, timeZone, weekStartsOn);
+  const band = visibleBand(columns.flatMap((column) => column.segments));
+  const hours = Array.from(
+    { length: band.to - band.from },
+    (_, i) => band.from + i,
+  );
+  const todayKey = now ? dayKey(now, timeZone) : null;
+
+  return (
+    <div className="overflow-x-auto">
+      <div className="grid min-w-3xl grid-cols-[3.5rem_repeat(7,minmax(0,1fr))]">
+        <div aria-hidden />
+        {columns.map((column) => {
+          const isToday = column.key === todayKey;
+          return (
+            <div
+              key={column.key}
+              className={cn(
+                "border-line border-b px-2 pb-2 text-center",
+                isToday && "border-b-mint border-b-2",
+              )}
+            >
+              <span
+                className={cn(
+                  "text-2sm",
+                  isToday ? "text-ink font-display" : "text-ink-soft",
+                )}
+              >
+                {formatShortDateWithWeekday(
+                  calendarDate(column.day, timeZone),
+                  locale,
+                )}
+              </span>
+            </div>
+          );
+        })}
+
+        <div className="border-line border-r">
+          {hours.map((hour) => (
+            <div
+              key={hour}
+              style={{ height: `${HOUR_REM}rem` }}
+              className="text-ink-faint relative text-right text-xs"
+            >
+              <span className="absolute -top-2 right-2">
+                {formatTime(
+                  hourInstant(columns[0].day, hour, timeZone),
+                  locale,
+                  timeZone,
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {columns.map((column) => (
+          <DayColumn
+            key={column.key}
+            column={column}
+            band={band}
+            hours={hours.length}
+            timeZone={timeZone}
+            strings={strings}
+            locale={locale}
+            words={words}
+          />
+        ))}
+      </div>
+
+      {rides.length === 0 ? (
+        <p className="text-2sm text-ink-soft px-2 pt-5">{strings.weekEmpty}</p>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * One column per day, holding every ride that *touches* that day rather than
+ * only the ones that start in it — a ride running 23:00→02:00 belongs to both
+ * days, clipped to each.
+ */
+function buildColumns(
+  rides: RideCalendarRow[],
+  anchor: Date,
+  timeZone: string,
+  weekStartsOn: number,
+): Column[] {
+  return weekDays(anchor, timeZone, weekStartsOn).map((day) => {
+    const start = startOfDay(day, timeZone);
+    const end = nextDay(start, timeZone);
+
+    const dayRides: RideCalendarRow[] = [];
+    const segments: Segment[] = [];
+    for (const ride of rides) {
+      const segment = daySegment(ride, start, end, timeZone);
+      if (!segment) continue;
+      dayRides.push(ride);
+      segments.push(segment);
+    }
+
+    return {
+      key: dayKey(start, timeZone),
+      day: start,
+      rides: dayRides,
+      segments,
+    };
+  });
+}
+
+function DayColumn({
+  column,
+  band,
+  hours,
+  timeZone,
+  strings,
+  locale,
+  words,
+}: {
+  column: Column;
+  band: { from: number; to: number };
+  hours: number;
+  timeZone: string;
+  strings: CalendarStrings;
+  locale: Locale;
+  words: Locale;
+}) {
+  const bandStart = band.from * 60;
+  const bandMinutes = (band.to - band.from) * 60;
+  const packed = lanes(column.rides);
+
+  return (
+    <div
+      className="border-line relative border-r"
+      style={{ height: `${hours * HOUR_REM}rem` }}
+    >
+      {Array.from({ length: hours }, (_, i) => (
+        <div
+          key={i}
+          style={{ height: `${HOUR_REM}rem` }}
+          className="border-line border-b"
+        />
+      ))}
+
+      {column.rides.map((ride, index) => {
+        const { from, to } = column.segments[index];
+        const top = ((from - bandStart) / bandMinutes) * 100;
+        const height = ((to - from) / bandMinutes) * 100;
+        const { lane, lanes: width } = packed[index];
+        const clampedTop = Math.max(0, top);
+
+        return (
+          <article
+            key={ride.id}
+            style={{
+              top: `${clampedTop}%`,
+              height: `${Math.min(Math.max(height, 4), 100 - clampedTop)}%`,
+              left: `${(lane / width) * 100}%`,
+              width: `${100 / width}%`,
+            }}
+            className={cn(
+              "absolute overflow-hidden rounded-md border border-l-4 px-2 py-1.25",
+              rideTone(ride),
+            )}
+          >
+            <p
+              className={cn(
+                "font-display truncate text-xs",
+                ride.status === "cancelled" && "line-through",
+              )}
+            >
+              {formatTime(ride.startsAt, locale, timeZone)}
+            </p>
+            <p className="truncate text-xs">
+              {rideWhere(ride, strings) ?? strings.models[ride.model]}
+            </p>
+            <p className="truncate text-xs opacity-70">
+              {rideTrishawNames(ride, strings)}
+              {" · "}
+              {ride._count.roster
+                ? formatPlural(ride._count.roster, strings.riders, words)
+                : ridePilots(ride).length
+                  ? strings.roles.pilot
+                  : strings.pilotNeeded}
+            </p>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * The hour band the week actually uses, padded by an hour and clamped to a day.
+ * Read off the clipped segments, so a ride crossing midnight widens each day it
+ * touches by the part that lands there rather than by its whole span.
+ */
+function visibleBand(segments: Segment[]) {
+  if (!segments.length) return DEFAULT_BAND;
+  let from = DEFAULT_BAND.from;
+  let to = DEFAULT_BAND.to;
+  for (const segment of segments) {
+    from = Math.min(from, Math.floor(segment.from / 60));
+    // A ride ending at 17:30 needs the 18:00 line drawn.
+    to = Math.max(to, Math.ceil(segment.to / 60));
+  }
+  return {
+    from: Math.max(0, from - 1),
+    to: Math.min(MINUTES_IN_DAY / 60, to + 1),
+  };
+}
+
+/**
+ * The instant at which the chapter's clock reads this hour — not the instant
+ * UTC does. `formatTime` renders an instant in a zone, so handing it a UTC
+ * o'clock would label the 09:00 line "11:00" in Berlin.
+ */
+function hourInstant(day: Date, hour: number, timeZone: string) {
+  const { year, month, day: date } = wallClock(day, timeZone);
+  return instantAt({ year, month, day: date, hour, minute: 0 }, timeZone);
+}
