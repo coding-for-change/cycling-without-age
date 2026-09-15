@@ -76,9 +76,16 @@ function offsetMinutes(instant: Date, timeZone: string): number {
  *
  * Two passes: the first guess uses UTC's offset, the second corrects with the
  * offset actually in force there — which is what makes the day after a DST
- * switch land on the right hour. In the hour a zone skips forward this returns
- * the instant just after the jump; in the hour it repeats, the earlier of the
- * two. Both are the conventional readings.
+ * switch land on the right hour.
+ *
+ * Both ambiguous cases resolve by the offset in force at the naive UTC instant,
+ * so neither is simply "the earlier one":
+ *
+ * - An hour the zone skips forward returns the instant just after the jump.
+ * - An hour the zone repeats returns whichever side that offset lands on — the
+ *   second occurrence in Berlin, the first in Denver. Nothing schedules a ride
+ *   inside that hour today; if something ever does, pick a side here
+ *   deliberately rather than relying on this falling out of the arithmetic.
  */
 export function instantAt(wall: WallClock, timeZone: string): Date {
   const naive = Date.UTC(
@@ -251,4 +258,56 @@ export function firstDayOfWeek(locale: string): number {
   } catch {
     return 1;
   }
+}
+
+export const MINUTES_IN_DAY = 24 * 60;
+
+/** Minutes since midnight on the clock face, in `timeZone`. Never exceeds 1440. */
+export function clockMinutes(instant: Date, timeZone: string): number {
+  const { hour, minute } = wallClock(instant, timeZone);
+  return hour * 60 + minute;
+}
+
+/** The instant that starts the day after `dayStart`. */
+export const nextDay = (dayStart: Date, timeZone: string) =>
+  startOfDay(addDays(dayStart, 1, timeZone), timeZone);
+
+/**
+ * Where a span sits inside one day column, as wall-clock minutes from that
+ * day's midnight — the same clock the hour labels are drawn from, so a ride on
+ * a 23- or 25-hour day lands on the row it actually reads. Elapsed minutes
+ * would drift by an hour on those two days a year.
+ *
+ * A span reaching past either edge is clipped to it, so a ride running from
+ * 23:00 to 02:00 yields 1380→1440 on the first day and 0→120 on the second.
+ * Returns `null` when the span does not touch the day at all.
+ */
+export function daySegment(
+  span: Span,
+  dayStart: Date,
+  dayEnd: Date,
+  timeZone: string,
+): { from: number; to: number } | null {
+  if (span.startsAt >= dayEnd || span.endsAt <= dayStart) return null;
+  return {
+    from: span.startsAt <= dayStart ? 0 : clockMinutes(span.startsAt, timeZone),
+    // Midnight reads as 0 on the clock, but as the *end* of this column it is
+    // the full day.
+    to:
+      span.endsAt >= dayEnd
+        ? MINUTES_IN_DAY
+        : clockMinutes(span.endsAt, timeZone),
+  };
+}
+
+/** Every local day a span touches, as `YYYY-MM-DD` keys, in order. */
+export function daysTouched(span: Span, timeZone: string): string[] {
+  const keys: string[] = [];
+  let cursor = startOfDay(span.startsAt, timeZone);
+  // Rides are capped well below this, but a runaway span must not spin forever.
+  while (cursor < span.endsAt && keys.length < 366) {
+    keys.push(dayKey(cursor, timeZone));
+    cursor = nextDay(cursor, timeZone);
+  }
+  return keys;
 }

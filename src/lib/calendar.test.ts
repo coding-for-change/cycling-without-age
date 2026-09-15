@@ -1,12 +1,17 @@
 import {
   addDays,
   calendarDate,
+  clockMinutes,
   dayKey,
+  daySegment,
+  daysTouched,
   firstDayOfWeek,
   instantAt,
   lanes,
   minutesFromMidnight,
   overlaps,
+  MINUTES_IN_DAY,
+  nextDay,
   sameDay,
   startOfDay,
   startOfWeek,
@@ -325,5 +330,115 @@ describe("firstDayOfWeek", () => {
 
   it("falls back to Monday for a locale it cannot parse", () => {
     expect(firstDayOfWeek("not a locale")).toBe(1);
+  });
+});
+
+describe("the repeated hour", () => {
+  it("resolves by the offset at the naive instant, not always the earlier one", () => {
+    // Berlin lands on the second occurrence (CET), Denver on the first (MDT).
+    // Documented in `instantAt` — this test is what keeps that honest.
+    expect(
+      instantAt(
+        { year: 2026, month: 10, day: 25, hour: 2, minute: 30 },
+        BERLIN,
+      ).toISOString(),
+    ).toBe("2026-10-25T01:30:00.000Z");
+    expect(
+      instantAt(
+        { year: 2026, month: 11, day: 1, hour: 1, minute: 30 },
+        DENVER,
+      ).toISOString(),
+    ).toBe("2026-11-01T07:30:00.000Z");
+  });
+});
+
+describe("clockMinutes and daySegment", () => {
+  const span = (from: string, to: string) => ({
+    startsAt: new Date(from),
+    endsAt: new Date(to),
+  });
+
+  it("reads the clock face, not elapsed time", () => {
+    // The grid's hour rows are wall-clock, so a 25-hour day must not shift a
+    // 10:00 ride onto the 11:00 row.
+    const tenAm = instantAt(
+      { year: 2026, month: 10, day: 25, hour: 10, minute: 0 },
+      BERLIN,
+    );
+    expect(clockMinutes(tenAm, BERLIN)).toBe(600);
+    expect(minutesFromMidnight(tenAm, startOfDay(tenAm, BERLIN))).toBe(660);
+  });
+
+  it("places a ride inside its own day", () => {
+    const start = startOfDay(new Date("2026-09-08T12:00:00Z"), BERLIN);
+    const end = nextDay(start, BERLIN);
+    expect(
+      daySegment(
+        span("2026-09-08T08:00:00Z", "2026-09-08T10:00:00Z"),
+        start,
+        end,
+        BERLIN,
+      ),
+    ).toEqual({ from: 600, to: 720 });
+  });
+
+  it("clips a ride that runs past midnight into both days", () => {
+    const ride = span("2026-09-08T21:00:00Z", "2026-09-09T00:00:00Z"); // 23:00–02:00 Berlin
+    const first = startOfDay(new Date("2026-09-08T12:00:00Z"), BERLIN);
+    const second = nextDay(first, BERLIN);
+
+    expect(daySegment(ride, first, second, BERLIN)).toEqual({
+      from: 1380,
+      to: MINUTES_IN_DAY,
+    });
+    expect(daySegment(ride, second, nextDay(second, BERLIN), BERLIN)).toEqual({
+      from: 0,
+      to: 120,
+    });
+  });
+
+  it("is null for a day the ride never touches", () => {
+    const day = startOfDay(new Date("2026-09-10T12:00:00Z"), BERLIN);
+    expect(
+      daySegment(
+        span("2026-09-08T08:00:00Z", "2026-09-08T10:00:00Z"),
+        day,
+        nextDay(day, BERLIN),
+        BERLIN,
+      ),
+    ).toBeNull();
+  });
+
+  it("does not claim a day it only touches at midnight", () => {
+    // Half-open: a ride ending exactly at midnight belongs to the day before.
+    const ride = span("2026-09-08T18:00:00Z", "2026-09-08T22:00:00Z"); // ends 00:00
+    const next = startOfDay(new Date("2026-09-09T12:00:00Z"), BERLIN);
+    expect(daySegment(ride, next, nextDay(next, BERLIN), BERLIN)).toBeNull();
+  });
+});
+
+describe("daysTouched", () => {
+  it("lists one day for an ordinary ride", () => {
+    expect(
+      daysTouched(
+        {
+          startsAt: new Date("2026-09-08T08:00:00Z"),
+          endsAt: new Date("2026-09-08T10:00:00Z"),
+        },
+        BERLIN,
+      ),
+    ).toEqual(["2026-09-08"]);
+  });
+
+  it("lists both days for one that runs past midnight", () => {
+    expect(
+      daysTouched(
+        {
+          startsAt: new Date("2026-09-08T21:00:00Z"),
+          endsAt: new Date("2026-09-09T00:00:00Z"),
+        },
+        BERLIN,
+      ),
+    ).toEqual(["2026-09-08", "2026-09-09"]);
   });
 });

@@ -1,4 +1,4 @@
-"use client"; // sanity check that this doesnt land on main
+"use client";
 
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { Character } from "@/components/character";

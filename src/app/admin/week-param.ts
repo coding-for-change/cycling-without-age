@@ -20,7 +20,7 @@ export function readWeekAnchor(
   if (!match) return startOfWeek(now, timeZone, weekStartsOn);
 
   const [, year, month, day] = match;
-  const anchor = instantAt(
+  const noon = instantAt(
     {
       year: Number(year),
       month: Number(month),
@@ -30,11 +30,12 @@ export function readWeekAnchor(
     },
     timeZone,
   );
-  // A malformed-but-matching date (2026-02-31) lands somewhere unintended, so
-  // fall back rather than render a week nobody asked for.
-  return Number.isNaN(anchor.getTime())
-    ? startOfWeek(now, timeZone, weekStartsOn)
-    : startOfWeek(anchor, timeZone, weekStartsOn);
+  // `Date.UTC` rolls 2026-02-31 forward to 2026-03-03 rather than rejecting it,
+  // so a date that does not exist can only be spotted by reading it back. Noon
+  // keeps the check clear of any hour a zone skips.
+  return dayKey(noon, timeZone) === raw
+    ? startOfWeek(noon, timeZone, weekStartsOn)
+    : startOfWeek(now, timeZone, weekStartsOn);
 }
 
 /** The param value that reopens this week. */

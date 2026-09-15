@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { $Enums, Prisma } from "@/generated/prisma";
+import { Prisma, type $Enums } from "@/generated/prisma";
 
 /**
  * What every calendar surface renders. Kept in one place so the week grid, the
@@ -86,20 +86,31 @@ export const findRideById = (id: string) =>
   prisma.ride.findUnique({ where: { id }, select: calendarSelect });
 
 /**
- * Reservations already holding any of these trishaws in the window, so the
- * caller can name the one that clashed. `exceptRideId` lets a ride being
- * rescheduled ignore its own current reservations.
- *
- * A cancelled ride releases its equipment, which is why it is excluded here
- * rather than filtered by the caller.
+ * Committing equipment is check-then-write, and two schedulers can both pass
+ * the check before either writes. MySQL has no exclusion constraint that could
+ * express "no overlapping window for this trishaw", and `UNIQUE(rideId,
+ * trishawId)` only stops the same bike being listed twice on one ride — so the
+ * trishaw rows are locked `FOR UPDATE` inside the transaction. A second booking
+ * for the same bike waits there, and then sees the first one's reservation.
  */
-export const findTrishawConflicts = (
+type Writer<T> = (tx: Prisma.TransactionClient) => Promise<T>;
+
+async function conflictsUnderLock(
+  tx: Prisma.TransactionClient,
   trishawIds: string[],
   from: Date,
   to: Date,
   exceptRideId?: string,
-) =>
-  prisma.rideTrishaw.findMany({
+) {
+  if (!trishawIds.length) return [];
+
+  await tx.$queryRaw(
+    Prisma.sql`SELECT \`id\` FROM \`trishaw\` WHERE \`id\` IN (${Prisma.join(
+      trishawIds,
+    )}) FOR UPDATE`,
+  );
+
+  return tx.rideTrishaw.findMany({
     where: {
       trishawId: { in: trishawIds },
       ride: {
@@ -110,40 +121,73 @@ export const findTrishawConflicts = (
     },
     select: { trishawId: true, rideId: true },
   });
+}
 
-export const insertRide = (
+/** `null` when the window is already taken — the caller names the refusal. */
+async function reserving<T>(
+  trishawIds: string[],
+  from: Date,
+  to: Date,
+  write: Writer<T>,
+  exceptRideId?: string,
+): Promise<T | null> {
+  return prisma.$transaction(async (tx) => {
+    const conflicts = await conflictsUnderLock(
+      tx,
+      trishawIds,
+      from,
+      to,
+      exceptRideId,
+    );
+    return conflicts.length ? null : write(tx);
+  });
+}
+
+const reservationCreate = (trishawIds: string[]) => ({
+  create: trishawIds.map((trishawId) => ({ trishawId })),
+});
+
+export const insertRideReserving = (
   data: Prisma.RideUncheckedCreateInput,
   trishawIds: string[],
+  from: Date,
+  to: Date,
 ) =>
-  prisma.ride.create({
-    data: {
-      ...data,
-      trishaws: { create: trishawIds.map((trishawId) => ({ trishawId })) },
-    },
-    select: calendarSelect,
-  });
+  reserving(trishawIds, from, to, (tx) =>
+    tx.ride.create({
+      data: { ...data, trishaws: reservationCreate(trishawIds) },
+      select: calendarSelect,
+    }),
+  );
 
 /** Rescheduling replaces the reservation set outright, never merges into it. */
+export const updateRideReserving = (
+  id: string,
+  data: Prisma.RideUncheckedUpdateInput,
+  trishawIds: string[],
+  from: Date,
+  to: Date,
+) =>
+  reserving(
+    trishawIds,
+    from,
+    to,
+    (tx) =>
+      tx.ride.update({
+        where: { id },
+        data: {
+          ...data,
+          trishaws: { deleteMany: {}, ...reservationCreate(trishawIds) },
+        },
+        select: calendarSelect,
+      }),
+    id,
+  );
+
 export const updateRideById = (
   id: string,
   data: Prisma.RideUncheckedUpdateInput,
-  trishawIds?: string[],
-) =>
-  prisma.ride.update({
-    where: { id },
-    data: {
-      ...data,
-      ...(trishawIds
-        ? {
-            trishaws: {
-              deleteMany: {},
-              create: trishawIds.map((trishawId) => ({ trishawId })),
-            },
-          }
-        : {}),
-    },
-    select: calendarSelect,
-  });
+) => prisma.ride.update({ where: { id }, data, select: calendarSelect });
 
 export const upsertAssignment = (
   rideId: string,

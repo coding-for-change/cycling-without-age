@@ -1,9 +1,11 @@
 import {
   calendarDate,
   dayKey,
+  daySegment,
   instantAt,
   lanes,
-  minutesFromMidnight,
+  MINUTES_IN_DAY,
+  nextDay,
   startOfDay,
   wallClock,
   weekDays,
@@ -40,6 +42,15 @@ type Props = {
 const HOUR_REM = 3.5;
 const DEFAULT_BAND = { from: 8, to: 18 };
 
+type Segment = { from: number; to: number };
+
+type Column = {
+  key: string;
+  day: Date;
+  rides: RideCalendarRow[];
+  segments: Segment[];
+};
+
 /**
  * The Chapter Operating Calendar: the week the chapter is delivering rides in.
  *
@@ -58,32 +69,23 @@ export function RideWeek({
   words,
   now,
 }: Props) {
-  const days = weekDays(anchor, timeZone, weekStartsOn);
-  const band = visibleBand(rides, timeZone);
+  const columns = buildColumns(rides, anchor, timeZone, weekStartsOn);
+  const band = visibleBand(columns.flatMap((column) => column.segments));
   const hours = Array.from(
     { length: band.to - band.from },
     (_, i) => band.from + i,
   );
   const todayKey = now ? dayKey(now, timeZone) : null;
 
-  const byDay = new Map<string, RideCalendarRow[]>();
-  for (const ride of rides) {
-    const key = dayKey(ride.startsAt, timeZone);
-    const bucket = byDay.get(key);
-    if (bucket) bucket.push(ride);
-    else byDay.set(key, [ride]);
-  }
-
   return (
     <div className="overflow-x-auto">
       <div className="grid min-w-3xl grid-cols-[3.5rem_repeat(7,minmax(0,1fr))]">
         <div aria-hidden />
-        {days.map((day) => {
-          const key = dayKey(day, timeZone);
-          const isToday = key === todayKey;
+        {columns.map((column) => {
+          const isToday = column.key === todayKey;
           return (
             <div
-              key={key}
+              key={column.key}
               className={cn(
                 "border-line border-b px-2 pb-2 text-center",
                 isToday && "border-b-mint border-b-2",
@@ -96,7 +98,7 @@ export function RideWeek({
                 )}
               >
                 {formatShortDateWithWeekday(
-                  calendarDate(day, timeZone),
+                  calendarDate(column.day, timeZone),
                   locale,
                 )}
               </span>
@@ -113,7 +115,7 @@ export function RideWeek({
             >
               <span className="absolute -top-2 right-2">
                 {formatTime(
-                  hourInstant(days[0], hour, timeZone),
+                  hourInstant(columns[0].day, hour, timeZone),
                   locale,
                   timeZone,
                 )}
@@ -122,11 +124,10 @@ export function RideWeek({
           ))}
         </div>
 
-        {days.map((day) => (
+        {columns.map((column) => (
           <DayColumn
-            key={dayKey(day, timeZone)}
-            day={day}
-            rides={byDay.get(dayKey(day, timeZone)) ?? []}
+            key={column.key}
+            column={column}
             band={band}
             hours={hours.length}
             timeZone={timeZone}
@@ -144,9 +145,41 @@ export function RideWeek({
   );
 }
 
+/**
+ * One column per day, holding every ride that *touches* that day rather than
+ * only the ones that start in it — a ride running 23:00→02:00 belongs to both
+ * days, clipped to each.
+ */
+function buildColumns(
+  rides: RideCalendarRow[],
+  anchor: Date,
+  timeZone: string,
+  weekStartsOn: number,
+): Column[] {
+  return weekDays(anchor, timeZone, weekStartsOn).map((day) => {
+    const start = startOfDay(day, timeZone);
+    const end = nextDay(start, timeZone);
+
+    const dayRides: RideCalendarRow[] = [];
+    const segments: Segment[] = [];
+    for (const ride of rides) {
+      const segment = daySegment(ride, start, end, timeZone);
+      if (!segment) continue;
+      dayRides.push(ride);
+      segments.push(segment);
+    }
+
+    return {
+      key: dayKey(start, timeZone),
+      day: start,
+      rides: dayRides,
+      segments,
+    };
+  });
+}
+
 function DayColumn({
-  day,
-  rides,
+  column,
   band,
   hours,
   timeZone,
@@ -154,8 +187,7 @@ function DayColumn({
   locale,
   words,
 }: {
-  day: Date;
-  rides: RideCalendarRow[];
+  column: Column;
   band: { from: number; to: number };
   hours: number;
   timeZone: string;
@@ -163,10 +195,9 @@ function DayColumn({
   locale: Locale;
   words: Locale;
 }) {
-  const dayStart = startOfDay(day, timeZone);
   const bandStart = band.from * 60;
   const bandMinutes = (band.to - band.from) * 60;
-  const packed = lanes(rides);
+  const packed = lanes(column.rides);
 
   return (
     <div
@@ -181,19 +212,19 @@ function DayColumn({
         />
       ))}
 
-      {rides.map((ride, index) => {
-        const from = minutesFromMidnight(ride.startsAt, dayStart);
-        const to = minutesFromMidnight(ride.endsAt, dayStart);
+      {column.rides.map((ride, index) => {
+        const { from, to } = column.segments[index];
         const top = ((from - bandStart) / bandMinutes) * 100;
         const height = ((to - from) / bandMinutes) * 100;
         const { lane, lanes: width } = packed[index];
+        const clampedTop = Math.max(0, top);
 
         return (
           <article
             key={ride.id}
             style={{
-              top: `${Math.max(0, top)}%`,
-              height: `${Math.max(height, 4)}%`,
+              top: `${clampedTop}%`,
+              height: `${Math.min(Math.max(height, 4), 100 - clampedTop)}%`,
               left: `${(lane / width) * 100}%`,
               width: `${100 / width}%`,
             }}
@@ -204,7 +235,7 @@ function DayColumn({
           >
             <p
               className={cn(
-                "truncate text-xs font-display",
+                "font-display truncate text-xs",
                 ride.status === "cancelled" && "line-through",
               )}
             >
@@ -229,19 +260,24 @@ function DayColumn({
   );
 }
 
-/** The hour band the week actually uses, padded by an hour and clamped to a day. */
-function visibleBand(rides: RideCalendarRow[], timeZone: string) {
-  if (!rides.length) return DEFAULT_BAND;
+/**
+ * The hour band the week actually uses, padded by an hour and clamped to a day.
+ * Read off the clipped segments, so a ride crossing midnight widens each day it
+ * touches by the part that lands there rather than by its whole span.
+ */
+function visibleBand(segments: Segment[]) {
+  if (!segments.length) return DEFAULT_BAND;
   let from = DEFAULT_BAND.from;
   let to = DEFAULT_BAND.to;
-  for (const ride of rides) {
-    const start = wallClock(ride.startsAt, timeZone);
-    const end = wallClock(ride.endsAt, timeZone);
-    from = Math.min(from, start.hour);
+  for (const segment of segments) {
+    from = Math.min(from, Math.floor(segment.from / 60));
     // A ride ending at 17:30 needs the 18:00 line drawn.
-    to = Math.max(to, end.minute > 0 ? end.hour + 1 : end.hour);
+    to = Math.max(to, Math.ceil(segment.to / 60));
   }
-  return { from: Math.max(0, from - 1), to: Math.min(24, to + 1) };
+  return {
+    from: Math.max(0, from - 1),
+    to: Math.min(MINUTES_IN_DAY / 60, to + 1),
+  };
 }
 
 /**

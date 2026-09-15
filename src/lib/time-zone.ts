@@ -36,7 +36,7 @@ const SINGLE_ZONE_MARKETS: Record<string, string> = {
 export function isValidTimeZone(value: string): boolean {
   if (!value) return false;
   try {
-    new Intl.DateTimeFormat("en-US", { timeZone: value });
+    new Intl.DateTimeFormat(undefined, { timeZone: value });
     return true;
   } catch {
     return false;

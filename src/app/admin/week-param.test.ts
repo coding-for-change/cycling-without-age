@@ -87,3 +87,29 @@ describe("weekHref", () => {
     ).toBe("/admin/bikes?chapter=muenchen&week=2026-09-14");
   });
 });
+
+describe("dates that pass the pattern but do not exist", () => {
+  it("falls back for 31 February rather than showing 3 March", () => {
+    // `Date.UTC` rolls the day forward instead of rejecting it, so the only way
+    // to catch this is to read the date back.
+    const anchor = readWeekAnchor("2026-02-31", BERLIN, MONDAY, NOW);
+    expect(wallClock(anchor, BERLIN)).toMatchObject({ month: 9, day: 7 });
+  });
+
+  // Each of these matches the `\d{4}-\d{2}-\d{2}` pattern and rolls over to a
+  // real date, so only the read-back catches them. Named individually: when
+  // this goes red in CI the report should say which input broke it.
+  it.each(["2026-13-01", "2026-04-32", "2026-00-10", "2026-02-30"])(
+    "falls back for %s",
+    (bad) => {
+      expect(
+        wallClock(readWeekAnchor(bad, BERLIN, MONDAY, NOW), BERLIN),
+      ).toMatchObject({ month: 9, day: 7 });
+    },
+  );
+
+  it("still accepts a real leap day", () => {
+    const anchor = readWeekAnchor("2028-02-29", BERLIN, MONDAY, NOW);
+    expect(wallClock(anchor, BERLIN)).toMatchObject({ month: 2, day: 28 });
+  });
+});

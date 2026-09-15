@@ -14,9 +14,9 @@ import {
   findRidesForPassengers,
   findRidesForPilot,
   findRidesInRange,
-  findTrishawConflicts,
-  insertRide,
+  insertRideReserving,
   updateRideById,
+  updateRideReserving,
   upsertAssignment,
   upsertRosterEntry,
   type RideCalendarRow,
@@ -59,15 +59,13 @@ export const listTrishaws = (chapterIds: string[]) =>
  * cancelled ride releases it, which is why cancelled rides are excluded from the
  * conflict query rather than filtered here.
  */
-async function reserveTrishaws(
-  trishawIds: string[],
-  chapterId: string,
-  startsAt: Date,
-  endsAt: Date,
-  exceptRideId?: string,
-) {
-  if (!trishawIds.length) return;
-
+/**
+ * Which chapter a trishaw belongs to and whether it is roadworthy are stable
+ * facts, so they are checked here. Whether its window is free is not — that
+ * check has to happen inside the write's own transaction, or two schedulers
+ * both pass it. See `insertRideReserving`.
+ */
+async function assertTrishawsUsable(trishawIds: string[], chapterId: string) {
   for (const trishawId of trishawIds) {
     const trishaw = await findTrishawById(trishawId);
     if (!trishaw) throw new DomainError("unknownTrishaw");
@@ -76,34 +74,35 @@ async function reserveTrishaws(
     if (trishaw.status !== "active")
       throw new DomainError("trishawUnavailable");
   }
-
-  const conflicts = await findTrishawConflicts(
-    trishawIds,
-    startsAt,
-    endsAt,
-    exceptRideId,
-  );
-  if (conflicts.length) throw new DomainError("trishawReserved");
 }
 
 export async function scheduleRide(input: RideInput) {
   const { trishawIds, ...data } = rideInput.parse(input);
-  await reserveTrishaws(trishawIds, data.chapterId, data.startsAt, data.endsAt);
-  return insertRide(data, trishawIds);
+  await assertTrishawsUsable(trishawIds, data.chapterId);
+  const ride = await insertRideReserving(
+    data,
+    trishawIds,
+    data.startsAt,
+    data.endsAt,
+  );
+  if (!ride) throw new DomainError("trishawReserved");
+  return ride;
 }
 
 export async function rescheduleRide(id: string, input: RideInput) {
   const existing = await findRideById(id);
   if (!existing) throw new DomainError("unknownRide");
   const { trishawIds, ...data } = rideInput.parse(input);
-  await reserveTrishaws(
+  await assertTrishawsUsable(trishawIds, data.chapterId);
+  const ride = await updateRideReserving(
+    id,
+    data,
     trishawIds,
-    data.chapterId,
     data.startsAt,
     data.endsAt,
-    id,
   );
-  return updateRideById(id, data, trishawIds);
+  if (!ride) throw new DomainError("trishawReserved");
+  return ride;
 }
 
 /**

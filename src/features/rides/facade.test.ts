@@ -2,8 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { rides } from "@/features/rides";
 import { domainCode } from "@/lib/domain-error";
 
-jest.mock("@/lib/prisma", () => ({
-  prisma: {
+jest.mock("@/lib/prisma", () => {
+  const client: Record<string, unknown> = {
     ride: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
@@ -14,8 +14,11 @@ jest.mock("@/lib/prisma", () => ({
     rideTrishaw: { findMany: jest.fn() },
     rideAssignment: { upsert: jest.fn(), delete: jest.fn() },
     rideRosterEntry: { upsert: jest.fn(), count: jest.fn(), delete: jest.fn() },
-  },
-}));
+    $queryRaw: jest.fn(),
+  };
+  client.$transaction = jest.fn((run: (tx: unknown) => unknown) => run(client));
+  return { prisma: client };
+});
 
 const db = prisma as unknown as {
   ride: {
@@ -28,6 +31,8 @@ const db = prisma as unknown as {
   rideTrishaw: { findMany: jest.Mock };
   rideAssignment: { upsert: jest.Mock; delete: jest.Mock };
   rideRosterEntry: { upsert: jest.Mock; count: jest.Mock; delete: jest.Mock };
+  $queryRaw: jest.Mock;
+  $transaction: jest.Mock;
 };
 
 const CHAPTER = "chapter-muenchen";
@@ -66,6 +71,7 @@ beforeEach(() => {
   db.ride.update.mockResolvedValue({ id: "ride-new" });
   db.ride.findMany.mockResolvedValue([]);
   db.rideTrishaw.findMany.mockResolvedValue([]);
+  db.$queryRaw.mockResolvedValue([]);
 });
 
 describe("scheduleRide", () => {
@@ -103,6 +109,7 @@ describe("scheduleRide", () => {
     await rides.scheduleRide(base);
     expect(db.trishaw.findUnique).not.toHaveBeenCalled();
     expect(db.rideTrishaw.findMany).not.toHaveBeenCalled();
+    expect(db.$queryRaw).not.toHaveBeenCalled();
     expect(db.ride.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ trishaws: { create: [] } }),
@@ -180,6 +187,29 @@ describe("scheduleRide", () => {
     await expect(
       rides.scheduleRide({ ...base, trishawIds: [TRISHAW, TRISHAW] }),
     ).rejects.toThrow();
+    expect(db.ride.create).not.toHaveBeenCalled();
+  });
+
+  it("locks the trishaws and writes inside one transaction", async () => {
+    trishawRow();
+    await rides.scheduleRide({ ...base, trishawIds: [TRISHAW] });
+    // The conflict check alone cannot stop a concurrent booking — the row lock
+    // inside the same transaction is what serialises them.
+    expect(db.$transaction).toHaveBeenCalledTimes(1);
+    expect(db.$queryRaw).toHaveBeenCalledTimes(1);
+    const sql = String(db.$queryRaw.mock.calls[0][0].strings.join("?"));
+    expect(sql).toContain("FOR UPDATE");
+    expect(sql).toContain("trishaw");
+  });
+
+  it("does not write when the window was taken", async () => {
+    trishawRow();
+    db.rideTrishaw.findMany.mockResolvedValue([
+      { trishawId: TRISHAW, rideId: "ride-existing" },
+    ]);
+    expect(
+      await codeOf(rides.scheduleRide({ ...base, trishawIds: [TRISHAW] })),
+    ).toBe("trishawReserved");
     expect(db.ride.create).not.toHaveBeenCalled();
   });
 

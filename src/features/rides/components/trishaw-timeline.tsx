@@ -1,5 +1,5 @@
 import { Bike } from "lucide-react";
-import { calendarDate, dayKey, weekDays } from "@/lib/calendar";
+import { calendarDate, dayKey, daysTouched, weekDays } from "@/lib/calendar";
 import {
   formatShortDateWithWeekday,
   formatTime,
@@ -53,13 +53,17 @@ export function TrishawTimeline({
 
   // A ride that books several trishaws occupies a square in each of their rows —
   // which is the whole point of the view: every bike it consumes shows as busy.
+  // It occupies every day it touches too, so a ride running past midnight keeps
+  // the bike blocked on the following morning rather than vanishing from it.
   const byTrishawDay = new Map<string, RideCalendarRow[]>();
   for (const ride of rides) {
     for (const trishaw of rideTrishaws(ride)) {
-      const key = `${trishaw.id}/${dayKey(ride.startsAt, timeZone)}`;
-      const bucket = byTrishawDay.get(key);
-      if (bucket) bucket.push(ride);
-      else byTrishawDay.set(key, [ride]);
+      for (const day of daysTouched(ride, timeZone)) {
+        const key = `${trishaw.id}/${day}`;
+        const bucket = byTrishawDay.get(key);
+        if (bucket) bucket.push(ride);
+        else byTrishawDay.set(key, [ride]);
+      }
     }
   }
 
