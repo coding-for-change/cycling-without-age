@@ -402,3 +402,30 @@ describe("what a pilot may read", () => {
     );
   });
 });
+
+/**
+ * The RFP's contact-detail exchange is between the rider and the pilot matched
+ * to them — not between riders who happen to share a trishaw.
+ */
+describe("who may read a rider's name", () => {
+  const FROM = new Date("2026-09-08T00:00:00Z");
+  const TO = new Date("2026-09-15T00:00:00Z");
+  const selectOf = () => db.ride.findMany.mock.calls[0][0].select;
+
+  it("gives the assigned pilot the names on their own rides", async () => {
+    await rides.listRidesForPilot("user-1", FROM, TO);
+    expect(selectOf().roster).toBeDefined();
+  });
+
+  // Two riders on one ride are managed by two different people.
+  it("gives the passenger agenda a count and no names", async () => {
+    await rides.listRidesForPassengers(["passenger-1"], FROM, TO);
+    expect(selectOf().roster).toBeUndefined();
+    expect(selectOf()._count).toEqual({ select: { roster: true } });
+  });
+
+  it("gives the admin calendar a count and no names", async () => {
+    await rides.listRidesInRange(["chapter-muenchen"], FROM, TO);
+    expect(selectOf().roster).toBeUndefined();
+  });
+});

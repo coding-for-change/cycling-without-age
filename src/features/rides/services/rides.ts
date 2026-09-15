@@ -36,6 +36,32 @@ export type RideCalendarRow = Prisma.RideGetPayload<{
 }>;
 
 /**
+ * What an assigned pilot sees on top of the shared shape. The RFP's
+ * contact-detail exchange on match runs both ways — the client gets the pilot's
+ * name, the pilot gets the client's (`04-ride-models.md` §7) — and a pilot
+ * deciding whether a ride suits them needs to know who they would be riding
+ * with, which is the whole of the request.
+ *
+ * Deliberately NOT folded into `calendarSelect`: `/passenger` reads that shape
+ * too, and on a ride with more than one rider, one rider's manager must not
+ * learn the other riders' names.
+ */
+const pilotSelect = {
+  ...calendarSelect,
+  roster: {
+    orderBy: { position: "asc" },
+    select: {
+      id: true,
+      passenger: { select: { id: true, firstName: true, lastName: true } },
+    },
+  },
+} satisfies Prisma.RideSelect;
+
+export type PilotRideRow = Prisma.RideGetPayload<{
+  select: typeof pilotSelect;
+}>;
+
+/**
  * Overlap, not containment: a ride that starts before the window and ends
  * inside it still occupies the window and must be drawn.
  */
@@ -65,7 +91,7 @@ export const findRidesForPilot = (userId: string, from: Date, to: Date) =>
       ...overlapping(from, to),
     },
     orderBy: [{ startsAt: "asc" }, { id: "asc" }],
-    select: calendarSelect,
+    select: pilotSelect,
   });
 
 export const findRidesForPassengers = (

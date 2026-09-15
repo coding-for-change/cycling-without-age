@@ -19,6 +19,7 @@ import {
   updateRideReserving,
   upsertAssignment,
   upsertRosterEntry,
+  type PilotRideRow,
   type RideCalendarRow,
 } from "./services/rides";
 import {
@@ -29,7 +30,7 @@ import {
   type TrishawRow,
 } from "./services/trishaws";
 
-export type { RideCalendarRow, TrishawRow };
+export type { PilotRideRow, RideCalendarRow, TrishawRow };
 
 export const listRidesInRange = (chapterIds: string[], from: Date, to: Date) =>
   chapterIds.length

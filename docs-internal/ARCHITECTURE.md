@@ -676,9 +676,21 @@ That second clause on `/pilot` is load-bearing: removing someone from a chapter 
 `member` row and nothing else, so `RideAssignment` rows outlive the membership.
 `findRidesForPilot` therefore joins on current membership as well as the assignment.
 
-A rider sees the **pilot's name** once one is assigned — deliberate, and what
-`references/04-ride-models.md` §7 asks for on match. A pilot sees the **roster size**, not
-rider names.
+The **contact-detail exchange on match** runs both ways, as `references/04-ride-models.md` §7
+describes it: a rider sees the **pilot's name** once one is assigned, and the assigned pilot
+sees the **rider names** on that ride. A pilot choosing whether a ride suits them is choosing
+who they will spend an hour with, so a bare roster count was the wrong answer.
+
+The exchange is between a rider and *their* pilot, and the selects enforce exactly that.
+`pilotSelect` in `rides/services` is `calendarSelect` plus the roster, and it is used by
+`findRidesForPilot` alone — deliberately not folded into the shared shape, because
+`/passenger` reads that too and two riders on one trishaw are managed by two different people.
+The admin week and the passenger agenda still get `_count.roster` and nothing more.
+`facade.test.ts` pins all three surfaces, so widening one by accident fails a test.
+
+Phone numbers are the part of §7 still missing: `Passenger` carries a name, birth date and
+gender, but no number, so "the client's and/or the institution's phone" has nothing to read
+from yet.
 
 ### The calendar this is *not*
 

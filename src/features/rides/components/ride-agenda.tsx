@@ -7,17 +7,26 @@ import {
   type Locale,
 } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { RideCalendarRow } from "../facade";
+import type { PilotRideRow, RideCalendarRow } from "../facade";
 import {
   ridePilots,
+  rideRiderNames,
   rideTone,
   rideTrishawNames,
   rideWhere,
   type CalendarStrings,
 } from "./ride-presentation";
 
+/**
+ * The passenger agenda passes the shared calendar shape; the pilot agenda
+ * passes rows that also carry the roster. One component rather than two,
+ * because the only difference is whether the rider names are known — and only
+ * the assigned pilot is given them.
+ */
+type AgendaRide = RideCalendarRow & Partial<Pick<PilotRideRow, "roster">>;
+
 type Props = {
-  rides: RideCalendarRow[];
+  rides: AgendaRide[];
   strings: CalendarStrings;
   /** Notation locale — how dates and times are written. */
   locale: Locale;
@@ -44,7 +53,7 @@ export function RideAgenda({ rides, strings, locale, words, title }: Props) {
     );
   }
 
-  const days = new Map<string, RideCalendarRow[]>();
+  const days = new Map<string, AgendaRide[]>();
   for (const ride of rides) {
     const key = dayKey(ride.startsAt, ride.chapter.timeZone);
     const bucket = days.get(key);
@@ -89,7 +98,7 @@ function AgendaRow({
   locale,
   words,
 }: {
-  ride: RideCalendarRow;
+  ride: AgendaRide;
   strings: CalendarStrings;
   locale: Locale;
   words: Locale;
@@ -150,9 +159,11 @@ function AgendaRow({
             : strings.pilotNeeded}
         </span>
         <span>
-          {ride._count.roster
-            ? formatPlural(ride._count.roster, strings.riders, words)
-            : strings.noRiders}
+          {ride.roster?.length
+            ? rideRiderNames(ride.roster)
+            : ride._count.roster
+              ? formatPlural(ride._count.roster, strings.riders, words)
+              : strings.noRiders}
         </span>
       </div>
     </li>

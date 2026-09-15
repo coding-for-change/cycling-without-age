@@ -49,3 +49,13 @@ export function rideTrishawNames(
   const names = rideTrishaws(ride).map((trishaw) => trishaw.name);
   return names.length ? names.join(", ") : strings.noTrishaw;
 }
+
+/** "Anna Bauer, Karl Weber" — who an assigned pilot is taking out. */
+export const rideRiderNames = (
+  roster: { passenger: { firstName: string; lastName: string } }[],
+) =>
+  roster
+    .map(({ passenger }) =>
+      `${passenger.firstName} ${passenger.lastName}`.trim(),
+    )
+    .join(", ");
