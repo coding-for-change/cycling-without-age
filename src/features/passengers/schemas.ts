@@ -12,9 +12,6 @@ export const passengerInput = z.object({
 });
 export type PassengerInput = z.infer<typeof passengerInput>;
 
-/** The rider row's copy of the two fields the account surface can edit. The
- *  name is left out on purpose: `User.name` is one string and the row keeps
- *  `firstName`/`lastName`, so splitting it back apart would be lossy. */
 export const ownRiderDetailsPatch = z.object({
   birthDate: birthDate.optional(),
   gender: gender.optional(),

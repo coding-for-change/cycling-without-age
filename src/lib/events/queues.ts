@@ -1,8 +1,6 @@
 import { Queue } from "bullmq";
 import { redisConnection } from "@/lib/redis";
 
-// Email and push are separate queues so the Resend rate limit throttles mail
-// without ever holding a push job back.
 export const QUEUE = {
   events: "events",
   handlers: "handlers",

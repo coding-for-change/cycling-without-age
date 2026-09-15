@@ -4,12 +4,8 @@ import { cacheLife } from "next/cache";
 import { getDictionary } from "@/lib/i18n";
 import type { MemberPerspective } from "../../nav";
 import { MEMBER_LIFE } from "../instant";
-import { MemberEmpty } from "../member-empty";
+import { EmptyState } from "@/components/empty-state";
 
-/**
- * There is no ride model yet, so this is the empty state and nothing else —
- * written to say what will appear here rather than that something is missing.
- */
 export async function NextRideCard({
   perspective,
 }: {
@@ -29,12 +25,12 @@ export async function NextRideCard({
       <h2 className="text-xs font-semibold tracking-wide text-ink-soft uppercase">
         {nextRide.title}
       </h2>
-      <MemberEmpty
+      <EmptyState
         icon={CalendarClock}
         className="flex-none"
       >
         {nextRide[perspective].empty}
-      </MemberEmpty>
+      </EmptyState>
     </section>
   );
 }

@@ -41,11 +41,6 @@ describe("runEmailDelivery", () => {
     expect(rateLimit).not.toHaveBeenCalled();
   });
 
-  /**
-   * The throttle belongs to the whole team, not to this one job: pausing the
-   * queue for the window Resend named is what keeps the next nine jobs from
-   * burning their attempts against the same 429.
-   */
   it("parks the whole email queue for as long as Resend asked", async () => {
     email.mockRejectedValue(new MailRateLimitedError("slow down", 1_500));
 

@@ -1,4 +1,7 @@
-export type ChapterRole = "admin" | "pilot" | "passenger";
+import { z } from "zod";
+
+export const chapterRole = z.enum(["admin", "pilot", "passenger"]);
+export type ChapterRole = z.infer<typeof chapterRole>;
 
 export type Membership = { chapterId: string; roles: ChapterRole[] };
 
@@ -15,10 +18,7 @@ export const parseRoles = (role: string | null | undefined): ChapterRole[] =>
   (role ?? "")
     .split(",")
     .map((r) => r.trim())
-    .filter(
-      (r): r is ChapterRole =>
-        r === "admin" || r === "pilot" || r === "passenger",
-    );
+    .filter((r): r is ChapterRole => chapterRole.safeParse(r).success);
 
 export const isSuperAdmin = (access: Access) =>
   (access.role ?? "").split(",").some((r) => r.trim() === "superadmin");
@@ -69,12 +69,8 @@ export type AdminScope = {
   chapters: ScopeChapter[];
   canSeeChapters: boolean;
   canSeeCountries: boolean;
-  /** Creating a country is not scoped to one, so only a superadmin may. */
   canCreateCountries: boolean;
-  /** An account spans chapters, so no chapter or country admin sees enough of
-   *  it to take it away. */
   canDeleteAccounts: boolean;
-  /** History with no chapter attached — an account claimed, a chapter deleted. */
   canSeeGlobalEvents: boolean;
 };
 
@@ -87,7 +83,6 @@ export const hasAnyAdminScope = (access: Access) =>
   isSuperAdmin(access) ||
   access.countryAdminOf.length > 0 ||
   access.memberships.some((m) => m.roles.includes("admin"));
-
 
 export const canDeleteOwnAccount = (access: Access) =>
   !hasAnyAdminScope(access);
@@ -111,9 +106,6 @@ export function resolveAdminScope(
   return {
     global,
     countries: allCountries.filter((c) => countryIds.has(c.id)),
-    // A superadmin gets every chapter unconditionally. Filtering them through
-    // `countryIds` would drop a chapter whose country is missing from the list,
-    // which `isChapterAdmin(superadmin, x, null) === true` says cannot happen.
     chapters: global
       ? [...allChapters]
       : allChapters.filter(
@@ -127,12 +119,6 @@ export function resolveAdminScope(
   };
 }
 
-/**
- * The widest view someone is entitled to, used when no narrowing param is set.
- * A country is only the default when it covers every chapter in reach — a
- * country admin of DK who also runs one German chapter would otherwise open
- * onto a view that silently omits it.
- */
 export function defaultActiveScope(scope: AdminScope): ActiveScope {
   if (scope.global) return { kind: "all" };
 
@@ -149,22 +135,11 @@ export function defaultActiveScope(scope: AdminScope): ActiveScope {
   return { kind: "all" };
 }
 
-/**
- * `null` means the requested narrowing is outside this person's authority.
- *
- * Every `/admin/*` page reads its scope through `readActiveScope`
- * (`src/app/admin/active-scope.ts`), which turns a `null` here into
- * `forbidden()` — without that, `?chapter=` and `?country=` would be an
- * escalation path around the scope the sidebar offers.
- */
 export function resolveActiveScope(
   scope: AdminScope,
   params: { chapter?: string; country?: string },
 ): ActiveScope | null {
   if (params.chapter) {
-    // Case-folded on both sides: a URL typed with the wrong capitalisation is a
-    // typo, and reading it as "outside your authority" would surface as an
-    // access bug rather than a bad link.
     const slug = params.chapter.toLowerCase();
     const chapter = scope.chapters.find((c) => c.slug.toLowerCase() === slug);
     return chapter ? { kind: "chapter", chapter } : null;
@@ -191,12 +166,6 @@ export function scopeChapters(
 
 export type Perspective = "admin" | "pilot" | "passenger";
 
-/**
- * Which hats someone can put on. Read off the membership rows rather than
- * `getHighestRole`, which collapses a stack down to its top entry — a
- * superadmin who also pedals in München is both, and the switcher has to offer
- * both. A superadmin is not implicitly a pilot: that takes a real membership.
- */
 export function availablePerspectives(access: Access): Perspective[] {
   const roles = new Set(access.memberships.flatMap((m) => m.roles));
   return [

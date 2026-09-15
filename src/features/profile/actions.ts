@@ -14,11 +14,6 @@ const SAVE_LIMIT = { max: 60, windowMs: 60_000 };
 const withinSaveLimit = (userId: string) =>
   withinRateLimit(`own-details:${userId}`, SAVE_LIMIT);
 
-/**
- * Self-service only: the account written is always the one in the session, so
- * there is no id on the wire to tamper with. The session comes first so an
- * expired one answers with a sign-in rather than a validation error.
- */
 export async function updateOwnDetailsAction(
   input: unknown,
 ): Promise<ProfileActionResult> {

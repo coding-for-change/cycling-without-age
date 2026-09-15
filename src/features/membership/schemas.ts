@@ -1,10 +1,8 @@
 import { z } from "zod";
+import { chapterRole } from "@/lib/access";
 
-export const chapterRole = z.enum(["admin", "pilot", "passenger"]);
-export type ChapterRole = z.infer<typeof chapterRole>;
+export { chapterRole, type ChapterRole } from "@/lib/access";
 
-/** One request applies to at most this many chapters; the screen stops the
- *  selection at the same number so the cap is never met as a generic failure. */
 export const MAX_PILOT_CHAPTERS = 5;
 
 export const pilotApplicationInput = z.object({

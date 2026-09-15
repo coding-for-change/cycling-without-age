@@ -18,11 +18,6 @@ import { ICONS } from "@/components/icons";
 import type { Perspective } from "@/lib/access";
 import type { PerspectiveChoice } from "@/lib/perspectives";
 
-/**
- * The perspective half of the admin scope switcher. Members have no scope to
- * narrow, so there is no `useSearchParams` here and the whole thing is a plain
- * list of hats with the chapter written underneath.
- */
 export function PerspectiveSwitcher({
   perspectives,
   activePerspective,
@@ -53,8 +48,6 @@ export function PerspectiveSwitcher({
     </>
   );
 
-  // One hat — or none, which is a guest looking around. A control that offers
-  // to switch and then has nowhere to go is worse than no control at all.
   if (perspectives.length < 2)
     return (
       <SidebarMenu>

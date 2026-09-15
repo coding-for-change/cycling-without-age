@@ -38,11 +38,6 @@ import {
 } from "./sections";
 import type { AccountData } from "./types";
 
-/**
- * The desk chrome: the person and their hats on the left, one section at a time
- * on the right. Closed, it renders nothing but its trigger — so the passkey list
- * is only ever fetched by someone actually looking at it.
- */
 export function AccountDialog({
   data,
   activePerspective,

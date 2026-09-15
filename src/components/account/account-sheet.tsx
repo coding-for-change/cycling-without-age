@@ -16,11 +16,6 @@ import { ProfileHeader } from "./profile-header";
 import { ACCOUNT_SECTIONS, AccountSectionBody, sectionTitle } from "./sections";
 import type { AccountData } from "./types";
 
-/**
- * The phone chrome: one sheet that scrolls, every section stacked, because a
- * left nav on a phone is a second tap for nothing. The same sections as the
- * dialog — only the frame differs.
- */
 export function AccountSheet({
   data,
   activePerspective,

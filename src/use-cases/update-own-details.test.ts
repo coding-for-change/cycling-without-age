@@ -29,7 +29,6 @@ describe("updateOwnDetails", () => {
     expect(updateRider).not.toHaveBeenCalled();
   });
 
-  // The rider row carries its own copy of these two, so an edit has to land twice.
   it("mirrors a birth date onto the rider row", async () => {
     await updateOwnDetails(USER, { birthDate: BIRTH_DATE });
 
@@ -56,7 +55,6 @@ describe("updateOwnDetails", () => {
     });
   });
 
-  // The rider row is a mirror: it is only worth writing once the account took it.
   it("writes the account before the rider row", async () => {
     await updateOwnDetails(USER, { gender: "other" });
 

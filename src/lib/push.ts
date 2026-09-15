@@ -2,8 +2,6 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getMessaging } from "firebase-admin/messaging";
 import type { ServiceAccount } from "firebase-admin/app";
 
-// One multicast request carries at most 500 tokens; FCM rejects a larger batch
-// outright rather than truncating it.
 const CHUNK = 500;
 
 export type PushMessage = {
@@ -16,11 +14,6 @@ export type PushMessage = {
 
 export type PushResult = { sent: number; invalidTokens: string[] };
 
-/**
- * The deploy vault writes `key=value` lines, so a multi-line service-account
- * JSON has to arrive base64-encoded there while `.env.local` may hold the raw
- * file. Both are accepted, told apart by the leading brace.
- */
 export function parseServiceAccount(
   raw: string | undefined = process.env.FIREBASE_SERVICE_ACCOUNT,
 ): ServiceAccount | null {
@@ -63,11 +56,7 @@ const TOKEN_ERROR_CODES = [
   "messaging/invalid-registration-token",
 ];
 
-/**
- * A token FCM will never accept again, so the row can go. `invalid-argument`
- * covers far more than tokens, hence the message check — deleting a device
- * because a payload field was malformed would lose a working subscription.
- */
+// "invalid-argument" also covers malformed payload fields, hence the message check.
 export function isInvalidTokenError(err: unknown) {
   const { code, message } = (err ?? {}) as { code?: string; message?: string };
   if (!code) return false;
@@ -78,8 +67,6 @@ export function isInvalidTokenError(err: unknown) {
   );
 }
 
-// Initialised on the first send, never at import: the worker and the Next
-// server both load this module, and only one of them ever pushes.
 function messaging() {
   const account = parseServiceAccount();
   if (!account) throw new Error("FIREBASE_SERVICE_ACCOUNT is unset");
@@ -121,8 +108,6 @@ export async function sendPush({
     });
   }
 
-  // Nothing got through and the reason was not a dead token: let BullMQ retry
-  // rather than reporting a delivery that never happened.
   if (sent === 0 && otherErrors.length > 0) throw otherErrors[0];
 
   return { sent, invalidTokens };

@@ -12,6 +12,9 @@ export const updateChapterById = (
 export const findChapterById = (id: string) =>
   prisma.organization.findUnique({ where: { id } });
 
+export const findChaptersByIds = (ids: string[]) =>
+  prisma.organization.findMany({ where: { id: { in: ids } } });
+
 export const findChapterBySlug = (slug: string) =>
   prisma.organization.findUnique({ where: { slug } });
 
@@ -27,7 +30,6 @@ export const findChapters = (countryId?: string) =>
     orderBy: { name: "asc" },
   });
 
-/** Only what an admin scope is built from — the fat row carries three @db.Text columns. */
 export const findChapterScopes = () =>
   prisma.organization.findMany({
     orderBy: { name: "asc" },

@@ -4,27 +4,20 @@ import { GraduationCap } from "lucide-react";
 import { membership } from "@/features/membership";
 import { requireAuth } from "@/lib/auth-guards";
 import { getDictionary } from "@/lib/i18n";
-import { MemberEmpty } from "../../_components/member-empty";
-import {
-  MemberPageFallback,
-  MemberPageShell,
-} from "../../_components/member-page";
+import { EmptyState } from "@/components/empty-state";
+import { MemberPageShell } from "../../_components/member-page";
+import { PageFallback } from "@/components/page-fallback";
 
 export default function PilotTrainingPage() {
   return (
     <MemberPageShell>
-      <Suspense fallback={<MemberPageFallback />}>
+      <Suspense fallback={<PageFallback />}>
         <Training />
       </Suspense>
     </MemberPageShell>
   );
 }
 
-/**
- * Open to anyone who is riding or waiting to hear back — being a member of a
- * chapter is not the bar, having applied is. So this guards itself rather than
- * leaning on `requirePerspective`.
- */
 async function Training() {
   const session = await requireAuth();
   const [dict, memberships, applications] = await Promise.all([
@@ -43,12 +36,12 @@ async function Training() {
   return (
     <>
       <h1 className="text-2xl tracking-tight md:text-3xl">{strings.title}</h1>
-      <MemberEmpty
+      <EmptyState
         icon={GraduationCap}
         className="flex-1 justify-start rounded-none border-none pt-16"
       >
         {strings.body}
-      </MemberEmpty>
+      </EmptyState>
     </>
   );
 }

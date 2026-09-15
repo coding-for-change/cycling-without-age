@@ -18,14 +18,11 @@ export const notificationPayload = z.record(
 );
 export type NotificationPayload = z.infer<typeof notificationPayload>;
 
-// Rendered at display time, so what we keep are the parameters, never the
-// sentence: the inbox has to re-render when a user switches language.
 export const createNotificationInput = z.object({
   eventId: z.string().min(1),
   recipientUserId: z.string().min(1),
   category: notificationCategory,
   payload: notificationPayload,
-  // An absolute URL here would make every notification an open redirect.
   href: z.string().refine(isAppPath, "href must be an app-relative path"),
   collapseKey: z.string().min(1).max(191).optional(),
 });
@@ -51,7 +48,6 @@ export const registerDeviceInput = z.object({
 });
 export type RegisterDeviceInput = z.infer<typeof registerDeviceInput>;
 
-// What a client may send: the owner comes from the session, never the payload.
 export const deviceInput = z.object({
   token: deviceToken,
   platform: devicePlatform,

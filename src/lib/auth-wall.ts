@@ -81,6 +81,3 @@ export function useDraft<T>(kind: string, schema: ZodType<T>): T | null {
   useEffect(clearDraft, []);
   return readDraft(raw, kind, schema);
 }
-
-export const signInHref = (next: string) =>
-  `/sign-in?next=${encodeURIComponent(next)}`;

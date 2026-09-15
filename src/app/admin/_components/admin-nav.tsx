@@ -12,16 +12,10 @@ import {
 } from "@/components/ui/sidebar";
 import type { ResolvedNavItem } from "../nav";
 import { ICONS } from "@/components/icons";
+import { matchesPath } from "@/lib/nav-match";
 
-/**
- * `/admin` is a prefix of every other destination, so the overview only lights
- * up on an exact match. Everything else matches its own subtree, which is what
- * keeps "Members" active on a member's detail page later on.
- */
 const matches = (pathname: string, href: string) =>
-  href === "/admin"
-    ? pathname === "/admin"
-    : pathname === href || pathname.startsWith(`${href}/`);
+  href === "/admin" ? pathname === "/admin" : matchesPath(pathname, href);
 
 export function AdminNav({
   items,

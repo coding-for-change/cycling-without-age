@@ -172,8 +172,6 @@ describe("recordActivity", () => {
     expect(record).toHaveBeenCalledWith(expected);
   });
 
-  // These two live in the bell only; a history line would repeat what the
-  // membership row already says.
   it.each(["user.onboarded", "chapter.memberJoined"])(
     "refuses %s, which has no history line",
     async (type) => {

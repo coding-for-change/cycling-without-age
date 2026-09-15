@@ -1,11 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-/**
- * The dark-mint hero action at the end of an onboarding step: the label on the
- * left, the icon in a translucent disc on the right. Mint is the caretaking
- * colour, so this is the "you are done here" button rather than a red one.
- */
 export function MintPillButton({
   label,
   icon: Icon,

@@ -82,12 +82,6 @@ export async function previewAvatar(email: unknown): Promise<string | null> {
   return avatarSvg(avatarSeed(parsed.data));
 }
 
-/**
- * Takes no input and only ever deletes the account behind the session — there is
- * no id on the wire, so there is nothing to point at someone else. The admin
- * check is re-run here rather than trusted from the disabled button, and the
- * rate limit covers a client looping the confirm dialog.
- */
 export async function deleteOwnAccountAction(): Promise<DeleteOwnAccountResult> {
   const session = await requireAuth();
 

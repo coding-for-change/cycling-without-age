@@ -23,7 +23,6 @@ const HAMBURG = {
   countryId: DE,
 };
 
-// A country admin of Germany: two German chapters in reach, Denmark out of it.
 const scope: AdminScope = {
   global: false,
   countries: [{ id: DE, code: "DE", name: "Deutschland" }],
@@ -59,8 +58,6 @@ describe("readActiveScope", () => {
     expect(chapterIds).toEqual([HAMBURG.id]);
   });
 
-  // The escalation attempt: a chapter slug outside the scope must not fall back
-  // to the default view, which would make the URL a silent no-op.
   it("refuses a chapter outside the caller's authority", async () => {
     await expect(read({ chapter: "aarhus" })).rejects.toThrow("FORBIDDEN");
   });

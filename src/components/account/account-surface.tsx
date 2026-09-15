@@ -8,16 +8,6 @@ import { AccountDialog } from "./account-dialog";
 import { AccountSheet } from "./account-sheet";
 import type { AccountData } from "./types";
 
-/**
- * One account surface, two chromes. The breakpoint decides which, and the key
- * makes a flip across it a remount rather than a half-migrated tree.
- *
- * Until it is first opened there is nothing in the tree at all — which is what
- * keeps the hydration flip between the two chromes invisible and what stops
- * `useListPasskeys` firing for everyone who never looks. After that the frame
- * stays so closing still animates; the sections themselves are unmounted by the
- * dialog and the sheet either way.
- */
 export function AccountSurface({
   data,
   activePerspective,

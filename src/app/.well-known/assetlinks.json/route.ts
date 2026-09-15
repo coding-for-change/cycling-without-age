@@ -1,8 +1,6 @@
 import { connection } from "next/server";
 import { NATIVE_APP } from "@/lib/native-app";
 
-// Colon-separated SHA-256 fingerprints of every signing certificate the
-// Android app ships with; empty until the release keystore exists.
 const fingerprints = () =>
   (process.env.ANDROID_CERT_SHA256_FINGERPRINTS ?? "")
     .split(",")

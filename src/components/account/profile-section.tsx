@@ -12,8 +12,6 @@ const GENDERS = ["female", "male", "other"] as const;
 
 const EARLIEST_BIRTH_DATE = "1900-01-01";
 
-/** Never reached — both fields are `required`, so an emptied one is put back
- *  before it ever gets here — but the action has no way to say "unset". */
 const rejected: ActionResult = { ok: false, error: "invalid" };
 
 export function ProfileSection({ data }: { data: AccountData }) {
@@ -61,8 +59,6 @@ export function ProfileSection({ data }: { data: AccountData }) {
       <SelectRow
         value={data.profile.gender}
         label={strings.profile.gender}
-        // The empty choice exists only while nothing is set: picking it again is
-        // a no-op, and there is deliberately no way back to "not set".
         placeholder={
           data.profile.gender === null
             ? strings.profile.genderPlaceholder

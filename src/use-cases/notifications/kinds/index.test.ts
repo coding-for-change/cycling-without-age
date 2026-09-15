@@ -28,8 +28,6 @@ describe("kinds", () => {
     expect(kindOf("pilotApplication.decided").category).toBe("application");
   });
 
-  // `notify` reads the kind by event type, so a listener without one is a job
-  // that throws five times in the worker instead of a notification.
   it("covers every event notify listens to", () => {
     const listened = Object.entries(handlers)
       .filter(([, listeners]) => "notify" in listeners)
@@ -78,8 +76,6 @@ describe("chapter.memberJoined recipients", () => {
     ).resolves.toEqual(["admin-bo"]);
   });
 
-  // A chapter that switched the card off gets no inbox row at all, so the
-  // admin list is never even read.
   it("tells nobody when the chapter switched the card off", async () => {
     getSettings.mockResolvedValue({
       ...DEFAULT_CHAPTER_SETTINGS,

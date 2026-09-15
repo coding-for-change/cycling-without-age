@@ -13,11 +13,6 @@ const set = (next: boolean) => {
   listeners.forEach((listener) => listener());
 };
 
-/**
- * Attached on the first subscriber and never removed: the flag is module state
- * shared by every hook instance, so the two plugin listeners outlive any single
- * component and cost one round trip for the life of the WebView.
- */
 const attach = () => {
   if (attached || !Capacitor.isNativePlatform()) return;
   attached = true;
@@ -42,10 +37,6 @@ const subscribe = (onStoreChange: () => void): (() => void) => {
 const snapshot = () => open;
 const serverSnapshot = () => false;
 
-/**
- * Whether the native keyboard covers the viewport. Always `false` on the web,
- * where the browser already shrinks the layout viewport for us.
- */
 export function useKeyboardOpen(): boolean {
   return useSyncExternalStore(subscribe, snapshot, serverSnapshot);
 }

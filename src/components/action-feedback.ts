@@ -27,12 +27,6 @@ export type SaveLabels = {
   errors: { generic: string } & Record<string, string>;
 };
 
-/**
- * The half of an autosave that is the same wherever one happens: report the
- * outcome, fire exactly one haptic, and offer Undo on a first save but not on
- * the undo of one. The optimistic bookkeeping stays with the caller, whose
- * notion of "the value this replaced" differs per surface.
- */
 export function reportSave(
   result: ActionResult,
   {

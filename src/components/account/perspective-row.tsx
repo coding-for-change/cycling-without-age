@@ -6,11 +6,6 @@ import { cn } from "@/lib/utils";
 import type { Perspective } from "@/lib/access";
 import type { AccountData } from "./types";
 
-/**
- * The hats this person wears, as a segmented control. One hat means nothing to
- * switch, so the row is not rendered at all. Switching closes the surface first:
- * the shell it belongs to is the thing being left.
- */
 export function PerspectiveRow({
   data,
   activePerspective,

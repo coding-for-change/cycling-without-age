@@ -61,8 +61,6 @@ export async function PendingChapterCard({
   );
 }
 
-// The application is in step two for as long as this card is on screen: it is
-// only ever rendered for a pending application.
 const ACTIVE_STEP = 1;
 
 function ApplicationTimeline({ steps }: { steps: StatusStrings["steps"] }) {

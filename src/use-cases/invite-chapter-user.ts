@@ -21,8 +21,6 @@ export async function inviteChapterUser({
     createdByUserId: inviterUserId,
   });
 
-  // An invitee has never chosen a language, so they borrow the inviter's until
-  // onboarding overwrites it.
   if (created || !(await profile.getProfile(userId))?.locale) {
     await profile.setLocale(userId, locale);
   }

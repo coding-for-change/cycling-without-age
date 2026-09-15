@@ -19,7 +19,6 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
-        /** The one red action on an admin surface. Brand tokens, not shadcn's. */
         brand: "bg-red text-white hover:bg-red-hover",
       },
       size: {
@@ -31,10 +30,6 @@ const buttonVariants = cva(
         "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "size-8",
         "icon-lg": "size-10",
-        /**
-         * The one hero action at the foot of a `(flow)` screen: full width,
-         * fully round, 56px. Geometry only — pair it with `variant`.
-         */
         hero: "h-14 w-full rounded-full px-6 text-base has-[>svg]:px-4",
       },
     },

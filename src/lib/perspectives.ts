@@ -11,12 +11,6 @@ export type PerspectiveChoice = {
   icon: IconKey;
 };
 
-/**
- * The hats a person wears, in one list. The admin scope switcher, the member
- * perspective switcher and the ⌘K palette all render it, so nobody can offer a
- * perspective another surface hides. Perspective-agnostic on purpose: it sits
- * in `lib` rather than under `admin/` because the member shell needs it too.
- */
 export function perspectiveChoices(
   access: Access,
   dict: Dictionary,

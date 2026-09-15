@@ -52,7 +52,6 @@ export function IdentifierStep({
     let cancelled = false;
     void (async () => {
       try {
-        // The shell's WebView has no autofill passkeys; the button covers it.
         if (isNative()) return;
         if (!(await PublicKeyCredential.isConditionalMediationAvailable?.()))
           return;
@@ -62,9 +61,7 @@ export function IdentifierStep({
 
         haptics.success();
         router.replace("/onboarding");
-      } catch {
-        // No passkey enrolled, or the browser declined. Typing still works.
-      }
+      } catch {}
     })();
     return () => {
       cancelled = true;

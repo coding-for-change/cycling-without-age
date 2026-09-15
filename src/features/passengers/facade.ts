@@ -43,8 +43,6 @@ export async function saveOwnPassenger(input: PassengerInput) {
   const existing = await findPassengerOfUser(data.userId);
   if (!existing) return addPassenger(data);
 
-  // `chapterId` from the input is dropped on purpose: the existing row's chapter
-  // wins, because moving someone between chapters is leaving one, not editing a name.
   const { userId, firstName, lastName, birthDate, gender } = data;
   return upsertOwnPassenger(userId, {
     firstName,
@@ -56,12 +54,6 @@ export async function saveOwnPassenger(input: PassengerInput) {
   });
 }
 
-/**
- * `birthDate` and `gender` live on the account and on the rider row this person
- * books their own rides with. `updateMany` rather than `update` because most
- * accounts have no rider row at all — a volunteer editing their birthday writes
- * nothing here instead of raising a missing-record error.
- */
 export async function updateOwnRiderDetails(
   userId: string,
   patch: OwnRiderDetailsPatchInput,

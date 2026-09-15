@@ -56,8 +56,6 @@ describe("completeOnboarding", () => {
     );
   });
 
-  // The conditional write is the guard: a re-submitted last step stamps nothing
-  // and so announces nothing.
   it("stays silent when the account was already onboarded", async () => {
     stamped(0);
 
@@ -67,7 +65,6 @@ describe("completeOnboarding", () => {
     expect(db.event.create).not.toHaveBeenCalled();
   });
 
-  // A pilot can finish onboarding before any chapter has taken them on.
   it("announces a welcome with no chapter behind it", async () => {
     await profile.completeOnboarding(USER, {
       chapterId: null,
@@ -105,7 +102,6 @@ describe("updateOwnDetails", () => {
     expect(data()).toEqual({ gender: "female" });
   });
 
-  // The date input posts a string; Prisma wants a Date.
   it("coerces an ISO date string into a Date", async () => {
     await profile.updateOwnDetails(USER, { birthDate: "1948-04-02" });
 
@@ -117,7 +113,6 @@ describe("updateOwnDetails", () => {
     expect(db.user.update).not.toHaveBeenCalled();
   });
 
-  // A mistyped year lands as a validation error, not a 126-year-old passenger.
   it("refuses a birth date outside the plausible range", async () => {
     await expect(
       profile.updateOwnDetails(USER, { birthDate: "1899-04-02" }),
@@ -139,7 +134,6 @@ describe("setNotificationPreferences", () => {
     });
   });
 
-  // One switch flipped must not carry the other one's stale value along.
   it("leaves the untouched switch alone", async () => {
     await profile.setNotificationPreferences(USER, { email: true });
 

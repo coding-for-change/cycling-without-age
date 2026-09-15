@@ -88,7 +88,6 @@ export function PasskeyManager({
   const signInAgain = () =>
     startTransition(async () => {
       await authClient.signOut();
-      // A full load, like `useSignOut`; `next` brings them back to this screen.
       window.location.href = `/sign-in?next=${encodeURIComponent(window.location.pathname)}`;
     });
 

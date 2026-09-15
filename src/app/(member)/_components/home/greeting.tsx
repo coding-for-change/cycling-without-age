@@ -7,13 +7,8 @@ import { PERSPECTIVE_HOME } from "@/lib/redirects";
 import { fill, firstName } from "@/lib/utils";
 import { primaryAction, type MemberPerspective } from "../../nav";
 import { MEMBER_LIFE } from "../instant";
-import { signInHref } from "../sign-in-href";
+import { signInHref } from "@/lib/redirects";
 
-/**
- * The top of the home screen: who is reading, what this place is for, and the
- * one red action. The action is `md:hidden` because the sidebar already carries
- * it on a desktop — two reds on one screen is one too many.
- */
 export async function Greeting({
   perspective,
 }: {

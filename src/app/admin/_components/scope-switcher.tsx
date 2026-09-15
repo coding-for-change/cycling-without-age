@@ -18,18 +18,11 @@ import {
 } from "@/components/ui/sidebar";
 import { getInitials } from "@/lib/utils";
 import type { Perspective } from "@/lib/access";
-import type { IconKey, ScopeArg } from "@/lib/commands";
+import type { ScopeArg } from "@/lib/commands";
+import type { PerspectiveChoice } from "@/lib/perspectives";
+import type { ScopeChoice } from "../scopes";
 import { ICONS } from "@/components/icons";
 import { readScopeArg, scopeHref } from "./scope-url";
-
-export type PerspectiveOption = {
-  perspective: Perspective;
-  label: string;
-  href: string;
-  icon: IconKey;
-};
-
-export type ScopeOption = { arg: ScopeArg; label: string; icon: IconKey };
 
 export function ScopeSwitcher({
   perspectives,
@@ -39,9 +32,9 @@ export function ScopeSwitcher({
   roleLabel,
   strings,
 }: {
-  perspectives: PerspectiveOption[];
+  perspectives: PerspectiveChoice[];
   activePerspective: Perspective;
-  scopes: ScopeOption[];
+  scopes: ScopeChoice[];
   defaultScope: ScopeArg;
   roleLabel: string;
   strings: { switchLabel: string; perspective: string; label: string };
@@ -54,9 +47,6 @@ export function ScopeSwitcher({
     defaultScope,
   );
 
-  // Never empty in practice — passing `requireAdminScope` means at least one
-  // chapter, one country or global reach — but a blank trigger would be a worse
-  // failure than showing the role.
   const active = scopes.find((s) => s.arg === activeScope);
   const activeLabel = active?.label ?? roleLabel;
   const showPerspectives = perspectives.length > 1;
@@ -77,9 +67,6 @@ export function ScopeSwitcher({
     </>
   );
 
-  // One chapter, one hat: there is nothing to switch between, so this is a label
-  // and not a button. A control that announces "switch perspective" and then does
-  // nothing is worse than no control.
   if (!showPerspectives && !showScopes)
     return (
       <SidebarMenu>

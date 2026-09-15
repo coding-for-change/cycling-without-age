@@ -24,7 +24,6 @@ const Ctx = createContext<{ status: Status; report: Report }>({
   report: () => {},
 });
 
-/** One header indicator for however many fields autosave on the page. */
 export function SaveStatusProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const inFlight = useRef(0);
@@ -56,14 +55,12 @@ export function SaveStatus({
   className,
 }: {
   labels: { saving: string; saved: string };
-  /** The UI language — relative time is words, not notation. */
   words: string;
   className?: string;
 }) {
   const { status } = useContext(Ctx);
   const [now, setNow] = useState(() => new Date());
 
-  // "just now" has to age into "1 min ago" without another save happening.
   useEffect(() => {
     if (status.kind !== "saved") return;
     const timer = setInterval(() => setNow(new Date()), 30_000);

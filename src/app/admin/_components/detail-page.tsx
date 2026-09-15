@@ -3,7 +3,6 @@ import { ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/** The way back out of a detail page, above its header. */
 export function BackLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
@@ -19,10 +18,6 @@ export function BackLink({ href, label }: { href: string; label: string }) {
   );
 }
 
-/**
- * One block of a detail page's main column. Linear separates these with a rule
- * and a heading rather than cards, so that pairing lives here.
- */
 export function DetailSection({
   title,
   children,

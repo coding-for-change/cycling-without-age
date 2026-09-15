@@ -1,24 +1,26 @@
 import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
+  EmptyTitle,
 } from "@/components/ui/empty";
 import { cn } from "@/lib/utils";
 
-/**
- * What an admin surface shows when it has nothing to list: the page's own icon
- * in a mint disc over one line of explanation. Every list uses this, so an
- * empty chapters table and an empty members table read the same way.
- */
-export function AdminEmpty({
+export function EmptyState({
   icon: Icon,
+  title,
+  action,
   children,
   className,
 }: {
   icon: LucideIcon;
-  children: React.ReactNode;
+  title?: string;
+  action?: ReactNode;
+  children: ReactNode;
   className?: string;
 }) {
   return (
@@ -30,10 +32,16 @@ export function AdminEmpty({
         >
           <Icon aria-hidden />
         </EmptyMedia>
+        {title ? (
+          <EmptyTitle className="font-display font-bold text-balance">
+            {title}
+          </EmptyTitle>
+        ) : null}
         <EmptyDescription className="text-ink-soft">
           {children}
         </EmptyDescription>
       </EmptyHeader>
+      {action ? <EmptyContent>{action}</EmptyContent> : null}
     </Empty>
   );
 }

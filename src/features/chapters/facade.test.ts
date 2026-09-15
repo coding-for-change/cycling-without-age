@@ -66,14 +66,11 @@ describe("appointing a country admin", () => {
     expect(emitted()).toMatchObject({
       type: "countryAdmin.appointed",
       actorUserId: ACTOR,
-      // A country admin belongs to no single chapter.
       chapterId: null,
       payload: expect.objectContaining({ userId: USER, countryId: COUNTRY }),
     });
   });
 
-  // Appointing someone who already runs the country asks for a state that is
-  // already true, so nobody is told about it a second time.
   it("stays silent when they already run the country", async () => {
     db.countryAdmin.findUnique.mockResolvedValue({ userId: USER });
 
@@ -119,8 +116,6 @@ describe("removing a country admin", () => {
 });
 
 describe("reading a chapter's settings", () => {
-  // Callers never branch on a missing row: a chapter that changed nothing
-  // reads exactly like one whose row says the defaults.
   it("answers with the defaults while there is no row", async () => {
     await expect(chapters.getSettings(CHAPTER)).resolves.toEqual(
       DEFAULT_CHAPTER_SETTINGS,
@@ -158,7 +153,6 @@ describe("writing a chapter's settings", () => {
     );
   });
 
-  // An emptied note is a value, not an omission: null has to reach the column.
   it("passes an emptied welcome note through to the row", async () => {
     await chapters.updateSettings(CHAPTER, { welcomeNote: null });
 

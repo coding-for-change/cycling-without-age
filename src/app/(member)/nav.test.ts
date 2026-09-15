@@ -10,8 +10,6 @@ import {
 } from "./nav";
 import type { MemberNavKey } from "./nav";
 
-// Deliberately not the dictionary: everything below the parity block is about
-// the shape of the registry, and must not go red when a string is reworded.
 const LABELS: Record<MemberNavKey, string> = {
   home: "Home",
   rides: "My rides",
@@ -123,7 +121,6 @@ describe("which row is active", () => {
     expect(activeTabKey("/pilot/rides/ride-42", items)).toBe("rides");
   });
 
-  // The longest match wins: /pilot is a prefix of everything.
   it("titles a nested page itself while its parent tab stays lit", () => {
     expect(title("/pilot/training")).toBe("training");
     expect(activeTabKey("/pilot/training", items)).toBe("home");
@@ -171,7 +168,6 @@ describe("nextPerspective", () => {
     expect(nextPerspective(["pilot"], "pilot")).toBeNull();
   });
 
-  // A guest on /passenger holds nothing: rotating them anywhere would be a lie.
   it("refuses to rotate from a hat this person does not hold", () => {
     expect(nextPerspective(["admin", "pilot"], "passenger")).toBeNull();
   });

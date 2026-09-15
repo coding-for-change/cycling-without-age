@@ -23,10 +23,6 @@ import { ApprovalCelebration } from "./_components/approval-celebration";
 import { PendingChapterCard } from "./_components/pending-chapter-card";
 import { RejectedCard } from "./_components/rejected-card";
 
-/**
- * Every section guards itself and streams on its own, so the shell paints
- * immediately and the slowest query never holds up the greeting.
- */
 export default function PilotHomePage() {
   return (
     <MemberPageShell>
@@ -49,11 +45,6 @@ export default function PilotHomePage() {
   );
 }
 
-/**
- * Where the application stands: the welcome, the ones still being read, and the
- * ones that came back no. Somebody with neither a chapter nor an application
- * has not finished signing up at all, so they go back to the flow.
- */
 async function PilotStatus() {
   "use cache: private";
   cacheLife(MEMBER_LIFE);
@@ -127,7 +118,6 @@ async function PilotStatus() {
   );
 }
 
-/** Only worth showing to someone who is riding, or about to be. */
 async function TrainingLink() {
   "use cache: private";
   cacheLife(MEMBER_LIFE);
