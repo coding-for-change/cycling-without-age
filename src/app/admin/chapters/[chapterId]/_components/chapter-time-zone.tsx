@@ -33,7 +33,15 @@ export function ChapterTimeZone({
   zones: readonly string[];
   labels: { timeZone: string; timeZoneHint: string; field: SaveLabels };
 }) {
-  const [zone, setZone] = useState(value);
+  const [override, setOverride] = useState<{
+    id: string;
+    from: string;
+    to: string;
+  } | null>(null);
+  const zone =
+    override && override.id === id && override.from === value
+      ? override.to
+      : value;
   const report = useSaveStatus();
 
   // Grouped by the part before the slash — "Europe", "America" — which is how
@@ -52,7 +60,7 @@ export function ChapterTimeZone({
   const save = async (next: string, undoable: boolean) => {
     const previous = zone;
     if (next === previous) return;
-    setZone(next);
+    setOverride({ id, from: value, to: next });
     report("saving");
 
     const result = await updateChapterAction(id, { timeZone: next });
@@ -61,7 +69,7 @@ export function ChapterTimeZone({
       labels: labels.field,
       undo: undoable ? () => void save(previous, false) : undefined,
     });
-    if (!ok) setZone(previous);
+    if (!ok) setOverride(null);
   };
 
   return (
