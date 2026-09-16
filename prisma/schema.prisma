@@ -388,12 +388,38 @@ model StorageLocationChapter {
   @@map("storage_location_chapter")
 }
 
+/**
+ * A trishaw model — "Triobike Taxi", "VeloPlus". A table rather than an enum
+ * because it is a manufacturer's catalogue that grows: CWA's own roles
+ * reference writes the set open-endedly, "(Triobike Taxi, VeloPlus, …)". A
+ * table rather than free text because three requirements *compare* types —
+ * pilot qualification is per trishaw type (`03-roles.md`), a client chooses a
+ * bike type when booking, and the negotiation loop offers another type when one
+ * is unavailable (`07-functional-ride-user-stories.md`). None of those survive
+ * an unconstrained string.
+ *
+ * Whether a type also fixes the seat count and wheelchair access is still open
+ * with CWA; both become columns here when answered, which is the point of a
+ * table.
+ */
+model TrishawType {
+  id        String    @id @default(cuid())
+  name      String    @db.VarChar(80)
+  trishaws  Trishaw[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([name])
+  @@map("trishaw_type")
+}
+
 model Trishaw {
   id        String        @id @default(cuid())
   chapterId String
   chapter   Organization  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
   name      String        @db.Text
-  type      String?       @db.Text
+  typeId    String?
+  type      TrishawType?  @relation(fields: [typeId], references: [id], onDelete: SetNull)
   seats     Int           @default(2)
   status    TrishawStatus @default(active)
 
@@ -408,6 +434,7 @@ model Trishaw {
 
   @@index([chapterId, status])
   @@index([storageLocationId])
+  @@index([typeId])
   @@map("trishaw")
 }
 

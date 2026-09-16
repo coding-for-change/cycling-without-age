@@ -119,7 +119,7 @@ export function TrishawTimeline({
                 </span>
                 <span className="text-ink-soft block pl-5 text-xs">
                   {trishaw.status === "active"
-                    ? (trishaw.type ?? strings.trishawStatuses.active)
+                    ? (trishaw.type?.name ?? strings.trishawStatuses.active)
                     : strings.trishawStatuses[trishaw.status]}
                 </span>
               </th>

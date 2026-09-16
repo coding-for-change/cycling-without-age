@@ -570,6 +570,17 @@ Three deliberate shapes in the schema, all from
   `Ride` could not express either. Trailers, wheelchair bikes and transport vehicles —
   listed beside trishaws in §2C — reserve the same way once they have models of their own.
 
+A trishaw's model is a **`TrishawType` row**, not a string. Three requirements compare types —
+pilot qualification is per trishaw type (`references/03-roles.md`), a client chooses a bike type
+when booking, and the negotiation loop offers another type when one is unavailable
+(`references/07-functional-ride-user-stories.md`) — and none of those survives free text, where
+`VeloPlus` and `VeloPlus ` are two different models. It is a table rather than an enum because
+the reference writes the set open-endedly, *"(Triobike Taxi, VeloPlus, …)"*: it is a
+manufacturer's catalogue that grows, and growing it should not be a migration. `Trishaw.typeId`
+is nullable, because a bike can be entered before CWA has told us its model. Whether a type also
+fixes the seat count and wheelchair access is still open with them; both become columns on
+`TrishawType` when answered, which is the point of a table.
+
 `RideAssignment` carries staffing — lifecycle phase 3 — and `RideRole` holds **`pilot` alone**.
 CWA does staff rides with ambassadors and transporters, and the glossary names them, but
 `ChapterRole` is admin/pilot/passenger: nobody can *be* an ambassador here, so carrying the

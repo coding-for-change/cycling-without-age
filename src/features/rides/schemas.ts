@@ -60,7 +60,7 @@ export type RideInput = z.input<typeof rideInput>;
 export const trishawInput = z.object({
   chapterId: z.string().min(1),
   name: z.string().trim().min(1).max(80),
-  type: z.string().trim().max(80).nullable().optional(),
+  typeId: z.string().min(1).nullable().optional(),
   seats: z.number().int().min(1).max(4).default(2),
   status: z.enum(TRISHAW_STATUSES).default("active"),
 });

@@ -24,6 +24,7 @@ import {
 } from "./services/rides";
 import {
   findTrishawById,
+  findTrishawTypeById,
   findTrishawsOfChapters,
   insertTrishaw,
   updateTrishawById,
@@ -135,9 +136,17 @@ export async function cancelRide(id: string, reason?: string | null) {
   });
 }
 
+/**
+ * The model is checked here rather than left to the foreign key: `trishaw` has
+ * two of them, so a rejected write cannot say whether the chapter or the type
+ * was the unknown one. Same reason `createChapter` looks up its country.
+ */
 export async function addTrishaw(input: TrishawInput) {
   const data = trishawInput.parse(input);
-  return insertTrishaw({ ...data, type: data.type ?? null });
+  const typeId = data.typeId ?? null;
+  if (typeId && !(await findTrishawTypeById(typeId)))
+    throw new DomainError("unknownTrishawType");
+  return insertTrishaw({ ...data, typeId });
 }
 
 export async function setTrishawStatus(

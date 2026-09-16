@@ -29,7 +29,8 @@ export type DomainErrorCode =
   | "unknownChapter"
   | "unknownCountry"
   | "unknownRide"
-  | "unknownTrishaw";
+  | "unknownTrishaw"
+  | "unknownTrishawType";
 
 /**
  * A refusal the UI can name. Facades throw these instead of prose, so an Action

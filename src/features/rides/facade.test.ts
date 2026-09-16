@@ -11,6 +11,7 @@ jest.mock("@/lib/prisma", () => {
       update: jest.fn(),
     },
     trishaw: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
+    trishawType: { findUnique: jest.fn() },
     rideTrishaw: { findMany: jest.fn() },
     rideAssignment: { upsert: jest.fn(), delete: jest.fn() },
     rideRosterEntry: { upsert: jest.fn(), count: jest.fn(), delete: jest.fn() },
@@ -28,6 +29,7 @@ const db = prisma as unknown as {
     update: jest.Mock;
   };
   trishaw: { findUnique: jest.Mock; create: jest.Mock; update: jest.Mock };
+  trishawType: { findUnique: jest.Mock };
   rideTrishaw: { findMany: jest.Mock };
   rideAssignment: { upsert: jest.Mock; delete: jest.Mock };
   rideRosterEntry: { upsert: jest.Mock; count: jest.Mock; delete: jest.Mock };
@@ -50,7 +52,7 @@ const trishawRow = (over: Record<string, unknown> = {}) =>
     id: TRISHAW,
     chapterId: CHAPTER,
     name: "Sonnenstrahl",
-    type: "Triobike Taxi",
+    type: { id: "type-triobike", name: "Triobike Taxi" },
     seats: 2,
     status: "active",
     storageLocation: null,
@@ -427,5 +429,55 @@ describe("who may read a rider's name", () => {
   it("gives the admin calendar a count and no names", async () => {
     await rides.listRidesInRange(["chapter-muenchen"], FROM, TO);
     expect(selectOf().roster).toBeUndefined();
+  });
+});
+
+describe("adding a trishaw", () => {
+  it("links the bike to a catalogue row rather than storing a string", async () => {
+    db.trishawType.findUnique.mockResolvedValue({
+      id: "type-triobike",
+      name: "Triobike Taxi",
+    });
+    db.trishaw.create.mockResolvedValue({ id: TRISHAW });
+    await rides.addTrishaw({
+      chapterId: CHAPTER,
+      name: "Sonnenstrahl",
+      typeId: "type-triobike",
+    });
+    expect(db.trishaw.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ typeId: "type-triobike" }),
+      }),
+    );
+  });
+
+  // The catalogue is incomplete until CWA supplies it, so a bike may arrive
+  // before its model does.
+  it("accepts a bike whose model is not in the catalogue yet", async () => {
+    db.trishaw.create.mockResolvedValue({ id: TRISHAW });
+    await rides.addTrishaw({ chapterId: CHAPTER, name: "Namenlos" });
+    expect(db.trishaw.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ typeId: null }),
+      }),
+    );
+    // No model given, so nothing to look up.
+    expect(db.trishawType.findUnique).not.toHaveBeenCalled();
+  });
+
+  // `trishaw` has two foreign keys, so the write alone could not say which one
+  // was wrong — hence the explicit check.
+  it("refuses a model that is not in the catalogue", async () => {
+    db.trishawType.findUnique.mockResolvedValue(null);
+    expect(
+      await codeOf(
+        rides.addTrishaw({
+          chapterId: CHAPTER,
+          name: "Sonnenstrahl",
+          typeId: "type-nope",
+        }),
+      ),
+    ).toBe("unknownTrishawType");
+    expect(db.trishaw.create).not.toHaveBeenCalled();
   });
 });

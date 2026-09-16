@@ -238,6 +238,20 @@ async function seedRides(
     where: { chapterId: { in: slugs.map(chapterId) } },
   });
 
+  // The catalogue. `03-roles.md` names these two; the rest arrive as rows once
+  // CWA tells us, which is the whole reason this is a table and not an enum.
+  const typeIds = new Map<string, string>();
+  for (const name of new Set(
+    Object.values(TRISHAWS).flatMap((list) => list.map((t) => t.type)),
+  )) {
+    const row = await prisma.trishawType.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
+    typeIds.set(name, row.id);
+  }
+
   const trishawIds = new Map<string, string>();
   for (const [slug, list] of Object.entries(TRISHAWS)) {
     for (const trishaw of list) {
@@ -247,8 +261,13 @@ async function seedRides(
       trishawIds.set(
         `${slug}/${trishaw.name}`,
         existing?.id ??
-          (await rides.addTrishaw({ ...trishaw, chapterId: chapterId(slug) }))
-            .id,
+          (
+            await rides.addTrishaw({
+              name: trishaw.name,
+              chapterId: chapterId(slug),
+              typeId: typeIds.get(trishaw.type)!,
+            })
+          ).id,
       );
     }
   }

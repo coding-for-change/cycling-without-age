@@ -5,7 +5,7 @@ const trishawSelect = {
   id: true,
   chapterId: true,
   name: true,
-  type: true,
+  type: { select: { id: true, name: true } },
   seats: true,
   status: true,
   chapter: { select: { id: true, name: true, timeZone: true } },
@@ -36,6 +36,12 @@ export const findTrishawsOfChapters = (chapterIds: string[]) =>
     },
     orderBy: [{ chapterId: "asc" }, { name: "asc" }],
     select: trishawSelect,
+  });
+
+export const findTrishawTypeById = (id: string) =>
+  prisma.trishawType.findUnique({
+    where: { id },
+    select: { id: true, name: true },
   });
 
 export const findTrishawById = (id: string) =>
