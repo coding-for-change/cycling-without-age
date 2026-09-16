@@ -69,6 +69,26 @@ read it in Mailpit and follow its button, which lands on `/sign-in?next=/admin` 
 Inviting an address that already has an account still grants the role (the toast says so)
 rather than failing.
 
+## Walking the calendar
+
+The seed schedules six rides **relative to the day you run it** — two behind, four ahead —
+so the week grid and both agendas always have something whichever day that is.
+
+- `/admin/rides` is the Chapter Operating Calendar: seven columns, today underlined in mint.
+  The week is in the URL (`?week=2026-09-14`), so the arrows are plain links and a shared
+  link reopens the same week.
+- `/admin/bikes` is the same week as trishaw rows — which bike is out when. München has
+  *Sonnenstrahl* and *Isarwind*, Hamburg *Alsterschwan*, København *Nørrebro 1*. The München
+  event ride two days back deliberately books **both** München trishaws, so it shows in both
+  rows — a ride commits many trishaws, not one.
+- Sign in as `pilot@cwa.local` and `/pilot` lists their next rides across **both** their
+  chapters. As `passenger@cwa.local`, `/passenger` shows the functional ride to the doctor —
+  with "Pilot needed", because that one is deliberately unstaffed.
+- One Hamburg ride is seeded **cancelled** (weather). It stays on the calendar struck
+  through: cancelling releases the trishaw but does not free the square.
+
+Nothing schedules a ride from the UI yet — the "New ride" button just opens the calendar.
+
 ## The demo org structure
 
 | Country | Chapters |

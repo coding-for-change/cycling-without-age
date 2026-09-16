@@ -10,6 +10,7 @@ import { chapters } from "@/features/chapters";
 import { joinUrl } from "@/lib/app-url";
 import { formatDate, resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
+import { supportedTimeZones } from "@/lib/time-zone";
 import { fill } from "@/lib/utils";
 import { readActiveScope } from "../../../active-scope";
 import { ActivityFeed } from "../../../members/[userId]/_components/activity-feed";
@@ -184,6 +185,8 @@ export async function ChapterBody({
         countryName={country?.name ?? ""}
         coords={{ lat: chapter.latitude, lng: chapter.longitude }}
         radiusKm={chapter.serviceRadiusKm}
+        timeZone={chapter.timeZone}
+        zones={supportedTimeZones()}
         others={others}
         mapEnabled={Boolean(process.env.NEXT_PUBLIC_MAPBOX_TOKEN)}
         language={language}
@@ -212,6 +215,8 @@ export async function ChapterBody({
           radius: detail.radius,
           radiusValue: strings.create.radiusValue,
           overlap: strings.create.overlap,
+          timeZone: detail.timeZone,
+          timeZoneHint: detail.timeZoneHint,
         }}
         history={history}
         properties={properties}

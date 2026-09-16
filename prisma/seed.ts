@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
+import { rides } from "@/features/rides";
 import type { ChapterRole } from "@/lib/access";
 
 if (process.env.NODE_ENV === "production") {
@@ -200,6 +201,206 @@ async function seedUser(persona: Persona) {
   return user.id;
 }
 
+const TRISHAWS: Record<string, { name: string; type: string }[]> = {
+  muenchen: [
+    { name: "Sonnenstrahl", type: "Triobike Taxi" },
+    { name: "Isarwind", type: "VeloPlus" },
+  ],
+  hamburg: [{ name: "Alsterschwan", type: "Triobike Taxi" }],
+  copenhagen: [{ name: "Nørrebro 1", type: "Triobike Taxi" }],
+};
+
+/** Midnight today, in the seeding machine's own zone. */
+function startOfToday() {
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+  return midnight;
+}
+
+const at = (base: Date, dayOffset: number, hour: number, minute = 0) => {
+  const d = new Date(base);
+  d.setDate(base.getDate() + dayOffset);
+  d.setHours(hour, minute, 0, 0);
+  return d;
+};
+
+/**
+ * Rides are seeded relative to today so the calendar always has a populated
+ * week. They are rebuilt on every run — re-seeding a moving window is the only
+ * way to keep it idempotent.
+ */
+async function seedRides(
+  chapterId: (slug: string) => string,
+  userIds: Map<string, string>,
+) {
+  const slugs = Object.keys(TRISHAWS);
+  await prisma.ride.deleteMany({
+    where: { chapterId: { in: slugs.map(chapterId) } },
+  });
+
+  // The catalogue. `03-roles.md` names these two; the rest arrive as rows once
+  // CWA tells us, which is the whole reason this is a table and not an enum.
+  const typeIds = new Map<string, string>();
+  for (const name of new Set(
+    Object.values(TRISHAWS).flatMap((list) => list.map((t) => t.type)),
+  )) {
+    const row = await prisma.trishawType.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
+    typeIds.set(name, row.id);
+  }
+
+  const trishawIds = new Map<string, string>();
+  for (const [slug, list] of Object.entries(TRISHAWS)) {
+    for (const trishaw of list) {
+      const existing = await prisma.trishaw.findFirst({
+        where: { chapterId: chapterId(slug), name: trishaw.name },
+      });
+      trishawIds.set(
+        `${slug}/${trishaw.name}`,
+        existing?.id ??
+          (
+            await rides.addTrishaw({
+              name: trishaw.name,
+              chapterId: chapterId(slug),
+              typeId: typeIds.get(trishaw.type)!,
+            })
+          ).id,
+      );
+    }
+  }
+
+  // Where München keeps its bikes. The case the model exists for is one site
+  // shared by several chapters, but no two seeded chapters are in the same
+  // city, so that path is covered in `features/rides/facade.test.ts` instead.
+  const site = await prisma.storageLocation.upsert({
+    where: { id: "seed-site-sonnenhof" },
+    update: {},
+    create: {
+      id: "seed-site-sonnenhof",
+      name: "Seniorenheim Sonnenhof",
+      address: "Sonnenstraße 12, 80331 München",
+      latitude: 48.1371,
+      longitude: 11.5654,
+      chapters: { create: [{ chapterId: chapterId("muenchen") }] },
+    },
+  });
+  await prisma.trishaw.updateMany({
+    where: {
+      id: {
+        in: TRISHAWS.muenchen.map((t) => trishawIds.get(`muenchen/${t.name}`)!),
+      },
+    },
+    data: { storageLocationId: site.id },
+  });
+
+  const today = startOfToday();
+  const pilot = userIds.get("pilot@cwa.local")!;
+  const multi = userIds.get("multi@cwa.local")!;
+  const rider = await passengers.getOwnPassenger(
+    userIds.get("passenger@cwa.local")!,
+  );
+
+  // Offsets are days from today, not from Monday: the seed must leave something
+  // in the past for the week grid and something ahead for the two agendas
+  // whichever day of the week it is run.
+  const plan = [
+    {
+      chapter: "muenchen",
+      trishaws: ["muenchen/Sonnenstrahl", "muenchen/Isarwind"],
+      day: -2,
+      from: 10,
+      to: 12,
+      model: "event" as const,
+      // A Multiple Ride Event running two trishaws at once — the case a single
+      // FK could not express.
+      location: "Seniorenheim Sonnenhof",
+      staff: [pilot, multi],
+      riders: rider ? [rider.id] : [],
+    },
+    {
+      chapter: "muenchen",
+      trishaws: ["muenchen/Isarwind"],
+      day: 1,
+      from: 14,
+      to: 16,
+      model: "event" as const,
+      location: "Englischer Garten",
+      staff: [pilot],
+      riders: [],
+    },
+    {
+      chapter: "muenchen",
+      trishaws: ["muenchen/Sonnenstrahl"],
+      day: 2,
+      from: 9,
+      to: 10,
+      model: "functional" as const,
+      location: "Seniorenheim Sonnenhof",
+      destination: "Hausarzt Dr. Weber",
+      staff: [],
+      riders: rider ? [rider.id] : [],
+    },
+    {
+      chapter: "muenchen",
+      trishaws: ["muenchen/Isarwind"],
+      day: 4,
+      from: 15,
+      to: 17,
+      model: "pleasure" as const,
+      location: "Seniorenheim Sonnenhof",
+      staff: [pilot],
+      riders: [],
+    },
+    {
+      chapter: "hamburg",
+      trishaws: ["hamburg/Alsterschwan"],
+      day: 3,
+      from: 11,
+      to: 13,
+      model: "event" as const,
+      location: "Alstergarten",
+      staff: [pilot, multi],
+      riders: [],
+    },
+    {
+      chapter: "hamburg",
+      trishaws: ["hamburg/Alsterschwan"],
+      day: 5,
+      from: 10,
+      to: 12,
+      model: "event" as const,
+      location: "Alstergarten",
+      staff: [multi],
+      riders: [],
+      cancel: "Weather — storm warning",
+    },
+  ];
+
+  for (const item of plan) {
+    const ride = await rides.scheduleRide({
+      chapterId: chapterId(item.chapter),
+      trishawIds: item.trishaws.map((key) => trishawIds.get(key)!),
+      model: item.model,
+      startsAt: at(today, item.day, item.from),
+      endsAt: at(today, item.day, item.to),
+      locationName: item.location,
+      destinationName: item.destination ?? null,
+    });
+    for (const userId of item.staff) {
+      await rides.assignVolunteer(ride.id, userId);
+    }
+    for (const passengerId of item.riders) {
+      await rides.bookRider(ride.id, passengerId);
+    }
+    if (item.cancel) await rides.cancelRide(ride.id, item.cancel);
+  }
+
+  return plan.length;
+}
+
 async function main() {
   const countryIds = await seedCountries();
   const chapterIds = await seedChapters(countryIds);
@@ -210,8 +411,11 @@ async function main() {
     return id;
   };
 
+  const userIds = new Map<string, string>();
+
   for (const persona of PERSONAS) {
     const userId = await seedUser(persona);
+    userIds.set(persona.email, userId);
 
     for (const code of persona.countryAdminOf ?? []) {
       await chapters.appointCountryAdmin(userId, countryIds.get(code)!);
@@ -242,6 +446,8 @@ async function main() {
     }
   }
 
+  const rideCount = await seedRides(chapterId, userIds);
+
   console.table(
     PERSONAS.map((p) => ({
       email: p.email,
@@ -260,7 +466,7 @@ async function main() {
     })),
   );
   console.log(
-    `${COUNTRIES.length} countries, ${CHAPTERS.length} chapters, ${PERSONAS.length} accounts. Sign in with an email OTP — see docs-internal/DEV-ACCOUNTS.md.`,
+    `${COUNTRIES.length} countries, ${CHAPTERS.length} chapters, ${PERSONAS.length} accounts, ${rideCount} rides. Sign in with an email OTP — see docs-internal/DEV-ACCOUNTS.md.`,
   );
 }
 

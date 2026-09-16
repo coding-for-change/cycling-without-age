@@ -1,14 +1,17 @@
 import { Suspense } from "react";
 import { UserRound } from "lucide-react";
 import { chapters } from "@/features/chapters";
+import { passengers } from "@/features/passengers";
+import { rides } from "@/features/rides";
+import { RideAgenda } from "@/features/rides/components/ride-agenda";
 import { getSession, redirectIfElsewhere } from "@/lib/auth-guards";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { readGuestChapterId } from "@/lib/guest-chapter";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionary, getLocale } from "@/lib/i18n";
 import { fill } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { headers } from "next/headers";
-import { resolveLocale } from "@/lib/format";
+import { resolveLocale, wordsLocale } from "@/lib/format";
 import { AccountDialog } from "@/components/account-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SignOutButton } from "@/components/sign-out-button";
@@ -21,6 +24,11 @@ export default function PassengerHomePage() {
       </Suspense>
       <Suspense fallback={<Skeleton className="mt-6 h-5 w-64" />}>
         <ChosenChapter />
+      </Suspense>
+      <Suspense
+        fallback={<Skeleton className="mt-10 h-28 w-full rounded-lg" />}
+      >
+        <UpcomingRides />
       </Suspense>
       <Suspense fallback={null}>
         <SessionActions />
@@ -43,6 +51,42 @@ async function ChosenChapter() {
         ? fill(dict.passenger.browsing, { chapter: chapter.name })
         : dict.passenger.noChapter}
     </p>
+  );
+}
+
+/**
+ * Everyone this account rides for — a relative or carer who books on someone
+ * else's behalf manages several riders, and all of their rides belong here.
+ */
+async function UpcomingRides() {
+  const session = await getSession();
+  if (!session) return null;
+
+  const now = new Date();
+  const [dict, language, head, mine] = await Promise.all([
+    getDictionary(),
+    getLocale(),
+    headers(),
+    passengers.listPassengersManagedBy(session.user.id),
+  ]);
+  if (!mine.length) return null;
+
+  const upcoming = await rides.listRidesForPassengers(
+    mine.map((passenger) => passenger.id),
+    now,
+    new Date(now.getTime() + 28 * 24 * 60 * 60 * 1000),
+  );
+
+  return (
+    <div className="mt-10">
+      <RideAgenda
+        rides={upcoming}
+        strings={dict.calendar}
+        locale={resolveLocale(head.get("accept-language"))}
+        words={wordsLocale(language)}
+        title={dict.calendar.upcoming}
+      />
+    </div>
   );
 }
 

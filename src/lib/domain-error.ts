@@ -17,11 +17,20 @@ export type DomainErrorCode =
   | "notChapterMember"
   | "notOwnAccount"
   | "passengerChapterMismatch"
+  | "rideEndsBeforeStart"
+  | "rideTooLong"
+  | "rideTooShort"
   | "selfChange"
   | "slugTaken"
+  | "trishawNotInChapter"
+  | "trishawReserved"
+  | "trishawUnavailable"
   | "unknownApplication"
   | "unknownChapter"
-  | "unknownCountry";
+  | "unknownCountry"
+  | "unknownRide"
+  | "unknownTrishaw"
+  | "unknownTrishawType";
 
 /**
  * A refusal the UI can name. Facades throw these instead of prose, so an Action

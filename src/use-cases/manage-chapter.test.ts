@@ -11,12 +11,14 @@ jest.mock("@/features/chapters", () => ({
     updateChapter: jest.fn(),
     deleteChapter: jest.fn(),
     diffChapter: jest.fn(),
+    withDerivedTimeZone: jest.fn(),
   },
 }));
 
 const record = activity.record as jest.Mock;
 const getChapter = chapters.getChapter as jest.Mock;
 const diffChapter = chapters.diffChapter as jest.Mock;
+const withDerivedTimeZone = chapters.withDerivedTimeZone as jest.Mock;
 
 const AARHUS = {
   id: "ch1",
@@ -37,6 +39,9 @@ const AARHUS = {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  // The enrichment itself is covered in the chapters slice; here it just has to
+  // be the thing that reaches both the diff and the write.
+  withDerivedTimeZone.mockImplementation((input) => input);
   getChapter.mockResolvedValue(AARHUS);
   diffChapter.mockReturnValue([
     { field: "serviceRadiusKm", from: "10", to: "12" },
@@ -76,4 +81,24 @@ describe("deleting a chapter", () => {
       payload: { name: "Aarhus Nord", slug: "aarhus-nord" },
     });
   });
+});
+
+it("diffs and writes the same patch, so a derived zone is recorded", async () => {
+  const input = { latitude: 39.7392, longitude: -104.9903 };
+  const patch = { ...input, timeZone: "America/Denver" };
+  withDerivedTimeZone.mockReturnValue(patch);
+  diffChapter.mockReturnValue([
+    { field: "timeZone", from: "Europe/Copenhagen", to: "America/Denver" },
+  ]);
+
+  await updateChapter({ chapterId: "ch1", input, actorUserId: "admin" });
+
+  expect(diffChapter).toHaveBeenCalledWith(AARHUS, patch);
+  expect(chapters.updateChapter).toHaveBeenCalledWith("ch1", patch);
+  expect(record).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: "chapterUpdated",
+      payload: expect.objectContaining({ field: "timeZone" }),
+    }),
+  );
 });
