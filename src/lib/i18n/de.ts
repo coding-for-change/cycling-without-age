@@ -832,8 +832,6 @@ const de: Dictionary = {
     },
     roles: {
       pilot: "Pilot",
-      ambassador: "Begleitung",
-      transporter: "Transport",
     },
     trishawStatuses: {
       active: "Bereit",

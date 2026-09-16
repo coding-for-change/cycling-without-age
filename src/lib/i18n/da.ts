@@ -808,8 +808,6 @@ const da: Dictionary = {
     },
     roles: {
       pilot: "Pilot",
-      ambassador: "Ledsager",
-      transporter: "Transport",
     },
     trishawStatuses: {
       active: "Klar",

@@ -570,9 +570,12 @@ Three deliberate shapes in the schema, all from
   `Ride` could not express either. Trailers, wheelchair bikes and transport vehicles —
   listed beside trishaws in §2C — reserve the same way once they have models of their own.
 
-`RideAssignment` carries staffing (`pilot` · `ambassador` · `transporter`) — lifecycle phase 3.
-Pilot qualification is per trishaw *type*, which is why `Trishaw.type` exists even though
-nothing enforces it yet.
+`RideAssignment` carries staffing — lifecycle phase 3 — and `RideRole` holds **`pilot` alone**.
+CWA does staff rides with ambassadors and transporters, and the glossary names them, but
+`ChapterRole` is admin/pilot/passenger: nobody can *be* an ambassador here, so carrying the
+values described a capability the app did not have. They return as a plain `ENUM` add once
+membership can express them. Pilot qualification is per trishaw *type*, which is why
+`Trishaw.type` exists even though nothing enforces it yet.
 
 ### Reserving the equipment
 

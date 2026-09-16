@@ -809,8 +809,6 @@ const en = {
     },
     roles: {
       pilot: "Pilot",
-      ambassador: "Ambassador",
-      transporter: "Transporter",
     },
     trishawStatuses: {
       active: "Ready",

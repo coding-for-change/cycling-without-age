@@ -345,8 +345,6 @@ enum RideStatus {
 
 enum RideRole {
   pilot
-  ambassador
-  transporter
 }
 
 enum TrishawStatus {

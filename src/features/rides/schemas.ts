@@ -3,7 +3,14 @@ import { isValidTimeZone } from "@/lib/time-zone";
 
 export const RIDE_MODELS = ["event", "pleasure", "functional"] as const;
 export const RIDE_STATUSES = ["scheduled", "cancelled", "completed"] as const;
-export const RIDE_ROLES = ["pilot", "ambassador", "transporter"] as const;
+/**
+ * Only `pilot` is modelled. CWA does staff rides with ambassadors and
+ * transporters (`references/02-glossary.md`), but nobody can *be* one here —
+ * `ChapterRole` is admin/pilot/passenger — so carrying them as assignment roles
+ * described a capability the app did not have. They come back when membership
+ * can express them.
+ */
+export const RIDE_ROLES = ["pilot"] as const;
 export const TRISHAW_STATUSES = ["active", "maintenance", "retired"] as const;
 
 /** A ride nobody can attend is a scheduling mistake, not a short ride. */
