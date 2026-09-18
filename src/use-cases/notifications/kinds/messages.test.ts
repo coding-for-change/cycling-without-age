@@ -80,6 +80,14 @@ const EVENTS: Record<EventType, DomainEvent> = {
     chapterId: CHAPTER,
     role: "pilot",
   },
+  "chat.messageSent": {
+    type: "chat.messageSent",
+    conversationId: "conversation-1",
+    messageId: "message-1",
+    seq: 1,
+    actorUserId: ACTOR,
+    chapterId: CHAPTER,
+  },
   "countryAdmin.appointed": {
     type: "countryAdmin.appointed",
     countryId: COUNTRY,

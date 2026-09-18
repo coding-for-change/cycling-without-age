@@ -84,6 +84,11 @@ export const activeTabKey = <
   return item === null ? null : (item.parent ?? item.key);
 };
 
+const CONVERSATION_PATH = /^\/(?:pilot|passenger)\/chat\/[^/]+\/?$/;
+
+export const isConversationPath = (pathname: string): boolean =>
+  CONVERSATION_PATH.test(pathname);
+
 export type MemberPrimaryAction = { href: string; icon: IconKey };
 
 export const primaryAction = (

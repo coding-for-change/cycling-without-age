@@ -50,6 +50,8 @@ export const notificationPreferences = z
   .object({
     push: z.boolean().optional(),
     email: z.boolean().optional(),
+    chatPush: z.boolean().optional(),
+    chatEmail: z.boolean().optional(),
   })
   .refine(nonEmpty);
 export type NotificationPreferences = z.infer<typeof notificationPreferences>;

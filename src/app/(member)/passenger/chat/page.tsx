@@ -1,10 +1,10 @@
-import { MemberPage } from "../../_components/member-page";
+import { Suspense } from "react";
+import { MemberChatPane } from "../../_components/chat-shell";
 
 export default function PassengerChatPage() {
   return (
-    <MemberPage
-      perspective="passenger"
-      page="chat"
-    />
+    <Suspense fallback={null}>
+      <MemberChatPane perspective="passenger" />
+    </Suspense>
   );
 }

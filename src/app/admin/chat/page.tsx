@@ -1,5 +1,10 @@
-import { AdminPage } from "../_components/admin-page";
+import { Suspense } from "react";
+import { AdminChatPane } from "./_components/admin-chat-shell";
 
-export default function ChatPage() {
-  return <AdminPage page="chat" />;
+export default function AdminChatPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminChatPane />
+    </Suspense>
+  );
 }

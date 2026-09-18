@@ -1,5 +1,6 @@
 import { eventTypes } from "@/lib/events/catalog";
 import type { Envelope, EventType } from "@/lib/events/catalog";
+import { notifyChatMessage } from "@/use-cases/chat-notifications/notify-chat-message";
 import { findKind } from "@/use-cases/notifications/kinds";
 import { notify } from "@/use-cases/notifications/notify";
 import {
@@ -19,6 +20,7 @@ export const handlers = Object.fromEntries(
     {
       ...(findKind(type) ? { notify } : {}),
       ...(recordsActivityFor(type) ? { recordActivity } : {}),
+      ...(type === "chat.messageSent" ? { chatNotify: notifyChatMessage } : {}),
     },
   ]),
 ) as Registry;

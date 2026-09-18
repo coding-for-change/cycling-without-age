@@ -19,6 +19,8 @@ export const findProfile = (userId: string) =>
       managesOthers: true,
       notifyEmail: true,
       notifyPush: true,
+      notifyChatPush: true,
+      notifyChatEmail: true,
       consentSafetyAt: true,
       consentDataAt: true,
       passkeyPromptedAt: true,
@@ -42,3 +44,32 @@ export const stampOnboarded = (
 
 export const findUserIdByEmail = (email: string) =>
   prisma.user.findUnique({ where: { email }, select: { id: true } });
+
+export const findUserIdByPhone = (phoneNumber: string) =>
+  prisma.user.findFirst({ where: { phoneNumber }, select: { id: true } });
+
+export const findProfilesByName = (
+  query: string,
+  limit: number,
+  excludeUserId: string,
+) =>
+  prisma.user.findMany({
+    where: { id: { not: excludeUserId }, name: { contains: query } },
+    orderBy: { name: "asc" },
+    take: limit,
+    select: { id: true, name: true, email: true },
+  });
+
+export const findProfiles = (userIds: string[]) =>
+  prisma.user.findMany({
+    where: { id: { in: userIds } },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      locale: true,
+      notifyChatPush: true,
+      notifyChatEmail: true,
+    },
+  });

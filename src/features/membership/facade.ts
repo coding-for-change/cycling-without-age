@@ -18,6 +18,7 @@ import {
   deleteMember,
   findAdminMembersOfChapter,
   findMember,
+  findMembersMatchingName,
   findMembersOfChapters,
   findMembersOfUser,
   upsertMemberRole,
@@ -43,6 +44,27 @@ export const listMembershipsOfUser = async (
 
 export const listMembersOfChapters = (chapterIds: string[]) =>
   findMembersOfChapters(chapterIds);
+
+export type MemberMatch = {
+  userId: string;
+  name: string;
+  email: string;
+  chapterId: string;
+};
+
+export const searchMembersByName = async (
+  chapterIds: string[],
+  query: string,
+  opts: { limit: number; excludeUserId: string },
+): Promise<MemberMatch[]> =>
+  chapterIds.length === 0
+    ? []
+    : (await findMembersMatchingName(chapterIds, query, opts)).map((user) => ({
+        userId: user.id,
+        name: user.name,
+        email: user.email,
+        chapterId: user.members[0]?.organizationId ?? chapterIds[0],
+      }));
 
 export const listChapterAdmins = async (chapterId: string) =>
   (await findAdminMembersOfChapter(chapterId)).filter((m) =>

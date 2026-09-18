@@ -19,17 +19,37 @@ import type {
 } from "./schemas";
 import {
   findProfile,
+  findProfiles,
+  findProfilesByName,
   findUserIdByEmail,
+  findUserIdByPhone,
   stampOnboarded,
   updateProfile,
 } from "./services/profile";
 
 export type Profile = NonNullable<Awaited<ReturnType<typeof findProfile>>>;
 
+export type ProfileSummary = Awaited<ReturnType<typeof findProfiles>>[number];
+
 export const getProfile = (userId: string) => findProfile(userId);
+
+export const getProfiles = async (
+  userIds: string[],
+): Promise<ProfileSummary[]> => {
+  const unique = [...new Set(userIds)];
+  return unique.length === 0 ? [] : findProfiles(unique);
+};
+
+export const searchProfilesByName = (
+  query: string,
+  opts: { limit: number; excludeUserId: string },
+) => findProfilesByName(query.trim(), opts.limit, opts.excludeUserId);
 
 export const getUserIdByEmail = async (email: string) =>
   (await findUserIdByEmail(email.trim().toLowerCase()))?.id ?? null;
+
+export const getUserIdByPhone = async (phone: string) =>
+  (await findUserIdByPhone(phone.trim()))?.id ?? null;
 
 export const setLocale = (userId: string, locale: string) =>
   updateProfile(userId, { locale });
@@ -112,10 +132,13 @@ export async function setNotificationPreferences(
   userId: string,
   prefs: NotificationPreferences,
 ) {
-  const { push, email } = notificationPreferencesSchema.parse(prefs);
+  const { push, email, chatPush, chatEmail } =
+    notificationPreferencesSchema.parse(prefs);
   return updateProfile(userId, {
     ...(push === undefined ? {} : { notifyPush: push }),
     ...(email === undefined ? {} : { notifyEmail: email }),
+    ...(chatPush === undefined ? {} : { notifyChatPush: chatPush }),
+    ...(chatEmail === undefined ? {} : { notifyChatEmail: chatEmail }),
   });
 }
 

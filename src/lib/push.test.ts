@@ -146,6 +146,33 @@ describe("sendPush", () => {
     });
   });
 
+  it("folds every banner of one conversation into the last on both platforms", async () => {
+    sendEachForMulticast.mockResolvedValue(respond(ok()));
+
+    await sendPush({
+      ...message,
+      tokens: ["token-a"],
+      badge: 3,
+      collapseKey: "conv-1",
+    });
+
+    expect(sendEachForMulticast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        apns: {
+          headers: { "apns-collapse-id": "conv-1" },
+          payload: {
+            aps: { sound: "default", badge: 3, "thread-id": "conv-1" },
+          },
+        },
+        android: {
+          priority: "high",
+          collapseKey: "conv-1",
+          notification: { tag: "conv-1" },
+        },
+      }),
+    );
+  });
+
   it("reports the tokens FCM retired next to the ones that went out", async () => {
     sendEachForMulticast.mockResolvedValue(
       respond(ok(), failed("messaging/registration-token-not-registered")),

@@ -6,6 +6,8 @@ import { getDictionary } from "@/lib/i18n";
 import type { NavKey } from "../nav";
 import { ICONS } from "@/components/icons";
 
+type AdminPageKey = Exclude<NavKey, "chat">;
+
 export function AdminPageShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex w-full flex-1 flex-col gap-6 px-4 pt-2 pb-8 lg:px-6">
@@ -14,7 +16,7 @@ export function AdminPageShell({ children }: { children: ReactNode }) {
   );
 }
 
-export async function AdminPageBody({ page }: { page: NavKey }) {
+export async function AdminPageBody({ page }: { page: AdminPageKey }) {
   await requireAdminScope();
   const { title, body } = (await getDictionary()).admin.pages[page];
   const Icon = ICONS[page];
@@ -32,7 +34,7 @@ export async function AdminPageBody({ page }: { page: NavKey }) {
   );
 }
 
-export function AdminPage({ page }: { page: NavKey }) {
+export function AdminPage({ page }: { page: AdminPageKey }) {
   return (
     <AdminPageShell>
       <Suspense fallback={<PageFallback />}>

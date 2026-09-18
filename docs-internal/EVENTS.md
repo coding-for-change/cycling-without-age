@@ -1,8 +1,9 @@
 # Domain events, queue and worker
 
-The pipeline that turns "something happened" into inbox rows, push and email. Design and
-the options behind it: [NOTIFICATIONS-PLAN.md](NOTIFICATIONS-PLAN.md). Firebase setup for
-the push half: [PUSH-SETUP.md](PUSH-SETUP.md). This file is how it works and how to add
+The pipeline that turns "something happened" into inbox rows, push and email. The decisions
+behind it live in [ARCHITECTURE.md](ARCHITECTURE.md) (*The Worker*, *Notification bell*,
+*Chat*); the Firebase credential is documented next to `FIREBASE_SERVICE_ACCOUNT` in
+`.env.example` and read only by `src/lib/push.ts`. This file is how it works and how to add
 to it.
 
 The promise: an event is **defined once, emitted once**, and any number of listeners run
@@ -154,6 +155,7 @@ can never be mistaken for an event id:
 | --------------- | ----------------------- | ------------------------------------------------------------------------------ |
 | `sweep`         | every 60 s              | re-queues `Event` rows Redis never heard about                                  |
 | `prune-devices` | `0 4 * * *` (04:00 UTC) | deletes `Device` rows whose `lastSeenAt` is older than `STALE_DEVICE_DAYS` (270) |
+| `prune-chat`    | `0 3 * * *` (03:00 UTC) | deletes `chat_message` rows older than 12 months in 1,000-row batches, then conversations with no members left |
 
 `notifications.registerDevice` bumps `lastSeenAt` on every app open, so the cutoff means
 "no sign of this install for nine months", not "no push has been sent to it". 270 days is
@@ -162,6 +164,49 @@ anyway — a volunteer who does not open the app over the winter keeps their pus
 half of token hygiene; the other half is FCM answering a send with *not registered*, which
 `deliverPush` turns into `notifications.removeDeviceTokens` on the spot. Both schedulers are
 registered with `upsertJobScheduler`, so restarting the worker does not stack them up.
+
+## Chat: one event, no bell row (COD-245)
+
+`chat.messageSent { conversationId, messageId, seq, actorUserId, chapterId }` is the one event
+in the catalog whose entry in `handlers.ts` is a single listener, `{ chatNotify }`. No `notify`,
+so **no `Notification` row and no bell card**; no `recordActivity`, so no history line. A message
+is either live in front of you, a banner, or a line in tomorrow's mail — it is never something
+waiting in an inbox. Unread is arithmetic (`lastSeq > lastReadSeq` per membership), which is why
+nothing needs to be counted.
+
+Everything below the bell is reused as-is. `notify-chat-message` loads the members through the
+chat facade, drops the sender, and for each remaining recipient — in chunks of 25 — skips anyone
+muted or currently focused on that conversation (`presence.isFocusedOn`), then:
+
+| Queue   | `job.name`     | Data                                                 | Id |
+| ------- | -------------- | ---------------------------------------------------- | -- |
+| `push`  | `chat`         | `{ recipientUserId, conversationId, messageId }`      | jobId `chat-<messageId>-<recipientUserId>` |
+| `email` | `chat-digest`  | `{ recipientUserId, conversationId, windowStartedAt }` | deduplication id `chat-digest-<recipientUserId>-<conversationId>` |
+
+`worker/index.ts` routes both delivery queues by `job.name`, so `chat` and `chat-digest` sit
+beside the generic `runPushDelivery` / `runEmailDelivery` without touching them. The digest goes
+through the same `parkOnRateLimit` wrapper as every other mail, so a Resend `429` parks the
+worker rather than failing the job.
+
+**The digest debounce.** Email is only for a recipient push cannot reach — no device, or push
+switched off. Those recipients get one grouped mail per conversation, not one per message. The
+job is enqueued with BullMQ's trailing-edge deduplication (`{ id, extend: true, replace: true }`)
+and a delay from `digest-window.ts`: **5 minutes after the last message, capped at 15 minutes
+after the first unread one**. A plain `jobId` would not reset the delay, which is why the
+deduplication form is load-bearing. The producer reads the live job through
+`queue.getDeduplicationJobId` + `Job.fromId` and carries its `windowStartedAt` forward, so the
+15-minute cap survives every replacement.
+
+Both deliveries re-decide at wake-up rather than trusting what was true at enqueue time:
+`deliver-chat-push` re-checks read position, mute and `notifyChatPush` before sending and
+collapses a conversation's banners into one (`collapseKey`, which becomes FCM's
+`android.collapseKey` + `notification.tag` and APNs' `apns-collapse-id` + `thread-id`);
+`deliver-chat-digest` re-checks membership, unread, mute, `notifyChatEmail` and *still no push*,
+then decrypts only the recipient's own unread rows and renders `src/emails/chat-digest.tsx`.
+Neither writes a `Delivery` row — chat has no inbox row to hang one off. Instead
+`deliver-chat-digest` returns what happened (`sent`, `already read`, `muted`, `push available`,
+…), which Bull Board shows as the job's return value, so a quiet mailbox can be explained
+from the `email` queue's *completed* tab.
 
 ## Watching the queues
 
