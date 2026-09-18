@@ -13,8 +13,10 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { LanguagePicker } from "@/components/language-picker";
 import type { AccountData } from "@/components/account/types";
 import type { Locale } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import {
   activeItem,
+  isConversationPath,
   type MemberPerspective,
   type ResolvedMemberNavItem,
 } from "../nav";
@@ -44,7 +46,12 @@ export function MemberTopBar({
   const title = activeItem(pathname, items)?.label;
 
   return (
-    <header className="relative flex min-h-16 shrink-0 items-center gap-2 px-4 pt-safe lg:px-6">
+    <header
+      className={cn(
+        "relative flex min-h-16 shrink-0 items-center gap-2 px-4 pt-safe lg:px-6",
+        isConversationPath(pathname) && "hidden md:flex",
+      )}
+    >
       {account ? (
         <AvatarButton
           data={account}

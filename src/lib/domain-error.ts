@@ -1,21 +1,34 @@
 import { Prisma } from "@/generated/prisma";
 
 export type DomainErrorCode =
+  | "aboveThreshold"
   | "adminNotApplied"
   | "alreadyDecided"
   | "alreadyHasAccount"
   | "alreadyHasPassenger"
   | "alreadyPilot"
+  | "announcementOnly"
+  | "cannotLeaveDirect"
   | "codeTaken"
   | "consentRequired"
+  | "editWindowClosed"
+  | "frozen"
   | "lastAdmin"
   | "notChapterMember"
+  | "notFound"
+  | "notMember"
   | "notOwnAccount"
+  | "notOwner"
+  | "notReachable"
+  | "notSender"
   | "passengerChapterMismatch"
+  | "self"
   | "selfChange"
   | "slugTaken"
+  | "tooLong"
   | "unknownApplication"
   | "unknownChapter"
+  | "unknownConversation"
   | "unknownCountry";
 
 export class DomainError extends Error {

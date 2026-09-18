@@ -3,7 +3,11 @@ import { queue } from "@/lib/events/queues";
 import { MailRateLimitedError } from "@/lib/mailer";
 import { deliverEmail } from "@/use-cases/notifications/deliver-email";
 import { deliverPush } from "@/use-cases/notifications/deliver-push";
-import { runEmailDelivery, runPushDelivery } from "@/worker/deliveries";
+import {
+  parkOnRateLimit,
+  runEmailDelivery,
+  runPushDelivery,
+} from "@/worker/deliveries";
 import type { DeliveryJob } from "@/worker/deliveries";
 
 jest.mock("@/lib/events/queues", () => {
@@ -56,6 +60,25 @@ describe("runEmailDelivery", () => {
     email.mockRejectedValue(new Error("Resend down"));
 
     await expect(runEmailDelivery(job)).rejects.toThrow("Resend down");
+    expect(rateLimit).not.toHaveBeenCalled();
+  });
+});
+
+describe("parkOnRateLimit", () => {
+  it("parks any mail the chat digest included", async () => {
+    const send = jest
+      .fn()
+      .mockRejectedValue(new MailRateLimitedError("slow down", 900));
+
+    await expect(parkOnRateLimit(send)).rejects.toThrow(
+      Worker.RateLimitError().message,
+    );
+
+    expect(rateLimit).toHaveBeenCalledWith(900);
+  });
+
+  it("returns quietly when the mail went out", async () => {
+    await expect(parkOnRateLimit(async () => {})).resolves.toBeUndefined();
     expect(rateLimit).not.toHaveBeenCalled();
   });
 });

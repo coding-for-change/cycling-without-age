@@ -2,6 +2,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { LogIn } from "lucide-react";
 import { loadAccount } from "@/components/account/load-account";
+import { chat } from "@/features/chat";
 import { ICONS } from "@/components/icons";
 import { UserMenu } from "@/components/user-menu";
 import {
@@ -43,7 +44,12 @@ export async function MemberSidebar({
     loadAccount(),
   ]);
 
-  const home = session ? await getMemberHome(session.user.id) : null;
+  const [home, unread] = session
+    ? await Promise.all([
+        getMemberHome(session.user.id),
+        chat.countUnreadConversations(session.user.id),
+      ])
+    : ([null, 0] as const);
   const chapterNames = home?.chapters.map((chapter) => chapter.name) ?? [];
 
   const subtitle = session
@@ -97,6 +103,7 @@ export async function MemberSidebar({
         <MemberNav
           items={resolveMemberNav(perspective, dict.member.nav)}
           groupLabel={dict.member.navLabel}
+          badges={{ chat: unread }}
         />
       </SidebarContent>
 

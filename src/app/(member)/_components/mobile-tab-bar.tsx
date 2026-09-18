@@ -3,12 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChatBadge } from "@/features/chat/components/chat-badge";
 import { ICONS } from "@/components/icons";
 import { haptics } from "@/lib/native/haptics";
 import { useKeyboardOpen } from "@/lib/native/keyboard";
 import { cn } from "@/lib/utils";
 import {
   activeTabKey,
+  isConversationPath,
   type MemberNavKey,
   type ResolvedMemberNavItem,
 } from "../nav";
@@ -18,9 +20,11 @@ type Intent = { key: MemberNavKey; from: string };
 export function MobileTabBar({
   items,
   label,
+  badges,
 }: {
   items: ResolvedMemberNavItem[];
   label: string;
+  badges?: Partial<Record<MemberNavKey, number>>;
 }) {
   const pathname = usePathname();
   const keyboardOpen = useKeyboardOpen();
@@ -31,7 +35,7 @@ export function MobileTabBar({
   const active = intent && intent.from === pathname ? intent.key : settled;
   const activeIndex = tabs.findIndex((item) => item.key === active);
 
-  if (keyboardOpen) return null;
+  if (keyboardOpen || isConversationPath(pathname)) return null;
 
   return (
     <nav
@@ -72,10 +76,16 @@ export function MobileTabBar({
                     current ? "text-white" : "text-ink-soft hover:text-ink",
                   )}
                 >
-                  <Icon
-                    aria-hidden
-                    className="size-5"
-                  />
+                  <span className="relative flex">
+                    <Icon
+                      aria-hidden
+                      className="size-5"
+                    />
+                    <ChatBadge
+                      count={badges?.[key] ?? 0}
+                      className="absolute -top-1.5 -right-2.5 h-4 min-w-4 bg-red px-1"
+                    />
+                  </span>
                   <span className="max-w-full truncate">{itemLabel}</span>
                 </Link>
               </li>

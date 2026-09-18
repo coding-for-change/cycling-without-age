@@ -19,7 +19,12 @@ export type AccountData = {
   };
   perspectives: PerspectiveChoice[];
   canDeleteAccount: boolean;
-  notifications: { push: boolean; email: boolean };
+  notifications: {
+    push: boolean;
+    email: boolean;
+    chatPush: boolean;
+    chatEmail: boolean;
+  };
   signOutLabel: string;
   cancelLabel: string;
 };

@@ -3,7 +3,13 @@ import { profile } from "@/features/profile";
 
 jest.mock("@/lib/prisma", () => {
   const client: Record<string, unknown> = {
-    user: { findUnique: jest.fn(), update: jest.fn(), updateMany: jest.fn() },
+    user: {
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      update: jest.fn(),
+      updateMany: jest.fn(),
+    },
     event: { create: jest.fn(async () => ({ id: "event-1" })) },
   };
   client.$transaction = jest.fn((run: (tx: unknown) => unknown) => run(client));
@@ -20,7 +26,13 @@ jest.mock("@/lib/events/queues", () => ({
 }));
 
 const db = prisma as unknown as {
-  user: { findUnique: jest.Mock; update: jest.Mock; updateMany: jest.Mock };
+  user: {
+    findUnique: jest.Mock;
+    findFirst: jest.Mock;
+    findMany: jest.Mock;
+    update: jest.Mock;
+    updateMany: jest.Mock;
+  };
   event: { create: jest.Mock };
 };
 
@@ -140,10 +152,63 @@ describe("setNotificationPreferences", () => {
     expect(db.user.update.mock.calls[0][0].data).toEqual({ notifyEmail: true });
   });
 
+  it("writes the two message switches on their own columns", async () => {
+    await profile.setNotificationPreferences(USER, {
+      chatPush: false,
+      chatEmail: true,
+    });
+
+    expect(db.user.update.mock.calls[0][0].data).toEqual({
+      notifyChatPush: false,
+      notifyChatEmail: true,
+    });
+  });
+
   it("refuses an empty preference patch", async () => {
     await expect(
       profile.setNotificationPreferences(USER, {}),
     ).rejects.toThrow();
     expect(db.user.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("getProfiles", () => {
+  it("asks for each account once", async () => {
+    db.user.findMany.mockResolvedValue([]);
+
+    await profile.getProfiles(["user-anna", "user-bo", "user-anna"]);
+
+    expect(db.user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: { in: ["user-anna", "user-bo"] } },
+      }),
+    );
+  });
+
+  it("reads nothing for an empty list", async () => {
+    await expect(profile.getProfiles([])).resolves.toEqual([]);
+    expect(db.user.findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("getUserIdByPhone", () => {
+  it("answers with the account behind an E.164 number", async () => {
+    db.user.findFirst.mockResolvedValue({ id: USER });
+
+    await expect(profile.getUserIdByPhone("+4915112345678")).resolves.toBe(
+      USER,
+    );
+    expect(db.user.findFirst).toHaveBeenCalledWith({
+      where: { phoneNumber: "+4915112345678" },
+      select: { id: true },
+    });
+  });
+
+  it("answers with null when nobody uses it", async () => {
+    db.user.findFirst.mockResolvedValue(null);
+
+    await expect(
+      profile.getUserIdByPhone("+4915112345678"),
+    ).resolves.toBeNull();
   });
 });

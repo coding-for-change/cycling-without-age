@@ -12,6 +12,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { chat } from "@/features/chat";
 import { requireAdminScope } from "@/lib/auth-guards";
 import { getDictionary } from "@/lib/i18n";
 import { loadAccount } from "@/components/account/load-account";
@@ -30,6 +31,7 @@ export async function AdminSidebar() {
     loadAccount(),
   ]);
 
+  const unread = await chat.countUnreadConversations(session.user.id);
   const items = resolveNav(scope, dict.admin.nav);
   const inGroup = (group: string) => items.filter((i) => i.group === group);
 
@@ -72,6 +74,7 @@ export async function AdminSidebar() {
         <AdminNav
           items={inGroup("main")}
           groupLabel={dict.admin.navLabel}
+          badges={{ chat: unread }}
         />
         <AdminNav
           items={inGroup("organisation")}

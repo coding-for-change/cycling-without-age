@@ -1,5 +1,7 @@
 import { Suspense, type ReactNode } from "react";
+import { CollapseSidebarOn } from "@/components/collapse-sidebar-on";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { PERSPECTIVE_HOME } from "@/lib/redirects";
 import type { MemberPerspective } from "../nav";
 import { MemberChrome, MemberChromeFallback } from "./member-chrome";
 import { MemberSidebar } from "./member-sidebar";
@@ -16,6 +18,9 @@ export function MemberShell({
 }) {
   return (
     <SidebarProvider className="min-h-dvh">
+      <Suspense fallback={null}>
+        <CollapseSidebarOn prefix={`${PERSPECTIVE_HOME[perspective]}/chat`} />
+      </Suspense>
       <Suspense fallback={<MemberSidebarSkeleton />}>
         <MemberSidebar perspective={perspective} />
       </Suspense>

@@ -10,6 +10,7 @@ export type PushMessage = {
   body: string;
   data: Record<string, string>;
   badge?: number;
+  collapseKey?: string;
 };
 
 export type PushResult = { sent: number; invalidTokens: string[] };
@@ -81,6 +82,7 @@ export async function sendPush({
   body,
   data,
   badge,
+  collapseKey,
 }: PushMessage): Promise<PushResult> {
   if (tokens.length === 0) return { sent: 0, invalidTokens: [] };
 
@@ -94,8 +96,24 @@ export async function sendPush({
       tokens: batch,
       notification: { title, body },
       data,
-      apns: { payload: { aps: { sound: "default", badge } } },
-      android: { priority: "high" },
+      apns: {
+        ...(collapseKey
+          ? { headers: { "apns-collapse-id": collapseKey } }
+          : {}),
+        payload: {
+          aps: {
+            sound: "default",
+            badge,
+            ...(collapseKey ? { "thread-id": collapseKey } : {}),
+          },
+        },
+      },
+      android: {
+        priority: "high",
+        ...(collapseKey
+          ? { collapseKey, notification: { tag: collapseKey } }
+          : {}),
+      },
     });
 
     response.responses.forEach((result, index) => {

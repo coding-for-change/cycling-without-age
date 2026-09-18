@@ -45,7 +45,7 @@ behind it.
 ```text
 src/
 ├── app/                  # ROUTING: Pages, Layouts, and API Route handlers.
-│   ├── api/              # External-only endpoints (Webhooks, etc.).
+│   ├── api/              # Endpoints no Server Action can be: webhooks, and the chat SSE stream.
 │   ├── admin/            # The admin shell: inset sidebar, top bar, ⌘K.
 │   ├── (member)/         # The member shell: /pilot and /passenger, one implementation.
 │   └── (routes)/         # UI Routes. Minimal logic. Calls Use Cases/Facades.
@@ -631,3 +631,50 @@ JSON, or a payload that fails the caller's Zod schema all return `null` and the 
 back to its no-draft copy. Nothing from `sessionStorage` is ever trusted as input to a write:
 the Book-a-ride confirmation only *displays* the draft. When ride requests become real rows,
 the draft stays a UI convenience and the Server Action re-validates from scratch.
+
+## Chat
+
+Permanent 1:1 conversations started by contact lookup, group conversations scoped to a chapter,
+and a `frozenAt` state reserved for the ride chats that come later. The slice is
+`src/features/chat` (schemas → services → facade → actions → components), joined to the rest of
+the app by `src/use-cases/chat/*` and `src/use-cases/chat-notifications/*`.
+
+### The transport is SSE, and why there is no second server
+
+Sends are Server Actions. Everything the server pushes back — new messages, edits, reactions,
+read positions, typing, presence — arrives over one `text/event-stream` from
+`GET /api/chat/stream`. A WebSocket server would be a second process and a second origin: a
+custom server "cannot be used together" with `output: "standalone"`, which the Dockerfile
+relies on. SSE needs no new dependency, inherits the same better-auth cookie inside the
+Capacitor WebView, and Caddy streams it unbuffered.
+
+Pub/sub is best-effort by design. Every message carries a per-conversation `seq`, so a dropped
+frame is repaired by the client's reconnect resync (`syncInboxAction` plus
+`loadMessagesAction({ afterSeq })`) rather than by a delivery guarantee. `publish` is wrapped in
+a 2 s timeout and logs instead of throwing: an unreachable Redis must never fail a chat write.
+The client transport sits behind `ChatRealtimeProvider`, so swapping SSE for WebSockets later
+touches one file.
+
+### Channels
+
+| Channel | Carries | Published by |
+| --- | --- | --- |
+| `user:<userId>` | `message.created`, `message.updated`, `reaction.changed`, `conversation.updated`, `conversation.created`, `member.left` | the facade, after commit, one publish per member (pipelined) |
+| `conv:<conversationId>` | `typing`, `read` | the facade, from `typingAction` / `markReadAction` |
+| `presence` | `presence { userId, online }` | `lib/realtime/presence.ts`, on the 0→1 and →0 transitions only |
+
+A stream subscribes to its own user channel, the focused conversation channel, and `presence`
+filtered to the viewer's contact set (`chat.listContactUserIds`, refreshed when a
+`conversation.created` arrives). `lib/realtime/events.ts` types the wire format structurally in
+zod — `src/lib` may not import from `src/features` — so the feature's view types and the wire
+types are kept field-identical by hand, with dates as ISO strings on both sides.
+
+
+### Envelope encryption
+
+Message bodies are AES-256-GCM ciphertext in a `Blob`, never plaintext. Each conversation owns a
+random 32-byte DEK, wrapped under `CHAT_MASTER_KEY` (base64, 32 bytes) and stored in
+`Conversation.dek` with a `keyVersion`; unwrapped DEKs live in a 1,000-entry in-process LRU.
+Each message uses a fresh 12-byte IV with the conversation id as AAD, so a ciphertext cannot be
+replayed into another conversation. All of it is in `src/lib/crypto/chat-cipher.ts` and only the
+facade calls it — services hand Bytes in and Bytes out.

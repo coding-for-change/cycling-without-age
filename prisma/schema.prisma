@@ -32,6 +32,8 @@ model User {
   managesOthers        Boolean              @default(false)
   notifyEmail          Boolean              @default(false)
   notifyPush           Boolean              @default(false)
+  notifyChatPush       Boolean              @default(true)
+  notifyChatEmail      Boolean              @default(true)
   consentSafetyAt      DateTime?
   consentDataAt        DateTime?
   passkeyPromptedAt    DateTime?
@@ -59,6 +61,10 @@ model User {
   eventActions         Event[]              @relation("eventActor")
   notifications        Notification[]       @relation("notificationRecipient")
   devices              Device[]
+  conversationsCreated Conversation[]       @relation("conversationCreator")
+  conversations        ConversationMember[]
+  chatMessages         ChatMessage[]        @relation("chatMessageSender")
+  chatReactions        ChatReaction[]
 
   @@unique([email])
   @@unique([phoneNumber])
@@ -159,6 +165,7 @@ model Organization {
   domainEvents    Event[]
   serviceRadiusKm Int                  @default(10)
   settings        ChapterSettings?
+  conversations   Conversation[]
 
   @@unique([slug])
   @@index([countryId])
@@ -431,4 +438,109 @@ model Device {
   @@index([userId])
   @@index([lastSeenAt])
   @@map("device")
+}
+
+enum ConversationKind {
+  direct
+  group
+}
+
+enum ConversationOrigin {
+  manual
+  ride
+}
+
+enum ConversationMemberRole {
+  owner
+  member
+}
+
+enum ChatMessageKind {
+  text
+  system
+}
+
+model Conversation {
+  id               String             @id @default(cuid())
+  kind             ConversationKind
+  origin           ConversationOrigin @default(manual)
+  title            String?            @db.VarChar(120)
+  chapterId        String?
+  chapter          Organization?      @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  createdByUserId  String?
+  createdBy        User?              @relation("conversationCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  directKey        String?            @unique
+  dek              Bytes              @db.VarBinary(80)
+  keyVersion       Int                @default(1)
+  announcementOnly Boolean            @default(false)
+  lastSeq          Int                @default(0)
+  lastMessageId    String?
+  lastMessageAt    DateTime?
+  frozenAt         DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  members  ConversationMember[]
+  messages ChatMessage[]
+
+  @@index([chapterId, lastMessageAt])
+  @@index([createdByUserId])
+  @@map("conversation")
+}
+
+model ConversationMember {
+  conversationId String
+  conversation   Conversation           @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           ConversationMemberRole @default(member)
+  joinedAt       DateTime               @default(now())
+  lastReadSeq    Int                    @default(0)
+  lastReadAt     DateTime?
+  mutedUntil     DateTime?
+
+  @@id([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_member")
+}
+
+model ChatMessage {
+  id             String          @id @default(cuid())
+  conversationId String
+  conversation   Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  seq            Int
+  senderId       String?
+  sender         User?           @relation("chatMessageSender", fields: [senderId], references: [id], onDelete: SetNull)
+  kind           ChatMessageKind @default(text)
+  body           Bytes           @db.Blob
+  meta           Json?
+  replyToId      String?
+  replyTo        ChatMessage?    @relation("chatMessageReply", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies        ChatMessage[]   @relation("chatMessageReply")
+  clientId       String?         @db.VarChar(64)
+  editedAt       DateTime?
+  deletedAt      DateTime?
+  createdAt      DateTime        @default(now())
+
+  reactions ChatReaction[]
+
+  @@unique([conversationId, seq])
+  @@unique([conversationId, senderId, clientId])
+  @@index([createdAt])
+  @@index([senderId])
+  @@index([replyToId])
+  @@map("chat_message")
+}
+
+model ChatReaction {
+  messageId String
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emoji     String      @db.VarChar(32)
+  createdAt DateTime    @default(now())
+
+  @@id([messageId, userId, emoji])
+  @@index([userId])
+  @@map("chat_reaction")
 }
