@@ -678,3 +678,5 @@ random 32-byte DEK, wrapped under `CHAT_MASTER_KEY` (base64, 32 bytes) and store
 Each message uses a fresh 12-byte IV with the conversation id as AAD, so a ciphertext cannot be
 replayed into another conversation. All of it is in `src/lib/crypto/chat-cipher.ts` and only the
 facade calls it — services hand Bytes in and Bytes out.
+
+What is still to build, in order, with the verbs that already exist for it: [CHAT-PLAN.md](CHAT-PLAN.md).
