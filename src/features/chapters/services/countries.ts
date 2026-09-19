@@ -12,7 +12,6 @@ export const updateCountryById = (
 export const findCountries = () =>
   prisma.country.findMany({ orderBy: { name: "asc" } });
 
-/** Only what an admin scope is built from. */
 export const findCountryScopes = () =>
   prisma.country.findMany({
     orderBy: { name: "asc" },
@@ -41,8 +40,6 @@ export const findCountryFootprints = (ids: string[]) =>
     select: { id: true, ...footprintSelect },
   });
 
-// The chapter -> country relation restricts, so the chapters go first, and both
-// deletes share one transaction: a half-deleted country is not a state to land in.
 export const deleteCountryById = (id: string) =>
   prisma.$transaction([
     prisma.organization.deleteMany({ where: { countryId: id } }),

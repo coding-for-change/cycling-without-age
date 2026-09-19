@@ -33,21 +33,16 @@ import {
 import { haptics } from "@/lib/native/haptics";
 import type { Dictionary } from "@/lib/i18n";
 import { cn, fill } from "@/lib/utils";
-import { formatBadge, type InboxCategory, type InboxRow } from "./inbox-row";
+import { formatBadge, type InboxRow } from "./inbox-row";
+import type { NotificationCategory } from "@/features/notifications";
 
-const ICON: Record<InboxCategory, LucideIcon> = {
+const ICON: Record<NotificationCategory, LucideIcon> = {
   application: ClipboardCheck,
   invitation: Mail,
   welcome: Sparkles,
   membership: Users,
 };
 
-/**
- * Local state, not `useOptimistic`: the actions deliberately do not revalidate,
- * so the props never change underneath and an optimistic value would snap back
- * the moment its transition ends. The server re-mounts this component through
- * `key` when the inbox itself changes.
- */
 export function NotificationBellMenu({
   rows,
   unseen,
@@ -85,7 +80,6 @@ export function NotificationBellMenu({
 
   function handleRowClick(event: MouseEvent<HTMLAnchorElement>, row: InboxRow) {
     markRead(row.id);
-    // A modifier click belongs to the browser — open the tab, still mark read.
     if (
       event.defaultPrevented ||
       event.button !== 0 ||
@@ -105,7 +99,6 @@ export function NotificationBellMenu({
     haptics.tap();
     setOpen(false);
     startTransition(async () => {
-      // Read first, navigate second: the destination renders its own bell.
       await markNotificationRead(row.id);
       router.push(row.href);
     });

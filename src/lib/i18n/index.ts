@@ -1,5 +1,4 @@
-// Server-only by construction: `next/headers` fails at build time if this
-// module is imported from a Client Component. Pass strings down as props.
+import { cache } from "react";
 import { cookies, headers } from "next/headers";
 import { match } from "@formatjs/intl-localematcher";
 import Negotiator from "negotiator";
@@ -17,7 +16,7 @@ export type { Dictionary };
 
 const dictionaries: Record<Locale, Dictionary> = { en, da, de };
 
-export async function getLocale(): Promise<Locale> {
+export const getLocale = cache(async (): Promise<Locale> => {
   const cookieLocale = (await cookies()).get(LOCALE_COOKIE)?.value;
   if (cookieLocale && hasLocale(cookieLocale)) return cookieLocale;
 
@@ -32,7 +31,7 @@ export async function getLocale(): Promise<Locale> {
   } catch {
     return defaultLocale;
   }
-}
+});
 
 export async function getDictionary(): Promise<Dictionary> {
   return dictionaries[await getLocale()];

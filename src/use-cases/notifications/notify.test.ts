@@ -124,7 +124,6 @@ describe("notify", () => {
     ]);
   });
 
-  // The jobId is what makes a redelivered event harmless.
   it("queues one delivery per channel, keyed for deduplication", async () => {
     await notify(decided);
 
@@ -142,8 +141,6 @@ describe("notify", () => {
     );
   });
 
-  // The mail is the fallback for a push that never landed, so it waits long
-  // enough for the phone to win.
   it("parks the mail of an ifNoPush kind behind the push", async () => {
     await notify(submitted);
 
@@ -167,7 +164,6 @@ describe("notify", () => {
     expect(addTo("email")).not.toHaveBeenCalled();
   });
 
-  // Otherwise the admin who added the passenger is told about their own click.
   it("leaves the actor out of the recipients", async () => {
     listChapterAdmins.mockResolvedValue([
       { userId: "user-anke" },

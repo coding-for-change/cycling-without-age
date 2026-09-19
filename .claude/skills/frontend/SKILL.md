@@ -76,7 +76,9 @@ the two in full, with page references. Don't cite the book for a rule it doesn't
   Placement, from the inside out: a stateless primitive shadcn doesn't cover goes in
   `src/components/ui/`; shared UI used across route groups that stands on `lib`
   infrastructure and never on a feature goes flat in `src/components/`
-  (`sign-out-button`, `passkey-manager`, `language-picker`); domain UI that calls a
+  (`sign-out-button`, `passkey-manager`, `language-picker`, `icons`, and the autosave kit —
+  `inline-field`, `save-status`, `action-feedback`, `confirm-delete-dialog`, `settings-rows`);
+  a folder there when it is a set rather than a file (`account/`, `notifications/`); domain UI that calls a
   Facade or Action goes in its feature slice; UI used by one route only goes in that
   route's `_components/`.
 - **Admin lists**: every admin table is `DataTable` from `src/components/ui/data-table.tsx`
@@ -171,6 +173,10 @@ the two in full, with page references. Don't cite the book for a rule it doesn't
   (anything streamed behind `<Suspense>`), because the server has no viewport and always
   reports desktop. It is a shadcn registry file, so a future `npx shadcn add` may overwrite
   it — check it after one.
+- A fixed `h-16` on a bar that also carries `pt-[env(safe-area-inset-top)]` eats its own
+  content under a notch — the padding comes out of the height. Use `min-h-16` (see
+  `(member)/_components/member-top-bar.tsx`); `admin-top-bar.tsx` still has the old shape and
+  should follow when it is next touched.
 - `--sidebar` in `globals.css` points at `--canvas-deep`, so the sidebar surface and the
   ground are one warm surface with the white content card floating on it. Fix this in the
   token, never with a `className`: shadcn puts `has-data-[variant=inset]:bg-sidebar` on the
@@ -201,8 +207,10 @@ the two in full, with page references. Don't cite the book for a rule it doesn't
   dependency-free in `@/lib/avatar-seed` for Client Components, and a live preview goes
   through the `previewAvatar` Server Action (see `invite-dialog.tsx`), never DiceBear itself.
   Pass the SVG string down as a prop — the library never ships to the browser. The animated
-  variant is for the large "profile card" surfaces only (account dialog, person header, user
-  menu popover); lists stay static. `User.image` is not shown anywhere.
+  variant is for the large "profile card" surfaces (account dialog, person header, user
+  menu popover) and for the person's own character in the mobile top bar — the one living
+  thing in the chrome; lists and menu triggers stay static. The SVG gates its keyframes
+  behind `prefers-reduced-motion: no-preference` itself. `User.image` is not shown anywhere.
 
 ## Layout rhythm
 

@@ -14,12 +14,6 @@ const PoseContext = createContext<
   ((pose: CharacterPose | null) => void) | null
 >(null);
 
-/**
- * Lets a screen override the pose the route would otherwise imply. The carousel
- * is the reason it exists: the character is slide one's artwork, so it has to
- * step aside once the person swipes on to a photograph. Pass `null` to hand
- * control back to the route.
- */
 export function useSetCharacterPose() {
   const setPose = useContext(PoseContext);
   if (!setPose) {

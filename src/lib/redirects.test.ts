@@ -1,4 +1,4 @@
-import { HOME_BY_ROLE, safeNextPath } from "@/lib/redirects";
+import { HOME_BY_ROLE, safeNextPath, signInHref } from "@/lib/redirects";
 
 describe("HOME_BY_ROLE", () => {
   it("routes every role to its home", () => {
@@ -47,7 +47,6 @@ describe("safeNextPath", () => {
     expect(safeNextPath("/pilot two")).toBeNull();
   });
 
-  // Without these the wizard would hand itself back its own screens forever.
   it("refuses the screens of the flow it is meant to survive", () => {
     expect(safeNextPath("/sign-in")).toBeNull();
     expect(safeNextPath("/sign-in/code")).toBeNull();
@@ -57,7 +56,6 @@ describe("safeNextPath", () => {
     expect(safeNextPath("/api/auth/callback")).toBeNull();
   });
 
-  // Next routes on the decoded pathname, so `/%73ign-in` IS `/sign-in`.
   it("sees through percent-encoding when refusing those screens", () => {
     expect(safeNextPath("/%73ign-in")).toBeNull();
     expect(safeNextPath("/onboarding%2Fconsent")).toBeNull();
@@ -66,5 +64,16 @@ describe("safeNextPath", () => {
 
   it("does not confuse a prefix with a path segment", () => {
     expect(safeNextPath("/locations")).toBe("/locations");
+  });
+});
+
+describe("signInHref", () => {
+  it("escapes the destination so a query of its own survives the round trip", () => {
+    expect(signInHref("/join/muenchen/ride")).toBe(
+      "/sign-in?next=%2Fjoin%2Fmuenchen%2Fride",
+    );
+    expect(signInHref("/admin/rides?chapter=muenchen")).toBe(
+      "/sign-in?next=%2Fadmin%2Frides%3Fchapter%3Dmuenchen",
+    );
   });
 });

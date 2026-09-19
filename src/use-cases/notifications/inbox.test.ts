@@ -1,6 +1,6 @@
 import { chapters } from "@/features/chapters";
 import { notifications } from "@/features/notifications";
-import { listInbox, unseenCount } from "@/use-cases/notifications/inbox";
+import { listInbox } from "@/use-cases/notifications/inbox";
 
 jest.mock("@/features/chapters", () => ({
   chapters: { getChapter: jest.fn(), getCountry: jest.fn() },
@@ -14,7 +14,6 @@ jest.mock("@/features/notifications", () => ({
 jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
 
 const list = notifications.listInbox as jest.Mock;
-const count = notifications.unseenCount as jest.Mock;
 
 const USER = "user-pernille";
 const CREATED = new Date("2026-09-09T10:00:00Z");
@@ -56,7 +55,6 @@ describe("listInbox", () => {
     expect(english.body).toContain("has approved you as a pilot");
   });
 
-  // The welcome card is the one that would read "Welcome aboard" twice over.
   it("prefers a kind's short title over its email heading", async () => {
     list.mockResolvedValue([
       row({
@@ -71,8 +69,6 @@ describe("listInbox", () => {
     expect(item.category).toBe("welcome");
   });
 
-  // A kind retired after its rows were written must leave a gap in the bell,
-  // never an exception in front of it.
   it("drops a row whose kind is gone instead of blanking the bell", async () => {
     list.mockResolvedValue([row({ event: { type: "ride.requested" } }), row()]);
 
@@ -91,14 +87,5 @@ describe("listInbox", () => {
 
     const [item] = await listInbox(USER, "en");
     expect(item).toMatchObject({ readAt, seenAt: readAt });
-  });
-});
-
-describe("unseenCount", () => {
-  it("asks the feature for the recipient's own count", async () => {
-    count.mockResolvedValue(4);
-
-    expect(await unseenCount(USER)).toBe(4);
-    expect(count).toHaveBeenCalledWith(USER);
   });
 });

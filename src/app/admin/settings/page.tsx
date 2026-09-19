@@ -2,32 +2,31 @@ import { Suspense } from "react";
 import { chapters } from "@/features/chapters";
 import { joinUrl } from "@/lib/app-url";
 import { getDictionary, getLocale } from "@/lib/i18n";
-import {
-  AdminPageFallback,
-  AdminPageHeader,
-  AdminPageShell,
-} from "../_components/admin-page";
-import { readActiveScope } from "../active-scope";
+import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
+import { readActiveScope, type AdminSearchParams } from "../active-scope";
 import { JoinLinkCard } from "./_components/join-link-card";
 import { NotificationSettingsCard } from "./_components/notification-settings-card";
-
-type AdminSearchParams = Promise<Record<string, string | string[] | undefined>>;
+import { PageFallback } from "@/components/page-fallback";
 
 export default function SettingsPage({
   searchParams,
 }: {
-  searchParams: AdminSearchParams;
+  searchParams: Promise<AdminSearchParams>;
 }) {
   return (
     <AdminPageShell>
-      <Suspense fallback={<AdminPageFallback />}>
+      <Suspense fallback={<PageFallback />}>
         <Settings searchParams={searchParams} />
       </Suspense>
     </AdminPageShell>
   );
 }
 
-async function Settings({ searchParams }: { searchParams: AdminSearchParams }) {
+async function Settings({
+  searchParams,
+}: {
+  searchParams: Promise<AdminSearchParams>;
+}) {
   const { active } = await readActiveScope(searchParams);
   const chapter = active.kind === "chapter" ? active.chapter : null;
 

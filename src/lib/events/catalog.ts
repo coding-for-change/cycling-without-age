@@ -1,8 +1,6 @@
 import { z } from "zod";
 
-// Inlined rather than imported from `features/membership`: `lib/` sits under
-// every feature and must not depend on one.
-const chapterRole = z.enum(["admin", "pilot", "passenger"]);
+import { chapterRole } from "@/lib/access";
 
 export const eventSchema = z.discriminatedUnion("type", [
   z.object({
@@ -40,8 +38,6 @@ export const eventSchema = z.discriminatedUnion("type", [
     type: z.literal("chapter.memberJoined"),
     chapterId: z.string().min(1),
     userId: z.string().min(1),
-    // Someone joining on their own has no actor, and an admin who adds a
-    // passenger must not be told about their own click.
     actorUserId: z.string().min(1).nullable(),
   }),
   z.object({
@@ -66,6 +62,10 @@ export const eventSchema = z.discriminatedUnion("type", [
 
 export type DomainEvent = z.infer<typeof eventSchema>;
 export type EventType = DomainEvent["type"];
+
+export const eventTypes: EventType[] = eventSchema.options.map(
+  (option) => option.shape.type.value,
+);
 export type EventOf<K extends EventType> = Extract<DomainEvent, { type: K }>;
 
 export type Envelope<K extends EventType = EventType> = {

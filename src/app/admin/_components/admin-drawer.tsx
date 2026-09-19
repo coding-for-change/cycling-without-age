@@ -11,11 +11,6 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
-/**
- * Every admin create/edit surface. Slides in from the right on a desk so the
- * list it came from stays in view, and up from the bottom on a phone where it
- * is the whole screen anyway. The list behind it keeps its own scroll.
- */
 export function AdminDrawer({
   open,
   onOpenChange,
@@ -87,7 +82,6 @@ export function AdminDrawer({
   );
 }
 
-/** ⌘↵ / Ctrl+↵ submits the form the key was pressed in. */
 export function submitOnCmdEnter(event: KeyboardEvent<HTMLFormElement>) {
   if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
     event.preventDefault();

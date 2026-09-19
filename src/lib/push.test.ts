@@ -52,8 +52,6 @@ describe("parseServiceAccount", () => {
     expect(parseServiceAccount(raw)).toEqual(parsed);
   });
 
-  // The deploy vault writes `key=value` lines, so a multi-line JSON only
-  // survives base64-encoded.
   it("reads the base64 the deploy vault carries", () => {
     expect(parseServiceAccount(Buffer.from(raw).toString("base64"))).toEqual(
       parsed,
@@ -95,8 +93,6 @@ describe("isInvalidTokenError", () => {
     expect(isInvalidTokenError({ code })).toBe(true);
   });
 
-  // invalid-argument covers every malformed field, so only the message tells a
-  // dead token from a payload we got wrong.
   it("retires the device on invalid-argument only when the token is named", () => {
     expect(
       isInvalidTokenError({
@@ -160,8 +156,6 @@ describe("sendPush", () => {
     ).toEqual({ sent: 1, invalidTokens: ["token-dead"] });
   });
 
-  // Nothing arrived and the reason was not a dead token: BullMQ has to retry
-  // rather than the row claiming a delivery that never happened.
   it("throws when every send failed for a reason that may pass", async () => {
     sendEachForMulticast.mockResolvedValue(
       respond(failed("messaging/internal-error", "backend unavailable")),
@@ -183,7 +177,6 @@ describe("sendPush", () => {
     });
   });
 
-  // One multicast carries at most 500 tokens; FCM rejects a larger batch.
   it("splits a recipient with more than 500 devices into batches", async () => {
     const tokens = Array.from({ length: 501 }, (_, index) => `token-${index}`);
     sendEachForMulticast.mockImplementation(

@@ -1,13 +1,13 @@
 import { createElement } from "react";
 import { NotificationEmail } from "@/emails/notification";
-import { getEmailStrings, resolveEmailLocale } from "@/emails/strings";
+import { resolveEmailLocale } from "@/emails/strings";
 import { chapters } from "@/features/chapters";
 import { notifications } from "@/features/notifications";
 import { profile } from "@/features/profile";
 import { activity } from "@/lib/activity";
 import { APP_URL } from "@/lib/app-url";
 import { MailRateLimitedError, sendMail } from "@/lib/mailer";
-import { kindOf } from "./kinds";
+import { kindOf, renderMessage } from "./kinds";
 import type { Message } from "./kinds/types";
 
 export async function deliverEmail(notificationId: string) {
@@ -35,11 +35,7 @@ export async function deliverEmail(notificationId: string) {
 
   try {
     const locale = resolveEmailLocale(account.locale);
-    const message = kind.message(
-      kind.payload.parse(notification.payload),
-      getEmailStrings(locale),
-      locale,
-    );
+    const message = renderMessage(kind, notification.payload, locale);
     const href = `${APP_URL}${notification.href}`;
     const replyTo = await replyToOf(notification.event.chapterId);
 
@@ -59,21 +55,12 @@ export async function deliverEmail(notificationId: string) {
       payload: { template: message.template ?? notification.category },
     });
   } catch (error) {
-    // A throttle is not a failed delivery: the row stays `sending` and
-    // `beginDelivery` re-claims it when the worker retries the job.
     if (error instanceof MailRateLimitedError) throw error;
     await notifications.deliveryFailed(delivery.id, String(error));
-    // Rethrow. A swallowed error is a job BullMQ believes succeeded, and the
-    // mail is then lost for good instead of retried.
     throw error;
   }
 }
 
-/**
- * The run-time half of the policy. A delayed `ifNoPush` job wakes up two
- * minutes after the push went out, so the questions it asks — did the push
- * land, has the person already read it — can only be answered here.
- */
 async function reasonToSkip(
   notification: { id: string; readAt: Date | null },
   policy: { email: "always" | "ifNoPush" | "never"; optional: boolean },
@@ -88,8 +75,6 @@ async function reasonToSkip(
   return push?.status === "sent" ? "push delivered" : null;
 }
 
-// The mail comes from the platform, but a reply belongs to the chapter it was
-// about; an event without a chapter keeps the platform sender.
 const replyToOf = async (chapterId: string | null) =>
   chapterId ? (await chapters.getSettings(chapterId)).replyToEmail : null;
 

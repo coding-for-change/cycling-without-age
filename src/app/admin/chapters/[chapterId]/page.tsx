@@ -1,20 +1,19 @@
 import { Suspense } from "react";
-import {
-  AdminPageFallback,
-  AdminPageShell,
-} from "../../_components/admin-page";
+import { AdminPageShell } from "../../_components/admin-page";
 import { ChapterBody } from "./_components/chapter-body";
+import { PageFallback } from "@/components/page-fallback";
+import type { AdminSearchParams } from "../../active-scope";
 
 export default function ChapterPage({
   params,
   searchParams,
 }: {
   params: Promise<{ chapterId: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams: Promise<AdminSearchParams>;
 }) {
   return (
     <AdminPageShell>
-      <Suspense fallback={<AdminPageFallback />}>
+      <Suspense fallback={<PageFallback />}>
         <ChapterBody
           params={params}
           searchParams={searchParams}

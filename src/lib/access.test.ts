@@ -1,6 +1,7 @@
 import {
   adminChapterIds,
   availablePerspectives,
+  canDeleteOwnAccount,
   defaultActiveScope,
   getHighestRole,
   hasAnyAdminScope,
@@ -178,7 +179,6 @@ describe("getHighestRole", () => {
   });
 });
 
-// The seed org (docs-internal/DEV-ACCOUNTS.md): two countries, three chapters.
 const COUNTRIES: ScopeCountry[] = [
   { id: DE, code: "DE", name: "Deutschland" },
   { id: DK, code: "DK", name: "Danmark" },
@@ -204,12 +204,10 @@ const COPENHAGEN: ScopeChapter = {
 };
 const CHAPTERS: ScopeChapter[] = [MUENCHEN, HAMBURG, COPENHAGEN];
 
-// admin.muenchen@cwa.local
 const muenchenAdmin: Access = {
   ...none,
   memberships: [{ chapterId: MUENCHEN.id, roles: parseRoles("admin") }],
 };
-// pilot@cwa.local — approved in both German chapters
 const twoChapterPilot: Access = {
   ...none,
   memberships: [
@@ -217,7 +215,6 @@ const twoChapterPilot: Access = {
     { chapterId: HAMBURG.id, roles: ["pilot"] },
   ],
 };
-// multi@cwa.local — country admin DK *and* pilot+admin of a German chapter
 const multi: Access = {
   ...none,
   countryAdminOf: [DK],
@@ -246,13 +243,40 @@ describe("hasAnyAdminScope", () => {
     expect(hasAnyAdminScope(both)).toBe(true);
   });
 
-  // The regression this exists for: /admin was reachable by any signed-in account.
   it("keeps pilots, passengers and fresh sign-ups out", () => {
     expect(hasAnyAdminScope(berlinPilot)).toBe(false);
     expect(hasAnyAdminScope(twoChapterPilot)).toBe(false);
     expect(hasAnyAdminScope(aarhusPassenger)).toBe(false);
     expect(hasAnyAdminScope(none)).toBe(false);
     expect(hasAnyAdminScope({ ...none, role: "user" })).toBe(false);
+  });
+});
+
+describe("canDeleteOwnAccount", () => {
+  it("lets someone who only rides or pedals close their own account", () => {
+    expect(canDeleteOwnAccount(berlinPilot)).toBe(true);
+    expect(canDeleteOwnAccount(twoChapterPilot)).toBe(true);
+    expect(canDeleteOwnAccount(aarhusPassenger)).toBe(true);
+    expect(canDeleteOwnAccount(none)).toBe(true);
+  });
+
+  it("holds back anyone who still administers something", () => {
+    expect(canDeleteOwnAccount(superadmin)).toBe(false);
+    expect(canDeleteOwnAccount(deAdmin)).toBe(false);
+    expect(canDeleteOwnAccount(berlinAdmin)).toBe(false);
+    expect(canDeleteOwnAccount(muenchenAdmin)).toBe(false);
+  });
+
+  it("reads admin out of a stacked membership", () => {
+    expect(canDeleteOwnAccount(multi)).toBe(false);
+    expect(
+      canDeleteOwnAccount({
+        ...none,
+        memberships: [
+          { chapterId: HAMBURG.id, roles: parseRoles("pilot,admin") },
+        ],
+      }),
+    ).toBe(false);
   });
 });
 
@@ -298,8 +322,6 @@ describe("resolveAdminScope", () => {
     expect(scope.canSeeCountries).toBe(false);
   });
 
-  // The role-stacking case a getHighestRole-based implementation gets wrong: it
-  // would flatten multi@cwa.local down to "countryAdmin" and lose Hamburg.
   it("unions a stacked country admin and chapter admin instead of flattening", () => {
     const scope = scopeOf(multi);
     expect(scope.global).toBe(false);
@@ -343,8 +365,6 @@ describe("defaultActiveScope", () => {
     });
   });
 
-  // DK does not cover Hamburg, so defaulting to the country would silently hide
-  // a chapter this person actually runs.
   it("does not default to a country that fails to cover every chapter in reach", () => {
     expect(defaultActiveScope(scopeOf(multi))).toEqual({ kind: "all" });
   });
@@ -409,7 +429,6 @@ describe("scopeChapters", () => {
     ).toEqual([MUENCHEN, HAMBURG]);
   });
 
-  // The unnarrowed view is still the person's own scope, never every chapter.
   it("hands back the whole scope and nothing beyond it", () => {
     expect(scopeChapters(everything, { kind: "all" })).toEqual(CHAPTERS);
     expect(scopeChapters(scopeOf(muenchenAdmin), { kind: "all" })).toEqual([
@@ -434,7 +453,6 @@ describe("availablePerspectives", () => {
     expect(availablePerspectives(aarhusPassenger)).toEqual(["passenger"]);
   });
 
-  // A superadmin is not implicitly a pilot: riding out takes a real membership.
   it("does not hand a superadmin a pilot hat they never earned", () => {
     expect(availablePerspectives(superadmin)).toEqual(["admin"]);
   });

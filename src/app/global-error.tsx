@@ -1,7 +1,5 @@
 "use client";
 
-// global-error replaces the root layout, so it must render its own
-// <html>/<body> and import global styles itself.
 import "./globals.css";
 import { Button } from "@/components/ui/button";
 

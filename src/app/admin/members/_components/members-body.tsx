@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { AdminEmpty } from "../../_components/admin-empty";
+import { EmptyState } from "@/components/empty-state";
 import { membership } from "@/features/membership";
 import { parseRoles, type ChapterRole } from "@/lib/access";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
@@ -7,16 +7,17 @@ import { formatDate, formatNumber, resolveLocale } from "@/lib/format";
 import { getDictionary } from "@/lib/i18n";
 import { fill } from "@/lib/utils";
 import { AdminPageHeader } from "../../_components/admin-page";
-import { ICONS } from "../../_components/icons";
+import { ICONS } from "@/components/icons";
 import { readActiveScope } from "../../active-scope";
 import { InviteDialog } from "./invite-dialog";
 import { MembersTable, type MemberRow } from "./members-table";
 import { RequestsTable, type RequestRow } from "./requests-table";
+import type { AdminSearchParams } from "../../active-scope";
 
 export async function MembersBody({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams: Promise<AdminSearchParams>;
 }) {
   const { active, scopeQuery, chapters, chapterIds } =
     await readActiveScope(searchParams);
@@ -108,7 +109,7 @@ export async function MembersBody({
             table={dict.admin.table}
           />
         ) : (
-          <AdminEmpty icon={MembersIcon}>{dict.admin.members.empty}</AdminEmpty>
+          <EmptyState icon={MembersIcon}>{dict.admin.members.empty}</EmptyState>
         )}
       </section>
     </>

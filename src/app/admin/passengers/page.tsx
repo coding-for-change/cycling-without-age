@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { headers } from "next/headers";
-import { AdminEmpty } from "../_components/admin-empty";
+import { EmptyState } from "@/components/empty-state";
 import { chapters as chapterFeature } from "@/features/chapters";
 import { passengers } from "@/features/passengers";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
@@ -12,29 +12,24 @@ import {
   isPhoneTempEmail,
   type CountryCode,
 } from "@/lib/identity";
-import {
-  AdminPageFallback,
-  AdminPageHeader,
-  AdminPageShell,
-} from "../_components/admin-page";
-import { ICONS } from "../_components/icons";
-import { readActiveScope } from "../active-scope";
+import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
+import { ICONS } from "@/components/icons";
+import { readActiveScope, type AdminSearchParams } from "../active-scope";
 import { AddPassengerDrawer } from "./_components/add-passenger-drawer";
 import {
   PassengersTable,
   type PassengerRow,
 } from "./_components/passengers-table";
-
-type AdminSearchParams = Promise<Record<string, string | string[] | undefined>>;
+import { PageFallback } from "@/components/page-fallback";
 
 export default function PassengersPage({
   searchParams,
 }: {
-  searchParams: AdminSearchParams;
+  searchParams: Promise<AdminSearchParams>;
 }) {
   return (
     <AdminPageShell>
-      <Suspense fallback={<AdminPageFallback />}>
+      <Suspense fallback={<PageFallback />}>
         <Passengers searchParams={searchParams} />
       </Suspense>
     </AdminPageShell>
@@ -44,7 +39,7 @@ export default function PassengersPage({
 async function Passengers({
   searchParams,
 }: {
-  searchParams: AdminSearchParams;
+  searchParams: Promise<AdminSearchParams>;
 }) {
   const { active, scopeQuery, chapters, chapterIds } =
     await readActiveScope(searchParams);
@@ -120,9 +115,9 @@ async function Passengers({
           table={dict.admin.table}
         />
       ) : (
-        <AdminEmpty icon={PassengersIcon}>
+        <EmptyState icon={PassengersIcon}>
           {dict.admin.passengers.empty}
-        </AdminEmpty>
+        </EmptyState>
       )}
     </>
   );

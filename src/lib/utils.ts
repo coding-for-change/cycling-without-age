@@ -5,11 +5,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/**
- * Initials for an avatar. Only parts that start with a letter or digit count —
- * chapter names are written "Hamburg – Alstergarten", and treating the dash as
- * a word turns that into "H–".
- */
 export function getInitials(name: string) {
   return name
     .split(/[\s]+/)
@@ -28,3 +23,5 @@ export function fill(
     key in values ? String(values[key]) : match,
   );
 }
+
+export const firstName = (name: string) => name.trim().split(/\s+/)[0];

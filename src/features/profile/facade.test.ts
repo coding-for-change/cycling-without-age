@@ -56,8 +56,6 @@ describe("completeOnboarding", () => {
     );
   });
 
-  // The conditional write is the guard: a re-submitted last step stamps nothing
-  // and so announces nothing.
   it("stays silent when the account was already onboarded", async () => {
     stamped(0);
 
@@ -67,7 +65,6 @@ describe("completeOnboarding", () => {
     expect(db.event.create).not.toHaveBeenCalled();
   });
 
-  // A pilot can finish onboarding before any chapter has taken them on.
   it("announces a welcome with no chapter behind it", async () => {
     await profile.completeOnboarding(USER, {
       chapterId: null,
@@ -78,5 +75,75 @@ describe("completeOnboarding", () => {
       chapterId: null,
       payload: expect.objectContaining({ role: "passenger" }),
     });
+  });
+});
+
+describe("updateOwnDetails", () => {
+  const data = () => db.user.update.mock.calls[0][0].data;
+
+  it("writes only the field that was edited", async () => {
+    await profile.updateOwnDetails(USER, { name: "Pernille Holm" });
+
+    expect(db.user.update).toHaveBeenCalledWith({
+      where: { id: USER },
+      data: { name: "Pernille Holm" },
+    });
+  });
+
+  it("trims the name it is given", async () => {
+    await profile.updateOwnDetails(USER, { name: "  Pernille Holm  " });
+
+    expect(data()).toEqual({ name: "Pernille Holm" });
+  });
+
+  it("keeps the fields that were not sent out of the write", async () => {
+    await profile.updateOwnDetails(USER, { gender: "female" });
+
+    expect(data()).toEqual({ gender: "female" });
+  });
+
+  it("coerces an ISO date string into a Date", async () => {
+    await profile.updateOwnDetails(USER, { birthDate: "1948-04-02" });
+
+    expect(data().birthDate).toEqual(new Date("1948-04-02"));
+  });
+
+  it("refuses a patch with nothing in it", async () => {
+    await expect(profile.updateOwnDetails(USER, {})).rejects.toThrow();
+    expect(db.user.update).not.toHaveBeenCalled();
+  });
+
+  it("refuses a birth date outside the plausible range", async () => {
+    await expect(
+      profile.updateOwnDetails(USER, { birthDate: "1899-04-02" }),
+    ).rejects.toThrow();
+    expect(db.user.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("setNotificationPreferences", () => {
+  it("writes both switches when both are sent", async () => {
+    await profile.setNotificationPreferences(USER, {
+      push: true,
+      email: false,
+    });
+
+    expect(db.user.update).toHaveBeenCalledWith({
+      where: { id: USER },
+      data: { notifyPush: true, notifyEmail: false },
+    });
+  });
+
+  it("leaves the untouched switch alone", async () => {
+    await profile.setNotificationPreferences(USER, { email: true });
+
+    expect(db.user.update.mock.calls[0][0].data).toEqual({ notifyEmail: true });
+  });
+
+  it("refuses an empty preference patch", async () => {
+    await expect(
+      profile.setNotificationPreferences(USER, {}),
+    ).rejects.toThrow();
+    expect(db.user.update).not.toHaveBeenCalled();
   });
 });

@@ -28,6 +28,8 @@ graph TD
     A[src/app]
     ADM[app/admin shell]
     CMD[app/admin/commands]
+    MEM["app/(member) shell"]
+    ACCT[components/account surface]
     BELL[components/notifications bell]
     PR[components/push-registrar]
   end
@@ -43,6 +45,8 @@ graph TD
     ACT8[features/accounts/actions]
     ACT9[features/notifications/actions]
     ACT10[app/admin/settings/actions]
+    ACT11[features/profile/actions]
+    ACT0[app/actions setLocale]
   end
   subgraph Orchestration
     U1[use-cases/build-session-access]
@@ -60,6 +64,8 @@ graph TD
     U17[use-cases/notifications/deliver-push]
     U18[use-cases/notifications/inbox]
     U19[use-cases/notifications/kinds]
+    U20[use-cases/member-home]
+    U21[use-cases/update-own-details]
   end
   subgraph Worker
     W1["worker/index (dispatcher, sweeper, prune-devices, email + push workers)"]
@@ -108,6 +114,25 @@ graph TD
   G --> F3
   AUTH[lib/auth customSession] --> U1
 
+  A --> MEM
+  MEM --> G
+  MEM --> U20
+  MEM --> ACCT
+  MEM --> BELL
+  ADM --> ACCT
+  ACCT --> ACT11
+  ACCT --> ACT8
+  ACCT --> ACT0
+  ACT11 --> G
+  ACT11 --> F3
+  ACT11 --> U21
+  ACT0 --> G
+  ACT0 --> F3
+  U20 --> F1
+  U20 --> F2
+  U21 --> F3
+  U21 --> F4
+
   A --> BELL
   ADM --> BELL
   BELL --> G
@@ -153,6 +178,7 @@ graph TD
   ADM --> ACT8
   ACT8 --> U10
   ACT8 --> U11
+  ACT8 --> F6
   ACT5 --> F2
   ACT5 --> F6
   ACT6 --> F1
@@ -252,6 +278,8 @@ graph TD
 | `notifications/deliver-email` | `notifications`, `profile`, `chapters` (+ `activity`, `mailer`) | One email for one `Notification`, in the recipient's own locale (hence `profile`), with the attempt recorded on the `Delivery` row. A delayed `ifNoPush` job re-checks here whether the push landed or the row was already read. `chapters.getSettings` supplies the chapter's reply-to, so an answer goes back to the chapter the mail was about. |
 | `notifications/deliver-push` | `notifications`, `profile` (+ `lib/push`) | One push for one `Notification`: the recipient's opt-in and device tokens, the locale for the copy, `sendPush` through `firebase-admin`, and dead tokens pruned from the `device` table. A kind may also carry a `chapterAllowsPush` hook, which the kinds (U19) answer from `chapters`. Missing credentials are a `skipped` row, not a retry. |
 | `notifications/inbox` | `notifications` (+ the kinds) | The bell's read model: stored payloads rendered back into `{ title, body, href }` in the reader's locale, plus the unseen count. Its kind lookup is non-throwing, so a retired kind leaves a gap in the list instead of blanking the bell. |
+| `member-home` | `chapters`, `membership` | Where a member belongs: their memberships, their open applications and the chapter rows behind both. `cache()`d, because the sidebar subtitle and the home's chapter cards ask it in the same request from two different Suspense boundaries. |
+| `update-own-details` | `passengers`, `profile` | `birthDate` and `gender` are deliberately duplicated onto the rider row an account books its own rides with, so one edit in the account surface has to reach both. A name-only edit stops at `profile` — splitting one string back into `firstName`/`lastName` would be lossy. |
 | `manage-country-admins` | `chapters`, `profile` | Appointing by email needs the lookup in `profile` and the row in `chapters`. Removal coordinates nothing, so it collapsed into `app/admin/countries/actions`, and the history line now comes from the `countryAdmin.*` events. |
 | `provision-assisted-passenger` | `accounts`, `membership`, `passengers`, `activity` | One "add a passenger at the door" makes the account, joins the chapter, creates the rider row and records who created it — four features, and the helper rule decides whether the rider row points at the new account or at nobody. |
 | `invite-chapter-user` | `accounts`, `membership`, `profile` | Provisioning the account, seeding the invitee's language from the inviter's, and granting the chapter roles are three features. It sends nothing: `membership.inviteMember` emits `member.invited` and the pipeline mails it. |
@@ -276,7 +304,10 @@ Single-facade work has no use case: `lib/auth-guards` calls `chapters.getChapter
 and `profile.getProfile` (the admin passkey gate) directly, `app/admin/chapters/actions` calls
 the chapters facade directly, `features/membership/actions` calls the membership facade
 directly, and the passkey and pilot-next-steps actions call the profile facade directly.
-`features/notifications/actions` (ACT9) is the same shape: mark seen, mark read, register and
+`deleteOwnAccountAction` (in ACT8) is the same: `accounts.deleteUser` is one facade call
+behind `requireAuth` plus `canDeleteOwnAccount`, and the schema cascades the rest, so it is an
+Action and not a use case — the mirror of `ACT5 --> F6` below, with the session as the only
+subject. `features/notifications/actions` (ACT9) is the same shape: mark seen, mark read, register and
 unregister a device are four writes into one facade, called from the bell (BELL) and from the
 push registrar (PR). `app/admin/settings/actions` (ACT10) likewise: one write of the chapter's
 `ChapterSettings` row behind `requireChapterAdmin`, so it calls `chapters.updateSettings`
@@ -287,6 +318,13 @@ directly.
 coordinates one feature and carries no session, so per AGENTS.md it is not a use case —
 `worker/index` dispatches it next to `sweep` through its `MAINTENANCE` map. See
 [EVENTS.md](../EVENTS.md) → *Maintenance jobs*.
+
+`MEM` is the member shell (`src/app/(member)`) and `ACCT` the account surface
+(`src/components/account`). Neither is a feature slice: the shell is routing plus chrome and
+the surface is cross-route UI over `lib`, which is why they sit in Presentation and reach the
+server only through `G` (`perspectiveViewerSession`, `requirePerspective`), one use case
+(`U20`) and Server Actions. `ADM --> ACCT` is the same surface mounted from the admin
+sidebar's user menu — one implementation, three call sites.
 
 The bell reads through a use case (U18) because rendering a stored payload needs the kinds,
 not because two features are involved.

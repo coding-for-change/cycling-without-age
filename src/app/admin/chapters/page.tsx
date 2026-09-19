@@ -9,35 +9,34 @@ import { joinUrl } from "@/lib/app-url";
 import { resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import {
-  AdminPageFallback,
-  AdminPageHeader,
-  AdminPageShell,
-} from "../_components/admin-page";
-import { readActiveScope } from "../active-scope";
+import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
+import { readActiveScope, type AdminSearchParams } from "../active-scope";
 import type { ChapterPin } from "./_components/chapters-map-view";
 import { ChaptersTable, type ChapterRow } from "./_components/chapters-table";
-
-type AdminSearchParams = Promise<Record<string, string | string[] | undefined>>;
+import { PageFallback } from "@/components/page-fallback";
 
 export default function ChaptersPage({
   searchParams,
 }: {
-  searchParams: AdminSearchParams;
+  searchParams: Promise<AdminSearchParams>;
 }) {
   return (
     <AdminPageShell>
-      <Suspense fallback={<AdminPageFallback />}>
+      <Suspense fallback={<PageFallback />}>
         <Chapters searchParams={searchParams} />
       </Suspense>
     </AdminPageShell>
   );
 }
 
-async function Chapters({ searchParams }: { searchParams: AdminSearchParams }) {
+async function Chapters({
+  searchParams,
+}: {
+  searchParams: Promise<AdminSearchParams>;
+}) {
   const {
     scope,
-    active,
+    scopeQuery,
     chapters: inScope,
   } = await readActiveScope(searchParams, "chapters");
 
@@ -78,8 +77,6 @@ async function Chapters({ searchParams }: { searchParams: AdminSearchParams }) {
     ];
   });
 
-  // Every chapter, not just the ones in scope: an overlap warning is only
-  // useful if it can see the neighbour on the other side of the border.
   const pins: ChapterPin[] = all.map((chapter) => ({
     id: chapter.id,
     name: chapter.name,
@@ -89,20 +86,13 @@ async function Chapters({ searchParams }: { searchParams: AdminSearchParams }) {
     radiusKm: chapter.serviceRadiusKm ?? CHAPTER_RADIUS_KM.default,
   }));
 
-  const scopeParams = new URLSearchParams();
-  if (active.kind === "chapter")
-    scopeParams.set("chapter", active.chapter.slug);
-  if (active.kind === "country")
-    scopeParams.set("country", active.country.code);
-
   const href = (extra: Record<string, string>) => {
-    const query = new URLSearchParams(scopeParams);
+    const query = new URLSearchParams(scopeQuery);
     for (const [key, value] of Object.entries(extra)) query.set(key, value);
     const search = query.toString();
     return search ? `/admin/chapters?${search}` : "/admin/chapters";
   };
 
-  const scopeQuery = scopeParams.toString() ? `?${scopeParams}` : "";
   const keepView: Record<string, string> =
     view === "map" ? { view: "map" } : {};
 

@@ -15,6 +15,7 @@ import {
   resolveAdminScope,
 } from "@/lib/access";
 import { HOME_BY_ROLE, NEXT_COOKIE, safeNextPath } from "@/lib/redirects";
+import type { MemberPerspective } from "@/lib/redirects";
 import type {
   Access,
   AdminScope,
@@ -50,14 +51,6 @@ function deny(): never {
   forbidden();
 }
 
-/**
- * Admins sign in with a passkey — the enrollment gate for every admin surface,
- * checked in the guards rather than only in the shell so a passkey-less admin
- * cannot POST straight at a Server Action either.
- *
- * Known ceiling (see ARCHITECTURE.md): this proves possession of a passkey, not
- * that this session used one. The upgrade path is session step-up.
- */
 const ensureAdminPasskey = cache(async (userId: string) => {
   const account = await profile.getProfile(userId);
   if ((account?._count.passkeys ?? 0) > 0) return;
@@ -105,20 +98,9 @@ export async function requireChapterRole(chapterId: string, role: ChapterRole) {
   return requireChapterAdmin(chapterId);
 }
 
-/**
- * The gate for the admin dashboard as a whole: anyone who administers *something*
- * gets in, and what they administer comes back with them. The narrower guards
- * above still decide individual chapters and countries — this one only answers
- * "is there any admin surface for this person at all", which is the question
- * `/admin` used to answer with `requireAuth` alone.
- *
- * Cached per request because the shell and the page underneath both call it.
- */
 export const requireAdminScope = cache(
   async (): Promise<{ session: Session; scope: AdminScope }> => {
     const session = await requireAuth();
-    // Not a 403: a pilot who lands on /admin is lost, not intruding. The narrow
-    // guards behind the actions still answer with `forbidden()`.
     if (!hasAnyAdminScope(session.access)) redirect(homeOf(session));
     await ensureAdminPasskey(session.user.id);
 
@@ -151,17 +133,11 @@ export function getHighestRole(session: { access: Access }): HighestRole {
   return highestRole(session.access);
 }
 
-/** Where this account belongs when nothing more specific was asked for. */
 export function homeOf(session: { access: Access }): string {
   const role = getHighestRole(session);
   return role ? HOME_BY_ROLE[role] : "/onboarding";
 }
 
-/**
- * Sends someone away from a perspective that is not theirs — but only if they
- * have one of their own. Someone with no role at all (a pilot whose application
- * is still pending) falls through to the screen that explains why.
- */
 export function redirectIfElsewhere(
   session: { access: Access },
   perspective: Perspective,
@@ -174,5 +150,15 @@ export function redirectIfElsewhere(
 export async function requirePerspective(perspective: Perspective) {
   const session = await requireAuth();
   redirectIfElsewhere(session, perspective);
+  return session;
+}
+
+export async function perspectiveViewerSession(
+  perspective: MemberPerspective,
+): Promise<Session | null> {
+  if (perspective === "pilot") return requirePerspective("pilot");
+
+  const session = await getSession();
+  if (session) redirectIfElsewhere(session, "passenger");
   return session;
 }

@@ -18,8 +18,7 @@ const failureOf = (error: FetchError): PasskeyFailure | null =>
     ? { code: error.code ?? "UNKNOWN_ERROR", message: error.message ?? "" }
     : null;
 
-// A rejected plugin call carries a WebAuthn-style name as its Capacitor code,
-// e.g. NotAllowedError when the person dismisses the sheet.
+// A rejected plugin call carries the WebAuthn error name as its Capacitor code.
 const nativeFailure = (error: unknown): PasskeyFailure => ({
   code: (error as { code?: string } | null)?.code ?? "UNKNOWN_ERROR",
   message: error instanceof Error ? error.message : String(error),
@@ -36,11 +35,6 @@ const credentialBody = (credential: PasskeyCredential) => ({
   response: credential.response,
 });
 
-/**
- * One entry point for both worlds. In the browser better-auth's own client
- * runs WebAuthn; in the native shell the same challenge and verification
- * endpoints are used, only the credential comes from the OS passkey APIs.
- */
 export async function addPasskey({
   name,
 }: {

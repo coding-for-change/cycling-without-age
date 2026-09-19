@@ -9,14 +9,8 @@ import {
   CHAPTER_DESCRIPTION_MAX,
   isHttpUrl,
 } from "@/features/chapters/schemas";
-import {
-  InlineField,
-  type InlineFieldLabels,
-} from "../../../_components/inline-field";
-import {
-  SaveStatus,
-  SaveStatusProvider,
-} from "../../../_components/save-status";
+import { InlineField, type InlineFieldLabels } from "@/components/inline-field";
+import { SaveStatus, SaveStatusProvider } from "@/components/save-status";
 import type { MapPin } from "../../_components/chapter-map";
 import { ChapterLogo } from "../../_components/chapter-logo";
 import { updateChapterAction } from "../../actions";

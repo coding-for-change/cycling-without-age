@@ -46,6 +46,8 @@ behind it.
 src/
 ├── app/                  # ROUTING: Pages, Layouts, and API Route handlers.
 │   ├── api/              # External-only endpoints (Webhooks, etc.).
+│   ├── admin/            # The admin shell: inset sidebar, top bar, ⌘K.
+│   ├── (member)/         # The member shell: /pilot and /passenger, one implementation.
 │   └── (routes)/         # UI Routes. Minimal logic. Calls Use Cases/Facades.
 ├── use-cases/            # GLOBAL ORCHESTRATORS: Cross-feature logic.
 ├── features/             # BOUNDED CONTEXTS: Domain-specific modules.
@@ -58,6 +60,7 @@ src/
 │       ├── index.ts      # PUBLIC API: Export ONLY the Facade and Components.
 │       └── schemas.ts    # Contracts: Zod schemas and TS types.
 ├── components/           # SHARED UI: cross-route components over `lib` infra.
+│   ├── account/          # The account surface (dialog + sheet) and its sections.
 │   ├── notifications/    # The bell, shared by admin, pilot and passenger.
 │   └── ui/               # ATOMIC UI: stateless shadcn primitives.
 ├── worker/               # BOUNDARY: BullMQ workers. Same image, second command.
@@ -75,7 +78,8 @@ src/
 The iOS (`ios/`) and Android (`android/`) apps are thin Capacitor shells whose WebView loads the
 deployed site (remote-URL shell — the app is server-rendered and cannot be statically exported).
 Native plugin access is cross-cutting infrastructure and lives in `src/lib/native/*`
-(`haptics.ts`, `push.ts`, `native-bootstrap.tsx`), same status as `lib/auth-guards`: any layer's
+(`haptics.ts`, `push.ts`, `app.ts`, `keyboard.ts`, `back-policy.ts`, `native-bootstrap.tsx`,
+`native-back-handler.tsx`), same status as `lib/auth-guards`: any layer's
 client components may import the wrappers, but `@capacitor/*`, `@capacitor-firebase/*` and
 `firebase` are never imported outside `src/lib/native/` (lint-enforced). The server half of push
 is the mirror image: `firebase-admin` may only be imported by `src/lib/push.ts`, so the
@@ -429,16 +433,17 @@ table stores facts.
 
 ### Notification bell (`src/components/notifications`)
 
-The bell is not a feature slice and not an admin component. Three route groups show the same
-inbox — the admin top bar, `/pilot` and `/passenger` — so it lives in `src/components/` with
-the other cross-route UI, one server component (`notification-bell.tsx`) over the
-`listInbox`/`unseenCount` use case and one client popover (`notification-bell-menu.tsx`) that
-holds nothing but open state.
+The bell is not a feature slice and not an admin component. Two shells show the same inbox —
+the admin top bar and the member top bar (`/pilot` and `/passenger`) — so it lives in
+`src/components/` with the other cross-route UI, one server component (`notification-bell.tsx`)
+over the `listInbox`/`unseenCount` use case and one client popover
+(`notification-bell-menu.tsx`) that holds nothing but open state.
 
 Every call site wraps it in `<Suspense>`. The bell reads the session and the request headers,
 which under `cacheComponents` is a request-time read: outside a Suspense boundary it fails the
-build rather than the request. The fallback is a plain skeleton, `null` on `/passenger` so a
-signed-out visitor never sees a bell flash where there will be none.
+build rather than the request. The fallback is a plain skeleton. `MemberChrome` renders the
+whole thing — bell *and* fallback — as `null` when there is no session, so a guest on
+`/passenger` never sees a control flash where there will be none.
 
 Its two actions — `markInboxSeen`, `markNotificationRead` — deliberately **do not**
 `revalidatePath`. A Server Action re-renders the route it was called from, and the badge and

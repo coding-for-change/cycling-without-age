@@ -1,7 +1,9 @@
 import { z } from "zod";
-import { chapters } from "@/features/chapters";
 import { fill } from "@/lib/utils";
+import { nameOfChapter } from "./lookups";
 import { defineKind } from "./types";
+import { ORG_NAME } from "@/lib/brand";
+import { PERSPECTIVE_HOME } from "@/lib/redirects";
 
 export const pilotApplicationDecided = defineKind({
   event: "pilotApplication.decided",
@@ -14,16 +16,16 @@ export const pilotApplicationDecided = defineKind({
   }),
   recipients: async (event) => [event.userId],
   params: async (event) => ({
-    chapterName: (await chapters.getChapter(event.chapterId))?.name ?? null,
+    chapterName: await nameOfChapter(event.chapterId),
     approved: event.approved,
     note: event.note,
   }),
-  href: () => "/pilot",
+  href: () => PERSPECTIVE_HOME.pilot,
   message: ({ chapterName, approved, note }, strings) => {
     const copy = approved
       ? strings.applicationApproved
       : strings.applicationRejected;
-    const chapter = chapterName ?? "Cycling Without Age";
+    const chapter = chapterName ?? ORG_NAME;
     return {
       subject: fill(copy.subject, { chapter }),
       preview: copy.preview,

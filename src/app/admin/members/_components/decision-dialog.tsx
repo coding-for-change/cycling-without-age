@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { fill } from "@/lib/utils";
 import { decideApplicationAction } from "../actions";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
-import { notify, type NotifyLabels } from "../../_components/action-feedback";
+import { notify, type NotifyLabels } from "@/components/action-feedback";
 
 export type DecisionTarget = {
   applicationId: string;

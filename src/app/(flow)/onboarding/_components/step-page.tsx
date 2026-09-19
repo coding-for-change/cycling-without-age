@@ -25,7 +25,6 @@ import type { OnboardingRole } from "@/lib/onboarding";
 export type StepDefaults = {
   firstName: string;
   lastName: string;
-  /** `YYYY-MM-DD`, which is what `<input type="date">` wants. */
   birthDate: string;
   gender: "female" | "male" | "other" | null;
   consented: boolean;
@@ -36,8 +35,6 @@ export type StepDefaults = {
 export type StepContext = {
   role: OnboardingRole;
   progress: StepProgress | null;
-  /** What they answered last time, so walking back shows their answers rather
-   *  than an empty form they have to fill in again. */
   defaults: StepDefaults;
   presetChapterName: string | null;
   claimBanner: string | null;

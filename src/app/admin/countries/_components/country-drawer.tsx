@@ -21,12 +21,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { countryInput, type CountryInput } from "@/features/chapters/schemas";
 import { REGION_CODES, regionName } from "@/lib/countries";
 import { fill } from "@/lib/utils";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
-import { notify, type NotifyLabels } from "../../_components/action-feedback";
+import { TextField } from "../../_components/text-field";
+import { notify, type NotifyLabels } from "@/components/action-feedback";
 import { createCountryAction, updateCountryAction } from "../actions";
 import type { CountryRow } from "./countries-table";
 
@@ -189,23 +189,12 @@ export function CountryDrawer({
             )}
           />
 
-          <FormField
+          <TextField
             control={form.control}
             name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{labels.fields.name}</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    autoComplete="off"
-                    className="h-11 border-line text-base"
-                  />
-                </FormControl>
-                <p className="text-2sm text-ink-soft">{labels.nameHint}</p>
-                <FormMessage />
-              </FormItem>
-            )}
+            label={labels.fields.name}
+            hint={labels.nameHint}
+            autoComplete="off"
           />
         </form>
       </Form>

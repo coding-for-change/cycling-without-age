@@ -52,11 +52,6 @@ export const listChapterAdmins = async (chapterId: string) =>
 export const getMemberRoles = async (userId: string, chapterId: string) =>
   parseRoles((await findMember(userId, chapterId))?.role);
 
-/**
- * Roles stack on one member row (BetterAuth stores them comma-separated).
- * Returns both sides of the write so a caller can tell a real change from a
- * repeat and emit its event only once.
- */
 async function withRoles(
   userId: string,
   chapterId: string,
@@ -87,7 +82,6 @@ async function withRoles(
   );
 }
 
-// Passengers are active the moment they join — no application, no approval.
 export const joinAsPassenger = (
   userId: string,
   chapterId: string,
@@ -137,8 +131,6 @@ export function grantChapterRole(
   return grantChapterRoles(userId, chapterId, [role], tx);
 }
 
-// Only existing members can be promoted — a chapter admin who is not in the
-// chapter would be invisible to every member-facing list.
 export async function promoteToChapterAdmin(
   userId: string,
   chapterId: string,
@@ -172,7 +164,6 @@ export const removeFromChapter = (
 
 export type MemberRoleChange = "promote" | "demote" | "remove";
 
-/** An invitation is a membership plus the mail that tells them about it. */
 export function inviteMember(input: InviteMemberInput) {
   const { userId, chapterId, actorUserId, roles } =
     inviteMemberInput.parse(input);
@@ -188,11 +179,6 @@ export function inviteMember(input: InviteMemberInput) {
   });
 }
 
-/**
- * An admin may promote themselves no further and may not demote or remove
- * themselves — losing your own last admin role locks you out of the chapter you
- * are standing in.
- */
 export async function changeMemberRole({
   userId,
   chapterId,
@@ -236,7 +222,6 @@ export const getApplication = (id: string) => findApplicationById(id);
 export const listApplicationsOfUser = (userId: string) =>
   findApplicationsOfUser(userId);
 
-/** Applying to several chapters at once is one intent, so it is one call. */
 export async function submitPilotApplications({
   userId,
   chapterIds,
