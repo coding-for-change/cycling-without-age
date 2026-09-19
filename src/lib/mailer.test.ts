@@ -3,6 +3,9 @@ const send = jest.fn();
 jest.mock("resend", () => ({
   Resend: jest.fn(() => ({ emails: { send } })),
 }));
+jest.mock("@react-email/components", () => ({
+  render: jest.fn(async () => "<p>Hej Bo</p>"),
+}));
 
 const ORIGINAL_ENV = process.env;
 
@@ -44,6 +47,18 @@ describe("sendMail against Resend", () => {
     expect(send).toHaveBeenCalledWith(
       expect.objectContaining({ to: "p@example.com" }),
     );
+  });
+
+  it("renders the React part to HTML itself so Resend never has to", async () => {
+    answer(null);
+    const { sendMail } = await loadMailer();
+    const { createElement } = await import("react");
+
+    await sendMail({ ...message, react: createElement("p", null, "Hej Bo") });
+
+    const payload = send.mock.calls[0][0];
+    expect(payload.html).toContain("Hej Bo");
+    expect(payload).not.toHaveProperty("react");
   });
 
   it("reads the wait out of retry-after when Resend throttles", async () => {
