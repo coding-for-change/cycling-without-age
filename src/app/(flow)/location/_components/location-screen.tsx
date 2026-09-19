@@ -184,8 +184,6 @@ export function LocationScreen({
 
       if (multi) {
         const result = await applyToChaptersAsPilot(selected);
-        // Asked separately: the join goes through the membership feature's own
-        // action, and that slice has no business knowing about onboarding.
         return result.ok ? go(await nextOnboardingPath()) : fail(result.error);
       }
 

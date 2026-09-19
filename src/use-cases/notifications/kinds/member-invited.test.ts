@@ -48,8 +48,6 @@ describe("the invitation notification", () => {
     );
   });
 
-  // Both roles at once: the mail names them in one sentence and lands the
-  // invitee on the admin side, the more capable of the two.
   it("names both roles in one sentence, in the reader's language", async () => {
     expect((await render(["pilot", "admin"])).body).toContain(
       "Pilot und Ortsgruppen-Admin",

@@ -1,5 +1,6 @@
 import { Worker } from "bullmq";
 import type { Job } from "bullmq";
+import { chat } from "@/features/chat";
 import { notifications } from "@/features/notifications";
 import type { EventType } from "@/lib/events/catalog";
 import { QUEUE, closeQueues, queue } from "@/lib/events/queues";
@@ -8,26 +9,34 @@ import {
   loadEvent,
   markEventProcessed,
 } from "@/lib/events/store";
+import { closeRealtime } from "@/lib/realtime";
 import { redisConnection } from "@/lib/redis";
+import { deliverChatDigest } from "@/use-cases/chat-notifications/deliver-chat-digest";
+import type { ChatDigestJob } from "@/use-cases/chat-notifications/deliver-chat-digest";
+import { deliverChatPush } from "@/use-cases/chat-notifications/deliver-chat-push";
+import type { ChatPushJob } from "@/use-cases/chat-notifications/deliver-chat-push";
 import { startBoard } from "./board";
-import { runEmailDelivery, runPushDelivery } from "./deliveries";
+import {
+  parkOnRateLimit,
+  runEmailDelivery,
+  runPushDelivery,
+} from "./deliveries";
 import { handlers } from "./handlers";
 import { checkHealth } from "./health";
+import type { DeliveryJob } from "./deliveries";
 import type { Listener } from "./handlers";
 
 const SWEEP_EVERY_MS = 60_000;
 const BOARD_PORT = Number(process.env.WORKER_PORT ?? 3001);
 const SWEEP_BATCH = 100;
-// Once a night, off-peak for every chapter between Japan and the US west coast.
 const PRUNE_DEVICES_CRON = "0 4 * * *";
+const PRUNE_CHAT_CRON = "0 3 * * *";
+const CHAT_RETENTION_MONTHS = 12;
+const CHAT_PRUNE_BATCH = 1_000;
 
 const RESEND_RATE_LIMIT = Number(process.env.RESEND_RATE_LIMIT ?? 8);
 
-/**
- * One event in, one job per listener out. The jobId pins each (event, listener)
- * pair, so re-dispatching the same event is free. It may not contain a colon:
- * BullMQ builds its Redis keys as `bull:<queue>:<jobId>`.
- */
+// A jobId may not contain a colon: BullMQ keys are `bull:<queue>:<jobId>`.
 async function dispatchEvent(eventId: string) {
   const event = await loadEvent(eventId);
   const listeners = Object.keys(handlers[event.type]);
@@ -42,10 +51,6 @@ async function dispatchEvent(eventId: string) {
   await markEventProcessed(eventId);
 }
 
-/**
- * The safety net for everything Redis never heard about: an enqueue that failed,
- * a Redis that was down, a process that died between commit and add.
- */
 async function sweep() {
   const stale = await findUnprocessedEvents(
     new Date(Date.now() - SWEEP_EVERY_MS),
@@ -63,16 +68,45 @@ async function sweep() {
   );
 }
 
-/** The nightly half of token hygiene; the other half is FCM rejecting a token mid-send. */
 async function pruneDevices() {
   const removed = await notifications.pruneStaleDevices();
   if (removed > 0) console.info(`[worker] pruned ${removed} stale device(s)`);
 }
 
+async function pruneChat() {
+  const cutoff = new Date();
+  cutoff.setMonth(cutoff.getMonth() - CHAT_RETENTION_MONTHS);
+  const olderThan = cutoff.toISOString();
+
+  let messages = 0;
+  for (;;) {
+    const removed = await chat.pruneOldMessages(olderThan, CHAT_PRUNE_BATCH);
+    if (removed === 0) break;
+    messages += removed;
+  }
+
+  const conversations = await chat.purgeEmptyConversations();
+  if (messages > 0 || conversations > 0)
+    console.info(
+      `[worker] pruned ${messages} chat message(s) and ${conversations} empty conversation(s)`,
+    );
+}
+
 const MAINTENANCE: Record<string, () => Promise<void>> = {
   sweep,
   "prune-devices": pruneDevices,
+  "prune-chat": pruneChat,
 };
+
+const runEmailJob = (job: Job) =>
+  job.name === "chat-digest"
+    ? parkOnRateLimit(() => deliverChatDigest(job.data as ChatDigestJob))
+    : runEmailDelivery(job as DeliveryJob);
+
+const runPushJob = (job: Job) =>
+  job.name === "chat"
+    ? deliverChatPush(job.data as ChatPushJob)
+    : runPushDelivery(job as DeliveryJob);
 
 async function runListener(job: Job<{ eventId: string }>) {
   const event = await loadEvent(job.data.eventId);
@@ -93,12 +127,12 @@ async function main() {
       connection: redisConnection,
       concurrency: 10,
     }),
-    new Worker(QUEUE.email, runEmailDelivery, {
+    new Worker(QUEUE.email, runEmailJob, {
       connection: redisConnection,
       limiter: { max: RESEND_RATE_LIMIT, duration: 1_000 },
       concurrency: RESEND_RATE_LIMIT,
     }),
-    new Worker(QUEUE.push, runPushDelivery, {
+    new Worker(QUEUE.push, runPushJob, {
       connection: redisConnection,
       concurrency: 5,
     }),
@@ -119,6 +153,9 @@ async function main() {
   await queue(QUEUE.events).upsertJobScheduler("prune-devices", {
     pattern: PRUNE_DEVICES_CRON,
   });
+  await queue(QUEUE.events).upsertJobScheduler("prune-chat", {
+    pattern: PRUNE_CHAT_CRON,
+  });
 
   const board = await startBoard(BOARD_PORT, () => checkHealth(workers));
 
@@ -127,6 +164,7 @@ async function main() {
     await Promise.all(workers.map((worker) => worker.close()));
     board.close();
     await closeQueues();
+    await closeRealtime();
     process.exit(0);
   };
   process.on("SIGINT", shutdown);

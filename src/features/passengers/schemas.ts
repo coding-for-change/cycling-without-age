@@ -11,3 +11,10 @@ export const passengerInput = z.object({
   gender,
 });
 export type PassengerInput = z.infer<typeof passengerInput>;
+
+export const ownRiderDetailsPatch = z.object({
+  birthDate: birthDate.optional(),
+  gender: gender.optional(),
+});
+export type OwnRiderDetailsPatch = z.infer<typeof ownRiderDetailsPatch>;
+export type OwnRiderDetailsPatchInput = z.input<typeof ownRiderDetailsPatch>;

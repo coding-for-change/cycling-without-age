@@ -1,5 +1,3 @@
-// Source of truth for the dictionary shape. Every other locale must
-// implement `Dictionary`, so a missing or extra key is a type error.
 const en = {
   home: {
     title: "Hello World",
@@ -367,10 +365,6 @@ const en = {
       bikes: {
         title: "Trishaws",
         body: "Each trishaw your chapter looks after, who last had it out, and when it next needs a service.",
-      },
-      chat: {
-        title: "Messages",
-        body: "Conversations between pilots, passengers and the chapter. Nothing has been said yet.",
       },
       reports: {
         title: "Reports",
@@ -784,7 +778,6 @@ const en = {
         body: "{chapter} says welcome. Watch the training videos, then meet a captain for your first ride.",
         dismiss: "Got it",
       },
-      account: "Account",
     },
     status: {
       pendingTitle: "Your request is with {chapter}",
@@ -807,14 +800,193 @@ const en = {
     training: {
       title: "Training while you wait",
       body: "The videos are still being filmed. The moment they're ready they show up here — about 20 minutes, then a workshop with one of the captains.",
-      back: "Back to pilot home",
     },
   },
   passenger: {
-    account: "Account",
-    title: "Passenger home",
     browsing: "Browsing {chapter}",
     noChapter: "No chapter chosen yet",
+  },
+  member: {
+    nav: {
+      home: "Home",
+      rides: "My rides",
+      calendar: "Calendar",
+      chat: "Chat",
+      training: "Training",
+    },
+    navLabel: "Sections",
+    tabBarLabel: "Main",
+    action: { pilot: "Find open rides", passenger: "Book a ride" },
+    perspective: {
+      switchLabel: "Switch perspective",
+      label: "Perspective",
+      chapters: "{count} chapters",
+      noChapter: "No chapter yet",
+    },
+    user: {
+      pilot: { menuLabel: "Your account", account: "Account" },
+      passenger: { menuLabel: "Your account", account: "Account" },
+    },
+    topBar: {
+      pilot: {
+        account: "Your account",
+        switchHint: "Double-tap to switch perspective",
+      },
+      passenger: {
+        account: "Your account",
+        switchHint: "Double-tap to switch perspective",
+      },
+    },
+    guest: {
+      subtitle: "Looking around",
+      signIn: "Sign in",
+      hero: "Create your account",
+      heroHint: "Booking a ride takes an email or a phone number. That's all.",
+      greeting: "Welcome",
+      tagline:
+        "Have a look around first — the chapter you picked is right here.",
+    },
+    home: {
+      greeting: "Hi {name}",
+      pilot: { tagline: "Ready when you are." },
+      passenger: {
+        tagline: "Your next ride starts here.",
+        chooseChapter: "Choose a chapter",
+      },
+      nextRide: {
+        title: "Next ride",
+        pilot: {
+          empty:
+            "Nothing on your list yet. When your chapter posts open rides, the next one you take shows up here — date, passenger, meeting point.",
+        },
+        passenger: {
+          empty:
+            "Nothing booked yet. When you book a ride, the day, the time and the pilot who's coming to collect you land here.",
+        },
+      },
+      yourChapters: "Your chapters",
+      yourChapter: "Your chapter",
+    },
+    pages: {
+      rides: {
+        title: "My rides",
+        pilot: {
+          body: "Your first ride isn't on the list yet. When your chapter posts open rides, the ones that need a pilot appear here — pick one, and the trishaw is yours for the afternoon.",
+        },
+        passenger: {
+          body: "Nothing booked yet. Once your chapter opens booking, this is where your rides wait — the day, the time, and the pilot who rings the bell.",
+        },
+      },
+      calendar: {
+        title: "Calendar",
+        pilot: {
+          body: "An empty week, for now. Your rides, training dates and chapter meet-ups will line up here.",
+        },
+        passenger: {
+          body: "Nothing planned yet. Your upcoming rides appear here, with the date and the time your pilot arrives.",
+        },
+      },
+    },
+  },
+  chat: {
+    list: {
+      title: "Chat",
+      unreads: "Unreads",
+      search: "Search names and groups",
+      newChat: "New",
+      empty: {
+        title: "No messages yet",
+        body: "Write to the captain who signed you off, or to the pilot you rode with on Saturday. Everyone in your chapter is one tap away.",
+        cta: "Start a chat",
+      },
+      pane: {
+        title: "Pick a conversation",
+        body: "Your chats live on the left. Open one, or start a new chat with somebody from your chapter.",
+      },
+      noResults: "No name or group matches that.",
+      you: "You",
+      mutedLabel: "Muted",
+    },
+    thread: {
+      online: "Online",
+      offline: "Offline",
+      typingOne: "{name} is typing…",
+      typingTwo: "{first} and {second} are typing…",
+      typingMany: "{first} and {count} others are typing…",
+      seen: "Seen",
+      seenBy: "Seen by {count}",
+      edited: "edited",
+      deleted: "Message deleted",
+      reconnecting: "Reconnecting…",
+      frozen: {
+        title: "This chat has wrapped up",
+        body: "It closed when the ride ended. Either of you can pick it up again.",
+      },
+      announcementLocked:
+        "Only the person who started this group writes here. You still get every announcement.",
+      loadOlder: "Load older messages",
+      jumpToLatest: "Jump to the latest",
+      back: "All chats",
+      today: "Today",
+      yesterday: "Yesterday",
+    },
+    system: {
+      left: "{name} left the group",
+      continued: "{name} kept the conversation going",
+      announcementOn: "{name} turned this into an announcement channel",
+      announcementOff: "{name} opened the group up again",
+    },
+    composer: {
+      placeholder: "Write a message",
+      send: "Send",
+      reply: "Reply",
+      replyingTo: "Replying to {name}",
+      cancelReply: "Cancel reply",
+      bold: "Bold",
+      italic: "Italic",
+      strike: "Strikethrough",
+      code: "Code",
+      link: "Link",
+      list: "List",
+      quote: "Quote",
+      notSent: "Not sent",
+      retry: "Try again",
+    },
+    newChat: {
+      title: "New chat",
+      person: "Person",
+      group: "Group",
+      searchLabel: "Name, email or phone number",
+      searchPlaceholder: "Anna",
+      searching: "Looking…",
+      noMatches: "Nobody here by that name.",
+      change: "Change",
+      notFound: "Nobody here with that email or number.",
+      notReachable:
+        "You two don't share a chapter yet, so this door stays shut.",
+      self: "That one is you.",
+      startChat: "Start chat",
+      groupTitle: "Group name",
+      groupTitlePlaceholder: "Saturday crew",
+      chapter: "Chapter",
+      addPeople: "Add people",
+      people: "{count} in this group",
+      announcementHint:
+        "Above 100 people only you can write. Everyone else reads along.",
+      createGroup: "Create group",
+      tooFew: "A group needs at least two other people.",
+      tooMany: "A group holds 1,000 people at most.",
+      generic: "That didn't work. Try again.",
+    },
+    deletedAccount: "Deleted account",
+    errors: {
+      notMember: "This conversation isn't yours to open.",
+      frozen: "This chat has wrapped up. Pick it up again to write.",
+      announcementOnly: "Only the person who started this group writes here.",
+      tooLong: "That is longer than 4,000 characters.",
+      rateLimited: "Give it a moment, then send again.",
+      generic: "That didn't work. Try again.",
+    },
   },
   notifications: {
     title: "Notifications",
@@ -834,25 +1006,94 @@ const en = {
   },
   account: {
     title: "Account",
-    passkeys: "Passkeys",
-    passkeysBody:
-      "A passkey lets your own device sign you in — a fingerprint, a face, a PIN. Nothing to remember, nothing to type.",
-    add: "Add a passkey",
-    nameLabel: "Name this passkey (optional)",
-    namePlaceholder: "Work laptop",
-    unnamed: "Passkey",
-    thisDevice: "This device",
-    synced: "Synced",
-    added: "Passkey added.",
-    remove: "Remove",
-    removeConfirm: "Remove {name}?",
-    removeBody:
-      "To sign in on that device you'll need another passkey, or a code by email or text.",
-    empty: "No passkeys yet. Add one and this device remembers you.",
-    failed: "That didn't work. Try again.",
-    signInAgain: "It's been a while. Sign in again before adding a passkey.",
-    signInAgainAction: "Sign in again",
-    back: "Back",
+    description:
+      "Your details, your language, how we reach you, and how you sign in.",
+    status: { saving: "Saving", saved: "Saved {when}" },
+    field: {
+      edit: "Edit",
+      saved: "Saved.",
+      undo: "Undo",
+      undone: "Put back.",
+      invalid: "That doesn't look right.",
+      errors: { generic: "That didn't work. Try again." },
+    },
+    perspective: { title: "Viewing as" },
+    profile: {
+      title: "Profile",
+      name: "Name",
+      namePlaceholder: "Your name",
+      birthDate: "Birthday",
+      birthDatePlaceholder: "Add your birthday",
+      invalidBirthDate: "That birthday doesn't look right. Check the year.",
+      gender: "Gender",
+      genderPlaceholder: "Not set",
+      genders: { female: "Female", male: "Male", other: "Other" },
+    },
+    language: {
+      title: "Language",
+      body: "Emails and notifications come in this language too.",
+    },
+    notifications: {
+      title: "Notifications",
+      body: "The essentials — a ride confirmed, a chapter answering — always reach you. These are the extras.",
+      push: {
+        label: "Push",
+        hint: "A tap on your phone when something happens.",
+      },
+      email: { label: "Email", hint: "The same news, in your inbox." },
+      chat: {
+        push: {
+          label: "Messages",
+          hint: "A buzz when someone writes — unless you already have that chat open.",
+        },
+        email: {
+          label: "Messages by email",
+          hint: "Only when your phone can't be reached: one mail with what you missed.",
+        },
+      },
+      permissionDenied:
+        "Your phone is blocking notifications. Allow them in Settings, then try again.",
+    },
+    passkeys: {
+      title: "Passkeys",
+      body: "A passkey lets your own device sign you in — a fingerprint, a face, a PIN. Nothing to remember, nothing to type.",
+      add: "Add a passkey",
+      nameLabel: "Name this passkey (optional)",
+      namePlaceholder: "Work laptop",
+      unnamed: "Passkey",
+      thisDevice: "This device",
+      synced: "Synced",
+      added: "Passkey added.",
+      remove: "Remove",
+      removeConfirm: "Remove {name}?",
+      removeBody:
+        "To sign in on that device you'll need another passkey, or a code by email or text.",
+      empty: "No passkeys yet. Add one and this device remembers you.",
+      failed: "That didn't work. Try again.",
+      signInAgain: "It's been a while. Sign in again before adding a passkey.",
+      signInAgainAction: "Sign in again",
+      back: "Back",
+    },
+    danger: {
+      title: "Sign out or delete",
+      body: "Signing out keeps everything. Deleting takes your account, your chapters and your history with it — rides already ridden stay on the record.",
+      delete: {
+        open: "Delete account",
+        title: "Delete your account for good?",
+        body: "Your account, roles, requests and history go with it. Rides already ridden stay on the record.",
+        label: "Type {word} to confirm",
+        word: "DELETE",
+        submit: "Delete account",
+        done: "Your account is gone. Thank you for the wind in our hair.",
+        blocked:
+          "You still run a chapter or a country. Hand that over to someone else first — then this button is yours.",
+        errors: {
+          handOverAdmin: "Hand over your admin role first.",
+          rateLimited: "Give it a moment and try again.",
+          generic: "That didn't work. Try again.",
+        },
+      },
+    },
   },
   legal: {
     imprint: {

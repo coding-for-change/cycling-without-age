@@ -62,7 +62,7 @@ import type { ResolvedPlace } from "@/lib/mapbox";
 import { haptics } from "@/lib/native/haptics";
 import { cn, fill } from "@/lib/utils";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
-import { notify, type NotifyLabels } from "../../_components/action-feedback";
+import { notify, type NotifyLabels } from "@/components/action-feedback";
 import { TextField } from "../../_components/text-field";
 import { createCountryAction } from "../../countries/actions";
 import {
@@ -157,11 +157,6 @@ type SlugState = "idle" | "checking" | "free" | "taken";
 type Detected = { code: string; known: boolean };
 type Created = { id: string; slug: string; name: string };
 
-/**
- * Name it, place it. Everything the schema needs beyond those two is either
- * derived (the slug from the name, the country from the address) or optional,
- * so the drawer asks for two things and fills in the rest from Mapbox.
- */
 export function ChapterCreateDrawer({
   open,
   onOpenChange,
@@ -226,7 +221,6 @@ export function ChapterCreateDrawer({
     [latitude, longitude],
   );
 
-  // Mapbox owns the city until someone types over it.
   const autoCity = useRef<string | null>(null);
   const reverseTicket = useRef(0);
 
@@ -297,8 +291,6 @@ export function ChapterCreateDrawer({
     });
   };
 
-  // The drag is the truth about where the pin is; the reverse lookup only
-  // catches the address up to it.
   const movePin = useCallback(
     (coords: Coords) => {
       form.setValue("latitude", coords.lat, { shouldDirty: true });

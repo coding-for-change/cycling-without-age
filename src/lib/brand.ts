@@ -1,3 +1,5 @@
+export const ORG_NAME = "Cycling Without Age";
+
 export const brand = {
   font: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
   fontUrl: "https://rsms.me/inter/font-files/InterVariable.woff2",

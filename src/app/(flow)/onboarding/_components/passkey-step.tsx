@@ -29,8 +29,6 @@ export function PasskeyStep({
 }: {
   progress: StepProgress | null;
   strings: Strings;
-  /** Set when an admin is sent here by the enrolment gate: no skip, and success
-   *  returns to this path instead of the next onboarding step. */
   requiredNext?: string | null;
 }) {
   const router = useRouter();
@@ -40,7 +38,6 @@ export function PasskeyStep({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  // The server names the next step; a cached `/onboarding` redirect would replay.
   const leave = (result: { ok: true; next: string } | { ok: false }) =>
     router.push(result.ok ? result.next : "/onboarding", {
       transitionTypes: ["nav-forward"],

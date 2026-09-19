@@ -54,13 +54,11 @@ const USER = "user-1";
 const CHAPTER = "chapter-berlin";
 const ADMIN = "admin-9";
 
-// null = not a member of the chapter.
 const memberRow = (role: string | null) =>
   db.member.findUnique.mockResolvedValue(role === null ? null : { role });
 
 const roleWritten = () => db.member.upsert.mock.calls[0][0].update.role;
 
-// How many admins the chapter has besides whatever `memberRow` says.
 const admins = (count: number) =>
   db.member.findMany.mockResolvedValue(
     Array.from({ length: count }, () => ({ role: "admin" })),
@@ -108,7 +106,6 @@ describe("joining and role stacking", () => {
     expect(db.event.create).not.toHaveBeenCalled();
   });
 
-  // Nobody clicked for them, so there is no actor to leave out of the recipients.
   it("has no actor when someone joins on their own", async () => {
     memberRow(null);
     await membership.joinAsPassenger(USER, CHAPTER);
@@ -123,7 +120,6 @@ describe("joining and role stacking", () => {
 
   it("cannot grant a role that is not a chapter role", () => {
     memberRow("passenger");
-    // Rejected by the schema before any await, so it never reaches the DB.
     expect(() =>
       membership.grantChapterRole(USER, CHAPTER, "superadmin" as never),
     ).toThrow();
@@ -193,7 +189,6 @@ describe("the last admin of a chapter", () => {
     expect(roleWritten()).toBe("pilot");
   });
 
-  // Without the row lock two admins could both read "two admins" and both leave.
   it("is counted behind a chapter lock taken before the write", async () => {
     memberRow("admin,pilot");
     await membership.revokeChapterRole(USER, CHAPTER, "admin");
@@ -231,8 +226,6 @@ describe("applying as a pilot", () => {
     expect(db.member.upsert).not.toHaveBeenCalled();
   });
 
-  // Every route into an application goes through here, so the chapter admins
-  // hear about it whether it came from onboarding, the seed or the app.
   it("announces the application on the same transaction as the write", async () => {
     memberRow("passenger");
     await membership.applyAsPilot({ userId: USER, chapterId: CHAPTER });
@@ -431,7 +424,6 @@ describe("inviting a member", () => {
     ]);
   });
 
-  // Rejected by the schema before any await, so it never reaches the DB.
   it("refuses a role that is not a chapter role", () => {
     expect(() =>
       membership.inviteMember({

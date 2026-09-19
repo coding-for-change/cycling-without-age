@@ -385,10 +385,6 @@ const de: Dictionary = {
         title: "Rikschas",
         body: "Jede Rikscha, um die sich deine Ortsgruppe kümmert, wer sie zuletzt draußen hatte und wann sie wieder zur Wartung muss.",
       },
-      chat: {
-        title: "Nachrichten",
-        body: "Gespräche zwischen Piloten, Passagieren und der Ortsgruppe. Gesagt wurde noch nichts.",
-      },
       reports: {
         title: "Berichte",
         body: "Gefahrene Ausfahrten, ehrenamtliche Stunden, zurückgelegte Kilometer — die Zahlen, die eine Ortsgruppe braucht, wenn jemand fragt, was sie eigentlich tut.",
@@ -811,7 +807,6 @@ const de: Dictionary = {
         body: "{chapter} sagt willkommen. Schau die Trainingsvideos und triff dann eine Captain für deine erste Ausfahrt.",
         dismiss: "Alles klar",
       },
-      account: "Konto",
     },
     status: {
       pendingTitle: "Deine Anfrage liegt bei {chapter}",
@@ -831,14 +826,200 @@ const de: Dictionary = {
     training: {
       title: "Training für die Wartezeit",
       body: "Die Videos werden noch gedreht. Sobald sie fertig sind, stehen sie hier — rund 20 Minuten, danach ein Workshop mit einer der Captains.",
-      back: "Zurück zur Pilot-Startseite",
     },
   },
   passenger: {
-    account: "Konto",
-    title: "Startseite für Passagiere",
     browsing: "Sie sehen {chapter}",
     noChapter: "Sie haben noch keine Ortsgruppe gewählt",
+  },
+  // Pronomenfrei in geteilten Schlüsseln; ...pilot... in du-Form,
+  // ...passenger... in Sie-Form. Siehe docs/BRAND.md § Tone.
+  member: {
+    nav: {
+      home: "Start",
+      rides: "Meine Ausfahrten",
+      calendar: "Kalender",
+      chat: "Nachrichten",
+      training: "Training",
+    },
+    navLabel: "Bereiche",
+    tabBarLabel: "Hauptbereiche",
+    action: {
+      pilot: "Offene Ausfahrten finden",
+      passenger: "Ausfahrt buchen",
+    },
+    perspective: {
+      switchLabel: "Perspektive wechseln",
+      label: "Perspektive",
+      chapters: "{count} Ortsgruppen",
+      noChapter: "Noch keine Ortsgruppe",
+    },
+    user: {
+      pilot: { menuLabel: "Dein Konto", account: "Konto" },
+      passenger: { menuLabel: "Ihr Konto", account: "Konto" },
+    },
+    topBar: {
+      pilot: {
+        account: "Dein Konto",
+        switchHint: "Doppeltippen, um die Perspektive zu wechseln",
+      },
+      passenger: {
+        account: "Ihr Konto",
+        switchHint: "Doppeltippen, um die Perspektive zu wechseln",
+      },
+    },
+    guest: {
+      subtitle: "Sie sehen sich um",
+      signIn: "Anmelden",
+      hero: "Konto anlegen",
+      heroHint:
+        "Für eine Ausfahrt brauchen Sie eine E-Mail-Adresse oder eine Telefonnummer. Mehr nicht.",
+      greeting: "Willkommen",
+      tagline:
+        "Sehen Sie sich erst einmal um — die gewählte Ortsgruppe steht gleich hier.",
+    },
+    home: {
+      greeting: "Hallo {name}",
+      pilot: { tagline: "Bereit, wenn du es bist." },
+      passenger: {
+        tagline: "Ihre nächste Ausfahrt beginnt hier.",
+        chooseChapter: "Ortsgruppe wählen",
+      },
+      nextRide: {
+        title: "Nächste Ausfahrt",
+        pilot: {
+          empty:
+            "Auf deiner Liste steht noch nichts. Sobald deine Ortsgruppe offene Ausfahrten ausschreibt, steht die nächste hier — Datum, Passagier, Treffpunkt.",
+        },
+        passenger: {
+          empty:
+            "Noch nichts gebucht. Wenn Sie eine Ausfahrt buchen, stehen hier der Tag, die Uhrzeit und der Pilot, der Sie abholt.",
+        },
+      },
+      yourChapters: "Ortsgruppen",
+      yourChapter: "Ortsgruppe",
+    },
+    pages: {
+      rides: {
+        title: "Meine Ausfahrten",
+        pilot: {
+          body: "Deine erste Ausfahrt steht noch nicht auf der Liste. Sobald deine Ortsgruppe offene Ausfahrten ausschreibt, tauchen hier die auf, die einen Piloten brauchen — such dir eine aus, und die Rikscha gehört dir für den Nachmittag.",
+        },
+        passenger: {
+          body: "Noch nichts gebucht. Sobald Ihre Ortsgruppe die Buchung öffnet, warten Ihre Ausfahrten hier — der Tag, die Uhrzeit und der Pilot, der klingelt.",
+        },
+      },
+      calendar: {
+        title: "Kalender",
+        pilot: {
+          body: "Eine leere Woche, vorerst. Deine Ausfahrten, Trainingstermine und Treffen der Ortsgruppe reihen sich hier ein.",
+        },
+        passenger: {
+          body: "Noch nichts geplant. Ihre kommenden Ausfahrten stehen hier, mit dem Datum und der Uhrzeit, zu der Ihr Pilot kommt.",
+        },
+      },
+    },
+  },
+  chat: {
+    list: {
+      title: "Chat",
+      unreads: "Ungelesen",
+      search: "Namen und Gruppen durchsuchen",
+      newChat: "Neu",
+      empty: {
+        title: "Noch keine Nachrichten",
+        body: "Schreib dem Captain, der dich eingewiesen hat, oder dem Piloten von Samstag. Alle in deiner Ortsgruppe sind einen Tipp entfernt.",
+        cta: "Chat starten",
+      },
+      pane: {
+        title: "Wähl ein Gespräch",
+        body: "Deine Chats stehen links. Öffne eins — oder starte ein neues mit jemandem aus deiner Ortsgruppe.",
+      },
+      noResults: "Kein Name und keine Gruppe passt dazu.",
+      you: "Du",
+      mutedLabel: "Stumm",
+    },
+    thread: {
+      online: "Online",
+      offline: "Offline",
+      typingOne: "{name} schreibt …",
+      typingTwo: "{first} und {second} schreiben …",
+      typingMany: "{first} und {count} weitere schreiben …",
+      seen: "Gelesen",
+      seenBy: "Von {count} gelesen",
+      edited: "bearbeitet",
+      deleted: "Nachricht gelöscht",
+      reconnecting: "Verbindung wird wiederhergestellt …",
+      frozen: {
+        title: "Dieser Chat ist abgeschlossen",
+        body: "Er wurde mit dem Ende der Fahrt geschlossen. Ihr beide könnt ihn jederzeit wieder aufnehmen.",
+      },
+      announcementLocked:
+        "Hier schreibt nur, wer die Gruppe gestartet hat. Jede Ankündigung erreicht dich trotzdem.",
+      loadOlder: "Ältere Nachrichten laden",
+      jumpToLatest: "Zur neuesten Nachricht",
+      back: "Alle Chats",
+      today: "Heute",
+      yesterday: "Gestern",
+    },
+    system: {
+      left: "{name} hat die Gruppe verlassen",
+      continued: "{name} hat das Gespräch wieder aufgenommen",
+      announcementOn: "{name} hat daraus einen Ankündigungskanal gemacht",
+      announcementOff: "{name} hat die Gruppe wieder für alle geöffnet",
+    },
+    composer: {
+      placeholder: "Nachricht schreiben",
+      send: "Senden",
+      reply: "Antworten",
+      replyingTo: "Antwort an {name}",
+      cancelReply: "Antwort verwerfen",
+      bold: "Fett",
+      italic: "Kursiv",
+      strike: "Durchgestrichen",
+      code: "Code",
+      link: "Link",
+      list: "Liste",
+      quote: "Zitat",
+      notSent: "Nicht gesendet",
+      retry: "Nochmal versuchen",
+    },
+    newChat: {
+      title: "Neuer Chat",
+      person: "Person",
+      group: "Gruppe",
+      searchLabel: "Name, E-Mail oder Telefonnummer",
+      searchPlaceholder: "Anna",
+      searching: "Suche…",
+      noMatches: "Niemand hier mit diesem Namen.",
+      change: "Ändern",
+      notFound: "Niemand mit dieser E-Mail oder Nummer.",
+      notReachable:
+        "Ihr seid noch in keiner gemeinsamen Ortsgruppe — deshalb bleibt diese Tür zu.",
+      self: "Das bist du selbst.",
+      startChat: "Chat starten",
+      groupTitle: "Gruppenname",
+      groupTitlePlaceholder: "Samstagsrunde",
+      chapter: "Ortsgruppe",
+      addPeople: "Leute hinzufügen",
+      people: "{count} in dieser Gruppe",
+      announcementHint:
+        "Ab 100 Leuten schreibst nur noch du. Alle anderen lesen mit.",
+      createGroup: "Gruppe erstellen",
+      tooFew: "Eine Gruppe braucht mindestens zwei weitere Leute.",
+      tooMany: "In eine Gruppe passen höchstens 1.000 Leute.",
+      generic: "Das hat nicht geklappt. Versuch es nochmal.",
+    },
+    deletedAccount: "Gelöschtes Konto",
+    errors: {
+      notMember: "Dieses Gespräch gehört nicht dir.",
+      frozen:
+        "Dieser Chat ist abgeschlossen. Nimm ihn wieder auf, um zu schreiben.",
+      announcementOnly: "Hier schreibt nur, wer die Gruppe gestartet hat.",
+      tooLong: "Das sind mehr als 4.000 Zeichen.",
+      rateLimited: "Einen Moment, dann nochmal senden.",
+      generic: "Das hat nicht geklappt. Versuch es nochmal.",
+    },
   },
   // Pronomenfrei: dieselbe Glocke hängt über Sie-Passagieren und du-Piloten.
   notifications: {
@@ -861,27 +1042,97 @@ const de: Dictionary = {
     // du-Form: Das Konto teilen sich Admins, Piloten und Passagiere; die
     // Sicherheitstexte richten sich an Aktive.
     title: "Konto",
-    passkeys: "Passkeys",
-    passkeysBody:
-      "Mit einem Passkey meldet dich dein eigenes Gerät an — Fingerabdruck, Gesicht oder PIN. Nichts zu merken, nichts zu tippen.",
-    add: "Passkey hinzufügen",
-    nameLabel: "Passkey benennen (optional)",
-    namePlaceholder: "Arbeitslaptop",
-    unnamed: "Passkey",
-    thisDevice: "Dieses Gerät",
-    synced: "Synchronisiert",
-    added: "Passkey hinzugefügt.",
-    remove: "Entfernen",
-    removeConfirm: "{name} entfernen?",
-    removeBody:
-      "Zum Anmelden auf diesem Gerät brauchst du dann einen anderen Passkey oder einen Code per E-Mail oder SMS.",
-    empty:
-      "Noch keine Passkeys. Leg einen an, und dieses Gerät erkennt dich wieder.",
-    failed: "Das hat nicht geklappt. Versuch es erneut.",
-    signInAgain:
-      "Es ist eine Weile her. Melde dich neu an, bevor du einen Passkey anlegst.",
-    signInAgainAction: "Neu anmelden",
-    back: "Zurück",
+    description:
+      "Deine Angaben, deine Sprache, wie wir dich erreichen und wie du dich anmeldest.",
+    status: { saving: "Speichert", saved: "Gespeichert {when}" },
+    field: {
+      edit: "Bearbeiten",
+      saved: "Gespeichert.",
+      undo: "Rückgängig",
+      undone: "Zurückgesetzt.",
+      invalid: "Das sieht nicht richtig aus.",
+      errors: { generic: "Das hat nicht geklappt. Versuch es noch mal." },
+    },
+    perspective: { title: "Ansicht als" },
+    profile: {
+      title: "Profil",
+      name: "Name",
+      namePlaceholder: "Dein Name",
+      birthDate: "Geburtstag",
+      birthDatePlaceholder: "Geburtstag ergänzen",
+      invalidBirthDate:
+        "Der Geburtstag sieht nicht richtig aus. Prüf das Jahr.",
+      gender: "Geschlecht",
+      genderPlaceholder: "Nicht angegeben",
+      genders: { female: "Weiblich", male: "Männlich", other: "Divers" },
+    },
+    language: {
+      title: "Sprache",
+      body: "E-Mails und Benachrichtigungen kommen ebenfalls in dieser Sprache.",
+    },
+    notifications: {
+      title: "Benachrichtigungen",
+      body: "Das Wichtige — eine bestätigte Ausfahrt, eine Antwort der Ortsgruppe — kommt immer an. Hier geht es um den Rest.",
+      push: {
+        label: "Push",
+        hint: "Ein kurzes Summen auf dem Handy, wenn etwas passiert.",
+      },
+      email: { label: "E-Mail", hint: "Dieselben Neuigkeiten, im Postfach." },
+      chat: {
+        push: {
+          label: "Nachrichten",
+          hint: "Ein Summen, wenn dir jemand schreibt — außer du hast den Chat gerade offen.",
+        },
+        email: {
+          label: "Nachrichten per E-Mail",
+          hint: "Nur wenn dein Handy nicht erreichbar ist: eine Mail mit dem, was du verpasst hast.",
+        },
+      },
+      permissionDenied:
+        "Das Handy blockiert Benachrichtigungen. Erlaube sie in den Einstellungen und versuch es noch einmal.",
+    },
+    passkeys: {
+      title: "Passkeys",
+      body: "Mit einem Passkey meldet dich dein eigenes Gerät an — Fingerabdruck, Gesicht oder PIN. Nichts zu merken, nichts zu tippen.",
+      add: "Passkey hinzufügen",
+      nameLabel: "Passkey benennen (optional)",
+      namePlaceholder: "Arbeitslaptop",
+      unnamed: "Passkey",
+      thisDevice: "Dieses Gerät",
+      synced: "Synchronisiert",
+      added: "Passkey hinzugefügt.",
+      remove: "Entfernen",
+      removeConfirm: "{name} entfernen?",
+      removeBody:
+        "Zum Anmelden auf diesem Gerät brauchst du dann einen anderen Passkey oder einen Code per E-Mail oder SMS.",
+      empty:
+        "Noch keine Passkeys. Leg einen an, und dieses Gerät erkennt dich wieder.",
+      failed: "Das hat nicht geklappt. Versuch es erneut.",
+      signInAgain:
+        "Es ist eine Weile her. Melde dich neu an, bevor du einen Passkey anlegst.",
+      signInAgainAction: "Neu anmelden",
+      back: "Zurück",
+    },
+    danger: {
+      title: "Abmelden oder löschen",
+      body: "Beim Abmelden bleibt alles erhalten. Beim Löschen gehen Konto, Ortsgruppen und Verlauf mit — gefahrene Ausfahrten bleiben im Protokoll.",
+      delete: {
+        open: "Konto löschen",
+        title: "Konto endgültig löschen?",
+        body: "Konto, Rollen, Anfragen und Verlauf gehen damit weg. Gefahrene Ausfahrten bleiben im Protokoll.",
+        label: "Tipp {word} zur Bestätigung",
+        word: "DELETE",
+        submit: "Konto löschen",
+        done: "Das Konto ist gelöscht. Danke für den Wind in unseren Haaren.",
+        blocked:
+          "Du führst noch eine Ortsgruppe oder ein Land. Gib das zuerst ab — dann gehört dieser Knopf dir.",
+        errors: {
+          handOverAdmin: "Gib zuerst deine Adminrolle ab.",
+          rateLimited: "Einen Moment noch, dann versuch es erneut.",
+          generic: "Das hat nicht geklappt. Versuch es noch mal.",
+        },
+      },
+    },
   },
   legal: {
     imprint: {

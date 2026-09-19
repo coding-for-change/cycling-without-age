@@ -6,9 +6,6 @@ export type Gender = z.infer<typeof gender>;
 export const residence = z.enum(["careHome", "home"]);
 export type Residence = z.infer<typeof residence>;
 
-/** Old enough to have signed up themselves, young enough to be a person. Both
- *  bounds exist so a mistyped year lands as a validation error rather than a
- *  1900-year-old passenger in a chapter's list. */
 export const birthDate = z.coerce
   .date()
   .min(new Date("1900-01-01"))
@@ -35,3 +32,26 @@ export const consentInput = z.object({
   data: z.boolean(),
 });
 export type ConsentInput = z.infer<typeof consentInput>;
+
+const nonEmpty = (patch: Record<string, unknown>) =>
+  Object.values(patch).some((value) => value !== undefined);
+
+export const ownDetailsPatch = z
+  .object({
+    name: z.string().trim().min(1).max(120).optional(),
+    birthDate: birthDate.optional(),
+    gender: gender.optional(),
+  })
+  .refine(nonEmpty);
+export type OwnDetailsPatch = z.infer<typeof ownDetailsPatch>;
+export type OwnDetailsPatchInput = z.input<typeof ownDetailsPatch>;
+
+export const notificationPreferences = z
+  .object({
+    push: z.boolean().optional(),
+    email: z.boolean().optional(),
+    chatPush: z.boolean().optional(),
+    chatEmail: z.boolean().optional(),
+  })
+  .refine(nonEmpty);
+export type NotificationPreferences = z.infer<typeof notificationPreferences>;

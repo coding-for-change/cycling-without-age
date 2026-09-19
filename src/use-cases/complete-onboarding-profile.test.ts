@@ -66,8 +66,6 @@ describe("completeOnboardingProfile", () => {
     });
   });
 
-  // The welcome is rendered by the worker from the stored account language, so
-  // the language has to be written before the event goes out.
   it("stores the language before it announces the welcome", async () => {
     await completeOnboardingProfile({
       userId: USER,
@@ -82,7 +80,6 @@ describe("completeOnboardingProfile", () => {
     );
   });
 
-  /** A pilot's chapter is still an application at this point, not a membership. */
   it("takes a pilot's chapter from their application", async () => {
     listMemberships.mockResolvedValue([]);
 

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { domainCode } from "@/lib/domain-error";
+import { actionFailure } from "@/lib/domain-error";
 import { z } from "zod";
 import {
   chapters,
@@ -36,20 +36,14 @@ export type ChapterCreated =
 
 const chapterId = z.string().min(1).max(64);
 
-const failed = (
-  error: unknown,
-): { ok: false; error: "slugTaken" | "generic" } =>
-  domainCode(error) === "slugTaken"
-    ? { ok: false, error: "slugTaken" }
-    : { ok: false, error: "generic" };
+const failed = (error: unknown) =>
+  actionFailure(error, { slugTaken: "slugTaken" });
 
 export async function createChapterAction(
   input: z.input<typeof chapterInput>,
 ): Promise<ChapterCreated> {
   const parsed = chapterInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: "generic" };
-  // Which country the chapter lands in decides who may create it, so the
-  // payload is parsed before the guard reads `countryId` off it.
   const session = await requireCountryAdmin(parsed.data.countryId);
 
   try {
@@ -106,10 +100,6 @@ export async function deleteChapterAction(
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/* Live helpers behind the create drawer and the detail page                   */
-/* -------------------------------------------------------------------------- */
-
 const SLUG_LIMIT = { max: 60, windowMs: 60_000 };
 const SEARCH_LIMIT = { max: 60, windowMs: 60_000 };
 const RESOLVE_LIMIT = { max: 30, windowMs: 60_000 };
@@ -131,7 +121,6 @@ const searchInput = z.object({
   language: z.string().max(8).optional(),
 });
 
-/** Care homes are points of interest, so the search asks for those too. */
 export async function suggestChapterPlaces(
   input: unknown,
 ): Promise<PlaceSuggestion[]> {

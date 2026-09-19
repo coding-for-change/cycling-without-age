@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { domainCode, isUniqueViolation } from "@/lib/domain-error";
+import { actionFailure, isUniqueViolation } from "@/lib/domain-error";
 import { z } from "zod";
 import {
   chapters,
@@ -20,10 +20,8 @@ const id = z.string().min(1).max(64);
 const appointInput = z.object({ countryId: id, email: z.email() });
 const removeInput = z.object({ countryId: id, userId: id });
 
-const failed = (error: unknown): CountryActionResult =>
-  domainCode(error) === "codeTaken"
-    ? { ok: false, error: "codeTaken" }
-    : { ok: false, error: "generic" };
+const failed = (error: unknown) =>
+  actionFailure(error, { codeTaken: "codeTaken" });
 
 export async function createCountryAction(
   input: z.input<typeof countryInput>,
@@ -96,8 +94,6 @@ export async function appointCountryAdminAction(
     revalidatePath("/admin", "layout");
     return { ok: true };
   } catch (error) {
-    // Appointing someone who already runs the country asks for a state that is
-    // already true.
     if (isUniqueViolation(error)) return { ok: true };
     return { ok: false, error: "generic" };
   }

@@ -1,8 +1,8 @@
-import { getEmailStrings, resolveEmailLocale } from "@/emails/strings";
+import { resolveEmailLocale } from "@/emails/strings";
 import { notifications } from "@/features/notifications";
 import { profile } from "@/features/profile";
 import { isPushConfigured, sendPush } from "@/lib/push";
-import { kindOf } from "./kinds";
+import { kindOf, renderMessage } from "./kinds";
 
 export async function deliverPush(notificationId: string) {
   const notification = await notifications.get(notificationId);
@@ -40,14 +40,8 @@ export async function deliverPush(notificationId: string) {
   }
 
   const locale = resolveEmailLocale(account.locale);
-  const message = kind.message(
-    kind.payload.parse(notification.payload),
-    getEmailStrings(locale),
-    locale,
-  );
+  const message = renderMessage(kind, notification.payload, locale);
 
-  // Missing credentials are a setup state, not an outage: the row records it
-  // and the job completes instead of retrying five times against nothing.
   if (!isPushConfigured()) {
     if (process.env.NODE_ENV !== "production") {
       console.info(
@@ -70,7 +64,6 @@ export async function deliverPush(notificationId: string) {
 
     await notifications.removeDeviceTokens(invalidTokens);
 
-    // Every token was dead: nothing to retry, the devices are already gone.
     if (sent > 0) await notifications.deliverySent(delivery.id, null);
     else await notifications.deliveryFailed(delivery.id, "all tokens rejected");
   } catch (error) {

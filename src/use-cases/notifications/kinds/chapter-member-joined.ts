@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
-import { profile } from "@/features/profile";
 import { fill } from "@/lib/utils";
+import { nameOfChapter, nameOfPerson } from "./lookups";
 import { defineKind } from "./types";
+import { ORG_NAME } from "@/lib/brand";
 
 export const chapterMemberJoined = defineKind({
   event: "chapter.memberJoined",
@@ -13,9 +14,6 @@ export const chapterMemberJoined = defineKind({
     memberName: z.string().nullable(),
     chapterName: z.string().nullable(),
   }),
-  // An admin who joins their own chapter, or who signs a passenger up, is not
-  // told about their own action. A chapter that switched the card off gets no
-  // row at all rather than a skipped delivery.
   recipients: async (event) => {
     const settings = await chapters.getSettings(event.chapterId);
     if (!settings.notifyOnMemberJoined) return [];
@@ -25,16 +23,19 @@ export const chapterMemberJoined = defineKind({
         (userId) => userId !== event.actorUserId && userId !== event.userId,
       );
   },
-  params: async (event) => ({
-    memberName: (await profile.getProfile(event.userId))?.name ?? null,
-    chapterName: (await chapters.getChapter(event.chapterId))?.name ?? null,
-  }),
+  params: async (event) => {
+    const [memberName, chapterName] = await Promise.all([
+      nameOfPerson(event.userId),
+      nameOfChapter(event.chapterId),
+    ]);
+    return { memberName, chapterName };
+  },
   href: (event) => `/admin/members/${event.userId}`,
   message: ({ memberName, chapterName }, strings) => {
     const copy = strings.memberJoined;
     const values = {
       name: memberName ?? copy.anonymous,
-      chapter: chapterName ?? "Cycling Without Age",
+      chapter: chapterName ?? ORG_NAME,
     };
     return {
       subject: fill(copy.subject, values),

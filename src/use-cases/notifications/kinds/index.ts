@@ -1,7 +1,8 @@
+import { getEmailStrings } from "@/emails/strings";
+import type { Locale } from "@/lib/i18n/locales";
 import type { AnyKind } from "./types";
 import { chapterMemberJoined } from "./chapter-member-joined";
-import { countryAdminAppointed } from "./country-admin-appointed";
-import { countryAdminRemoved } from "./country-admin-removed";
+import { countryAdminAppointed, countryAdminRemoved } from "./country-admin";
 import { memberInvited } from "./member-invited";
 import { memberRoleChanged } from "./member-role-changed";
 import { pilotApplicationDecided } from "./pilot-application-decided";
@@ -21,8 +22,16 @@ export const kinds: AnyKind[] = [
 
 const byEvent = new Map(kinds.map((kind) => [kind.event as string, kind]));
 
+export const findKind = (eventType: string) => byEvent.get(eventType);
+
 export function kindOf(eventType: string): AnyKind {
-  const kind = byEvent.get(eventType);
+  const kind = findKind(eventType);
   if (!kind) throw new Error(`[notifications] no kind for ${eventType}`);
   return kind;
 }
+
+export const renderMessage = (
+  kind: AnyKind,
+  payload: unknown,
+  locale: Locale,
+) => kind.message(kind.payload.parse(payload), getEmailStrings(locale), locale);

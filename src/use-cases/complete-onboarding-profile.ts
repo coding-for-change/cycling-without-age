@@ -34,13 +34,10 @@ export async function completeOnboardingProfile({
     }
   }
 
-  // The locale first: the welcome that `completeOnboarding` emits is written in
-  // whatever language the account carries by the time the worker picks it up.
   await profile.setLocale(userId, locale);
   await profile.completeOnboarding(userId, { chapterId, role });
 }
 
-/** A pilot's chapter is still an application at this point, not a membership. */
 async function chapterOf(userId: string, role: OnboardingRole) {
   if (role === "passenger") {
     const joined = await membership.listMembershipsOfUser(userId);

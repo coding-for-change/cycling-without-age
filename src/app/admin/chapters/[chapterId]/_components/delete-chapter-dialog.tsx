@@ -2,17 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { fill } from "@/lib/utils";
-import type { NotifyLabels } from "../../../_components/action-feedback";
 import {
   ConfirmDeleteDialog,
   type ConfirmDeleteLabels,
-} from "../../../_components/confirm-delete-dialog";
+} from "@/components/confirm-delete-dialog";
 import { deleteChapterAction } from "../../actions";
 
-export type DeleteChapterLabels = ConfirmDeleteLabels & {
-  footprint: string;
-  errors: NotifyLabels["errors"];
-};
+export type DeleteChapterLabels = ConfirmDeleteLabels & { footprint: string };
 
 export function DeleteChapterDialog({
   chapterId,
@@ -45,7 +41,6 @@ export function DeleteChapterDialog({
       })}
       labels={labels}
       cancel={cancel}
-      errors={labels.errors}
       action={() => deleteChapterAction(chapterId)}
       onDone={() => router.push(backHref)}
     />

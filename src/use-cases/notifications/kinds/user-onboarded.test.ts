@@ -64,7 +64,6 @@ describe("the welcome notification", () => {
     expect((await render()).note).toBeNull();
   });
 
-  // Rows written before chapters could leave a note carry no key at all.
   it("still parses a payload stored before notes existed", () => {
     expect(
       userOnboarded.payload.parse({ chapterName: "München", role: "pilot" }),

@@ -5,11 +5,6 @@ import { useState } from "react";
 import { isHttpUrl } from "@/features/chapters/schemas";
 import { cn, getInitials } from "@/lib/utils";
 
-/**
- * The chapter's logo when it has one that loads, its initials on mint when it
- * does not. `unoptimized` because the URL is whatever the admin pasted, and
- * the image proxy only serves allow-listed hosts.
- */
 export function ChapterLogo({
   logo,
   name,

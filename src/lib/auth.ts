@@ -21,6 +21,7 @@ import { OtpEmail } from "@/emails/otp";
 import { sendSms } from "@/lib/sms";
 import { phoneTempEmail } from "@/lib/identity";
 import { buildSessionAccess } from "@/use-cases/build-session-access";
+import { ORG_NAME } from "@/lib/brand";
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -37,9 +38,8 @@ const devTrustedOrigins =
           .filter(Boolean),
       ];
 
-// The org plugin's REST endpoints (/api/auth/organization/*) bypass our facades
-// entirely, so every chapter role gets the member statement set — empty
-// organization/member/invitation — and role changes only happen via withRoles.
+// The org plugin's REST endpoints bypass the facades, so every role gets the
+// empty member statement set and role changes only happen via withRoles.
 export const organizationRoles = {
   admin: orgMemberAc,
   pilot: orgMemberAc,
@@ -55,7 +55,7 @@ const passkeyOrigins = (process.env.PASSKEY_ANDROID_ORIGINS ?? "")
   .filter(Boolean);
 
 export const auth = betterAuth({
-  appName: "Cycling Without Age",
+  appName: ORG_NAME,
   database: prismaAdapter(prisma, { provider: "mysql" }),
   trustedOrigins: devTrustedOrigins,
   session: {
@@ -103,7 +103,7 @@ export const auth = betterAuth({
       signUpOnVerification: { getTempEmail: phoneTempEmail },
     }),
     passkey({
-      rpName: "Cycling Without Age",
+      rpName: ORG_NAME,
       ...(passkeyOrigins.length > 0
         ? { origin: [new URL(APP_URL).origin, ...passkeyOrigins] }
         : {}),

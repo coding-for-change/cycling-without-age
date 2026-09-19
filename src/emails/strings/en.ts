@@ -1,16 +1,3 @@
-/**
- * Email copy, kept apart from the page dictionary on purpose. `getDictionary()`
- * reads the request cookie, so it only works while the recipient happens to be
- * the person browsing — a CRON job, an admin action or a queued send has no
- * cookie to read. Everything here takes the locale as an argument instead.
- *
- * This is also the seam a super admin will eventually edit through: an override
- * row keyed by (template, locale) can shadow these files without touching a
- * template.
- *
- * Source of truth for the shape. `da` and `de` are typed against it, so a missing
- * or extra key is a build error.
- */
 const en = {
   otp: {
     subject: "{otp} is your Cycling Without Age code",
@@ -160,6 +147,23 @@ const en = {
     cta: "Open Cycling Without Age",
     footer:
       "You received this email because your role at Cycling Without Age changed.",
+  },
+  chatDigest: {
+    subjectDirect: "{name} wrote to you",
+    subjectGroup: {
+      one: "{count} new message in {title}",
+      other: "{count} new messages in {title}",
+    },
+    preview: "The messages waiting for you",
+    heading: "While you were away",
+    intro: {
+      one: "{count} unread message in {title}.",
+      other: "{count} unread messages in {title}.",
+    },
+    cta: "Open the conversation",
+    more: "and {count} more",
+    someone: "Someone",
+    footer: "You received this email because push cannot reach you.",
   },
   roles: {
     admin: "a chapter admin",

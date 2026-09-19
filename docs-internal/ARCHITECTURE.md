@@ -45,7 +45,9 @@ behind it.
 ```text
 src/
 ├── app/                  # ROUTING: Pages, Layouts, and API Route handlers.
-│   ├── api/              # External-only endpoints (Webhooks, etc.).
+│   ├── api/              # Endpoints no Server Action can be: webhooks, and the chat SSE stream.
+│   ├── admin/            # The admin shell: inset sidebar, top bar, ⌘K.
+│   ├── (member)/         # The member shell: /pilot and /passenger, one implementation.
 │   └── (routes)/         # UI Routes. Minimal logic. Calls Use Cases/Facades.
 ├── use-cases/            # GLOBAL ORCHESTRATORS: Cross-feature logic.
 ├── features/             # BOUNDED CONTEXTS: Domain-specific modules.
@@ -58,6 +60,7 @@ src/
 │       ├── index.ts      # PUBLIC API: Export ONLY the Facade and Components.
 │       └── schemas.ts    # Contracts: Zod schemas and TS types.
 ├── components/           # SHARED UI: cross-route components over `lib` infra.
+│   ├── account/          # The account surface (dialog + sheet) and its sections.
 │   ├── notifications/    # The bell, shared by admin, pilot and passenger.
 │   └── ui/               # ATOMIC UI: stateless shadcn primitives.
 ├── worker/               # BOUNDARY: BullMQ workers. Same image, second command.
@@ -75,7 +78,8 @@ src/
 The iOS (`ios/`) and Android (`android/`) apps are thin Capacitor shells whose WebView loads the
 deployed site (remote-URL shell — the app is server-rendered and cannot be statically exported).
 Native plugin access is cross-cutting infrastructure and lives in `src/lib/native/*`
-(`haptics.ts`, `push.ts`, `native-bootstrap.tsx`), same status as `lib/auth-guards`: any layer's
+(`haptics.ts`, `push.ts`, `app.ts`, `keyboard.ts`, `back-policy.ts`, `native-bootstrap.tsx`,
+`native-back-handler.tsx`), same status as `lib/auth-guards`: any layer's
 client components may import the wrappers, but `@capacitor/*`, `@capacitor-firebase/*` and
 `firebase` are never imported outside `src/lib/native/` (lint-enforced). The server half of push
 is the mirror image: `firebase-admin` may only be imported by `src/lib/push.ts`, so the
@@ -429,16 +433,17 @@ table stores facts.
 
 ### Notification bell (`src/components/notifications`)
 
-The bell is not a feature slice and not an admin component. Three route groups show the same
-inbox — the admin top bar, `/pilot` and `/passenger` — so it lives in `src/components/` with
-the other cross-route UI, one server component (`notification-bell.tsx`) over the
-`listInbox`/`unseenCount` use case and one client popover (`notification-bell-menu.tsx`) that
-holds nothing but open state.
+The bell is not a feature slice and not an admin component. Two shells show the same inbox —
+the admin top bar and the member top bar (`/pilot` and `/passenger`) — so it lives in
+`src/components/` with the other cross-route UI, one server component (`notification-bell.tsx`)
+over the `listInbox`/`unseenCount` use case and one client popover
+(`notification-bell-menu.tsx`) that holds nothing but open state.
 
 Every call site wraps it in `<Suspense>`. The bell reads the session and the request headers,
 which under `cacheComponents` is a request-time read: outside a Suspense boundary it fails the
-build rather than the request. The fallback is a plain skeleton, `null` on `/passenger` so a
-signed-out visitor never sees a bell flash where there will be none.
+build rather than the request. The fallback is a plain skeleton. `MemberChrome` renders the
+whole thing — bell *and* fallback — as `null` when there is no session, so a guest on
+`/passenger` never sees a control flash where there will be none.
 
 Its two actions — `markInboxSeen`, `markNotificationRead` — deliberately **do not**
 `revalidatePath`. A Server Action re-renders the route it was called from, and the badge and
@@ -626,3 +631,50 @@ JSON, or a payload that fails the caller's Zod schema all return `null` and the 
 back to its no-draft copy. Nothing from `sessionStorage` is ever trusted as input to a write:
 the Book-a-ride confirmation only *displays* the draft. When ride requests become real rows,
 the draft stays a UI convenience and the Server Action re-validates from scratch.
+
+## Chat
+
+Permanent 1:1 conversations started by contact lookup, group conversations scoped to a chapter,
+and a `frozenAt` state reserved for the ride chats that come later. The slice is
+`src/features/chat` (schemas → services → facade → actions → components), joined to the rest of
+the app by `src/use-cases/chat/*` and `src/use-cases/chat-notifications/*`.
+
+### The transport is SSE, and why there is no second server
+
+Sends are Server Actions. Everything the server pushes back — new messages, edits, reactions,
+read positions, typing, presence — arrives over one `text/event-stream` from
+`GET /api/chat/stream`. A WebSocket server would be a second process and a second origin: a
+custom server "cannot be used together" with `output: "standalone"`, which the Dockerfile
+relies on. SSE needs no new dependency, inherits the same better-auth cookie inside the
+Capacitor WebView, and Caddy streams it unbuffered.
+
+Pub/sub is best-effort by design. Every message carries a per-conversation `seq`, so a dropped
+frame is repaired by the client's reconnect resync (`syncInboxAction` plus
+`loadMessagesAction({ afterSeq })`) rather than by a delivery guarantee. `publish` is wrapped in
+a 2 s timeout and logs instead of throwing: an unreachable Redis must never fail a chat write.
+The client transport sits behind `ChatRealtimeProvider`, so swapping SSE for WebSockets later
+touches one file.
+
+### Channels
+
+| Channel | Carries | Published by |
+| --- | --- | --- |
+| `user:<userId>` | `message.created`, `message.updated`, `reaction.changed`, `conversation.updated`, `conversation.created`, `member.left` | the facade, after commit, one publish per member (pipelined) |
+| `conv:<conversationId>` | `typing`, `read` | the facade, from `typingAction` / `markReadAction` |
+| `presence` | `presence { userId, online }` | `lib/realtime/presence.ts`, on the 0→1 and →0 transitions only |
+
+A stream subscribes to its own user channel, the focused conversation channel, and `presence`
+filtered to the viewer's contact set (`chat.listContactUserIds`, refreshed when a
+`conversation.created` arrives). `lib/realtime/events.ts` types the wire format structurally in
+zod — `src/lib` may not import from `src/features` — so the feature's view types and the wire
+types are kept field-identical by hand, with dates as ISO strings on both sides.
+
+
+### Envelope encryption
+
+Message bodies are AES-256-GCM ciphertext in a `Blob`, never plaintext. Each conversation owns a
+random 32-byte DEK, wrapped under `CHAT_MASTER_KEY` (base64, 32 bytes) and stored in
+`Conversation.dek` with a `keyVersion`; unwrapped DEKs live in a 1,000-entry in-process LRU.
+Each message uses a fresh 12-byte IV with the conversation id as AAD, so a ciphertext cannot be
+replayed into another conversation. All of it is in `src/lib/crypto/chat-cipher.ts` and only the
+facade calls it — services hand Bytes in and Bytes out.

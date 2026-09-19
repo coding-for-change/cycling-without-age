@@ -74,8 +74,6 @@ export function ConsentStep({
   };
 
   const submit = () => {
-    // The box arrives pre-ticked for someone who answered before, so the
-    // toggle alone would never ask iOS; asking here covers that path too.
     if (ticked.notifications) void requestNotificationPermission();
     startTransition(async () => {
       const result = await submitConsent({
@@ -180,8 +178,6 @@ function LegalLinks({ strings }: { strings: Strings }) {
             href={part === "{imprint}" ? "/legal/imprint" : "/legal/privacy"}
             target="_blank"
             rel="noopener noreferrer"
-            // Stop the label's own click handler from toggling the box when the
-            // person only wanted to read what they are agreeing to.
             onClick={(event) => event.stopPropagation()}
             className="underline underline-offset-2 hover:text-ink"
           >

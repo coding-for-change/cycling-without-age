@@ -17,15 +17,8 @@ import type { ScopeArg } from "@/lib/commands";
 import type { ResolvedNavItem } from "../nav";
 import type { ScopeChoice } from "../scopes";
 import { readScopeArg } from "./scope-url";
+import { matchesPath } from "@/lib/nav-match";
 
-/**
- * The scope half of the breadcrumb comes from the URL, not from the server: a
- * Layout cannot read `searchParams`, so a label resolved server-side would keep
- * saying "München" after someone widened to the whole country.
- *
- * `pt` carries the notch — the WebView in the Capacitor shell draws under it,
- * and this bar is the topmost thing on the page.
- */
 export function AdminTopBar({
   items,
   scopes,
@@ -53,9 +46,7 @@ export function AdminTopBar({
 
   const section =
     items.find(
-      (item) =>
-        item.href !== "/admin" &&
-        (pathname === item.href || pathname.startsWith(`${item.href}/`)),
+      (item) => item.href !== "/admin" && matchesPath(pathname, item.href),
     ) ?? items.find((item) => item.href === "/admin");
 
   return (

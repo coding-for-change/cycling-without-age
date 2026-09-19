@@ -3,11 +3,12 @@ const send = jest.fn();
 jest.mock("resend", () => ({
   Resend: jest.fn(() => ({ emails: { send } })),
 }));
+jest.mock("@react-email/components", () => ({
+  render: jest.fn(async () => "<p>Hej Bo</p>"),
+}));
 
 const ORIGINAL_ENV = process.env;
 
-// `mailer` reads the environment and builds its Resend client at import time,
-// so each case needs the module loaded afresh behind the env it is testing.
 const loadMailer = async () => {
   let mailer!: typeof import("@/lib/mailer");
   await jest.isolateModulesAsync(async () => {
@@ -46,6 +47,18 @@ describe("sendMail against Resend", () => {
     expect(send).toHaveBeenCalledWith(
       expect.objectContaining({ to: "p@example.com" }),
     );
+  });
+
+  it("renders the React part to HTML itself so Resend never has to", async () => {
+    answer(null);
+    const { sendMail } = await loadMailer();
+    const { createElement } = await import("react");
+
+    await sendMail({ ...message, react: createElement("p", null, "Hej Bo") });
+
+    const payload = send.mock.calls[0][0];
+    expect(payload.html).toContain("Hej Bo");
+    expect(payload).not.toHaveProperty("react");
   });
 
   it("reads the wait out of retry-after when Resend throttles", async () => {
@@ -107,8 +120,6 @@ describe("sendMail against Resend", () => {
     ).toBe(1_000);
   });
 
-  // Anything else is a real failure: the delivery is marked failed and retried
-  // on BullMQ's own backoff, not on Resend's clock.
   it("leaves every other Resend error a plain Error", async () => {
     answer({ name: "validation_error", message: "from is not verified" });
     const { sendMail, MailRateLimitedError } = await loadMailer();
@@ -129,7 +140,6 @@ describe("sendMail against Resend", () => {
 });
 
 describe("sendMail outside production", () => {
-  // A dev box with a live key in .env must not be able to mail a real address.
   it("goes to Mailpit and never touches Resend", async () => {
     process.env = { ...process.env, NODE_ENV: "development" };
     const fetchMock = jest
@@ -148,7 +158,6 @@ describe("sendMail outside production", () => {
     );
   });
 
-  // A notification about a chapter is answered by that chapter, not by us.
   it("carries a reply-to into the Mailpit body, and omits it when there is none", async () => {
     process.env = { ...process.env, NODE_ENV: "development" };
     const fetchMock = jest

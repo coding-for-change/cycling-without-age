@@ -4,37 +4,56 @@ import type { OnboardingRole } from "@/lib/onboarding";
 import {
   consentInput,
   homeInput,
+  notificationPreferences as notificationPreferencesSchema,
+  ownDetailsPatch,
   personalDetailsInput,
   residence as residenceSchema,
 } from "./schemas";
 import type {
   ConsentInput,
   HomeInput,
+  NotificationPreferences,
+  OwnDetailsPatchInput,
   PersonalDetailsInput,
   Residence,
 } from "./schemas";
 import {
   findProfile,
+  findProfiles,
+  findProfilesByName,
   findUserIdByEmail,
+  findUserIdByPhone,
   stampOnboarded,
   updateProfile,
 } from "./services/profile";
 
 export type Profile = NonNullable<Awaited<ReturnType<typeof findProfile>>>;
 
+export type ProfileSummary = Awaited<ReturnType<typeof findProfiles>>[number];
+
 export const getProfile = (userId: string) => findProfile(userId);
+
+export const getProfiles = async (
+  userIds: string[],
+): Promise<ProfileSummary[]> => {
+  const unique = [...new Set(userIds)];
+  return unique.length === 0 ? [] : findProfiles(unique);
+};
+
+export const searchProfilesByName = (
+  query: string,
+  opts: { limit: number; excludeUserId: string },
+) => findProfilesByName(query.trim(), opts.limit, opts.excludeUserId);
 
 export const getUserIdByEmail = async (email: string) =>
   (await findUserIdByEmail(email.trim().toLowerCase()))?.id ?? null;
 
+export const getUserIdByPhone = async (phone: string) =>
+  (await findUserIdByPhone(phone.trim()))?.id ?? null;
+
 export const setLocale = (userId: string, locale: string) =>
   updateProfile(userId, { locale });
 
-/**
- * The care-home path clears any address on purpose: the chapter's own position is
- * the pickup point, and a stale home address left behind would quietly become the
- * one a ride is planned from.
- */
 export async function setResidence(
   userId: string,
   residence: Residence,
@@ -58,16 +77,6 @@ export async function setResidence(
   });
 }
 
-/**
- * Consent is stamped, never unstamped: withdrawing it is an account deletion,
- * which is a different flow with different obligations.
- *
- * The timestamps record when they FIRST agreed and are not moved by a later
- * visit — someone stepping back through the flow to change their notification
- * preference has not re-consented, and a consent date that drifts forward is
- * worse than useless in a data-protection request. The preferences themselves
- * are a live setting and do follow the latest answer.
- */
 export async function recordConsent(userId: string, input: ConsentInput) {
   const { safety, notifications, data } = consentInput.parse(input);
   if (!data) throw new DomainError("consentRequired");
@@ -82,8 +91,6 @@ export async function recordConsent(userId: string, input: ConsentInput) {
   });
 }
 
-/** True the first time only, so the welcome lands once however often the last
- *  onboarding step is submitted. */
 export function completeOnboarding(
   userId: string,
   { chapterId, role }: { chapterId: string | null; role: OnboardingRole },
@@ -102,12 +109,36 @@ export function setPersonalDetails(
 ) {
   const { firstName, lastName, birthDate, gender } =
     personalDetailsInput.parse(input);
-  // `name` is BetterAuth's own column and what every member list renders, so it
-  // is kept in step rather than left as whatever the OAuth provider supplied.
   return updateProfile(userId, {
     name: `${firstName} ${lastName}`,
     birthDate,
     gender,
+  });
+}
+
+export async function updateOwnDetails(
+  userId: string,
+  patch: OwnDetailsPatchInput,
+) {
+  const { name, birthDate, gender } = ownDetailsPatch.parse(patch);
+  return updateProfile(userId, {
+    ...(name === undefined ? {} : { name }),
+    ...(birthDate === undefined ? {} : { birthDate }),
+    ...(gender === undefined ? {} : { gender }),
+  });
+}
+
+export async function setNotificationPreferences(
+  userId: string,
+  prefs: NotificationPreferences,
+) {
+  const { push, email, chatPush, chatEmail } =
+    notificationPreferencesSchema.parse(prefs);
+  return updateProfile(userId, {
+    ...(push === undefined ? {} : { notifyPush: push }),
+    ...(email === undefined ? {} : { notifyEmail: email }),
+    ...(chatPush === undefined ? {} : { notifyChatPush: chatPush }),
+    ...(chatEmail === undefined ? {} : { notifyChatEmail: chatEmail }),
   });
 }
 

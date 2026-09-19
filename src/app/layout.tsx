@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { defaultLocale, locales, LOCALE_COOKIE } from "@/lib/i18n";
 import { NativeBootstrap } from "@/lib/native/native-bootstrap";
+import { NativeBackHandler } from "@/lib/native/native-back-handler";
 import { PushRegistrar } from "@/components/push-registrar";
 import "./globals.css";
 
@@ -42,9 +44,17 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col font-sans">
         <NativeBootstrap />
+        <Suspense fallback={null}>
+          <NativeBackHandler />
+        </Suspense>
         <PushRegistrar />
         {children}
-        <Toaster />
+        <Toaster
+          mobileOffset={{
+            bottom:
+              "calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 1.25rem)",
+          }}
+        />
       </body>
     </html>
   );

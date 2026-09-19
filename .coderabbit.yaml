@@ -146,7 +146,7 @@ reviews:
         CONCURRENCY. Flag check-then-write without a transaction or unique
         constraint (last admin, one application per user, one device token),
         `Promise.all` where one rejection leaves the others half-applied, and
-        a side effect fired without `await` outside `afterResponse`.
+        a side effect fired without `await`.
 
     # --------------------------------------------- outbox, worker, notifications --
     - path: "src/{lib/events,worker,use-cases/notifications,features/notifications}/**"
@@ -166,8 +166,8 @@ reviews:
         - ioredis runs with `maxRetriesPerRequest: null`, so a Redis call in a
           request path without a timeout hangs the request after commit. Flag
           it.
-        - `afterResponse` runs the work inline when there is no request scope
-          (CRON, scripts, tests). Flag work that assumes a request.
+        - A Use Case must stay callable from CRON, scripts and tests. Flag work
+          that assumes a request scope.
         - A tapped push may only navigate to an app-relative `href`. Flag an
           absolute URL or a user-controlled string in the payload.
         - Flag device-token handling that lets a user register a token to

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { domainCode } from "@/lib/domain-error";
+import { actionFailure } from "@/lib/domain-error";
 import { z } from "zod";
 import { accounts } from "@/features/accounts";
 import {
@@ -34,18 +34,12 @@ const roleChangeInput = z.object({
 
 const deleteUserInput = z.object({ userId: id });
 
-function failed(error: unknown): AdminActionResult {
-  switch (domainCode(error)) {
-    case "lastAdmin":
-      return { ok: false, error: "lastAdmin" };
-    case "alreadyDecided":
-      return { ok: false, error: "alreadyDecided" };
-    case "selfChange":
-      return { ok: false, error: "self" };
-    default:
-      return { ok: false, error: "generic" };
-  }
-}
+const failed = (error: unknown): AdminActionResult =>
+  actionFailure(error, {
+    lastAdmin: "lastAdmin",
+    alreadyDecided: "alreadyDecided",
+    selfChange: "self",
+  });
 
 export async function decideApplicationAction(
   input: z.input<typeof decisionInput>,
@@ -53,8 +47,6 @@ export async function decideApplicationAction(
   const parsed = decisionInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: "generic" };
 
-  // The chapter to guard against is the application's, so it has to be read
-  // first — behind a session, so an anonymous POST cannot probe for ids.
   await requireAuth();
   const application = await membership.getApplication(
     parsed.data.applicationId,
@@ -97,9 +89,6 @@ export async function changeMemberRoleAction(
   }
 }
 
-// Superadmin only: an account spans chapters, so no chapter or country admin can
-// see enough of it to take it away. A chapter admin removes people from the
-// chapter instead.
 export async function deleteUserAction(
   input: z.input<typeof deleteUserInput>,
 ): Promise<AdminActionResult> {

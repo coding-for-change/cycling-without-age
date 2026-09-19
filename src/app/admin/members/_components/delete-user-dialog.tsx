@@ -1,16 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import type { NotifyLabels } from "../../_components/action-feedback";
 import {
   ConfirmDeleteDialog,
   type ConfirmDeleteLabels,
-} from "../../_components/confirm-delete-dialog";
+} from "@/components/confirm-delete-dialog";
 import { deleteUserAction } from "../actions";
 
-export type DeleteUserLabels = ConfirmDeleteLabels & {
-  errors: NotifyLabels["errors"];
-};
+export type DeleteUserLabels = ConfirmDeleteLabels;
 
 export function DeleteUserDialog({
   userId,
@@ -32,7 +29,6 @@ export function DeleteUserDialog({
       name={name}
       labels={labels}
       cancel={cancel}
-      errors={labels.errors}
       action={() => deleteUserAction({ userId })}
       onDone={() => router.push(backHref)}
     />

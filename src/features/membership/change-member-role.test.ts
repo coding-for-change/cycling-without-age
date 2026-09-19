@@ -47,7 +47,6 @@ const emitted = () => db.event.create.mock.calls[0][0].data;
 beforeEach(() => {
   jest.clearAllMocks();
   db.member.findUnique.mockResolvedValue({ role: "admin,pilot" });
-  // A second admin, so stepping down is allowed; covered in facade.test.ts.
   db.member.findMany.mockResolvedValue([{ role: "admin" }, { role: "admin" }]);
 });
 
@@ -97,8 +96,6 @@ describe("changeMemberRole", () => {
     },
   );
 
-  // The href of the notification is read off this, so it has to be the roles
-  // left after the write, not the ones the member had before it.
   it("carries the roles that remain after the change", async () => {
     await membership.changeMemberRole({
       userId: OTHER,

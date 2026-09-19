@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
-import { profile } from "@/features/profile";
 import { fill } from "@/lib/utils";
+import { nameOfChapter, nameOfPerson } from "./lookups";
 import { defineKind } from "./types";
+import { ORG_NAME } from "@/lib/brand";
 
 export const pilotApplicationSubmitted = defineKind({
   event: "pilotApplication.submitted",
@@ -15,10 +16,13 @@ export const pilotApplicationSubmitted = defineKind({
   }),
   recipients: async (event) =>
     (await membership.listChapterAdmins(event.chapterId)).map((m) => m.userId),
-  params: async (event) => ({
-    applicantName: (await profile.getProfile(event.userId))?.name ?? null,
-    chapterName: (await chapters.getChapter(event.chapterId))?.name ?? null,
-  }),
+  params: async (event) => {
+    const [applicantName, chapterName] = await Promise.all([
+      nameOfPerson(event.userId),
+      nameOfChapter(event.chapterId),
+    ]);
+    return { applicantName, chapterName };
+  },
   href: (event) => `/admin/members/${event.userId}`,
   chapterAllowsPush: async (chapterId) =>
     chapterId === null ||
@@ -27,7 +31,7 @@ export const pilotApplicationSubmitted = defineKind({
     const copy = strings.applicationSubmitted;
     const values = {
       name: applicantName ?? copy.anonymous,
-      chapter: chapterName ?? "Cycling Without Age",
+      chapter: chapterName ?? ORG_NAME,
     };
     return {
       subject: fill(copy.subject, values),

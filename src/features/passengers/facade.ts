@@ -1,12 +1,13 @@
-import { passengerInput } from "./schemas";
+import { ownRiderDetailsPatch, passengerInput } from "./schemas";
 import { DomainError } from "@/lib/domain-error";
-import type { PassengerInput } from "./schemas";
+import type { OwnRiderDetailsPatchInput, PassengerInput } from "./schemas";
 import {
   countPassengersManagedBy,
   findPassengerOfUser,
   findPassengersManagedBy,
   findPassengersOfChapters,
   insertPassenger,
+  updatePassengerOfUser,
   upsertOwnPassenger,
 } from "./services/passengers";
 
@@ -42,8 +43,6 @@ export async function saveOwnPassenger(input: PassengerInput) {
   const existing = await findPassengerOfUser(data.userId);
   if (!existing) return addPassenger(data);
 
-  // `chapterId` from the input is dropped on purpose: the existing row's chapter
-  // wins, because moving someone between chapters is leaving one, not editing a name.
   const { userId, firstName, lastName, birthDate, gender } = data;
   return upsertOwnPassenger(userId, {
     firstName,
@@ -53,4 +52,17 @@ export async function saveOwnPassenger(input: PassengerInput) {
     chapterId: existing.chapterId,
     managedByUserId: existing.managedByUserId,
   });
+}
+
+export async function updateOwnRiderDetails(
+  userId: string,
+  patch: OwnRiderDetailsPatchInput,
+) {
+  const { birthDate, gender } = ownRiderDetailsPatch.parse(patch);
+  const data = {
+    ...(birthDate === undefined ? {} : { birthDate }),
+    ...(gender === undefined ? {} : { gender }),
+  };
+  if (Object.keys(data).length === 0) return { count: 0 };
+  return updatePassengerOfUser(userId, data);
 }

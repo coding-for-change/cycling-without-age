@@ -1,10 +1,12 @@
 import { Suspense, type ReactNode } from "react";
-import { AdminEmpty } from "./admin-empty";
-import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/empty-state";
+import { PageFallback } from "@/components/page-fallback";
 import { requireAdminScope } from "@/lib/auth-guards";
 import { getDictionary } from "@/lib/i18n";
 import type { NavKey } from "../nav";
-import { ICONS } from "./icons";
+import { ICONS } from "@/components/icons";
+
+type AdminPageKey = Exclude<NavKey, "chat">;
 
 export function AdminPageShell({ children }: { children: ReactNode }) {
   return (
@@ -14,26 +16,7 @@ export function AdminPageShell({ children }: { children: ReactNode }) {
   );
 }
 
-export function AdminPageFallback() {
-  return (
-    <>
-      <Skeleton className="h-9 w-44" />
-      <div className="flex flex-1 flex-col items-center justify-start gap-4 p-6 pt-16">
-        <Skeleton className="mb-2 size-10 rounded-lg" />
-        <Skeleton className="h-4 w-72 max-w-full" />
-        <Skeleton className="h-4 w-52 max-w-full" />
-      </div>
-    </>
-  );
-}
-
-/**
- * Re-guards below the layout on purpose: a Layout is not a security boundary in
- * Next, and living in the shared body rather than in each of the eleven pages
- * makes the check impossible to forget when a twelfth is added. `getSession` is
- * request-cached, so the repeat costs nothing.
- */
-export async function AdminPageBody({ page }: { page: NavKey }) {
+export async function AdminPageBody({ page }: { page: AdminPageKey }) {
   await requireAdminScope();
   const { title, body } = (await getDictionary()).admin.pages[page];
   const Icon = ICONS[page];
@@ -41,20 +24,20 @@ export async function AdminPageBody({ page }: { page: NavKey }) {
   return (
     <>
       <h1 className="text-2xl tracking-tight md:text-3xl">{title}</h1>
-      <AdminEmpty
+      <EmptyState
         icon={Icon}
         className="flex-1 justify-start rounded-none border-none pt-16"
       >
         {body}
-      </AdminEmpty>
+      </EmptyState>
     </>
   );
 }
 
-export function AdminPage({ page }: { page: NavKey }) {
+export function AdminPage({ page }: { page: AdminPageKey }) {
   return (
     <AdminPageShell>
-      <Suspense fallback={<AdminPageFallback />}>
+      <Suspense fallback={<PageFallback />}>
         <AdminPageBody page={page} />
       </Suspense>
     </AdminPageShell>

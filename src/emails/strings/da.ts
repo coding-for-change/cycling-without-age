@@ -150,6 +150,23 @@ const da: EmailStrings = {
     footer:
       "Du modtager denne e-mail, fordi din rolle i Cycling Without Age er ændret.",
   },
+  chatDigest: {
+    subjectDirect: "{name} har skrevet til dig",
+    subjectGroup: {
+      one: "{count} ny besked i {title}",
+      other: "{count} nye beskeder i {title}",
+    },
+    preview: "Beskederne, der venter på dig",
+    heading: "Mens du var væk",
+    intro: {
+      one: "{count} ulæst besked i {title}.",
+      other: "{count} ulæste beskeder i {title}.",
+    },
+    cta: "Åbn samtalen",
+    more: "og {count} mere",
+    someone: "Nogen",
+    footer: "Du modtager denne e-mail, fordi push ikke kan nå dig.",
+  },
   roles: {
     admin: "afdelingsadmin",
     pilot: "pilot",

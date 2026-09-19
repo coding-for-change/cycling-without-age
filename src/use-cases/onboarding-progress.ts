@@ -14,13 +14,11 @@ import { HOME_BY_ROLE } from "@/lib/redirects";
 
 export type OnboardingState = {
   progress: OnboardingProgress;
-  /** The preset after validation — a chapter that exists, a role we recognise. */
   preset: {
     chapterId: string | null;
     role: OnboardingRole | null;
     chapterName: string | null;
   };
-  /** The account row the progress was derived from, so callers need not re-read it. */
   account: Awaited<ReturnType<typeof profile.getProfile>>;
 };
 
@@ -59,8 +57,6 @@ export async function getOnboardingState(
     applications.length > 0 ||
     Boolean(preset.chapterId && preset.role);
 
-  // A pilot is the account holder, so their details sit on the account. A rider's
-  // sit on their own Passenger row — the account may never ride at all.
   const profiled =
     account?.managesOthers === true ||
     (role === "pilot"
@@ -85,19 +81,11 @@ export async function getOnboardingState(
   };
 }
 
-/**
- * `next` is the destination someone was heading for before they were asked to
- * sign in (parked in a cookie by `proxy.ts`). It is spent only once there is
- * nothing left to do — an unfinished wizard always wins, or the person would
- * land on a page their account is not ready for.
- */
 export async function resolveDestination(
   session: { user: { id: string }; access: Access },
   preset: JoinPreset,
   next: string | null = null,
 ): Promise<string> {
-  // An admin has no onboarding to do — asking a chapter admin whether they would
-  // like to be a passenger or a pilot is a question a flow should never ask.
   const role = getHighestRole(session.access);
   if (
     role === "superadmin" ||

@@ -12,31 +12,26 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { chat } from "@/features/chat";
 import { requireAdminScope } from "@/lib/auth-guards";
-import { avatarSeed, avatarSvg } from "@/lib/avatar";
-import { headers } from "next/headers";
-import { resolveLocale } from "@/lib/format";
 import { getDictionary } from "@/lib/i18n";
+import { loadAccount } from "@/components/account/load-account";
+import { UserMenu } from "@/components/user-menu";
 import { resolveNav } from "../nav";
-import {
-  defaultScopeArg,
-  perspectiveChoices,
-  roleLabel,
-  scopeChoices,
-} from "../scopes";
+import { perspectiveChoices, roleLabel } from "@/lib/perspectives";
+import { defaultScopeArg, scopeChoices } from "../scopes";
 import { AdminNav } from "./admin-nav";
-import { AdminUserMenu } from "./admin-user-menu";
 import { CommandHint } from "./command-hint";
 import { ScopeSwitcher } from "./scope-switcher";
 
 export async function AdminSidebar() {
-  const [{ session, scope }, dict, head] = await Promise.all([
+  const [{ session, scope }, dict, account] = await Promise.all([
     requireAdminScope(),
     getDictionary(),
-    headers(),
+    loadAccount(),
   ]);
-  const locale = resolveLocale(head.get("accept-language"));
 
+  const unread = await chat.countUnreadConversations(session.user.id);
   const items = resolveNav(scope, dict.admin.nav);
   const inGroup = (group: string) => items.filter((i) => i.group === group);
 
@@ -79,6 +74,7 @@ export async function AdminSidebar() {
         <AdminNav
           items={inGroup("main")}
           groupLabel={dict.admin.navLabel}
+          badges={{ chat: unread }}
         />
         <AdminNav
           items={inGroup("organisation")}
@@ -93,18 +89,16 @@ export async function AdminSidebar() {
           groupLabel={dict.admin.navGroups.footer}
         />
         <CommandHint label={dict.admin.commands.hint} />
-        <AdminUserMenu
-          name={session.user.name}
-          email={session.user.email}
-          avatar={avatarSvg(avatarSeed(session.user.email))}
-          avatarAnimated={avatarSvg(avatarSeed(session.user.email), true)}
-          strings={{
-            ...dict.admin.user,
-            signOut: dict.common.signOut,
-          }}
-          account={dict.account}
-          locale={locale}
-        />
+        {account ? (
+          <UserMenu
+            data={account}
+            activePerspective="admin"
+            strings={{
+              ...dict.admin.user,
+              signOut: dict.common.signOut,
+            }}
+          />
+        ) : null}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

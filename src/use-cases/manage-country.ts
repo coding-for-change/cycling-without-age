@@ -2,10 +2,6 @@ import { activity } from "@/lib/activity";
 import { DomainError } from "@/lib/domain-error";
 import { chapters } from "@/features/chapters";
 
-/**
- * The events are global on purpose: the country and every chapter row under it
- * are gone, and a `chapterId` pointing at one would cascade the line away with it.
- */
 export async function deleteCountry({
   countryId,
   actorUserId,

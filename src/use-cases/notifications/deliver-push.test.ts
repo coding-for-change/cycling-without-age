@@ -57,7 +57,6 @@ const decided = () => ({
   },
 });
 
-// The admin's copy of a pilot application: optional, so their preference counts.
 const submitted = () => ({
   id: "notif-2",
   recipientUserId: ADMIN,
@@ -125,7 +124,6 @@ describe("deliverPush", () => {
     expect(skipped).toHaveBeenCalledWith("delivery-1", "opted out");
   });
 
-  // An essential kind ignores the preference; the inbox row exists either way.
   it("pushes an essential kind to someone who opted out", async () => {
     getProfile.mockResolvedValue({ locale: "de", notifyPush: false });
 
@@ -143,7 +141,6 @@ describe("deliverPush", () => {
     expect(skipped).toHaveBeenCalledWith("delivery-1", "no device");
   });
 
-  // Missing credentials are a setup state, not an outage worth five retries.
   it("skips instead of failing while push is unconfigured", async () => {
     configured.mockReturnValue(false);
 
@@ -164,7 +161,6 @@ describe("deliverPush", () => {
     expect(sent).toHaveBeenCalledWith("delivery-1", null);
   });
 
-  // Every device is dead: there is nothing left to retry against.
   it("fails without throwing when every token was rejected", async () => {
     push.mockResolvedValue({ sent: 0, invalidTokens: ["token-a"] });
 
@@ -189,8 +185,6 @@ describe("deliverPush", () => {
 describe("deliverPush and the chapter's own switch", () => {
   beforeEach(() => get.mockResolvedValue(submitted()));
 
-  // The chapter's say is read like the recipient's own preference, so a
-  // switched-off alert still leaves a Delivery row behind.
   it("skips an alert the chapter turned off", async () => {
     getSettings.mockResolvedValue({
       ...DEFAULT_CHAPTER_SETTINGS,

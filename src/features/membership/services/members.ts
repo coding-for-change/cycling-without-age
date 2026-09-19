@@ -42,6 +42,33 @@ export const findMembersOfChapters = (
     },
   });
 
+export const findMembersMatchingName = (
+  chapterIds: string[],
+  query: string,
+  { limit, excludeUserId }: { limit: number; excludeUserId: string },
+  db: Prisma.TransactionClient = prisma,
+) =>
+  db.user.findMany({
+    where: {
+      id: { not: excludeUserId },
+      name: { contains: query },
+      members: { some: { organizationId: { in: chapterIds } } },
+    },
+    orderBy: { name: "asc" },
+    take: limit,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      members: {
+        where: { organizationId: { in: chapterIds } },
+        orderBy: { createdAt: "asc" },
+        take: 1,
+        select: { organizationId: true },
+      },
+    },
+  });
+
 export const findAdminMembersOfChapter = (
   chapterId: string,
   db: Prisma.TransactionClient = prisma,

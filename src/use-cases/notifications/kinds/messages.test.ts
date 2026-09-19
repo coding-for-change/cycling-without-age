@@ -80,6 +80,14 @@ const EVENTS: Record<EventType, DomainEvent> = {
     chapterId: CHAPTER,
     role: "pilot",
   },
+  "chat.messageSent": {
+    type: "chat.messageSent",
+    conversationId: "conversation-1",
+    messageId: "message-1",
+    seq: 1,
+    actorUserId: ACTOR,
+    chapterId: CHAPTER,
+  },
   "countryAdmin.appointed": {
     type: "countryAdmin.appointed",
     countryId: COUNTRY,
@@ -117,7 +125,6 @@ const known = () => {
   getProfile.mockResolvedValue({ name: "Anke Weiss" });
 };
 
-// The admin-facing kinds fire from a step that runs before the name is set.
 const unknown = () => {
   getChapter.mockResolvedValue(null);
   getCountry.mockResolvedValue(null);
@@ -169,8 +176,6 @@ describe.each(kinds.map((kind) => [kind.event, kind] as const))(
   },
 );
 
-// `activity-feed.tsx` falls back to the "approval" label for a template it does
-// not know, so every id here needs a row in `admin.history.templates`.
 describe("the templates the history feed has to label", () => {
   const collect = async () => {
     const templates = new Set<string>();

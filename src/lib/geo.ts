@@ -12,12 +12,6 @@ export function distanceMeters(a: Coords, b: Coords): number {
   return 2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
-/**
- * The nearest service area whose circle touches this one, or null. Two areas
- * overlap when the distance between their centres is less than the sum of their
- * radii — the rule lives here so the create drawer and the detail page cannot
- * disagree about it.
- */
 export function nearestOverlap<T extends { coords: Coords; radiusKm: number }>(
   center: Coords,
   radiusKm: number,
@@ -31,10 +25,6 @@ export function nearestOverlap<T extends { coords: Coords; radiusKm: number }>(
   );
 }
 
-/**
- * A ring of `[lng, lat]` pairs approximating a circle, for a GeoJSON polygon.
- * Closed (first point repeated last), as the spec wants.
- */
 export function circleRing(
   center: Coords,
   radiusM: number,
