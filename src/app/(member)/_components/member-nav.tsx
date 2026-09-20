@@ -9,15 +9,22 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { ChatBadge } from "@/features/chat/components/chat-badge";
 import { ICONS } from "@/components/icons";
-import { activeTabKey, type ResolvedMemberNavItem } from "../nav";
+import {
+  activeTabKey,
+  type MemberNavKey,
+  type ResolvedMemberNavItem,
+} from "../nav";
 
 export function MemberNav({
   items,
   groupLabel,
+  badges,
 }: {
   items: ResolvedMemberNavItem[];
   groupLabel: string;
+  badges?: Partial<Record<MemberNavKey, number>>;
 }) {
   const pathname = usePathname();
   const current = activeTabKey(pathname, items);
@@ -47,6 +54,10 @@ export function MemberNav({
                       <span>{label}</span>
                     </Link>
                   </SidebarMenuButton>
+                  <ChatBadge
+                    count={badges?.[key] ?? 0}
+                    className="pointer-events-none absolute top-1.5 right-1 select-none group-data-[collapsible=icon]:hidden"
+                  />
                 </SidebarMenuItem>
               );
             })}

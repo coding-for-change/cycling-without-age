@@ -26,9 +26,11 @@ export async function sendMail(options: MailOptions) {
 
   if (!resend) throw new Error("RESEND_API_KEY is unset — cannot send mail");
 
+  const { react, ...rest } = options;
   const { error, headers } = await resend.emails.send({
     from: process.env.EMAIL_FROM!,
-    ...options,
+    ...rest,
+    ...(react ? { html: await render(react) } : {}),
   } as Parameters<typeof resend.emails.send>[0]);
 
   if (!error) return;

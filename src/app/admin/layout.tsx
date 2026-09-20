@@ -1,4 +1,5 @@
 import { Suspense, type ReactNode } from "react";
+import { CollapseSidebarOn } from "@/components/collapse-sidebar-on";
 import { NotificationBellSkeleton } from "@/components/notifications/notification-bell-skeleton";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,6 +11,9 @@ import { AdminSidebarSkeleton } from "./_components/sidebar-skeleton";
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider className="min-h-dvh">
+      <Suspense fallback={null}>
+        <CollapseSidebarOn prefix="/admin/chat" />
+      </Suspense>
       <Suspense fallback={<AdminSidebarSkeleton />}>
         <AdminSidebar />
       </Suspense>

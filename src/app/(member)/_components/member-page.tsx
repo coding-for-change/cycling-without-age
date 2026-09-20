@@ -23,7 +23,7 @@ export function MemberPageShell({ children }: { children: ReactNode }) {
   );
 }
 
-export type MemberPageKey = "rides" | "calendar" | "chat";
+export type MemberPageKey = "rides" | "calendar";
 
 export async function MemberPageBody({
   perspective,

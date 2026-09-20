@@ -35,9 +35,10 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy standalone server
-COPY --from=builder /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 # Copy static assets
-COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+RUN mkdir -p .next/cache && chown -R nextjs:nodejs .next
 # Copy public assets
 COPY --from=builder /app/public ./public
 # Copy required files for Prisma migrations

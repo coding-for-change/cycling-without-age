@@ -17,10 +17,19 @@ export function NotificationsSection({ data }: { data: AccountData }) {
     },
   };
 
+  const permitted = async () =>
+    !isNative() || (await requestNotificationPermission());
+
   const savePush = async (next: boolean): Promise<ActionResult> => {
-    if (next && isNative() && !(await requestNotificationPermission()))
+    if (next && !(await permitted()))
       return { ok: false, error: "permissionDenied" };
     return setNotificationPreferencesAction({ push: next });
+  };
+
+  const saveChatPush = async (next: boolean): Promise<ActionResult> => {
+    if (next && !(await permitted()))
+      return { ok: false, error: "permissionDenied" };
+    return setNotificationPreferencesAction({ chatPush: next });
   };
 
   return (
@@ -42,6 +51,22 @@ export function NotificationsSection({ data }: { data: AccountData }) {
           hint={strings.notifications.email.hint}
           labels={strings.field}
           onSave={(next) => setNotificationPreferencesAction({ email: next })}
+        />
+        <ToggleRow
+          value={data.notifications.chatPush}
+          label={strings.notifications.chat.push.label}
+          hint={strings.notifications.chat.push.hint}
+          labels={pushLabels}
+          onSave={saveChatPush}
+        />
+        <ToggleRow
+          value={data.notifications.chatEmail}
+          label={strings.notifications.chat.email.label}
+          hint={strings.notifications.chat.email.hint}
+          labels={strings.field}
+          onSave={(next) =>
+            setNotificationPreferencesAction({ chatEmail: next })
+          }
         />
       </ul>
     </div>

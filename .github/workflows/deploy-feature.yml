@@ -34,6 +34,7 @@ jobs:
                     {{ {
                       "REGISTRY_USERNAME": REGISTRY_USERNAME | default(""),
                       "REGISTRY_PASSWORD": REGISTRY_PASSWORD | default(""),
+                      "CHAT_MASTER_KEY": CHAT_MASTER_KEY | default(""),
                       "VPS_DEPLOY_KEY": VPS_DEPLOY_KEY | default("")
                     } | to_json }}
                 no_log: true
@@ -44,6 +45,8 @@ jobs:
           # Mask single-line secrets
           echo "::add-mask::$(jq -r '.REGISTRY_USERNAME // empty' decrypted.json)"
           echo "::add-mask::$(jq -r '.REGISTRY_PASSWORD // empty' decrypted.json)"
+          CHAT_MASTER_KEY=$(jq -r '.CHAT_MASTER_KEY // empty' decrypted.json)
+          if [ -n "$CHAT_MASTER_KEY" ]; then echo "::add-mask::$CHAT_MASTER_KEY"; fi
 
           # IMPORTANT: We purposefully DO NOT use echo "::add-mask::..." for VPS_DEPLOY_KEY.
           # Attempting to mask a multiline string using echo causes bash to expand it into multiple lines.
@@ -102,6 +105,7 @@ jobs:
           echo "DATABASE_URL=mysql://root:${DB_PASSWORD}@db:3306/cwa" >> .env
           echo "NEXT_PUBLIC_APP_URL=https://${{ env.BRANCH_NAME_SAFE }}.cwa.codingforchange.com" >> .env
           echo "REDIS_URL=redis://redis:6379" >> .env
+          echo "CHAT_MASTER_KEY=$(jq -r '.CHAT_MASTER_KEY // empty' decrypted.json)" >> .env
 
       - name: Deploy to VPS
         run: |

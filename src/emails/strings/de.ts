@@ -153,6 +153,23 @@ const de: EmailStrings = {
     footer:
       "Du erhältst diese E-Mail, weil sich deine Rolle bei Cycling Without Age geändert hat.",
   },
+  chatDigest: {
+    subjectDirect: "{name} hat Ihnen geschrieben",
+    subjectGroup: {
+      one: "{count} neue Nachricht in {title}",
+      other: "{count} neue Nachrichten in {title}",
+    },
+    preview: "Die Nachrichten, die auf Sie warten",
+    heading: "Während Sie weg waren",
+    intro: {
+      one: "{count} ungelesene Nachricht in {title}.",
+      other: "{count} ungelesene Nachrichten in {title}.",
+    },
+    cta: "Unterhaltung öffnen",
+    more: "und {count} weitere",
+    someone: "Jemand",
+    footer: "Sie erhalten diese E-Mail, weil Push Sie nicht erreichen kann.",
+  },
   roles: {
     admin: "Ortsgruppen-Admin",
     pilot: "Pilot",

@@ -32,6 +32,7 @@ graph TD
     ACCT[components/account surface]
     BELL[components/notifications bell]
     PR[components/push-registrar]
+    CHATUI[features/chat/components]
   end
   subgraph Boundary
     G[lib/auth-guards]
@@ -46,6 +47,9 @@ graph TD
     ACT9[features/notifications/actions]
     ACT10[app/admin/settings/actions]
     ACT11[features/profile/actions]
+    ACT12[features/chat/actions]
+    RT1[app/api/chat/stream route]
+    RT2["app/chat/[id] deep-link route"]
     ACT0[app/actions setLocale]
   end
   subgraph Orchestration
@@ -66,9 +70,17 @@ graph TD
     U19[use-cases/notifications/kinds]
     U20[use-cases/member-home]
     U21[use-cases/update-own-details]
+    U22[use-cases/chat/chat-inbox]
+    U23[use-cases/chat/conversation-view]
+    U24[use-cases/chat/start-direct-chat]
+    U25[use-cases/chat/create-group-chat]
+    U26[use-cases/chat/oversight]
+    U27[use-cases/chat-notifications/notify-chat-message]
+    U28[use-cases/chat-notifications/deliver-chat-push]
+    U29[use-cases/chat-notifications/deliver-chat-digest]
   end
   subgraph Worker
-    W1["worker/index (dispatcher, sweeper, prune-devices, email + push workers)"]
+    W1["worker/index (dispatcher, sweeper, prune-devices, prune-chat, email + push workers)"]
     W2[worker/handlers registry]
     W3["worker/listeners/record-activity (generic)"]
     W4[worker/deliveries]
@@ -80,11 +92,13 @@ graph TD
     F4[features/passengers facade]
     F6[features/accounts facade]
     F7[features/notifications facade]
-    F8[features/rides facade]
+    F8[features/chat facade]
+    F9[features/rides facade]
     CM1[features/chapters/commands]
     CM2[features/membership/commands]
     CM3[features/profile/commands]
     CM4[features/passengers/commands]
+    CM5[features/chat/commands]
   end
   subgraph Data
     S1[chapters/services]
@@ -93,7 +107,8 @@ graph TD
     S4[passengers/services]
     S6[accounts/services]
     S7[notifications/services]
-    S8[rides/services]
+    S8[chat/services]
+    S9[rides/services]
     DB[(MySQL via lib/prisma)]
   end
   subgraph Infrastructure
@@ -105,6 +120,8 @@ graph TD
     ML[lib/mailer]
     PUSH[lib/push firebase-admin]
     NP[lib/native/push]
+    RTH[lib/realtime hub + presence]
+    CRY[lib/crypto/chat-cipher]
     BA[lib/auth BetterAuth admin API]
     COOKIE[(guest chapter + join preset cookies)]
   end
@@ -112,9 +129,9 @@ graph TD
   A --> G
   A --> F1
   A --> F5
-  A --> F8
+  A --> F9
   A --> CAL
-  ADM --> F8
+  ADM --> F9
   ADM --> CAL
   A --> U2
   G --> F1
@@ -161,6 +178,62 @@ graph TD
   CMD --> CM2
   CMD --> CM3
   CMD --> CM4
+  CMD --> CM5
+
+  MEM --> CHATUI
+  ADM --> CHATUI
+  MEM --> U22
+  MEM --> U23
+  ADM --> U22
+  ADM --> U23
+  MEM --> F8
+  ADM --> F8
+  CHATUI --> ACT12
+  ACT12 --> G
+  ACT12 --> F8
+  ACT12 --> U22
+  ACT12 --> U24
+  ACT12 --> U25
+  RT1 --> F8
+  RT1 --> RTH
+  RT2 --> G
+  U22 --> F8
+  U22 --> F3
+  U22 --> RTH
+  U23 --> F8
+  U23 --> F3
+  U23 --> RTH
+  U24 --> F8
+  U24 --> F1
+  U24 --> F2
+  U24 --> F3
+  U25 --> F8
+  U25 --> F1
+  U25 --> F2
+  U26 --> F8
+  U26 --> F3
+  U27 --> F8
+  U27 --> F3
+  U27 --> F7
+  U27 --> RTH
+  U27 --> Q
+  U28 --> F8
+  U28 --> F3
+  U28 --> F7
+  U28 --> PUSH
+  U29 --> F8
+  U29 --> F3
+  U29 --> F7
+  U29 --> ML
+  F8 --> S8
+  F8 --> CRY
+  F8 --> RTH
+  F8 --> EV
+  S8 --> DB
+  W1 --> F8
+  W1 --> U28
+  W1 --> U29
+  W2 --> U27
 
   A --> ACT1
   A --> ACT2
@@ -256,8 +329,8 @@ graph TD
   W3 --> F5
 
   F1 --> S1
-  F8 --> S8
-  S8 --> DB
+  F9 --> S9
+  S9 --> DB
   F2 --> S2
   F2 --> F5
   F6 --> F5
@@ -294,6 +367,33 @@ graph TD
 | `invite-chapter-user` | `accounts`, `membership`, `profile` | Provisioning the account, seeding the invitee's language from the inviter's, and granting the chapter roles are three features. It sends nothing: `membership.inviteMember` emits `member.invited` and the pipeline mails it. |
 | `manage-chapter` | `chapters`, `activity` | Creating, editing or deleting a chapter is a `chapters` write plus the history line that makes it legible on the chapter's own page. `chapters.diffChapter` turns one autosave into one `chapterUpdated` event per field that actually changed (a moved pin and its new address fold into one `location` change), and the delete event is recorded *global* because the row it would point at is gone. |
 | `manage-country` | `chapters`, `activity` | Deleting a country takes every chapter under it (the relation restricts, so the service deletes both in one transaction) and writes the history: one `countryDeleted` line plus a `chapterDeleted` line per chapter, all recorded *global* because the rows they would point at are gone. |
+| `chat/chat-inbox` | `chat`, `profile` (+ `lib/realtime` presence) | A conversation row is a chat row, a name and a face from `profile`, and a green dot from Redis. `getInbox` and `syncInbox` share one batched `profile.getProfiles` and one pipelined `isOnline`, so an inbox of fifty costs three queries. |
+| `chat/conversation-view` | `chat`, `profile` (+ `lib/realtime` presence) | The same join for one open thread: the summary, its members with names, avatars and presence (capped at 200 — `memberCount` carries the truth), and the first page of messages. It reuses `chat-inbox`'s `displayOf`, so the list row and the thread header never name a conversation differently. |
+| `chat/start-direct-chat` | `chat`, `profile`, `membership`, `chapters` | Reach is the rule that needs four features: find the person by exact email or E.164 (`profile`), then allow it only when both share a chapter (`membership`), or the viewer is a superadmin, a chapter admin over one of the target's chapters, or the country admin above one (`chapters`). The first shared chapter is what the conversation stores as its `chapterId`, which is what oversight later reads. |
+| `chat/create-group-chat` | `chat`, `membership`, `chapters` | Every initial member must belong to the group's chapter, and so must the creator unless they administer it. One roster read answers both questions. |
+| `chat/oversight` | `chat`, `profile` | Maps an `AdminScope` plus the active scope to chapter ids and names the participants of a direct conversation. It authorises nothing itself — the page runs `requireAdminScope` and re-guards on the conversation's own `chapterId`. |
+| `chat-notifications/notify-chat-message` | `chat`, `profile`, `notifications` (+ `lib/realtime` presence, BullMQ) | The `chat.messageSent` listener. Drops the sender, then per recipient in chunks of 25: mute, `presence.isFocusedOn`, preference, device tokens — a `chat` push job for anyone reachable, a debounced `chat-digest` mail job for anyone not. Writes no `Notification` row: chat never appears in the bell. |
+| `chat-notifications/deliver-chat-push` | `chat`, `profile`, `notifications` (+ `lib/push`) | One banner for one message, re-deciding at wake-up: still unread, still unmuted, still opted in. Titled "Anna Berg" or "Anna Berg · Saturday crew", body stripped of markdown to 140 characters, collapsed per conversation so ten messages are one banner. |
+| `chat-notifications/deliver-chat-digest` | `chat`, `profile`, `notifications` (+ `lib/mailer`) | One grouped mail for everything unread in one conversation, for a recipient push cannot reach. Re-checks membership, unread, mute, preference and *still no push* before decrypting a single row. |
+
+The chat use cases exist for the reason the manifesto gives: a facade may not call another
+feature, and none of these is about chat alone. Naming a conversation needs `profile`. Deciding
+who may start one needs `membership` and `chapters`. Drawing a row needs presence from
+`lib/realtime` on top of both. Everything that *is* about chat alone — send, edit, delete,
+react, mark read, mute, leave, freeze, continue — stays a single facade call behind
+`features/chat/actions`, with no use case in between.
+
+`lib/realtime` (RTH) and `lib/crypto/chat-cipher` (CRY) are cross-cutting infrastructure, the
+same standing as `lib/push` and `lib/mailer`: the facade publishes through the hub, the SSE
+route subscribes through it, the notification listener asks it who is focused, and the worker
+would too. `CRY` has exactly one caller — the chat facade — because services stay dumb and hand
+`Bytes` in and out, and no other layer ever sees plaintext it did not decrypt itself.
+
+`RT1` and `RT2` are Route Handlers sitting in the Boundary subgraph on purpose. A Route Handler
+is the boundary when the transport cannot be a Server Action: `GET /api/chat/stream` is an SSE
+connection and `/chat/[id]` is a deep link from a push banner or a digest mail. Both guard
+themselves and then call facades, exactly as an `actions.ts` does — `proxy.ts` excludes
+`/api/`, so the stream is its own gate.
 
 No use case was added for `rides` either. The calendar surfaces — `/admin/rides`,
 `/admin/bikes`, `/pilot` and `/passenger` — are Server Components that read the `rides`

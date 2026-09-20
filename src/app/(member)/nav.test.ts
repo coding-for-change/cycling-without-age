@@ -3,6 +3,7 @@ import {
   MEMBER_NAV,
   activeItem,
   activeTabKey,
+  isConversationPath,
   memberNav,
   nextPerspective,
   primaryAction,
@@ -135,6 +136,26 @@ describe("which row is active", () => {
     const passenger = resolveMemberNav("passenger", LABELS);
     expect(activeItem("/pilot/chat", passenger)).toBeNull();
     expect(activeTabKey("/passenger/chat", passenger)).toBe("chat");
+  });
+});
+
+describe("isConversationPath", () => {
+  it("is true only on an open conversation, where the chrome steps aside", () => {
+    expect(isConversationPath("/pilot/chat/abc123")).toBe(true);
+    expect(isConversationPath("/passenger/chat/abc123")).toBe(true);
+    expect(isConversationPath("/passenger/chat/abc123/")).toBe(true);
+  });
+
+  it("leaves the list, the shell and the admin twin alone", () => {
+    expect(isConversationPath("/pilot/chat")).toBe(false);
+    expect(isConversationPath("/passenger/chat")).toBe(false);
+    expect(isConversationPath("/pilot")).toBe(false);
+    expect(isConversationPath("/pilot/rides/ride-42")).toBe(false);
+    expect(isConversationPath("/admin/chat/abc123")).toBe(false);
+  });
+
+  it("stops at one segment, so nothing deeper hides the chrome by accident", () => {
+    expect(isConversationPath("/pilot/chat/abc123/info")).toBe(false);
   });
 });
 

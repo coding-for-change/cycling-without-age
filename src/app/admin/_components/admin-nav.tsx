@@ -10,7 +10,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import type { ResolvedNavItem } from "../nav";
+import type { NavKey, ResolvedNavItem } from "../nav";
+import { ChatBadge } from "@/features/chat/components/chat-badge";
 import { ICONS } from "@/components/icons";
 import { matchesPath } from "@/lib/nav-match";
 
@@ -21,10 +22,12 @@ export function AdminNav({
   items,
   label,
   groupLabel,
+  badges,
 }: {
   items: ResolvedNavItem[];
   label?: string;
   groupLabel?: string;
+  badges?: Partial<Record<NavKey, number>>;
 }) {
   const pathname = usePathname();
 
@@ -52,6 +55,10 @@ export function AdminNav({
                     <span>{itemLabel}</span>
                   </Link>
                 </SidebarMenuButton>
+                <ChatBadge
+                  count={badges?.[key] ?? 0}
+                  className="pointer-events-none absolute top-1.5 right-1 select-none group-data-[collapsible=icon]:hidden"
+                />
               </SidebarMenuItem>
             );
           })}

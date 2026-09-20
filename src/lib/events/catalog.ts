@@ -47,6 +47,14 @@ export const eventSchema = z.discriminatedUnion("type", [
     role: z.enum(["pilot", "passenger"]),
   }),
   z.object({
+    type: z.literal("chat.messageSent"),
+    conversationId: z.string().min(1),
+    messageId: z.string().min(1),
+    seq: z.number().int().min(1),
+    actorUserId: z.string().min(1),
+    chapterId: z.string().min(1).nullable(),
+  }),
+  z.object({
     type: z.literal("countryAdmin.appointed"),
     countryId: z.string().min(1),
     userId: z.string().min(1),

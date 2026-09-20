@@ -40,6 +40,8 @@ export const loadAccount = cache(async (): Promise<AccountData | null> => {
     notifications: {
       push: person?.notifyPush ?? false,
       email: person?.notifyEmail ?? false,
+      chatPush: person?.notifyChatPush ?? true,
+      chatEmail: person?.notifyChatEmail ?? true,
     },
     signOutLabel: dict.common.signOut,
     cancelLabel: dict.common.back,

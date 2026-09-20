@@ -148,6 +148,23 @@ const en = {
     footer:
       "You received this email because your role at Cycling Without Age changed.",
   },
+  chatDigest: {
+    subjectDirect: "{name} wrote to you",
+    subjectGroup: {
+      one: "{count} new message in {title}",
+      other: "{count} new messages in {title}",
+    },
+    preview: "The messages waiting for you",
+    heading: "While you were away",
+    intro: {
+      one: "{count} unread message in {title}.",
+      other: "{count} unread messages in {title}.",
+    },
+    cta: "Open the conversation",
+    more: "and {count} more",
+    someone: "Someone",
+    footer: "You received this email because push cannot reach you.",
+  },
   roles: {
     admin: "a chapter admin",
     pilot: "a pilot",
