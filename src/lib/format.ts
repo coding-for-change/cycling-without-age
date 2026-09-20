@@ -188,6 +188,25 @@ export function formatShortDateWithWeekday(
   }).format(toCalendarDate(value));
 }
 
+/** `M` — one letter for a day column too narrow for a word; the same in every supported locale */
+export function formatWeekdayNarrow(
+  value: Date | string,
+  locale: Locale,
+): string {
+  return dateTimeFormatter(locale, {
+    ...CALENDAR_UTC,
+    weekday: "narrow",
+  }).format(toCalendarDate(value));
+}
+
+/** `7` (en-US) · `7.` (da-DK) */
+export function formatDayOfMonth(value: Date | string, locale: Locale): string {
+  return dateTimeFormatter(locale, {
+    ...CALENDAR_UTC,
+    day: "numeric",
+  }).format(toCalendarDate(value));
+}
+
 /* -------------------------------------------------------------------------- */
 /* Instants — a real moment, so the zone is mandatory                         */
 /* -------------------------------------------------------------------------- */
@@ -209,6 +228,18 @@ export function formatTime(
   return dateTimeFormatter(locale, {
     timeZone,
     timeStyle: "short",
+  }).format(new Date(value));
+}
+
+/** `10 AM` (en-US) · `10 Uhr` (de-DE) · `10` (en-GB, da-DK) — an hour rail with no room for minutes */
+export function formatHour(
+  value: Date | string,
+  locale: Locale,
+  timeZone: string,
+): string {
+  return dateTimeFormatter(locale, {
+    timeZone,
+    hour: "numeric",
   }).format(new Date(value));
 }
 

@@ -11,13 +11,14 @@ import {
   weekDays,
 } from "@/lib/calendar";
 import {
+  formatHour,
   formatPlural,
-  formatShortDateWithWeekday,
   formatTime,
   type Locale,
 } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { RideCalendarRow } from "../facade";
+import { DayHeading } from "./day-heading";
 import {
   ridePilots,
   rideTone,
@@ -58,6 +59,11 @@ type Column = {
  * rides in the afternoon does not scroll past an empty morning. Navigation
  * lives in the URL, so this stays a Server Component and the week changes
  * without shipping a calendar to the browser.
+ *
+ * All seven days always fit: below the `@3xl` container width the hour rail
+ * narrows to hour-only labels, the day heads stack, and a ride chip wraps its
+ * name instead of truncating it — a phone shows the whole week, not four days
+ * and a scrollbar.
  */
 export function RideWeek({
   rides,
@@ -78,8 +84,8 @@ export function RideWeek({
   const todayKey = now ? dayKey(now, timeZone) : null;
 
   return (
-    <div className="overflow-x-auto">
-      <div className="grid min-w-3xl grid-cols-[3.5rem_repeat(7,minmax(0,1fr))]">
+    <div className="@container">
+      <div className="grid grid-cols-[3rem_repeat(7,minmax(0,1fr))] @3xl:grid-cols-[3.5rem_repeat(7,minmax(0,1fr))]">
         <div aria-hidden />
         {columns.map((column) => {
           const isToday = column.key === todayKey;
@@ -87,41 +93,39 @@ export function RideWeek({
             <div
               key={column.key}
               className={cn(
-                "border-line border-b px-2 pb-2 text-center",
+                "border-line border-b px-1 pb-2 text-center @3xl:px-2",
                 isToday && "border-b-mint border-b-2",
               )}
             >
-              <span
-                className={cn(
-                  "text-2sm",
-                  isToday ? "text-ink font-display" : "text-ink-soft",
-                )}
-              >
-                {formatShortDateWithWeekday(
-                  calendarDate(column.day, timeZone),
-                  locale,
-                )}
-              </span>
+              <DayHeading
+                day={calendarDate(column.day, timeZone)}
+                locale={locale}
+                isToday={isToday}
+              />
             </div>
           );
         })}
 
         <div className="border-line border-r">
-          {hours.map((hour) => (
-            <div
-              key={hour}
-              style={{ height: `${HOUR_REM}rem` }}
-              className="text-ink-faint relative text-right text-xs"
-            >
-              <span className="absolute -top-2 right-2">
-                {formatTime(
-                  hourInstant(columns[0].day, hour, timeZone),
-                  locale,
-                  timeZone,
-                )}
-              </span>
-            </div>
-          ))}
+          {hours.map((hour) => {
+            const instant = hourInstant(columns[0].day, hour, timeZone);
+            return (
+              <div
+                key={hour}
+                style={{ height: `${HOUR_REM}rem` }}
+                className="text-ink-faint relative text-right text-xs"
+              >
+                <span className="absolute -top-2 right-1 whitespace-nowrap @3xl:right-2">
+                  <span className="@3xl:hidden">
+                    {formatHour(instant, locale, timeZone)}
+                  </span>
+                  <span className="hidden @3xl:inline">
+                    {formatTime(instant, locale, timeZone)}
+                  </span>
+                </span>
+              </div>
+            );
+          })}
         </div>
 
         {columns.map((column) => (
@@ -139,7 +143,9 @@ export function RideWeek({
       </div>
 
       {rides.length === 0 ? (
-        <p className="text-2sm text-ink-soft px-2 pt-5">{strings.weekEmpty}</p>
+        <p className="text-2sm text-ink-soft px-4 pt-5 @3xl:px-2">
+          {strings.weekEmpty}
+        </p>
       ) : null}
     </div>
   );
@@ -218,6 +224,7 @@ function DayColumn({
         const height = ((to - from) / bandMinutes) * 100;
         const { lane, lanes: width } = packed[index];
         const clampedTop = Math.max(0, top);
+        const cancelled = ride.status === "cancelled";
 
         return (
           <article
@@ -229,22 +236,27 @@ function DayColumn({
               width: `${100 / width}%`,
             }}
             className={cn(
-              "absolute overflow-hidden rounded-md border border-l-4 px-2 py-1.25",
+              "absolute flex flex-col overflow-hidden rounded-md border border-l-2 p-1 text-xs @3xl:border-l-4 @3xl:px-2 @3xl:py-1.25",
               rideTone(ride),
             )}
           >
             <p
               className={cn(
-                "font-display truncate text-xs",
-                ride.status === "cancelled" && "line-through",
+                "font-display order-2 @3xl:order-1 @3xl:truncate",
+                cancelled && "line-through",
               )}
             >
               {formatTime(ride.startsAt, locale, timeZone)}
             </p>
-            <p className="truncate text-xs">
+            <p
+              className={cn(
+                "order-1 font-medium hyphens-auto wrap-break-word @3xl:order-2 @3xl:truncate @3xl:font-normal",
+                cancelled && "line-through @3xl:no-underline",
+              )}
+            >
               {rideWhere(ride, strings) ?? strings.models[ride.model]}
             </p>
-            <p className="truncate text-xs opacity-70">
+            <p className="order-3 hidden truncate opacity-70 @3xl:block">
               {rideTrishawNames(ride, strings)}
               {" · "}
               {ride._count.roster

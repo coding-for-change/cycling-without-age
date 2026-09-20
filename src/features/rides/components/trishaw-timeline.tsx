@@ -1,12 +1,9 @@
 import { Bike } from "lucide-react";
 import { calendarDate, dayKey, daysTouched, weekDays } from "@/lib/calendar";
-import {
-  formatShortDateWithWeekday,
-  formatTime,
-  type Locale,
-} from "@/lib/format";
+import { formatTime, type Locale } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { RideCalendarRow, TrishawRow } from "../facade";
+import { DayHeading } from "./day-heading";
 import {
   rideTone,
   rideTrishaws,
@@ -33,6 +30,10 @@ type Props = {
  *
  * Cancelled rides release the trishaw, so they are drawn faintly rather than
  * blocking the square.
+ *
+ * Below the `@3xl` container width the trishaw column is gone: each trishaw
+ * becomes its own row group with the name on a line of its own above its seven
+ * day squares, so a phone still shows the whole week.
  */
 export function TrishawTimeline({
   trishaws,
@@ -68,60 +69,61 @@ export function TrishawTimeline({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-3xl table-fixed border-collapse">
+    <div className="@container">
+      <table className="w-full table-fixed border-collapse">
         <thead>
           <tr>
             <th
               scope="col"
-              className="border-line text-2sm text-ink-soft w-44 border-b px-3 pb-2 text-left font-normal"
+              className="border-line text-2sm text-ink-soft hidden w-44 border-b px-3 pb-2 text-left font-normal @3xl:table-cell"
             >
               {strings.trishaw}
             </th>
             {days.map((day) => {
               const key = dayKey(day, timeZone);
+              const isToday = key === todayKey;
               return (
                 <th
                   key={key}
                   scope="col"
                   className={cn(
-                    "border-line text-2sm border-b px-2 pb-2 text-center font-normal",
-                    key === todayKey
-                      ? "text-ink font-display border-b-mint border-b-2"
-                      : "text-ink-soft",
+                    "border-line border-b px-1 pb-2 text-center font-normal @3xl:px-2",
+                    isToday && "border-b-mint border-b-2",
                   )}
                 >
-                  {formatShortDateWithWeekday(
-                    calendarDate(day, timeZone),
-                    locale,
-                  )}
+                  <DayHeading
+                    day={calendarDate(day, timeZone)}
+                    locale={locale}
+                    isToday={isToday}
+                  />
                 </th>
               );
             })}
           </tr>
         </thead>
-        <tbody>
-          {trishaws.map((trishaw) => (
-            <tr
-              key={trishaw.id}
-              className="align-top"
-            >
+        {trishaws.map((trishaw) => (
+          <tbody key={trishaw.id}>
+            <tr className="@3xl:hidden">
+              <th
+                scope="rowgroup"
+                colSpan={days.length}
+                className="px-1 pt-3 pb-1.25 text-left"
+              >
+                <TrishawLabel
+                  trishaw={trishaw}
+                  strings={strings}
+                />
+              </th>
+            </tr>
+            <tr className="align-top">
               <th
                 scope="row"
-                className="border-line border-b px-3 py-3 text-left"
+                className="border-line hidden border-b px-3 py-3 text-left @3xl:table-cell"
               >
-                <span className="text-2sm flex items-center gap-1.25">
-                  <Bike
-                    aria-hidden
-                    className="size-3.5 shrink-0"
-                  />
-                  {trishaw.name}
-                </span>
-                <span className="text-ink-soft block pl-5 text-xs">
-                  {trishaw.status === "active"
-                    ? (trishaw.type?.name ?? strings.trishawStatuses.active)
-                    : strings.trishawStatuses[trishaw.status]}
-                </span>
+                <TrishawLabel
+                  trishaw={trishaw}
+                  strings={strings}
+                />
               </th>
               {days.map((day) => {
                 const key = dayKey(day, timeZone);
@@ -132,7 +134,7 @@ export function TrishawTimeline({
                 return (
                   <td
                     key={key}
-                    className="border-line border-b p-1.25"
+                    className="border-line border-b p-1 @3xl:p-1.25"
                   >
                     <div className="flex flex-col gap-1.25">
                       {dayRides.map((ride) => (
@@ -149,10 +151,35 @@ export function TrishawTimeline({
                 );
               })}
             </tr>
-          ))}
-        </tbody>
+          </tbody>
+        ))}
       </table>
     </div>
+  );
+}
+
+function TrishawLabel({
+  trishaw,
+  strings,
+}: {
+  trishaw: TrishawRow;
+  strings: CalendarStrings;
+}) {
+  return (
+    <>
+      <span className="text-2sm flex items-center gap-1.25">
+        <Bike
+          aria-hidden
+          className="size-3.5 shrink-0"
+        />
+        {trishaw.name}
+      </span>
+      <span className="text-ink-soft block pl-5 text-xs">
+        {trishaw.status === "active"
+          ? (trishaw.type?.name ?? strings.trishawStatuses.active)
+          : strings.trishawStatuses[trishaw.status]}
+      </span>
+    </>
   );
 }
 
@@ -175,19 +202,22 @@ function Reservation({
 
   return (
     <div
-      className={cn("rounded border border-l-4 px-2 py-1", rideTone(ride))}
+      className={cn(
+        "rounded border border-l-2 p-1 text-xs @3xl:border-l-4 @3xl:px-2 @3xl:py-1",
+        rideTone(ride),
+      )}
       title={range}
     >
       <p
         className={cn(
-          "truncate text-xs font-display",
+          "font-display wrap-break-word @3xl:truncate",
           ride.status === "cancelled" && "line-through",
         )}
       >
         <span aria-hidden>{formatTime(ride.startsAt, locale, timeZone)}</span>
         <span className="sr-only">{range}</span>
       </p>
-      <p className="truncate text-xs opacity-70">
+      <p className="line-clamp-3 hyphens-auto wrap-break-word opacity-70 @3xl:line-clamp-1">
         {rideWhere(ride, strings) ?? strings.models[ride.model]}
       </p>
       {ride.status === "cancelled" ? (

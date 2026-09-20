@@ -74,16 +74,18 @@ async function Bikes({
         />
       </AdminPageHeader>
       {label ? <p className="text-2sm text-ink-soft -mt-3">{label}</p> : null}
-      <TrishawTimeline
-        trishaws={trishaws}
-        rides={weekRides}
-        anchor={anchor}
-        timeZone={timeZone}
-        weekStartsOn={weekStartsOn}
-        strings={dict.calendar}
-        locale={locale}
-        now={now}
-      />
+      <div className="-mx-4 md:mx-0">
+        <TrishawTimeline
+          trishaws={trishaws}
+          rides={weekRides}
+          anchor={anchor}
+          timeZone={timeZone}
+          weekStartsOn={weekStartsOn}
+          strings={dict.calendar}
+          locale={locale}
+          now={now}
+        />
+      </div>
     </>
   );
 }
