@@ -6,11 +6,8 @@ import { TrishawTimeline } from "@/features/rides/components/trishaw-timeline";
 import { addDays, firstDayOfWeek, startOfWeek } from "@/lib/calendar";
 import { resolveLocale } from "@/lib/format";
 import { getDictionary } from "@/lib/i18n";
-import {
-  AdminPageFallback,
-  AdminPageHeader,
-  AdminPageShell,
-} from "../_components/admin-page";
+import { PageFallback } from "@/components/page-fallback";
+import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
 import { WeekSwitcher } from "../_components/week-switcher";
 import { readActiveScope, type AdminSearchParams } from "../active-scope";
 import { calendarTimeZone } from "../calendar-scope";
@@ -23,7 +20,7 @@ export default function BikesPage({
 }) {
   return (
     <AdminPageShell>
-      <Suspense fallback={<AdminPageFallback />}>
+      <Suspense fallback={<PageFallback />}>
         <Bikes searchParams={searchParams} />
       </Suspense>
     </AdminPageShell>

@@ -10,11 +10,6 @@ const ROLE_EVENT: Record<"promote" | "demote" | "remove", ActivityType> = {
   remove: "memberRemoved",
 };
 
-/**
- * The history feed, rebuilt from the same facts the notifications are built
- * from. An event with no builder here writes no line — and saying so out loud
- * beats a listener that silently does nothing.
- */
 const builders: { [K in EventType]?: Builder<K> } = {
   "pilotApplication.decided": (event) => ({
     userId: event.userId,
@@ -53,6 +48,8 @@ const builders: { [K in EventType]?: Builder<K> } = {
     type: "countryAdminRemoved",
   }),
 };
+
+export const recordsActivityFor = (type: EventType) => type in builders;
 
 export async function recordActivity({ event }: Envelope) {
   const build = builders[event.type] as Builder<EventType> | undefined;

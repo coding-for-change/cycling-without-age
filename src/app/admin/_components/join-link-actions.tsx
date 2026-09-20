@@ -11,11 +11,6 @@ export type JoinLinkLabels = {
   downloadPng: string;
 };
 
-/**
- * Copy the join link, print its poster, save its QR. Three surfaces show these
- * — chapter settings, a chapter's detail page and the create drawer's done
- * panel — so the poster route and the PNG filename are spelled once here.
- */
 export function JoinLinkActions({
   url,
   slug,

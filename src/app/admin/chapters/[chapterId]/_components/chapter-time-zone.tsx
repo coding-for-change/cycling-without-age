@@ -5,11 +5,8 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
-import {
-  reportSave,
-  type SaveLabels,
-} from "../../../_components/action-feedback";
-import { useSaveStatus } from "../../../_components/save-status";
+import { reportSave, type SaveLabels } from "@/components/action-feedback";
+import { useSaveStatus } from "@/components/save-status";
 import { updateChapterAction } from "../../actions";
 
 /**

@@ -40,7 +40,6 @@ describe("recording an event", () => {
 describe("reading a person's history", () => {
   const where = () => db.activityEvent.findMany.mock.calls[0][0].where;
 
-  // An admin only sees what happened inside the chapters they administer.
   it("asks for the chapters in scope only", async () => {
     await activity.listForUser("u1", { chapterIds: ["c1"] });
     expect(where()).toEqual({

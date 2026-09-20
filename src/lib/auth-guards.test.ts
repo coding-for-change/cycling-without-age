@@ -5,6 +5,7 @@ import {
   getHighestRole,
   getSession,
   homeOf,
+  perspectiveViewerSession,
   requireAdminScope,
   requireAuth,
   requireChapterAdmin,
@@ -20,11 +21,8 @@ import type { Access } from "@/lib/access";
 
 jest.mock("react", () => ({
   ...jest.requireActual("react"),
-  // No request scope in tests — dedupe would leak one test's session into the next.
   cache: (fn: unknown) => fn,
 }));
-// Mutable, because `x-pathname` and the `cwa.next` cookie are exactly what the
-// redirect targets are read from.
 const requestHeaders = new Headers();
 const requestCookies = new Map<string, string>();
 
@@ -71,8 +69,6 @@ const BERLIN = "chapter-berlin";
 const AARHUS = "chapter-aarhus";
 const UNKNOWN = "chapter-ghost";
 
-// Full rows, as the facade really returns them — the guard is expected to project
-// them down to the four fields AdminScope carries.
 const COUNTRY_ROWS = [
   { id: DE, code: "DE", name: "Deutschland", createdAt: new Date(0) },
   { id: DK, code: "DK", name: "Danmark", createdAt: new Date(0) },
@@ -111,8 +107,6 @@ const AARHUS_SCOPE = {
 };
 const DE_SCOPE = { id: DE, code: "DE", name: "Deutschland" };
 
-// One enrolled passkey by default: the admin MFA gate is a separate rule with
-// its own tests, and every other case would otherwise be answered by it.
 const signedInAs = (access: Partial<Access>, passkeys = 1) => {
   getProfile.mockResolvedValue({ _count: { passkeys } });
   return getSessionMock.mockResolvedValue({
@@ -129,12 +123,9 @@ const sessionWith = (access: Partial<Access>) => ({
 const denied = (run: () => Promise<unknown>) =>
   expect(run()).rejects.toThrow("FORBIDDEN");
 
-// A signed-out visitor never reaches the 403: `requireAuth` sends them to sign in
-// first, which is the one authorization outcome that stays a redirect.
 const sentToSignIn = (run: () => Promise<unknown>) =>
   expect(run()).rejects.toThrow("REDIRECT:/sign-in");
 
-// The exact target, so `/sign-in` and `/sign-in?next=…` cannot pass for each other.
 const redirectedTo = async (run: () => Promise<unknown>) => {
   try {
     await run();
@@ -191,12 +182,10 @@ describe("a user who just signed up (no roles yet)", () => {
     await denied(() => requireChapterRole(BERLIN, "passenger"));
   });
 
-  // Never a 403 on a dashboard: they are lost, not intruding.
   it("is sent to the dispatcher instead of the admin dashboard", async () => {
     expect(await redirectedTo(requireAdminScope)).toBe("/onboarding");
   });
 
-  // The pending applicant: no role yet, so the pilot status screen is theirs.
   it("keeps the pilot perspective, having no home of its own", async () => {
     await expect(requirePerspective("pilot")).resolves.toBeTruthy();
     await expect(requirePerspective("passenger")).resolves.toBeTruthy();
@@ -246,7 +235,6 @@ describe("a pilot of Berlin", () => {
     await denied(() => requireCountryAdmin(DE));
   });
 
-  // The regression: /admin used to sit behind requireAuth alone, so a pilot got in.
   it("is sent to /pilot instead of the admin dashboard", async () => {
     expect(await redirectedTo(requireAdminScope)).toBe("/pilot");
     expect(listChapterScopes).not.toHaveBeenCalled();
@@ -281,7 +269,6 @@ describe("an admin of Berlin", () => {
     await denied(requireSuperAdmin);
   });
 
-  // Editing the chapter record itself is the country admin's job, not theirs.
   it("cannot edit its own chapter's record", async () => {
     await denied(() => requireCountryAdminOfChapter(BERLIN));
   });
@@ -427,6 +414,26 @@ describe("homeOf", () => {
   });
 });
 
+describe("perspectiveViewerSession", () => {
+  it("lets a guest look at the passenger home, and nowhere else", async () => {
+    getSessionMock.mockResolvedValue(null);
+
+    await expect(perspectiveViewerSession("passenger")).resolves.toBeNull();
+    await sentToSignIn(() => perspectiveViewerSession("pilot"));
+  });
+
+  it("keeps a pilot on its own side of the shell", async () => {
+    signedInAs({ memberships: [{ chapterId: BERLIN, roles: ["pilot"] }] });
+
+    await expect(perspectiveViewerSession("pilot")).resolves.toMatchObject({
+      user: { id: "u1" },
+    });
+    expect(
+      await redirectedTo(() => perspectiveViewerSession("passenger")),
+    ).toBe("/pilot");
+  });
+});
+
 describe("the admin passkey gate", () => {
   it("sends an admin without a passkey to enrol one, before any query runs", async () => {
     signedInAs({ memberships: [{ chapterId: BERLIN, roles: ["admin"] }] }, 0);
@@ -459,7 +466,6 @@ describe("the admin passkey gate", () => {
     await expect(requireAdminScope()).resolves.toBeTruthy();
   });
 
-  // A pilot passing a chapter-role check is not an admin and is never asked.
   it("never asks a pilot for one", async () => {
     signedInAs({ memberships: [{ chapterId: BERLIN, roles: ["pilot"] }] }, 0);
 

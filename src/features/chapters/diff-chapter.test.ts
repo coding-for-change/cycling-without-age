@@ -1,6 +1,5 @@
 import { chapters } from "@/features/chapters";
 
-// `diffChapter` is pure; the facade's other exports are what pull in the client.
 jest.mock("@/lib/prisma", () => ({ prisma: {} }));
 
 const AARHUS = {

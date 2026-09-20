@@ -57,8 +57,6 @@ describe("inviteChapterUser", () => {
     });
   });
 
-  // A brand-new account has no language of its own, so the mail the invitation
-  // triggers would otherwise go out in the default one.
   it("seeds the inviter's language into a new account without asking", async () => {
     await invite();
 
@@ -77,7 +75,6 @@ describe("inviteChapterUser", () => {
     );
   });
 
-  // Their own choice outranks whatever language the inviter happens to browse in.
   it("leaves an existing language alone", async () => {
     provisionUser.mockResolvedValue({ userId: "user-old", created: false });
     getProfile.mockResolvedValue({ email: "p@example.com", locale: "en" });

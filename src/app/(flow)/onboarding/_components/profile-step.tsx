@@ -47,8 +47,6 @@ export function ProfileStep({
 }) {
   const router = useRouter();
   const { oops } = useCharacter();
-  // Seeded from what they saved, so the back button leads to their own answers
-  // rather than a blank form.
   const [firstName, setFirstName] = useState(defaults.firstName);
   const [lastName, setLastName] = useState(defaults.lastName);
   const [birthDate, setBirthDate] = useState(defaults.birthDate);

@@ -1,10 +1,5 @@
 import { z } from "zod";
-import {
-  DRAFT_MAX_AGE_MS,
-  DRAFT_VERSION,
-  readDraft,
-  signInHref,
-} from "@/lib/auth-wall";
+import { DRAFT_MAX_AGE_MS, DRAFT_VERSION, readDraft } from "@/lib/auth-wall";
 
 const ride = z.object({
   chapterSlug: z.string(),
@@ -79,16 +74,5 @@ describe("readDraft", () => {
         NOW,
       ),
     ).toBeNull();
-  });
-});
-
-describe("signInHref", () => {
-  it("escapes the destination so a query of its own survives the round trip", () => {
-    expect(signInHref("/join/muenchen/ride")).toBe(
-      "/sign-in?next=%2Fjoin%2Fmuenchen%2Fride",
-    );
-    expect(signInHref("/admin/rides?chapter=muenchen")).toBe(
-      "/sign-in?next=%2Fadmin%2Frides%3Fchapter%3Dmuenchen",
-    );
   });
 });

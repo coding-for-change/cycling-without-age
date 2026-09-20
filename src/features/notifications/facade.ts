@@ -34,10 +34,6 @@ import {
   upsertDevice,
 } from "./services/devices";
 
-/**
- * Idempotent by table constraint: the unique (eventId, recipientUserId) turns a
- * redelivered job into a no-op instead of a second card in the bell.
- */
 export async function create(input: CreateNotificationInput) {
   const data = createNotificationInput.parse(input);
   return upsertNotification({
@@ -54,18 +50,12 @@ export const listInbox = (recipientUserId: string, take = INBOX_PAGE_SIZE) =>
 export const unseenCount = (recipientUserId: string) =>
   countUnseenOfUser(recipientUserId);
 
-// Ownership is part of the WHERE clause, never a separate check: a caller
-// cannot mark someone else's notification read by guessing an id.
 export const markSeen = async (recipientUserId: string) =>
   (await stampSeen(recipientUserId)).count;
 
 export const markRead = async (id: string, recipientUserId: string) =>
   (await stampRead(id, recipientUserId)).count > 0;
 
-/**
- * Claims the attempt and returns the row to report against, or null when this
- * channel already went out — the guard against a retry double-sending.
- */
 export async function beginDelivery(input: BeginDeliveryInput) {
   const { notificationId, channel } = beginDeliveryInput.parse(input);
   const existing = await findDelivery(notificationId, channel);
@@ -88,7 +78,6 @@ export const deliverySkipped = (id: string, reason: string) =>
 export const registerDevice = (input: RegisterDeviceInput) =>
   upsertDevice(registerDeviceInput.parse(input));
 
-// The owner is part of the WHERE, so a token someone else holds survives.
 export const unregisterDevice = async (userId: string, token: string) =>
   (await deleteDeviceOfUser(userId, deviceTokenSchema.parse(token))).count > 0;
 
@@ -100,12 +89,7 @@ export const removeDeviceTokens = async (tokens: string[]) => {
   return (await deleteDevicesByToken(tokens)).count;
 };
 
-/**
- * FCM itself expires a token after 270 days of inactivity, so this only clears
- * rows FCM would reject anyway: a pilot who parks the trishaw for the winter
- * still gets the spring push. `lastSeenAt` moves on every app open, so the
- * cutoff means "no sign of this install for that long", not "no push sent to it".
- */
+// FCM itself drops a token after 270 days of inactivity.
 export const STALE_DEVICE_DAYS = 270;
 
 export const pruneStaleDevices = async (

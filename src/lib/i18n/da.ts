@@ -789,7 +789,6 @@ const da: Dictionary = {
         body: "{chapter} siger velkommen. Se træningsvideoerne, og mød så en kaptajn til din første tur.",
         dismiss: "Forstået",
       },
-      account: "Konto",
     },
     status: {
       pendingTitle: "Din ansøgning ligger hos {chapter}",
@@ -809,14 +808,102 @@ const da: Dictionary = {
     training: {
       title: "Træning mens du venter",
       body: "Videoerne er stadig under optagelse. Så snart de er klar, står de her — cirka 20 minutter og derefter en workshop med en af kaptajnerne.",
-      back: "Tilbage til pilotforsiden",
     },
   },
   passenger: {
-    account: "Konto",
-    title: "Passagerens forside",
     browsing: "Du kigger på {chapter}",
     noChapter: "Du har ikke valgt en lokalafdeling endnu",
+  },
+  member: {
+    nav: {
+      home: "Hjem",
+      rides: "Mine ture",
+      calendar: "Kalender",
+      chat: "Beskeder",
+      training: "Træning",
+    },
+    navLabel: "Afsnit",
+    tabBarLabel: "Hovedmenu",
+    action: { pilot: "Find ledige ture", passenger: "Book en tur" },
+    perspective: {
+      switchLabel: "Skift perspektiv",
+      label: "Perspektiv",
+      chapters: "{count} afdelinger",
+      noChapter: "Ingen afdeling endnu",
+    },
+    user: {
+      pilot: { menuLabel: "Din konto", account: "Konto" },
+      passenger: { menuLabel: "Din konto", account: "Konto" },
+    },
+    topBar: {
+      pilot: {
+        account: "Din konto",
+        switchHint: "Dobbelttryk for at skifte perspektiv",
+      },
+      passenger: {
+        account: "Din konto",
+        switchHint: "Dobbelttryk for at skifte perspektiv",
+      },
+    },
+    guest: {
+      subtitle: "Du kigger dig omkring",
+      signIn: "Log ind",
+      hero: "Opret din konto",
+      heroHint:
+        "En e-mail eller et telefonnummer er alt, der skal til for at booke en tur.",
+      greeting: "Velkommen",
+      tagline: "Se dig omkring først — afdelingen, du valgte, står lige her.",
+    },
+    home: {
+      greeting: "Hej {name}",
+      pilot: { tagline: "Klar, når du er." },
+      passenger: {
+        tagline: "Din næste tur begynder her.",
+        chooseChapter: "Vælg en afdeling",
+      },
+      nextRide: {
+        title: "Næste tur",
+        pilot: {
+          empty:
+            "Der står ikke noget på din liste endnu. Når din afdeling lægger ledige ture op, dukker den næste, du tager, op her — dato, passager og mødested.",
+        },
+        passenger: {
+          empty:
+            "Der er ikke booket noget endnu. Når du booker en tur, lander dagen, tidspunktet og piloten, der kommer og henter dig, her.",
+        },
+      },
+      yourChapters: "Dine afdelinger",
+      yourChapter: "Din afdeling",
+    },
+    pages: {
+      rides: {
+        title: "Mine ture",
+        pilot: {
+          body: "Din første tur står ikke på listen endnu. Når din afdeling lægger ture op, kommer dem, der mangler en pilot, frem her — vælg en, så er rickshawen din hele eftermiddagen.",
+        },
+        passenger: {
+          body: "Der er ikke booket noget endnu. Når din afdeling åbner for booking, venter dine ture her — dagen, tidspunktet og piloten, der ringer på.",
+        },
+      },
+      calendar: {
+        title: "Kalender",
+        pilot: {
+          body: "En tom uge, indtil videre. Dine ture, træningsdatoer og afdelingens sammenkomster stiller sig op her.",
+        },
+        passenger: {
+          body: "Der er ikke planlagt noget endnu. Dine kommende ture dukker op her, med datoen og tidspunktet, hvor din pilot kommer.",
+        },
+      },
+      chat: {
+        title: "Beskeder",
+        pilot: {
+          body: "Der er stille indtil videre. Når beskeder åbner, hører du fra din kaptajn og de andre piloter her — hvem der kører på lørdag, og hvem der mangler en afløser.",
+        },
+        passenger: {
+          body: "Der er stille indtil videre. Når beskeder åbner, er det her, afdelingen siger hej — og her, du kan bede om et ekstra tæppe på en kold dag.",
+        },
+      },
+    },
   },
   notifications: {
     title: "Beskeder",
@@ -873,26 +960,85 @@ const da: Dictionary = {
   },
   account: {
     title: "Konto",
-    passkeys: "Adgangsnøgler",
-    passkeysBody:
-      "Med en adgangsnøgle logger din egen enhed dig ind — fingeraftryk, ansigt eller pinkode. Intet at huske, intet at skrive.",
-    add: "Tilføj en adgangsnøgle",
-    nameLabel: "Giv adgangsnøglen et navn (valgfrit)",
-    namePlaceholder: "Arbejdscomputer",
-    unnamed: "Adgangsnøgle",
-    thisDevice: "Denne enhed",
-    synced: "Synkroniseret",
-    added: "Adgangsnøgle tilføjet.",
-    remove: "Fjern",
-    removeConfirm: "Fjern {name}?",
-    removeBody:
-      "For at logge ind på den enhed skal du så bruge en anden adgangsnøgle eller en kode på e-mail eller sms.",
-    empty: "Ingen adgangsnøgler endnu. Tilføj en, så husker enheden dig.",
-    failed: "Det virkede ikke. Prøv igen.",
-    signInAgain:
-      "Der er gået et stykke tid. Log ind igen, før du tilføjer en adgangsnøgle.",
-    signInAgainAction: "Log ind igen",
-    back: "Tilbage",
+    description:
+      "Dine oplysninger, dit sprog, hvordan vi får fat i dig, og hvordan du logger ind.",
+    status: { saving: "Gemmer", saved: "Gemt {when}" },
+    field: {
+      edit: "Ret",
+      saved: "Gemt.",
+      undo: "Fortryd",
+      undone: "Sat tilbage.",
+      invalid: "Det ser ikke rigtigt ud.",
+      errors: { generic: "Det virkede ikke. Prøv igen." },
+    },
+    perspective: { title: "Du ser som" },
+    profile: {
+      title: "Profil",
+      name: "Navn",
+      namePlaceholder: "Dit navn",
+      birthDate: "Fødselsdag",
+      birthDatePlaceholder: "Tilføj din fødselsdag",
+      invalidBirthDate: "Den fødselsdag ser ikke rigtig ud. Tjek årstallet.",
+      gender: "Køn",
+      genderPlaceholder: "Ikke angivet",
+      genders: { female: "Kvinde", male: "Mand", other: "Andet" },
+    },
+    language: {
+      title: "Sprog",
+      body: "E-mails og beskeder kommer også på dette sprog.",
+    },
+    notifications: {
+      title: "Beskeder",
+      body: "Det vigtigste — en tur, der er bekræftet, en afdeling, der svarer — når altid frem til dig. Her er resten.",
+      push: {
+        label: "Push",
+        hint: "Et prik på din telefon, når der sker noget.",
+      },
+      email: { label: "E-mail", hint: "Samme nyt, i din indbakke." },
+      permissionDenied:
+        "Din telefon blokerer for beskeder. Tillad dem under Indstillinger, og prøv så igen.",
+    },
+    passkeys: {
+      title: "Adgangsnøgler",
+      body: "Med en adgangsnøgle logger din egen enhed dig ind — fingeraftryk, ansigt eller pinkode. Intet at huske, intet at skrive.",
+      add: "Tilføj en adgangsnøgle",
+      nameLabel: "Giv adgangsnøglen et navn (valgfrit)",
+      namePlaceholder: "Arbejdscomputer",
+      unnamed: "Adgangsnøgle",
+      thisDevice: "Denne enhed",
+      synced: "Synkroniseret",
+      added: "Adgangsnøgle tilføjet.",
+      remove: "Fjern",
+      removeConfirm: "Fjern {name}?",
+      removeBody:
+        "For at logge ind på den enhed skal du så bruge en anden adgangsnøgle eller en kode på e-mail eller sms.",
+      empty: "Ingen adgangsnøgler endnu. Tilføj en, så husker enheden dig.",
+      failed: "Det virkede ikke. Prøv igen.",
+      signInAgain:
+        "Der er gået et stykke tid. Log ind igen, før du tilføjer en adgangsnøgle.",
+      signInAgainAction: "Log ind igen",
+      back: "Tilbage",
+    },
+    danger: {
+      title: "Log ud eller slet",
+      body: "Logger du ud, bliver alt stående. Sletter du, følger din konto, dine afdelinger og din historik med — ture, der allerede er kørt, bliver stående.",
+      delete: {
+        open: "Slet konto",
+        title: "Slet din konto for altid?",
+        body: "Din konto, dine roller, dine ansøgninger og din historik forsvinder. Ture, der allerede er kørt, bliver stående.",
+        label: "Skriv {word} for at bekræfte",
+        word: "DELETE",
+        submit: "Slet konto",
+        done: "Din konto er væk. Tak for vinden i håret.",
+        blocked:
+          "Du står stadig for en afdeling eller et land. Giv det videre til en anden først — så er knappen din.",
+        errors: {
+          handOverAdmin: "Giv din adminrolle videre først.",
+          rateLimited: "Vent et øjeblik, og prøv igen.",
+          generic: "Det virkede ikke. Prøv igen.",
+        },
+      },
+    },
   },
   legal: {
     imprint: {

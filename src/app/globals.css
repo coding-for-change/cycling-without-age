@@ -3,20 +3,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ==========================================================================
-   Cycling Without Age — brand theme. See docs/BRAND.md, which separates what
-   the brand book mandates from what this product decided on top of it.
-
-   The palette is the brand book's four colors — black, white, mint #92D2C6,
-   red #ED1C24 — plus tints of them (greys are ink tints). The book's black is
-   rendered here as --ink #2e2823, and that one token carries EVERY black mark:
-   type, icon strokes, borders, rules, illustration line work. Don't reach for a
-   literal #000 alongside it.
-
-   Type is Inter throughout, self-hosted by next/font (--font-inter), and
-   headlines separate from body by weight, not typeface. The brand's TacaPro is
-   not bundled; BRAND.md explains why and how to reinstate it.
-   ========================================================================== */
 :root {
   --canvas: #ffffff;
   --canvas-deep: #f4f2ef; /* warm light grey — black 30/30/30 at ~5% */
@@ -39,11 +25,7 @@
   --r-card: 0.75rem;
   --r-tile: 1.5rem;
   --r-cover: 1.125rem;
-
-  --shadow-soft:
-    0 2px 4px -2px rgb(0 0 0 / 0.05), 0 8px 20px -8px rgb(0 0 0 / 0.09);
-  --shadow-lift:
-    0 4px 8px -4px rgb(0 0 0 / 0.09), 0 18px 36px -14px rgb(0 0 0 / 0.16);
+  --tabbar-h: 3.5rem;
 
   --font-display:
     var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -97,19 +79,6 @@
   }
 }
 
-/* shadcn's neutral scale, remapped onto the brand ink.
-
-   These are the tokens that decide what an unstyled <Button>, <Card> or body
-   paragraph actually renders. Left at shadcn's defaults they are pure-neutral
-   greys (--foreground #0a0a0a, --primary #000), so the app rendered three
-   different blacks: #0a0a0a for text, #000 for buttons, and the brand's
-   #2e2823 only where someone wrote `text-ink` by hand. The brand ink was the
-   one black that never appeared.
-
-   `hsl(27 13.6% 16%)` is exactly --ink #2e2823; the greys below share its hue
-   so borders and muted text stay in the same warm family. Every foreground
-   here is that ink, so brand ink is what you get by DEFAULT and `text-ink` is
-   a restatement rather than a correction. */
 :root {
   --background: 0 0% 100%;
   --foreground: 27 13.6% 16%;
@@ -131,9 +100,6 @@
   --input: 27 14% 88%;
   --ring: 27 13.6% 16%;
   --radius: 0.625rem;
-  /* The sidebar surface IS the ground the content card floats on, so it points
-     at --canvas-deep rather than a near-white of its own: one warm surface, one
-     white card, which is what makes the inset variant read as intended. */
   --sidebar: var(--canvas-deep);
   --sidebar-foreground: hsl(27 13.6% 16%);
   --sidebar-primary: hsl(27 13.6% 16%);
@@ -164,8 +130,6 @@
   --border: 0 0% 14.9%;
   --input: 0 0% 14.9%;
   --ring: 0 0% 83.1%;
-  /* Same rewarming; the blue primary and ring become mint, the brand's own
-     accent, rather than a hue from outside the palette. */
   --sidebar: hsl(27 13.6% 12%);
   --sidebar-foreground: hsl(0 0% 98%);
   --sidebar-primary: hsl(168 45% 25%);
@@ -217,17 +181,36 @@
   --color-grey-tint: var(--grey-tint);
   --font-display: var(--font-display);
 
-  /* Compact UI text (13px) — Linear's base size, for dense admin surfaces:
-     feeds, property columns, row actions. Body copy stays text-sm/base. */
+  --shadow-soft:
+    0 2px 4px -2px rgb(0 0 0 / 0.05), 0 8px 20px -8px rgb(0 0 0 / 0.09);
+  --shadow-lift:
+    0 4px 8px -4px rgb(0 0 0 / 0.09), 0 18px 36px -14px rgb(0 0 0 / 0.16);
+
   --text-2sm: 0.8125rem;
   --text-2sm--line-height: 1.25rem;
 }
 
-/* Headlines are Inter Bold (BRAND.md § Typography). --font-display and --font-sans
-   are the same stack today, so weight is the only thing separating a headline from
-   body text — set it explicitly, because Tailwind's preflight resets headings to
-   `font-weight: inherit` and they would otherwise render at 400. The `font-display`
-   utility comes from --font-display above. */
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility pb-tabbar {
+  padding-bottom: calc(
+    var(--tabbar-h) + max(0.75rem, env(safe-area-inset-bottom)) + 1rem
+  );
+}
+
+@layer base {
+  html {
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
 @layer base {
   h1,
   h2,
@@ -238,9 +221,6 @@
   }
 }
 
-/* text-wrap inherits, so two rules cover the app: body copy is `pretty` (no
-   orphans), headlines `balance` (even line lengths). A heading that is not an
-   h* element adds `text-balance` itself. */
 @layer base {
   body {
     text-wrap: pretty;
@@ -267,16 +247,6 @@
   }
 }
 
-/* ==========================================================================
-   Sign-in flow motion.
-
-   The character is mounted once in the (flow) layout and never remounts, so it
-   travels between poses with a plain transform transition.
-   ========================================================================== */
-
-/* The header line every (flow) screen shares: the back button, the step dots
-   and the compact character all centre on it. --flow-top is its top edge,
-   --flow-bar its height (the back button). */
 .flow-shell {
   --flow-top: calc(1rem + env(safe-area-inset-top));
   --flow-bar: 2.75rem;
@@ -298,7 +268,6 @@
   will-change: transform;
 }
 
-/* Centred and large: the first thing anyone sees on the carousel. */
 .character-stage[data-pose="hero"] {
   --ch-scale: 0.7;
   --ch-x: calc(50vw - var(--ch-scale) * 10rem);
@@ -376,7 +345,22 @@
   }
 }
 
-/* The overlay swallows clicks for the length of the animation otherwise. */
+::view-transition-old(.tab-out) {
+  animation: 120ms ease-in both member-fade reverse;
+}
+::view-transition-new(.tab-in) {
+  animation: 180ms ease-out both member-fade;
+}
+
+@keyframes member-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 ::view-transition {
   pointer-events: none;
 }
@@ -390,9 +374,6 @@
   }
 }
 
-/* Stepped aside: the carousel's later slides carry a photograph, and the
-   character is only the artwork for the first one. It fades from wherever it
-   was rather than jumping, so swiping back brings it straight home. */
 .character-stage[data-pose="away"] {
   --ch-scale: 0.7;
   --ch-x: calc(50vw - var(--ch-scale) * 10rem);
@@ -433,9 +414,6 @@
   }
 }
 
-/* The story progress bar: the active segment fills over one autoplay interval,
-   which the component sets as `--story-ms` so the timer and the bar cannot
-   drift apart. */
 .story-fill {
   transform-origin: left;
   animation: story-fill var(--story-ms) linear forwards;
@@ -457,10 +435,6 @@
   }
 }
 
-/* ==========================================================================
-   Carousel illustration motion. Ported from the mockup's brand.css so the
-   ported art keeps the movement it was drawn with.
-   ========================================================================== */
 .art-float {
   animation: art-float 5s ease-in-out infinite;
 }
@@ -484,7 +458,6 @@
   animation: art-ping 2.8s ease-out infinite;
 }
 
-/* One band's width, so the doubled coastline loops without a seam. */
 .art-globe {
   animation: art-globe 26s linear infinite;
 }
@@ -575,8 +548,6 @@
   }
 }
 
-/* The printable chapter poster (/join/[slug]/poster) is the app's only print
-   surface: A4 edge to edge, its own 16mm gutter drawn by the page itself. */
 @page {
   size: A4;
   margin: 0;

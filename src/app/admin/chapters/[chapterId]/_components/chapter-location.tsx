@@ -13,8 +13,8 @@ import { DetailSection } from "../../../_components/detail-page";
 import { CHAPTER_RADIUS_KM } from "@/features/chapters/schemas";
 import { haptics } from "@/lib/native/haptics";
 import { cn, fill } from "@/lib/utils";
-import { reportSave } from "../../../_components/action-feedback";
-import { useSaveStatus } from "../../../_components/save-status";
+import { reportSave } from "@/components/action-feedback";
+import { useSaveStatus } from "@/components/save-status";
 import type { MapPin } from "../../_components/chapter-map";
 import {
   resolveChapterPlace,
@@ -39,12 +39,6 @@ type Place = {
 const keyOf = (place: Place) =>
   `${place.coords.lat}|${place.coords.lng}|${place.address}|${place.city}|${place.radiusKm}`;
 
-/**
- * Where the chapter sits and how far it rides. The address box above the map
- * holds the address on record; typing a new one searches Mapbox, and picking a
- * result writes address, town and coordinates in one save — one history line,
- * one Undo. The pin itself only shows.
- */
 export function ChapterLocation({
   id,
   server,

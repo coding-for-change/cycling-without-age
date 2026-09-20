@@ -16,13 +16,14 @@ import { readActiveScope } from "../../../active-scope";
 import { ActivityFeed } from "../../../members/[userId]/_components/activity-feed";
 import { ChapterEditor } from "./chapter-editor";
 import { DeleteChapterDialog } from "./delete-chapter-dialog";
+import type { AdminSearchParams } from "../../../active-scope";
 
 export async function ChapterBody({
   params,
   searchParams,
 }: {
   params: Promise<{ chapterId: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams: Promise<AdminSearchParams>;
 }) {
   const [{ session, scopeQuery, chapters: inScope }, { chapterId }] =
     await Promise.all([readActiveScope(searchParams, "chapters"), params]);

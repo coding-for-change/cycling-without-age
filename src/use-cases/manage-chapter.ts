@@ -50,10 +50,6 @@ export async function updateChapter({
   return after;
 }
 
-/**
- * The event is global on purpose: the chapter row is gone, and a `chapterId`
- * pointing at it would cascade the line away with it.
- */
 export async function deleteChapter({
   chapterId,
   actorUserId,

@@ -5,8 +5,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 export type StepProgress = {
   index: number;
   total: number;
-  /** "Step {current} of {total}" — the only thing a screen reader gets, since the
-   *  dots themselves say nothing out loud. */
   label: string;
 };
 
@@ -62,7 +60,6 @@ export function Step({
   );
 }
 
-/** The error line above a step's action. Reserved space is the caller's job. */
 export function StepError({ children }: { children: ReactNode }) {
   return (
     <p
@@ -102,7 +99,6 @@ export function StepDots({
   );
 }
 
-/** Matches the Step frame so the streamed content does not shift the layout. */
 export function StepSkeleton() {
   return (
     <Step title={<Skeleton className="h-9 w-3/4" />}>

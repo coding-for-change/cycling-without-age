@@ -31,7 +31,6 @@ async function atStep(step: OnboardingStep) {
   return { session, userId: session.user.id, ...state };
 }
 
-/** Recomputed after the write, so it names the step that now comes next. */
 const onward = async (
   session: Parameters<typeof resolveDestination>[0],
 ): Promise<StepResult> => ({
@@ -90,7 +89,6 @@ const relationshipInput = z.enum([
   "other",
 ]);
 
-/** `null` details is the "booking for someone else" path — see the use case. */
 export async function submitProfile(
   input: unknown,
   helperRelationship?: unknown,
@@ -132,7 +130,6 @@ export async function submitProfile(
   }
 }
 
-/** Stamped whichever way they answered, so an optional step is offered once. */
 export async function markPasskeyAnswered(): Promise<StepResult> {
   const session = await requireAuth();
   await profile.markPasskeyPrompted(session.user.id);
@@ -147,8 +144,6 @@ export async function finishPilotNextSteps(): Promise<StepResult> {
   return onward(session);
 }
 
-/** For the location screen, whose join goes through the membership feature's own
- *  action — that slice has no business knowing what onboarding looks like. */
 export async function nextOnboardingPath(): Promise<string> {
   const session = await requireAuth();
   return resolveDestination(

@@ -8,19 +8,22 @@ import { haptics } from "@/lib/native/haptics";
 import { deletePushToken, getPushToken } from "@/lib/native/push";
 import { unregisterDevice } from "@/features/notifications/actions";
 
-/**
- * The FCM token outlives the session, so a device row left behind would push
- * this person's notifications to whoever signs in on the phone next. Best
- * effort: sign-out never waits on a network that may already be gone.
- */
-async function forgetDevice() {
+export async function forgetDevice() {
   try {
     const device = await getPushToken();
     if (device) await unregisterDevice({ token: device.token });
     await deletePushToken();
-  } catch {
-    // Web, or FCM unreachable. The session cookie is the part that matters.
-  }
+  } catch {}
+}
+
+export async function finishSignOut() {
+  try {
+    await authClient.signOut();
+  } catch {}
+  try {
+    sessionStorage.clear();
+  } catch {}
+  window.location.href = "/sign-in";
 }
 
 export function useSignOut() {
@@ -31,13 +34,7 @@ export function useSignOut() {
       startTransition(async () => {
         haptics.tap();
         await forgetDevice();
-        await authClient.signOut();
-        try {
-          sessionStorage.clear();
-        } catch {
-          // Private mode. The cookie is already gone, which is the part that matters.
-        }
-        window.location.href = "/sign-in";
+        await finishSignOut();
       }),
     [],
   );

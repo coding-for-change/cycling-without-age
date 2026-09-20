@@ -3,25 +3,20 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { chapters } from "@/features/chapters";
-import { readActiveScope } from "../active-scope";
+import { readActiveScope, type AdminSearchParams } from "../active-scope";
 import { getDictionary, getLocale } from "@/lib/i18n";
-import {
-  AdminPageFallback,
-  AdminPageHeader,
-  AdminPageShell,
-} from "../_components/admin-page";
+import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
 import { CountriesTable, type CountryRow } from "./_components/countries-table";
-
-type AdminSearchParams = Promise<Record<string, string | string[] | undefined>>;
+import { PageFallback } from "@/components/page-fallback";
 
 export default function CountriesPage({
   searchParams,
 }: {
-  searchParams: AdminSearchParams;
+  searchParams: Promise<AdminSearchParams>;
 }) {
   return (
     <AdminPageShell>
-      <Suspense fallback={<AdminPageFallback />}>
+      <Suspense fallback={<PageFallback />}>
         <Countries searchParams={searchParams} />
       </Suspense>
     </AdminPageShell>
@@ -31,7 +26,7 @@ export default function CountriesPage({
 async function Countries({
   searchParams,
 }: {
-  searchParams: AdminSearchParams;
+  searchParams: Promise<AdminSearchParams>;
 }) {
   const [{ scopeQuery }, dict, language, countries] = await Promise.all([
     readActiveScope(searchParams, "countries"),

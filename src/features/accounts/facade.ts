@@ -68,11 +68,8 @@ export async function getClaimBanner(userId: string) {
 
 export const markClaimed = (userId: string) => markUserClaimed(userId);
 
-/**
- * Someone signing in to an account an admin created for them takes it over.
- * ponytail: read-then-write, so a double submit could record the event twice;
- * an `updateMany({ where: { claimedAt: null } })` in the service closes it.
- */
+// ponytail: read-then-write, so a double submit could record the event twice;
+// an `updateMany({ where: { claimedAt: null } })` in the service closes it.
 export async function claimAccount(userId: string) {
   if (!(await getClaimBanner(userId))) return;
 
@@ -84,7 +81,4 @@ export async function claimAccount(userId: string) {
   });
 }
 
-/** Hard delete. Sessions, passkeys, memberships, applications and history cascade
- *  in the schema; rows that only point at this person (`createdBy`, event actor)
- *  are nulled there too. */
 export const deleteUser = (userId: string) => removeUser(userId);

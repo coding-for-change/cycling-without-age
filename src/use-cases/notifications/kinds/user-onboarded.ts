@@ -2,6 +2,8 @@ import { z } from "zod";
 import { chapters } from "@/features/chapters";
 import { fill } from "@/lib/utils";
 import { defineKind } from "./types";
+import { ORG_NAME } from "@/lib/brand";
+import { PERSPECTIVE_HOME } from "@/lib/redirects";
 
 export const userOnboarded = defineKind({
   event: "user.onboarded",
@@ -10,7 +12,6 @@ export const userOnboarded = defineKind({
   payload: z.object({
     chapterName: z.string().nullable(),
     role: z.enum(["pilot", "passenger"]),
-    // Rows written before chapters could leave a note carry no key at all.
     welcomeNote: z.string().nullable().default(null),
   }),
   recipients: async (event) => [event.userId],
@@ -27,11 +28,11 @@ export const userOnboarded = defineKind({
       welcomeNote: settings.welcomeNote,
     };
   },
-  href: (event) => (event.role === "pilot" ? "/pilot" : "/passenger"),
+  href: (event) => PERSPECTIVE_HOME[event.role],
   message: ({ chapterName, role, welcomeNote }, strings) => {
     const copy =
       role === "pilot" ? strings.welcomePilot : strings.welcomePassenger;
-    const chapter = chapterName ?? "Cycling Without Age";
+    const chapter = chapterName ?? ORG_NAME;
     return {
       subject: copy.subject,
       title: fill(copy.title, { chapter }),

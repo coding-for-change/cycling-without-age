@@ -13,15 +13,9 @@ export type PasskeyCredential =
   | PasskeyRegistrationCredential
   | PasskeyAuthenticationCredential;
 
-// Resolves to the module, never to the plugin proxy: see push.ts for why a
-// Capacitor plugin must not be the value of an awaited promise.
+// The awaited value must be the module, never the plugin proxy: its `then` reads as a thenable.
 const plugin = () => import("@capgo/capacitor-passkey");
 
-/**
- * The shell's WKWebView has no WebAuthn, so the ceremony runs through the OS
- * passkey APIs. `origin` is the site the relying party expects to see in
- * clientDataJSON; iOS 17.4+ encodes it, older versions report the rpId.
- */
 export const createNativePasskey = async (
   publicKey: PasskeyCreationOptions,
   origin: string,

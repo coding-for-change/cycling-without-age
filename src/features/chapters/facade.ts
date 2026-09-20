@@ -45,6 +45,7 @@ import {
 import {
   deleteChapterById,
   findChapterById,
+  findChaptersByIds,
   findChapterBySlug,
   findChapterTimeZones,
   findChapterCountryId,
@@ -79,7 +80,6 @@ export const listCountryAdmins = (countryId: string) =>
 export const listCountriesAdministeredBy = async (userId: string) =>
   (await findCountryAdminsOf(userId)).map((row) => row.countryId);
 
-/** Both sides emit only on a real change, so appointing twice stays silent. */
 export async function appointCountryAdmin(
   userId: string,
   countryId: string,
@@ -142,7 +142,6 @@ const toFootprint = (row: {
   ),
 });
 
-/** What goes with the country if it is deleted — every chapter under it, and all they hold. */
 export async function getCountryFootprint(
   id: string,
 ): Promise<CountryFootprint | null> {
@@ -150,13 +149,11 @@ export async function getCountryFootprint(
   return row ? toFootprint(row) : null;
 }
 
-/** The list view's footprints in one query rather than one per row. */
 export async function listCountryFootprints(ids: string[]) {
   const rows = await findCountryFootprints(ids);
   return new Map(rows.map((row) => [row.id, toFootprint(row)]));
 }
 
-/** The list view's admins in one query rather than one per row. */
 export async function listAdminsByCountry(countryIds: string[]) {
   const rows = await findCountryAdminsOfCountries(countryIds);
   const grouped = new Map<
@@ -179,13 +176,12 @@ export const deleteCountry = (id: string) => deleteCountryById(id);
 
 type Chapter = NonNullable<Awaited<ReturnType<typeof getChapter>>>;
 
-/** Latitude, longitude and the address they name are one move on the map. */
 const LOCATION = ["latitude", "longitude", "address"] as const;
 const VALUE_MAX = 120;
 
 const shown = (value: unknown): string => {
   if (value === null || value === undefined || value === "") return "";
-  const text = typeof value === "number" ? String(value) : String(value);
+  const text = String(value);
   return text.length > VALUE_MAX ? `${text.slice(0, VALUE_MAX - 1)}…` : text;
 };
 
@@ -199,10 +195,6 @@ const locationText = (row: {
     ? `${row.latitude.toFixed(5)}, ${row.longitude.toFixed(5)}`
     : "");
 
-/**
- * One history line per field that actually changed. A whole form re-submitted
- * with one edit reads as one edit, and a save that changed nothing is silent.
- */
 export function diffChapter(
   before: Chapter,
   input: ChapterUpdateInput,
@@ -236,6 +228,9 @@ export const listChapters = (countryId?: string) => findChapters(countryId);
 export const listChapterScopes = () => findChapterScopes();
 export const listCountryScopes = () => findCountryScopes();
 export const getChapter = (id: string) => findChapterById(id);
+
+export const getChapters = async (ids: string[]) =>
+  ids.length === 0 ? [] : findChaptersByIds(ids);
 export const getChapterBySlug = (slug: string) => findChapterBySlug(slug);
 
 export const getChapterCountryId = async (id: string) =>
@@ -251,7 +246,6 @@ export type ChapterFootprint = {
   pendingApplications: number;
 };
 
-/** What goes with the chapter if it is deleted — the schema cascades all three. */
 export async function getChapterFootprint(
   id: string,
 ): Promise<ChapterFootprint | null> {
@@ -308,14 +302,10 @@ export function withDerivedTimeZone(
   return timeZone ? { ...input, timeZone } : input;
 }
 
-// A chapter belongs to exactly one country for life — moving it would silently
-// re-scope every country admin's authority over it — and the slug is printed on
-// posters, so neither is updatable.
 export function updateChapter(id: string, input: ChapterUpdateInput) {
   return updateChapterById(id, chapterUpdateInput.parse(input));
 }
 
-/** Defaults until the chapter changes something, so callers never branch on a missing row. */
 export const getSettings = async (
   chapterId: string,
 ): Promise<ChapterSettings> =>

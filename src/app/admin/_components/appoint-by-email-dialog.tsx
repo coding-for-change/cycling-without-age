@@ -11,7 +11,7 @@ import {
   notify,
   type ActionResult,
   type NotifyLabels,
-} from "./action-feedback";
+} from "@/components/action-feedback";
 import { AdminDrawer, submitOnCmdEnter } from "./admin-drawer";
 
 export function AppointByEmailDialog({

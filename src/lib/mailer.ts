@@ -5,9 +5,6 @@ import type { ReactElement } from "react";
 const apiKey = process.env.RESEND_API_KEY;
 const resend = apiKey ? new Resend(apiKey) : null;
 
-// Outside production nothing real is ever sent: mail goes to the local Mailpit catcher
-// even when a Resend key is lying around in .env, so a dev box cannot email a live
-// address by accident. Set MAILPIT_URL="" to opt back into real delivery in dev.
 const mailpitUrl =
   process.env.NODE_ENV === "production"
     ? null
@@ -44,10 +41,6 @@ export async function sendMail(options: MailOptions) {
   throw new Error(`Resend: ${error.name} — ${error.message}`);
 }
 
-/**
- * A throttle is not a failure: the worker parks the job until Resend's window
- * reopens instead of burning one of its five attempts.
- */
 export class MailRateLimitedError extends Error {
   readonly retryAfterMs: number;
 
@@ -59,14 +52,12 @@ export class MailRateLimitedError extends Error {
 }
 
 const DEFAULT_RETRY_AFTER_MS = 1_000;
-// A stray header must not park the whole email queue for an hour.
 const MAX_RETRY_AFTER_MS = 60_000;
 
 const isRateLimit = (error: { name?: string; statusCode?: number | null }) =>
   error.name === "rate_limit_exceeded" || error.statusCode === 429;
 
-// Resend answers a 429 with both headers in seconds; `retry-after` is the one
-// it sets per request, `ratelimit-reset` the window it belongs to.
+// Resend sends both in seconds: `retry-after` per request, `ratelimit-reset` per window.
 function retryAfterMs(headers: Record<string, string> | null | undefined) {
   const seconds =
     toSeconds(headers?.["retry-after"]) ??

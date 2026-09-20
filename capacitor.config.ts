@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from "@capacitor/cli";
+import type { KeyboardResize } from "@capacitor/keyboard";
 
 const url = process.env.CAP_SERVER_URL ?? "https://cwa.codingforchange.com";
 
@@ -22,6 +23,10 @@ const config: CapacitorConfig = {
     },
     FirebaseMessaging: {
       presentationOptions: ["badge", "sound", "alert"],
+    },
+    Keyboard: {
+      resize: "native" as KeyboardResize,
+      resizeOnFullScreen: true,
     },
     // The associated-domains entitlement and the Android asset statement are
     // committed by hand, so the plugin's cap-sync hook stays off.

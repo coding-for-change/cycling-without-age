@@ -1,0 +1,54 @@
+"use client";
+
+import { toast } from "sonner";
+import { haptics } from "@/lib/native/haptics";
+
+export type ActionResult = { ok: true } | { ok: false; error: string };
+
+export type NotifyLabels = {
+  done: string;
+  errors: { generic: string } & Record<string, string>;
+};
+
+export function notify(result: ActionResult, labels: NotifyLabels) {
+  if (result.ok) {
+    toast.success(labels.done);
+    haptics.success();
+    return;
+  }
+  toast.error(labels.errors[result.error] ?? labels.errors.generic);
+  haptics.error();
+}
+
+export type SaveLabels = {
+  saved: string;
+  undo: string;
+  undone: string;
+  errors: { generic: string } & Record<string, string>;
+};
+
+export function reportSave(
+  result: ActionResult,
+  {
+    report,
+    labels,
+    undo,
+  }: {
+    report: (state: "saving" | "saved" | "failed") => void;
+    labels: SaveLabels;
+    undo?: () => void;
+  },
+): boolean {
+  if (!result.ok) {
+    report("failed");
+    haptics.error();
+    toast.error(labels.errors[result.error] ?? labels.errors.generic);
+    return false;
+  }
+  report("saved");
+  haptics.success();
+  toast.success(undo ? labels.saved : labels.undone, {
+    action: undo ? { label: labels.undo, onClick: undo } : undefined,
+  });
+  return true;
+}

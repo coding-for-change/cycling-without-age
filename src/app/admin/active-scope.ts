@@ -9,10 +9,6 @@ export type AdminSearchParams = Record<string, string | string[] | undefined>;
 const first = (value: string | string[] | undefined) =>
   Array.isArray(value) ? value[0] : value;
 
-/**
- * The scope written back as a query string, so a link out of a scoped page
- * keeps the narrowing. The counterpart of `resolveActiveScope` reading it.
- */
 export const scopeQuery = (active: ActiveScope) =>
   active.kind === "chapter"
     ? `?chapter=${encodeURIComponent(active.chapter.slug)}`
@@ -20,15 +16,6 @@ export const scopeQuery = (active: ActiveScope) =>
       ? `?country=${encodeURIComponent(active.country.code)}`
       : "";
 
-/**
- * The one way an `/admin` page reads its scope. `?chapter=` and `?country=`
- * are user input: a value outside the caller's authority is a 403, never a
- * silent widening back to everything they may see.
- *
- * Pass the `NAV` key of the surface being rendered and the row's own `visible`
- * predicate is enforced here, so a page never re-spells the authority its
- * sidebar entry already declares.
- */
 export async function readActiveScope(
   searchParams: Promise<AdminSearchParams>,
   nav?: NavKey,

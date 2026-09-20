@@ -17,13 +17,14 @@ import { readActiveScope } from "../../../active-scope";
 import { DeleteUserDialog } from "../../_components/delete-user-dialog";
 import { MemberActions } from "../../_components/member-actions";
 import { ActivityFeed } from "./activity-feed";
+import type { AdminSearchParams } from "../../../active-scope";
 
 export async function PersonBody({
   params,
   searchParams,
 }: {
   params: Promise<{ userId: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams: Promise<AdminSearchParams>;
 }) {
   const [{ session, scope, scopeQuery, chapters, chapterIds }, { userId }] =
     await Promise.all([readActiveScope(searchParams), params]);

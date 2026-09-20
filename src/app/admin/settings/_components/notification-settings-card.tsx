@@ -1,26 +1,14 @@
 "use client";
 
-import { useId, useState, type ReactNode } from "react";
 import { z } from "zod";
-import { Switch } from "@/components/ui/switch";
 import {
   CHAPTER_WELCOME_NOTE_MAX,
   type ChapterSettings,
   type ChapterSettingsInput,
 } from "@/features/chapters/schemas";
-import {
-  reportSave,
-  type ActionResult,
-} from "../../_components/action-feedback";
-import {
-  InlineField,
-  type InlineFieldLabels,
-} from "../../_components/inline-field";
-import {
-  SaveStatus,
-  SaveStatusProvider,
-  useSaveStatus,
-} from "../../_components/save-status";
+import { InlineField, type InlineFieldLabels } from "@/components/inline-field";
+import { SaveStatus, SaveStatusProvider } from "@/components/save-status";
+import { FieldRow, ToggleRow } from "@/components/settings-rows";
 import { updateChapterSettingsAction } from "../actions";
 
 export type NotificationSettingsLabels = {
@@ -115,78 +103,5 @@ export function NotificationSettingsCard({
         </ul>
       </section>
     </SaveStatusProvider>
-  );
-}
-
-function ToggleRow({
-  value,
-  label,
-  hint,
-  labels,
-  onSave,
-}: {
-  value: boolean;
-  label: string;
-  hint: string;
-  labels: InlineFieldLabels;
-  onSave: (next: boolean) => Promise<ActionResult>;
-}) {
-  const report = useSaveStatus();
-  const id = useId();
-  const [override, setOverride] = useState<{
-    from: boolean;
-    to: boolean;
-  } | null>(null);
-
-  // Optimistic until the server refresh catches up, then the prop takes over.
-  const shown = override && override.from === value ? override.to : value;
-
-  const persist = async (next: boolean, undoable: boolean) => {
-    setOverride({ from: !next, to: next });
-    report("saving");
-    const ok = reportSave(await onSave(next), {
-      report,
-      labels,
-      undo: undoable ? () => void persist(!next, false) : undefined,
-    });
-    if (!ok) setOverride(null);
-  };
-
-  return (
-    <li className="flex min-h-11 items-start justify-between gap-5 py-3">
-      <div className="grid gap-1">
-        <span
-          id={id}
-          className="text-sm font-medium"
-        >
-          {label}
-        </span>
-        <span className="text-2sm text-ink-soft">{hint}</span>
-      </div>
-      <Switch
-        aria-labelledby={id}
-        checked={shown}
-        onCheckedChange={(next) => void persist(next, true)}
-        className="mt-1"
-      />
-    </li>
-  );
-}
-
-function FieldRow({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint: string;
-  children: ReactNode;
-}) {
-  return (
-    <li className="grid gap-1 py-3">
-      <span className="text-sm font-medium">{label}</span>
-      <span className="text-2sm text-ink-soft">{hint}</span>
-      {children}
-    </li>
   );
 }

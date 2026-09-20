@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bike } from "lucide-react";
-import { saveDraft, signInHref } from "@/lib/auth-wall";
+import { saveDraft } from "@/lib/auth-wall";
+import { signInHref } from "@/lib/redirects";
 import { haptics } from "@/lib/native/haptics";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
