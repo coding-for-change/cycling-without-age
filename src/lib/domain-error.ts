@@ -22,14 +22,23 @@ export type DomainErrorCode =
   | "notReachable"
   | "notSender"
   | "passengerChapterMismatch"
+  | "rideEndsBeforeStart"
+  | "rideTooLong"
+  | "rideTooShort"
   | "self"
   | "selfChange"
   | "slugTaken"
   | "tooLong"
+  | "trishawNotInChapter"
+  | "trishawReserved"
+  | "trishawUnavailable"
   | "unknownApplication"
   | "unknownChapter"
   | "unknownConversation"
-  | "unknownCountry";
+  | "unknownCountry"
+  | "unknownRide"
+  | "unknownTrishaw"
+  | "unknownTrishawType";
 
 export class DomainError extends Error {
   readonly code: DomainErrorCode;

@@ -93,6 +93,7 @@ graph TD
     F6[features/accounts facade]
     F7[features/notifications facade]
     F8[features/chat facade]
+    F9[features/rides facade]
     CM1[features/chapters/commands]
     CM2[features/membership/commands]
     CM3[features/profile/commands]
@@ -107,6 +108,7 @@ graph TD
     S6[accounts/services]
     S7[notifications/services]
     S8[chat/services]
+    S9[rides/services]
     DB[(MySQL via lib/prisma)]
   end
   subgraph Infrastructure
@@ -114,6 +116,7 @@ graph TD
     EV[lib/events outbox]
     Q[("Redis via BullMQ")]
     MB[lib/mapbox]
+    CAL[lib/calendar + lib/time-zone]
     ML[lib/mailer]
     PUSH[lib/push firebase-admin]
     NP[lib/native/push]
@@ -126,6 +129,10 @@ graph TD
   A --> G
   A --> F1
   A --> F5
+  A --> F9
+  A --> CAL
+  ADM --> F9
+  ADM --> CAL
   A --> U2
   G --> F1
   G --> F3
@@ -322,6 +329,8 @@ graph TD
   W3 --> F5
 
   F1 --> S1
+  F9 --> S9
+  S9 --> DB
   F2 --> S2
   F2 --> F5
   F6 --> F5
@@ -385,6 +394,20 @@ is the boundary when the transport cannot be a Server Action: `GET /api/chat/str
 connection and `/chat/[id]` is a deep link from a push banner or a digest mail. Both guard
 themselves and then call facades, exactly as an `actions.ts` does — `proxy.ts` excludes
 `/api/`, so the stream is its own gate.
+
+No use case was added for `rides` either. The calendar surfaces — `/admin/rides`,
+`/admin/bikes`, `/pilot` and `/passenger` — are Server Components that read the `rides`
+facade directly. `/admin/rides` and `/admin/bikes` additionally read
+`chapters.getChapterTimeZones`, because a calendar has to know which clock to draw in; a
+Server Component reading two facades is the existing pattern (`/admin/passengers` already
+reads `passengers` and `chapters`), and the Use Case rule in AGENTS.md governs Actions, not
+pages. The slice contributes no `commands.ts`: both of its destinations already have `NAV`
+rows, so the shell claims them by href, and it has no verbs of its own until ride scheduling
+(COD-155/179) lands.
+
+`lib/calendar` and `lib/time-zone` (CAL) are cross-cutting infrastructure beside
+`lib/format`: pure functions over instants and IANA zones, no React and no Prisma, so a
+facade, a page or a test may use them.
 
 No use case was added for the admin shell. `G --> F1` now carries two guards:
 `requireChapterAdmin` (`chapters.getChapterCountryId`) and `requireAdminScope`

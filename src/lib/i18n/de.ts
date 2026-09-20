@@ -633,6 +633,9 @@ const de: Dictionary = {
       detail: {
         back: "Zurück zu den Ortsgruppen",
         location: "Standort",
+        timeZone: "Zeitzone",
+        timeZoneHint:
+          "Fahrzeiten werden in dieser Zone angezeigt. Sie folgt der Stecknadel, solange du sie hier nicht festlegst.",
         about: "Über die Ortsgruppe",
         history: "Verlauf",
         historyEmpty:
@@ -1036,6 +1039,43 @@ const de: Dictionary = {
       invitation: "Einladung",
       welcome: "Willkommen",
       membership: "Mitgliedschaft",
+    },
+  },
+  calendar: {
+    today: "Heute",
+    thisWeek: "Diese Woche",
+    previousWeek: "Vorige Woche",
+    nextWeek: "Nächste Woche",
+    weekOf: "Woche ab {date}",
+    upcoming: "Demnächst",
+    agendaEmpty:
+      "Noch nichts gebucht. Sobald eine Fahrt eingeplant ist, steht sie hier.",
+    weekEmpty: "Diese Woche keine Fahrten.",
+    trishaw: "Rikscha",
+    noTrishaws: "Noch keine Rikschas eingetragen.",
+    riders: { one: "{count} Fahrgast", other: "{count} Fahrgäste" },
+    noRiders: "Noch keine Fahrgäste",
+    pilotNeeded: "Pilot gesucht",
+    noTrishaw: "Noch keine Rikscha",
+    cancelledOn: "Abgesagt",
+    via: "nach",
+    models: {
+      event: "Gruppenfahrt",
+      pleasure: "Ausfahrt",
+      functional: "Zweckfahrt",
+    },
+    statuses: {
+      scheduled: "Geplant",
+      cancelled: "Abgesagt",
+      completed: "Gefahren",
+    },
+    roles: {
+      pilot: "Pilot",
+    },
+    trishawStatuses: {
+      active: "Bereit",
+      maintenance: "In der Werkstatt",
+      retired: "Ausgemustert",
     },
   },
   account: {

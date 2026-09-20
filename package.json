@@ -43,6 +43,7 @@
     "@dicebear/styles": "^10.6.0",
     "@formatjs/intl-localematcher": "^0.8.13",
     "@hookform/resolvers": "^5.9.1",
+    "@photostructure/tz-lookup": "^11.6.1",
     "@prisma/client": "^6.19.2",
     "@react-email/components": "^1.0.12",
     "@shadcn/react": "^0.3.0",

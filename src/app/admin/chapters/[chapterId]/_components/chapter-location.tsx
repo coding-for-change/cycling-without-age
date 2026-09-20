@@ -22,6 +22,7 @@ import {
   updateChapterAction,
 } from "../../actions";
 import type { ChapterLabels } from "./chapter-editor";
+import { ChapterTimeZone } from "./chapter-time-zone";
 
 const ChapterMap = dynamic(() => import("../../_components/chapter-map"), {
   ssr: false,
@@ -46,9 +47,13 @@ export function ChapterLocation({
   language,
   notation,
   labels,
+  timeZone,
+  zones,
 }: {
   id: string;
   server: Place;
+  timeZone: string;
+  zones: readonly string[];
   others: MapPin[];
   mapEnabled: boolean;
   language: string;
@@ -181,6 +186,17 @@ export function ChapterLocation({
             })}
           </p>
         ) : null}
+
+        <ChapterTimeZone
+          id={id}
+          value={timeZone}
+          zones={zones}
+          labels={{
+            timeZone: labels.timeZone,
+            timeZoneHint: labels.timeZoneHint,
+            field: labels.field,
+          }}
+        />
       </div>
     </DetailSection>
   );

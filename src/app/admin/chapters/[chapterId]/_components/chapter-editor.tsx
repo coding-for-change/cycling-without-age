@@ -37,6 +37,8 @@ export type ChapterLabels = {
   radius: string;
   radiusValue: string;
   overlap: string;
+  timeZone: string;
+  timeZoneHint: string;
 };
 
 export type ChapterEditorProps = {
@@ -50,6 +52,8 @@ export type ChapterEditorProps = {
   countryName: string;
   coords: Coords;
   radiusKm: number;
+  timeZone: string;
+  zones: readonly string[];
   others: MapPin[];
   mapEnabled: boolean;
   language: string;
@@ -70,6 +74,8 @@ export function ChapterEditor({
   countryName,
   coords,
   radiusKm,
+  timeZone,
+  zones,
   others,
   mapEnabled,
   language,
@@ -119,6 +125,8 @@ export function ChapterEditor({
           <ChapterLocation
             id={id}
             server={{ coords, address, city, radiusKm }}
+            timeZone={timeZone}
+            zones={zones}
             others={others}
             mapEnabled={mapEnabled}
             language={language}

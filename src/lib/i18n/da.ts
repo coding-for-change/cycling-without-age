@@ -613,6 +613,9 @@ const da: Dictionary = {
       detail: {
         back: "Tilbage til afdelinger",
         location: "Placering",
+        timeZone: "Tidszone",
+        timeZoneHint:
+          "Turenes tidspunkter vises i denne zone. Den følger nålen, medmindre du vælger den her.",
         about: "Om afdelingen",
         history: "Historik",
         historyEmpty:
@@ -1003,6 +1006,43 @@ const da: Dictionary = {
       invitation: "Invitation",
       welcome: "Velkommen",
       membership: "Medlemskab",
+    },
+  },
+  calendar: {
+    today: "I dag",
+    thisWeek: "Denne uge",
+    previousWeek: "Forrige uge",
+    nextWeek: "Næste uge",
+    weekOf: "Uge fra {date}",
+    upcoming: "Kommer snart",
+    agendaEmpty:
+      "Der er ikke booket noget endnu. Så snart en tur er planlagt, dukker den op her.",
+    weekEmpty: "Ingen ture i denne uge.",
+    trishaw: "Rickshaw",
+    noTrishaws: "Ingen rickshaws oprettet endnu.",
+    riders: { one: "{count} passager", other: "{count} passagerer" },
+    noRiders: "Ingen passagerer endnu",
+    pilotNeeded: "Pilot mangler",
+    noTrishaw: "Ingen rickshaw endnu",
+    cancelledOn: "Aflyst",
+    via: "til",
+    models: {
+      event: "Fællestur",
+      pleasure: "Fornøjelsestur",
+      functional: "Ærindetur",
+    },
+    statuses: {
+      scheduled: "Planlagt",
+      cancelled: "Aflyst",
+      completed: "Kørt",
+    },
+    roles: {
+      pilot: "Pilot",
+    },
+    trishawStatuses: {
+      active: "Klar",
+      maintenance: "På værksted",
+      retired: "Taget ud af drift",
     },
   },
   account: {
