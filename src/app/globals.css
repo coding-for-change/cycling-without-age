@@ -300,7 +300,6 @@
   --ch-y: 21.5svh;
 }
 
-
 .character-stage[data-pose="compact"] {
   --ch-scale: 0.2;
   --ch-x: calc(100vw - 1rem - var(--ch-scale) * 20rem);

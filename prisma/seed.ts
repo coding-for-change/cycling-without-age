@@ -210,7 +210,6 @@ async function main() {
     return id;
   };
 
-
   let superAdminId: string | null = null;
 
   for (const persona of PERSONAS) {

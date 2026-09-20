@@ -42,7 +42,6 @@ function NativePushRegistrar() {
 
     let active = true;
 
-
     const remember = (device: PushDevice | null) => {
       if (!device || !active) return;
       void hasNotificationPermission()
