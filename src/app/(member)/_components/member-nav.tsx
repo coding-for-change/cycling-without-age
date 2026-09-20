@@ -12,7 +12,6 @@ import {
 import { ICONS } from "@/components/icons";
 import { activeTabKey, type ResolvedMemberNavItem } from "../nav";
 
-
 export function MemberNav({
   items,
   groupLabel,
