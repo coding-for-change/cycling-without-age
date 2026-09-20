@@ -21,6 +21,9 @@ ENV NEXT_PUBLIC_MAPBOX_TOKEN=$NEXT_PUBLIC_MAPBOX_TOKEN
 # Build Next.js (standalone output)
 RUN npm run build
 
+# Bundle the queue worker to /app/worker.js (same image, second command)
+RUN npm run build:worker
+
 # ---- Runner ----
 FROM node:22-alpine AS runner
 WORKDIR /app
@@ -40,6 +43,9 @@ COPY --from=builder /app/public ./public
 # Copy required files for Prisma migrations
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
+# The worker bundle, and the generated Prisma client it loads the engine from
+COPY --from=builder /app/worker.js ./worker.js
+COPY --from=builder /app/src/generated/prisma ./src/generated/prisma
 
 USER nextjs
 

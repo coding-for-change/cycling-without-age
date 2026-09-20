@@ -74,14 +74,16 @@ export const deleteMember = (
   db: Prisma.TransactionClient = prisma,
 ) => db.member.deleteMany({ where: { userId, organizationId: chapterId } });
 
-// ponytail: one row lock per chapter serialises every role change of that
-// chapter. Fine at chapter scale; lock the member row instead if a chapter ever
-// has enough concurrent admin edits to feel it.
 export const withChapterLock = <T>(
   chapterId: string,
   fn: (db: Prisma.TransactionClient) => Promise<T>,
-) =>
-  prisma.$transaction(async (tx) => {
+  db?: Prisma.TransactionClient,
+) => {
+  const locked = async (tx: Prisma.TransactionClient) => {
     await tx.$queryRaw`SELECT id FROM organization WHERE id = ${chapterId} FOR UPDATE`;
     return fn(tx);
-  });
+  };
+  // Prisma cannot nest interactive transactions: a caller that already has one
+  // hands it in, and the lock is taken inside it rather than beside it.
+  return db ? locked(db) : prisma.$transaction(locked);
+};

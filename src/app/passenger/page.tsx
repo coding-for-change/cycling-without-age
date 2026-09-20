@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { UserRound } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { chapters } from "@/features/chapters";
 import { passengers } from "@/features/passengers";
 import { rides } from "@/features/rides";
@@ -18,10 +19,17 @@ import { SignOutButton } from "@/components/sign-out-button";
 
 export default function PassengerHomePage() {
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
-      <Suspense fallback={<Skeleton className="h-9 w-56" />}>
-        <Title />
-      </Suspense>
+    <main className="mx-auto w-full max-w-2xl flex-1 px-6 pt-[max(4rem,calc(env(safe-area-inset-top)+1rem))] pb-16">
+      <div className="flex min-h-11 items-center justify-between gap-4">
+        <Suspense fallback={<Skeleton className="h-9 w-56" />}>
+          <Title />
+        </Suspense>
+        {/* No skeleton: a guest never gets a bell, and a placeholder would
+            flash a control that is not coming. */}
+        <Suspense fallback={null}>
+          <NotificationBell className="size-11" />
+        </Suspense>
+      </div>
       <Suspense fallback={<Skeleton className="mt-6 h-5 w-64" />}>
         <ChosenChapter />
       </Suspense>

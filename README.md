@@ -6,18 +6,26 @@ Next.js 16 app with Prisma (MySQL), Tailwind CSS v4, and shadcn/ui. Deployed to 
 
 ```bash
 cp .env.example .env.local   # local DB credentials
-docker compose up -d --wait  # MySQL 8 on localhost:3307
+docker compose up -d --wait  # MySQL 3307, Redis 6380, Mailpit 8026, MinIO 9002
 npm install
 npm run db:migrate           # apply Prisma migrations
 npm run dev                  # http://localhost:3000
+npm run dev:worker           # second terminal: the queue worker
 ```
+
+The worker serves the queue dashboard at <http://localhost:3001/queues>.
+
+Notifications and anything else driven by a domain event only happen while the worker runs
+— see [docs-internal/EVENTS.md](docs-internal/EVENTS.md).
 
 ## Scripts
 
 | Script | Purpose |
 | --- | --- |
 | `npm run dev` | Start the dev server |
+| `npm run dev:worker` | Start the BullMQ worker (events, notifications) |
 | `npm run build` / `npm run start` | Production build / serve |
+| `npm run build:worker` | Bundle the worker to `worker.js` (what the image runs) |
 | `npm run lint` | ESLint (incl. architecture boundaries) |
 | `npm run format` / `npm run format:check` | Prettier |
 | `npm run db:migrate` | `prisma migrate dev` against `.env.local` |

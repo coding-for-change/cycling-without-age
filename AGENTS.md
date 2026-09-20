@@ -87,9 +87,7 @@ No Shortcuts:
 ## 7. NATIVE (CAPACITOR) RULES
 The iOS/Android apps are thin Capacitor shells whose WebView loads https://cwa.codingforchange.com.
 
-- ALL `@capacitor/*` imports live in `src/lib/native/*` (lint-enforced via `no-restricted-imports`).
-  Features import the semantic wrappers (`@/lib/native/haptics`), never plugins directly.
-- Native APIs are client-only: call them from client components; the wrappers are SSR-safe
+client-only: call them from client components; the wrappers are SSR-safe
   no-ops on web (guarded by `Capacitor.isNativePlatform()`). Everything must degrade
   gracefully in the browser — web-first.
 - Haptics semantics: `haptics.success/warning/error` at action completion, fired next to the
@@ -101,3 +99,15 @@ The iOS/Android apps are thin Capacitor shells whose WebView loads https://cwa.c
   the OS permission declarations already present: `NSLocationWhenInUseUsageDescription` in
   `ios/App/App/Info.plist` and `ACCESS_COARSE_LOCATION` / `ACCESS_FINE_LOCATION` in
   `android/app/src/main/AndroidManifest.xml`.
+- Push goes through `@/lib/native/push` (`requestNotificationPermission`, `getPushToken`,
+  `onPushToken`, `onPushReceived`, `onPushOpened`), which wraps `@capacitor-firebase/messaging`
+  behind a dynamic import so the plugin never enters the web bundle. `<PushRegistrar />` in
+  `src/app/layout.tsx` is the only caller that registers a token; a tapped push may only
+  navigate to an app-relative `href`.
+- Passkeys go through `@/lib/native/passkey` (`@capgo/capacitor-passkey`): the shell's
+  WebView has no WebAuthn, so `@/lib/passkey-client` (`addPasskey`, `signInWithPasskey`)
+  runs the ceremony natively and feeds better-auth's own `/passkey/*` endpoints. UI never
+  calls `authClient.passkey.addPasskey` or `authClient.signIn.passkey` directly. The app is
+  tied to the site by the `webcredentials:` entitlement, the Android `asset_statements`
+  meta-data and `/.well-known/apple-app-site-association` + `/.well-known/assetlinks.json`
+  (`src/app/.well-known/*`, identifiers in `src/lib/native-app.ts`).

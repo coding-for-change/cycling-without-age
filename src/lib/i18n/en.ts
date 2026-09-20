@@ -206,6 +206,8 @@ const en = {
     admin: {
       title: "Admins sign in with a passkey",
       body: "Your device becomes your key to the dashboard — a fingerprint, a face, a PIN. Set one up to open it.",
+      failed:
+        "That didn't work — try again. You can also set your passkey up in a browser.",
     },
   },
   pilotNextSteps: {
@@ -258,7 +260,7 @@ const en = {
       summary: "You'd like to ride with {chapter}, {when}.",
       noDraft:
         "We lost track of what you picked. Choose a time again on the chapter's page.",
-      note: "Ride booking is coming soon \u2014 nothing has been sent yet.",
+      note: "Ride booking is coming soon — nothing has been sent yet.",
       back: "Back to {chapter}",
     },
   },
@@ -348,7 +350,7 @@ const en = {
     pages: {
       overview: {
         title: "Overview",
-        body: "Once rides are booked, this is where the week ahead lands \u2014 today's trips, the pilots taking them out, and anything still waiting on you.",
+        body: "Once rides are booked, this is where the week ahead lands — today's trips, the pilots taking them out, and anything still waiting on you.",
       },
       rides: {
         title: "Rides",
@@ -360,7 +362,7 @@ const en = {
       },
       passengers: {
         title: "Passengers",
-        body: "The people your chapter rides with \u2014 including the ones a relative or carer books for.",
+        body: "The people your chapter rides with — including the ones a relative or carer books for.",
       },
       bikes: {
         title: "Trishaws",
@@ -372,7 +374,7 @@ const en = {
       },
       reports: {
         title: "Reports",
-        body: "Rides ridden, hours volunteered, kilometres covered \u2014 the numbers a chapter needs when someone asks what it does.",
+        body: "Rides ridden, hours volunteered, kilometres covered — the numbers a chapter needs when someone asks what it does.",
       },
       chapters: {
         title: "Chapters",
@@ -523,6 +525,12 @@ const en = {
         approval: "Approved",
         rejection: "Turned down",
         invite: "Invitation",
+        welcome: "Welcome",
+        applicationSubmitted: "New application",
+        roleChanged: "Role change",
+        memberJoined: "New member",
+        countryAdminAppointed: "Country admin",
+        countryAdminRemoved: "Country admin stepped down",
       },
       fields: {
         name: "the name",
@@ -667,7 +675,7 @@ const en = {
       delete: {
         open: "Delete country",
         title: "Delete {name} for good?",
-        body: "Every chapter in this country goes with it \u2014 their members, passengers and open requests too. Rides already ridden stay on the record.",
+        body: "Every chapter in this country goes with it — their members, passengers and open requests too. Rides already ridden stay on the record.",
         footprint:
           "{chapters} chapters \u00b7 {members} members \u00b7 {passengers} passengers",
         label: "Type {word} to confirm",
@@ -709,7 +717,7 @@ const en = {
         added: "{name} is on the list.",
         errors: {
           exists: "That email or number already has an account.",
-          invalid: "Check the details \u2014 something isn't quite right.",
+          invalid: "Check the details — something isn't quite right.",
           generic: "That didn't work. Try again.",
         },
       },
@@ -732,6 +740,38 @@ const en = {
         copied: "Link copied.",
         poster: "Print the poster",
         downloadPng: "Save QR code as PNG",
+      },
+      notifications: {
+        title: "Notifications",
+        body: "Who hears about a new face, and what your chapter's mail says when it lands.",
+        memberJoined: {
+          label: "Someone joins the chapter",
+          hint: "A card waits in the admin inbox whenever a new passenger joins.",
+        },
+        applicationPush: {
+          label: "Pilot applications buzz your phone",
+          hint: "Switch it off and the card still waits in the inbox — with an email two minutes later, unless somebody has already read it in the app.",
+        },
+        replyTo: {
+          label: "Reply-to address",
+          hint: "Hit reply on any mail the chapter sends and the answer lands here.",
+          placeholder: "hello@example.com",
+          invalid: "That isn't an email address.",
+        },
+        welcomeNote: {
+          label: "A word of welcome",
+          hint: "A few lines from you, highlighted in the welcome mail every new pilot and passenger gets.",
+          placeholder: "We ride Tuesdays at two, and there is always cake.",
+        },
+        status: { saving: "Saving", saved: "Saved {when}" },
+        field: {
+          edit: "Edit",
+          saved: "Saved.",
+          undo: "Undo",
+          undone: "Put back.",
+          invalid: "That doesn't look right.",
+          errors: { generic: "That didn't work. Try again." },
+        },
       },
     },
   },
@@ -778,6 +818,22 @@ const en = {
     title: "Passenger home",
     browsing: "Browsing {chapter}",
     noChapter: "No chapter chosen yet",
+  },
+  notifications: {
+    title: "Notifications",
+    bell: "Notifications",
+    bellWithCount: "Notifications, {count} new",
+    unread: "Unread",
+    empty: {
+      title: "All quiet for now",
+      body: "The moment something happens — a chapter answers, a ride is booked — it lands right here.",
+    },
+    categories: {
+      application: "Application",
+      invitation: "Invitation",
+      welcome: "Welcome",
+      membership: "Membership",
+    },
   },
   calendar: {
     today: "Today",

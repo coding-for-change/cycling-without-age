@@ -1,16 +1,8 @@
-import { createElement } from "react";
-import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
 import { profile } from "@/features/profile";
 import type { PersonalDetailsInput } from "@/features/profile";
-import { getEmailStrings, resolveEmailLocale } from "@/emails/strings";
-import { WelcomeEmail } from "@/emails/welcome";
-import { afterResponse } from "@/lib/after-response";
-import { APP_URL } from "@/lib/app-url";
-import { fill } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/locales";
-import { sendMail } from "@/lib/mailer";
 import type { OnboardingRole } from "@/lib/onboarding";
 
 export async function completeOnboardingProfile({
@@ -42,10 +34,10 @@ export async function completeOnboardingProfile({
     }
   }
 
+  // The locale first: the welcome that `completeOnboarding` emits is written in
+  // whatever language the account carries by the time the worker picks it up.
   await profile.setLocale(userId, locale);
-  // Delivery is not what the person pressing Continue is waiting for; the
-  // helper logs and compensates on its own.
-  await afterResponse(() => sendWelcome({ userId, role, chapterId, locale }));
+  await profile.completeOnboarding(userId, { chapterId, role });
 }
 
 /** A pilot's chapter is still an application at this point, not a membership. */
@@ -60,58 +52,4 @@ async function chapterOf(userId: string, role: OnboardingRole) {
   }
   const applied = await membership.listApplicationsOfUser(userId);
   return applied[0]?.chapterId ?? null;
-}
-
-async function sendWelcome({
-  userId,
-  role,
-  chapterId,
-  locale,
-}: {
-  userId: string;
-  role: OnboardingRole;
-  chapterId: string | null;
-  locale: Locale;
-}) {
-  let claimed = false;
-  try {
-    const account = await profile.getProfile(userId);
-    if (!account?.email) return;
-    claimed = await profile.claimWelcomeEmail(userId);
-    if (!claimed) return;
-
-    const emailLocale = resolveEmailLocale(locale ?? account.locale);
-    const strings = getEmailStrings(emailLocale);
-    const copy =
-      role === "pilot" ? strings.welcomePilot : strings.welcomePassenger;
-    const chapterName = chapterId
-      ? ((await chapters.getChapter(chapterId))?.name ?? "Cycling Without Age")
-      : "Cycling Without Age";
-
-    await sendMail({
-      to: account.email,
-      subject: copy.subject,
-      text: `${copy.heading}\n\n${fill(copy.intro, { chapter: chapterName })}\n\n${copy.how.join("\n")}`,
-      react: createElement(WelcomeEmail, {
-        locale: emailLocale,
-        strings: copy,
-        chapterName,
-        href: `${APP_URL}${role === "pilot" ? "/pilot" : "/passenger"}`,
-      }),
-    });
-  } catch (error) {
-    console.error("[onboarding] welcome email failed", error);
-    // A claim left behind by a failed send would make every later attempt
-    // believe the mail already went out.
-    if (claimed) {
-      await profile
-        .releaseWelcomeEmail(userId)
-        .catch((releaseError) =>
-          console.error(
-            "[onboarding] welcome email not released",
-            releaseError,
-          ),
-        );
-    }
-  }
 }

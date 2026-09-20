@@ -24,10 +24,12 @@ const en = {
   },
   welcomePassenger: {
     subject: "Welcome to Cycling Without Age",
+    title: "Welcome to {chapter}",
     preview: "Your seat at the front is ready",
     heading: "Wind in your hair, whenever you like",
     intro:
       "Your account is ready. {chapter} has your details, and a pilot is waiting to pedal.",
+    noteHeading: "A note from {chapter}",
     howHeading: "How a ride works",
     how: [
       "Ask for a ride in the app — pick a day and a time that suits you.",
@@ -40,10 +42,12 @@ const en = {
   },
   welcomePilot: {
     subject: "Welcome aboard — three steps to your first ride",
+    title: "Welcome to {chapter}",
     preview: "Your pilot request is with the chapter",
     heading: "Welcome aboard",
     intro:
       "Your request to pilot for {chapter} is in. A chapter admin looks at it — usually within a few days.",
+    noteHeading: "A note from {chapter}",
     howHeading: "How you become a pilot",
     how: [
       "Watch the training videos — about 20 minutes, right in the app.",
@@ -86,9 +90,81 @@ const en = {
     footer:
       "You received this email because a Cycling Without Age chapter admin invited your address.",
   },
+  applicationSubmitted: {
+    subject: "{name} wants to pilot at {chapter}",
+    preview: "A new pilot request",
+    heading: "A new pilot request",
+    intro:
+      "{name} has asked to pilot for {chapter}. Take a look and answer yes, or not this time.",
+    cta: "Review the request",
+    footer:
+      "You received this email because you help run a Cycling Without Age chapter.",
+    anonymous: "Someone",
+  },
+  rolePromoted: {
+    subject: "You're a chapter admin at {chapter}",
+    preview: "New responsibilities at your chapter",
+    heading: "You're a chapter admin",
+    intro:
+      "{actor} made you an admin of {chapter}. You can invite people, answer pilot requests and keep the chapter's details straight.",
+    cta: "Open the chapter",
+    footer:
+      "You received this email because your role in a Cycling Without Age chapter changed.",
+  },
+  roleDemoted: {
+    subject: "Your admin role at {chapter} has ended",
+    preview: "A change to your role",
+    heading: "No longer an admin",
+    intro:
+      "{actor} has ended your admin role at {chapter}. Everything else stays as it was — you keep riding with the chapter.",
+    cta: "Open Cycling Without Age",
+    footer:
+      "You received this email because your role in a Cycling Without Age chapter changed.",
+  },
+  memberRemoved: {
+    subject: "You've left {chapter}",
+    preview: "A change to your membership",
+    heading: "You've left {chapter}",
+    intro:
+      "{actor} has removed you from {chapter}. Your account stays yours, and any chapter is free to take you on again.",
+    cta: "Find a chapter",
+    footer:
+      "You received this email because your membership of a Cycling Without Age chapter changed.",
+  },
+  memberJoined: {
+    subject: "{name} joined {chapter}",
+    preview: "A new passenger",
+    heading: "A new passenger",
+    intro: "{name} is now a passenger at {chapter}.",
+    cta: "Open the member",
+    footer:
+      "You received this email because you help run a Cycling Without Age chapter.",
+    anonymous: "Someone",
+  },
+  countryAdminAppointed: {
+    subject: "You look after {country} now",
+    preview: "A country to look after",
+    heading: "You look after {country}",
+    intro:
+      "{actor} made you a country admin for {country}. Every chapter there is yours to support from now on.",
+    cta: "Open the dashboard",
+    footer:
+      "You received this email because your role at Cycling Without Age changed.",
+  },
+  countryAdminRemoved: {
+    subject: "Your country admin role for {country} has ended",
+    preview: "A change to your role",
+    heading: "No longer a country admin",
+    intro:
+      "{actor} has ended your country admin role for {country}. What you do in your own chapters is untouched.",
+    cta: "Open Cycling Without Age",
+    footer:
+      "You received this email because your role at Cycling Without Age changed.",
+  },
   roles: {
     admin: "a chapter admin",
     pilot: "a pilot",
+    passenger: "a passenger",
   },
 };
 

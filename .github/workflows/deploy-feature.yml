@@ -101,6 +101,7 @@ jobs:
           echo "DB_PASSWORD=${DB_PASSWORD}" >> .env
           echo "DATABASE_URL=mysql://root:${DB_PASSWORD}@db:3306/cwa" >> .env
           echo "NEXT_PUBLIC_APP_URL=https://${{ env.BRANCH_NAME_SAFE }}.cwa.codingforchange.com" >> .env
+          echo "REDIS_URL=redis://redis:6379" >> .env
 
       - name: Deploy to VPS
         run: |

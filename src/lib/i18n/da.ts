@@ -208,6 +208,8 @@ const da: Dictionary = {
     admin: {
       title: "Admins logger ind med en adgangsnøgle",
       body: "Din enhed bliver din nøgle til dashboardet — fingeraftryk, ansigt eller PIN. Lav en for at åbne det.",
+      failed:
+        "Det virkede ikke — prøv igen. Du kan også lave din adgangsnøgle i en browser.",
     },
   },
   pilotNextSteps: {
@@ -228,7 +230,7 @@ const da: Dictionary = {
     },
     pilot: {
       title: "Træd i pedalerne",
-      body: "Piloter tager naboer med ud en time ad gangen. Bed om at være med, så vender en afdelingsadmin tilbage \u2014 som regel inden for et par dage.",
+      body: "Piloter tager naboer med ud en time ad gangen. Bed om at være med, så vender en afdelingsadmin tilbage — som regel inden for et par dage.",
       cta: "Søg om at være pilot her",
       pending: "Din ansøgning ligger hos afdelingen.",
     },
@@ -260,7 +262,7 @@ const da: Dictionary = {
       summary: "Du vil gerne køre med {chapter}, {when}.",
       noDraft:
         "Vi mistede overblikket over dit valg. Vælg et tidspunkt igen på afdelingens side.",
-      note: "Turbestilling er på vej \u2014 der er ikke sendt noget endnu.",
+      note: "Turbestilling er på vej — der er ikke sendt noget endnu.",
       back: "Tilbage til {chapter}",
     },
   },
@@ -525,6 +527,12 @@ const da: Dictionary = {
         approval: "Godkendt",
         rejection: "Afvist",
         invite: "Invitation",
+        welcome: "Velkommen",
+        applicationSubmitted: "Ny ansøgning",
+        roleChanged: "Rolleændring",
+        memberJoined: "Nyt medlem",
+        countryAdminAppointed: "Landeadmin",
+        countryAdminRemoved: "Landeadmin trådt tilbage",
       },
       fields: {
         name: "navnet",
@@ -669,7 +677,7 @@ const da: Dictionary = {
       delete: {
         open: "Slet land",
         title: "Slet {name} for altid?",
-        body: "Alle afdelinger i landet følger med \u2014 deres medlemmer, passagerer og åbne ansøgninger også. Ture, der allerede er kørt, bliver stående.",
+        body: "Alle afdelinger i landet følger med — deres medlemmer, passagerer og åbne ansøgninger også. Ture, der allerede er kørt, bliver stående.",
         footprint:
           "{chapters} afdelinger \u00b7 {members} medlemmer \u00b7 {passengers} passagerer",
         label: "Skriv {word} for at bekræfte",
@@ -711,7 +719,7 @@ const da: Dictionary = {
         added: "{name} står på listen.",
         errors: {
           exists: "Den e-mail eller det nummer har allerede en konto.",
-          invalid: "Tjek oplysningerne \u2014 noget passer ikke helt.",
+          invalid: "Tjek oplysningerne — noget passer ikke helt.",
           generic: "Det virkede ikke. Prøv igen.",
         },
       },
@@ -734,6 +742,38 @@ const da: Dictionary = {
         copied: "Link kopieret.",
         poster: "Print plakaten",
         downloadPng: "Gem QR-kode som PNG",
+      },
+      notifications: {
+        title: "Beskeder",
+        body: "Hvem der hører om et nyt ansigt, og hvad afdelingens post siger, når den lander.",
+        memberJoined: {
+          label: "Nogen melder sig til afdelingen",
+          hint: "Et kort venter i admin-indbakken, hver gang en ny passager kommer til.",
+        },
+        applicationPush: {
+          label: "Pilotansøgninger vibrerer i lommen",
+          hint: "Slår du det fra, venter kortet stadig i indbakken — og mailen følger to minutter senere, medmindre nogen allerede har læst den i appen.",
+        },
+        replyTo: {
+          label: "Svaradresse",
+          hint: "Svarer nogen på en mail fra afdelingen, lander svaret her.",
+          placeholder: "hej@eksempel.dk",
+          invalid: "Det er ikke en e-mailadresse.",
+        },
+        welcomeNote: {
+          label: "Et par ord med på vejen",
+          hint: "Et par linjer fra dig, fremhævet i velkomstmailen, som alle nye piloter og passagerer får.",
+          placeholder: "Vi kører tirsdage klokken to, og der er altid kage.",
+        },
+        status: { saving: "Gemmer", saved: "Gemt {when}" },
+        field: {
+          edit: "Ret",
+          saved: "Gemt.",
+          undo: "Fortryd",
+          undone: "Sat tilbage.",
+          invalid: "Det ser ikke rigtigt ud.",
+          errors: { generic: "Det virkede ikke. Prøv igen." },
+        },
       },
     },
   },
@@ -777,6 +817,22 @@ const da: Dictionary = {
     title: "Passagerens forside",
     browsing: "Du kigger på {chapter}",
     noChapter: "Du har ikke valgt en lokalafdeling endnu",
+  },
+  notifications: {
+    title: "Beskeder",
+    bell: "Beskeder",
+    bellWithCount: "Beskeder, {count} nye",
+    unread: "Ulæst",
+    empty: {
+      title: "Der er helt stille lige nu",
+      body: "I samme øjeblik der sker noget — en afdeling svarer, en tur bliver booket — lander det her.",
+    },
+    categories: {
+      application: "Ansøgning",
+      invitation: "Invitation",
+      welcome: "Velkommen",
+      membership: "Medlemskab",
+    },
   },
   calendar: {
     today: "I dag",

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma";
 
 export const insertCountry = (data: { name: string; code: string }) =>
   prisma.country.create({ data });
@@ -48,15 +49,32 @@ export const deleteCountryById = (id: string) =>
     prisma.country.delete({ where: { id } }),
   ]);
 
-export const insertCountryAdmin = (userId: string, countryId: string) =>
-  prisma.countryAdmin.upsert({
+export const insertCountryAdmin = (
+  userId: string,
+  countryId: string,
+  db: Prisma.TransactionClient = prisma,
+) =>
+  db.countryAdmin.upsert({
     where: { userId_countryId: { userId, countryId } },
     create: { userId, countryId },
     update: {},
   });
 
-export const deleteCountryAdmin = (userId: string, countryId: string) =>
-  prisma.countryAdmin.deleteMany({ where: { userId, countryId } });
+export const deleteCountryAdmin = (
+  userId: string,
+  countryId: string,
+  db: Prisma.TransactionClient = prisma,
+) => db.countryAdmin.deleteMany({ where: { userId, countryId } });
+
+export const findCountryAdmin = (
+  userId: string,
+  countryId: string,
+  db: Prisma.TransactionClient = prisma,
+) =>
+  db.countryAdmin.findUnique({
+    where: { userId_countryId: { userId, countryId } },
+    select: { userId: true },
+  });
 
 export const findCountryAdminsOf = (userId: string) =>
   prisma.countryAdmin.findMany({

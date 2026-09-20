@@ -1,16 +1,18 @@
 # CodeRabbit configuration — https://docs.coderabbit.ai/reference/yaml-template
 #
-# CodeRabbit is good at the generic sweep (bugs, security, style) but knows
-# nothing about this project's own rules. The path_instructions below restate
-# the parts of AGENTS.md and .claude/skills/frontend/SKILL.md that a reviewer
-# can actually check on a diff.
+# Purpose: surface bugs, authorization holes and other vulnerabilities in a diff.
 #
-# Those two files remain the source of truth. If a rule changes there and here,
-# they will drift — keep this file to rules that are stable and mechanical, and
-# leave nuance to the skill.
+# Brand, typography and layout are enforced elsewhere — ESLint and
+# scripts/check-brand-tokens.mjs in CI, and docs/BRAND.md plus the frontend skill,
+# which the knowledge_base block below feeds to CodeRabbit as guidelines. AGENTS.md
+# and CLAUDE.md are ingested by default. Do not restate those documents here: the
+# instruction budget goes to failure modes a reviewer can only catch by reading
+# the code, and restated rules drift.
 
 language: "en-US"
-tone_instructions: "Direct and concrete. Point at the line and say what breaks. Skip praise and preamble."
+tone_instructions: >-
+  Direct and concrete. Point at the line, say what breaks, and name the input or
+  state that triggers it. Skip praise, preamble and restating the diff.
 early_access: false
 enable_free_tier: true
 
@@ -31,162 +33,217 @@ reviews:
     - "!package-lock.json"
     - "!.next/**"
     - "!public/**"
+    - "!worker.js"
     - "!**/*.otf"
     - "!**/*.woff2"
 
   path_instructions:
-    # ---------------------------------------------------------------- brand --
-    - path: "src/**/*.{css,tsx,ts}"
+    # ------------------------------------------------------------- everything --
+    - path: "**"
       instructions: |
-        Brand rules from docs/BRAND.md and .claude/skills/frontend/SKILL.md.
+        WHAT THIS REVIEW IS FOR, in order of priority:
+        1. Bugs — wrong logic, unhandled null/empty/duplicate input, off-by-one,
+           timezone and DST errors, a Promise not awaited or a rejection
+           swallowed, state that can drift between MySQL, Redis and the Next.js
+           cache, an invariant the old code kept and the new code does not.
+        2. Security — missing or mis-scoped authorization, data reaching a
+           browser that should not, injection, unsafe redirects, cache
+           poisoning, secrets, weakened auth configuration.
+        3. Reliability — retries that duplicate side effects, unbounded
+           queries, races between check and write, migrations that lose data.
+        4. Anything else only when it is a real defect with a concrete failure.
 
-        COLOUR — the palette is exactly: ink (--ink #2e2823, a warm espresso),
-        white, mint (--mint #92D2C6), red (--red #ED1C24), plus --mint-deep
-        #28584E for dark surfaces, and tints of those.
-        - Flag any hardcoded hex, rgb() or hsl() colour in a component. Colours
-          come from tokens (`bg-mint`, `text-ink`, `border-line`), never literals.
-        - Flag any literal #000 / 0 0% 0% / `black`. Every black mark — text,
-          icon strokes, borders, rules, illustration line work — is --ink. The
-          shadcn neutral tokens in globals.css are already mapped onto --ink;
-          flag any change that points them back at a neutral grey, and flag any
-          per-component attempt to re-point them.
-        - Flag any hue outside the palette (blue, amber, violet, teal that is
-          not mint). Illustration and photography are exempt; UI chrome is not.
-        - Text is ink or white only — never mint or red type in chrome. White
-          type belongs on red or --mint-deep.
+        For each finding give: the input or state that triggers it, what
+        happens, and the smallest fix. A remark with no concrete failure path
+        is not a finding — drop it.
 
-        TYPOGRAPHY — Inter, and only Inter; a deliberate product decision
-        (docs/BRAND.md § Typography). It is loaded exactly once via `next/font`
-        in src/app/layout.tsx as --font-inter, and globals.css points both
-        --font-sans and --font-display at it. Flag a second `next/font` call,
-        any @font-face or Google Fonts link, or a new font family. The one
-        exception is email: src/emails/layout.tsx loads Inter through React
-        Email's `<Font>` with a Helvetica fallback, because no stylesheet
-        reaches a mail client. Headlines differ from body by weight (700),
-        not typeface.
+        DO NOT COMMENT ON formatting, import order, naming taste, Tailwind class
+        order, colour tokens, typography, copy wording, or anything Prettier,
+        ESLint (eslint-plugin-boundaries, no-restricted-imports) or
+        scripts/check-brand-tokens.mjs already enforce in CI. Do not ask for
+        comments or docstrings: this codebase deliberately has none
+        (AGENTS.md § 2). Suggest a test only when it would have caught a bug
+        you found in this diff.
 
-        ICONS — lucide-react only. Flag emoji used as icons, icon fonts, or
-        external image assets for iconography.
-
-        COPY — flag user-visible strings that are hardcoded in a way that
-        cannot be extracted later (buried in a ternary or template deep in
-        markup). Copy lives in the src/lib/i18n dictionaries (en.ts is the
-        shape, the other languages are typed against it) and reaches Client
-        Components as props.
-
-    # ----------------------------------------------------- i18n / formatting --
+    # ---------------------------------------------------- server-side safety --
     - path: "src/**/*.{ts,tsx}"
       instructions: |
-        FORMATTING — this app must render correctly in both European and US
-        conventions. See .claude/skills/frontend/SKILL.md § Formatting.
+        AUTHORIZATION. Guards live in `@/lib/auth-guards`: requireAuth,
+        requireSuperAdmin, requireCountryAdmin(countryId),
+        requireChapterAdmin(chapterId), requireCountryAdminOfChapter(chapterId),
+        requireChapterRole(chapterId, role), requireAdminScope,
+        requirePerspective. Facades and services trust the ids they are given.
+        - Every exported function in a `"use server"` file, every route.ts
+          handler and every page.tsx that shows non-public data must call a
+          guard before its first database read or write. Flag one that does
+          not. A layout is not a security boundary; the page re-guards.
+        - The scope id handed to a guard usually comes from client input
+          (`parsed.data.chapterId`). Flag when the record actually mutated
+          (userId, applicationId, passengerId, notificationId, token…) is not
+          proven to belong to that scope in the facade/service query
+          (`where: { id, chapterId }`, `recipientUserId`). A chapter admin of A
+          sending chapterId=A with a userId from chapter B is the failure.
+        - When the scope must be read from the record first, the read must sit
+          behind requireAuth so anonymous callers cannot probe ids — see
+          decideApplicationAction in src/app/admin/members/actions.ts.
+        - `redirect()`, `forbidden()`, `unauthorized()` and `notFound()` throw.
+          Flag a guard or one of these inside a try/catch that catches
+          everything: the catch swallows the interrupt and the action keeps
+          running or returns `{ ok: false, error: "generic" }`.
+        - Flag a superadmin-only operation (deleting a user, country changes)
+          gated by a chapter guard, or a chapter operation gated only by
+          requireAuth.
 
-        - Flag any `Intl.*` formatter constructed with a hardcoded locale
-          ("de-DE", "en-US", …). Locale is always passed in as an argument.
-        - Flag any `Intl.*` constructed inside a component body or render path
-          rather than cached — use the helpers in `@/lib/format`.
-        - Flag `hour12: true/false`. The locale resolves this; en-US wants 12h
-          and de-DE wants 24h on their own.
-        - Flag currency derived from the viewer's locale. Currency is an ISO
-          4217 code from the data (the chapter's own currency); the locale only
-          governs notation. Deriving it turns a EUR 50 ride into $50.
-        - Flag date/time formatting of an instant without an explicit
-          `timeZone`. The server runs UTC and the browser does not — this
-          produces React hydration mismatches and off-by-one days.
-        - Flag `navigator.language` read during render. Resolve the locale on
-          the server and pass it down.
-        - Flag hand-rolled date or number formatting (manual padStart, string
-          concatenation, `.split("T")`) for anything a human reads. ISO 8601 is
-          correct only for machine-readable values.
+        INPUT. Actions take `unknown` and parse with the feature's Zod schema
+        before anything else. Flag: a typed action parameter with no
+        safeParse; a schema that lets the client set a server-owned field
+        (userId, role, status, chapterId where the session decides it,
+        createdBy); `data: parsed.data` or a spread into Prisma where the
+        schema is wider than the intended columns; `$queryRawUnsafe`,
+        `$executeRawUnsafe` or any SQL built from strings; `findMany` without
+        `take` on anything that reaches a page or a response.
 
-        ARCHITECTURE — AGENTS.md defines a strict vertical-slice hierarchy and
-        imports may only flow downward. Flag violations:
+        DATA EXPOSURE. Everything a Server Component passes as props to a
+        Client Component, and everything an Action returns, goes to the
+        browser. Flag: a select/include or return value carrying Passkey,
+        Account, Session, Verification, Device tokens, or other users' email,
+        phone or address past the facade; `process.env.*` read in a Client
+        Component; a secret named `NEXT_PUBLIC_*` (today only APP_URL,
+        MAPBOX_TOKEN and the store URLs are public on purpose); raw error
+        messages, stack traces or Prisma errors returned to the client
+        instead of a coded result.
 
-        - Presentation (`src/app/**`, `src/features/*/components`) calling a
-          Service or Prisma directly. It may only call Server Actions, Use Cases
-          or Feature Facades.
-        - A Facade (`src/features/*/facade.ts`) importing another feature, a Use
-          Case, or anything session/HTTP-shaped. Facades stay reusable from CRON
-          and scripts.
-        - Auth checks inside a Facade. They live in `lib/auth-guards.ts` and are
-          called from Actions and cross-feature Use Cases.
-        - A Use Case in `src/use-cases/` that touches only one feature — that
-          collapses into the Action.
-        - `revalidatePath` / `revalidateTag` anywhere but an Action.
+        REDIRECTS AND COOKIES. Only `safeNextPath` in src/lib/redirects.ts may
+        turn a URL, cookie or header value into a redirect target. Flag any
+        `redirect(` or `NextResponse.redirect(` fed by searchParams, cookies
+        or headers that bypasses it, and any change that loosens it.
+        src/proxy.ts checks cookie presence, not a valid session: flag logic
+        added there that grants access on its own. Flag cookies set without
+        httpOnly, sameSite and `secure` in production, or whose value is
+        trusted without validation.
 
-        COMMENTS — AGENTS.md § 2: "Code is self-explanatory and therefore no
-        comments." Flag explanatory comments added to application code; the fix
-        is a clearer name or a smaller function. Do NOT flag: JSDoc on an
-        exported API, a comment recording *why* a non-obvious choice was made
-        (a workaround, a spec reference, a hydration hazard), or license headers.
+        CACHE COMPONENTS (next.config.ts: cacheComponents: true). A
+        `"use cache"` function is shared across users. Flag one that reads
+        cookies(), headers() or getSession(), or renders user-specific data
+        without the user id in its arguments — it serves one user's page to
+        the next. Flag `cacheLife`/`cacheTag` changes that keep auth-relevant
+        data alive longer, and React `cache()` used for anything beyond one
+        request.
 
-        LOADING & NAVIGATION — AGENTS.md § UI and Frontend decisions.
-        - Flag an async server component doing a slow fetch with no `<Suspense>`
-          boundary or `loading.tsx` alongside it. Pages that can wait need
-          skeletons, not spinners.
-        - Flag client-side navigation that blocks on data where a prefetched
-          `<Link>` or streamed boundary would keep it instant.
+        RATE LIMITING AND ABUSE. `withinRateLimit` (src/lib/rate-limit.ts) is
+        an in-process Map: per instance, lost on restart, not shared with the
+        worker. Flag a new path that sends email, SMS or push, or creates
+        accounts, with no rate limit, and flag code that relies on the
+        limiter as a hard security control. Flag responses that differ for an
+        existing versus unknown email, slug or id to anonymous callers.
 
-        INTERNATIONALISATION — the app is multilingual and the user's language
-        is a saved preference. Flag any new user-visible string committed in a
-        form that cannot be extracted for translation.
+        AUTH CONFIGURATION (src/lib/auth.ts, src/app/.well-known/**,
+        next.config.ts). Flag widening of `trustedOrigins`, passkey `origin`
+        or rpID, `allowedDevOrigins`, or the Android fingerprints served from
+        .well-known outside a dev-only branch; flag session lifetime, OTP or
+        rate-limit settings weakened.
 
-        NATIVE (CAPACITOR) — AGENTS.md § 7. The iOS/Android apps are thin
-        Capacitor shells around the web app, so everything must work web-first.
+        CONCURRENCY. Flag check-then-write without a transaction or unique
+        constraint (last admin, one application per user, one device token),
+        `Promise.all` where one rejection leaves the others half-applied, and
+        a side effect fired without `await` outside `afterResponse`.
 
-        - Flag any `@capacitor/*` import outside `src/lib/native/*`. Features
-          import the semantic wrappers (`@/lib/native/haptics`), never plugins
-          directly. This is lint-enforced, so an import here usually means the
-          rule was disabled — flag that too.
-        - Flag a native call from a server component or module scope. Native
-          APIs are client-only and the wrappers must stay SSR-safe no-ops on
-          web, guarded by `Capacitor.isNativePlatform()`.
-        - Flag a feature that only works on native, with no graceful web
-          degradation.
-        - Haptics: at most ONE per user action — they mark moments, not taps.
-          Flag haptics fired in a loop, on every keystroke, or on scroll.
-          `success/warning/error` belong next to the toast in the client
-          component receiving the Server Action result.
-
-    # ---------------------------------------------------------- components ---
-    - path: "src/components/ui/**"
+    # --------------------------------------------- outbox, worker, notifications --
+    - path: "src/{lib/events,worker,use-cases/notifications,features/notifications}/**"
       instructions: |
-        These are shadcn primitives generated into the repo. They are edited
-        deliberately and rarely.
+        The transactional outbox: the business write and `emit()` commit
+        together inside `transaction()` (src/lib/events/emit.ts); enqueueing
+        happens after the commit; the sweeper re-enqueues anything Redis never
+        heard about; BullMQ retries failed jobs. Everything downstream
+        therefore runs at least once.
+        - Flag a side effect (email, push, SMS, Redis) inside the transaction
+          callback, or an emit outside `transaction()`.
+        - Flag a listener or delivery that is not idempotent: creating a
+          Notification or Delivery without a unique key or existence check,
+          sending before recording the attempt, counting on a single run.
+        - jobIds become Redis keys `bull:<queue>:<jobId>` and must not contain
+          a colon. Flag a new jobId format.
+        - ioredis runs with `maxRetriesPerRequest: null`, so a Redis call in a
+          request path without a timeout hangs the request after commit. Flag
+          it.
+        - `afterResponse` runs the work inline when there is no request scope
+          (CRON, scripts, tests). Flag work that assumes a request.
+        - A tapped push may only navigate to an app-relative `href`. Flag an
+          absolute URL or a user-controlled string in the payload.
+        - Flag device-token handling that lets a user register a token to
+          another user, or unregister a token they do not own.
+        - The bull-board dashboard on WORKER_PORT has no auth and shows raw
+          job payloads. Flag anything that exposes it: a `ports:` mapping on
+          the worker service, a Caddy route, or mounting it in the app.
 
-        - Treat any diff here as higher-risk than ordinary app code and say so.
-        - Flag hardcoded colours; these components must stay token-driven
-          (`bg-primary`, `text-muted-foreground`), which is what lets the brand
-          palette apply to all of them from one place.
-        - Flag removal of accessibility wiring: aria-*, role, focus management,
-          keyboard handlers, or Radix primitives swapped for plain elements.
-
-    # --------------------------------------------------------------- docs ----
-    - path: "{docs/**,.claude/**,*.md}"
+    # ----------------------------------------------------------------- database --
+    - path: "prisma/**"
       instructions: |
-        These files are the project's own rulebook.
+        Migrations are hand-written SQL applied by `prisma migrate deploy` when
+        the app container starts, while the previous image may still be
+        serving. Flag: DROP or RENAME of a column or table current code still
+        reads; NOT NULL added without a default or backfill; a unique index on
+        data that may already hold duplicates; a type change that truncates;
+        a new foreign key without an index (MySQL); schema.prisma and the
+        migration disagreeing. For a new or changed `onDelete: Cascade`, say
+        exactly which rows deleting a User, Organization or Country would take
+        with it. Flag PII added to a model without a reason in the PR.
 
-        - Flag references to files, exports, commits or paths that do not exist
-          in the repo. Dangling references are the main failure mode here.
-        - docs/BRAND.md deliberately separates what the CWA Brand Book mandates
-          from decisions this product made on top of it. Flag any new rule added
-          to the "from the book" side without a page reference, and any product
-          decision presented as if the book required it.
-
-    # ----------------------------------------------------------- security ---
-    - path: "src/{features,use-cases,app}/**/*.ts"
+    # ------------------------------------------------------- CI, deploy, infra --
+    - path: "{.github/**,Dockerfile,docker-compose*.yml,Caddyfile,.config/**,scripts/**,.husky/**}"
       instructions: |
-        AGENTS.md § 6 rule 10 requires a security pass on every new feature.
-        On Actions, Facades and route handlers specifically:
+        - Workflows: flag `pull_request_target`, a third-party action pinned to
+          a tag instead of a SHA, `${{ github.event.* }}` or other untrusted
+          text interpolated into `run:`, a secret echoed or written to a file
+          that outlives the step, a job with no `permissions:` block, and any
+          new host key acceptance at deploy time.
+        - Dockerfile: running as root, a secret in a build ARG or ENV
+          (anything not NEXT_PUBLIC_* is baked into the image), copying .env
+          or .vault_pass, dropping `npm ci`.
+        - Compose and Caddy: a port bound to 0.0.0.0 instead of 127.0.0.1,
+          Redis or the worker exposed, a removed healthcheck, the worker
+          running migrations alongside the app.
+        - .config/secrets.yml: every value is a `!vault` tag. Flag plaintext.
 
-        - Flag a Server Action or route handler with no authorization check.
-          Guards live in `lib/auth-guards.ts` and are called from Actions and
-          cross-feature Use Cases — never from a Facade.
-        - Flag an authorization check that verifies authentication but not
-          ownership, where the record belongs to a specific user or chapter.
-        - Flag unvalidated input reaching a Service. Actions validate with the
-          feature's Zod schema first.
-        - Flag anything that returns more of a record than the caller needs —
-          password hashes, tokens, other users' personal data.
+    # ----------------------------------------------------------------- native --
+    - path: "{ios/**,android/**,capacitor.config.ts,src/lib/native/**}"
+      instructions: |
+        The apps are thin Capacitor shells loading https://cwa.codingforchange.com.
+        Flag: `NSAllowsArbitraryLoads`, `usesCleartextTraffic="true"`,
+        `android:exported="true"` on a component without a permission,
+        `allowBackup="true"`, `debuggable`, a new Info.plist or manifest
+        permission no feature uses, and `server.url`, `allowNavigation` or
+        `cleartext` in capacitor.config.ts pointing anywhere but the production
+        origin outside the CAP_SERVER_URL dev override. Wrappers in
+        src/lib/native/* must stay SSR-safe no-ops guarded by
+        `Capacitor.isNativePlatform()`; flag plugin access at module scope.
+
+    # --------------------------------------------------------------------- UI --
+    - path: "src/**/*.{tsx,css}"
+      instructions: |
+        UI is secondary in this review. Brand and layout rules come from
+        docs/BRAND.md and .claude/skills/frontend/SKILL.md via the knowledge
+        base; apply them only when a diff clearly breaks one, never ahead of a
+        bug. Worth a comment here:
+        - `dangerouslySetInnerHTML` or `srcDoc` with anything user-influenced.
+          The existing uses render a dicebear SVG from a seed and an inline
+          lang script; a new one needs the same justification.
+        - Formatting an instant without an explicit `timeZone`, or an `Intl.*`
+          formatter with a hardcoded locale: hydration mismatch and wrong
+          dates for real users.
+        - A control hidden client-side while the Server Action behind it stays
+          unguarded.
+        - Removed aria-*, role, focus or keyboard handling in
+          src/components/ui/**.
+        - A user-visible string committed in a form that cannot be extracted
+          for translation.
+
+    # ------------------------------------------------------------------- docs --
+    - path: "{docs/**,docs-internal/**,*.md,.claude/**}"
+      instructions: |
+        Flag references to files, exports or paths that do not exist in the
+        repo. In .claude/settings*.json flag a hook that runs a shell command
+        or a permission allowlist entry broader than the task needs.
 
   auto_review:
     enabled: true
@@ -195,9 +252,56 @@ reviews:
     base_branches:
       - ".*"
 
+  finishing_touches:
+    # AGENTS.md § 2: code is self-explanatory, no comments.
+    docstrings:
+      enabled: false
+
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
+    custom_checks:
+      - name: "Authorization on server entry points"
+        mode: "warning"
+        instructions: |
+          For every function added or changed in a "use server" file, every
+          route.ts export, and every page.tsx under src/app/admin, src/app/pilot
+          and src/app/passenger: confirm it calls a guard from @/lib/auth-guards
+          before its first database read or write, that the guard's scope id is
+          tied to the record it mutates, and that the guard is not inside a
+          try/catch. Fail if any entry point lacks one or the scope cannot be
+          tied to the mutated record.
+      - name: "Migration safety"
+        mode: "warning"
+        instructions: |
+          If prisma/migrations changed: fail when a statement drops or renames a
+          column or table current code still reads, adds NOT NULL without a
+          default or backfill, or adds a unique index with no note on existing
+          duplicates. Migrations run at container start via prisma migrate
+          deploy while the previous version may still be serving.
+
+  tools:
+    # Semgrep only runs when a semgrep.yml exists in the repo; there is none yet.
+    # Secret scanning (gitleaks, trufflehog), dependency CVEs (osvScanner),
+    # IaC (trivy, checkov, hadolint), workflows (actionlint, zizmor), eslint,
+    # prismaLint and reactDoctor are on by default and stay on.
+    biome:
+      enabled: false # Prettier + ESLint already run in CI
+    languagetool:
+      enabled: false # grammar nits on docs are not what this review is for
+    markdownlint:
+      enabled: false
+
 chat:
   auto_reply: true
 
 knowledge_base:
   code_guidelines:
     enabled: true
+    filePatterns:
+      - "**/AGENTS.md"
+      - "**/CLAUDE.md"
+      - files: "docs-internal/ARCHITECTURE.md"
+        applyTo: "src/**/*.ts,src/**/*.tsx"
+      - files: "docs/BRAND.md,.claude/skills/frontend/SKILL.md"
+        applyTo: "src/**/*.tsx,src/**/*.css,src/emails/**"

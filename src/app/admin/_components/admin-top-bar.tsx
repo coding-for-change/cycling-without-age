@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   Breadcrumb,
@@ -31,12 +32,14 @@ export function AdminTopBar({
   defaultScope,
   locale,
   languageLabel,
+  bell,
 }: {
   items: ResolvedNavItem[];
   scopes: ScopeChoice[];
   defaultScope: ScopeArg;
   locale: Locale;
   languageLabel: string;
+  bell: ReactNode;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -77,11 +80,14 @@ export function AdminTopBar({
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <LanguagePicker
-        locale={locale}
-        label={languageLabel}
-        className="ml-auto h-9 px-3"
-      />
+      <div className="ml-auto flex items-center gap-2">
+        {bell}
+        <LanguagePicker
+          locale={locale}
+          label={languageLabel}
+          className="h-9 px-3"
+        />
+      </div>
     </header>
   );
 }

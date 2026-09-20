@@ -4,6 +4,7 @@ services:
     restart: unless-stopped
     depends_on:
       - db
+      - redis
     env_file:
       - .env
     ports:
@@ -11,6 +12,28 @@ services:
     command: >
       sh -c "npx prisma migrate deploy &&
              node server.js"
+
+  worker:
+    image: localhost:5000/cwa-${BRANCH_NAME_SAFE}:latest
+    restart: unless-stopped
+    command: node worker.js
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:' + (process.env.WORKER_PORT ?? 3001) + '/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   db:
     image: mysql:8.0
@@ -21,5 +44,19 @@ services:
     volumes:
       - db_data:/var/lib/mysql
 
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+
 volumes:
   db_data:
+  redis_data:

@@ -50,7 +50,6 @@ export async function inviteChapterUser(
   try {
     await invite({
       inviterUserId: session.user.id,
-      inviterName: session.user.name,
       locale: await getLocale(),
       input: parsed.data,
     });

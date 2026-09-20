@@ -14,11 +14,25 @@ jest.mock("@/lib/prisma", () => {
       upsert: jest.fn(),
       updateMany: jest.fn(),
     },
+    event: { create: jest.fn(async () => ({ id: "event-1" })) },
     $queryRaw: jest.fn(),
   };
   client.$transaction = jest.fn((run: (tx: unknown) => unknown) => run(client));
   return { prisma: client };
 });
+
+jest.mock("@/lib/events/queues", () => ({
+  QUEUE: {
+    events: "events",
+    handlers: "handlers",
+    email: "email",
+    push: "push",
+  },
+  queue: () => ({
+    add: jest.fn(async () => ({})),
+    addBulk: jest.fn(async () => []),
+  }),
+}));
 
 const db = prisma as unknown as {
   member: {
@@ -32,6 +46,7 @@ const db = prisma as unknown as {
     upsert: jest.Mock;
     updateMany: jest.Mock;
   };
+  event: { create: jest.Mock };
   $queryRaw: jest.Mock;
 };
 
@@ -51,10 +66,16 @@ const admins = (count: number) =>
     Array.from({ length: count }, () => ({ role: "admin" })),
   );
 
+const emitted = (type: string) =>
+  db.event.create.mock.calls
+    .map(([args]) => args.data)
+    .filter((data: { type: string }) => data.type === type);
+
 beforeEach(() => {
   jest.clearAllMocks();
   admins(2);
   db.chapterApplication.updateMany.mockResolvedValue({ count: 1 });
+  db.chapterApplication.upsert.mockResolvedValue({ id: "app-1" });
 });
 
 describe("joining and role stacking", () => {
@@ -68,6 +89,30 @@ describe("joining and role stacking", () => {
     memberRow("passenger");
     await membership.joinAsPassenger(USER, CHAPTER);
     expect(roleWritten()).toBe("passenger");
+  });
+
+  it("announces a passenger once, and not again on a repeat join", async () => {
+    memberRow(null);
+    await membership.joinAsPassenger(USER, CHAPTER, ADMIN);
+    expect(emitted("chapter.memberJoined")).toEqual([
+      expect.objectContaining({
+        chapterId: CHAPTER,
+        actorUserId: ADMIN,
+        payload: expect.objectContaining({ userId: USER }),
+      }),
+    ]);
+
+    db.event.create.mockClear();
+    memberRow("passenger");
+    await membership.joinAsPassenger(USER, CHAPTER, ADMIN);
+    expect(db.event.create).not.toHaveBeenCalled();
+  });
+
+  // Nobody clicked for them, so there is no actor to leave out of the recipients.
+  it("has no actor when someone joins on their own", async () => {
+    memberRow(null);
+    await membership.joinAsPassenger(USER, CHAPTER);
+    expect(emitted("chapter.memberJoined")[0].actorUserId).toBeNull();
   });
 
   it("keeps existing roles when granting another", async () => {
@@ -186,12 +231,30 @@ describe("applying as a pilot", () => {
     expect(db.member.upsert).not.toHaveBeenCalled();
   });
 
+  // Every route into an application goes through here, so the chapter admins
+  // hear about it whether it came from onboarding, the seed or the app.
+  it("announces the application on the same transaction as the write", async () => {
+    memberRow("passenger");
+    await membership.applyAsPilot({ userId: USER, chapterId: CHAPTER });
+    expect(emitted("pilotApplication.submitted")).toEqual([
+      expect.objectContaining({
+        chapterId: CHAPTER,
+        actorUserId: USER,
+        payload: expect.objectContaining({
+          applicationId: "app-1",
+          userId: USER,
+        }),
+      }),
+    ]);
+  });
+
   it("cannot apply when already a pilot of that chapter", async () => {
     memberRow("pilot");
     await expect(
       membership.applyAsPilot({ userId: USER, chapterId: CHAPTER }),
     ).rejects.toThrow("alreadyPilot");
     expect(db.chapterApplication.upsert).not.toHaveBeenCalled();
+    expect(db.event.create).not.toHaveBeenCalled();
   });
 
   it("cannot apply without a user or a chapter", async () => {
@@ -250,6 +313,35 @@ describe("deciding an application", () => {
         }),
       }),
     );
+  });
+
+  it("writes the event on the same transaction client as the decision", async () => {
+    application();
+    memberRow("passenger");
+    await decide(true, "Bring your own helmet.");
+
+    expect(db.event.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          type: "pilotApplication.decided",
+          chapterId: CHAPTER,
+          actorUserId: ADMIN,
+          payload: expect.objectContaining({
+            userId: USER,
+            approved: true,
+            note: "Bring your own helmet.",
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("writes no event when the decision is refused", async () => {
+    application();
+    memberRow("passenger");
+    db.chapterApplication.updateMany.mockResolvedValue({ count: 0 });
+    await expect(decide(true)).rejects.toThrow("alreadyDecided");
+    expect(db.event.create).not.toHaveBeenCalled();
   });
 
   it("grants nothing when another admin decided first", async () => {
@@ -313,6 +405,43 @@ describe("deciding an application", () => {
         }),
       }),
     );
+  });
+});
+
+describe("inviting a member", () => {
+  it("grants the roles and announces the invitation together", async () => {
+    memberRow(null);
+    await membership.inviteMember({
+      userId: USER,
+      chapterId: CHAPTER,
+      actorUserId: ADMIN,
+      roles: ["pilot", "admin"],
+    });
+
+    expect(roleWritten()).toBe("pilot,admin");
+    expect(emitted("member.invited")).toEqual([
+      expect.objectContaining({
+        chapterId: CHAPTER,
+        actorUserId: ADMIN,
+        payload: expect.objectContaining({
+          userId: USER,
+          roles: ["pilot", "admin"],
+        }),
+      }),
+    ]);
+  });
+
+  // Rejected by the schema before any await, so it never reaches the DB.
+  it("refuses a role that is not a chapter role", () => {
+    expect(() =>
+      membership.inviteMember({
+        userId: USER,
+        chapterId: CHAPTER,
+        actorUserId: ADMIN,
+        roles: ["superadmin" as never],
+      }),
+    ).toThrow();
+    expect(db.member.upsert).not.toHaveBeenCalled();
   });
 });
 

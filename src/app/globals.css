@@ -255,12 +255,33 @@
   }
 }
 
+@layer base {
+  input[type="date"] {
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  input[type="date"]::-webkit-date-and-time-value {
+    min-height: 1.5em;
+    text-align: start;
+  }
+}
+
 /* ==========================================================================
    Sign-in flow motion.
 
    The character is mounted once in the (flow) layout and never remounts, so it
    travels between poses with a plain transform transition.
    ========================================================================== */
+
+/* The header line every (flow) screen shares: the back button, the step dots
+   and the compact character all centre on it. --flow-top is its top edge,
+   --flow-bar its height (the back button). */
+.flow-shell {
+  --flow-top: calc(1rem + env(safe-area-inset-top));
+  --flow-bar: 2.75rem;
+}
+
 .character-stage {
   position: fixed;
   left: 0;
@@ -284,11 +305,10 @@
   --ch-y: 21.5svh;
 }
 
-/* Small, tucked into the top-right corner while a question is being answered. */
 .character-stage[data-pose="compact"] {
   --ch-scale: 0.2;
   --ch-x: calc(100vw - 1rem - var(--ch-scale) * 20rem);
-  --ch-y: calc(1rem + env(safe-area-inset-top));
+  --ch-y: calc(var(--flow-top) + var(--flow-bar) / 2 - var(--ch-scale) * 10rem);
 }
 
 @media (min-width: 768px) {
@@ -296,10 +316,9 @@
     --ch-scale: 1;
     --ch-y: 17.5svh;
   }
-  /* Bigger on a desktop viewport, but never over the map on /location — that
-     route keeps the mobile size and lives in the right-hand column. */
+
   .character-stage[data-pose="compact"] {
-    --ch-scale: 0.34;
+    --ch-scale: 0.26;
   }
   .character-stage[data-pose="compact"][data-aside="true"] {
     --ch-scale: 0.2;

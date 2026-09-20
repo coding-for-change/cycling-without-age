@@ -3,15 +3,20 @@ import {
   timeZoneForCoordinates,
 } from "@/lib/time-zone";
 import { DomainError, mapping } from "@/lib/domain-error";
+import { transaction } from "@/lib/events";
 import { distanceMeters, type Coords } from "@/lib/geo";
 import {
   chapterInput,
+  chapterSettingsInput,
   chapterUpdateInput,
   countryInput,
   countryUpdateInput,
+  DEFAULT_CHAPTER_SETTINGS,
 } from "./schemas";
 import type {
   ChapterInput,
+  ChapterSettings,
+  ChapterSettingsInput,
   ChapterUpdateInput,
   CountryInput,
   CountryUpdateInput,
@@ -21,6 +26,7 @@ import {
   deleteCountryById,
   findCountries,
   findCountryScopes,
+  findCountryAdmin,
   findCountryAdmins,
   findCountryAdminsOf,
   findCountryAdminsOfCountries,
@@ -32,6 +38,10 @@ import {
   insertCountryAdmin,
   updateCountryById,
 } from "./services/countries";
+import {
+  findChapterSettings,
+  upsertChapterSettings,
+} from "./services/settings";
 import {
   deleteChapterById,
   findChapterById,
@@ -69,14 +79,45 @@ export const listCountryAdmins = (countryId: string) =>
 export const listCountriesAdministeredBy = async (userId: string) =>
   (await findCountryAdminsOf(userId)).map((row) => row.countryId);
 
-export async function appointCountryAdmin(userId: string, countryId: string) {
+/** Both sides emit only on a real change, so appointing twice stays silent. */
+export async function appointCountryAdmin(
+  userId: string,
+  countryId: string,
+  actorUserId: string,
+) {
   if (!(await findCountryById(countryId)))
     throw new DomainError("unknownCountry");
-  return insertCountryAdmin(userId, countryId);
+
+  return transaction(async (tx, emit) => {
+    if (await findCountryAdmin(userId, countryId, tx)) return false;
+    await insertCountryAdmin(userId, countryId, tx);
+    await emit({
+      type: "countryAdmin.appointed",
+      countryId,
+      userId,
+      actorUserId,
+    });
+    return true;
+  });
 }
 
-export const removeCountryAdmin = (userId: string, countryId: string) =>
-  deleteCountryAdmin(userId, countryId);
+export function removeCountryAdmin(
+  userId: string,
+  countryId: string,
+  actorUserId: string,
+) {
+  return transaction(async (tx, emit) => {
+    const { count } = await deleteCountryAdmin(userId, countryId, tx);
+    if (count === 0) return false;
+    await emit({
+      type: "countryAdmin.removed",
+      countryId,
+      userId,
+      actorUserId,
+    });
+    return true;
+  });
+}
 
 export type CountryFootprint = {
   chapters: number;
@@ -272,6 +313,21 @@ export function withDerivedTimeZone(
 // posters, so neither is updatable.
 export function updateChapter(id: string, input: ChapterUpdateInput) {
   return updateChapterById(id, chapterUpdateInput.parse(input));
+}
+
+/** Defaults until the chapter changes something, so callers never branch on a missing row. */
+export const getSettings = async (
+  chapterId: string,
+): Promise<ChapterSettings> =>
+  (await findChapterSettings(chapterId)) ?? DEFAULT_CHAPTER_SETTINGS;
+
+export async function updateSettings(
+  chapterId: string,
+  input: ChapterSettingsInput,
+): Promise<ChapterSettings> {
+  if (!(await findChapterCountryId(chapterId)))
+    throw new DomainError("unknownChapter");
+  return upsertChapterSettings(chapterId, chapterSettingsInput.parse(input));
 }
 
 export type NearestChapter = {

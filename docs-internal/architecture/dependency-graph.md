@@ -10,6 +10,12 @@ logic sits in the facade that owns the domain rule (`membership.changeMemberRole
 "cannot change your own role" rule; `accounts.claimAccount` the claim), and the Action calls
 that facade directly.
 
+`decide-pilot-application` is gone for the same reason. Once the decision emitted
+`pilotApplication.decided` instead of calling the activity log and the mailer itself, it
+coordinated one facade and nothing else, so it collapsed into `membership.decideApplication`
+— which now owns the transaction the `Event` row commits in — and `app/admin/members/actions`
+calls that facade directly. Its old work is two listeners in the worker.
+
 > Newly qualifying for the same treatment: `manage-chapter` and `manage-country` now touch
 > only `chapters` plus the log, so both could collapse into their Actions or into the
 > `chapters` facade. Left as-is deliberately — the facade already exports thin
@@ -22,6 +28,8 @@ graph TD
     A[src/app]
     ADM[app/admin shell]
     CMD[app/admin/commands]
+    BELL[components/notifications bell]
+    PR[components/push-registrar]
   end
   subgraph Boundary
     G[lib/auth-guards]
@@ -33,6 +41,8 @@ graph TD
     ACT6[app/admin/chapters/actions]
     ACT7[app/admin/countries/actions]
     ACT8[features/accounts/actions]
+    ACT9[features/notifications/actions]
+    ACT10[app/admin/settings/actions]
   end
   subgraph Orchestration
     U1[use-cases/build-session-access]
@@ -40,12 +50,22 @@ graph TD
     U3[use-cases/settle-passenger-location]
     U4[use-cases/accept-onboarding-consent]
     U5[use-cases/complete-onboarding-profile]
-    U6[use-cases/decide-pilot-application]
     U9[use-cases/manage-country-admins]
     U10[use-cases/provision-assisted-passenger]
     U11[use-cases/invite-chapter-user]
     U13[use-cases/manage-chapter]
     U14[use-cases/manage-country]
+    U15[use-cases/notifications/notify]
+    U16[use-cases/notifications/deliver-email]
+    U17[use-cases/notifications/deliver-push]
+    U18[use-cases/notifications/inbox]
+    U19[use-cases/notifications/kinds]
+  end
+  subgraph Worker
+    W1["worker/index (dispatcher, sweeper, prune-devices, email + push workers)"]
+    W2[worker/handlers registry]
+    W3["worker/listeners/record-activity (generic)"]
+    W4[worker/deliveries]
   end
   subgraph Features
     F1[features/chapters facade]
@@ -53,7 +73,8 @@ graph TD
     F3[features/profile facade]
     F4[features/passengers facade]
     F6[features/accounts facade]
-    F7[features/rides facade]
+    F7[features/notifications facade]
+    F8[features/rides facade]
     CM1[features/chapters/commands]
     CM2[features/membership/commands]
     CM3[features/profile/commands]
@@ -65,14 +86,19 @@ graph TD
     S3[profile/services]
     S4[passengers/services]
     S6[accounts/services]
-    S7[rides/services]
+    S7[notifications/services]
+    S8[rides/services]
     DB[(MySQL via lib/prisma)]
   end
   subgraph Infrastructure
     F5[lib/activity]
+    EV[lib/events outbox]
+    Q[("Redis via BullMQ")]
     MB[lib/mapbox]
     CAL[lib/calendar + lib/time-zone]
     ML[lib/mailer]
+    PUSH[lib/push firebase-admin]
+    NP[lib/native/push]
     BA[lib/auth BetterAuth admin API]
     COOKIE[(guest chapter + join preset cookies)]
   end
@@ -80,14 +106,28 @@ graph TD
   A --> G
   A --> F1
   A --> F5
-  A --> F7
+  A --> F8
   A --> CAL
-  ADM --> F7
+  ADM --> F8
   ADM --> CAL
   A --> U2
   G --> F1
   G --> F3
   AUTH[lib/auth customSession] --> U1
+
+  A --> BELL
+  ADM --> BELL
+  BELL --> G
+  BELL --> U18
+  BELL --> ACT9
+  A --> PR
+  PR --> ACT9
+  PR --> NP
+  ACT9 --> G
+  ACT9 --> F7
+  ADM --> ACT10
+  ACT10 --> G
+  ACT10 --> F1
 
   A --> ADM
   ADM --> G
@@ -122,7 +162,6 @@ graph TD
   ACT8 --> U11
   ACT5 --> F2
   ACT5 --> F6
-  ACT5 --> U6
   ACT6 --> F1
   ACT6 --> U13
   ACT6 --> MB
@@ -139,37 +178,60 @@ graph TD
   U3 --> F3
   U4 --> F2
   U4 --> F3
-  U5 --> F1
   U5 --> F2
   U5 --> F3
   U5 --> F4
-  U5 --> ML
-  U6 --> F1
-  U6 --> F2
-  U6 --> F3
-  U6 --> F5
-  U6 --> ML
   U9 --> F1
   U9 --> F3
-  U9 --> F5
   U10 --> F2
   U10 --> F4
   U10 --> F5
   U10 --> F6
-  U11 --> F1
   U11 --> F2
   U11 --> F3
-  U11 --> F5
   U11 --> F6
-  U11 --> ML
   U13 --> F1
   U13 --> F5
   U14 --> F1
   U14 --> F5
+  U15 --> F7
+  U15 --> U19
+  U15 --> Q
+  U16 --> F7
+  U16 --> F1
+  U16 --> F3
+  U16 --> F5
+  U16 --> ML
+  U16 --> U19
+  U17 --> F7
+  U17 --> F3
+  U17 --> PUSH
+  U17 --> U19
+  U18 --> F7
+  U18 --> U19
+  U19 --> F1
+  U19 --> F2
+  U19 --> F3
+
+  F1 --> EV
+  F2 --> EV
+  F3 --> EV
+  EV --> DB
+  EV --> Q
+  Q --> W1
+  W1 --> EV
+  W1 --> F7
+  W1 --> W2
+  W1 --> W4
+  W4 --> U16
+  W4 --> U17
+  W2 --> U15
+  W2 --> W3
+  W3 --> F5
 
   F1 --> S1
-  F7 --> S7
-  S7 --> DB
+  F8 --> S8
+  S8 --> DB
   F2 --> S2
   F2 --> F5
   F6 --> F5
@@ -177,6 +239,8 @@ graph TD
   F3 --> S3
   F4 --> S4
   F6 --> S6
+  F7 --> S7
+  S7 --> DB
   S1 --> DB
   S2 --> DB
   S3 --> DB
@@ -192,11 +256,14 @@ graph TD
 | `onboarding-progress` | `chapters`, `membership`, `profile` | How far someone got is spread across three tables: which chapter they joined, what they consented to, whether a rider profile exists. Read by the `/onboarding` resolver and by every step that draws the progress dots. |
 | `settle-passenger-location` | `membership`, `profile` | "Where do you live" and "which chapter serves you" are one answer given on one screen, but two features own the two halves. |
 | `accept-onboarding-consent` | `membership`, `profile` | Records consent and, when a QR preset skipped the location step, performs the join it would have done. |
-| `complete-onboarding-profile` | `chapters`, `membership`, `passengers`, `profile` | Writes the account's own details, creates the rider profile a ride will point at, resolves the chapter, and sends the welcome mail. |
-| `decide-pilot-application` | `activity`, `chapters`, `membership`, `profile` | One approval writes the decision, the granted role, the history events and the applicant's email — in the applicant's own locale, so the profile is read too. |
-| `manage-country-admins` | `activity`, `chapters`, `profile` | Country-admin rows belong to `chapters`, the email lookup to `profile`, and the audit line to `activity`. |
+| `complete-onboarding-profile` | `membership`, `passengers`, `profile` | Writes the account's own details, creates the rider profile a ride will point at, and stamps `onboardedAt`. The welcome mail is no longer sent here: `profile.completeOnboarding` emits `user.onboarded` and the pipeline does the rest, exactly once. |
+| `notifications/notify` | `notifications` (+ the kinds) | The generic listener. A kind names the recipients and the parameters; this writes one inbox row each and queues push and email per the kind's policy. Runs in the worker, from an event, with no session. |
+| `notifications/deliver-email` | `notifications`, `profile`, `chapters` (+ `activity`, `mailer`) | One email for one `Notification`, in the recipient's own locale (hence `profile`), with the attempt recorded on the `Delivery` row. A delayed `ifNoPush` job re-checks here whether the push landed or the row was already read. `chapters.getSettings` supplies the chapter's reply-to, so an answer goes back to the chapter the mail was about. |
+| `notifications/deliver-push` | `notifications`, `profile` (+ `lib/push`) | One push for one `Notification`: the recipient's opt-in and device tokens, the locale for the copy, `sendPush` through `firebase-admin`, and dead tokens pruned from the `device` table. A kind may also carry a `chapterAllowsPush` hook, which the kinds (U19) answer from `chapters`. Missing credentials are a `skipped` row, not a retry. |
+| `notifications/inbox` | `notifications` (+ the kinds) | The bell's read model: stored payloads rendered back into `{ title, body, href }` in the reader's locale, plus the unseen count. Its kind lookup is non-throwing, so a retired kind leaves a gap in the list instead of blanking the bell. |
+| `manage-country-admins` | `chapters`, `profile` | Appointing by email needs the lookup in `profile` and the row in `chapters`. Removal coordinates nothing, so it collapsed into `app/admin/countries/actions`, and the history line now comes from the `countryAdmin.*` events. |
 | `provision-assisted-passenger` | `accounts`, `membership`, `passengers`, `activity` | One "add a passenger at the door" makes the account, joins the chapter, creates the rider row and records who created it — four features, and the helper rule decides whether the rider row points at the new account or at nobody. |
-| `invite-chapter-user` | `accounts`, `chapters`, `membership`, `profile` (+ `activity`, `mailer`) | Provisioning the account, granting the chapter role, and mailing the invitation in the invitee's own locale (hence `profile`) are three features plus infrastructure. |
+| `invite-chapter-user` | `accounts`, `membership`, `profile` | Provisioning the account, seeding the invitee's language from the inviter's, and granting the chapter roles are three features. It sends nothing: `membership.inviteMember` emits `member.invited` and the pipeline mails it. |
 | `manage-chapter` | `chapters`, `activity` | Creating, editing or deleting a chapter is a `chapters` write plus the history line that makes it legible on the chapter's own page. `chapters.diffChapter` turns one autosave into one `chapterUpdated` event per field that actually changed (a moved pin and its new address fold into one `location` change), and the delete event is recorded *global* because the row it would point at is gone. |
 | `manage-country` | `chapters`, `activity` | Deleting a country takes every chapter under it (the relation restricts, so the service deletes both in one transaction) and writes the history: one `countryDeleted` line plus a `chapterDeleted` line per chapter, all recorded *global* because the rows they would point at are gone. |
 
@@ -232,6 +299,20 @@ Single-facade work has no use case: `lib/auth-guards` calls `chapters.getChapter
 and `profile.getProfile` (the admin passkey gate) directly, `app/admin/chapters/actions` calls
 the chapters facade directly, `features/membership/actions` calls the membership facade
 directly, and the passkey and pilot-next-steps actions call the profile facade directly.
+`features/notifications/actions` (ACT9) is the same shape: mark seen, mark read, register and
+unregister a device are four writes into one facade, called from the bell (BELL) and from the
+push registrar (PR). `app/admin/settings/actions` (ACT10) likewise: one write of the chapter's
+`ChapterSettings` row behind `requireChapterAdmin`, so it calls `chapters.updateSettings`
+directly.
+
+`W1 --> F7` is the one edge from the worker straight into a facade: the nightly
+`prune-devices` scheduler calls `notifications.pruneStaleDevices()`. Token hygiene
+coordinates one feature and carries no session, so per AGENTS.md it is not a use case —
+`worker/index` dispatches it next to `sweep` through its `MAINTENANCE` map. See
+[EVENTS.md](../EVENTS.md) → *Maintenance jobs*.
+
+The bell reads through a use case (U18) because rendering a stored payload needs the kinds,
+not because two features are involved.
 
 `features/accounts` (F6) has no UI of its own either — its Server Actions (ACT8) are imported
 straight into the admin passengers and members screens, because "provision a user" is not a
@@ -249,8 +330,14 @@ owns no domain of its own. Writes sit next to the mutation they record; the only
 person-history feed on `/admin/members/[userId]` and the chapter history on
 `/admin/chapters/[chapterId]`, both straight from the Server Component.
 
-`lib/mapbox` and `lib/mailer` are cross-cutting infrastructure, callable from any layer — the
-same standing as `lib/prisma` and `lib/sms`. `lib/mapbox` is reached only from a Server Action
-so the secret token never enters a client bundle — the location flow's actions (ACT2) and the
-admin chapter actions (ACT6: suggest, retrieve and reverse-geocode behind `requireAdminScope`
-and a per-user rate limit) are its two callers.
+`lib/mapbox`, `lib/mailer` and `lib/push` are cross-cutting infrastructure, callable from any
+layer — the same standing as `lib/prisma` and `lib/sms`. `lib/mapbox` is reached only from a
+Server Action so the secret token never enters a client bundle — the location flow's actions
+(ACT2) and the admin chapter actions (ACT6: suggest, retrieve and reverse-geocode behind
+`requireAdminScope` and a per-user rate limit) are its two callers.
+
+`lib/mailer` now has exactly two callers: `deliver-email` and the sign-in OTP inside
+better-auth. Every other mail in the product is a notification kind, so no use case imports it
+any more. `lib/push` has one, `deliver-push`, and one import site for `firebase-admin`
+(lint-enforced) so service-account credentials cannot reach a browser bundle. Its client
+counterpart `lib/native/push` is the only place `@capacitor-firebase/messaging` is imported.

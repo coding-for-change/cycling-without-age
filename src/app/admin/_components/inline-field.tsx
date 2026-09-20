@@ -56,8 +56,8 @@ export function InlineField({
   maxLength?: number;
   /** An emptied required field is put back rather than saved as nothing. */
   required?: boolean;
-  type?: "text" | "url";
-  inputMode?: "text" | "url";
+  type?: "text" | "url" | "email";
+  inputMode?: "text" | "url" | "email";
   validate?: (next: string) => boolean;
   display?: (value: string) => ReactNode;
   onSave: (next: Value, previous: Value) => Promise<ActionResult>;
