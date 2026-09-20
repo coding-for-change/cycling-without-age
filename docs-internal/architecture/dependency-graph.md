@@ -53,6 +53,7 @@ graph TD
     F3[features/profile facade]
     F4[features/passengers facade]
     F6[features/accounts facade]
+    F7[features/rides facade]
     CM1[features/chapters/commands]
     CM2[features/membership/commands]
     CM3[features/profile/commands]
@@ -64,11 +65,13 @@ graph TD
     S3[profile/services]
     S4[passengers/services]
     S6[accounts/services]
+    S7[rides/services]
     DB[(MySQL via lib/prisma)]
   end
   subgraph Infrastructure
     F5[lib/activity]
     MB[lib/mapbox]
+    CAL[lib/calendar + lib/time-zone]
     ML[lib/mailer]
     BA[lib/auth BetterAuth admin API]
     COOKIE[(guest chapter + join preset cookies)]
@@ -77,6 +80,10 @@ graph TD
   A --> G
   A --> F1
   A --> F5
+  A --> F7
+  A --> CAL
+  ADM --> F7
+  ADM --> CAL
   A --> U2
   G --> F1
   G --> F3
@@ -161,6 +168,8 @@ graph TD
   U14 --> F5
 
   F1 --> S1
+  F7 --> S7
+  S7 --> DB
   F2 --> S2
   F2 --> F5
   F6 --> F5
@@ -190,6 +199,20 @@ graph TD
 | `invite-chapter-user` | `accounts`, `chapters`, `membership`, `profile` (+ `activity`, `mailer`) | Provisioning the account, granting the chapter role, and mailing the invitation in the invitee's own locale (hence `profile`) are three features plus infrastructure. |
 | `manage-chapter` | `chapters`, `activity` | Creating, editing or deleting a chapter is a `chapters` write plus the history line that makes it legible on the chapter's own page. `chapters.diffChapter` turns one autosave into one `chapterUpdated` event per field that actually changed (a moved pin and its new address fold into one `location` change), and the delete event is recorded *global* because the row it would point at is gone. |
 | `manage-country` | `chapters`, `activity` | Deleting a country takes every chapter under it (the relation restricts, so the service deletes both in one transaction) and writes the history: one `countryDeleted` line plus a `chapterDeleted` line per chapter, all recorded *global* because the rows they would point at are gone. |
+
+No use case was added for `rides` either. The calendar surfaces — `/admin/rides`,
+`/admin/bikes`, `/pilot` and `/passenger` — are Server Components that read the `rides`
+facade directly. `/admin/rides` and `/admin/bikes` additionally read
+`chapters.getChapterTimeZones`, because a calendar has to know which clock to draw in; a
+Server Component reading two facades is the existing pattern (`/admin/passengers` already
+reads `passengers` and `chapters`), and the Use Case rule in AGENTS.md governs Actions, not
+pages. The slice contributes no `commands.ts`: both of its destinations already have `NAV`
+rows, so the shell claims them by href, and it has no verbs of its own until ride scheduling
+(COD-155/179) lands.
+
+`lib/calendar` and `lib/time-zone` (CAL) are cross-cutting infrastructure beside
+`lib/format`: pure functions over instants and IANA zones, no React and no Prisma, so a
+facade, a page or a test may use them.
 
 No use case was added for the admin shell. `G --> F1` now carries two guards:
 `requireChapterAdmin` (`chapters.getChapterCountryId`) and `requireAdminScope`

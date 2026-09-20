@@ -607,6 +607,9 @@ const en = {
       detail: {
         back: "Back to chapters",
         location: "Location",
+        timeZone: "Time zone",
+        timeZoneHint:
+          "Ride times are shown in this zone. It follows the pin unless you set it here.",
         about: "About",
         history: "History",
         historyEmpty:
@@ -775,6 +778,43 @@ const en = {
     title: "Passenger home",
     browsing: "Browsing {chapter}",
     noChapter: "No chapter chosen yet",
+  },
+  calendar: {
+    today: "Today",
+    thisWeek: "This week",
+    previousWeek: "Previous week",
+    nextWeek: "Next week",
+    weekOf: "Week of {date}",
+    upcoming: "Coming up",
+    agendaEmpty:
+      "Nothing booked yet. When a ride is scheduled for you, it turns up here.",
+    weekEmpty: "No rides this week.",
+    trishaw: "Trishaw",
+    noTrishaws: "No trishaws on the books yet.",
+    riders: { one: "{count} rider", other: "{count} riders" },
+    noRiders: "No riders yet",
+    pilotNeeded: "Pilot needed",
+    noTrishaw: "No trishaw yet",
+    cancelledOn: "Cancelled",
+    via: "to",
+    models: {
+      event: "Event ride",
+      pleasure: "Pleasure ride",
+      functional: "Functional ride",
+    },
+    statuses: {
+      scheduled: "Scheduled",
+      cancelled: "Cancelled",
+      completed: "Completed",
+    },
+    roles: {
+      pilot: "Pilot",
+    },
+    trishawStatuses: {
+      active: "Ready",
+      maintenance: "In for service",
+      retired: "Retired",
+    },
   },
   account: {
     title: "Account",
