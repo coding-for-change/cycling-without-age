@@ -12,6 +12,13 @@ export const updateChapterById = (
 export const findChapterById = (id: string) =>
   prisma.organization.findUnique({ where: { id } });
 
+export const findChapterTimeZones = (ids: string[]) =>
+  prisma.organization.findMany({
+    where: { id: { in: ids } },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, timeZone: true },
+  });
+
 export const findChapterBySlug = (slug: string) =>
   prisma.organization.findUnique({ where: { slug } });
 

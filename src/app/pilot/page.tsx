@@ -13,10 +13,12 @@ import { NotificationBell } from "@/components/notifications/notification-bell";
 import { NotificationBellSkeleton } from "@/components/notifications/notification-bell-skeleton";
 import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
+import { rides } from "@/features/rides";
+import { RideAgenda } from "@/features/rides/components/ride-agenda";
 import { requirePerspective } from "@/lib/auth-guards";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
-import { resolveLocale } from "@/lib/format";
-import { getDictionary } from "@/lib/i18n";
+import { resolveLocale, wordsLocale } from "@/lib/format";
+import { getDictionary, getLocale } from "@/lib/i18n";
 import { fill } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AccountDialog } from "@/components/account-dialog";
@@ -50,12 +52,22 @@ function PilotHomeSkeleton() {
 
 async function PilotHome() {
   const session = await requirePerspective("pilot");
-  const [dict, head, memberships, applications] = await Promise.all([
-    getDictionary(),
-    headers(),
-    membership.listMembershipsOfUser(session.user.id),
-    membership.listApplicationsOfUser(session.user.id),
-  ]);
+  const now = new Date();
+  const [dict, language, head, memberships, applications, upcoming] =
+    await Promise.all([
+      getDictionary(),
+      getLocale(),
+      headers(),
+      membership.listMembershipsOfUser(session.user.id),
+      membership.listApplicationsOfUser(session.user.id),
+      // A pilot plans in weeks, not months — far enough to see what is coming,
+      // near enough that the list stays a list.
+      rides.listRidesForPilot(
+        session.user.id,
+        now,
+        new Date(now.getTime() + 28 * 24 * 60 * 60 * 1000),
+      ),
+    ]);
 
   const pilotChapterIds = memberships
     .filter((m) => m.roles.includes("pilot"))
@@ -97,6 +109,18 @@ async function PilotHome() {
           })}
           dismiss={home.celebration.dismiss}
         />
+      ) : null}
+
+      {pilotChapterIds.length > 0 ? (
+        <div className="mt-10">
+          <RideAgenda
+            rides={upcoming}
+            strings={dict.calendar}
+            locale={locale}
+            words={wordsLocale(language)}
+            title={dict.calendar.upcoming}
+          />
+        </div>
       ) : null}
 
       {mine.length > 0 ? (

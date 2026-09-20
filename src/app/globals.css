@@ -183,6 +183,11 @@
   body {
     @apply bg-background text-foreground font-sans;
   }
+  /* The overscroll bounce paints the root canvas, which is white unless html
+     says otherwise. Under an app shell it must be the shell's ground. */
+  html:has([data-slot="sidebar-wrapper"]) {
+    background-color: var(--sidebar);
+  }
 }
 
 @theme inline {
