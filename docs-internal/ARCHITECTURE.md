@@ -631,3 +631,191 @@ JSON, or a payload that fails the caller's Zod schema all return `null` and the 
 back to its no-draft copy. Nothing from `sessionStorage` is ever trusted as input to a write:
 the Book-a-ride confirmation only *displays* the draft. When ride requests become real rows,
 the draft stays a UI convenience and the Server Action re-validates from scratch.
+
+## Rides, trishaws and the calendar
+
+### What a Ride is
+
+CWA's own glossary is the authority here (`.agents/skills/cwa-context/references/02-glossary.md`).
+A **Ride** is the scheduled thing: a chapter, a window, a Ride Location, the equipment it
+commits, and the rosters and volunteer slots that hang off it. The riders on it live in
+**`RideRosterEntry`** — and *that* is the counting unit, because the glossary is explicit that
+two people on one trip count as two rides. Every statistic in Report 1–20 therefore counts
+roster entries, never `Ride` rows.
+
+Three deliberate shapes in the schema, all from
+`references/04-ride-models.md` § Design consequences:
+
+- **`model` is a property of the ride, not of the chapter** (`event` · `pleasure` ·
+  `functional`) — one chapter runs all three.
+- **A destination is nullable, not absent.** Event and pleasure rides start and end in the
+  same place; a functional ride goes A → B. The destination columns exist on every row so
+  adding functional rides later needs no migration.
+- **A round trip is two rides.** `returnLegOfId` is a self-relation, because the RFP treats
+  the return leg as its own entry in the Ride Request List.
+- **A ride commits *many* trishaws, not one.** `RideTrishaw` is a join table. A request may
+  be for "a single trishaw or multiple trishaws"
+  (`references/05-ride-lifecycle.md` §1C) and a Multiple Ride Event "can involve multiple
+  trishaws, pilots, ambassadors, transporters" (`references/02-glossary.md`). A column on
+  `Ride` could not express either. Trailers, wheelchair bikes and transport vehicles —
+  listed beside trishaws in §2C — reserve the same way once they have models of their own.
+
+A trishaw's model is a **`TrishawType` row**, not a string. Three requirements compare types —
+pilot qualification is per trishaw type (`references/03-roles.md`), a client chooses a bike type
+when booking, and the negotiation loop offers another type when one is unavailable
+(`references/07-functional-ride-user-stories.md`) — and none of those survives free text, where
+`VeloPlus` and `VeloPlus ` are two different models. It is a table rather than an enum because
+the reference writes the set open-endedly, *"(Triobike Taxi, VeloPlus, …)"*: it is a
+manufacturer's catalogue that grows, and growing it should not be a migration. `Trishaw.typeId`
+is nullable, because a bike can be entered before CWA has told us its model. Whether a type also
+fixes the seat count and wheelchair access is still open with them; both become columns on
+`TrishawType` when answered, which is the point of a table.
+
+`RideAssignment` carries staffing — lifecycle phase 3 — and `RideRole` holds **`pilot` alone**.
+CWA does staff rides with ambassadors and transporters, and the glossary names them, but
+`ChapterRole` is admin/pilot/passenger: nobody can *be* an ambassador here, so carrying the
+values described a capability the app did not have. They return as a plain `ENUM` add once
+membership can express them. Pilot qualification is per trishaw *type*, which is why
+`Trishaw.type` exists even though nothing enforces it yet.
+
+### Reserving the equipment
+
+Lifecycle phase 2C commits resources: a scheduled ride holds **each** of its trishaws for its
+window, and they are "no longer available to others". `rides.scheduleRide` and
+`rides.rescheduleRide` enforce that in the facade over the whole set — `trishawReserved` when
+any of them is already out in an overlapping window, `trishawNotInChapter` when the scheduling
+chapter cannot reach it, `trishawUnavailable` when one is in for service. Rescheduling
+**replaces** the reservation set rather than merging into it. Cancelling **releases** the
+equipment but keeps the ride on the calendar, because the glossary says cancellation does not
+free the square.
+
+### Storage locations: a bike lives at a place, not at a chapter
+
+A trishaw is often kept somewhere shared — a care home or depot that serves more than one
+chapter — so **owning** a bike and **reaching** it are two different questions, and the schema
+answers them separately.
+
+`Trishaw.chapterId` stays what it always was: the owning chapter, who bought the bike and who
+reports on it. `Trishaw.storageLocationId` is new and nullable — null means the bike sits at
+its owning chapter's own address, and a row means it lives at a `StorageLocation`.
+`StorageLocationChapter` links a site to **one or more** chapters, because a single care home
+serving two neighbouring chapters is the case that a column could not express.
+
+Reachability follows from that, in `rides.reachableFrom`: a chapter may schedule a trishaw it
+owns, **or** one parked at a site it shares. `findTrishawsOfChapters` is the same rule as a
+query — an `OR` over owner and shared site, not a filter on `chapterId` — so `/admin/bikes`
+lists a shared bike for every chapter entitled to it. Sharing the shed does not override the
+other two checks: a bike in for service is still `trishawUnavailable`, and the window is still
+reserved inside the write's transaction.
+
+There is **no admin surface for storage locations yet** — no create, edit or link screen, and
+`prisma/seed.ts` is the only thing that writes one. Until there is, a shared site has to be
+created by hand. That is the missing piece, not a design gap.
+
+### Time zones: the chapter's clock, never the server's or the reader's
+
+A ride is stored as an instant. Which day column it falls in, and what time it reads, are
+questions about the **chapter's** wall clock — so `Organization.timeZone` is `NOT NULL` and
+every calendar function takes an IANA zone explicitly.
+
+`src/lib/calendar.ts` is that arithmetic, and it is deliberately dependency-free: `Intl`
+already ships the tz database, so `wallClock` (instant → local Y/M/D/h/m) and `instantAt`
+(local wall clock → instant, two-pass so DST lands right) are the whole of it. Everything
+else — `startOfDay`, `addDays`, `startOfWeek`, `weekDays`, `lanes` — is built on those two.
+`src/lib/calendar.test.ts` covers the 23- and 25-hour days, the hour Berlin skips, a
+45-minute offset (Kathmandu) and a date-line crossing, because those are the cases a naive
+`setDate` gets wrong.
+
+A new chapter's zone comes from its **pin**, via `resolveChapterTimeZone` in
+`src/lib/time-zone.ts` (`@photostructure/tz-lookup`, zero dependencies, CC0). A country is
+the wrong unit for this question — the US, Canada and Australia span several zones, and
+Spain and Portugal each keep a second one offshore (`Atlantic/Canary`, `Atlantic/Azores`) —
+and a chapter always has coordinates, because the address search fills them in. The country
+map survives only as a fallback for a caller with no pin, and `UTC` below that, so chapter
+creation can never fail on this.
+
+Moving the pin re-derives the zone (`chapters.withDerivedTimeZone`, applied by
+`use-cases/manage-chapter` before it diffs). This is **not** about a chapter relocating —
+a chapter cannot change country or slug, so one that moves is a new chapter, not an edited
+one. It is about a chapter first pinned on the wrong side of a border: the pin decides the
+zone, so the two are not allowed to disagree. The change gets its own line in the chapter's
+history, so it is never silent.
+
+**There is no field for editing the zone directly yet.** `chapterUpdateInput` accepts one
+and it wins over the pin when supplied, but no screen supplies it — so today, correcting a
+chapter's zone means correcting its pin. A zone picker on the chapter page is the missing
+piece.
+
+The lookup is a compressed raster, so a pin within a kilometre or two of a zone border can
+land on the wrong side. That is why the zone is a stored, correctable column rather than
+something derived on every read.
+
+When an admin's scope spans chapters in different zones, `app/admin/calendar-scope.ts` picks
+the first and **names it on screen**, rather than drawing times that are quietly wrong for
+everyone else.
+
+### Three views, no calendar library
+
+Only one of the three surfaces is a month-style grid, and none of them needed a dependency:
+
+| Surface | Shape | Why |
+| --- | --- | --- |
+| `/pilot`, `/passenger` | `RideAgenda` — a grouped list | On a phone "my next three rides" is the whole question; a grid answers it worse. |
+| `/admin/rides` | `RideWeek` — the Chapter Operating Calendar | Seven day columns over an hour band trimmed to what the week actually uses. `lanes()` packs overlapping rides into columns. |
+| `/admin/bikes` | `TrishawTimeline` — trishaw rows × day columns | Answers "can I promise this bike on Thursday" without reading every ride. A ride booking several trishaws appears in each of their rows. |
+
+All three are **Server Components**. The week lives in the URL (`?week=YYYY-MM-DD`, see
+`app/admin/week-param.ts`), so navigation prefetches, survives a refresh, shares as a link,
+and ships no calendar to the browser.
+
+### Who may read what
+
+| Surface | Guard | Rows it can reach |
+| --- | --- | --- |
+| `/admin/rides`, `/admin/bikes` | `readActiveScope(params, nav)` → `requireAdminScope` + the `NAV` row's own `visible` predicate; an out-of-scope `?chapter=`/`?country=` is a 403, never a silent widening | only `scopeChapters(scope, active)` |
+| `/pilot` | `requirePerspective("pilot")` | rides they are **assigned to** *and* whose chapter they are **still a member of** |
+| `/passenger` | `getSession` | rides rostering a `Passenger` row they manage |
+
+That second clause on `/pilot` is load-bearing: removing someone from a chapter deletes their
+`member` row and nothing else, so `RideAssignment` rows outlive the membership.
+`findRidesForPilot` therefore joins on current membership as well as the assignment.
+
+The **contact-detail exchange on match** runs both ways, as `references/04-ride-models.md` §7
+describes it: a rider sees the **pilot's name** once one is assigned, and the assigned pilot
+sees the **rider names** on that ride. A pilot choosing whether a ride suits them is choosing
+who they will spend an hour with, so a bare roster count was the wrong answer.
+
+The exchange is between a rider and *their* pilot, and the selects enforce exactly that.
+`pilotSelect` in `rides/services` is `calendarSelect` plus the roster, and it is used by
+`findRidesForPilot` alone — deliberately not folded into the shared shape, because
+`/passenger` reads that too and two riders on one trishaw are managed by two different people.
+The admin week and the passenger agenda still get `_count.roster` and nothing more.
+`facade.test.ts` pins all three surfaces, so widening one by accident fails a test.
+
+Phone numbers are the part of §7 still missing: `Passenger` carries a name, birth date and
+gender, but no number, so "the client's and/or the institution's phone" has nothing to read
+from yet.
+
+### The calendar this is *not*
+
+`/admin/bikes` answers COD-181's "which Bike is rented when" — a per-equipment reservation
+view. It is **not** the Chapter Operating Calendar as the glossary defines it
+(`references/02-glossary.md`), which is a **capacity** model: the chapter configures the
+maximum resources and volunteers per role available in each schedulable period, and a period
+that consumes them all "shows unavailable", with admins seeing trishaw/trailer *counts*. That
+view is what lifecycle phase 1D validates a new request against, and it needs a
+chapter-configuration model that does not exist yet. The two are different features, and
+both are wanted.
+
+### Not here yet
+
+Nothing **writes** a ride from the UI: there is no scheduling drawer, so `scheduleRide`,
+`cancelRide`, `assignVolunteer` and `bookRider` are reached only from `prisma/seed.ts` and
+the facade tests. When the scheduling drawer lands, its Server Action owns the
+authorization — the facade takes `chapterId` from its input and checks nothing, by design —
+so it must sit behind `requireChapterAdmin(chapterId)`, not `requireAdminScope()`.
+
+Ride *requests* (lifecycle phase 1), the Ride Request List, recurrence,
+cancellation reason codes, waivers, storage locations and care centers are all still absent —
+see COD-155 / COD-179 / COD-151. The `.ics` feed and email attachment are COD-182 and were
+deliberately left off this branch.

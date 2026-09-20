@@ -1,7 +1,10 @@
 import {
+  formatDayOfMonth,
   formatDistance,
   formatDuration,
+  formatHour,
   formatRelativeTime,
+  formatWeekdayNarrow,
   wordsLocale,
 } from "@/lib/format";
 
@@ -78,5 +81,38 @@ describe("wordsLocale", () => {
     expect(wordsLocale("de")).toBe("de-DE");
     expect(wordsLocale("da")).toBe("da-DK");
     expect(wordsLocale("en").startsWith("en")).toBe(true);
+  });
+});
+
+describe("formatWeekdayNarrow", () => {
+  it("is a single letter in every supported locale", () => {
+    expect(formatWeekdayNarrow("2026-09-14", "en-US")).toBe("M");
+    expect(formatWeekdayNarrow("2026-09-14", "de-DE")).toBe("M");
+    expect(formatWeekdayNarrow("2026-09-14", "da-DK")).toBe("M");
+    expect(formatWeekdayNarrow("2026-09-16", "en-GB")).toBe("W");
+  });
+});
+
+describe("formatDayOfMonth", () => {
+  it("keeps each locale's own notation", () => {
+    expect(formatDayOfMonth("2026-09-07", "en-US")).toBe("7");
+    expect(formatDayOfMonth("2026-09-07", "de-DE")).toBe("7");
+    expect(formatDayOfMonth("2026-09-07", "da-DK")).toBe("7.");
+  });
+});
+
+describe("formatHour", () => {
+  const instant = new Date("2026-09-14T08:00:00Z");
+
+  it("lets the locale choose between 12h and 24h", () => {
+    expect(formatHour(instant, "en-US", "Europe/Berlin")).toMatch(/^10\sAM$/);
+    expect(formatHour(instant, "de-DE", "Europe/Berlin")).toMatch(/^10\sUhr$/);
+    expect(formatHour(instant, "en-GB", "Europe/Berlin")).toBe("10");
+    expect(formatHour(instant, "da-DK", "Europe/Berlin")).toBe("10");
+  });
+
+  it("reads the hour in the given zone, not in UTC", () => {
+    expect(formatHour(instant, "en-GB", "UTC")).toBe("08");
+    expect(formatHour(instant, "en-GB", "America/Denver")).toBe("02");
   });
 });

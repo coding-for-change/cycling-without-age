@@ -33,8 +33,11 @@ export async function updateChapter({
   const before = await chapters.getChapter(chapterId);
   if (!before) throw new DomainError("unknownChapter");
 
-  const changes = chapters.diffChapter(before, input);
-  const after = await chapters.updateChapter(chapterId, input);
+  // The zone follows the pin, so resolve it before diffing — otherwise the
+  // change would be written without a history line of its own.
+  const patch = chapters.withDerivedTimeZone(input);
+  const changes = chapters.diffChapter(before, patch);
+  const after = await chapters.updateChapter(chapterId, patch);
   for (const change of changes) {
     await activity.record({
       userId: actorUserId,

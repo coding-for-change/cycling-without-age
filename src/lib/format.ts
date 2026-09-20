@@ -188,6 +188,25 @@ export function formatShortDateWithWeekday(
   }).format(toCalendarDate(value));
 }
 
+/** `M` — one letter for a day column too narrow for a word; the same in every supported locale */
+export function formatWeekdayNarrow(
+  value: Date | string,
+  locale: Locale,
+): string {
+  return dateTimeFormatter(locale, {
+    ...CALENDAR_UTC,
+    weekday: "narrow",
+  }).format(toCalendarDate(value));
+}
+
+/** `7` (en-US) · `7.` (da-DK) */
+export function formatDayOfMonth(value: Date | string, locale: Locale): string {
+  return dateTimeFormatter(locale, {
+    ...CALENDAR_UTC,
+    day: "numeric",
+  }).format(toCalendarDate(value));
+}
+
 /* -------------------------------------------------------------------------- */
 /* Instants — a real moment, so the zone is mandatory                         */
 /* -------------------------------------------------------------------------- */
@@ -209,6 +228,18 @@ export function formatTime(
   return dateTimeFormatter(locale, {
     timeZone,
     timeStyle: "short",
+  }).format(new Date(value));
+}
+
+/** `10 AM` (en-US) · `10 Uhr` (de-DE) · `10` (en-GB, da-DK) — an hour rail with no room for minutes */
+export function formatHour(
+  value: Date | string,
+  locale: Locale,
+  timeZone: string,
+): string {
+  return dateTimeFormatter(locale, {
+    timeZone,
+    hour: "numeric",
   }).format(new Date(value));
 }
 
@@ -380,4 +411,31 @@ export function formatDuration(seconds: number, locale: Locale): string {
   return rest === 0
     ? unit(hours, "hour")
     : `${unit(hours, "hour")} ${unit(rest, "minute")}`;
+}
+
+const pluralRules = new Map<string, Intl.PluralRules>();
+
+/** The plural forms a dictionary entry carries. */
+export type PluralForms = { one: string; other: string };
+
+/**
+ * Picks the plural form and fills `{count}`. English, German and Danish all
+ * have two categories, but `Intl.PluralRules` is what keeps that true for the
+ * next language rather than an `=== 1`.
+ *
+ * Takes a words locale (`wordsLocale(language)`), not a notation locale — the
+ * result is read as words, so an English UI must not pick a German form.
+ */
+export function formatPlural(
+  count: number,
+  forms: PluralForms,
+  locale: Locale,
+): string {
+  let rules = pluralRules.get(locale);
+  if (!rules) {
+    rules = new Intl.PluralRules(locale);
+    pluralRules.set(locale, rules);
+  }
+  const form = rules.select(count) === "one" ? forms.one : forms.other;
+  return form.replace("{count}", formatNumber(count, locale));
 }

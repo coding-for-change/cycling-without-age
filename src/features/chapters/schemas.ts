@@ -1,4 +1,15 @@
 import { z } from "zod";
+import { isValidTimeZone } from "@/lib/time-zone";
+
+/**
+ * An IANA zone the runtime can actually format in. Optional on create — the
+ * facade resolves it from the chapter's country — and correctable afterwards.
+ */
+const timeZone = z
+  .string()
+  .trim()
+  .max(64)
+  .refine(isValidTimeZone, "unknown IANA time zone");
 
 export const countryInput = z.object({
   name: z.string().trim().min(1).max(120),
@@ -68,6 +79,7 @@ export const chapterInput = z.object({
     .min(CHAPTER_RADIUS_KM.min)
     .max(CHAPTER_RADIUS_KM.max)
     .optional(),
+  timeZone: timeZone.optional(),
 });
 export type ChapterInput = z.infer<typeof chapterInput>;
 

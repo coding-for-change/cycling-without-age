@@ -12,11 +12,20 @@ export type DomainErrorCode =
   | "notChapterMember"
   | "notOwnAccount"
   | "passengerChapterMismatch"
+  | "rideEndsBeforeStart"
+  | "rideTooLong"
+  | "rideTooShort"
   | "selfChange"
   | "slugTaken"
+  | "trishawNotInChapter"
+  | "trishawReserved"
+  | "trishawUnavailable"
   | "unknownApplication"
   | "unknownChapter"
-  | "unknownCountry";
+  | "unknownCountry"
+  | "unknownRide"
+  | "unknownTrishaw"
+  | "unknownTrishawType";
 
 export class DomainError extends Error {
   readonly code: DomainErrorCode;

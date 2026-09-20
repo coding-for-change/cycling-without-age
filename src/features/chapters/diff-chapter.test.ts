@@ -45,3 +45,51 @@ describe("diffing a chapter edit", () => {
     ]);
   });
 });
+
+describe("withDerivedTimeZone", () => {
+  const munich = { latitude: 48.1351, longitude: 11.582 };
+
+  it("re-derives the zone when the pin moves", () => {
+    // Pinned in Munich, corrected to Denver — the case the rule exists for.
+    expect(
+      chapters.withDerivedTimeZone({
+        latitude: 39.7392,
+        longitude: -104.9903,
+      }),
+    ).toMatchObject({ timeZone: "America/Denver" });
+  });
+
+  it("leaves the input alone when only the address changed", () => {
+    const input = { address: "Sonnenstraße 1" };
+    expect(chapters.withDerivedTimeZone(input)).toBe(input);
+  });
+
+  it("lets an explicit zone overrule the map", () => {
+    expect(
+      chapters.withDerivedTimeZone({ ...munich, timeZone: "Europe/London" }),
+    ).toMatchObject({ timeZone: "Europe/London" });
+  });
+
+  it("leaves the input alone when the pin is unusable", () => {
+    const input = { latitude: 999, longitude: 999 };
+    expect(chapters.withDerivedTimeZone(input)).toBe(input);
+  });
+
+  it("produces a history line, so the change is never silent", () => {
+    const before = {
+      ...AARHUS,
+      latitude: 56.1629,
+      longitude: 10.2039,
+      timeZone: "Europe/Copenhagen",
+    };
+    const enriched = chapters.withDerivedTimeZone({
+      latitude: 39.7392,
+      longitude: -104.9903,
+    });
+    const fields = chapters
+      .diffChapter(before as never, enriched)
+      .map((change) => change.field);
+    expect(fields).toContain("timeZone");
+    expect(fields).toContain("location");
+  });
+});
