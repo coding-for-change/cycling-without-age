@@ -84,6 +84,13 @@ No Shortcuts:
 - A "use case" that touches only one feature is not a use case — collapse it into the Action.
 - Auth checks live in `lib/auth-guards.ts`, called from Actions, (cross-feature) Use Cases and Server Components. Never inside a Facade. A Layout is not a security boundary — the page underneath re-guards.
 
+Observability:
+- Log through `@/lib/observability/logger` (`logger`, `childLogger`, `devConsole` for dev-only output). `console` is an ESLint error everywhere else.
+- Log ids only — `user_id`, `chapter_id`, `job_id`, `event`. Never emails, phone numbers, names, birth dates, addresses, coordinates, chat text, OTPs, tokens or connection strings; wrap errors in `serializeError`.
+- Business events go through `logDomainEvent`; every outbox event emitted inside `transaction()` already logs one.
+- Counters and histograms come from `@/lib/observability/metrics` (`web.*`, `worker.*`). `pino` and `prom-client` may only be imported inside `src/lib/observability/**`.
+- Capture only at boundaries: Actions (`actionFailure`), route handlers (`onRequestError`), the Worker and Use Cases. Facades and Services throw and never report. The `chat-notifications/*` use-cases never log, tag or capture message content.
+
 ## 7. NATIVE (CAPACITOR) RULES
 The iOS/Android apps are thin Capacitor shells whose WebView loads https://cwa.codingforchange.com.
 

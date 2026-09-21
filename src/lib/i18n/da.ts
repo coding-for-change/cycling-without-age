@@ -771,6 +771,23 @@ const da: Dictionary = {
           errors: { generic: "Det virkede ikke. Prøv igen." },
         },
       },
+      support: {
+        title: "Meld et problem",
+        body: "Driller noget i administrationen? Beskriv det i én sætning, så lander det hos dem, der passer på det.",
+        open: "Meld et problem",
+        drawer: {
+          title: "Hvad skete der?",
+          description:
+            "En sætning eller to er rigeligt. Den går direkte til dem, der kan rette det.",
+          placeholder:
+            "Jeg trykkede Gem på min profil, og så blev skærmen tom.",
+          submit: "Send",
+          cancel: "Annuller",
+          tooShort: "Et par ord mere, tak — mindst ti tegn.",
+          done: "Tak. Det hjælper mere, end du tror.",
+          failed: "Det blev ikke sendt. Prøv igen om lidt.",
+        },
+      },
     },
   },
   pilot: {
@@ -1115,6 +1132,22 @@ const da: Dictionary = {
         "Der er gået et stykke tid. Log ind igen, før du tilføjer en adgangsnøgle.",
       signInAgainAction: "Log ind igen",
       back: "Tilbage",
+    },
+    support: {
+      title: "Noget der driller?",
+      body: "Fortæl hvad der skete, så kigger vi på det. Ingen skærmbilleder nødvendige — de tekniske detaljer følger med af sig selv.",
+      open: "Meld et problem",
+      drawer: {
+        title: "Hvad skete der?",
+        description:
+          "En sætning eller to er rigeligt. Den går direkte til dem, der kan rette det.",
+        placeholder: "Jeg trykkede Gem på min profil, og så blev skærmen tom.",
+        submit: "Send",
+        cancel: "Annuller",
+        tooShort: "Et par ord mere, tak — mindst ti tegn.",
+        done: "Tak. Det hjælper mere, end du tror.",
+        failed: "Det blev ikke sendt. Prøv igen om lidt.",
+      },
     },
     danger: {
       title: "Log ud eller slet",

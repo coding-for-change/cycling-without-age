@@ -7,8 +7,31 @@ import { profile } from "@/features/profile";
 import { activity } from "@/lib/activity";
 import { APP_URL } from "@/lib/app-url";
 import { MailRateLimitedError, sendMail } from "@/lib/mailer";
+import { worker as workerMetrics } from "@/lib/observability/metrics";
 import { kindOf, renderMessage } from "./kinds";
 import type { Message } from "./kinds/types";
+
+const CHANNEL = "email";
+
+const recordSkipped = (reason: string) =>
+  workerMetrics.deliveries.inc({
+    channel: CHANNEL,
+    status: "skipped",
+    reason,
+  });
+
+const recordSent = (eventCreatedAt: Date) => {
+  workerMetrics.deliveries.inc({
+    channel: CHANNEL,
+    status: "sent",
+    reason: "",
+  });
+  if (eventCreatedAt instanceof Date)
+    workerMetrics.deliveryLatency.observe(
+      { channel: CHANNEL },
+      (Date.now() - eventCreatedAt.getTime()) / 1_000,
+    );
+};
 
 export async function deliverEmail(notificationId: string) {
   const notification = await notifications.get(notificationId);
@@ -24,12 +47,14 @@ export async function deliverEmail(notificationId: string) {
   const account = await profile.getProfile(notification.recipientUserId);
   if (!account?.email) {
     await notifications.deliverySkipped(delivery.id, "no email address");
+    recordSkipped("no email address");
     return;
   }
 
   const skip = await reasonToSkip(notification, kind.policy, account);
   if (skip) {
     await notifications.deliverySkipped(delivery.id, skip);
+    recordSkipped(skip);
     return;
   }
 
@@ -47,6 +72,7 @@ export async function deliverEmail(notificationId: string) {
       ...(replyTo ? { replyTo } : {}),
     });
     await notifications.deliverySent(delivery.id, null);
+    recordSent(notification.event.createdAt);
     await activity.record({
       userId: notification.recipientUserId,
       actorUserId: notification.event.actorUserId ?? undefined,
@@ -57,6 +83,11 @@ export async function deliverEmail(notificationId: string) {
   } catch (error) {
     if (error instanceof MailRateLimitedError) throw error;
     await notifications.deliveryFailed(delivery.id, String(error));
+    workerMetrics.deliveries.inc({
+      channel: CHANNEL,
+      status: "failed",
+      reason: "error",
+    });
     throw error;
   }
 }

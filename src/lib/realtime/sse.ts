@@ -1,3 +1,6 @@
+import { reasonOf } from "@/lib/observability/errors";
+import { childLogger } from "@/lib/observability/logger";
+import { web } from "@/lib/observability/metrics";
 import { conversationChannel, PRESENCE_CHANNEL, userChannel } from "./channels";
 import type { RealtimeEvent } from "./events";
 
@@ -48,9 +51,11 @@ export function createChatStream({
   const encoder = new TextEncoder();
   const contacts = new Set(contactIds);
   const offs: Array<() => void> = [];
+  const log = childLogger({ user_id: userId });
 
   let ticker: ReturnType<typeof setInterval> | null = null;
   let counted = false;
+  let opened = false;
   let closed = false;
   let release: (close: boolean) => void = () => {};
 
@@ -61,6 +66,10 @@ export function createChatStream({
         closed = true;
 
         signal.removeEventListener("abort", onAbort);
+        if (opened) {
+          opened = false;
+          web.sseConnections.dec();
+        }
         if (ticker !== null) clearInterval(ticker);
         ticker = null;
         while (offs.length > 0) offs.pop()?.();
@@ -68,13 +77,21 @@ export function createChatStream({
         if (counted)
           void presence
             .disconnect(userId)
-            .catch((error) => console.error("chat stream disconnect", error));
+            .catch((error) =>
+              log.warn(
+                { site: "disconnect", reason: reasonOf(error) },
+                "chat stream presence disconnect failed",
+              ),
+            );
 
         if (!close) return;
         try {
           controller.close();
         } catch (error) {
-          console.error("chat stream close", error);
+          log.warn(
+            { site: "close", reason: reasonOf(error) },
+            "chat stream close failed",
+          );
         }
       };
 
@@ -89,6 +106,8 @@ export function createChatStream({
         return;
       }
       signal.addEventListener("abort", onAbort);
+      opened = true;
+      web.sseConnections.inc();
 
       const write = (chunk: string) => {
         if (closed) return;
@@ -112,7 +131,12 @@ export function createChatStream({
                 contacts.clear();
                 for (const id of ids) contacts.add(id);
               })
-              .catch((error) => console.error("chat stream contacts", error));
+              .catch((error) =>
+                log.warn(
+                  { site: "contacts", reason: reasonOf(error) },
+                  "chat stream contact refresh failed",
+                ),
+              );
           send(event);
         }),
       );
@@ -137,7 +161,12 @@ export function createChatStream({
         write(": ping\n\n");
         void presence
           .heartbeat(userId, focus)
-          .catch((error) => console.error("chat stream heartbeat", error));
+          .catch((error) =>
+            log.warn(
+              { site: "heartbeat", reason: reasonOf(error) },
+              "chat stream heartbeat failed",
+            ),
+          );
       }, HEARTBEAT_MS);
 
       counted = true;

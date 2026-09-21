@@ -795,6 +795,23 @@ const de: Dictionary = {
           errors: { generic: "Das hat nicht geklappt. Versuch es noch mal." },
         },
       },
+      support: {
+        title: "Problem melden",
+        body: "Im Admin hakt etwas? Ein Satz genügt — er landet bei den Leuten, die das hier warten.",
+        open: "Problem melden",
+        drawer: {
+          title: "Was ist passiert?",
+          description:
+            "Ein, zwei Sätze reichen völlig. Sie landen direkt bei den Leuten, die es reparieren.",
+          placeholder:
+            "Im Profil auf Speichern getippt, dann war der Bildschirm leer.",
+          submit: "Abschicken",
+          cancel: "Abbrechen",
+          tooShort: "Ein paar Worte mehr bitte — mindestens zehn Zeichen.",
+          done: "Danke. Das hilft mehr, als man denkt.",
+          failed: "Das ging nicht raus. Gleich noch einmal versuchen.",
+        },
+      },
     },
   },
   pilot: {
@@ -1152,6 +1169,23 @@ const de: Dictionary = {
         "Es ist eine Weile her. Melde dich neu an, bevor du einen Passkey anlegst.",
       signInAgainAction: "Neu anmelden",
       back: "Zurück",
+    },
+    support: {
+      title: "Etwas funktioniert nicht?",
+      body: "Kurz beschreiben, was passiert ist — wir schauen nach. Screenshots braucht es nicht, die technischen Details kommen von selbst mit.",
+      open: "Problem melden",
+      drawer: {
+        title: "Was ist passiert?",
+        description:
+          "Ein, zwei Sätze reichen völlig. Sie landen direkt bei den Leuten, die es reparieren.",
+        placeholder:
+          "Im Profil auf Speichern getippt, dann war der Bildschirm leer.",
+        submit: "Abschicken",
+        cancel: "Abbrechen",
+        tooShort: "Ein paar Worte mehr bitte — mindestens zehn Zeichen.",
+        done: "Danke. Das hilft mehr, als man denkt.",
+        failed: "Das ging nicht raus. Gleich noch einmal versuchen.",
+      },
     },
     danger: {
       title: "Abmelden oder löschen",

@@ -20,6 +20,7 @@
 # production
 /build
 worker.js
+worker-instrument.js
 
 # misc
 .DS_Store

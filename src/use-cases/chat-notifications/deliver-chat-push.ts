@@ -2,6 +2,7 @@ import { getEmailStrings, resolveEmailLocale } from "@/emails/strings";
 import { chat } from "@/features/chat";
 import { notifications } from "@/features/notifications";
 import { profile } from "@/features/profile";
+import { devConsole } from "@/lib/observability/logger";
 import { isPushConfigured, sendPush } from "@/lib/push";
 import { isMuted } from "./digest-window";
 import { previewOf } from "./preview";
@@ -35,12 +36,10 @@ export async function deliverChatPush({
   if (tokens.length === 0) return;
 
   if (!isPushConfigured()) {
-    if (process.env.NODE_ENV !== "production") {
-      console.info(
-        "[push] FIREBASE_SERVICE_ACCOUNT unset — skipping chat",
-        messageId,
-      );
-    }
+    devConsole.info(
+      "[push] FIREBASE_SERVICE_ACCOUNT unset — skipping chat",
+      messageId,
+    );
     return;
   }
 

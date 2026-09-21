@@ -1,4 +1,7 @@
 import type Redis from "ioredis";
+import { reasonOf, serializeError } from "@/lib/observability/errors";
+import { logger } from "@/lib/observability/logger";
+import { web } from "@/lib/observability/metrics";
 import { createRedisClient } from "@/lib/redis";
 import { withTimeout } from "@/lib/with-timeout";
 import { userChannel } from "./channels";
@@ -9,9 +12,20 @@ export type Unsubscribe = () => void;
 
 const PUBLISH_TIMEOUT_MS = 2_000;
 
-// A failed publish carries the message body in `error.command.args`, so only the reason is logged.
-const reasonOf = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
+function realtimeError(site: string, error: unknown, message: string) {
+  logger.error({ site, err: serializeError(error) }, message);
+  web.realtimeErrors.inc({ site });
+}
+
+function realtimeWarning(
+  site: string,
+  channel: string,
+  error: unknown,
+  message: string,
+) {
+  logger.warn({ site, channel, reason: reasonOf(error) }, message);
+  web.realtimeErrors.inc({ site });
+}
 
 type Hub = {
   commands: Redis | null;
@@ -34,7 +48,7 @@ export function commandClient(): Redis {
 
   const client = createRedisClient();
   client.on("error", (error: Error) =>
-    console.error("realtime commands", error),
+    realtimeError("commands", error, "realtime commands client failed"),
   );
   hub.commands = client;
   return client;
@@ -58,7 +72,11 @@ function deliver(channel: string, payload: string) {
     try {
       handler(event);
     } catch (error) {
-      console.error(`realtime handler on ${channel}`, error);
+      logger.error(
+        { site: "handler", channel, err: serializeError(error) },
+        "realtime handler failed",
+      );
+      web.realtimeErrors.inc({ site: "handler" });
     }
   }
 }
@@ -71,7 +89,7 @@ function subscriberClient(): Redis {
     deliver(channel, payload),
   );
   client.on("error", (error: Error) =>
-    console.error("realtime subscriber", error),
+    realtimeError("subscriber", error, "realtime subscriber client failed"),
   );
   hub.subscriber = client;
   return client;
@@ -91,7 +109,12 @@ export function subscribe(
     void client
       .subscribe(channel)
       .catch((error) =>
-        console.error(`realtime subscribe to ${channel}`, error),
+        realtimeWarning(
+          "subscribe",
+          channel,
+          error,
+          "realtime subscribe failed",
+        ),
       );
   }
 
@@ -110,7 +133,12 @@ export function subscribe(
     void client
       .unsubscribe(channel)
       .catch((error) =>
-        console.error(`realtime unsubscribe from ${channel}`, error),
+        realtimeWarning(
+          "unsubscribe",
+          channel,
+          error,
+          "realtime unsubscribe failed",
+        ),
       );
   };
 }
@@ -125,7 +153,7 @@ export async function publish(
       PUBLISH_TIMEOUT_MS,
     );
   } catch (error) {
-    console.error(`realtime publish to ${channel}`, reasonOf(error));
+    realtimeWarning("publish", channel, error, "realtime publish failed");
   }
 }
 
@@ -144,10 +172,15 @@ export async function publishToUsers(
   try {
     await withTimeout(pipeline.exec(), PUBLISH_TIMEOUT_MS);
   } catch (error) {
-    console.error(
-      `realtime publish to ${recipients.length} users`,
-      reasonOf(error),
+    logger.warn(
+      {
+        site: "publishToUsers",
+        recipients: recipients.length,
+        reason: reasonOf(error),
+      },
+      "realtime publish to users failed",
     );
+    web.realtimeErrors.inc({ site: "publishToUsers" });
   }
 }
 

@@ -1,3 +1,4 @@
 cwa.codingforchange.com {
+    import access_log
     reverse_proxy localhost:3002
 }

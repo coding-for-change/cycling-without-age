@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { domainCode } from "@/lib/domain-error";
+import { actionFailure } from "@/lib/domain-error";
 import { z } from "zod";
 import { requireAuth, requireChapterAdmin } from "@/lib/auth-guards";
 import { canDeleteOwnAccount } from "@/lib/access";
@@ -39,9 +39,7 @@ export async function addAssistedPassenger(
     revalidatePath("/admin", "layout");
     return { ok: true };
   } catch (error) {
-    if (domainCode(error) === "alreadyHasAccount")
-      return { ok: false, error: "exists" };
-    return { ok: false, error: "generic" };
+    return actionFailure(error, { alreadyHasAccount: "exists" } as const);
   }
 }
 
@@ -61,8 +59,8 @@ export async function inviteChapterUser(
     });
     revalidatePath("/admin", "layout");
     return { ok: true };
-  } catch {
-    return { ok: false, error: "generic" };
+  } catch (error) {
+    return actionFailure(error, {});
   }
 }
 
@@ -98,7 +96,7 @@ export async function deleteOwnAccountAction(): Promise<DeleteOwnAccountResult> 
     await accounts.deleteUser(session.user.id);
     revalidatePath("/admin", "layout");
     return { ok: true };
-  } catch {
-    return { ok: false, error: "generic" };
+  } catch (error) {
+    return actionFailure(error, {});
   }
 }

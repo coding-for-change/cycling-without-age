@@ -1,5 +1,7 @@
 import { Capacitor } from "@capacitor/core";
+import * as Sentry from "@sentry/nextjs";
 import { isAppPath } from "@/lib/app-path";
+import { reasonOf } from "@/lib/observability/errors";
 
 export type PushPlatform = "ios" | "android";
 export type PushDevice = { token: string; platform: PushPlatform };
@@ -9,6 +11,13 @@ export type PushPayload = { title: string; body: string; href: string | null };
 const tokenListeners = new Set<(device: PushDevice) => void>();
 
 const messaging = () => import("@capacitor-firebase/messaging");
+
+const breadcrumb = (site: string, error: unknown) =>
+  Sentry.addBreadcrumb({
+    category: "push",
+    message: `${site}: ${reasonOf(error)}`,
+    level: "warning",
+  });
 
 const nativePlatform = (): PushPlatform | null => {
   if (!Capacitor.isNativePlatform()) return null;
@@ -37,7 +46,9 @@ export async function requestNotificationPermission(): Promise<boolean> {
     }
     if (typeof Notification === "undefined") return false;
     return (await Notification.requestPermission()) === "granted";
-  } catch {
+  } catch (error) {
+    breadcrumb("requestPermission", error);
+    Sentry.captureException(error);
     return false;
   }
 }
@@ -47,7 +58,8 @@ export async function hasNotificationPermission(): Promise<boolean> {
   try {
     const { receive } = await (await messaging()).FirebaseMessaging.checkPermissions();
     return receive === "granted";
-  } catch {
+  } catch (error) {
+    breadcrumb("hasPermission", error);
     return false;
   }
 }
@@ -58,7 +70,9 @@ export async function getPushToken(): Promise<PushDevice | null> {
   try {
     const { token } = await (await messaging()).FirebaseMessaging.getToken();
     return token ? { token, platform } : null;
-  } catch {
+  } catch (error) {
+    breadcrumb("getToken", error);
+    Sentry.captureException(error);
     return null;
   }
 }
@@ -67,7 +81,9 @@ export async function deletePushToken(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
   try {
     await (await messaging()).FirebaseMessaging.deleteToken();
-  } catch {}
+  } catch (error) {
+    breadcrumb("deleteToken", error);
+  }
 }
 
 export function onPushToken(cb: (device: PushDevice) => void): Unsubscribe {

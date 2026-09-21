@@ -1,0 +1,5 @@
+[
+  { "stackRoot": "./", "sourceRoot": "./" },
+  { "stackRoot": "app:///", "sourceRoot": "./" },
+  { "stackRoot": "/app/", "sourceRoot": "./" }
+]

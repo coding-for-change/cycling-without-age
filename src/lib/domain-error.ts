@@ -1,4 +1,8 @@
+import { unstable_rethrow } from "next/navigation";
+import * as Sentry from "@sentry/nextjs";
 import { Prisma } from "@/generated/prisma";
+import { serializeError } from "@/lib/observability/errors";
+import { logger } from "@/lib/observability/logger";
 
 export type DomainErrorCode =
   | "aboveThreshold"
@@ -53,11 +57,18 @@ export class DomainError extends Error {
 export const domainCode = (error: unknown): DomainErrorCode | null =>
   error instanceof DomainError ? error.code : null;
 
-export const actionFailure = <E extends string>(
+export const actionFailure = <E extends string = never>(
   error: unknown,
   map: Partial<Record<DomainErrorCode, E>>,
 ): { ok: false; error: E | "generic" } => {
+  unstable_rethrow(error);
+
   const code = domainCode(error);
+  if (code === null) {
+    logger.error({ err: serializeError(error) }, "unexpected action error");
+    Sentry.captureException(error);
+  }
+
   return { ok: false, error: (code && map[code]) || "generic" };
 };
 

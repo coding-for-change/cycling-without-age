@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import { chat } from "@/features/chat";
 import { auth } from "@/lib/auth";
+import { web } from "@/lib/observability/metrics";
 import {
   createChatStream,
   presence,
@@ -13,6 +14,8 @@ export async function GET(request: Request) {
 
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session) return new Response("Unauthorized", { status: 401 });
+
+  if (request.headers.get("last-event-id")) web.sseReconnects.inc();
 
   const viewerId = session.user.id;
   const requested = new URL(request.url).searchParams.get("focus");

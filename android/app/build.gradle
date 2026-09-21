@@ -1,4 +1,7 @@
 apply plugin: 'com.android.application'
+apply plugin: 'io.sentry.android.gradle'
+
+def sentryAuthToken = System.getenv("SENTRY_AUTH_TOKEN") ?: ""
 
 android {
     namespace = "com.codingforchange.cwa"
@@ -10,6 +13,10 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        manifestPlaceholders = [
+            sentryDsn: System.getenv("SENTRY_DSN_ANDROID") ?: "",
+            sentryEnvironment: System.getenv("SENTRY_ENVIRONMENT") ?: "production"
+        ]
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
@@ -22,6 +29,23 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+}
+
+sentry {
+    org = "codingforchange"
+    projectName = "cwa-android"
+    authToken = sentryAuthToken
+    includeProguardMapping = true
+    autoUploadProguardMapping = sentryAuthToken != ""
+    includeSourceContext = sentryAuthToken != ""
+    tracingInstrumentation {
+        enabled = false
+    }
+    autoInstallation {
+        enabled = true
+    }
+    ignoredBuildTypes = ["debug"]
+    telemetry = false
 }
 
 repositories {

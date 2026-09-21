@@ -10,12 +10,17 @@ permissions:
 # Keys read out of .config/secrets.yml. All are masked in the logs; RUNTIME_KEYS
 # are written to the prod .env, and a key absent from the vault is omitted there.
 env:
-  BUILD_KEYS: REGISTRY_USERNAME REGISTRY_PASSWORD NEXT_PUBLIC_MAPBOX_TOKEN
+  BUILD_KEYS: >-
+    REGISTRY_USERNAME REGISTRY_PASSWORD NEXT_PUBLIC_MAPBOX_TOKEN
+    SENTRY_AUTH_TOKEN NEXT_PUBLIC_SENTRY_DSN
   RUNTIME_KEYS: >-
     DATABASE_URL BETTER_AUTH_SECRET RESEND_API_KEY MAPBOX_TOKEN
     GATEWAYAPI_TOKEN GATEWAYAPI_SENDER GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET
     FIREBASE_SERVICE_ACCOUNT PASSKEY_ANDROID_ORIGINS ANDROID_CERT_SHA256_FINGERPRINTS
-    CHAT_MASTER_KEY
+    CHAT_MASTER_KEY SENTRY_DSN_WEB SENTRY_DSN_WORKER
+  SENTRY_ORG: codingforchange
+  SENTRY_PROJECT: cycling-without-age
+  HEALTH_URL: https://cwa.codingforchange.com/api/health
 
 jobs:
   deploy:
@@ -24,8 +29,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Decrypt Secrets
+        id: secrets
         run: |
           if ! command -v ansible-playbook &> /dev/null; then
             pipx install ansible-core
@@ -50,12 +58,44 @@ jobs:
             value=$(jq -r --arg k "$key" '.[$k] // empty' decrypted.json)
             if [ -n "$value" ]; then echo "::add-mask::$value"; fi
           done
+          if [ -n "$(jq -r '.SENTRY_AUTH_TOKEN // empty' decrypted.json)" ]; then
+            echo "has_sentry_token=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_sentry_token=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install sentry CLI
+        if: steps.secrets.outputs.has_sentry_token == 'true'
+        run: |
+          curl https://cli.sentry.dev/install -fsS | bash -s -- --version 0.45.0
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Create Sentry release
+        if: steps.secrets.outputs.has_sentry_token == 'true'
+        continue-on-error: true
+        run: |
+          SENTRY_AUTH_TOKEN="$(jq -r '.SENTRY_AUTH_TOKEN // empty' decrypted.json)"
+          export SENTRY_AUTH_TOKEN
+          sentry release create "$SENTRY_ORG/${{ github.sha }}" --project cycling-without-age,cwa-worker
+          sentry release set-commits "$SENTRY_ORG/${{ github.sha }}" --auto
+
       # 2. Build Docker image
       - name: Build Docker image
+        env:
+          DOCKER_BUILDKIT: "1"
         run: |
+          SENTRY_AUTH_TOKEN="$(jq -r '.SENTRY_AUTH_TOKEN // empty' decrypted.json)"
+          export SENTRY_AUTH_TOKEN
+
           docker build \
             --build-arg NEXT_PUBLIC_APP_URL=https://cwa.codingforchange.com \
             --build-arg NEXT_PUBLIC_MAPBOX_TOKEN="$(jq -r '.NEXT_PUBLIC_MAPBOX_TOKEN // empty' decrypted.json)" \
+            --build-arg NEXT_PUBLIC_SENTRY_DSN="$(jq -r '.NEXT_PUBLIC_SENTRY_DSN // empty' decrypted.json)" \
+            --build-arg NEXT_PUBLIC_SENTRY_ENVIRONMENT=production \
+            --build-arg SENTRY_RELEASE=${{ github.sha }} \
+            --build-arg SENTRY_ORG="$SENTRY_ORG" \
+            --build-arg SENTRY_PROJECT="$SENTRY_PROJECT" \
+            --secret id=sentry_token,env=SENTRY_AUTH_TOKEN \
             -t registry.infra.codingforchange.com/cwa:${{ github.sha }} \
             -t registry.infra.codingforchange.com/cwa:latest \
             .
@@ -101,6 +141,10 @@ jobs:
             echo "BETTER_AUTH_URL=https://cwa.codingforchange.com"
             echo "REDIS_URL=redis://redis:6379"
             echo "EMAIL_FROM=cwa@codingforchange.com"
+            echo "IMAGE_TAG=${{ github.sha }}"
+            echo "SENTRY_ENVIRONMENT=production"
+            echo "SENTRY_RELEASE=${{ github.sha }}"
+            echo "METRICS_PORT=9464"
           } > /tmp/.env
           for key in $RUNTIME_KEYS; do
             value=$(jq -r --arg k "$key" '.[$k] // empty' decrypted.json)
@@ -113,10 +157,42 @@ jobs:
         run: |
           SSH="ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key deploy-cwa@codingforchange.com"
 
-          $SSH "cd /var/www/cwa && \
-            docker compose pull && \
-            docker compose up -d && \
-            sudo systemctl reload caddy"
+          $SSH "SHA='${{ github.sha }}' bash -s" << 'EOF'
+          set -e
+          cd /var/www/cwa
+          docker compose pull
+          docker compose up -d
+          sudo systemctl reload caddy
+
+          # The Grafana annotation is best effort: a missing token never fails a deploy.
+          if [ -r /var/www/cwa/.grafana-token ]; then
+            curl -fsS -X POST http://127.0.0.1:3001/api/annotations \
+              -H "Authorization: Bearer $(cat /var/www/cwa/.grafana-token)" \
+              -H 'Content-Type: application/json' \
+              -d "{\"tags\":[\"deploy\",\"cwa\",\"production\"],\"text\":\"cwa $SHA\"}" || true
+          fi
+          EOF
+
+      - name: Smoke test the deployment
+        run: |
+          for _ in $(seq 1 30); do
+            if curl -fsS "$HEALTH_URL" | grep -q '"ok":true'; then
+              echo "health ok"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "no healthy response from $HEALTH_URL"
+          exit 1
+
+      - name: Finalize Sentry release
+        if: steps.secrets.outputs.has_sentry_token == 'true'
+        continue-on-error: true
+        run: |
+          SENTRY_AUTH_TOKEN="$(jq -r '.SENTRY_AUTH_TOKEN // empty' decrypted.json)"
+          export SENTRY_AUTH_TOKEN
+          sentry release finalize "$SENTRY_ORG/${{ github.sha }}"
+          sentry release deploy "$SENTRY_ORG/${{ github.sha }}" production --url https://cwa.codingforchange.com
 
       - name: Clean up Secrets
         if: always()

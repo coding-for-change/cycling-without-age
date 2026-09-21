@@ -113,6 +113,7 @@ graph TD
   end
   subgraph Infrastructure
     F5[lib/activity]
+    OBS["lib/observability (logger, metrics, Sentry, context)"]
     EV[lib/events outbox]
     Q[("Redis via BullMQ")]
     MB[lib/mapbox]
@@ -467,6 +468,18 @@ and `lib/mailer`: a facade, a use case or a Server Component may write a history
 owns no domain of its own. Writes sit next to the mutation they record; the only reads are the
 person-history feed on `/admin/members/[userId]` and the chapter history on
 `/admin/chapters/[chapterId]`, both straight from the Server Component.
+
+`lib/observability` (OBS) is cross-cutting infrastructure of the same kind, one step wider:
+every node in the graph may log a line or move a counter, which is why no edges are drawn to
+it — they would reach every box and say nothing. `pino` and `prom-client` are importable
+nowhere else (lint-enforced), so the whole system has one logger and one registry; Sentry is
+used straight from the SDK over the shared options in `observability/sentry-shared.ts`.
+
+What *is* constrained is **capture**. Only Boundary nodes (every `actions.ts` via
+`actionFailure`, the route handlers via `onRequestError`), Orchestration nodes that own a
+failure, and the Worker (its `failed` listener, on the last attempt) call `captureException`.
+Facades (F\*) and services (S\*) throw and never report — a facade that imports capture turns
+one failure into one issue per layer it crossed.
 
 `lib/mapbox`, `lib/mailer` and `lib/push` are cross-cutting infrastructure, callable from any
 layer — the same standing as `lib/prisma` and `lib/sms`. `lib/mapbox` is reached only from a

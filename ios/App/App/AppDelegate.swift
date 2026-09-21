@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import Sentry
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -7,8 +8,35 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        startSentry()
         return true
+    }
+
+    private func startSentry() {
+        let dsn = infoString("SentryDSN")
+        guard !dsn.isEmpty else { return }
+
+        let shortVersion = infoString("CFBundleShortVersionString")
+        let build = infoString("CFBundleVersion")
+        let environment = infoString("SentryEnvironment")
+
+        SentrySDK.start { options in
+            options.dsn = dsn
+            options.environment = environment.isEmpty ? "production" : environment
+            options.releaseName = "com.codingforchange.cwa@\(shortVersion)+\(build)"
+            options.dist = build
+            options.enableAutoSessionTracking = true
+            options.attachScreenshot = false
+            options.attachViewHierarchy = false
+            options.sendDefaultPii = false
+            options.tracesSampleRate = 0
+            options.enableCaptureFailedRequests = false
+        }
+    }
+
+    private func infoString(_ key: String) -> String {
+        let value = Bundle.main.object(forInfoDictionaryKey: key) as? String
+        return value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     }
 
     func applicationWillResignActive(_ application: UIApplication) {

@@ -14,3 +14,6 @@ App/App/config.xml
 
 # Absolute symlinks into this machine's node_modules (cap sync, spm symlink option)
 App/CapApp-SPM/symlinks/
+
+# Local Sentry DSN / org (copy from App/Config/Sentry.example.xcconfig)
+App/Config/Sentry.xcconfig

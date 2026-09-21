@@ -1,7 +1,24 @@
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "5"
+
 services:
   app:
-    image: localhost:5000/cwa-${BRANCH_NAME_SAFE}:latest
+    image: localhost:5000/cwa-${BRANCH_NAME_SAFE}:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+    logging: *logging
+    labels:
+      alloy-logging: "true"
+      logging.project: cwa
+      logging.service: web
+      logging.environment: "feature-${BRANCH_NAME_SAFE}"
+      prometheus.scrape: "true"
+      prometheus.port: "9464"
+      prometheus.path: "/metrics"
     depends_on:
       - db
       - redis
@@ -12,11 +29,34 @@ services:
     command: >
       sh -c "npx prisma migrate deploy &&
              node server.js"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
   worker:
-    image: localhost:5000/cwa-${BRANCH_NAME_SAFE}:latest
+    image: localhost:5000/cwa-${BRANCH_NAME_SAFE}:${IMAGE_TAG:-latest}
     restart: unless-stopped
-    command: node worker.js
+    init: true
+    stop_grace_period: 30s
+    logging: *logging
+    labels:
+      alloy-logging: "true"
+      logging.project: cwa
+      logging.service: worker
+      logging.environment: "feature-${BRANCH_NAME_SAFE}"
+      prometheus.scrape: "true"
+      prometheus.port: "9464"
+      prometheus.path: "/metrics"
+    command: node --require ./worker-instrument.js worker.js
     depends_on:
       - db
       - redis
@@ -38,6 +78,7 @@ services:
   db:
     image: mysql:8.0
     restart: unless-stopped
+    logging: *logging
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
       MYSQL_DATABASE: cwa
@@ -47,6 +88,12 @@ services:
   redis:
     image: redis:8-alpine
     restart: unless-stopped
+    logging: *logging
+    labels:
+      alloy-logging: "true"
+      logging.project: cwa
+      logging.service: redis
+      logging.environment: "feature-${BRANCH_NAME_SAFE}"
     command: redis-server --appendonly yes --maxmemory-policy noeviction
     volumes:
       - redis_data:/data
@@ -56,6 +103,22 @@ services:
       timeout: 5s
       retries: 12
       start_period: 5s
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.91.1-alpine
+    restart: unless-stopped
+    logging: *logging
+    labels:
+      logging.project: cwa
+      logging.service: redis-exporter
+      logging.environment: "feature-${BRANCH_NAME_SAFE}"
+      prometheus.scrape: "true"
+      prometheus.port: "9121"
+      prometheus.path: "/metrics"
+    command: ["--redis.addr=redis://redis:6379"]
+    depends_on:
+      redis:
+        condition: service_healthy
 
 volumes:
   db_data:

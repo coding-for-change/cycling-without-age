@@ -70,7 +70,7 @@ describe("parkOnRateLimit", () => {
       .fn()
       .mockRejectedValue(new MailRateLimitedError("slow down", 900));
 
-    await expect(parkOnRateLimit(send)).rejects.toThrow(
+    await expect(parkOnRateLimit("chat-digest", send)).rejects.toThrow(
       Worker.RateLimitError().message,
     );
 
@@ -78,7 +78,9 @@ describe("parkOnRateLimit", () => {
   });
 
   it("returns quietly when the mail went out", async () => {
-    await expect(parkOnRateLimit(async () => {})).resolves.toBeUndefined();
+    await expect(
+      parkOnRateLimit("email", async () => {}),
+    ).resolves.toBeUndefined();
     expect(rateLimit).not.toHaveBeenCalled();
   });
 });

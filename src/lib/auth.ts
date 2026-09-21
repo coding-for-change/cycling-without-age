@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import {
   admin,
@@ -22,6 +23,9 @@ import { sendSms } from "@/lib/sms";
 import { phoneTempEmail } from "@/lib/identity";
 import { buildSessionAccess } from "@/use-cases/build-session-access";
 import { ORG_NAME } from "@/lib/brand";
+import { authEventKind } from "@/lib/auth-events";
+import { logDomainEvent } from "@/lib/observability/logger";
+import { web } from "@/lib/observability/metrics";
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -61,6 +65,25 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 90,
     updateAge: 60 * 60 * 24,
+  },
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      web.authEvents.inc({
+        kind: authEventKind(ctx.path),
+        outcome:
+          ctx.context.returned instanceof APIError ? "failure" : "success",
+      });
+    }),
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          logDomainEvent({ type: "user.created", actorUserId: user.id });
+          web.authEvents.inc({ kind: "user_created", outcome: "success" });
+        },
+      },
+    },
   },
   rateLimit: {
     enabled: true,

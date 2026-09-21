@@ -16,6 +16,8 @@ capacitor.config.ts
 .vault_pass
 .cursor
 .config
+.claude
+.playwright-mcp
 .github
 .husky
 android

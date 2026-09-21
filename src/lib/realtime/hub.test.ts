@@ -1,3 +1,22 @@
+jest.mock("@/lib/observability/logger", () => ({
+  logger: {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    fatal: jest.fn(),
+  },
+  childLogger: jest.fn(),
+  logDomainEvent: jest.fn(),
+  devConsole: {
+    log: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
+import { logger } from "@/lib/observability/logger";
 import {
   closeRealtime,
   publish,
@@ -5,6 +24,8 @@ import {
   subscribe,
 } from "@/lib/realtime/hub";
 import type { RealtimeEvent } from "@/lib/realtime/events";
+
+const warned = () => JSON.stringify((logger.warn as jest.Mock).mock.calls);
 
 type FakeClient = {
   subscribed: string[];
@@ -97,7 +118,7 @@ const read: RealtimeEvent = {
 
 beforeEach(() => {
   clients.length = 0;
-  jest.spyOn(console, "error").mockImplementation(() => undefined);
+  jest.clearAllMocks();
 });
 
 afterEach(async () => {
@@ -230,9 +251,8 @@ describe("publish", () => {
 
     await expect(publish("conv:1", message)).resolves.toBeUndefined();
 
-    const logged = JSON.stringify((console.error as jest.Mock).mock.calls);
-    expect(logged).toContain("Connection is closed.");
-    expect(logged).not.toContain("bike shed");
+    expect(warned()).toContain("Connection is closed.");
+    expect(warned()).not.toContain("bike shed");
   });
 
   it("gives up after the timeout instead of failing the caller", async () => {
@@ -244,7 +264,7 @@ describe("publish", () => {
     await jest.advanceTimersByTimeAsync(2_000);
 
     await expect(pending).resolves.toBeUndefined();
-    expect(console.error).toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalled();
   });
 });
 
@@ -275,7 +295,7 @@ describe("publishToUsers", () => {
     await jest.advanceTimersByTimeAsync(2_000);
 
     await expect(pending).resolves.toBeUndefined();
-    expect(console.error).toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalled();
   });
 });
 

@@ -3,7 +3,7 @@ import type { Prisma } from "@/generated/prisma";
 import { eventSchema } from "./catalog";
 import type { DomainEvent } from "./catalog";
 
-const scopeOf = (event: DomainEvent) => ({
+export const scopeOf = (event: DomainEvent) => ({
   actorUserId: "actorUserId" in event ? event.actorUserId : null,
   chapterId: "chapterId" in event ? event.chapterId : null,
 });
@@ -33,6 +33,15 @@ export const findUnprocessedEvents = (before: Date, take: number) =>
     select: { id: true },
     take,
   });
+
+export const countUnprocessed = async () => {
+  const { _count, _min } = await prisma.event.aggregate({
+    where: { processedAt: null },
+    _count: true,
+    _min: { createdAt: true },
+  });
+  return { count: _count, oldestCreatedAt: _min.createdAt };
+};
 
 export const markEventProcessed = (id: string) =>
   prisma.event.update({

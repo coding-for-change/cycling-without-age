@@ -1,14 +1,24 @@
 import { Worker } from "bullmq";
 import type { Job } from "bullmq";
+import { captureException, flush } from "@sentry/node";
 import { chat } from "@/features/chat";
 import { notifications } from "@/features/notifications";
 import type { EventType } from "@/lib/events/catalog";
 import { QUEUE, closeQueues, queue } from "@/lib/events/queues";
 import {
+  countUnprocessed,
   findUnprocessedEvents,
   loadEvent,
   markEventProcessed,
 } from "@/lib/events/store";
+import { serializeError } from "@/lib/observability/errors";
+import { logger } from "@/lib/observability/logger";
+import {
+  registerWorkerCollectors,
+  startMetricsServer,
+  stopMetricsServer,
+  worker as workerMetrics,
+} from "@/lib/observability/metrics";
 import { closeRealtime } from "@/lib/realtime";
 import { redisConnection } from "@/lib/redis";
 import { deliverChatDigest } from "@/use-cases/chat-notifications/deliver-chat-digest";
@@ -23,16 +33,25 @@ import {
 } from "./deliveries";
 import { handlers } from "./handlers";
 import { checkHealth } from "./health";
+import {
+  MAINTENANCE_NAMES,
+  isMaintenance,
+  runMaintenance,
+  schedulerOptions,
+} from "./monitors";
+import type { MaintenanceName } from "./monitors";
 import type { DeliveryJob } from "./deliveries";
 import type { Listener } from "./handlers";
 
 const SWEEP_EVERY_MS = 60_000;
 const BOARD_PORT = Number(process.env.WORKER_PORT ?? 3001);
+const METRICS_PORT = Number(process.env.METRICS_PORT ?? 9464);
 const SWEEP_BATCH = 100;
-const PRUNE_DEVICES_CRON = "0 4 * * *";
-const PRUNE_CHAT_CRON = "0 3 * * *";
 const CHAT_RETENTION_MONTHS = 12;
 const CHAT_PRUNE_BATCH = 1_000;
+const WORKER_ERROR_EVERY_MS = 60_000;
+const HARD_EXIT_MS = 25_000;
+const FLUSH_MS = 2_000;
 
 const RESEND_RATE_LIMIT = Number(process.env.RESEND_RATE_LIMIT ?? 8);
 
@@ -58,7 +77,8 @@ async function sweep() {
   );
   if (stale.length === 0) return;
 
-  console.info(`[worker] sweeping ${stale.length} unprocessed event(s)`);
+  logger.info({ count: stale.length }, "sweeping unprocessed events");
+  workerMetrics.sweepRequeued.inc(stale.length);
   await queue(QUEUE.events).addBulk(
     stale.map(({ id }) => ({
       name: "dispatch",
@@ -70,7 +90,7 @@ async function sweep() {
 
 async function pruneDevices() {
   const removed = await notifications.pruneStaleDevices();
-  if (removed > 0) console.info(`[worker] pruned ${removed} stale device(s)`);
+  if (removed > 0) logger.info({ removed }, "pruned stale devices");
 }
 
 async function pruneChat() {
@@ -87,20 +107,25 @@ async function pruneChat() {
 
   const conversations = await chat.purgeEmptyConversations();
   if (messages > 0 || conversations > 0)
-    console.info(
-      `[worker] pruned ${messages} chat message(s) and ${conversations} empty conversation(s)`,
-    );
+    logger.info({ messages, conversations }, "pruned chat history");
 }
 
-const MAINTENANCE: Record<string, () => Promise<void>> = {
+const MAINTENANCE: Record<MaintenanceName, () => Promise<void>> = {
   sweep,
   "prune-devices": pruneDevices,
   "prune-chat": pruneChat,
 };
 
+const runEventJob = (job: Job<{ id: string }>) =>
+  isMaintenance(job.name)
+    ? runMaintenance(job.name, MAINTENANCE[job.name])
+    : dispatchEvent(job.data.id);
+
 const runEmailJob = (job: Job) =>
   job.name === "chat-digest"
-    ? parkOnRateLimit(() => deliverChatDigest(job.data as ChatDigestJob))
+    ? parkOnRateLimit(job.name, async () => {
+        await deliverChatDigest(job.data as ChatDigestJob);
+      })
     : runEmailDelivery(job as DeliveryJob);
 
 const runPushJob = (job: Job) =>
@@ -116,14 +141,22 @@ async function runListener(job: Job<{ eventId: string }>) {
   await listener({ id: job.data.eventId, event });
 }
 
+const lastWorkerError = new Map<string, number>();
+
+function captureWorkerError(queueName: string, error: unknown) {
+  const now = Date.now();
+  if (now - (lastWorkerError.get(queueName) ?? 0) < WORKER_ERROR_EVERY_MS)
+    return;
+  lastWorkerError.set(queueName, now);
+  captureException(error);
+}
+
 async function main() {
   const workers = [
-    new Worker<{ id: string }>(
-      QUEUE.events,
-      (job) => MAINTENANCE[job.name]?.() ?? dispatchEvent(job.data.id),
-      { connection: redisConnection },
-    ),
-    new Worker(QUEUE.handlers, runListener, {
+    new Worker<{ id: string }>(QUEUE.events, runEventJob, {
+      connection: redisConnection,
+    }),
+    new Worker<{ eventId: string }>(QUEUE.handlers, runListener, {
       connection: redisConnection,
       concurrency: 10,
     }),
@@ -139,44 +172,108 @@ async function main() {
   ];
 
   for (const worker of workers) {
-    worker.on("failed", (job, error) =>
-      console.error(
-        `[worker] ${worker.name}/${job?.name} attempt ${job?.attemptsMade} failed`,
-        error,
-      ),
-    );
+    worker.on("failed", (job, error) => {
+      logger.error(
+        {
+          queue: worker.name,
+          job: job?.name,
+          job_id: job?.id,
+          attempt: job?.attemptsMade,
+          err: serializeError(error),
+        },
+        "job failed",
+      );
+      workerMetrics.jobs.inc({
+        queue: worker.name,
+        name: job?.name ?? "unknown",
+        outcome: "failed",
+      });
+      if (job && job.attemptsMade >= (job.opts.attempts ?? 1))
+        captureException(error, {
+          tags: { queue: worker.name, job: job.name },
+        });
+    });
+
+    worker.on("completed", (job) => {
+      workerMetrics.jobs.inc({
+        queue: worker.name,
+        name: job.name,
+        outcome: "completed",
+      });
+      if (job.finishedOn && job.processedOn)
+        workerMetrics.jobDuration.observe(
+          { queue: worker.name, name: job.name },
+          (job.finishedOn - job.processedOn) / 1_000,
+        );
+    });
+
+    worker.on("error", (error) => {
+      logger.error(
+        { queue: worker.name, err: serializeError(error) },
+        "worker error",
+      );
+      captureWorkerError(worker.name, error);
+    });
+
+    worker.on("stalled", (jobId) => {
+      logger.warn({ queue: worker.name, job_id: jobId }, "job stalled");
+    });
   }
 
-  await queue(QUEUE.events).upsertJobScheduler("sweep", {
-    every: SWEEP_EVERY_MS,
-  });
-  await queue(QUEUE.events).upsertJobScheduler("prune-devices", {
-    pattern: PRUNE_DEVICES_CRON,
-  });
-  await queue(QUEUE.events).upsertJobScheduler("prune-chat", {
-    pattern: PRUNE_CHAT_CRON,
-  });
+  for (const name of MAINTENANCE_NAMES)
+    await queue(QUEUE.events).upsertJobScheduler(name, schedulerOptions(name));
 
   const board = await startBoard(BOARD_PORT, () => checkHealth(workers));
+  startMetricsServer(METRICS_PORT);
+  registerWorkerCollectors({
+    queues: Object.values(QUEUE).map((name) => queue(name)),
+    workers,
+    countUnprocessed,
+  });
 
+  let stopping = false;
   const shutdown = async () => {
-    console.info("[worker] shutting down");
-    await Promise.all(workers.map((worker) => worker.close()));
+    if (stopping) return;
+    stopping = true;
+    logger.info("worker shutting down");
+
+    const hardExit = setTimeout(() => {
+      logger.error({ after_ms: HARD_EXIT_MS }, "worker shutdown timed out");
+      process.exit(1);
+    }, HARD_EXIT_MS);
+    hardExit.unref();
+
+    await Promise.allSettled(workers.map((worker) => worker.close()));
     board.close();
+    await stopMetricsServer();
     await closeQueues();
     await closeRealtime();
+    await flush(FLUSH_MS);
+    logger.info("worker stopped");
     process.exit(0);
   };
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
 
-  console.info(`[worker] listening on ${Object.values(QUEUE).join(", ")}`);
-  console.info(
-    `[worker] queues dashboard: http://localhost:${BOARD_PORT}/queues`,
+  process.on("unhandledRejection", (reason) => {
+    logger.fatal({ err: serializeError(reason) }, "unhandled rejection");
+  });
+  process.on("uncaughtException", (error) => {
+    logger.fatal({ err: serializeError(error) }, "uncaught exception");
+  });
+
+  logger.info(
+    {
+      queues: Object.values(QUEUE),
+      board_port: BOARD_PORT,
+      metrics_port: METRICS_PORT,
+    },
+    "worker listening",
   );
 }
 
 main().catch((error) => {
-  console.error("[worker] failed to start", error);
-  process.exit(1);
+  logger.fatal({ err: serializeError(error) }, "worker failed to start");
+  captureException(error);
+  void flush(FLUSH_MS).finally(() => process.exit(1));
 });

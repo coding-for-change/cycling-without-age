@@ -40,6 +40,9 @@ listener), and two delivery queues — `email`, rate limited to Resend's budget 
 (`lib/push.ts`, `firebase-admin`) at concurrency 5. Mail is throttled; push is not held
 behind it.
 
+Sentry is loaded into the worker by preload (`node --require ./worker-instrument.js`), never
+by an import in `index.ts`.
+
 ## Folder Structure Definition
 
 ```text
@@ -65,7 +68,8 @@ src/
 │   └── ui/               # ATOMIC UI: stateless shadcn primitives.
 ├── worker/               # BOUNDARY: BullMQ workers. Same image, second command.
 ├── lib/                  # INFRA: DB clients, Auth config, Shared utils.
-│   └── events/           # Domain event catalog, outbox and queues.
+│   ├── events/           # Domain event catalog, outbox and queues.
+│   └── observability/    # Logger, metrics, Sentry, request context.
 └── docs/                 # ARCHITECTURE: The system manifesto.
 ```
 
@@ -85,6 +89,36 @@ client components may import the wrappers, but `@capacitor/*`, `@capacitor-fireb
 is the mirror image: `firebase-admin` may only be imported by `src/lib/push.ts`, so the
 credentials have exactly one import site and cannot reach a browser bundle. See AGENTS.md §7 for
 the operational rules.
+
+## Observability
+
+`src/lib/observability/` is cross-cutting infrastructure, the same standing as
+`lib/auth-guards` and `lib/activity`: any layer may log a line or move a counter. `pino` and
+`prom-client` may only be imported inside it (lint-enforced), so there is exactly one logger
+and one metrics registry. `console` is an ESLint error outside `logger.ts`; dev-only output
+goes through `devConsole`, which is a no-op in production so an OTP or a Mailpit dump can never
+reach the JSON log stream. Sentry is used as the SDK ships it — `@sentry/nextjs` in the app,
+`@sentry/node` in the worker — over the shared scrubbing and sampling options in
+`observability/sentry-shared.ts`.
+
+**Capture happens at boundaries only.** `captureException` lives in Server Actions
+(`actionFailure`), Route Handlers (`onRequestError` in `src/instrumentation.ts`), the worker's
+`failed` listener on the last attempt and, where a workflow owns the failure, a Use Case. A
+facade or a service throws; it never reports. That is what keeps one failure one issue instead
+of one per layer it passed through.
+
+`actionFailure` in `lib/domain-error.ts` is the only door from a thrown error to a returned
+result: it `unstable_rethrow`s framework errors first, turns a `DomainError` into the error
+string the UI expects, and logs plus captures everything else.
+
+Every log line carries `trace_id` and `span_id` read from the active Sentry span, so a line and
+the issue it belongs to meet without an id of our own. Sentry is initialised in the worker by
+preload (`node --require ./worker-instrument.js worker.js`) rather than a first import, because
+the SDK must instrument pino, Prisma and ioredis before they load.
+
+Counters and histograms live in `observability/metrics.ts` and are scraped from `/metrics`,
+which both the web process (`src/instrumentation.ts`) and the worker serve through
+`startMetricsServer`; the worker also registers the queue, outbox and worker-up collectors.
 
 ## Roles & Organisation Structure (COD-158)
 

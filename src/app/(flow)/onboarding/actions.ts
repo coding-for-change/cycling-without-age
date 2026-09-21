@@ -1,11 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import * as Sentry from "@sentry/nextjs";
 import { accounts } from "@/features/accounts";
 import { z } from "zod";
 import { profile } from "@/features/profile";
 import { personalDetailsInput } from "@/features/profile";
 import { readNextPath, requireAuth } from "@/lib/auth-guards";
+import { actionFailure } from "@/lib/domain-error";
 import { readJoinPreset } from "@/lib/join-preset";
 import { getLocale } from "@/lib/i18n";
 import { canViewStep, type OnboardingStep } from "@/lib/onboarding";
@@ -75,7 +77,8 @@ export async function submitConsent(input: unknown): Promise<StepResult> {
     revalidatePath(ONBOARDING);
 
     return onward(at.session);
-  } catch {
+  } catch (error) {
+    Sentry.captureException(error);
     return { ok: false, error: "error" };
   }
 }
@@ -125,8 +128,8 @@ export async function submitProfile(
     });
     revalidatePath(ONBOARDING);
     return onward(at.session);
-  } catch {
-    return { ok: false, error: "generic" };
+  } catch (error) {
+    return actionFailure(error, {});
   }
 }
 
