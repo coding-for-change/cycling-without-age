@@ -13,6 +13,8 @@ services:
         condition: service_healthy
 
   worker:
+    labels:
+      alloy-logging: true
     image: localhost:5000/cwa:latest
     restart: unless-stopped
     # Migrations belong to the app container; two of them racing is asking for it.
