@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/auth-guards";
+import { actionFailure } from "@/lib/domain-error";
 import { withinRateLimit } from "@/lib/rate-limit";
 import { updateOwnDetails } from "@/use-cases/update-own-details";
 import { notificationPreferences, ownDetailsPatch, profile } from "./index";
@@ -27,8 +28,8 @@ export async function updateOwnDetailsAction(
     await updateOwnDetails(session.user.id, parsed.data);
     revalidatePath("/", "layout");
     return { ok: true };
-  } catch {
-    return { ok: false, error: "generic" };
+  } catch (error) {
+    return actionFailure(error, {});
   }
 }
 
@@ -45,7 +46,7 @@ export async function setNotificationPreferencesAction(
     await profile.setNotificationPreferences(session.user.id, parsed.data);
     revalidatePath("/", "layout");
     return { ok: true };
-  } catch {
-    return { ok: false, error: "generic" };
+  } catch (error) {
+    return actionFailure(error, {});
   }
 }

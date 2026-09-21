@@ -1,6 +1,7 @@
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getMessaging } from "firebase-admin/messaging";
 import type { ServiceAccount } from "firebase-admin/app";
+import { worker } from "@/lib/observability/metrics";
 
 const CHUNK = 500;
 
@@ -13,7 +14,11 @@ export type PushMessage = {
   collapseKey?: string;
 };
 
-export type PushResult = { sent: number; invalidTokens: string[] };
+export type PushResult = {
+  sent: number;
+  invalidTokens: string[];
+  failed: number;
+};
 
 export function parseServiceAccount(
   raw: string | undefined = process.env.FIREBASE_SERVICE_ACCOUNT,
@@ -57,6 +62,11 @@ const TOKEN_ERROR_CODES = [
   "messaging/invalid-registration-token",
 ];
 
+const errorCode = (error: unknown) => {
+  const { code } = (error ?? {}) as { code?: unknown };
+  return typeof code === "string" ? code : "unknown";
+};
+
 // "invalid-argument" also covers malformed payload fields, hence the message check.
 export function isInvalidTokenError(err: unknown) {
   const { code, message } = (err ?? {}) as { code?: string; message?: string };
@@ -84,7 +94,7 @@ export async function sendPush({
   badge,
   collapseKey,
 }: PushMessage): Promise<PushResult> {
-  if (tokens.length === 0) return { sent: 0, invalidTokens: [] };
+  if (tokens.length === 0) return { sent: 0, invalidTokens: [], failed: 0 };
 
   const invalidTokens: string[] = [];
   const otherErrors: unknown[] = [];
@@ -121,12 +131,20 @@ export async function sendPush({
         sent += 1;
         return;
       }
-      if (isInvalidTokenError(result.error)) invalidTokens.push(batch[index]);
-      else otherErrors.push(result.error ?? new Error("push rejected"));
+      if (isInvalidTokenError(result.error)) {
+        invalidTokens.push(batch[index]);
+        return;
+      }
+      const error = result.error ?? new Error("push rejected");
+      otherErrors.push(error);
+      worker.pushSendErrors.inc({ code: errorCode(error) });
     });
   }
 
+  if (invalidTokens.length > 0)
+    worker.pushTokensInvalid.inc(invalidTokens.length);
+
   if (sent === 0 && otherErrors.length > 0) throw otherErrors[0];
 
-  return { sent, invalidTokens };
+  return { sent, invalidTokens, failed: otherErrors.length };
 }

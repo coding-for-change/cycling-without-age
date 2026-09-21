@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { MAX_PILOT_CHAPTERS, membership } from "@/features/membership";
 import { requireAuth } from "@/lib/auth-guards";
-import { domainCode } from "@/lib/domain-error";
+import { actionFailure } from "@/lib/domain-error";
 
 export type MembershipActionResult =
   | { ok: true }
@@ -25,11 +25,9 @@ export async function joinChapterAsPassenger(
     revalidatePath("/onboarding");
     return { ok: true };
   } catch (error) {
-    return {
-      ok: false,
-      error:
-        domainCode(error) === "unknownChapter" ? "unknownChapter" : "generic",
-    };
+    return actionFailure(error, {
+      unknownChapter: "unknownChapter",
+    } as const);
   }
 }
 
@@ -48,11 +46,10 @@ export async function applyToChaptersAsPilot(
     revalidatePath("/onboarding");
     return { ok: true };
   } catch (error) {
-    const code = domainCode(error);
-    if (code === "unknownChapter" || code === "alreadyPilot") {
-      return { ok: false, error: code };
-    }
-    return { ok: false, error: "generic" };
+    return actionFailure(error, {
+      unknownChapter: "unknownChapter",
+      alreadyPilot: "alreadyPilot",
+    } as const);
   }
 }
 
@@ -62,7 +59,7 @@ export async function acknowledgeApproval(): Promise<MembershipActionResult> {
   try {
     await membership.markApprovalsSeen(session.user.id);
     return { ok: true };
-  } catch {
-    return { ok: false, error: "generic" };
+  } catch (error) {
+    return actionFailure(error, {});
   }
 }

@@ -19,7 +19,14 @@ export const findNotificationById = (id: string) =>
   prisma.notification.findUnique({
     where: { id },
     include: {
-      event: { select: { type: true, actorUserId: true, chapterId: true } },
+      event: {
+        select: {
+          type: true,
+          actorUserId: true,
+          chapterId: true,
+          createdAt: true,
+        },
+      },
     },
   });
 

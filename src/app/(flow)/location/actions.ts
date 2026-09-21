@@ -6,6 +6,7 @@ import { z } from "zod";
 import { chapters } from "@/features/chapters";
 import { homeInput } from "@/features/profile";
 import { readNextPath, requireAuth } from "@/lib/auth-guards";
+import { actionFailure } from "@/lib/domain-error";
 import {
   GUEST_CHAPTER_COOKIE,
   GUEST_CHAPTER_MAX_AGE,
@@ -183,7 +184,7 @@ export async function settlePassengerAt(
         await readNextPath(),
       ),
     };
-  } catch {
-    return { ok: false, error: "generic" };
+  } catch (error) {
+    return actionFailure(error, {});
   }
 }

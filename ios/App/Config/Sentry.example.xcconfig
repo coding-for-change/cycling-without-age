@@ -1,0 +1,6 @@
+// Copy to Config/Sentry.xcconfig (gitignored) and paste the cwa-ios DSN.
+// "//" opens a comment in xcconfig, so the DSN's slashes are split with $().
+SENTRY_DSN_IOS = https:/$()/PUBLIC_KEY@o0.ingest.sentry.io/0
+SENTRY_ENVIRONMENT = production
+SENTRY_ORG = codingforchange
+SENTRY_PROJECT = cwa-ios

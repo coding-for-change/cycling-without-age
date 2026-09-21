@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { cookies, headers } from "next/headers";
 import { forbidden, redirect } from "next/navigation";
+import { setTag, setUser } from "@sentry/nextjs";
 import { auth } from "@/lib/auth";
 import { chapters } from "@/features/chapters";
 import { profile } from "@/features/profile";
@@ -26,9 +27,14 @@ import type {
 
 export type Session = NonNullable<Awaited<ReturnType<typeof getSession>>>;
 
-export const getSession = cache(async () =>
-  auth.api.getSession({ headers: await headers() }),
-);
+export const getSession = cache(async () => {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (session) {
+    setUser({ id: session.user.id });
+    setTag("role", highestRole(session.access) ?? "none");
+  }
+  return session;
+});
 
 /** The destination parked by `proxy.ts`, spent by `resolveDestination`. */
 export const readNextPath = async () =>

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { chapters, chapterSettingsInput } from "@/features/chapters";
 import { requireChapterAdmin } from "@/lib/auth-guards";
+import { actionFailure } from "@/lib/domain-error";
 
 export type SettingsActionResult =
   { ok: true } | { ok: false; error: "generic" };
@@ -25,7 +26,7 @@ export async function updateChapterSettingsAction(
     await chapters.updateSettings(parsedId.data, parsed.data);
     revalidatePath("/admin/settings");
     return { ok: true };
-  } catch {
-    return { ok: false, error: "generic" };
+  } catch (error) {
+    return actionFailure(error, {});
   }
 }

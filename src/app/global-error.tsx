@@ -1,7 +1,8 @@
 "use client";
 
 import "./globals.css";
-import { Button } from "@/components/ui/button";
+import { ErrorFallback } from "@/components/error-fallback";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function GlobalError({
   error,
@@ -15,13 +16,12 @@ export default function GlobalError({
       lang="en"
       className="h-full antialiased"
     >
-      <body className="flex min-h-full flex-col items-center justify-center gap-4 p-6 text-center font-sans">
-        <h1 className="text-2xl font-semibold">Something went wrong</h1>
-        <p className="text-muted-foreground">
-          An unexpected error occurred.
-          {error.digest && ` (Error ID: ${error.digest})`}
-        </p>
-        <Button onClick={() => retry()}>Try again</Button>
+      <body className="flex min-h-full flex-col bg-canvas font-sans text-ink">
+        <ErrorFallback
+          error={error}
+          retry={retry}
+        />
+        <Toaster />
       </body>
     </html>
   );

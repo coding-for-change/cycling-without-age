@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { getSession, requireAuth } from "@/lib/auth-guards";
+import { actionFailure } from "@/lib/domain-error";
 import { withinRateLimit } from "@/lib/rate-limit";
 import { deviceInput, deviceTokenInput, notifications } from "./index";
 
@@ -18,8 +19,8 @@ const attempt = async (
   try {
     await run();
     return { ok: true };
-  } catch {
-    return GENERIC;
+  } catch (error) {
+    return actionFailure(error, {});
   }
 };
 

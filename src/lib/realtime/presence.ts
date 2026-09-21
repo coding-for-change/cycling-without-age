@@ -1,3 +1,6 @@
+import { reasonOf } from "@/lib/observability/errors";
+import { logger } from "@/lib/observability/logger";
+import { web } from "@/lib/observability/metrics";
 import { withTimeout } from "@/lib/with-timeout";
 import { PRESENCE_CHANNEL } from "./channels";
 import { commandClient, publish } from "./hub";
@@ -17,7 +20,11 @@ async function guard<T>(
   try {
     return await withTimeout(run(), COMMAND_TIMEOUT_MS);
   } catch (error) {
-    console.error(`realtime presence ${what}`, error);
+    logger.warn(
+      { site: "presence", what, reason: reasonOf(error) },
+      "realtime presence command failed",
+    );
+    web.realtimeErrors.inc({ site: "presence" });
     return fallback;
   }
 }

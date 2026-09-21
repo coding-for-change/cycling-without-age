@@ -390,8 +390,8 @@ export async function searchPeopleAction(
         subtitle: person.chapterName,
       })),
     };
-  } catch {
-    return GENERIC;
+  } catch (error) {
+    return actionFailure(error, {});
   }
 }
 

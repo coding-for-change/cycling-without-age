@@ -42,6 +42,17 @@
         <meta-data
             android:name="asset_statements"
             android:resource="@string/asset_statements" />
+
+        <!-- An empty DSN sends nothing, so builds without SENTRY_DSN_ANDROID in
+             the environment stay silent. io.sentry.release is omitted to keep
+             the default <applicationId>@<versionName>+<versionCode>. -->
+        <meta-data android:name="io.sentry.dsn" android:value="${sentryDsn}" />
+        <meta-data android:name="io.sentry.environment" android:value="${sentryEnvironment}" />
+        <meta-data android:name="io.sentry.auto-session-tracking.enable" android:value="true" />
+        <meta-data android:name="io.sentry.traces.sample-rate" android:value="0" />
+        <meta-data android:name="io.sentry.send-default-pii" android:value="false" />
+        <meta-data android:name="io.sentry.attach-screenshot" android:value="false" />
+        <meta-data android:name="io.sentry.attach-view-hierarchy" android:value="false" />
     </application>
 
     <!-- Permissions -->

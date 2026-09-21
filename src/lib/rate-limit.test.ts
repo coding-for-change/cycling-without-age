@@ -1,4 +1,13 @@
+import { web } from "@/lib/observability/metrics";
 import { withinRateLimit } from "./rate-limit";
+
+jest.mock("@/lib/observability/metrics", () => ({
+  web: { rateLimitHits: { inc: jest.fn() } },
+}));
+
+const hits = web.rateLimitHits.inc as unknown as jest.Mock;
+
+beforeEach(() => jest.clearAllMocks());
 
 const limit = { max: 3, windowMs: 1000 };
 
@@ -29,5 +38,22 @@ describe("withinRateLimit", () => {
     jest.setSystemTime(1500);
     expect(withinRateLimit(key, limit)).toBe(true);
     jest.useRealTimers();
+  });
+
+  it("counts a refusal under the key's scope, never the caller's id", () => {
+    const key = `chat-send:user-${Math.random()}`;
+    for (let i = 0; i < 3; i++) withinRateLimit(key, limit);
+    expect(hits).not.toHaveBeenCalled();
+
+    expect(withinRateLimit(key, limit)).toBe(false);
+    expect(hits).toHaveBeenCalledWith({ scope: "chat-send" });
+  });
+
+  it("uses the whole key as the scope when it carries no colon", () => {
+    const key = `plain-${Math.random()}`;
+    for (let i = 0; i < 3; i++) withinRateLimit(key, limit);
+    withinRateLimit(key, limit);
+
+    expect(hits).toHaveBeenCalledWith({ scope: key });
   });
 });

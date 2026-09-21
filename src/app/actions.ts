@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import * as Sentry from "@sentry/nextjs";
 import { profile } from "@/features/profile";
 import { getSession } from "@/lib/auth-guards";
 import { hasLocale, LOCALE_COOKIE } from "@/lib/i18n";
@@ -22,7 +23,9 @@ export async function setLocale(locale: string) {
   if (session) {
     try {
       await profile.setLocale(session.user.id, locale);
-    } catch {}
+    } catch (error) {
+      Sentry.captureException(error);
+    }
   }
 
   revalidatePath("/", "layout");

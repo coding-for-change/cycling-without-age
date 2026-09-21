@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { render } from "@react-email/components";
 import type { ReactElement } from "react";
+import { devConsole } from "@/lib/observability/logger";
 
 const apiKey = process.env.RESEND_API_KEY;
 const resend = apiKey ? new Resend(apiKey) : null;
@@ -91,9 +92,9 @@ async function sendToMailpit(url: string, options: MailOptions) {
     });
     if (!response.ok)
       throw new Error(`${response.status} ${await response.text()}`);
-    console.info(`[mailer] delivered to Mailpit (${url}) → ${options.to}`);
+    devConsole.info(`[mailer] delivered to Mailpit (${url}) → ${options.to}`);
   } catch (error) {
-    console.info("[mailer] Mailpit unreachable, logging instead", {
+    devConsole.info("[mailer] Mailpit unreachable, logging instead", {
       to: options.to,
       subject: options.subject,
       text: options.text,

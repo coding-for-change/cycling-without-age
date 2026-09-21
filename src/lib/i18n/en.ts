@@ -767,6 +767,22 @@ const en = {
           errors: { generic: "That didn't work. Try again." },
         },
       },
+      support: {
+        title: "Report a problem",
+        body: "Something in the admin acting up? One sentence is enough — it lands with the people who look after this.",
+        open: "Report a problem",
+        drawer: {
+          title: "Tell us what happened",
+          description:
+            "A sentence or two is plenty. It goes straight to the people who can fix it.",
+          placeholder: "I tapped Save on my profile and the screen went blank.",
+          submit: "Send it",
+          cancel: "Cancel",
+          tooShort: "A few more words, please — at least ten characters.",
+          done: "Thank you. That helps more than you'd think.",
+          failed: "That didn't send. Try again in a moment.",
+        },
+      },
     },
   },
   pilot: {
@@ -1113,6 +1129,22 @@ const en = {
       signInAgain: "It's been a while. Sign in again before adding a passkey.",
       signInAgainAction: "Sign in again",
       back: "Back",
+    },
+    support: {
+      title: "Something not working?",
+      body: "Tell us what happened and we'll go looking. No screenshots needed — the technical details come along on their own.",
+      open: "Report a problem",
+      drawer: {
+        title: "Tell us what happened",
+        description:
+          "A sentence or two is plenty. It goes straight to the people who can fix it.",
+        placeholder: "I tapped Save on my profile and the screen went blank.",
+        submit: "Send it",
+        cancel: "Cancel",
+        tooShort: "A few more words, please — at least ten characters.",
+        done: "Thank you. That helps more than you'd think.",
+        failed: "That didn't send. Try again in a moment.",
+      },
     },
     danger: {
       title: "Sign out or delete",

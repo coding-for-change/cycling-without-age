@@ -72,8 +72,8 @@ export async function deleteCountryAction(
     });
     revalidatePath("/admin", "layout");
     return { ok: true };
-  } catch {
-    return { ok: false, error: "generic" };
+  } catch (error) {
+    return failed(error);
   }
 }
 
@@ -95,7 +95,7 @@ export async function appointCountryAdminAction(
     return { ok: true };
   } catch (error) {
     if (isUniqueViolation(error)) return { ok: true };
-    return { ok: false, error: "generic" };
+    return failed(error);
   }
 }
 
@@ -114,7 +114,7 @@ export async function removeCountryAdminAction(
     );
     revalidatePath("/admin", "layout");
     return { ok: true };
-  } catch {
-    return { ok: false, error: "generic" };
+  } catch (error) {
+    return failed(error);
   }
 }

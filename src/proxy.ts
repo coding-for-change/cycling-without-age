@@ -43,4 +43,4 @@ export function proxy(request: NextRequest) {
   return response;
 }
 
-export const config = { matcher: ["/((?!_next/|api/|.*\\..*).*)"] };
+export const config = { matcher: ["/((?!_next/|api/|monitoring|.*\\..*).*)"] };

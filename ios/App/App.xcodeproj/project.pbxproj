@@ -19,6 +19,7 @@
 		C7119A853050C3240031DC87 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = C7119A843050C3240031DC87 /* GoogleService-Info.plist */; };
 		C7119A883050C44C0031DC87 /* FirebaseInstallations in Frameworks */ = {isa = PBXBuildFile; productRef = C7119A873050C44C0031DC87 /* FirebaseInstallations */; };
 		C7119A8A3050C44C0031DC87 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = C7119A893050C44C0031DC87 /* FirebaseMessaging */; };
+		C7A1B2C23060A1000031DC87 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = C7A1B2C13060A1000031DC87 /* Sentry */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,6 +34,7 @@
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		9582B6822FE993A50072D4E8 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
+		C7A1B2C33060A1000031DC87 /* Sentry.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Sentry.xcconfig; path = Config/Sentry.xcconfig; sourceTree = SOURCE_ROOT; };
 		C7119A843050C3240031DC87 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -44,6 +46,7 @@
 				C7119A8A3050C44C0031DC87 /* FirebaseMessaging in Frameworks */,
 				4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */,
 				C7119A883050C44C0031DC87 /* FirebaseInstallations in Frameworks */,
+				C7A1B2C23060A1000031DC87 /* Sentry in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -54,6 +57,7 @@
 			isa = PBXGroup;
 			children = (
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
+				C7A1B2C33060A1000031DC87 /* Sentry.xcconfig */,
 				504EC3061FED79650016851F /* App */,
 				504EC3051FED79650016851F /* Products */,
 			);
@@ -96,6 +100,7 @@
 				504EC3021FED79650016851F /* Resources */,
 				F1A2432E168FF132F2BCA271 /* Strip ATS exception (Release) */,
 				B5D3F0A1C2E4468B9A7D1E2F /* Strip Finder metadata */,
+				C7A1B2C43060A1000031DC87 /* Upload Debug Symbols to Sentry */,
 			);
 			buildRules = (
 			);
@@ -106,6 +111,7 @@
 				4D22ABE82AF431CB00220026 /* CapApp-SPM */,
 				C7119A873050C44C0031DC87 /* FirebaseInstallations */,
 				C7119A893050C44C0031DC87 /* FirebaseMessaging */,
+				C7A1B2C13060A1000031DC87 /* Sentry */,
 			);
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
@@ -139,6 +145,7 @@
 			packageReferences = (
 				D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */,
 				C7119A863050C44C0031DC87 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				C7A1B2C03060A1000031DC87 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
@@ -204,6 +211,26 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "# iCloud Drive (Desktop & Documents sync) and the simulator install both stamp\n# .app and .bundle folders with Finder flags, which codesign rejects as\n# \"resource fork, Finder information, or similar detritus not allowed\".\nxattr -cr \"${CODESIGNING_FOLDER_PATH}\"\n";
+		};
+		C7A1B2C43060A1000031DC87 /* Upload Debug Symbols to Sentry */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(DWARF_DSYM_FOLDER_PATH)",
+			);
+			name = "Upload Debug Symbols to Sentry";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "export PATH=\"$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH\"\nif [ \"$CONFIGURATION\" = \"Release\" ] && command -v sentry >/dev/null 2>&1; then\n  SENTRY_ORG=\"$SENTRY_ORG\" SENTRY_PROJECT=\"$SENTRY_PROJECT\" sentry debug-files upload --include-sources --type dsym \"$DWARF_DSYM_FOLDER_PATH\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -304,6 +331,7 @@
 		};
 		504EC3151FED79650016851F /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = C7A1B2C33060A1000031DC87 /* Sentry.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -455,6 +483,14 @@
 				minimumVersion = 12.18.0;
 			};
 		};
+		C7A1B2C03060A1000031DC87 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.29.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -472,6 +508,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C7119A863050C44C0031DC87 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseMessaging;
+		};
+		C7A1B2C13060A1000031DC87 /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C7A1B2C03060A1000031DC87 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -1,9 +1,20 @@
+import { worker } from "@/lib/observability/metrics";
 import {
   isInvalidTokenError,
   isPushConfigured,
   parseServiceAccount,
   sendPush,
 } from "@/lib/push";
+
+jest.mock("@/lib/observability/metrics", () => ({
+  worker: {
+    pushTokensInvalid: { inc: jest.fn() },
+    pushSendErrors: { inc: jest.fn() },
+  },
+}));
+
+const tokensInvalid = worker.pushTokensInvalid.inc as unknown as jest.Mock;
+const sendErrors = worker.pushSendErrors.inc as unknown as jest.Mock;
 
 const sendEachForMulticast = jest.fn();
 
@@ -128,6 +139,7 @@ describe("sendPush", () => {
     expect(await sendPush({ ...message, tokens: [] })).toEqual({
       sent: 0,
       invalidTokens: [],
+      failed: 0,
     });
     expect(sendEachForMulticast).not.toHaveBeenCalled();
   });
@@ -180,7 +192,31 @@ describe("sendPush", () => {
 
     expect(
       await sendPush({ ...message, tokens: ["token-a", "token-dead"] }),
-    ).toEqual({ sent: 1, invalidTokens: ["token-dead"] });
+    ).toEqual({ sent: 1, invalidTokens: ["token-dead"], failed: 0 });
+    expect(tokensInvalid).toHaveBeenCalledWith(1);
+    expect(sendErrors).not.toHaveBeenCalled();
+  });
+
+  it("counts a send error under the code FCM gave it", async () => {
+    sendEachForMulticast.mockResolvedValue(
+      respond(ok(), failed("messaging/internal-error", "backend unavailable")),
+    );
+
+    expect(
+      await sendPush({ ...message, tokens: ["token-a", "token-b"] }),
+    ).toEqual({ sent: 1, invalidTokens: [], failed: 1 });
+    expect(sendErrors).toHaveBeenCalledWith({
+      code: "messaging/internal-error",
+    });
+    expect(tokensInvalid).not.toHaveBeenCalled();
+  });
+
+  it("counts a rejection without a code as unknown", async () => {
+    sendEachForMulticast.mockResolvedValue(respond(ok(), { success: false }));
+
+    await sendPush({ ...message, tokens: ["token-a", "token-b"] });
+
+    expect(sendErrors).toHaveBeenCalledWith({ code: "unknown" });
   });
 
   it("throws when every send failed for a reason that may pass", async () => {
@@ -201,6 +237,7 @@ describe("sendPush", () => {
     expect(await sendPush({ ...message, tokens: ["token-dead"] })).toEqual({
       sent: 0,
       invalidTokens: ["token-dead"],
+      failed: 0,
     });
   });
 
@@ -214,6 +251,7 @@ describe("sendPush", () => {
     expect(await sendPush({ ...message, tokens })).toEqual({
       sent: 501,
       invalidTokens: [],
+      failed: 0,
     });
     expect(sendEachForMulticast).toHaveBeenCalledTimes(2);
     expect(sendEachForMulticast.mock.calls[0][0].tokens).toHaveLength(500);

@@ -95,8 +95,8 @@ export async function deleteChapterAction(
     });
     revalidatePath("/admin", "layout");
     return { ok: true };
-  } catch {
-    return { ok: false, error: "generic" };
+  } catch (error) {
+    return failed(error);
   }
 }
 

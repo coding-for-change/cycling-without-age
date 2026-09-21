@@ -1,4 +1,8 @@
+import { web } from "@/lib/observability/metrics";
+
 const windows = new Map<string, number[]>();
+
+const scopeOf = (key: string) => key.split(":")[0];
 
 export function withinRateLimit(
   key: string,
@@ -9,6 +13,7 @@ export function withinRateLimit(
 
   if (recent.length >= max) {
     windows.set(key, recent);
+    web.rateLimitHits.inc({ scope: scopeOf(key) });
     return false;
   }
 

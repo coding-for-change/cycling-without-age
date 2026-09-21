@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { chapters } from "@/features/chapters";
+import { SupportCard } from "@/components/report-problem/support-card";
 import { joinUrl } from "@/lib/app-url";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
@@ -37,31 +38,30 @@ async function Settings({
   ]);
   const strings = dict.admin.settings;
 
-  if (!chapter || !settings)
-    return (
-      <>
-        <AdminPageHeader title={dict.admin.pages.settings.title} />
-        <p className="max-w-prose text-sm text-ink-soft">
-          {strings.pickChapter}
-        </p>
-      </>
-    );
-
   return (
     <>
       <AdminPageHeader title={dict.admin.pages.settings.title} />
       <div className="grid gap-6">
-        <JoinLinkCard
-          url={joinUrl(chapter.slug)}
-          slug={chapter.slug}
-          labels={strings.joinLink}
-        />
-        <NotificationSettingsCard
-          chapterId={chapter.id}
-          settings={settings}
-          language={language}
-          labels={strings.notifications}
-        />
+        {chapter && settings ? (
+          <>
+            <JoinLinkCard
+              url={joinUrl(chapter.slug)}
+              slug={chapter.slug}
+              labels={strings.joinLink}
+            />
+            <NotificationSettingsCard
+              chapterId={chapter.id}
+              settings={settings}
+              language={language}
+              labels={strings.notifications}
+            />
+          </>
+        ) : (
+          <p className="max-w-prose text-sm text-ink-soft">
+            {strings.pickChapter}
+          </p>
+        )}
+        <SupportCard strings={strings.support} />
       </div>
     </>
   );
