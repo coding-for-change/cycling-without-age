@@ -9,6 +9,8 @@ import { passengers } from "@/features/passengers";
 import { rides } from "@/features/rides";
 import { APP_URL } from "@/lib/app-url";
 import { renderIcs, type IcsEvent } from "@/lib/ics";
+import { serializeError } from "@/lib/observability/errors";
+import { logger } from "@/lib/observability/logger";
 import { fill } from "@/lib/utils";
 
 type FeedStrings = EmailStrings["calendarFeed"];
@@ -104,7 +106,14 @@ export async function renderCalendarFeed(
       new Date(now.getTime() - PAST_DAYS * DAY_MS),
       new Date(now.getTime() + FUTURE_DAYS * DAY_MS),
     ),
-    calendarFeeds.recordFetch(feed.id, now),
+    calendarFeeds
+      .recordFetch(feed.id, now)
+      .catch((error) =>
+        logger.warn(
+          { err: serializeError(error), feed_id: feed.id },
+          "calendar feed fetch not recorded",
+        ),
+      ),
   ]);
 
   const strings = getEmailStrings(resolveEmailLocale(feed.locale)).calendarFeed;

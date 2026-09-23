@@ -931,7 +931,9 @@ own gate, like `/api/chat/stream`. What makes the address safe to keep showing:
 - The route is untraced in Sentry, and `scrubText` (`lib/observability/errors`) replaces the
   token anywhere it appears — request URL, `contexts.nextjs.request_path` from
   `captureRequestError`, messages, breadcrumbs, logs. Responses are `private, no-cache`,
-  `no-referrer`, `noindex`. The one place the path still lands is the reverse proxy's access
+  `no-referrer`, `noindex`. Session Replay masks text and inputs but records link `href`s as
+  they are, and the subscribe buttons carry the address in theirs — so the whole feed block
+  in `calendar-section.tsx` is `data-sentry-block`. The one place the path still lands is the reverse proxy's access
   log (`Caddyfile` → `import access_log`), which is worth a `log_skip /api/calendar/*` on the
   server.
 

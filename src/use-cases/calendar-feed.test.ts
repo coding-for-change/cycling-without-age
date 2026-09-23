@@ -17,6 +17,9 @@ jest.mock("@/features/rides", () => ({
   rides: { listRidesForCalendarFeed: jest.fn() },
 }));
 jest.mock("@/lib/app-url", () => ({ APP_URL: "https://cwa.example" }));
+jest.mock("@/lib/observability/logger", () => ({
+  logger: { warn: jest.fn() },
+}));
 
 const openFeed = calendarFeeds.openFeed as jest.Mock;
 const recordFetch = calendarFeeds.recordFetch as jest.Mock;
@@ -50,6 +53,7 @@ const lines = (ics: string | null) =>
 beforeEach(() => {
   jest.clearAllMocks();
   openFeed.mockResolvedValue({ id: "feed-1", userId: "user-1", locale: "en" });
+  recordFetch.mockResolvedValue(undefined);
   managedBy.mockResolvedValue([{ id: "passenger-1", firstName: "Erna" }]);
   memberships.mockResolvedValue([
     { chapterId: "chapter-muenchen", roles: ["pilot"] },
@@ -163,6 +167,13 @@ describe("renderCalendarFeed", () => {
   it("names nobody — not the riders the reader manages either", async () => {
     const ics = await renderCalendarFeed("token", NOW);
     expect(ics).not.toContain("Erna");
+  });
+
+  // "Last picked up" is a courtesy to the reader; it must never cost them the feed.
+  it("still serves the rides when recording the fetch fails", async () => {
+    recordFetch.mockRejectedValue(new Error("Lock wait timeout exceeded"));
+    const out = lines(await renderCalendarFeed("token", NOW));
+    expect(out).toContain("SUMMARY:Event ride");
   });
 
   it("is still a valid, empty calendar when there is nothing to ride", async () => {

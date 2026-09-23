@@ -108,7 +108,10 @@ function FeedDetails({
   const platform = useSyncExternalStore(unchanging, nativePlatform, onServer);
 
   return (
-    <>
+    <div
+      data-sentry-block
+      className="grid gap-4"
+    >
       <div className="grid gap-2">
         <label
           htmlFor={id}
@@ -195,7 +198,7 @@ function FeedDetails({
           destructive
         />
       </div>
-    </>
+    </div>
   );
 }
 
