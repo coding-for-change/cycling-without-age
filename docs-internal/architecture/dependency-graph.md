@@ -345,7 +345,7 @@ graph TD
   ACT13 --> G
   ACT13 --> F10
   RT3 --> U30
-  RT3 --> FSIG
+  RT3 --> F10
   U30 --> F10
   U30 --> F2
   U30 --> F4
@@ -421,8 +421,8 @@ themselves and then call facades, exactly as an `actions.ts` does — `proxy.ts`
 
 `RT3` is the third Route Handler in the Boundary subgraph, for the same reason as the other
 two: a calendar server can only issue a `GET` with the credential in the URL. It checks the file
-name's shape, verifies the signature (`FSIG`) *before* the per-address rate limit so a forged
-address never allocates a limiter bucket, delegates to `U30`, and owns only HTTP — the ETag,
+name's shape, asks `calendarFeeds.feedKeyOf` (F10) for the signature's verdict *before* the
+per-address rate limit so a forged address never allocates a limiter bucket, delegates to `U30`, and owns only HTTP — the ETag,
 the 304, the private headers. Enabling, resetting and turning off the address (ACT13) touch
 `calendar-feeds` alone, so they are Actions behind `requireAuth` with no use case, and the
 account surface (ACCT) reads `calendarFeeds.getFeed` directly in `loadAccount`, the same way it

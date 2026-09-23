@@ -59,15 +59,37 @@ export const listRidesForPassengers = (
     ? findRidesForPassengers(passengerIds, from, to)
     : Promise.resolve([]);
 
-export const listRidesForCalendarFeed = (
+/**
+ * A feed is polled over and over, so it is capped. A care home with fifty
+ * residents can outgrow any cap, and what it must not lose is what is coming
+ * up — so the upcoming rides fill the cap first and the past gets the rest,
+ * newest first. Past the cap, the rides furthest from now are the ones dropped.
+ */
+export const FEED_MAX_RIDES = 1000;
+
+export async function listRidesForCalendarFeed(
   userId: string,
   audience: FeedAudience,
   from: Date,
   to: Date,
-) =>
-  audience.pilotChapterIds.length || audience.passengerIds.length
-    ? findRidesForCalendarFeed(userId, audience, from, to)
-    : Promise.resolve([]);
+  now = new Date(),
+): Promise<RideFeedRow[]> {
+  if (!audience.pilotChapterIds.length && !audience.passengerIds.length)
+    return [];
+
+  const ahead = await findRidesForCalendarFeed(userId, audience, now, to, {
+    take: FEED_MAX_RIDES,
+  });
+  const room = FEED_MAX_RIDES - ahead.length;
+  if (room === 0) return ahead;
+
+  const behind = await findRidesForCalendarFeed(userId, audience, from, now, {
+    take: room,
+    latestFirst: true,
+    endedBy: now,
+  });
+  return [...behind.reverse(), ...ahead];
+}
 
 export const getRide = (id: string) => findRideById(id);
 

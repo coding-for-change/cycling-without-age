@@ -1123,8 +1123,11 @@ const da: Dictionary = {
       apps: {
         apple: "Apple Kalender",
         google: "Google Kalender",
-        outlook: "Outlook",
+        outlook: "Outlook.com",
+        outlookWork: "Outlook til arbejde eller skole",
       },
+      googleOnPhone:
+        "Bruger du Google Kalender? Google kan kun tilføje en kalender fra et link på en computer: kopiér linket, åbn calendar.google.com dér, og vælg Andre kalendere → Fra webadresse.",
       otherApps:
         "En anden app? Kopiér linket, og kig efter “Abonnér på kalender” eller “Tilføj fra URL”.",
       checked: "Sidst hentet af en kalender {when}.",

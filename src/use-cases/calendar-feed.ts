@@ -105,6 +105,7 @@ export async function renderCalendarFeed(
       audience,
       new Date(now.getTime() - PAST_DAYS * DAY_MS),
       new Date(now.getTime() + FUTURE_DAYS * DAY_MS),
+      now,
     ),
     calendarFeeds
       .recordFetch(feed.id, now)

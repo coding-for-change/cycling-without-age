@@ -1121,8 +1121,11 @@ const en = {
       apps: {
         apple: "Apple Calendar",
         google: "Google Calendar",
-        outlook: "Outlook",
+        outlook: "Outlook.com",
+        outlookWork: "Outlook for work or school",
       },
+      googleOnPhone:
+        "Using Google Calendar? Google only adds a calendar from a link on a computer: copy the link, open calendar.google.com there, and choose Other calendars → From URL.",
       otherApps:
         "Another app? Copy the link and look for “Subscribe to calendar” or “Add from URL”.",
       checked: "Last picked up by a calendar {when}.",

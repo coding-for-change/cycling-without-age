@@ -109,6 +109,14 @@ describe("resetFeed", () => {
   });
 });
 
+describe("feedKeyOf", () => {
+  it("names the key of a genuine address and reads nothing", () => {
+    expect(calendarFeeds.feedKeyOf(feedToken(KEY))).toBe(KEY);
+    expect(calendarFeeds.feedKeyOf(`${KEY}.BBBBBBBBBBBBBBBBBBBBBB`)).toBeNull();
+    expect(db.calendarFeed.findUnique).not.toHaveBeenCalled();
+  });
+});
+
 describe("openFeed", () => {
   it("opens a genuine address", async () => {
     opened();

@@ -1159,8 +1159,11 @@ const de: Dictionary = {
       apps: {
         apple: "Apple Kalender",
         google: "Google Kalender",
-        outlook: "Outlook",
+        outlook: "Outlook.com",
+        outlookWork: "Outlook für Arbeit oder Schule",
       },
+      googleOnPhone:
+        "Nutzt du Google Kalender? Google fügt einen Kalender per Link nur am Computer hinzu: Link kopieren, dort calendar.google.com öffnen und „Weitere Kalender“ → „Per URL“ wählen.",
       otherApps:
         "Andere App? Kopier den Link und such nach „Kalender abonnieren“ oder „Per URL hinzufügen“.",
       checked: "Zuletzt von einem Kalender abgerufen: {when}.",

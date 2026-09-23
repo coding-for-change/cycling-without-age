@@ -438,6 +438,7 @@ describe("who may read a rider's name", () => {
       { pilotChapterIds: [], passengerIds: ["passenger-1"] },
       FROM,
       TO,
+      FROM,
     );
     const select = selectOf();
     expect(select.roster).toBeUndefined();
@@ -452,24 +453,23 @@ describe("who may read a rider's name", () => {
 
 describe("what a calendar feed may read", () => {
   const FROM = new Date("2026-06-25T00:00:00Z");
+  const NOW = new Date("2026-09-23T10:00:00Z");
   const TO = new Date("2027-10-28T00:00:00Z");
-  const whereOf = () => db.ride.findMany.mock.calls[0][0].where;
+  const call = (n: number) => db.ride.findMany.mock.calls[n][0];
   const piloting = {
     assignments: { some: { userId: "user-1" } },
     chapterId: { in: [CHAPTER] },
   };
   const riding = { roster: { some: { passengerId: { in: ["passenger-1"] } } } };
+  const both = { pilotChapterIds: [CHAPTER], passengerIds: ["passenger-1"] };
+  const rows = (prefix: string, count: number) =>
+    Array.from({ length: count }, (_, i) => ({ id: `${prefix}-${i}` }));
 
   it("is the pilot's rule or the rider's, never either widened", async () => {
-    await rides.listRidesForCalendarFeed(
-      "user-1",
-      { pilotChapterIds: [CHAPTER], passengerIds: ["passenger-1"] },
-      FROM,
-      TO,
-    );
-    expect(whereOf()).toEqual({
+    await rides.listRidesForCalendarFeed("user-1", both, FROM, TO, NOW);
+    expect(call(0).where).toEqual({
       startsAt: { lt: TO },
-      endsAt: { gt: FROM },
+      endsAt: { gt: NOW },
       OR: [piloting, riding],
     });
   });
@@ -480,8 +480,9 @@ describe("what a calendar feed may read", () => {
       { pilotChapterIds: [], passengerIds: ["passenger-1"] },
       FROM,
       TO,
+      NOW,
     );
-    expect(whereOf().OR).toEqual([riding]);
+    expect(call(0).where.OR).toEqual([riding]);
   });
 
   // An empty `OR` would match every ride in the window.
@@ -492,9 +493,60 @@ describe("what a calendar feed may read", () => {
         { pilotChapterIds: [], passengerIds: [] },
         FROM,
         TO,
+        NOW,
       ),
     ).toEqual([]);
     expect(db.ride.findMany).not.toHaveBeenCalled();
+  });
+
+  it("fills the rest with the past, newest first, and never twice", async () => {
+    db.ride.findMany
+      .mockResolvedValueOnce(rows("ahead", 2))
+      .mockResolvedValueOnce([{ id: "behind-new" }, { id: "behind-old" }]);
+    const list = await rides.listRidesForCalendarFeed(
+      "user-1",
+      both,
+      FROM,
+      TO,
+      NOW,
+    );
+    expect(call(0)).toEqual(
+      expect.objectContaining({
+        take: rides.FEED_MAX_RIDES,
+        orderBy: [{ startsAt: "asc" }, { id: "asc" }],
+      }),
+    );
+    // A ride still running at `now` belongs to the first slice only.
+    expect(call(1)).toEqual(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          startsAt: { lt: NOW },
+          endsAt: { gt: FROM, lte: NOW },
+        }),
+        take: rides.FEED_MAX_RIDES - 2,
+        orderBy: [{ startsAt: "desc" }, { id: "desc" }],
+      }),
+    );
+    expect(list.map((ride) => ride.id)).toEqual([
+      "behind-old",
+      "behind-new",
+      "ahead-0",
+      "ahead-1",
+    ]);
+  });
+
+  // A care home with fifty residents must not lose next week to last spring.
+  it("keeps what is coming up when the cap is reached", async () => {
+    db.ride.findMany.mockResolvedValueOnce(rows("ahead", rides.FEED_MAX_RIDES));
+    const list = await rides.listRidesForCalendarFeed(
+      "user-1",
+      both,
+      FROM,
+      TO,
+      NOW,
+    );
+    expect(list).toHaveLength(rides.FEED_MAX_RIDES);
+    expect(db.ride.findMany).toHaveBeenCalledTimes(1);
   });
 });
 

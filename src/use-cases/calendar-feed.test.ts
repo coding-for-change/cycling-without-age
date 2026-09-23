@@ -83,6 +83,7 @@ describe("renderCalendarFeed", () => {
       },
       new Date("2026-06-25T10:00:00Z"),
       new Date("2027-10-28T10:00:00Z"),
+      NOW,
     );
     expect(recordFetch).toHaveBeenCalledWith("feed-1", NOW);
   });
@@ -130,6 +131,7 @@ describe("renderCalendarFeed", () => {
       { pilotChapterIds: [], passengerIds: ["passenger-1"] },
       expect.any(Date),
       expect.any(Date),
+      NOW,
     );
   });
 

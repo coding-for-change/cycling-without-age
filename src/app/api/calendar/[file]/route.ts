@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import { connection } from "next/server";
-import { feedFileName } from "@/features/calendar-feeds";
-import { verifyFeedToken } from "@/lib/crypto/feed-signature";
+import { calendarFeeds, feedFileName } from "@/features/calendar-feeds";
 import { web } from "@/lib/observability/metrics";
 import { withinRateLimit } from "@/lib/rate-limit";
 import { renderCalendarFeed } from "@/use-cases/calendar-feed";
@@ -43,7 +42,7 @@ export async function GET(
 
   // A forged address never reaches the limiter: it would otherwise let anyone
   // mint a fresh bucket per request.
-  const key = verifyFeedToken(token);
+  const key = calendarFeeds.feedKeyOf(token);
   if (!key) return notFound();
 
   if (!withinRateLimit(`calendar-feed-poll:${key}`, POLL_LIMIT)) {

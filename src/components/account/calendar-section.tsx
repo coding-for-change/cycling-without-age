@@ -39,6 +39,14 @@ type CalendarStrings = AccountData["strings"]["calendar"];
 
 const unchanging = () => () => {};
 const onServer = () => "web" as const;
+const notOnServer = () => false;
+
+/**
+ * Google subscribes to a calendar by link only from a computer; on a phone the
+ * same link opens the Google Calendar app, which has no way to take it.
+ */
+const onPhone = () =>
+  nativePlatform() !== "web" || window.matchMedia("(pointer: coarse)").matches;
 
 const subscribeLinks = (url: string) => {
   const webcal = url.replace(/^https?:/, "webcal:");
@@ -46,6 +54,7 @@ const subscribeLinks = (url: string) => {
     apple: webcal,
     google: `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}`,
     outlook: `https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(url)}`,
+    outlookWork: `https://outlook.office.com/calendar/0/addfromweb?url=${encodeURIComponent(url)}`,
   };
 };
 
@@ -106,6 +115,7 @@ function FeedDetails({
   const id = useId();
   const links = subscribeLinks(feed.url);
   const platform = useSyncExternalStore(unchanging, nativePlatform, onServer);
+  const phone = useSyncExternalStore(unchanging, onPhone, notOnServer);
 
   return (
     <div
@@ -153,19 +163,30 @@ function FeedDetails({
           {platform !== "android" && (
             <AppLink href={links.apple}>{strings.apps.apple}</AppLink>
           )}
-          <AppLink
-            href={links.google}
-            external
-          >
-            {strings.apps.google}
-          </AppLink>
+          {!phone && (
+            <AppLink
+              href={links.google}
+              external
+            >
+              {strings.apps.google}
+            </AppLink>
+          )}
           <AppLink
             href={links.outlook}
             external
           >
             {strings.apps.outlook}
           </AppLink>
+          <AppLink
+            href={links.outlookWork}
+            external
+          >
+            {strings.apps.outlookWork}
+          </AppLink>
         </div>
+        {phone && (
+          <p className="text-2sm text-ink-soft">{strings.googleOnPhone}</p>
+        )}
         <p className="text-2sm text-ink-soft">{strings.otherApps}</p>
       </div>
 

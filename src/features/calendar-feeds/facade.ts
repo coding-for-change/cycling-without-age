@@ -76,6 +76,13 @@ export async function disableFeed(userId: string): Promise<void> {
 }
 
 /**
+ * The key a genuine address was signed for, or `null`. Pure: no row is read,
+ * which is what lets the route reject a forged address before it spends a
+ * rate-limit bucket on it.
+ */
+export const feedKeyOf = (token: string) => verifyFeedToken(token);
+
+/**
  * The signature is checked before the table is read, so a forged or
  * mistyped address costs one HMAC and no query.
  */

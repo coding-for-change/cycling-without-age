@@ -909,7 +909,10 @@ when a ride is booked or accepted) is not built; the live feed is, below.
 A member can subscribe to their rides from the calendar they already use. The account surface
 (`src/components/account/calendar-section.tsx`, shown to anyone with a pilot or passenger
 perspective) creates a secret address, copies it, and offers one-tap subscribe links for Apple
-(`webcal:`), Google (`calendar.google.com/calendar/r?cid=`) and Outlook (`addfromweb?url=`).
+(`webcal:`, hidden inside the Android shell), Google (`calendar.google.com/calendar/r?cid=`),
+Outlook.com (`outlook.live.com/…/addfromweb?url=`) and Outlook for work or school
+(`outlook.office.com/…/addfromweb?url=`). Google subscribes by link only from a computer, so on
+a phone (the native shell, or a coarse pointer) its button gives way to a line saying so.
 Calendar apps then poll `GET /api/calendar/<token>.ics` on their own schedule.
 
 **The address is the credential.** A calendar server cannot send a cookie or a header, so
@@ -921,8 +924,9 @@ own gate, like `/api/chat/stream`. What makes the address safe to keep showing:
   subkey of `BETTER_AUTH_SECRET` and is stored nowhere. A copy of the table opens no feed, yet
   the account surface can show the address again at any time without keeping it in the clear.
   Rotating `BETTER_AUTH_SECRET` (which signs everyone out anyway) retires every address.
-- **The signature is checked before anything else** — in the route, before the per-address
-  rate limit, and again in `calendarFeeds.openFeed` before any row is read — so a forged or
+- **The signature is checked before anything else** — in the route through
+  `calendarFeeds.feedKeyOf`, before the per-address rate limit, and again in
+  `calendarFeeds.openFeed` before any row is read — so a forged or
   mistyped address costs one HMAC: no query, and no bucket in the in-memory limiter that
   anyone could otherwise mint one of per request. Every failure (unknown, reset, turned off,
   banned owner) is the same plain 404.
@@ -947,6 +951,12 @@ the reader manages. It is one query (`rides.findRidesForCalendarFeed`, an `OR` o
 no query at all when both are empty — an empty `OR` would match every ride), over a window of 90
 days back and 400 forward: a client drops whatever the feed stops listing, so last month stays on
 the wall.
+
+The feed is capped at `rides.FEED_MAX_RIDES` (1000), because it is re-read on every poll and a
+care home managing fifty residents can outgrow any window. A plain `take` on a query ordered
+oldest-first would spend the cap on last spring and drop next week, so the facade reads in two
+slices: rides still running or ahead of now, soonest first, up to the cap; then whatever room is
+left from the past, newest first. Past the cap, the rides furthest from now are the ones dropped.
 
 The account surface shows the section to anyone who could have rides (a pilot or passenger
 perspective, or a `Passenger` they manage) **and** to anyone who already has a feed, so an

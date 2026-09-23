@@ -147,6 +147,9 @@ export type FeedAudience = {
   passengerIds: string[];
 };
 
+/** One slice of a feed: `endedBy` keeps a past slice clear of the rides still running. */
+export type FeedSlice = { take: number; latestFirst?: boolean; endedBy?: Date };
+
 /**
  * The union of `/pilot` and `/passenger` in one query. Who counts as a pilot
  * where is membership's question, answered before this runs; here it is only
@@ -157,10 +160,12 @@ export const findRidesForCalendarFeed = (
   { pilotChapterIds, passengerIds }: FeedAudience,
   from: Date,
   to: Date,
+  { take, latestFirst = false, endedBy }: FeedSlice,
 ) =>
   prisma.ride.findMany({
     where: {
-      ...overlapping(from, to),
+      startsAt: { lt: to },
+      endsAt: endedBy ? { gt: from, lte: endedBy } : { gt: from },
       OR: [
         ...(pilotChapterIds.length
           ? [
@@ -175,7 +180,10 @@ export const findRidesForCalendarFeed = (
           : []),
       ],
     },
-    orderBy: [{ startsAt: "asc" }, { id: "asc" }],
+    orderBy: latestFirst
+      ? [{ startsAt: "desc" }, { id: "desc" }]
+      : [{ startsAt: "asc" }, { id: "asc" }],
+    take,
     select: feedSelect(userId),
   });
 
