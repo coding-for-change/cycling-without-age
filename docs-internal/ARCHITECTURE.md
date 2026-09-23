@@ -858,6 +858,7 @@ and ships no calendar to the browser.
 | `/admin/rides`, `/admin/bikes` | `readActiveScope(params, nav)` → `requireAdminScope` + the `NAV` row's own `visible` predicate; an out-of-scope `?chapter=`/`?country=` is a 403, never a silent widening | only `scopeChapters(scope, active)` |
 | `/pilot` | `requirePerspective("pilot")` | rides they are **assigned to** *and* whose chapter they are **still a member of** |
 | `/passenger` | `getSession` | rides rostering a `Passenger` row they manage |
+| `/api/calendar/<token>.ics` | the token itself — see *Calendar feed* below | the union of the two rows above, for the token's owner, with no names |
 
 That second clause on `/pilot` is load-bearing: removing someone from a chapter deletes their
 `member` row and nothing else, so `RideAssignment` rows outlive the membership.
@@ -900,5 +901,76 @@ so it must sit behind `requireChapterAdmin(chapterId)`, not `requireAdminScope()
 
 Ride *requests* (lifecycle phase 1), the Ride Request List, recurrence,
 cancellation reason codes, waivers, storage locations and care centers are all still absent —
-see COD-155 / COD-179 / COD-151. The `.ics` feed and email attachment are COD-182 and were
-deliberately left off this branch.
+see COD-155 / COD-179 / COD-151. The `.ics` **email attachment** half of COD-182 (a file sent
+when a ride is booked or accepted) is not built; the live feed is, below.
+
+### Calendar feed (COD-182)
+
+A member can subscribe to their rides from the calendar they already use. The account surface
+(`src/components/account/calendar-section.tsx`, shown to anyone with a pilot or passenger
+perspective) creates a secret address, copies it, and offers one-tap subscribe links for Apple
+(`webcal:`), Google (`calendar.google.com/calendar/r?cid=`) and Outlook (`addfromweb?url=`).
+Calendar apps then poll `GET /api/calendar/<token>.ics` on their own schedule.
+
+**The address is the credential.** A calendar server cannot send a cookie or a header, so
+the token has to live in the URL, and `proxy.ts` never sees `/api/`. The route is therefore its
+own gate, like `/api/chat/stream`. What makes the address safe to keep showing:
+
+- **A token is `<key>.<signature>`** (`src/lib/crypto/feed-signature.ts`). The 128-bit key is
+  random and stored in `calendar_feed.key`. The signature is an HMAC-SHA256 of it under an HKDF
+  subkey of `BETTER_AUTH_SECRET` and is stored nowhere. A copy of the table opens no feed, yet
+  the account surface can show the address again at any time without keeping it in the clear.
+  Rotating `BETTER_AUTH_SECRET` (which signs everyone out anyway) retires every address.
+- **The signature is checked before anything else** — in the route, before the per-address
+  rate limit, and again in `calendarFeeds.openFeed` before any row is read — so a forged or
+  mistyped address costs one HMAC: no query, and no bucket in the in-memory limiter that
+  anyone could otherwise mint one of per request. Every failure (unknown, reset, turned off,
+  banned owner) is the same plain 404.
+- **New link** replaces the key and **Turn off** deletes the row; either way every app holding
+  the old address gets a 404 on its next poll. Deleting the account cascades the row.
+- The route is untraced in Sentry, and `scrubText` (`lib/observability/errors`) replaces the
+  token anywhere it appears — request URL, `contexts.nextjs.request_path` from
+  `captureRequestError`, messages, breadcrumbs, logs. Responses are `private, no-cache`,
+  `no-referrer`, `noindex`. The one place the path still lands is the reverse proxy's access
+  log (`Caddyfile` → `import access_log`), which is worth a `log_skip /api/calendar/*` on the
+  server.
+
+**What a feed may contain** is the union of `/pilot` and `/passenger`, under the same rules.
+Piloted rides follow `/pilot` exactly: the reader must hold the pilot role in some chapter
+(`requirePerspective("pilot")`), and the ride must be in a chapter they are still a member of
+(`findRidesForPilot`). The use case reads both from `membership.listMembershipsOfUser` and hands
+the rides query a list of chapter ids, so a demoted or departed pilot drops out on the next poll
+even though their `RideAssignment` rows remain. Ridden rides are those rostering a `Passenger`
+the reader manages. It is one query (`rides.findRidesForCalendarFeed`, an `OR` over the two, and
+no query at all when both are empty — an empty `OR` would match every ride), over a window of 90
+days back and 400 forward: a client drops whatever the feed stops listing, so last month stays on
+the wall.
+
+The account surface shows the section to anyone who could have rides (a pilot or passenger
+perspective, or a `Passenger` they manage) **and** to anyone who already has a feed, so an
+address can always be turned off by its owner.
+
+**It names nobody.** A feed leaves the app for whichever provider hosts the reader's calendar,
+so `feedSelect` carries when, where, which trishaw and the chapter — and no rider names, no
+pilot names, no roster count, no cancellation reason (free text an admin typed). The event
+links back into the app for the who. `facade.test.ts` pins that select alongside the other
+three. A pilot's event reads *Pilot · Event ride*; a rider's reads *Event ride*; a cancelled one
+stays on the calendar as *Cancelled: …* with `STATUS:CANCELLED`, because the glossary keeps
+cancelled rides on the calendar.
+
+**The copy is sessionless.** A poll carries no cookie, so the feed speaks the owner's stored
+`User.locale` through `src/emails/strings` (`calendarFeed`), the same dictionary push and email
+use for the same reason. German avoids both *Sie* and *du*, since one feed serves pilots and
+passengers alike.
+
+**Serialisation** is `src/lib/ics.ts`, dependency-free like `lib/calendar`: times in UTC
+(`Z`), so no `VTIMEZONE` block has to be generated from the tz database; TEXT escaped so a line
+break in a location name — CR/LF, and Unicode's NEL/LS/PS, which some parsers also split on —
+cannot start a new property, with C0 and C1 controls dropped; lines folded at 75 *octets*, never
+inside a UTF-8 sequence. The body is deterministic for the same rides (`DTSTAMP` is the ride's
+`updatedAt`), so the route's ETag answers an unchanged poll with a 304.
+
+`lastFetchedAt` is written at most every 15 minutes, which is what lets the account surface
+say "last picked up by a calendar 2 h ago" — the only feedback a member gets that the
+subscription actually works. Polls are rate-limited per address (60 per 10 minutes) and
+counted in `cwa_calendar_feed_polls_total{outcome}`.

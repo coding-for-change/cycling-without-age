@@ -430,6 +430,72 @@ describe("who may read a rider's name", () => {
     await rides.listRidesInRange(["chapter-muenchen"], FROM, TO);
     expect(selectOf().roster).toBeUndefined();
   });
+
+  // A feed leaves the app for someone else's calendar servers.
+  it("gives a calendar feed nobody's name, not even a count", async () => {
+    await rides.listRidesForCalendarFeed(
+      "user-1",
+      { pilotChapterIds: [], passengerIds: ["passenger-1"] },
+      FROM,
+      TO,
+    );
+    const select = selectOf();
+    expect(select.roster).toBeUndefined();
+    expect(select._count).toBeUndefined();
+    expect(select.chapter).toEqual({ select: { name: true } });
+    expect(select.assignments).toEqual({
+      where: { userId: "user-1" },
+      select: { role: true },
+    });
+  });
+});
+
+describe("what a calendar feed may read", () => {
+  const FROM = new Date("2026-06-25T00:00:00Z");
+  const TO = new Date("2027-10-28T00:00:00Z");
+  const whereOf = () => db.ride.findMany.mock.calls[0][0].where;
+  const piloting = {
+    assignments: { some: { userId: "user-1" } },
+    chapterId: { in: [CHAPTER] },
+  };
+  const riding = { roster: { some: { passengerId: { in: ["passenger-1"] } } } };
+
+  it("is the pilot's rule or the rider's, never either widened", async () => {
+    await rides.listRidesForCalendarFeed(
+      "user-1",
+      { pilotChapterIds: [CHAPTER], passengerIds: ["passenger-1"] },
+      FROM,
+      TO,
+    );
+    expect(whereOf()).toEqual({
+      startsAt: { lt: TO },
+      endsAt: { gt: FROM },
+      OR: [piloting, riding],
+    });
+  });
+
+  it("drops a branch the reader has no standing in", async () => {
+    await rides.listRidesForCalendarFeed(
+      "user-1",
+      { pilotChapterIds: [], passengerIds: ["passenger-1"] },
+      FROM,
+      TO,
+    );
+    expect(whereOf().OR).toEqual([riding]);
+  });
+
+  // An empty `OR` would match every ride in the window.
+  it("asks the database nothing for a reader with no standing at all", async () => {
+    expect(
+      await rides.listRidesForCalendarFeed(
+        "user-1",
+        { pilotChapterIds: [], passengerIds: [] },
+        FROM,
+        TO,
+      ),
+    ).toEqual([]);
+    expect(db.ride.findMany).not.toHaveBeenCalled();
+  });
 });
 
 describe("adding a trishaw", () => {

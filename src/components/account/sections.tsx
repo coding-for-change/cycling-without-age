@@ -2,6 +2,7 @@
 
 import {
   Bell,
+  CalendarSync,
   CircleUserRound,
   KeyRound,
   Languages,
@@ -10,6 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ReportProblemButton } from "@/components/report-problem/report-problem-button";
+import { CalendarSection } from "./calendar-section";
 import { DangerSection } from "./danger-section";
 import { LanguageSection } from "./language-section";
 import { NotificationsSection } from "./notifications-section";
@@ -18,19 +20,36 @@ import { ProfileSection } from "./profile-section";
 import type { AccountData, AccountStrings } from "./types";
 
 export type AccountSectionKey =
-  "profile" | "language" | "notifications" | "passkeys" | "support" | "danger";
+  | "profile"
+  | "language"
+  | "notifications"
+  | "calendar"
+  | "passkeys"
+  | "support"
+  | "danger";
 
-export const ACCOUNT_SECTIONS: {
+type AccountSection = {
   key: AccountSectionKey;
   icon: LucideIcon;
-}[] = [
+  visible?: (data: AccountData) => boolean;
+};
+
+const ACCOUNT_SECTIONS: AccountSection[] = [
   { key: "profile", icon: CircleUserRound },
   { key: "language", icon: Languages },
   { key: "notifications", icon: Bell },
+  {
+    key: "calendar",
+    icon: CalendarSync,
+    visible: (data) => data.hasRides || data.calendarFeed !== null,
+  },
   { key: "passkeys", icon: KeyRound },
   { key: "support", icon: LifeBuoy },
   { key: "danger", icon: TriangleAlert },
 ];
+
+export const accountSections = (data: AccountData) =>
+  ACCOUNT_SECTIONS.filter((section) => section.visible?.(data) ?? true);
 
 export const sectionTitle = (strings: AccountStrings, key: AccountSectionKey) =>
   strings[key].title;
@@ -49,6 +68,8 @@ export function AccountSectionBody({
       return <LanguageSection data={data} />;
     case "notifications":
       return <NotificationsSection data={data} />;
+    case "calendar":
+      return <CalendarSection data={data} />;
     case "passkeys":
       return <PasskeysSection data={data} />;
     case "support":

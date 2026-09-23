@@ -108,6 +108,77 @@ export const findRidesForPassengers = (
     select: calendarSelect,
   });
 
+/**
+ * What a subscribed calendar is told: when, where, which bike — and nobody's
+ * name. A feed leaves the app for whichever provider the reader's calendar
+ * lives with, so the who stays behind the link back into the app.
+ * `assignments` is narrowed to the reader, which is all that "am I the pilot
+ * here" needs.
+ */
+const feedSelect = (userId: string) =>
+  ({
+    id: true,
+    chapterId: true,
+    model: true,
+    status: true,
+    startsAt: true,
+    endsAt: true,
+    updatedAt: true,
+    locationName: true,
+    locationAddress: true,
+    destinationName: true,
+    destinationAddress: true,
+    chapter: { select: { name: true } },
+    trishaws: {
+      orderBy: { trishaw: { name: "asc" } },
+      select: { trishaw: { select: { name: true } } },
+    },
+    assignments: { where: { userId }, select: { role: true } },
+  }) satisfies Prisma.RideSelect;
+
+export type RideFeedRow = Prisma.RideGetPayload<{
+  select: ReturnType<typeof feedSelect>;
+}>;
+
+export type FeedAudience = {
+  /** Chapters whose rides the reader may see as their pilot. */
+  pilotChapterIds: string[];
+  /** Riders the reader manages. */
+  passengerIds: string[];
+};
+
+/**
+ * The union of `/pilot` and `/passenger` in one query. Who counts as a pilot
+ * where is membership's question, answered before this runs; here it is only
+ * a list of chapters the assignment must fall in.
+ */
+export const findRidesForCalendarFeed = (
+  userId: string,
+  { pilotChapterIds, passengerIds }: FeedAudience,
+  from: Date,
+  to: Date,
+) =>
+  prisma.ride.findMany({
+    where: {
+      ...overlapping(from, to),
+      OR: [
+        ...(pilotChapterIds.length
+          ? [
+              {
+                assignments: { some: { userId } },
+                chapterId: { in: pilotChapterIds },
+              },
+            ]
+          : []),
+        ...(passengerIds.length
+          ? [{ roster: { some: { passengerId: { in: passengerIds } } } }]
+          : []),
+      ],
+    },
+    orderBy: [{ startsAt: "asc" }, { id: "asc" }],
+    select: feedSelect(userId),
+  });
+
 export const findRideById = (id: string) =>
   prisma.ride.findUnique({ where: { id }, select: calendarSelect });
 

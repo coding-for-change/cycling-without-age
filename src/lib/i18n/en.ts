@@ -1110,6 +1110,48 @@ const en = {
       permissionDenied:
         "Your phone is blocking notifications. Allow them in Settings, then try again.",
     },
+    calendar: {
+      title: "Calendar",
+      body: "Your rides, in the calendar you already use. Subscribe once and it keeps up by itself: new rides turn up, moved ones move, cancelled ones say so.",
+      enable: "Create my calendar link",
+      link: "Your calendar link",
+      copy: "Copy link",
+      copied: "Copied",
+      addTo: "Add it to",
+      apps: {
+        apple: "Apple Calendar",
+        google: "Google Calendar",
+        outlook: "Outlook",
+      },
+      otherApps:
+        "Another app? Copy the link and look for “Subscribe to calendar” or “Add from URL”.",
+      checked: "Last picked up by a calendar {when}.",
+      waiting: "No calendar has picked it up yet.",
+      cadence:
+        "Calendars check for changes on their own schedule — usually within a few hours, on Google sometimes a day.",
+      private:
+        "Anyone with this link can see when and where your rides are. Keep it to yourself, and make a new one if it ever gets out.",
+      enabled: "Your calendar link is ready.",
+      cancel: "Keep it",
+      reset: {
+        open: "New link",
+        title: "Make a new link?",
+        body: "The current link stops working straight away. Calendars using it stop updating until you add the new one.",
+        confirm: "Make new link",
+        done: "New link ready. Add it to your calendar again.",
+      },
+      disable: {
+        open: "Turn off",
+        title: "Turn off your calendar link?",
+        body: "The link stops working and calendars using it stop updating. You can make a new one any time.",
+        confirm: "Turn off",
+        done: "Calendar link turned off.",
+      },
+      errors: {
+        rateLimited: "Give it a moment and try again.",
+        generic: "That didn't work. Try again.",
+      },
+    },
     passkeys: {
       title: "Passkeys",
       body: "A passkey lets your own device sign you in — a fingerprint, a face, a PIN. Nothing to remember, nothing to type.",

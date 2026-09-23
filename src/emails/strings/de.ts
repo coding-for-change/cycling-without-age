@@ -170,6 +170,21 @@ const de: EmailStrings = {
     someone: "Jemand",
     footer: "Sie erhalten diese E-Mail, weil Push Sie nicht erreichen kann.",
   },
+  calendarFeed: {
+    // Ohne Anrede: derselbe Feed landet bei Piloten und Passagieren.
+    name: "Radeln ohne Alter",
+    description: "Fahrten mit Radeln ohne Alter. Hält sich von selbst aktuell.",
+    pilot: "Pilot · {model}",
+    cancelled: "Abgesagt: {title}",
+    models: {
+      event: "Gruppenfahrt",
+      pleasure: "Ausfahrt",
+      functional: "Zweckfahrt",
+    },
+    destination: "Nach {place}",
+    trishaws: "Rikscha: {names}",
+    details: "Details in der App: {url}",
+  },
   roles: {
     admin: "Ortsgruppen-Admin",
     pilot: "Pilot",

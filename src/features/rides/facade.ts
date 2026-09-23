@@ -11,6 +11,7 @@ import {
   deleteAssignment,
   deleteRosterEntry,
   findRideById,
+  findRidesForCalendarFeed,
   findRidesForPassengers,
   findRidesForPilot,
   findRidesInRange,
@@ -19,8 +20,10 @@ import {
   updateRideReserving,
   upsertAssignment,
   upsertRosterEntry,
+  type FeedAudience,
   type PilotRideRow,
   type RideCalendarRow,
+  type RideFeedRow,
 } from "./services/rides";
 import {
   findTrishawById,
@@ -31,7 +34,13 @@ import {
   type TrishawRow,
 } from "./services/trishaws";
 
-export type { PilotRideRow, RideCalendarRow, TrishawRow };
+export type {
+  FeedAudience,
+  PilotRideRow,
+  RideCalendarRow,
+  RideFeedRow,
+  TrishawRow,
+};
 
 export const listRidesInRange = (chapterIds: string[], from: Date, to: Date) =>
   chapterIds.length
@@ -48,6 +57,16 @@ export const listRidesForPassengers = (
 ) =>
   passengerIds.length
     ? findRidesForPassengers(passengerIds, from, to)
+    : Promise.resolve([]);
+
+export const listRidesForCalendarFeed = (
+  userId: string,
+  audience: FeedAudience,
+  from: Date,
+  to: Date,
+) =>
+  audience.pilotChapterIds.length || audience.passengerIds.length
+    ? findRidesForCalendarFeed(userId, audience, from, to)
     : Promise.resolve([]);
 
 export const getRide = (id: string) => findRideById(id);
