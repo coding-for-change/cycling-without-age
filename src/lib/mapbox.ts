@@ -1,4 +1,5 @@
 import type { Coords } from "@/lib/geo";
+import { logger } from "@/lib/observability/logger";
 
 if (typeof window !== "undefined") {
   throw new Error("@/lib/mapbox is server-only — call it from a Server Action");
@@ -50,7 +51,13 @@ async function get<T>(url: string): Promise<T | null> {
     const response = await fetch(url, {
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      logger.warn(
+        { status: response.status, body: await response.text() },
+        "mapbox request failed",
+      );
+      return null;
+    }
     return (await response.json()) as T;
   } catch {
     return null;
