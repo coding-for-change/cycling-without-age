@@ -47,12 +47,16 @@ const BEARER = /\bBearer\s+[\w\-._~+/]+=*/gi;
 const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g;
 const PHONE = /\+\d[\d\s().-]{6,17}\d/g;
 
+/** A calendar feed address is its own credential; see `lib/crypto/feed-signature`. */
+export const CALENDAR_FEED_TOKEN = /(\/api\/calendar\/)[^/?#\s"'<>]+/g;
+
 export function scrubText(text: string): string {
   return text
     .replace(CREDENTIALS, `$1${REDACTED}@`)
     .replace(BEARER, `Bearer ${REDACTED}`)
     .replace(EMAIL, "[email]")
-    .replace(PHONE, "[phone]");
+    .replace(PHONE, "[phone]")
+    .replace(CALENDAR_FEED_TOKEN, "$1[token]");
 }
 
 export function reasonOf(error: unknown): string {

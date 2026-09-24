@@ -66,6 +66,7 @@ model User {
   chatMessages         ChatMessage[]        @relation("chatMessageSender")
   chatReactions        ChatReaction[]
   rideAssignments      RideAssignment[]
+  calendarFeed         CalendarFeed?
 
   @@unique([email])
   @@unique([phoneNumber])
@@ -746,4 +747,20 @@ model RideRosterEntry {
   @@index([passengerId])
   @@index([rideId, position])
   @@map("ride_roster_entry")
+}
+
+/// A secret address a calendar app subscribes to (COD-182). Only `key` is kept;
+/// the URL also carries an HMAC of it (`lib/crypto/feed-signature`), so a copy
+/// of this table alone opens no feed. A new key is a new address, and every
+/// app still holding the old one gets a 404 on its next poll.
+model CalendarFeed {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key           String    @unique @db.VarChar(32)
+  lastFetchedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("calendar_feed")
 }

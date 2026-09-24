@@ -165,6 +165,21 @@ const en = {
     someone: "Someone",
     footer: "You received this email because push cannot reach you.",
   },
+  calendarFeed: {
+    name: "Cycling Without Age",
+    description:
+      "Your rides with Cycling Without Age. Keeps itself up to date.",
+    pilot: "Pilot · {model}",
+    cancelled: "Cancelled: {title}",
+    models: {
+      event: "Event ride",
+      pleasure: "Pleasure ride",
+      functional: "Functional ride",
+    },
+    destination: "To {place}",
+    trishaws: "Trishaw: {names}",
+    details: "Details in the app: {url}",
+  },
   roles: {
     admin: "a chapter admin",
     pilot: "a pilot",

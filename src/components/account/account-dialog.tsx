@@ -31,7 +31,7 @@ import type { Perspective } from "@/lib/access";
 import { PerspectiveRow } from "./perspective-row";
 import { ProfileHeader } from "./profile-header";
 import {
-  ACCOUNT_SECTIONS,
+  accountSections,
   AccountSectionBody,
   sectionTitle,
   type AccountSectionKey,
@@ -86,7 +86,7 @@ export function AccountDialog({
               <SidebarGroup>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {ACCOUNT_SECTIONS.map((item) => (
+                    {accountSections(data).map((item) => (
                       <SidebarMenuItem key={item.key}>
                         <SidebarMenuButton
                           isActive={item.key === section}

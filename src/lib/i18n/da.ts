@@ -1112,6 +1112,51 @@ const da: Dictionary = {
       permissionDenied:
         "Din telefon blokerer for beskeder. Tillad dem under Indstillinger, og prøv så igen.",
     },
+    calendar: {
+      title: "Kalender",
+      body: "Dine ture i den kalender, du allerede bruger. Abonnér én gang, så holder den sig selv opdateret: nye ture dukker op, flyttede flytter med, og aflyste bliver markeret.",
+      enable: "Opret mit kalenderlink",
+      link: "Dit kalenderlink",
+      copy: "Kopiér link",
+      copied: "Kopieret",
+      addTo: "Tilføj til",
+      apps: {
+        apple: "Apple Kalender",
+        google: "Google Kalender",
+        outlook: "Outlook.com",
+        outlookWork: "Outlook til arbejde eller skole",
+      },
+      googleOnPhone:
+        "Bruger du Google Kalender? Google kan kun tilføje en kalender fra et link på en computer: kopiér linket, åbn calendar.google.com dér, og vælg Andre kalendere → Fra webadresse.",
+      otherApps:
+        "En anden app? Kopiér linket, og kig efter “Abonnér på kalender” eller “Tilføj fra URL”.",
+      checked: "Sidst hentet af en kalender {when}.",
+      waiting: "Ingen kalender har hentet linket endnu.",
+      cadence:
+        "Kalendere tjekker for ændringer i deres eget tempo – som regel inden for få timer, hos Google nogle gange først efter en dag.",
+      private:
+        "Alle med dette link kan se, hvornår og hvor dine ture er. Hold det for dig selv, og lav et nyt, hvis det slipper ud.",
+      enabled: "Dit kalenderlink er klar.",
+      cancel: "Behold det",
+      reset: {
+        open: "Nyt link",
+        title: "Lav et nyt link?",
+        body: "Det nuværende link holder op med at virke med det samme. Kalendere, der bruger det, opdateres ikke, før du tilføjer det nye.",
+        confirm: "Lav nyt link",
+        done: "Nyt link klar. Tilføj det til din kalender igen.",
+      },
+      disable: {
+        open: "Slå fra",
+        title: "Slå dit kalenderlink fra?",
+        body: "Linket holder op med at virke, og kalendere, der bruger det, bliver ikke længere opdateret. Du kan altid lave et nyt.",
+        confirm: "Slå fra",
+        done: "Kalenderlinket er slået fra.",
+      },
+      errors: {
+        rateLimited: "Vent et øjeblik, og prøv igen.",
+        generic: "Det virkede ikke. Prøv igen.",
+      },
+    },
     passkeys: {
       title: "Adgangsnøgler",
       body: "Med en adgangsnøgle logger din egen enhed dig ind — fingeraftryk, ansigt eller pinkode. Intet at huske, intet at skrive.",

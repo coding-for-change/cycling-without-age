@@ -1148,6 +1148,51 @@ const de: Dictionary = {
       permissionDenied:
         "Das Handy blockiert Benachrichtigungen. Erlaube sie in den Einstellungen und versuch es noch einmal.",
     },
+    calendar: {
+      title: "Kalender",
+      body: "Deine Fahrten in dem Kalender, den du sowieso nutzt. Einmal abonnieren, dann bleibt er von selbst aktuell: Neue Fahrten tauchen auf, verschobene wandern mit, abgesagte sind als abgesagt markiert.",
+      enable: "Kalender-Link erstellen",
+      link: "Dein Kalender-Link",
+      copy: "Link kopieren",
+      copied: "Kopiert",
+      addTo: "Hinzufügen zu",
+      apps: {
+        apple: "Apple Kalender",
+        google: "Google Kalender",
+        outlook: "Outlook.com",
+        outlookWork: "Outlook für Arbeit oder Schule",
+      },
+      googleOnPhone:
+        "Nutzt du Google Kalender? Google fügt einen Kalender per Link nur am Computer hinzu: Link kopieren, dort calendar.google.com öffnen und „Weitere Kalender“ → „Per URL“ wählen.",
+      otherApps:
+        "Andere App? Kopier den Link und such nach „Kalender abonnieren“ oder „Per URL hinzufügen“.",
+      checked: "Zuletzt von einem Kalender abgerufen: {when}.",
+      waiting: "Noch hat kein Kalender den Link abgerufen.",
+      cadence:
+        "Kalender prüfen in ihrem eigenen Takt auf Änderungen – meist innerhalb weniger Stunden, bei Google manchmal erst nach einem Tag.",
+      private:
+        "Wer diesen Link hat, sieht, wann und wo deine Fahrten sind. Behalte ihn für dich – und erstell einen neuen, falls er doch mal in Umlauf gerät.",
+      enabled: "Dein Kalender-Link ist bereit.",
+      cancel: "Behalten",
+      reset: {
+        open: "Neuer Link",
+        title: "Neuen Link erstellen?",
+        body: "Der aktuelle Link funktioniert sofort nicht mehr. Kalender, die ihn nutzen, bleiben stehen, bis du den neuen hinzufügst.",
+        confirm: "Neuen Link erstellen",
+        done: "Neuer Link ist bereit. Füg ihn deinem Kalender noch mal hinzu.",
+      },
+      disable: {
+        open: "Ausschalten",
+        title: "Kalender-Link ausschalten?",
+        body: "Der Link funktioniert nicht mehr, und Kalender, die ihn nutzen, werden nicht mehr aktualisiert. Einen neuen kannst du jederzeit erstellen.",
+        confirm: "Ausschalten",
+        done: "Kalender-Link ausgeschaltet.",
+      },
+      errors: {
+        rateLimited: "Einen Moment, dann versuch es noch mal.",
+        generic: "Das hat nicht geklappt. Versuch es noch mal.",
+      },
+    },
     passkeys: {
       title: "Passkeys",
       body: "Mit einem Passkey meldet dich dein eigenes Gerät an — Fingerabdruck, Gesicht oder PIN. Nichts zu merken, nichts zu tippen.",
