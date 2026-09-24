@@ -9,7 +9,7 @@ Sentry.init({
   }),
   integrations: [
     Sentry.pinoIntegration({
-      log: { levels: ["warn", "error", "fatal"] },
+      log: { levels: ["info", "warn", "error", "fatal"] },
       error: { levels: [] },
     }),
     nodeProfilingIntegration(),

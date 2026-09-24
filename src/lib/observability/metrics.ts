@@ -294,6 +294,9 @@ async function collectOutboxAge() {
 
 export function registerWorkerCollectors(collectors: WorkerCollectors) {
   store.collectors = collectors;
+  for (const channel of ["email", "push"]) {
+    worker.deliveryLatency.zero({ channel });
+  }
 }
 
 export function startMetricsServer(port: number): Server {
