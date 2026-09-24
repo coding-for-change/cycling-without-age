@@ -116,6 +116,15 @@ the issue it belongs to meet without an id of our own. Sentry is initialised in 
 preload (`node --require ./worker-instrument.js worker.js`) rather than a first import, because
 the SDK must instrument pino, Prisma and ioredis before they load.
 
+Session Replay records on error only and never on `/chat` or `/admin/passengers`
+(`REPLAY_FORBIDDEN`). It masks all text and every input, except text that is exactly a
+dictionary string: `maskFn` is `maskUnlessStatic` from `observability/replay-mask.ts`, fed
+lazily with the dictionary for the page's `lang`. A template matches only when its placeholders
+are numbers (`{count}`, `{total}`, …) or `{word}`. Placeholder copy is left out because it
+holds sample names and addresses, and anything inside `input`, `textarea` or
+`[contenteditable]` stays masked even when it matches. A layout bug is visible in a replay;
+a name, an address or a note is not.
+
 Counters and histograms live in `observability/metrics.ts` and are scraped from `/metrics`,
 which both the web process (`src/instrumentation.ts`) and the worker serve through
 `startMetricsServer`; the worker also registers the queue, outbox and worker-up collectors.
@@ -935,7 +944,7 @@ own gate, like `/api/chat/stream`. What makes the address safe to keep showing:
 - The route is untraced in Sentry, and `scrubText` (`lib/observability/errors`) replaces the
   token anywhere it appears — request URL, `contexts.nextjs.request_path` from
   `captureRequestError`, messages, breadcrumbs, logs. Responses are `private, no-cache`,
-  `no-referrer`, `noindex`. Session Replay masks text and inputs but records link `href`s as
+  `no-referrer`, `noindex`. Session Replay masks everything but translated copy and records link `href`s as
   they are, and the subscribe buttons carry the address in theirs — so the whole feed block
   in `calendar-section.tsx` is `data-sentry-block`. The one place the path still lands is the reverse proxy's access
   log (`Caddyfile` → `import access_log`), which is worth a `log_skip /api/calendar/*` on the
