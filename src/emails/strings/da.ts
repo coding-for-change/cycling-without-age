@@ -167,6 +167,20 @@ const da: EmailStrings = {
     someone: "Nogen",
     footer: "Du modtager denne e-mail, fordi push ikke kan nå dig.",
   },
+  calendarFeed: {
+    name: "Cykling uden alder",
+    description: "Dine ture med Cykling uden alder. Holder sig selv opdateret.",
+    pilot: "Pilot · {model}",
+    cancelled: "Aflyst: {title}",
+    models: {
+      event: "Fællestur",
+      pleasure: "Fornøjelsestur",
+      functional: "Ærindetur",
+    },
+    destination: "Til {place}",
+    trishaws: "Rickshaw: {names}",
+    details: "Detaljer i appen: {url}",
+  },
   roles: {
     admin: "afdelingsadmin",
     pilot: "pilot",

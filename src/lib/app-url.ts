@@ -6,6 +6,9 @@ export const APP_URL = (
 
 export const joinUrl = (slug: string) => `${APP_URL}/join/${slug}`;
 
+export const calendarFeedUrl = (token: string) =>
+  `${APP_URL}/api/calendar/${token}.ics`;
+
 export const APP_STORE_URL =
   process.env.NEXT_PUBLIC_APP_STORE_URL ?? "https://apps.apple.com/";
 export const PLAY_STORE_URL =

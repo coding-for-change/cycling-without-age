@@ -5,7 +5,7 @@ import type {
   SamplingContext,
   TransactionEvent,
 } from "@sentry/core";
-import { scrubObject, scrubText } from "./errors";
+import { CALENDAR_FEED_TOKEN, scrubObject, scrubText } from "./errors";
 
 export type Service = "web" | "worker";
 
@@ -15,6 +15,7 @@ export const DEFAULT_TRACE_RATE = 0.2;
 export const SERVER_ACTION_TRACE_RATE = 0.5;
 
 const UNTRACED = [
+  /^\/api\/calendar\//,
   /^\/api\/chat\/stream(?:[/?]|$)/,
   /^\/api\/health(?:[/?]|$)/,
   /^\/metrics(?:[/?]|$)/,
@@ -30,6 +31,9 @@ const SENSITIVE_HEADERS = new Set([
   "set-cookie",
   "x-api-key",
 ]);
+
+export const scrubUrl = (url: string): string =>
+  url.replace(/\?.*$/, "").replace(CALENDAR_FEED_TOKEN, "$1[token]");
 
 const pathOf = (value: string): string => {
   const withoutMethod = value.replace(/^[A-Z]+\s+/, "");
@@ -82,7 +86,7 @@ const scrubRequest = (
   return {
     ...rest,
     ...(headers ? { headers } : {}),
-    ...(rest.url ? { url: rest.url.replace(/\?.*$/, "") } : {}),
+    ...(rest.url ? { url: scrubUrl(rest.url) } : {}),
   };
 };
 

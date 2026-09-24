@@ -82,6 +82,11 @@ export const web = {
     help: "Realtime hub and presence errors by site",
     labelNames: ["site"],
   }),
+  calendarFeedPolls: counter({
+    name: "cwa_calendar_feed_polls_total",
+    help: "Calendar feed requests by outcome",
+    labelNames: ["outcome"],
+  }),
 };
 
 export const worker = {

@@ -13,7 +13,7 @@ import { SaveStatus } from "@/components/save-status";
 import type { Perspective } from "@/lib/access";
 import { PerspectiveRow } from "./perspective-row";
 import { ProfileHeader } from "./profile-header";
-import { ACCOUNT_SECTIONS, AccountSectionBody, sectionTitle } from "./sections";
+import { accountSections, AccountSectionBody, sectionTitle } from "./sections";
 import type { AccountData } from "./types";
 
 export function AccountSheet({
@@ -65,7 +65,7 @@ export function AccountSheet({
             activePerspective={activePerspective}
             onOpenChange={onOpenChange}
           />
-          {ACCOUNT_SECTIONS.map((item) => (
+          {accountSections(data).map((item) => (
             <section
               key={item.key}
               className="grid gap-3 rounded-2xl border border-line p-4"

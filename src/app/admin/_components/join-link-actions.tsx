@@ -1,7 +1,7 @@
 import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { CopyButton } from "./copy-button";
+import { CopyButton } from "@/components/copy-button";
 import { DownloadQrButton } from "../settings/_components/download-qr-button";
 
 export type JoinLinkLabels = {

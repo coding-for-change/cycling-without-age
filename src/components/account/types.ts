@@ -1,3 +1,4 @@
+import type { CalendarFeedState } from "@/features/calendar-feeds/actions";
 import type { Locale as Notation } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
 import type { Locale as UiLocale } from "@/lib/i18n/locales";
@@ -25,6 +26,8 @@ export type AccountData = {
     chatPush: boolean;
     chatEmail: boolean;
   };
+  hasRides: boolean;
+  calendarFeed: CalendarFeedState | null;
   signOutLabel: string;
   cancelLabel: string;
 };

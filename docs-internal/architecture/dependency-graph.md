@@ -50,6 +50,8 @@ graph TD
     ACT12[features/chat/actions]
     RT1[app/api/chat/stream route]
     RT2["app/chat/[id] deep-link route"]
+    RT3["app/api/calendar/[file] feed route"]
+    ACT13[features/calendar-feeds/actions]
     ACT0[app/actions setLocale]
   end
   subgraph Orchestration
@@ -78,6 +80,7 @@ graph TD
     U27[use-cases/chat-notifications/notify-chat-message]
     U28[use-cases/chat-notifications/deliver-chat-push]
     U29[use-cases/chat-notifications/deliver-chat-digest]
+    U30[use-cases/calendar-feed]
   end
   subgraph Worker
     W1["worker/index (dispatcher, sweeper, prune-devices, prune-chat, email + push workers)"]
@@ -94,6 +97,7 @@ graph TD
     F7[features/notifications facade]
     F8[features/chat facade]
     F9[features/rides facade]
+    F10[features/calendar-feeds facade]
     CM1[features/chapters/commands]
     CM2[features/membership/commands]
     CM3[features/profile/commands]
@@ -109,6 +113,7 @@ graph TD
     S7[notifications/services]
     S8[chat/services]
     S9[rides/services]
+    S10[calendar-feeds/services]
     DB[(MySQL via lib/prisma)]
   end
   subgraph Infrastructure
@@ -123,6 +128,8 @@ graph TD
     NP[lib/native/push]
     RTH[lib/realtime hub + presence]
     CRY[lib/crypto/chat-cipher]
+    FSIG[lib/crypto/feed-signature]
+    ICS[lib/ics]
     BA[lib/auth BetterAuth admin API]
     COOKIE[(guest chapter + join preset cookies)]
   end
@@ -332,6 +339,21 @@ graph TD
   F1 --> S1
   F9 --> S9
   S9 --> DB
+
+  ACCT --> F10
+  ACCT --> ACT13
+  ACT13 --> G
+  ACT13 --> F10
+  RT3 --> U30
+  RT3 --> F10
+  U30 --> F10
+  U30 --> F2
+  U30 --> F4
+  U30 --> F9
+  U30 --> ICS
+  F10 --> S10
+  F10 --> FSIG
+  S10 --> DB
   F2 --> S2
   F2 --> F5
   F6 --> F5
@@ -375,6 +397,7 @@ graph TD
 | `chat/oversight` | `chat`, `profile` | Maps an `AdminScope` plus the active scope to chapter ids and names the participants of a direct conversation. It authorises nothing itself — the page runs `requireAdminScope` and re-guards on the conversation's own `chapterId`. |
 | `chat-notifications/notify-chat-message` | `chat`, `profile`, `notifications` (+ `lib/realtime` presence, BullMQ) | The `chat.messageSent` listener. Drops the sender, then per recipient in chunks of 25: mute, `presence.isFocusedOn`, preference, device tokens — a `chat` push job for anyone reachable, a debounced `chat-digest` mail job for anyone not. Writes no `Notification` row: chat never appears in the bell. |
 | `chat-notifications/deliver-chat-push` | `chat`, `profile`, `notifications` (+ `lib/push`) | One banner for one message, re-deciding at wake-up: still unread, still unmuted, still opted in. Titled "Anna Berg" or "Anna Berg · Saturday crew", body stripped of markdown to 140 characters, collapsed per conversation so ten messages are one banner. |
+| `calendar-feed` | `calendar-feeds`, `membership`, `passengers`, `rides` (+ `lib/ics`) | One poll of a subscribed calendar: `calendar-feeds` turns the address into an owner (signature first, then the row, then the ban check), `membership` says where that owner may read rides as a pilot (`/pilot`'s rule: the pilot role somewhere, current membership of the ride's chapter), `passengers` names the riders they manage, and `rides` returns the union with nobody's name in it. The strings come from the owner's stored locale, because a poll carries no session. Called only from the feed route (RT3). |
 | `chat-notifications/deliver-chat-digest` | `chat`, `profile`, `notifications` (+ `lib/mailer`) | One grouped mail for everything unread in one conversation, for a recipient push cannot reach. Re-checks membership, unread, mute, preference and *still no push* before decrypting a single row. |
 
 The chat use cases exist for the reason the manifesto gives: a facade may not call another
@@ -395,6 +418,16 @@ is the boundary when the transport cannot be a Server Action: `GET /api/chat/str
 connection and `/chat/[id]` is a deep link from a push banner or a digest mail. Both guard
 themselves and then call facades, exactly as an `actions.ts` does — `proxy.ts` excludes
 `/api/`, so the stream is its own gate.
+
+`RT3` is the third Route Handler in the Boundary subgraph, for the same reason as the other
+two: a calendar server can only issue a `GET` with the credential in the URL. It checks the file
+name's shape, asks `calendarFeeds.feedKeyOf` (F10) for the signature's verdict *before* the
+per-address rate limit so a forged address never allocates a limiter bucket, delegates to `U30`, and owns only HTTP — the ETag,
+the 304, the private headers. Enabling, resetting and turning off the address (ACT13) touch
+`calendar-feeds` alone, so they are Actions behind `requireAuth` with no use case, and the
+account surface (ACCT) reads `calendarFeeds.getFeed` directly in `loadAccount`, the same way it
+reads `profile`. `FSIG` has one caller, the `calendar-feeds` facade, which is the same standing
+`CRY` has with chat; `ICS` is pure serialisation like `CAL`.
 
 No use case was added for `rides` either. The calendar surfaces — `/admin/rides`,
 `/admin/bikes`, `/pilot` and `/passenger` — are Server Components that read the `rides`
