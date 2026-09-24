@@ -18,8 +18,16 @@ const attach = () => {
   attached = true;
   void keyboard()
     .then(({ Keyboard }) => {
-      void Keyboard.addListener("keyboardWillShow", () => set(true));
-      void Keyboard.addListener("keyboardWillHide", () => set(false));
+      void Keyboard.addListener("keyboardWillShow", () => set(true)).catch(
+        () => {
+          attached = false;
+        },
+      );
+      void Keyboard.addListener("keyboardWillHide", () => set(false)).catch(
+        () => {
+          attached = false;
+        },
+      );
     })
     .catch(() => {
       attached = false;
