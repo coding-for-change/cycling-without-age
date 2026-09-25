@@ -20,7 +20,8 @@ import {
   MessageScrollerViewport,
 } from "@/components/ui/message-scroller";
 import { formatDate, type Locale } from "@/lib/format";
-import { cn, fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import { cn } from "@/lib/utils";
 import { loadMessagesAction, markReadAction } from "../actions";
 import type { ChatMessageView } from "../schemas";
 import { ChatAvatar } from "./chat-avatar";
@@ -184,7 +185,7 @@ export function ConversationThread({
         lastOwn?.id === message.id && seen > 0
           ? conversation.kind === "direct"
             ? strings.thread.seen
-            : fill(strings.thread.seenBy, { count: seen })
+            : formatMessage(strings.thread.seenBy, { count: seen }, language)
           : null,
       seenByEveryone: seen === others.length,
     };
@@ -223,9 +224,11 @@ export function ConversationThread({
               ? peerOnline
                 ? strings.thread.online
                 : strings.thread.offline
-              : fill(strings.newChat.people, {
-                  count: conversation.memberCount,
-                })}
+              : formatMessage(
+                  strings.newChat.people,
+                  { count: conversation.memberCount },
+                  language,
+                )}
           </span>
         </div>
       </header>
@@ -285,9 +288,11 @@ export function ConversationThread({
                       <Marker className="justify-center text-2sm">
                         <MarkerContent className="text-center">
                           {message.meta
-                            ? fill(strings.system[message.meta.type], {
-                                name: nameOf(message.meta.actorUserId),
-                              })
+                            ? formatMessage(
+                                strings.system[message.meta.type],
+                                { name: nameOf(message.meta.actorUserId) },
+                                language,
+                              )
                             : ""}
                         </MarkerContent>
                       </Marker>
@@ -357,6 +362,7 @@ export function ConversationThread({
                 <TypingIndicator
                   names={typingNames}
                   strings={strings.thread}
+                  language={language}
                   showNames={conversation.kind === "group"}
                 />
               ) : null}
@@ -403,6 +409,7 @@ export function ConversationThread({
           strings={strings.composer}
           markdown={markdown}
           errors={strings.errors}
+          language={language}
         />
       )}
     </div>

@@ -184,12 +184,17 @@ the two in full, with page references. Don't cite the book for a rule it doesn't
 
 ## Strings and the character
 
-- **i18n exists**: `src/lib/i18n` is server-only by construction (it reads `next/headers`).
-  `en.ts` is the source of truth for the dictionary *shape*; `da.ts` and `de.ts` are typed
-  against it, so a missing key is a build error. **Pass strings down as props** — a Client
-  Component cannot import the module. German uses Sie-form for passenger-facing copy and
-  du-form for pilot-facing copy, so the same English sentence sometimes needs two German
-  ones. Interpolate with `fill()` from `@/lib/utils`.
+- **i18n exists**: messages live in `src/messages/app/{locale}.json` (ICU), loaded by
+  `getDictionary()` from `src/lib/i18n`, which is server-only by construction (it reads
+  `next/headers`). `en.json` is the source of truth for the *shape*; `da.json`/`de.json` are
+  typed against it and `src/lib/i18n/messages.test.ts` checks keys, arguments and plural
+  categories. **Pass strings down as props** — Client Components get finished strings or raw
+  message slices, never keys, and never use next-intl hooks. German uses Sie-form for
+  passenger-facing copy and du-form for pilot-facing copy, so the same English sentence
+  sometimes needs two German ones. Interpolate with `formatMessage(template, values, locale)`
+  from `@/lib/i18n/format`; counts are ICU plurals (`{count, plural, one {…} other {# …}}`),
+  never `count === 1`. Lists are objects keyed `"1"…"n"`, iterated with `Object.values`.
+  New keys are added to all locale files by hand and pushed with `npm run i18n:push`.
 - Because `getDictionary()` reads cookies, any component that awaits it must sit inside
   `<Suspense>` with a `<Skeleton>` fallback, or `cacheComponents` blocks the route's
   prerender. That is a build constraint, not a preference.

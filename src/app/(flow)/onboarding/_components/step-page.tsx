@@ -5,7 +5,7 @@ import { passengers } from "@/features/passengers";
 import { readNextPath, requireAuth } from "@/lib/auth-guards";
 import { hasAnyAdminScope } from "@/lib/access";
 import { readJoinPreset } from "@/lib/join-preset";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionary, getLocale } from "@/lib/i18n";
 import { toIsoDateUtc } from "@/lib/format";
 import {
   canViewStep,
@@ -17,9 +17,9 @@ import {
   resolveDestination,
 } from "@/use-cases/onboarding-progress";
 import type { StepProgress } from "../../_components/step";
-import { StepSkeleton } from "../../_components/step";
+import { StepSkeleton, withStepLabel } from "../../_components/step";
 import { StepTransition } from "../../_components/step-transition";
-import type { Dictionary } from "@/lib/i18n";
+import type { Dictionary, Locale } from "@/lib/i18n";
 import type { OnboardingRole } from "@/lib/onboarding";
 
 export type StepDefaults = {
@@ -39,6 +39,7 @@ export type StepContext = {
   presetChapterName: string | null;
   claimBanner: string | null;
   dict: Dictionary;
+  locale: Locale;
 };
 
 export function OnboardingStepPage({
@@ -70,9 +71,10 @@ async function Resolve({
   const session = await requireAuth();
   const preset = await readJoinPreset();
 
-  const [state, dict, rider, claimBanner] = await Promise.all([
+  const [state, dict, locale, rider, claimBanner] = await Promise.all([
     getOnboardingState(session.user.id, preset),
     getDictionary(),
+    getLocale(),
     passengers.getOwnPassenger(session.user.id),
     accounts.getClaimBanner(session.user.id),
   ]);
@@ -104,18 +106,20 @@ async function Resolve({
       safety: account?.consentSafetyAt != null,
       notifications: account?.notifyEmail === true,
     },
-    progress: dots(dict, {
+    progress: dots(dict, locale, {
       role: progress.role,
       presetRole: Boolean(state.preset.role),
       presetChapter: Boolean(state.preset.chapterId),
       step,
     }),
     dict,
+    locale,
   });
 }
 
 function dots(
   dict: Dictionary,
+  locale: Locale,
   {
     role,
     presetRole,
@@ -129,5 +133,5 @@ function dots(
   },
 ): StepProgress | null {
   const at = stepProgress({ role, presetRole, presetChapter }, step);
-  return at ? { ...at, label: dict.common.stepProgress } : null;
+  return at ? withStepLabel(at, dict.common.stepProgress, locale) : null;
 }

@@ -14,7 +14,8 @@ import {
 } from "@/features/fleet/actions";
 import type { Dictionary } from "@/lib/i18n";
 import { haptics } from "@/lib/native/haptics";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 
 type Strings = Dictionary["fleet"]["locations"];
 
@@ -23,11 +24,13 @@ export function PoolCode({
   code,
   strings,
   errors,
+  locale,
 }: {
   poolId: string;
   code: string | null;
   strings: Strings;
   errors: Dictionary["fleet"]["common"]["errors"];
+  locale: Locale;
 }) {
   const [pending, startTransition] = useTransition();
 
@@ -40,7 +43,9 @@ export function PoolCode({
         return;
       }
       haptics.success();
-      toast.success(fill(strings.code.regenerated, { code: result.code }));
+      toast.success(
+        formatMessage(strings.code.regenerated, { code: result.code }, locale),
+      );
     });
 
   return (

@@ -107,6 +107,7 @@ async function Trishaws({
             locations={manageable.map(locationOption)}
             defaultLocationId={defaultLocation.id}
             scopeQuery={scopeQuery}
+            locale={language}
             labels={{
               ...strings.create,
               open: strings.new,
@@ -140,6 +141,7 @@ async function Trishaws({
           rows={rows}
           scopeQuery={scopeQuery}
           table={dict.admin.table}
+          locale={language}
           labels={{
             columns: strings.columns,
             noModel: strings.noModel,

@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 import {
   notify,
   type ActionResult,
@@ -38,6 +39,7 @@ export function ConfirmDeleteDialog({
   name,
   footprint,
   labels,
+  locale,
   cancel,
   action,
   onDone,
@@ -46,6 +48,7 @@ export function ConfirmDeleteDialog({
   name: string;
   footprint?: string;
   labels: ConfirmDeleteLabels;
+  locale: Locale;
   cancel: string;
   action: () => Promise<ActionResult>;
   onDone?: () => void;
@@ -63,7 +66,7 @@ export function ConfirmDeleteDialog({
     startTransition(async () => {
       const result = await action();
       notify(result, {
-        done: fill(labels.done, { name }),
+        done: formatMessage(labels.done, { name }, locale),
         errors: labels.errors,
       });
       if (!result.ok) return;
@@ -100,7 +103,7 @@ export function ConfirmDeleteDialog({
           className="grid gap-4"
         >
           <DialogHeader>
-            <DialogTitle>{fill(labels.title, { name })}</DialogTitle>
+            <DialogTitle>{formatMessage(labels.title, { name }, locale)}</DialogTitle>
             <DialogDescription className="text-ink-soft">
               {labels.body}
             </DialogDescription>
@@ -110,7 +113,7 @@ export function ConfirmDeleteDialog({
           ) : null}
           <Field>
             <FieldLabel htmlFor={inputId}>
-              {fill(labels.label, { word: labels.word })}
+              {formatMessage(labels.label, { word: labels.word }, locale)}
             </FieldLabel>
             <Input
               id={inputId}

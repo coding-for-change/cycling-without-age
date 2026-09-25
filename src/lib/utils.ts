@@ -15,13 +15,4 @@ export function getInitials(name: string) {
     .toUpperCase();
 }
 
-export function fill(
-  template: string,
-  values: Record<string, string | number>,
-) {
-  return template.replace(/\{(\w+)\}/g, (match, key: string) =>
-    key in values ? String(values[key]) : match,
-  );
-}
-
 export const firstName = (name: string) => name.trim().split(/\s+/)[0];

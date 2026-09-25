@@ -18,7 +18,8 @@ import {
 import { inviteChapterUser, previewAvatar } from "@/features/accounts/actions";
 import { inviteInput, inviteRole } from "@/features/accounts/schemas";
 import { avatarSeed } from "@/lib/avatar-seed";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
 import { notify, type NotifyLabels } from "@/components/action-feedback";
 import { TextField } from "../../_components/text-field";
@@ -51,11 +52,13 @@ export function InviteDialog({
   chapterName,
   roleLabel,
   labels,
+  locale,
 }: {
   chapterId: string;
   chapterName: string;
   roleLabel: string;
   labels: InviteLabels;
+  locale: Locale;
 }) {
   const formId = useId();
   const [open, setOpen] = useState(false);
@@ -72,7 +75,7 @@ export function InviteDialog({
     startTransition(async () => {
       const result = await inviteChapterUser({ ...data, chapterId });
       notify(result, {
-        done: fill(labels.sent, { name: data.name }),
+        done: formatMessage(labels.sent, { name: data.name }, locale),
         errors: labels.errors,
       });
       if (!result.ok) return;
@@ -99,7 +102,11 @@ export function InviteDialog({
           if (!next) form.reset();
         }}
         title={labels.title}
-        description={fill(labels.description, { chapter: chapterName })}
+        description={formatMessage(
+          labels.description,
+          { chapter: chapterName },
+          locale,
+        )}
         footer={
           <>
             <Button

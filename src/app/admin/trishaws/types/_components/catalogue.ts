@@ -1,9 +1,9 @@
 import type { TrishawTypeRow } from "@/features/fleet";
 import { ownerKey } from "@/features/fleet/schemas";
 import type { ActiveScope, AdminScope, ScopeChapter } from "@/lib/access";
-import { formatPlural, wordsLocale } from "@/lib/format";
+import { wordsLocale } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { scopeCountries } from "../../../scope-countries";
 
 export const SEAT_COUNTS = [1, 2, 3, 4, 5, 6] as const;
@@ -11,7 +11,11 @@ export const SEAT_COUNTS = [1, 2, 3, 4, 5, 6] as const;
 export const seatOptions = (dict: Dictionary, language: string) =>
   SEAT_COUNTS.map((count) => ({
     value: count,
-    label: formatPlural(count, dict.fleet.common.seats, wordsLocale(language)),
+    label: formatMessage(
+      dict.fleet.common.seats,
+      { count },
+      wordsLocale(language),
+    ),
   }));
 
 export const catalogueCountryIds = (
@@ -48,16 +52,17 @@ export function ownerOptions(
   active: ActiveScope,
   chapters: ScopeChapter[],
   dict: Dictionary,
+  locale: string,
 ) {
   const labels = dict.fleet.types.create;
   return [
     ...chapters.map((chapter) => ({
       value: ownerKey({ scope: "chapter", chapterId: chapter.id }),
-      label: fill(labels.ownerChapter, { name: chapter.name }),
+      label: formatMessage(labels.ownerChapter, { name: chapter.name }, locale),
     })),
     ...scopeCountries(scope, active).map((country) => ({
       value: ownerKey({ scope: "country", countryId: country.id }),
-      label: fill(labels.ownerCountry, { name: country.name }),
+      label: formatMessage(labels.ownerCountry, { name: country.name }, locale),
     })),
     ...(scope.global
       ? [{ value: ownerKey({ scope: "global" }), label: labels.ownerGlobal }]

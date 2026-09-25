@@ -6,6 +6,7 @@ import { defaultLocale, locales, LOCALE_COOKIE } from "@/lib/i18n";
 import { NativeBootstrap } from "@/lib/native/native-bootstrap";
 import { NativeBackHandler } from "@/lib/native/native-back-handler";
 import { PushRegistrar } from "@/components/push-registrar";
+import { TranslatorTools } from "@/components/translator-tools";
 import "./globals.css";
 
 const inter = Inter({
@@ -48,6 +49,7 @@ export default function RootLayout({
           <NativeBackHandler />
         </Suspense>
         <PushRegistrar />
+        {process.env.NEXT_PUBLIC_TRANSLATOR_MODE === "1" && <TranslatorTools />}
         {children}
         <Toaster
           mobileOffset={{

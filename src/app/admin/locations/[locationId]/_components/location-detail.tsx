@@ -21,7 +21,9 @@ import {
 import { PhotoGallery } from "@/features/fleet/components/photo-gallery";
 import type { LocationUpdateInput } from "@/features/fleet/schemas";
 import type { Dictionary } from "@/lib/i18n";
-import { cn, fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
+import { cn } from "@/lib/utils";
 import { googleMapsUrl } from "@/lib/geo";
 import {
   PROPERTY_BUTTON,
@@ -88,7 +90,7 @@ export function LocationDetail({
   members: PoolMember[] | null;
   canManage: boolean;
   mapEnabled: boolean;
-  language: string;
+  language: Locale;
   backHref: string;
   strings: Dictionary["fleet"]["locations"];
   common: Dictionary["fleet"]["common"];
@@ -219,6 +221,7 @@ export function LocationDetail({
                   code={location.poolCode}
                   strings={strings}
                   errors={common.errors}
+                  locale={language}
                 />
                 <PoolManageToggle
                   poolId={location.id}
@@ -236,6 +239,7 @@ export function LocationDetail({
                 ) : isPool ? (
                   <ConfirmDeleteDialog
                     name={location.name}
+                    locale={language}
                     labels={{ ...detail.deletePool, errors: common.errors }}
                     cancel={strings.cancel}
                     action={() => archiveLocationAction(location.id)}
@@ -245,12 +249,20 @@ export function LocationDetail({
                   <ConfirmButton
                     icon={<Archive aria-hidden />}
                     label={detail.archive.open}
-                    title={fill(detail.archive.title, { name: location.name })}
+                    title={formatMessage(
+                      detail.archive.title,
+                      { name: location.name },
+                      language,
+                    )}
                     body={detail.archive.body}
                     confirm={detail.archive.submit}
                     cancel={strings.cancel}
                     destructive
-                    done={fill(detail.archive.done, { name: location.name })}
+                    done={formatMessage(
+                      detail.archive.done,
+                      { name: location.name },
+                      language,
+                    )}
                     errors={common.errors}
                     action={() => archiveLocationAction(location.id)}
                     onDone={() => router.push(backHref)}
@@ -267,6 +279,7 @@ export function LocationDetail({
             members={members}
             strings={strings}
             errors={common.errors}
+            locale={language}
           />
         ) : null}
 
@@ -309,6 +322,7 @@ export function LocationDetail({
           {canManage || location.entrancePhotoFileId ? (
             <PhotoGallery
               kind="entrancePhoto"
+              locale={language}
               max={1}
               readOnly={!canManage}
               value={
@@ -377,6 +391,7 @@ export function LocationDetail({
               members={members}
               strings={strings}
               errors={common.errors}
+              locale={language}
             />
           </DetailSection>
         ) : null}

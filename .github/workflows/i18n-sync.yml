@@ -1,0 +1,155 @@
+name: Tolgee Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/messages/**"
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: tolgee-sync
+  cancel-in-progress: false
+
+env:
+  SYNC_BRANCH: i18n/tolgee-sync
+
+jobs:
+  push:
+    name: Push keys to Tolgee
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Decrypt Tolgee key
+        run: |
+          if ! command -v ansible-playbook &> /dev/null; then
+            pipx install ansible-core
+          fi
+          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > .vault_pass
+          cat << 'EOF' > dump.yml
+          - hosts: localhost
+            gather_facts: false
+            vars_files:
+              - .config/secrets.yml
+            tasks:
+              - copy:
+                  dest: decrypted.json
+                  content: >
+                    {{ { "TOLGEE_API_KEY": TOLGEE_API_KEY | default("") } | to_json }}
+                no_log: true
+          EOF
+          ansible-playbook dump.yml --vault-password-file .vault_pass
+          TOLGEE_API_KEY=$(jq -r '.TOLGEE_API_KEY // empty' decrypted.json)
+          if [ -z "$TOLGEE_API_KEY" ]; then echo "TOLGEE_API_KEY missing from the vault"; exit 1; fi
+          echo "::add-mask::$TOLGEE_API_KEY"
+          echo "TOLGEE_API_KEY=$TOLGEE_API_KEY" >> "$GITHUB_ENV"
+          rm -f .vault_pass dump.yml decrypted.json
+
+      - name: Check messages
+        run: npx jest src/lib/i18n
+
+      - name: Push to Tolgee
+        run: npx tolgee push --remove-other-keys
+
+  pull:
+    name: Pull translations into a PR
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Decrypt Tolgee key
+        run: |
+          if ! command -v ansible-playbook &> /dev/null; then
+            pipx install ansible-core
+          fi
+          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > .vault_pass
+          cat << 'EOF' > dump.yml
+          - hosts: localhost
+            gather_facts: false
+            vars_files:
+              - .config/secrets.yml
+            tasks:
+              - copy:
+                  dest: decrypted.json
+                  content: >
+                    {{ { "TOLGEE_API_KEY": TOLGEE_API_KEY | default("") } | to_json }}
+                no_log: true
+          EOF
+          ansible-playbook dump.yml --vault-password-file .vault_pass
+          TOLGEE_API_KEY=$(jq -r '.TOLGEE_API_KEY // empty' decrypted.json)
+          if [ -z "$TOLGEE_API_KEY" ]; then echo "TOLGEE_API_KEY missing from the vault"; exit 1; fi
+          echo "::add-mask::$TOLGEE_API_KEY"
+          echo "TOLGEE_API_KEY=$TOLGEE_API_KEY" >> "$GITHUB_ENV"
+          rm -f .vault_pass dump.yml decrypted.json
+
+      - name: Pull from Tolgee
+        run: |
+          npx tolgee pull
+          npx prettier --write src/messages
+
+      - name: Detect changes
+        id: diff
+        run: |
+          if git diff --quiet -- src/messages; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check messages
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          npx prisma generate
+          npx tsc --noEmit -p .
+          npm test
+
+      - name: Open or update the sync PR
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$SYNC_BRANCH"
+          git add src/messages
+          git commit -m "Sync translations from Tolgee"
+          git push --force origin "$SYNC_BRANCH"
+          PR=$(gh pr list --head "$SYNC_BRANCH" --state open --json number --jq '.[0].number')
+          if [ -z "$PR" ]; then
+            gh pr create --base main --head "$SYNC_BRANCH" \
+              --title "Sync translations from Tolgee" \
+              --body "Translations edited in Tolgee since the last sync. Type check and tests ran in the sync job. Review the wording, then merge."
+          fi

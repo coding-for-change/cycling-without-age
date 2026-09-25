@@ -40,7 +40,8 @@ import {
   type PhotoGalleryLabels,
 } from "@/features/fleet/components/photo-gallery";
 import type { TypeUpdateInput } from "@/features/fleet/schemas";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 import {
   DetailHeader,
   DetailLayout,
@@ -121,7 +122,7 @@ export function TypeDetail({
   canManage: boolean;
   promoteLabel: string | null;
   backHref: string;
-  language: string;
+  language: Locale;
   labels: TypeDetailLabels;
 }) {
   const router = useRouter();
@@ -134,7 +135,7 @@ export function TypeDetail({
       media={
         <FileThumb
           fileId={type.photoFileId}
-          alt={fill(labels.photoAlt, { name: type.name })}
+          alt={formatMessage(labels.photoAlt, { name: type.name }, language)}
           size="lg"
         />
       }
@@ -231,7 +232,11 @@ export function TypeDetail({
                 body={labels.promoteHint}
                 confirm={promoteLabel}
                 cancel={labels.cancel}
-                done={fill(labels.promoteDone, { name: type.name })}
+                done={formatMessage(
+                  labels.promoteDone,
+                  { name: type.name },
+                  language,
+                )}
                 errors={errors}
                 action={() => promoteTypeAction(type.id)}
                 className={PROPERTY_BUTTON}
@@ -253,6 +258,7 @@ export function TypeDetail({
               name={type.name}
               archived={type.archived}
               labels={labels}
+              language={language}
             />
             <p className="text-2sm text-ink-soft">{labels.archiveHint}</p>
           </div>
@@ -261,6 +267,7 @@ export function TypeDetail({
           ) : (
             <ConfirmDeleteDialog
               name={type.name}
+              locale={language}
               labels={{ ...labels.delete, errors }}
               cancel={labels.cancel}
               action={() => deleteTypeAction(type.id)}
@@ -307,9 +314,10 @@ export function TypeDetail({
           {canManage || type.photoFileIds.length ? (
             <PhotoGallery
               kind="typePhoto"
+              locale={language}
               value={type.photoFileIds}
               readOnly={!canManage}
-              alt={fill(labels.photoAlt, { name: type.name })}
+              alt={formatMessage(labels.photoAlt, { name: type.name }, language)}
               labels={labels.gallery}
               onChange={(fileIds) => setTypePhotosAction(type.id, fileIds)}
             />
@@ -418,19 +426,23 @@ function ArchiveButton({
   name,
   archived,
   labels,
+  language,
 }: {
   typeId: string;
   name: string;
   archived: boolean;
   labels: TypeDetailLabels;
+  language: string;
 }) {
   const [pending, startTransition] = useTransition();
   const toggle = () =>
     startTransition(async () => {
       notify(await setTypeArchivedAction(typeId, !archived), {
-        done: fill(archived ? labels.restoredDone : labels.archivedDone, {
-          name,
-        }),
+        done: formatMessage(
+          archived ? labels.restoredDone : labels.archivedDone,
+          { name },
+          language,
+        ),
         errors: labels.field.errors,
       });
     });

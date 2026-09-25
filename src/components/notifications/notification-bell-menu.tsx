@@ -33,7 +33,9 @@ import {
 } from "@/features/notifications/actions";
 import { haptics } from "@/lib/native/haptics";
 import type { Dictionary } from "@/lib/i18n";
-import { cn, fill } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 import { formatBadge, type InboxRow } from "./inbox-row";
 import type { NotificationCategory } from "@/features/notifications";
 
@@ -49,11 +51,13 @@ export function NotificationBellMenu({
   rows,
   unseen,
   strings,
+  locale,
   className,
 }: {
   rows: InboxRow[];
   unseen: number;
   strings: Dictionary["notifications"];
+  locale: Locale;
   className?: string;
 }) {
   const router = useRouter();
@@ -65,7 +69,9 @@ export function NotificationBellMenu({
   const shown = dismissed ? 0 : unseen;
   const badge = formatBadge(shown);
   const label =
-    shown > 0 ? fill(strings.bellWithCount, { count: unseen }) : strings.bell;
+    shown > 0
+      ? formatMessage(strings.bellWithCount, { count: unseen }, locale)
+      : strings.bell;
 
   function handleOpenChange(next: boolean) {
     setOpen(next);

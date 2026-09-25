@@ -44,7 +44,7 @@ import {
 import { formatRelativeTime, wordsLocale } from "@/lib/format";
 import { haptics } from "@/lib/native/haptics";
 import { nativePlatform } from "@/lib/native/platform";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import type { AccountData } from "./types";
 
 type CalendarStrings = AccountData["strings"]["calendar"];
@@ -153,12 +153,16 @@ function FeedDetails({
         footer={
           <p>
             {feed.lastFetchedAt
-              ? fill(strings.checked, {
-                  when: formatRelativeTime(
-                    feed.lastFetchedAt,
-                    wordsLocale(language),
-                  ),
-                })
+              ? formatMessage(
+                  strings.checked,
+                  {
+                    when: formatRelativeTime(
+                      feed.lastFetchedAt,
+                      wordsLocale(language),
+                    ),
+                  },
+                  language,
+                )
               : strings.waiting}{" "}
             {strings.cadence}
           </p>

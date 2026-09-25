@@ -9,9 +9,9 @@ import { damageStateOf } from "@/features/fleet/components/trishaw-badges";
 import { TrishawNoteComposer } from "@/features/fleet/components/trishaw-note-composer";
 import { allowsAdmin } from "@/lib/access";
 import { requireAdminOf } from "@/lib/auth-guards";
-import { formatDate, formatPlural, wordsLocale } from "@/lib/format";
+import { formatDate, wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { trishawHistory } from "@/use-cases/trishaw-history";
 import { BackLink, DetailSection } from "../../../_components/detail-page";
 import { SidePanel } from "../../../_components/side-panel";
@@ -144,11 +144,16 @@ export async function TrishawBody({
         <DamageReportDrawer
           trishawId={trishaw.id}
           trishawName={trishaw.name}
+          locale={language}
           labels={{
             ...common.damage,
             open: common.damage.report,
             title: strings.report.title,
-            body: fill(strings.report.body, { name: trishaw.name }),
+            body: formatMessage(
+              strings.report.body,
+              { name: trishaw.name },
+              words,
+            ),
             gallery: { ...common.gallery, errors: common.errors },
             errors,
           }}
@@ -200,7 +205,11 @@ export async function TrishawBody({
         model={
           type
             ? {
-                seats: formatPlural(type.seats, common.seats, words),
+                seats: formatMessage(
+                  common.seats,
+                  { count: type.seats },
+                  words,
+                ),
                 wheelchair: type.wheelchairAccessible,
                 manualFileId: type.manualFileId,
                 description: type.description,
@@ -227,9 +236,11 @@ export async function TrishawBody({
           manualOpen: common.manual.open,
           noModel: strings.noModel,
           pool: common.pool,
-          since: fill(detail.since, {
-            date: formatDate(trishaw.createdAt, locale),
-          }),
+          since: formatMessage(
+            detail.since,
+            { date: formatDate(trishaw.createdAt, locale) },
+            words,
+          ),
           statuses: common.statuses,
           grounded: common.grounded,
           damaged: common.damaged,

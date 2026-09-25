@@ -162,6 +162,7 @@ export async function ChapterBody({
           backHref={backHref}
           labels={{ ...detail.delete, errors: strings.errors }}
           cancel={strings.cancel}
+          locale={language}
         />
       </div>
     </>

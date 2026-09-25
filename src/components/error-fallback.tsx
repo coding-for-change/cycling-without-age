@@ -5,8 +5,8 @@ import { LifeBuoy, RotateCcw, Unplug } from "lucide-react";
 import * as Sentry from "@sentry/nextjs";
 import { ReportProblemDrawer } from "@/components/report-problem/report-problem-drawer";
 import { Button } from "@/components/ui/button";
-import { errorStrings } from "@/lib/i18n/error-strings";
-import { fill } from "@/lib/utils";
+import { currentErrorLocale, errorStrings } from "@/lib/i18n/error-strings";
+import { formatMessage } from "@/lib/i18n/format";
 
 const NEVER = () => () => {};
 
@@ -17,7 +17,12 @@ export function ErrorFallback({
   error: Error & { digest?: string };
   retry: () => void;
 }) {
-  const strings = useSyncExternalStore(NEVER, errorStrings, errorStrings);
+  const locale = useSyncExternalStore(
+    NEVER,
+    currentErrorLocale,
+    currentErrorLocale,
+  );
+  const strings = errorStrings(locale);
   const [eventId] = useState<string | null>(() =>
     error.digest
       ? null
@@ -44,7 +49,7 @@ export function ErrorFallback({
 
       {reference ? (
         <p className="font-mono text-xs break-all text-ink-faint">
-          {fill(strings.errorId, { id: reference })}
+          {formatMessage(strings.errorId, { id: reference }, locale)}
         </p>
       ) : null}
 

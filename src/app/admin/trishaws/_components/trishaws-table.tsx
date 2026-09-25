@@ -17,6 +17,7 @@ import {
   type DamageState,
 } from "@/features/fleet/components/trishaw-badges";
 import type { TrishawStatusName } from "@/features/fleet/schemas";
+import type { Locale } from "@/lib/i18n/locales";
 
 export type TrishawListRow = {
   id: string;
@@ -54,12 +55,14 @@ export function TrishawsTable({
   filters,
   labels,
   table,
+  locale,
 }: {
   rows: TrishawListRow[];
   scopeQuery: string;
   filters: DataTableFilter[];
   labels: TrishawsTableLabels;
   table: DataTableStrings;
+  locale: Locale;
 }) {
   const href = (row: TrishawListRow) =>
     `/admin/trishaws/${row.id}${scopeQuery}`;
@@ -182,6 +185,7 @@ export function TrishawsTable({
       columns={columns}
       data={rows}
       strings={table}
+      locale={locale}
       filters={filters}
       rowHref={href}
       getRowId={(row) => row.id}

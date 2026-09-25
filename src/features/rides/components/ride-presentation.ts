@@ -1,5 +1,6 @@
 import type { Dictionary } from "@/lib/i18n";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/format";
 import type { RideCalendarRow } from "../facade";
 
 export type CalendarStrings = Dictionary["calendar"];
@@ -72,6 +73,7 @@ export function rideGroundedNote(
   ride: Pick<RideCalendarRow, "trishaws" | "status" | "endsAt">,
   now: Date,
   fleet: RideFleetStrings,
+  words: Locale,
 ): string | null {
   if (ride.status !== "scheduled" || ride.endsAt.getTime() <= now.getTime())
     return null;
@@ -79,8 +81,10 @@ export function rideGroundedNote(
     (trishaw) => trishaw.status !== "active",
   );
   return grounded.length
-    ? fill(fleet.groundedOnRide, {
-        names: grounded.map((trishaw) => trishaw.name).join(", "),
-      })
+    ? formatMessage(
+        fleet.groundedOnRide,
+        { names: grounded.map((trishaw) => trishaw.name).join(", ") },
+        words,
+      )
     : null;
 }

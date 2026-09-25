@@ -18,10 +18,10 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { perspectiveViewerSession } from "@/lib/auth-guards";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionary, getLocale, type Locale } from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
 import { perspectiveChoices } from "@/lib/perspectives";
 import { PERSPECTIVE_HOME, safeNextPath } from "@/lib/redirects";
-import { fill } from "@/lib/utils";
 import { getMemberHome } from "@/use-cases/member-home";
 import {
   primaryAction,
@@ -37,9 +37,10 @@ export async function MemberSidebar({
 }: {
   perspective: MemberPerspective;
 }) {
-  const [session, dict, head, account] = await Promise.all([
+  const [session, dict, locale, head, account] = await Promise.all([
     perspectiveViewerSession(perspective),
     getDictionary(),
+    getLocale(),
     headers(),
     loadAccount(),
   ]);
@@ -53,7 +54,7 @@ export async function MemberSidebar({
   const chapterNames = home?.chapters.map((chapter) => chapter.name) ?? [];
 
   const subtitle = session
-    ? chapterSubtitle(chapterNames, dict.member.perspective)
+    ? chapterSubtitle(chapterNames, dict.member.perspective, locale)
     : dict.member.guest.subtitle;
 
   const action = primaryAction(perspective);
@@ -141,8 +142,9 @@ export async function MemberSidebar({
 function chapterSubtitle(
   names: string[],
   strings: { chapters: string; noChapter: string },
+  locale: Locale,
 ) {
   if (names.length === 0) return strings.noChapter;
   if (names.length === 1) return names[0];
-  return fill(strings.chapters, { count: names.length });
+  return formatMessage(strings.chapters, { count: names.length }, locale);
 }

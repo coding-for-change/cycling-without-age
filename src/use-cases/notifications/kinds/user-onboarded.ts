@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { chapters } from "@/features/chapters";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { defineKind } from "./types";
 import { ORG_NAME } from "@/lib/brand";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
@@ -29,20 +29,23 @@ export const userOnboarded = defineKind({
     };
   },
   href: (event) => PERSPECTIVE_HOME[event.role],
-  message: ({ chapterName, role, welcomeNote }, strings) => {
+  message: ({ chapterName, role, welcomeNote }, strings, locale) => {
     const copy =
       role === "pilot" ? strings.welcomePilot : strings.welcomePassenger;
     const chapter = chapterName ?? ORG_NAME;
     return {
       subject: copy.subject,
-      title: fill(copy.title, { chapter }),
+      title: formatMessage(copy.title, { chapter }, locale),
       preview: copy.preview,
       heading: copy.heading,
-      body: fill(copy.intro, { chapter }),
+      body: formatMessage(copy.intro, { chapter }, locale),
       note: welcomeNote
-        ? { heading: fill(copy.noteHeading, { chapter }), text: welcomeNote }
+        ? {
+            heading: formatMessage(copy.noteHeading, { chapter }, locale),
+            text: welcomeNote,
+          }
         : null,
-      steps: { heading: copy.howHeading, items: copy.how },
+      steps: { heading: copy.howHeading, items: Object.values(copy.how) },
       cta: copy.cta,
       footer: copy.footer,
       template: "welcome",

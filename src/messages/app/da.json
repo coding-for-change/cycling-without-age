@@ -1,0 +1,1792 @@
+{
+  "account": {
+    "calendar": {
+      "addTo": "Tilføj til",
+      "apps": {
+        "apple": "Apple Kalender",
+        "google": "Google Kalender",
+        "outlook": "Outlook.com",
+        "outlookWork": "Outlook til arbejde eller skole"
+      },
+      "body": "Dine ture i den kalender, du allerede bruger. Abonnér én gang, så holder den sig selv opdateret: nye ture dukker op, flyttede flytter med, og aflyste bliver markeret.",
+      "cadence": "Kalendere tjekker for ændringer i deres eget tempo – som regel inden for få timer, hos Google nogle gange først efter en dag.",
+      "cancel": "Behold det",
+      "checked": "Sidst hentet af en kalender {when}.",
+      "copied": "Kopieret",
+      "copy": "Kopiér link",
+      "disable": {
+        "body": "Linket holder op med at virke, og kalendere, der bruger det, bliver ikke længere opdateret. Du kan altid lave et nyt.",
+        "confirm": "Slå fra",
+        "done": "Kalenderlinket er slået fra.",
+        "open": "Slå fra",
+        "title": "Slå dit kalenderlink fra?"
+      },
+      "enable": "Opret mit kalenderlink",
+      "enabled": "Dit kalenderlink er klar.",
+      "errors": {
+        "generic": "Det virkede ikke. Prøv igen.",
+        "rateLimited": "Vent et øjeblik, og prøv igen."
+      },
+      "googleOnPhone": "Bruger du Google Kalender? Google kan kun tilføje en kalender fra et link på en computer: kopiér linket, åbn calendar.google.com dér, og vælg Andre kalendere → Fra webadresse.",
+      "link": "Dit kalenderlink",
+      "otherApps": "En anden app? Kopiér linket, og kig efter “Abonnér på kalender” eller “Tilføj fra URL”.",
+      "private": "Alle med dette link kan se, hvornår og hvor dine ture er. Hold det for dig selv, og lav et nyt, hvis det slipper ud.",
+      "reset": {
+        "body": "Det nuværende link holder op med at virke med det samme. Kalendere, der bruger det, opdateres ikke, før du tilføjer det nye.",
+        "confirm": "Lav nyt link",
+        "done": "Nyt link klar. Tilføj det til din kalender igen.",
+        "open": "Nyt link",
+        "title": "Lav et nyt link?"
+      },
+      "title": "Kalender",
+      "waiting": "Ingen kalender har hentet linket endnu."
+    },
+    "danger": {
+      "body": "Logger du ud, bliver alt stående. Sletter du, følger din konto, dine afdelinger og din historik med — ture, der allerede er kørt, bliver stående.",
+      "delete": {
+        "blocked": "Du står stadig for en afdeling eller et land. Giv det videre til en anden først — så er knappen din.",
+        "body": "Din konto, dine roller, dine ansøgninger og din historik forsvinder. Ture, der allerede er kørt, bliver stående.",
+        "done": "Din konto er væk. Tak for vinden i håret.",
+        "errors": {
+          "generic": "Det virkede ikke. Prøv igen.",
+          "handOverAdmin": "Giv din adminrolle videre først.",
+          "rateLimited": "Vent et øjeblik, og prøv igen."
+        },
+        "label": "Skriv {word} for at bekræfte",
+        "open": "Slet konto",
+        "submit": "Slet konto",
+        "title": "Slet din konto for altid?",
+        "word": "DELETE"
+      },
+      "title": "Log ud eller slet"
+    },
+    "description": "Dine oplysninger, dit sprog, hvordan vi får fat i dig, og hvordan du logger ind.",
+    "field": {
+      "edit": "Ret",
+      "errors": {
+        "generic": "Det virkede ikke. Prøv igen."
+      },
+      "invalid": "Det ser ikke rigtigt ud.",
+      "saved": "Gemt.",
+      "undo": "Fortryd",
+      "undone": "Sat tilbage."
+    },
+    "language": {
+      "body": "E-mails og beskeder kommer også på dette sprog.",
+      "title": "Sprog"
+    },
+    "notifications": {
+      "body": "Det vigtigste — en tur, der er bekræftet, en afdeling, der svarer — når altid frem til dig. Her er resten.",
+      "chat": {
+        "email": {
+          "hint": "Kun når telefonen ikke kan nås: én mail med det, du gik glip af.",
+          "label": "Beskeder på mail"
+        },
+        "push": {
+          "hint": "Et prik, når nogen skriver — medmindre du allerede har samtalen åben.",
+          "label": "Beskeder"
+        }
+      },
+      "email": {
+        "hint": "Samme nyt, i din indbakke.",
+        "label": "E-mail"
+      },
+      "permissionDenied": "Din telefon blokerer for beskeder. Tillad dem under Indstillinger, og prøv så igen.",
+      "push": {
+        "hint": "Et prik på din telefon, når der sker noget.",
+        "label": "Push"
+      },
+      "title": "Beskeder"
+    },
+    "passkeys": {
+      "add": "Tilføj en adgangsnøgle",
+      "added": "Adgangsnøgle tilføjet.",
+      "back": "Tilbage",
+      "body": "Med en adgangsnøgle logger din egen enhed dig ind — fingeraftryk, ansigt eller pinkode. Intet at huske, intet at skrive.",
+      "empty": "Ingen adgangsnøgler endnu. Tilføj en, så husker enheden dig.",
+      "failed": "Det virkede ikke. Prøv igen.",
+      "nameLabel": "Giv adgangsnøglen et navn (valgfrit)",
+      "namePlaceholder": "Navn (valgfrit)",
+      "remove": "Fjern",
+      "removeBody": "For at logge ind på den enhed skal du så bruge en anden adgangsnøgle eller en kode på e-mail eller sms.",
+      "removeConfirm": "Fjern {name}?",
+      "signInAgain": "Der er gået et stykke tid. Log ind igen, før du tilføjer en adgangsnøgle.",
+      "signInAgainAction": "Log ind igen",
+      "synced": "Synkroniseret",
+      "thisDevice": "Denne enhed",
+      "title": "Adgangsnøgler",
+      "unnamed": "Adgangsnøgle"
+    },
+    "perspective": {
+      "title": "Du ser som"
+    },
+    "profile": {
+      "birthDate": "Fødselsdag",
+      "birthDatePlaceholder": "Tilføj din fødselsdag",
+      "gender": "Køn",
+      "genderPlaceholder": "Ikke angivet",
+      "genders": {
+        "female": "Kvinde",
+        "male": "Mand",
+        "other": "Andet"
+      },
+      "invalidBirthDate": "Den fødselsdag ser ikke rigtig ud. Tjek årstallet.",
+      "name": "Navn",
+      "namePlaceholder": "Dit navn",
+      "title": "Profil"
+    },
+    "status": {
+      "saved": "Gemt {when}",
+      "saving": "Gemmer"
+    },
+    "support": {
+      "body": "Fortæl hvad der skete, så kigger vi på det. Ingen skærmbilleder nødvendige — de tekniske detaljer følger med af sig selv.",
+      "drawer": {
+        "cancel": "Annuller",
+        "description": "En sætning eller to er rigeligt. Den går direkte til dem, der kan rette det.",
+        "done": "Tak. Det hjælper mere, end du tror.",
+        "failed": "Det blev ikke sendt. Prøv igen om lidt.",
+        "placeholder": "Jeg trykkede Gem på min profil, og så blev skærmen tom.",
+        "submit": "Send",
+        "title": "Hvad skete der?",
+        "tooShort": "Et par ord mere, tak — mindst ti tegn."
+      },
+      "open": "Meld et problem",
+      "title": "Noget der driller?"
+    },
+    "title": "Konto"
+  },
+  "admin": {
+    "chapters": {
+      "cancel": "Annuller",
+      "create": {
+        "addCountry": "Tilføj {country}",
+        "address": {
+          "hint": "Skriv en adresse eller plejehjemmets navn.",
+          "label": "Find adressen",
+          "noResults": "Intet fundet. Prøv vejen eller byen.",
+          "placeholder": "Vej, plejehjem eller by",
+          "searching": "Søger"
+        },
+        "changeAddress": "Søg igen",
+        "counter": "{count} / {max}",
+        "countryAdded": "{country} er med i bevægelsen.",
+        "countryDetected": "Fundet ud fra adressen.",
+        "countryMissing": "{country} er ikke i systemet endnu.",
+        "done": {
+          "another": "Start en mere",
+          "body": "Print plakaten til plejehjemmets væg, eller åbn afdelingen og tilføj dens folk.",
+          "open": "Åbn afdelingen",
+          "title": "{name} er på kortet."
+        },
+        "dragHint": "Træk i nålen for at finjustere. Adressen følger med.",
+        "intro": "Et navn og en adresse er alt, der skal til. Resten kan komme senere.",
+        "logoPreview": "Sådan kommer det til at se ud",
+        "needCountryAdmin": "Bed en superadmin om at tilføje {country} først.",
+        "optional": "Valgfrit",
+        "overlap": "Overlapper med {name}, {distance} væk.",
+        "pending": "Opretter",
+        "radius": "Hvor langt den kører",
+        "radiusValue": "{distance} omkring nålen",
+        "shortcut": "⌘↵",
+        "slugChecking": "Tjekker",
+        "slugDone": "Færdig",
+        "slugEdit": "Ret",
+        "slugFree": "Ledig",
+        "slugTaken": "Taget",
+        "submit": "Opret afdeling",
+        "webAddress": "Webadresse"
+      },
+      "created": "{name} er på kortet.",
+      "detail": {
+        "about": "Om afdelingen",
+        "back": "Tilbage til afdelinger",
+        "country": "Land",
+        "createdLabel": "Startet",
+        "delete": {
+          "body": "Medlemmer, passagerer og åbne ansøgninger følger med. Ture, der allerede er kørt, bliver stående.",
+          "done": "{name} er væk.",
+          "footprint": "{members} medlemmer · {passengers} passagerer · {pending} venter",
+          "label": "Skriv {word} for at bekræfte",
+          "open": "Slet afdeling",
+          "submit": "Slet afdeling",
+          "title": "Slet {name} for altid?",
+          "word": "DELETE"
+        },
+        "edit": "Ret",
+        "history": "Historik",
+        "historyEmpty": "Intet at fortælle endnu. Hver ændring af afdelingen lander her.",
+        "invalidUrl": "Det er ikke en webadresse.",
+        "joinLink": "Tilmeldingslink",
+        "location": "Placering",
+        "members": "Medlemmer",
+        "passengers": "Passagerer",
+        "pending": "Venter på godkendelse",
+        "people": "Mennesker",
+        "placeholders": {
+          "careHome": "Tilføj plejehjemmet",
+          "description": "Fortæl, hvad afdelingen handler om",
+          "logo": "Indsæt webadressen til et logo"
+        },
+        "properties": "Egenskaber",
+        "radius": "Hvor langt den kører",
+        "saved": "Gemt {when}",
+        "saving": "Gemmer",
+        "slug": "Webadresse",
+        "started": "Startet {date}",
+        "timeZone": "Tidszone",
+        "timeZoneHint": "Turenes tidspunkter vises i denne zone. Den følger nålen, medmindre du vælger den her.",
+        "undo": "Fortryd",
+        "undone": "Sat tilbage."
+      },
+      "edit": "Rediger afdeling",
+      "empty": "Ingen afdelinger endnu. Start den første.",
+      "errors": {
+        "generic": "Det virkede ikke. Prøv igen.",
+        "slugTaken": "Den webadresse er taget. Vælg en anden."
+      },
+      "fields": {
+        "address": "Adresse",
+        "careHomeName": "Plejehjem",
+        "city": "By",
+        "country": "Land",
+        "description": "Beskrivelse",
+        "latitude": "Breddegrad",
+        "location": "Placering",
+        "logo": "Logoets webadresse",
+        "longitude": "Længdegrad",
+        "name": "Afdelingens navn",
+        "serviceRadiusKm": "Hvor langt den kører (km)",
+        "slug": "Webadresse"
+      },
+      "mapLabel": "Kort over afdelinger",
+      "mapUnavailable": "Kortet mangler en Mapbox-nøgle. Sæt NEXT_PUBLIC_MAPBOX_TOKEN.",
+      "new": "Ny afdeling",
+      "open": "Åbn afdelingen",
+      "save": "Gem afdeling",
+      "saved": "Gemt.",
+      "views": {
+        "list": "Liste",
+        "map": "Kort"
+      }
+    },
+    "commands": {
+      "chapterMap": "Vis afdelinger på kortet",
+      "dialogDescription": "Hop til en side, skift perspektiv eller kør en handling fra tastaturet.",
+      "dialogTitle": "Kommandopalette",
+      "empty": "Der er ikke noget med det navn.",
+      "groups": {
+        "account": "Konto",
+        "create": "Opret",
+        "navigate": "Gå til",
+        "perspective": "Perspektiv",
+        "scope": "Omfang"
+      },
+      "hint": "til alt",
+      "joinPool": "Bliv en del af en rickshawpulje",
+      "language": "Sprog: {name}",
+      "newChapter": "Start en ny afdeling",
+      "newCountry": "Tilføj et nyt land",
+      "newLocation": "Tilføj en lokation",
+      "newPool": "Opret en rickshawpulje",
+      "newRide": "Start en ny tur",
+      "newTrishaw": "Tilføj en rickshaw",
+      "newTrishawType": "Tilføj en rickshawmodel",
+      "open": "Åbn kommandopaletten",
+      "placeholder": "Søg efter en side eller en handling",
+      "signOut": "Log ud",
+      "toggleSidebar": "Vis eller skjul sidepanelet",
+      "viewAsAdmin": "Se som admin",
+      "viewAsPassenger": "Se som passager",
+      "viewAsPilot": "Se som pilot"
+    },
+    "countries": {
+      "admins": "Landeadmins",
+      "appoint": "Tilføj en landeadmin",
+      "appointBody": "De skal have logget ind én gang.",
+      "appointed": "{email} står for landet nu.",
+      "appointLabel": "E-mailadresse",
+      "appointPlaceholder": "navn@eksempel.dk",
+      "appointShort": "Tilføj admin",
+      "cancel": "Annuller",
+      "confirmRemoveAdmin": "Fjern {name} som landeadmin?",
+      "created": "{name} er med i bevægelsen.",
+      "delete": {
+        "body": "Alle afdelinger i landet følger med — deres medlemmer, passagerer og åbne ansøgninger også. Ture, der allerede er kørt, bliver stående.",
+        "done": "{name} er væk.",
+        "footprint": "{chapters} afdelinger · {members} medlemmer · {passengers} passagerer",
+        "label": "Skriv {word} for at bekræfte",
+        "open": "Slet land",
+        "submit": "Slet land",
+        "title": "Slet {name} for altid?",
+        "word": "DELETE"
+      },
+      "edit": "Rediger land",
+      "empty": "Ingen lande endnu.",
+      "errors": {
+        "codeTaken": "Den landekode er taget.",
+        "generic": "Det virkede ikke. Prøv igen.",
+        "noAccount": "Ingen med den mailadresse har en konto endnu."
+      },
+      "fields": {
+        "code": "Landekode",
+        "name": "Landets navn"
+      },
+      "nameHint": "Sådan står det i sidepanelet og på afdelingernes sider.",
+      "new": "Nyt land",
+      "pick": {
+        "empty": "Intet land med det navn.",
+        "label": "Land",
+        "placeholder": "Skriv et land"
+      },
+      "removeAdmin": "Fjern {name}",
+      "save": "Gem land",
+      "saved": "Gemt."
+    },
+    "history": {
+      "accountClaimed": "Personen overtog selv kontoen",
+      "accountCreated": "{actor} oprettede denne konto",
+      "applicationApproved": "{actor} godkendte ansøgningen",
+      "applicationRejected": "{actor} sagde nej til ansøgningen",
+      "applicationSubmitted": "{actor} bad om at være pilot her",
+      "change": "{from} → {to}",
+      "chapterCreated": "{actor} satte afdelingen på kortet",
+      "chapterDeleted": "{actor} slettede afdelingen {name}",
+      "chapterUpdated": "{actor} ændrede {field}",
+      "countryAdminAppointed": "{actor} gjorde personen til landeadmin",
+      "countryAdminRemoved": "{actor} fjernede personen som landeadmin",
+      "countryDeleted": "{actor} slettede landet {name}",
+      "emailSent": "Der gik en e-mail ud — {template}",
+      "fields": {
+        "careHomeName": "plejehjemmet",
+        "city": "byen",
+        "description": "beskrivelsen",
+        "location": "placeringen",
+        "logo": "logoet",
+        "name": "navnet",
+        "serviceRadiusKm": "rækkevidden"
+      },
+      "invited": "{actor} sendte en invitation",
+      "memberRemoved": "{actor} fjernede personen fra afdelingen",
+      "nothing": "intet",
+      "roleGranted": "{actor} gav en ny rolle",
+      "roleRevoked": "{actor} tog en rolle tilbage",
+      "showMore": "Vis flere",
+      "someone": "Nogen",
+      "templates": {
+        "applicationSubmitted": "Ny ansøgning",
+        "approval": "Godkendt",
+        "countryAdminAppointed": "Landeadmin",
+        "countryAdminRemoved": "Landeadmin trådt tilbage",
+        "damageReported": "Skade meldt",
+        "invite": "Invitation",
+        "memberJoined": "Nyt medlem",
+        "poolAccessDecided": "Puljesvar",
+        "poolAccessRequested": "Puljeanmodning",
+        "rejection": "Afvist",
+        "roleChanged": "Rolleændring",
+        "welcome": "Velkommen"
+      },
+      "you": "Du"
+    },
+    "members": {
+      "actions": "Handlinger for {name}",
+      "columns": {
+        "joined": "Med siden",
+        "person": "Person",
+        "phone": "Telefon",
+        "role": "Rolle"
+      },
+      "demote": "Fjern adminrettigheder",
+      "demoteBody": "Personen bliver i afdelingen — beslutter blot ikke længere for den.",
+      "demoted": "{name} er ikke længere admin.",
+      "demoteTitle": "Fjern {name}s adminrettigheder?",
+      "empty": "Ingen medlemmer endnu. Godkend en pilotansøgning, og det første navn står her.",
+      "errors": {
+        "alreadyDecided": "Den har nogen allerede besluttet.",
+        "generic": "Det virkede ikke. Prøv igen.",
+        "lastAdmin": "En afdeling kan ikke miste sin sidste admin. Tilføj en mere først.",
+        "self": "Du kan ikke ændre din egen rolle. Bed en anden admin."
+      },
+      "history": "Historik",
+      "invite": {
+        "cancel": "Annuller",
+        "description": "Personen får en e-mail med et link til {chapter}.",
+        "email": "E-mailadresse",
+        "emailPlaceholder": "anna@eksempel.dk",
+        "errors": {
+          "generic": "Det virkede ikke. Prøv igen.",
+          "invalid": "Tjek navnet og e-mailadressen."
+        },
+        "name": "Personens navn",
+        "namePlaceholder": "Anna Jensen",
+        "open": "Inviter nogen",
+        "role": {
+          "admin": "Afdelingsadmin",
+          "pilot": "Pilot"
+        },
+        "roleHint": {
+          "admin": "Driver afdelingen, godkender nye piloter og inviterer folk.",
+          "pilot": "Træder i pedalerne og tager passagerer med på en tur."
+        },
+        "sending": "Sender…",
+        "sent": "Invitation sendt til {name}.",
+        "submit": "Send invitationen",
+        "title": "Inviter nogen"
+      },
+      "promote": "Gør til afdelingsadmin",
+      "promoteBody": "Så kan personen godkende piloter, booke ture og se alles oplysninger.",
+      "promoted": "{name} er afdelingsadmin.",
+      "promoteTitle": "Gør {name} til afdelingsadmin?",
+      "remove": "Fjern fra afdelingen",
+      "removeBody": "Adgangen til afdelingen forsvinder. De ture, der er kørt, bliver stående.",
+      "removed": "{name} er ude af afdelingen.",
+      "removeTitle": "Fjern {name} fra afdelingen?",
+      "title": "Alle i afdelingen"
+    },
+    "nav": {
+      "bikes": "Rickshawer",
+      "chapters": "Afdelinger",
+      "chat": "Beskeder",
+      "countries": "Lande",
+      "help": "Få hjælp",
+      "locations": "Lokationer",
+      "members": "Medlemmer",
+      "overview": "Overblik",
+      "passengers": "Passagerer",
+      "reports": "Rapporter",
+      "rides": "Ture",
+      "settings": "Indstillinger"
+    },
+    "navGroups": {
+      "footer": "Konto",
+      "main": "Afdelingens arbejde",
+      "organisation": "Organisation"
+    },
+    "navLabel": "Adminafsnit",
+    "newRide": "Ny tur",
+    "openMenu": "Åbn menu",
+    "pages": {
+      "bikes": {
+        "body": "Hver rickshaw, din afdeling passer på, hvem der sidst havde den ude, og hvornår den skal til service igen.",
+        "title": "Rickshawer"
+      },
+      "chapters": {
+        "body": "De afdelinger, du passer på, og dem du kan starte. En afdeling er et sted, et plejehjem og de frivillige omkring det.",
+        "title": "Afdelinger"
+      },
+      "countries": {
+        "body": "Alle lande i bevægelsen og de admins, der driver dem. Det er kun en superadmin, der ser dette.",
+        "title": "Lande"
+      },
+      "help": {
+        "body": "Guides til afdelingsadmins — og en vej til et menneske, når en guide ikke er nok.",
+        "title": "Få hjælp"
+      },
+      "locations": {
+        "body": "Hvor jeres rickshawer står, hvordan man kommer ind, og de puljer jeres afdeling deler.",
+        "title": "Lokationer"
+      },
+      "members": {
+        "body": "Piloter, afdelingsadmins og dem, der venter på at blive godkendt. Godkendelserne sker lige her.",
+        "title": "Medlemmer"
+      },
+      "overview": {
+        "body": "Så snart der bookes ture, lander ugen der kommer her — dagens ture, piloterne der kører dem, og alt det, der stadig venter på dig.",
+        "title": "Overblik"
+      },
+      "passengers": {
+        "body": "De mennesker, din afdeling kører med — også dem, som en pårørende eller en plejer booker for.",
+        "title": "Passagerer"
+      },
+      "reports": {
+        "body": "Kørte ture, frivillige timer, tilbagelagte kilometer — de tal, en afdeling har brug for, når nogen spørger, hvad den egentlig laver.",
+        "title": "Rapporter"
+      },
+      "rides": {
+        "body": "Alle ture, din afdeling har booket, fra anmodningen til farvellet ved døren. Der er ikke booket noget endnu.",
+        "title": "Ture"
+      },
+      "settings": {
+        "body": "Hvor langt din afdeling kører, hvem man kan få fat på, og oplysningerne på afdelingens egen side.",
+        "title": "Indstillinger"
+      }
+    },
+    "passengers": {
+      "add": {
+        "added": "{name} står på listen.",
+        "another": "Tilføj en mere lige efter",
+        "anotherHint": "Holder formularen åben til den næste beboer.",
+        "body": "Til den, der melder sig ved døren i stedet for på en telefon. Personen kan selv overtage kontoen senere med samme e-mail eller nummer.",
+        "contact": "E-mail eller telefonnummer",
+        "errors": {
+          "exists": "Den e-mail eller det nummer har allerede en konto.",
+          "generic": "Det virkede ikke. Prøv igen.",
+          "invalid": "Tjek oplysningerne — noget passer ikke helt."
+        },
+        "helper": "Nogen hjælper denne person",
+        "helperContact": "Hjælperens e-mail eller telefonnummer",
+        "helperIsAccountHolder": "Kontoen kommer til at tilhøre {helper}, som står for {passenger}.",
+        "helperName": "Hjælperens navn",
+        "helperRelationship": "Relation",
+        "open": "Tilføj en passager",
+        "submit": "Tilføj passager",
+        "title": "Tilføj en passager"
+      },
+      "columns": {
+        "born": "Født",
+        "chapter": "Afdeling",
+        "joined": "Med siden",
+        "name": "Navn"
+      },
+      "empty": "Ingen passagerer endnu. Tilføj den første, eller vent på, at nogen melder sig fra afdelingens side.",
+      "pickChapter": "Vælg én afdeling for at tilføje en passager til den."
+    },
+    "person": {
+      "back": "Tilbage til medlemmerne",
+      "contact": "Kontakt",
+      "delete": {
+        "body": "Kontoen, rollerne, ansøgningerne og historikken forsvinder. De ture, der er kørt, bliver stående.",
+        "done": "{name} er slettet.",
+        "errors": {
+          "generic": "Det virkede ikke. Prøv igen.",
+          "self": "Du kan ikke slette din egen konto her."
+        },
+        "label": "Skriv {word} for at bekræfte",
+        "open": "Slet bruger",
+        "submit": "Slet bruger",
+        "title": "Slet {name} for altid?",
+        "word": "DELETE"
+      },
+      "history": "Historik",
+      "historyEmpty": "Der er ikke noget at fortælle endnu. Hver godkendelse, hver rolleændring og hver e-mail lander her.",
+      "joined": "Med siden {date}",
+      "noEmail": "Ingen e-mailadresse",
+      "noPhone": "Intet telefonnummer",
+      "noRoles": "Ingen rolle endnu",
+      "roles": "Roller"
+    },
+    "perspectives": {
+      "admin": "Admin",
+      "passenger": "Passager",
+      "pilot": "Pilot"
+    },
+    "requests": {
+      "approve": "Godkend",
+      "approveBody": "Personen får en e-mail med de tre skridt til sin første tur.",
+      "approved": "{name} er om bord.",
+      "approveTitle": "Tag {name} om bord?",
+      "body": "Alle her har bedt om at være pilot i din afdeling. Læs, beslut — og de hører fra os i samme minut.",
+      "columns": {
+        "applied": "Spurgte",
+        "chapter": "Afdeling",
+        "person": "Person"
+      },
+      "count": "{count} venter",
+      "empty": "Der venter ingen. Den næste, der spørger, lander lige her.",
+      "noteLabel": "En besked til {name} (valgfri)",
+      "notePlaceholder": "En træningsdato, et telefonnummer, et venligt ord.",
+      "reject": "Sig nej",
+      "rejectBody": "Personen får en e-mail og kan spørge en anden afdeling.",
+      "rejected": "{name} har fået det at vide.",
+      "rejectTitle": "Sig nej til {name}?",
+      "title": "Venter på godkendelse"
+    },
+    "roles": {
+      "chapterAdmin": "Afdelingsadmin",
+      "countryAdmin": "Landeadmin",
+      "passenger": "Passager",
+      "pilot": "Pilot",
+      "superadmin": "Superadmin"
+    },
+    "scope": {
+      "all": "Alle afdelinger",
+      "allInCountry": "Alle afdelinger i {country}",
+      "label": "Område",
+      "perspective": "Perspektiv",
+      "switchLabel": "Skift perspektiv eller afdeling"
+    },
+    "settings": {
+      "joinLink": {
+        "body": "Alle, der åbner linket, lander på afdelingens side og kan melde sig derfra. Print plakaten til opslagstavlen på plejehjemmet.",
+        "copied": "Link kopieret.",
+        "copy": "Kopier link",
+        "downloadPng": "Gem QR-kode som PNG",
+        "poster": "Print plakaten",
+        "title": "Tilmeldingslink"
+      },
+      "notifications": {
+        "applicationPush": {
+          "hint": "Slår du det fra, venter kortet stadig i indbakken — og mailen følger to minutter senere, medmindre nogen allerede har læst den i appen.",
+          "label": "Pilotansøgninger vibrerer i lommen"
+        },
+        "body": "Hvem der hører om et nyt ansigt, og hvad afdelingens post siger, når den lander.",
+        "damagePush": {
+          "hint": "En pilot melder en bremse, der knirker, eller en punktering. Skader, der tager rickshawen ud af brug, når altid alle admins, uanset denne indstilling.",
+          "label": "Også mindre skader når frem til dig"
+        },
+        "field": {
+          "edit": "Ret",
+          "errors": {
+            "generic": "Det virkede ikke. Prøv igen."
+          },
+          "invalid": "Det ser ikke rigtigt ud.",
+          "saved": "Gemt.",
+          "undo": "Fortryd",
+          "undone": "Sat tilbage."
+        },
+        "memberJoined": {
+          "hint": "Et kort venter i admin-indbakken, hver gang en ny passager kommer til.",
+          "label": "Nogen melder sig til afdelingen"
+        },
+        "replyTo": {
+          "hint": "Svarer nogen på en mail fra afdelingen, lander svaret her.",
+          "invalid": "Det er ikke en e-mailadresse.",
+          "label": "Svaradresse",
+          "placeholder": "hej@eksempel.dk"
+        },
+        "status": {
+          "saved": "Gemt {when}",
+          "saving": "Gemmer"
+        },
+        "title": "Beskeder",
+        "welcomeNote": {
+          "hint": "Et par linjer fra dig, fremhævet i velkomstmailen, som alle nye piloter og passagerer får.",
+          "label": "Et par ord med på vejen",
+          "placeholder": "Vi kører tirsdage klokken to, og der er altid kage."
+        }
+      },
+      "pickChapter": "Vælg en afdeling i sidemenuen for at se afdelingens link.",
+      "postRide": {
+        "body": "Det, piloter ser, når de afslutter en tur: hvor rickshawen skal hen, hvad der skal tjekkes, hvem man ringer til.",
+        "hint": "Understøtter Markdown: **fed**, lister, links.",
+        "label": "Instruktioner efter turen",
+        "placeholder": "Sæt laderen i, tør sædet af, og læg nøglen tilbage i boksen.",
+        "title": "Efter turen"
+      },
+      "support": {
+        "body": "Driller noget i administrationen? Beskriv det i én sætning, så lander det hos dem, der passer på det.",
+        "drawer": {
+          "cancel": "Annuller",
+          "description": "En sætning eller to er rigeligt. Den går direkte til dem, der kan rette det.",
+          "done": "Tak. Det hjælper mere, end du tror.",
+          "failed": "Det blev ikke sendt. Prøv igen om lidt.",
+          "placeholder": "Jeg trykkede Gem på min profil, og så blev skærmen tom.",
+          "submit": "Send",
+          "title": "Hvad skete der?",
+          "tooShort": "Et par ord mere, tak — mindst ti tegn."
+        },
+        "open": "Meld et problem",
+        "title": "Meld et problem"
+      }
+    },
+    "table": {
+      "all": "Alle",
+      "clearSearch": "Ryd søgning",
+      "columns": "Kolonner",
+      "filterAria": "Filtrér efter {column}",
+      "next": "Næste",
+      "noResults": "Ingen træffere.",
+      "page": "Side {page}",
+      "pageInfo": "{from}–{to} af {total}",
+      "previous": "Forrige",
+      "search": "Søg …",
+      "sortAria": "Sortér efter {column}"
+    },
+    "user": {
+      "account": "Konto",
+      "menuLabel": "Din konto"
+    }
+  },
+  "calendar": {
+    "agendaEmpty": "Der er ikke booket noget endnu. Så snart en tur er planlagt, dukker den op her.",
+    "cancelledOn": "Aflyst",
+    "models": {
+      "event": "Fællestur",
+      "functional": "Ærindetur",
+      "pleasure": "Fornøjelsestur"
+    },
+    "nextWeek": "Næste uge",
+    "noRiders": "Ingen passagerer endnu",
+    "noTrishaw": "Ingen rickshaw endnu",
+    "noTrishaws": "Ingen rickshaws oprettet endnu.",
+    "pilotNeeded": "Pilot mangler",
+    "previousWeek": "Forrige uge",
+    "riders": "{count, plural, one {# passager} other {# passagerer}}",
+    "roles": {
+      "pilot": "Pilot"
+    },
+    "statuses": {
+      "cancelled": "Aflyst",
+      "completed": "Kørt",
+      "scheduled": "Planlagt"
+    },
+    "thisWeek": "Denne uge",
+    "today": "I dag",
+    "trishaw": "Rickshaw",
+    "trishawStatuses": {
+      "active": "Klar",
+      "maintenance": "På værksted",
+      "retired": "Taget ud af drift"
+    },
+    "upcoming": "Kommer snart",
+    "via": "til",
+    "weekEmpty": "Ingen ture i denne uge.",
+    "weekOf": "Uge fra {date}"
+  },
+  "chat": {
+    "composer": {
+      "cancelReply": "Fortryd svar",
+      "notSent": "Ikke sendt",
+      "placeholder": "Skriv en besked",
+      "reply": "Svar",
+      "replyingTo": "Svarer {name}",
+      "retry": "Prøv igen",
+      "send": "Send"
+    },
+    "deletedAccount": "Slettet konto",
+    "errors": {
+      "announcementOnly": "Kun den, der startede gruppen, skriver her.",
+      "frozen": "Denne chat er slut. Tag den op igen for at skrive.",
+      "generic": "Det virkede ikke. Prøv igen.",
+      "notMember": "Denne samtale er ikke din at åbne.",
+      "rateLimited": "Vent et øjeblik, og send så igen.",
+      "tooLong": "Det er længere end 4.000 tegn."
+    },
+    "list": {
+      "empty": {
+        "body": "Skriv til kaptajnen, der sagde god for dig, eller til piloten du kørte med i lørdags. Alle i din afdeling er ét tryk væk.",
+        "cta": "Start en chat",
+        "title": "Ingen beskeder endnu"
+      },
+      "mutedLabel": "Lydløs",
+      "newChat": "Ny",
+      "noResults": "Intet navn og ingen gruppe passer på det.",
+      "pane": {
+        "body": "Dine chats står til venstre. Åbn en — eller start en ny med nogen fra din afdeling.",
+        "title": "Vælg en samtale"
+      },
+      "search": "Søg i navne og grupper",
+      "title": "Chat",
+      "unreads": "Ulæste",
+      "you": "Dig"
+    },
+    "newChat": {
+      "addPeople": "Tilføj folk",
+      "announcementHint": "Over 100 folk er det kun dig, der skriver. Alle andre læser med.",
+      "change": "Skift",
+      "chapter": "Afdeling",
+      "createGroup": "Opret gruppe",
+      "generic": "Det virkede ikke. Prøv igen.",
+      "group": "Gruppe",
+      "groupTitle": "Gruppens navn",
+      "groupTitlePlaceholder": "Lørdagsholdet",
+      "noMatches": "Ingen her med det navn.",
+      "notFound": "Ingen med den e-mail eller det nummer.",
+      "notReachable": "I deler ikke en afdeling endnu, så den dør forbliver lukket.",
+      "people": "{count} i denne gruppe",
+      "person": "Person",
+      "searching": "Leder…",
+      "searchLabel": "Navn, e-mail eller telefonnummer",
+      "searchPlaceholder": "Anna",
+      "self": "Det er dig selv.",
+      "startChat": "Start chat",
+      "title": "Ny chat",
+      "tooFew": "En gruppe skal have mindst to andre med.",
+      "tooMany": "Der er plads til højst 1.000 i en gruppe."
+    },
+    "system": {
+      "announcementOff": "{name} åbnede gruppen for alle igen",
+      "announcementOn": "{name} gjorde det til en opslagskanal",
+      "continued": "{name} tog samtalen op igen",
+      "left": "{name} forlod gruppen"
+    },
+    "thread": {
+      "announcementLocked": "Kun den, der startede gruppen, skriver her. Du får stadig hver eneste besked.",
+      "back": "Alle chats",
+      "deleted": "Besked slettet",
+      "edited": "redigeret",
+      "frozen": {
+        "body": "Den lukkede, da turen sluttede. I kan begge tage den op igen.",
+        "title": "Denne chat er slut"
+      },
+      "jumpToLatest": "Spring til den nyeste",
+      "loadOlder": "Hent ældre beskeder",
+      "offline": "Offline",
+      "online": "Online",
+      "reconnecting": "Forbinder igen …",
+      "seen": "Set",
+      "seenBy": "Set af {count}",
+      "today": "I dag",
+      "typingMany": "{first} og {count} andre skriver …",
+      "typingOne": "{name} skriver …",
+      "typingTwo": "{first} og {second} skriver …",
+      "yesterday": "I går"
+    }
+  },
+  "common": {
+    "back": "Tilbage",
+    "continue": "Fortsæt",
+    "language": "Skift sprog",
+    "markdown": {
+      "bold": "Fed",
+      "code": "Kode",
+      "italic": "Kursiv",
+      "link": "Link",
+      "list": "Liste",
+      "quote": "Citat",
+      "strike": "Gennemstreget"
+    },
+    "next": "Videre",
+    "signOut": "Log ud",
+    "skip": "Spring over for nu",
+    "stepProgress": "Trin {current} af {total}"
+  },
+  "consent": {
+    "data": "Jeg accepterer, at mine data opbevares og behandles.",
+    "dataSuffix": "Se {imprint} og {privacy}.",
+    "error": "Vi kunne ikke gemme det. Prøv igen.",
+    "imprint": "Kolofon",
+    "joining": "Du bliver en del af {chapter}.",
+    "notifications": "Jeg vil gerne modtage e-mails og push-beskeder om vigtige ting.",
+    "privacy": "Databehandlingsaftale",
+    "required": "Sæt kryds i dem alle for at fortsætte.",
+    "safety": "Jeg forstår, at turene køres af oplærte frivillige, og jeg følger afdelingens sikkerhedsretningslinjer.",
+    "setUpBy": "{name} har oprettet denne konto til dig. Tjek oplysningerne, og sig ja for at fortsætte.",
+    "title": "Tre hurtige aftaler",
+    "titlePilot": "To hurtige aftaler"
+  },
+  "fleet": {
+    "allocation": {
+      "booked": "Booket til en overlappende tur",
+      "description": "{when} · {chapter}",
+      "groundedOnRide": "{names} ikke klar til at køre",
+      "kept": "Ikke klar længere — byt den ud med en anden rickshaw, hvis du kan.",
+      "loadFailed": "Turen kunne ikke indlæses.",
+      "noMatch": "Ingen rickshaw passer til “{query}”.",
+      "none": "Denne afdeling har ingen rickshawer endnu. Tilføj en under Rickshawer først.",
+      "nothingSelected": "Ingen rickshaw valgt — turen kører uden.",
+      "open": "Tildel rickshawer",
+      "saved": "Rickshawer tildelt.",
+      "saving": "Gemmer…",
+      "search": "Søg efter navn, model eller sted",
+      "selected": "{count, plural, one {1 rickshaw valgt} other {# rickshawer valgt}}",
+      "submit": "Gem tildeling",
+      "title": "Tildel rickshawer"
+    },
+    "common": {
+      "damage": {
+        "clear": "Afslut",
+        "cleared": "Skaden er afsluttet.",
+        "clearedBy": "Afsluttet af {name}: {note}",
+        "clearNote": "Hvad skete der?",
+        "clearPlaceholder": "Repareret, nyt dæk · Ubegrundet",
+        "clearSubmit": "Afslut skade",
+        "clearTitle": "Afslut skaden",
+        "description": "Hvad er der galt?",
+        "descriptionPlaceholder": "Punktering bagpå, venstre bremse hviner …",
+        "ground": "Tag rickshawen ud af brug",
+        "groundHint": "Den kan ikke bookes, før en admin afslutter skaden. Brug det, når det ville være usikkert at køre på den.",
+        "open": "{count, plural, one {1 åben skade} other {# åbne skader}}",
+        "photo": "Foto",
+        "report": "Meld skade",
+        "reportedBy": "Meldt af {name}",
+        "sent": "Tak – afdelingens admins har fået besked.",
+        "submit": "Send melding",
+        "submitting": "Sender …",
+        "unknownPerson": "Nogen"
+      },
+      "damaged": "Skade meldt",
+      "errors": {
+        "alreadyCleared": "Denne skade er allerede afsluttet.",
+        "alreadyDecided": "Nogen har allerede svaret på anmodningen.",
+        "alreadyMember": "Jeres afdeling bruger allerede denne pulje.",
+        "defaultLocation": "En afdelings standardlokation kan ikke fjernes.",
+        "frameNumberLocked": "Stelnummeret kan ikke ændres, når det er sat.",
+        "frameNumberTaken": "En anden rickshaw har allerede dette stelnummer.",
+        "generic": "Noget gik galt. Prøv igen.",
+        "invalidFile": "Den fil kan ikke bruges her.",
+        "locationNotEmpty": "Flyt rickshawerne et andet sted hen først.",
+        "poolInUse": "Jeres afdeling har stadig kommende ture med rickshawer fra denne pulje. Omfordel eller aflys dem først.",
+        "rateLimited": "For mange forsøg. Prøv igen om et par minutter.",
+        "trishawGrounded": "Denne rickshaw har en åben skade, der har taget den ud af brug. Afslut skaden for at tage den i brug igen.",
+        "trishawNotInChapter": "Denne afdeling kan ikke bruge den rickshaw.",
+        "trishawReserved": "Den rickshaw er allerede booket til en overlappende tur.",
+        "trishawUnavailable": "Den rickshaw er ikke klar til at køre.",
+        "typeInUse": "Rickshawer bruger stadig denne model. Arkivér den i stedet.",
+        "typeNameTaken": "Der findes allerede en model med det navn her.",
+        "unknownPool": "Der er ingen pulje med denne kode for jeres afdeling.",
+        "uploadRejected": "Filen kunne ikke uploades."
+      },
+      "gallery": {
+        "add": "Tilføj fotos",
+        "close": "Luk",
+        "cover": "Forside",
+        "failed": "{name} kunne ikke uploades.",
+        "full": "Der kan højst være {max} fotos.",
+        "hint": "JPEG, PNG eller WebP, op til 10 MB hver. Slip filer her.",
+        "next": "Næste foto",
+        "open": "Åbn foto {index} af {count}",
+        "position": "{index} / {count}",
+        "previous": "Forrige foto",
+        "remove": "Fjern foto",
+        "upload": "Upload fotos"
+      },
+      "grounded": "Taget ud af brug",
+      "kinds": {
+        "chapter": "Afdelingens lokation",
+        "pool": "Pulje"
+      },
+      "location": "Lokation",
+      "locations": "Lokationer",
+      "manual": {
+        "add": "Upload PDF",
+        "failed": "Manualen kunne ikke uploades. Brug en PDF under 20 MB.",
+        "hint": "Én PDF, op til 20 MB. Slip den her.",
+        "name": "Brugsanvisning (PDF)",
+        "open": "Åbn manual",
+        "remove": "Fjern",
+        "uploading": "Uploader …"
+      },
+      "markdownHint": "Understøtter Markdown: **fed**, lister, links.",
+      "pool": "Pulje",
+      "scopes": {
+        "chapter": "Afdeling",
+        "country": "Land",
+        "global": "Global"
+      },
+      "seats": "{count, plural, one {1 plads} other {# pladser}}",
+      "statuses": {
+        "active": "Klar",
+        "maintenance": "På værksted",
+        "retired": "Taget ud af drift"
+      },
+      "trishaw": "Rickshaw",
+      "trishaws": "Rickshawer",
+      "type": "Model",
+      "types": "Modeller",
+      "wheelchair": "Kørestol"
+    },
+    "finish": {
+      "accessCode": "Adgangskode",
+      "accessNotes": "Sådan kommer du ind",
+      "beforeYouLeave": "Før du går",
+      "done": "Færdig",
+      "entrance": "Indgang",
+      "entrancePhoto": "Indgang til {location}",
+      "homeCard": {
+        "body": "Bring rickshawen tilbage, og fortæl os, hvis noget gik i stykker.",
+        "title": "Afslut din seneste tur"
+      },
+      "intro": "Tak fordi du kørte! Sådan bringer du det hele tilbage.",
+      "noLocation": "Der er ikke angivet et sted til denne rickshaw. Spørg din afdeling, hvor den skal hen.",
+      "noTrishaws": "Der var ingen rickshaw på denne tur, så der er intet at bringe tilbage.",
+      "openInMaps": "Åbn i Kort",
+      "reportBody": "Afdelingens administratorer får din melding med det samme.",
+      "reported": "Du har meldt",
+      "reportTitle": "Meld skade på {name}",
+      "returnInstructions": "Sådan parkerer du den",
+      "returnTitle": "Her skal den hen",
+      "ride": "Din tur",
+      "thanks": "Tak fordi du kørte!",
+      "title": "Afslut din tur"
+    },
+    "locations": {
+      "actions": {
+        "join": "Tilmeld en pulje",
+        "newLocation": "Ny lokation",
+        "newPool": "Ny pulje"
+      },
+      "address": {
+        "hint": "Vælg et resultat for at sætte nålen; træk i den for at finjustere.",
+        "label": "Adresse",
+        "noResults": "Intet fundet. Prøv gaden eller byen.",
+        "placeholder": "Gade, bygning eller by",
+        "searching": "Søger"
+      },
+      "back": "Lokationer",
+      "cancel": "Annullér",
+      "code": {
+        "copied": "Kopieret",
+        "copy": "Kopiér",
+        "hint": "Afdelinger i samme land tilmelder sig med denne kode. Du godkender selv hver anmodning.",
+        "label": "Puljekode",
+        "regenerate": "Ny kode",
+        "regenerated": "Den nye kode er {code}. Den gamle virker ikke længere."
+      },
+      "create": {
+        "accessCode": "Adgangskode",
+        "accessCodeHint": "Kode til døren eller nøgleboksen. Kun admins og piloter ser den.",
+        "accessNotes": "Adgangsnoter",
+        "accessNotesPlaceholder": "Nøglen er i boksen, lyskontakten til højre …",
+        "chapter": "Afdeling",
+        "country": "Land",
+        "created": "{name} er klar.",
+        "entrance": "Sådan finder man indgangen",
+        "entrancePhoto": "Foto af indgangen",
+        "entrancePlaceholder": "Grå dør til venstre for læsserampen",
+        "locationBody": "Et sted, hvor jeres afdeling har rickshawer stående.",
+        "locationTitle": "Ny lokation",
+        "name": "Navn",
+        "namePlaceholder": "Garagen bag plejehjemmet",
+        "nameRequired": "Giv lokationen et navn.",
+        "poolBody": "Et depot, som flere afdelinger i ét land deler. Du får en kode, du kan dele ud.",
+        "poolTitle": "Ny pulje",
+        "returnInstructions": "Når den bringes tilbage",
+        "returnInstructionsPlaceholder": "Sæt laderen i, lås baghjulet, luk porten …",
+        "submit": "Tilføj lokation",
+        "submitPool": "Start pulje"
+      },
+      "decision": {
+        "approve": "Godkend",
+        "approveBody": "Deres admins kan se adgangsnoterne og booke puljens rickshawer.",
+        "approved": "{name} må nu bruge puljen.",
+        "approveTitle": "Lad {name} bruge denne pulje?",
+        "noteLabel": "En note til {name} (valgfri)",
+        "notePlaceholder": "Velkommen – nøglen ligger hos viceværten.",
+        "reject": "Afvis",
+        "rejectBody": "Afdelingens admins får besked. De kan spørge igen senere.",
+        "rejected": "{name} er afvist.",
+        "rejectTitle": "Afvis {name}?"
+      },
+      "detail": {
+        "access": "Sådan kommer man ind",
+        "accessCode": "Adgangskode",
+        "accessCodePlaceholder": "Ingen kode",
+        "accessNotes": "Adgangsnoter",
+        "accessNotesPlaceholder": "Intet skrevet endnu. Hvordan kommer piloter ind?",
+        "archive": {
+          "body": "Den forsvinder fra listerne. Rickshawerne skal flyttes først.",
+          "done": "{name} er arkiveret.",
+          "open": "Arkivér lokation",
+          "submit": "Arkivér",
+          "title": "Arkivér {name}?"
+        },
+        "danger": "Fjern",
+        "defaultHint": "En afdelings standardlokation kan ikke fjernes.",
+        "deletePool": {
+          "body": "Alle medlemsafdelinger mister adgangen, og koden holder op med at virke. Rickshawerne skal flyttes først.",
+          "done": "{name} er slettet.",
+          "label": "Skriv {word} for at bekræfte",
+          "open": "Slet pulje",
+          "submit": "Slet pulje",
+          "title": "Slet {name}?",
+          "word": "DELETE"
+        },
+        "entrance": "Indgang",
+        "entrancePhoto": "Foto af indgangen",
+        "entrancePlaceholder": "Beskriv, hvordan man finder døren",
+        "kind": "Type",
+        "name": "Navn",
+        "noEntrancePhoto": "Intet foto endnu.",
+        "noTrishaws": "Der står ingen rickshawer her endnu.",
+        "owner": "Hører til",
+        "place": "Sted",
+        "properties": "Egenskaber",
+        "readOnly": "Kun de admins, der driver denne lokation, kan ændre den.",
+        "returnInstructions": "Når den bringes tilbage",
+        "returnInstructionsPlaceholder": "Intet skrevet endnu. Hvad skal piloter gøre efter turen?",
+        "trishaws": "Rickshawer her"
+      },
+      "empty": {
+        "own": "Ingen lokationer endnu.",
+        "used": "Jeres afdeling bruger ingen pulje endnu. Har du en kode? Tilmeld jer."
+      },
+      "field": {
+        "edit": "Redigér",
+        "invalid": "Det ser ikke rigtigt ud.",
+        "saved": "Gemt.",
+        "undo": "Fortryd",
+        "undone": "Sat tilbage."
+      },
+      "forChapter": "for {chapter}",
+      "isDefault": "Standard",
+      "join": {
+        "approved": "Jeres afdeling bruger allerede denne pulje.",
+        "body": "Bed landets admin om puljens kode. De godkender anmodningen, før I kan booke dens rickshawer.",
+        "chapter": "For afdelingen",
+        "code": "Puljekode",
+        "codePlaceholder": "DK-ABCD-23",
+        "sent": "Anmodningen er sendt. I hører fra os, når den er besvaret.",
+        "submit": "Send anmodning",
+        "title": "Tilmeld en pulje"
+      },
+      "leave": {
+        "body": "{chapter} kan ikke længere booke rickshawer fra denne pulje. Med koden kan I spørge igen.",
+        "done": "{chapter} har forladt {name}.",
+        "open": "Forlad",
+        "submit": "Forlad pulje",
+        "title": "Forlad {name}?"
+      },
+      "map": {
+        "label": "Kort over lokationen",
+        "unavailable": "Kortet er ikke tilgængeligt lige nu."
+      },
+      "memberCount": "{count, plural, one {1 afdeling} other {# afdelinger}}",
+      "members": "Medlemsafdelinger",
+      "membersMayManage": {
+        "hint": "Admins i medlemsafdelingerne må tilføje, redigere og flytte rickshawerne i denne pulje.",
+        "label": "Medlemmer må administrere rickshawer"
+      },
+      "noAddress": "Ingen adresse endnu",
+      "noMembers": "Ingen afdeling bruger denne pulje endnu.",
+      "noPending": "Ingen åbne anmodninger.",
+      "open": "Åbn",
+      "openInGoogleMaps": "Åbn i Google Maps",
+      "pending": "Venter på dig",
+      "pendingBody": "Disse afdelinger har bedt om at bruge puljen. De kan ikke booke dens rickshawer, før du svarer.",
+      "pools": {
+        "body": "Fælles depoter for afdelingerne i dit land. Del koden ud – du bestemmer, hvem der kommer ind.",
+        "columns": {
+          "address": "Adresse",
+          "code": "Kode",
+          "country": "Land",
+          "members": "Afdelinger",
+          "name": "Navn",
+          "trishaws": "Rickshawer",
+          "waiting": "Venter"
+        },
+        "empty": "Ingen puljer endnu. Start en, når flere afdelinger deler et depot.",
+        "title": "Puljer",
+        "waiting": "{count, plural, one {1 anmodning} other {# anmodninger}}"
+      },
+      "remove": {
+        "body": "Afdelingen kan ikke længere booke rickshawer fra denne pulje.",
+        "done": "{chapter} er fjernet fra {name}.",
+        "open": "Fjern",
+        "submit": "Fjern afdeling",
+        "title": "Fjern {chapter} fra {name}?"
+      },
+      "requestStatus": {
+        "approved": "Godkendt",
+        "pending": "Venter på svar",
+        "rejected": "Afvist"
+      },
+      "sections": {
+        "own": "Jeres lokationer",
+        "ownBody": "Hvor afdelingens rickshawer står.",
+        "requests": "Anmodninger",
+        "requestsBody": "Puljer, jeres afdeling har bedt om at komme med i.",
+        "used": "Puljer I bruger",
+        "usedBody": "Fælles depoter, jeres afdeling må køre fra."
+      },
+      "status": {
+        "saved": "Gemt {when}",
+        "saving": "Gemmer"
+      },
+      "tabs": {
+        "label": "Visninger af lokationer",
+        "locations": "Lokationer",
+        "pools": "Puljer"
+      },
+      "title": "Lokationer",
+      "trishawCount": "{count, plural, =0 {Ingen rickshawer} one {1 rickshaw} other {# rickshawer}}"
+    },
+    "trishaws": {
+      "clear": {
+        "cancel": "Annuller"
+      },
+      "columns": {
+        "damage": "Skade",
+        "location": "Lokation",
+        "model": "Model",
+        "status": "Status",
+        "trishaw": "Rickshaw",
+        "wheelchair": "Kørestol"
+      },
+      "composer": {
+        "added": "Kommentar tilføjet.",
+        "label": "Kommentar",
+        "placeholder": "Tilføj en kommentar til historikken – fx nyt batteri monteret",
+        "submit": "Kommentér"
+      },
+      "create": {
+        "body": "Giv den et navn, piloterne kan genkende, og sig, hvor den står.",
+        "created": "{name} er nu en del af flåden.",
+        "frameNumber": "Stelnummer",
+        "frameNumberHint": "Står på stellet. Det kan ikke ændres senere.",
+        "frameNumberPlaceholder": "fx TB-2024-00317",
+        "location": "Lokation",
+        "model": "Model",
+        "name": "Navn",
+        "namePlaceholder": "Frida",
+        "note": "Beskrivelse",
+        "notePlaceholder": "Hvad der gør netop denne speciel – farve, tilbehør, særheder",
+        "photo": "Foto",
+        "submit": "Tilføj rickshaw",
+        "title": "Ny rickshaw"
+      },
+      "damageFilter": {
+        "damaged": "Skade meldt",
+        "grounded": "Taget ud af brug",
+        "none": "Ingen åben skade"
+      },
+      "delete": {
+        "body": "Historik og skadesmeldinger forsvinder med den. Ture, den var booket til, bevares uden den.",
+        "cancel": "Annuller",
+        "done": "{name} er slettet.",
+        "label": "Skriv {word} for at bekræfte",
+        "open": "Slet rickshaw",
+        "submit": "Slet rickshaw",
+        "title": "Slet {name} for altid?",
+        "word": "DELETE"
+      },
+      "detail": {
+        "about": "Om",
+        "back": "Alle rickshawer",
+        "calendar": "Kalender",
+        "calendarHint": "Ture, som denne rickshaw er booket til, uge for uge.",
+        "damage": "Skader",
+        "edit": "Rediger",
+        "frameNumber": "Stelnummer",
+        "frameNumberPlaceholder": "fx TB-2024-00317",
+        "history": "Historik",
+        "historyEmpty": "Der er ikke sket noget med denne rickshaw endnu.",
+        "invalid": "Det ser ikke rigtigt ud.",
+        "location": "Lokation",
+        "manual": "Manual",
+        "manualLabel": "Manual",
+        "model": "Model",
+        "modelDescription": "Om modellen",
+        "modelInfo": "Om modellen",
+        "name": "Navn",
+        "no": "Nej",
+        "noDamage": "Ingen åben skade. Klar til at køre, så vidt vi ved.",
+        "note": "Beskrivelse",
+        "notePlaceholder": "Farve, tilbehør og særheder ved netop denne rickshaw",
+        "photo": "Foto",
+        "photoHint": "Fotos af netop denne rickshaw – farve, klistermærker, mærker – så piloter kan kende den. Uden egne fotos vises modellens fotos.",
+        "photos": "Fotos",
+        "properties": "Egenskaber",
+        "readOnly": "Din afdeling bruger denne rickshaw. Admins, hvor den står, passer på den.",
+        "saved": "Gemt.",
+        "savedAt": "Gemt {when}",
+        "saving": "Gemmer",
+        "seats": "Pladser",
+        "since": "I flåden siden {date}",
+        "status": "Status",
+        "undo": "Fortryd",
+        "undone": "Sat tilbage.",
+        "wheelchair": "Kørestol",
+        "yes": "Ja"
+      },
+      "empty": "Ingen rickshawer endnu. Tilføj den første, så kan den bookes til ture.",
+      "history": {
+        "cleared": "Afsluttet",
+        "created": "{actor} tilføjede denne rickshaw",
+        "damage": "{actor} meldte en skade",
+        "moved": "{actor} flyttede den fra {from} til {to}",
+        "noPilot": "Ingen pilot sat på",
+        "note": "{actor} kommenterede",
+        "open": "Åben",
+        "pilotedBy": "kørt af",
+        "ride": "Tur",
+        "rideAt": "Tur fra {place}",
+        "someone": "Nogen",
+        "statusChanged": "{actor} ændrede status fra {from} til {to}",
+        "you": "Du"
+      },
+      "new": "Ny rickshaw",
+      "noLocations": "Opret en lokation først – hver rickshaw står et sted.",
+      "noModel": "Ingen model",
+      "picker": {
+        "clear": "Ryd",
+        "locationEmpty": "Ingen lokation passer.",
+        "locationPlaceholder": "Vælg en lokation …",
+        "modelEmpty": "Ingen model passer.",
+        "modelPlaceholder": "Søg i modeller …"
+      },
+      "report": {
+        "body": "Fortæl de andre admins, hvad der er galt med {name}.",
+        "title": "Meld skade"
+      },
+      "tabs": {
+        "label": "Visninger af flåden",
+        "models": "Modeller",
+        "timeline": "Ugeplan",
+        "trishaws": "Rickshawer"
+      },
+      "wheelchairFilter": {
+        "no": "Ikke kørestolsvenlig",
+        "yes": "Kørestolsvenlig"
+      }
+    },
+    "types": {
+      "archived": "Arkiveret",
+      "back": "Modeller",
+      "body": "De rickshawer, jeres afdelinger kører på – beskrevet én gang og delt så bredt, du vil: med én afdeling, hele landet eller alle.",
+      "cancel": "Annullér",
+      "columns": {
+        "name": "Model",
+        "scope": "Katalog",
+        "seats": "Pladser",
+        "trishaws": "Rickshawer",
+        "wheelchair": "Kørestol"
+      },
+      "create": {
+        "body": "Beskriv den én gang – hver rickshaw af denne slags peger hertil.",
+        "created": "{name} er i kataloget.",
+        "description": "Beskrivelse",
+        "descriptionPlaceholder": "Hvad der gør den særlig, hvordan sædet justeres, hvor batteriet sidder …",
+        "manual": "Manual",
+        "name": "Navn",
+        "namePlaceholder": "Christiania Classic, Van Raam O-Pair …",
+        "nameRequired": "Giv modellen et navn.",
+        "owner": "Katalog",
+        "ownerChapter": "{name} – kun denne afdeling",
+        "ownerCountry": "{name} – alle afdelinger i landet",
+        "ownerGlobal": "Global – alle afdelinger overalt",
+        "ownerHint": "Hvem der ser den. En afdelings model kan senere løftes op til landet.",
+        "photo": "Foto",
+        "seats": "Passagerpladser",
+        "submit": "Tilføj model",
+        "title": "Ny model",
+        "wheelchair": "Plads til kørestol",
+        "wheelchairHint": "En kørestol kan rulles om bord."
+      },
+      "detail": {
+        "archive": "Arkivér",
+        "archivedDone": "{name} er arkiveret.",
+        "archiveHint": "En arkiveret model kan ikke vælges til nye rickshawer. Dem, der bruger den, beholder den.",
+        "catalogue": "Katalog",
+        "deleteBlocked": "Rickshawer bruger stadig denne model, så den kan kun arkiveres.",
+        "delete": {
+          "body": "Modellen forsvinder for altid fra kataloget sammen med foto og manual.",
+          "done": "{name} er slettet.",
+          "label": "Skriv {word} for at bekræfte",
+          "open": "Slet model",
+          "submit": "Slet model",
+          "title": "Slet {name}?",
+          "word": "DELETE"
+        },
+        "description": "Om denne model",
+        "descriptionPlaceholder": "Intet skrevet endnu. Tilføj en beskrivelse …",
+        "manage": "Administrér",
+        "manual": "Manual",
+        "manualHint": "Producentens brugsanvisning som PDF: opladning, bremser, dæktryk, hvad man gør, når noget går i stykker.",
+        "name": "Navn",
+        "noManual": "Ingen manual uploadet endnu.",
+        "photo": "Foto",
+        "photoHint": "Vis modellen fra siden, forfra og passagersædet. Det første foto er forsidebilledet i lister.",
+        "photos": "Fotos",
+        "promote": {
+          "country": "Løft op til {name}",
+          "done": "{name} hører nu til et større katalog.",
+          "global": "Gør global",
+          "hint": "Gør den tilgængelig for flere afdelinger. Det kan ikke gøres snævrere igen."
+        },
+        "properties": "Egenskaber",
+        "readOnly": "Denne model hører til kataloget {owner}. Kun dets admins kan ændre den.",
+        "restore": "Gendan",
+        "restoredDone": "{name} er tilbage i kataloget.",
+        "seats": "Pladser",
+        "usage": "{count, plural, =0 {Ingen rickshawer bruger den} one {1 rickshaw bruger den} other {# rickshawer bruger den}}",
+        "wheelchair": "Plads til kørestol"
+      },
+      "empty": "Ingen modeller endnu. Beskriv den første, så kan hver rickshaw, du tilføjer, pege på den.",
+      "field": {
+        "edit": "Redigér",
+        "invalid": "Det ser ikke rigtigt ud.",
+        "saved": "Gemt.",
+        "undo": "Fortryd",
+        "undone": "Sat tilbage."
+      },
+      "new": "Ny model",
+      "photoAlt": "Foto af {name}",
+      "showArchived": "Vis arkiverede",
+      "status": {
+        "saved": "Gemt {when}",
+        "saving": "Gemmer"
+      },
+      "title": "Modeller",
+      "trishaws": "Rickshawer",
+      "wheelchairNo": "Nej",
+      "wheelchairYes": "Ja"
+    }
+  },
+  "forbidden": {
+    "description": "Du er logget ind, men denne side er ikke åben for dig.",
+    "returnHome": "Tilbage til forsiden",
+    "title": "Ingen nøgle til denne dør"
+  },
+  "home": {
+    "title": "Hej verden"
+  },
+  "join": {
+    "app": {
+      "appStore": "Hent i App Store",
+      "playStore": "Hent den på Google Play",
+      "title": "Kør med appen"
+    },
+    "eyebrow": "Cycling Without Age",
+    "member": {
+      "cta": "Åbn Cycling Without Age",
+      "title": "Du er allerede med i denne afdeling"
+    },
+    "passenger": {
+      "body": "En frivillig træder i pedalerne. Du sidder forrest i gågangsfart, med kun brisen mellem dig og gaden.",
+      "cta": "Kør med denne afdeling",
+      "title": "Kom med på en tur"
+    },
+    "pilot": {
+      "body": "Piloter tager naboer med ud en time ad gangen. Bed om at være med, så vender en afdelingsadmin tilbage — som regel inden for et par dage.",
+      "cta": "Søg om at være pilot her",
+      "pending": "Din ansøgning ligger hos afdelingen.",
+      "title": "Træd i pedalerne"
+    },
+    "poster": {
+      "madeWith": "Booking af Coding for Change",
+      "or": "eller gå til",
+      "scan": "Scan og vær med",
+      "slogan": "Ret til vind i håret"
+    },
+    "ride": {
+      "back": "Tilbage til {chapter}",
+      "confirm": "Fortsæt",
+      "cta": "Bestil en tur",
+      "noDraft": "Vi mistede overblikket over dit valg. Vælg et tidspunkt igen på afdelingens side.",
+      "note": "Turbestilling er på vej — der er ikke sendt noget endnu.",
+      "summary": "Du vil gerne køre med {chapter}, {when}.",
+      "title": "Næsten der",
+      "when": {
+        "afternoon": "om eftermiddagen",
+        "any": "når som helst",
+        "morning": "om formiddagen"
+      },
+      "whenTitle": "Hvornår passer det dig?"
+    }
+  },
+  "legal": {
+    "imprint": {
+      "body": "Afdelingens juridiske oplysninger kommer her.",
+      "title": "Kolofon"
+    },
+    "pending": "Siden er stadig under udarbejdelse. Spørg din afdeling om detaljerne i mellemtiden.",
+    "privacy": {
+      "body": "Hvad vi gemmer, hvorfor vi gemmer det, og hvordan du får det slettet, kommer her.",
+      "title": "Databehandlingsaftale"
+    }
+  },
+  "location": {
+    "distanceAway": "{distance} væk",
+    "errors": {
+      "alreadyPilot": "Du er allerede pilot i en af de afdelinger.",
+      "generic": "Vi kunne ikke gemme det. Prøv igen.",
+      "maxChapters": "Du kan højst anmode om {count} afdelinger ad gangen.",
+      "unknownChapter": "Den afdeling findes ikke længere. Vælg en anden."
+    },
+    "home": {
+      "confirm": "Det er min adresse",
+      "duration": "Cirka {duration} væk med rickshaw",
+      "hint": "Begynd at skrive, og vælg så din adresse på listen.",
+      "joinAnyway": "Deltag i {chapter} alligevel",
+      "label": "Din adresse",
+      "nearest": "Din nærmeste afdeling",
+      "noResults": "Ingen adresse passer på det.",
+      "outOfRangeBody": "{chapter} ligger {distance} væk — længere end de {radius}, den kører. Du kan stadig komme med: tag selv hen til afdelingen, eller få nogen til at køre dig derhen, så tager en pilot over ved døren.",
+      "outOfRangeTitle": "Vi kan ikke nå dig endnu",
+      "placeholder": "Vej og nummer",
+      "searching": "Søger …"
+    },
+    "locating": "Finder afdelinger i nærheden af dig …",
+    "mapLabel": "Kort over Cycling Without Age-afdelinger",
+    "mapUnavailable": "Kortet er ikke tilgængeligt lige nu. Listen virker stadig.",
+    "next": "Næste",
+    "noResults": "Ingen afdeling passer på det.",
+    "pending": "Et øjeblik …",
+    "permissionDenied": "Uden din placering kan vi ikke sortere efter afstand — her er alle afdelinger i stedet.",
+    "request": "Anmod om at deltage",
+    "requestCount": "Anmod om at deltage i {count} afdelinger",
+    "searchLabel": "Søg efter en afdeling",
+    "searchPlaceholder": "Afdeling eller by",
+    "selectPrompt": "Vælg en afdeling for at fortsætte.",
+    "subtitleAll": "Alle afdelinger i alfabetisk rækkefølge.",
+    "subtitleNearby": "Afdelingerne tættest på dig.",
+    "tabs": {
+      "careHome": "Plejehjem",
+      "home": "Egen adresse"
+    },
+    "title": "Hvor vil du gerne køre?",
+    "titlePassenger": "Hvor skal vi hente dig?"
+  },
+  "member": {
+    "action": {
+      "passenger": "Book en tur",
+      "pilot": "Find ledige ture"
+    },
+    "guest": {
+      "greeting": "Velkommen",
+      "hero": "Opret din konto",
+      "heroHint": "En e-mail eller et telefonnummer er alt, der skal til for at booke en tur.",
+      "signIn": "Log ind",
+      "subtitle": "Du kigger dig omkring",
+      "tagline": "Se dig omkring først — afdelingen, du valgte, står lige her."
+    },
+    "home": {
+      "greeting": "Hej {name}",
+      "nextRide": {
+        "passenger": {
+          "empty": "Der er ikke booket noget endnu. Når du booker en tur, lander dagen, tidspunktet og piloten, der kommer og henter dig, her."
+        },
+        "pilot": {
+          "empty": "Der står ikke noget på din liste endnu. Når din afdeling lægger ledige ture op, dukker den næste, du tager, op her — dato, passager og mødested."
+        },
+        "title": "Næste tur"
+      },
+      "passenger": {
+        "chooseChapter": "Vælg en afdeling",
+        "tagline": "Din næste tur begynder her."
+      },
+      "pilot": {
+        "tagline": "Klar, når du er."
+      },
+      "yourChapter": "Din afdeling",
+      "yourChapters": "Dine afdelinger"
+    },
+    "nav": {
+      "calendar": "Kalender",
+      "chat": "Beskeder",
+      "home": "Hjem",
+      "rides": "Mine ture",
+      "training": "Træning"
+    },
+    "navLabel": "Afsnit",
+    "pages": {
+      "calendar": {
+        "passenger": {
+          "body": "Der er ikke planlagt noget endnu. Dine kommende ture dukker op her, med datoen og tidspunktet, hvor din pilot kommer."
+        },
+        "pilot": {
+          "body": "En tom uge, indtil videre. Dine ture, træningsdatoer og afdelingens sammenkomster stiller sig op her."
+        },
+        "title": "Kalender"
+      },
+      "rides": {
+        "passenger": {
+          "body": "Der er ikke booket noget endnu. Når din afdeling åbner for booking, venter dine ture her — dagen, tidspunktet og piloten, der ringer på."
+        },
+        "pilot": {
+          "body": "Din første tur står ikke på listen endnu. Når din afdeling lægger ture op, kommer dem, der mangler en pilot, frem her — vælg en, så er rickshawen din hele eftermiddagen."
+        },
+        "title": "Mine ture"
+      }
+    },
+    "perspective": {
+      "chapters": "{count} afdelinger",
+      "label": "Perspektiv",
+      "noChapter": "Ingen afdeling endnu",
+      "switchLabel": "Skift perspektiv"
+    },
+    "tabBarLabel": "Hovedmenu",
+    "topBar": {
+      "passenger": {
+        "account": "Din konto",
+        "switchHint": "Dobbelttryk for at skifte perspektiv"
+      },
+      "pilot": {
+        "account": "Din konto",
+        "switchHint": "Dobbelttryk for at skifte perspektiv"
+      }
+    },
+    "user": {
+      "passenger": {
+        "account": "Konto",
+        "menuLabel": "Din konto"
+      },
+      "pilot": {
+        "account": "Konto",
+        "menuLabel": "Din konto"
+      }
+    }
+  },
+  "notFound": {
+    "description": "Siden, du leder efter, findes ikke.",
+    "returnHome": "Tilbage til forsiden",
+    "title": "Siden blev ikke fundet"
+  },
+  "notifications": {
+    "bell": "Beskeder",
+    "bellWithCount": "Beskeder, {count} nye",
+    "categories": {
+      "application": "Ansøgning",
+      "fleet": "Rickshawer",
+      "invitation": "Invitation",
+      "membership": "Medlemskab",
+      "welcome": "Velkommen"
+    },
+    "empty": {
+      "body": "I samme øjeblik der sker noget — en afdeling svarer, en tur bliver booket — lander det her.",
+      "title": "Der er helt stille lige nu"
+    },
+    "title": "Beskeder",
+    "unread": "Ulæst"
+  },
+  "passenger": {
+    "browsing": "Du kigger på {chapter}",
+    "noChapter": "Du har ikke valgt en lokalafdeling endnu"
+  },
+  "passkey": {
+    "admin": {
+      "body": "Din enhed bliver din nøgle til dashboardet — fingeraftryk, ansigt eller PIN. Lav en for at åbne det.",
+      "failed": "Det virkede ikke — prøv igen. Du kan også lave din adgangsnøgle i en browser.",
+      "title": "Admins logger ind med en adgangsnøgle"
+    },
+    "body": "Din enhed husker dig — ingen adgangskode at holde styr på.",
+    "create": "Lav adgangsnøgle",
+    "failed": "Det virkede ikke. Du kan tilføje en adgangsnøgle senere under Konto.",
+    "nameLabel": "Giv adgangsnøglen et navn (valgfrit)",
+    "namePlaceholder": "Arbejdscomputer",
+    "skip": "Ikke nu",
+    "title": "Lav din adgangsnøgle"
+  },
+  "pilot": {
+    "home": {
+      "celebration": {
+        "body": "{chapter} siger velkommen. Se træningsvideoerne, og mød så en kaptajn til din første tur.",
+        "dismiss": "Forstået",
+        "title": "Du er med."
+      },
+      "title": "Klar, når du er",
+      "training": "Træning mens du venter",
+      "trainingHint": "Cirka 20 minutters video — så kender du rickshawen, før du sætter dig på den.",
+      "yourChapters": "Dine afdelinger"
+    },
+    "status": {
+      "appliedOn": "Spurgte den {date}",
+      "applyElsewhere": "Find en anden afdeling",
+      "note": "Deres besked",
+      "pendingHint": "Afdelinger svarer typisk inden for et par dage. Du skal ikke gøre noget.",
+      "pendingTitle": "Din ansøgning ligger hos {chapter}",
+      "rejectedBody": "Det sker — rickshawer, kaptajner og træningsdatoer skal passe sammen. En anden afdeling i nærheden har måske plads.",
+      "rejectedTitle": "{chapter} siger nej denne gang",
+      "reviewers": "Læses af",
+      "reviewersNone": "Afdelingen har endnu ikke udpeget en admin. Vi giver dem et prik.",
+      "steps": {
+        "1": "Ansøgt",
+        "2": "Under behandling",
+        "3": "Velkommen"
+      }
+    },
+    "training": {
+      "body": "Videoerne er stadig under optagelse. Så snart de er klar, står de her — cirka 20 minutter og derefter en workshop med en af kaptajnerne.",
+      "title": "Træning mens du venter"
+    }
+  },
+  "pilotNextSteps": {
+    "finish": "Videre",
+    "steps": {
+      "1": "Se træningsvideoerne — cirka 20 minutter, direkte i appen.",
+      "2": "Deltag i en praktisk workshop med en af kaptajnerne.",
+      "3": "Tag din første tur — en kaptajn kører med første gang."
+    },
+    "title": "Sådan bliver du pilot"
+  },
+  "profile": {
+    "birthDate": "Fødselsdag",
+    "body": "Din afdeling har brug for det for at planlægge en tur. Ikke andet, for nu.",
+    "errors": {
+      "birthDate": "Den fødselsdag ser ikke rigtig ud. Tjek årstallet.",
+      "generic": "Vi kunne ikke gemme det. Prøv igen.",
+      "incomplete": "Udfyld alle felter for at fortsætte."
+    },
+    "firstName": "Fornavn",
+    "forSomeoneElse": "Jeg opretter kontoen, så en anden kan køre med",
+    "gender": "Køn",
+    "genders": {
+      "female": "Kvinde",
+      "male": "Mand",
+      "other": "Andet"
+    },
+    "lastName": "Efternavn",
+    "relationship": {
+      "label": "Din relation til personen",
+      "options": {
+        "carer": "Omsorgsperson",
+        "child": "Søn eller datter",
+        "friend": "Ven",
+        "other": "Andet",
+        "partner": "Partner",
+        "relative": "Anden pårørende"
+      }
+    },
+    "title": "Lidt om dig",
+    "titlePilot": "Lidt om dig"
+  },
+  "signIn": {
+    "code": {
+      "change": "Brug en anden e-mail eller et andet nummer",
+      "errors": {
+        "generic": "Noget gik galt. Prøv igen.",
+        "invalid": "Den kode er ikke rigtig. Tjek den og prøv igen.",
+        "rateLimited": "For mange forsøg. Prøv igen om et minut."
+      },
+      "label": "6-cifret kode",
+      "resend": "Send en ny kode",
+      "resendWait": "Du kan bede om en ny kode om et øjeblik.",
+      "resent": "Ny kode sendt.",
+      "sentToEmail": "Vi har sendt en 6-cifret kode til {identifier}.",
+      "sentToPhone": "Vi har sendt en sms med en 6-cifret kode til {identifier}.",
+      "title": "Indtast din kode"
+    },
+    "country": {
+      "noResults": "Intet land passer på det.",
+      "searchLabel": "Søg efter et land",
+      "searchPlaceholder": "Landets navn",
+      "selected": "{country}, {dialCode}",
+      "title": "Hvor er dit telefonnummer fra?"
+    },
+    "identifier": {
+      "changeCountry": "Skift landekode",
+      "errors": {
+        "empty": "Indtast en e-mailadresse eller et telefonnummer.",
+        "generic": "Noget gik galt. Prøv igen.",
+        "invalidEmail": "Den e-mailadresse ser ikke rigtig ud. Tjek for en tastefejl.",
+        "invalidPhone": "Nummeret ser ikke komplet ud for {country}. Tjek cifrene.",
+        "rateLimited": "For mange forsøg. Prøv igen om et minut."
+      },
+      "google": "Fortsæt med Google",
+      "label": "E-mail eller telefonnummer",
+      "passkey": "Brug en adgangsnøgle",
+      "placeholder": "dig@eksempel.dk",
+      "separator": "eller",
+      "title": "Hvad er din e-mail eller dit telefonnummer?"
+    },
+    "role": {
+      "passenger": {
+        "body": "Du sidder forrest og nyder vinden i håret.",
+        "title": "Jeg vil være passager"
+      },
+      "pilot": {
+        "body": "Du træder i pedalerne og tager passagerer med ud at køre.",
+        "title": "Jeg vil være pilot"
+      },
+      "title": "Hvordan vil du gerne være med?"
+    }
+  },
+  "welcome": {
+    "carouselLabel": "Hvad Cycling Without Age er",
+    "explore": "Se dig omkring uden at logge ind",
+    "progressLabel": "Trin {current} af {total}",
+    "signIn": "Log ind",
+    "slides": {
+      "1": {
+        "body": "Det begyndte i København i 2012 med én rickshaw og én god idé.",
+        "headline": "Alle har ret til vind i håret."
+      },
+      "2": {
+        "body": "En frivillig kører rickshawen i gåtempo. Du sidder forrest — intet mellem dig og gaden.",
+        "headline": "Piloterne træder i pedalerne."
+      },
+      "3": {
+        "body": "Hver lokalafdeling er frivillige fra kvarteret, der giver en time til dem, som byggede det.",
+        "headline": "Båret af naboer."
+      },
+      "4": {
+        "body": "Afdelinger i Europa, Nordamerika, Australien og Japan — der er efter alt at dømme en i nærheden.",
+        "headline": "Find din lokalafdeling."
+      }
+    },
+    "subtitle": "Log ind for at booke en tur eller træde i pedalerne. Eller se dig omkring først.",
+    "title": "Tag med på en tur."
+  }
+}

@@ -10,7 +10,7 @@ import { ICONS } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistance, type Locale } from "@/lib/format";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { ChapterLogo } from "./chapter-logo";
 import type { MapPin } from "./chapter-map";
 
@@ -91,9 +91,11 @@ export function ChaptersMapView({
           </div>
 
           <p className="mt-3 text-2sm text-ink-soft">
-            {fill(strings.radiusValue, {
-              distance: formatDistance(selected.radiusKm * 1000, notation),
-            })}
+            {formatMessage(
+              strings.radiusValue,
+              { distance: formatDistance(selected.radiusKm * 1000, notation) },
+              notation,
+            )}
           </p>
 
           <Button

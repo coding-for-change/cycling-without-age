@@ -18,7 +18,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDrawerParam } from "@/hooks/use-drawer-param";
 import { haptics } from "@/lib/native/haptics";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import {
   createGroupChatAction,
   startDirectChatAction,
@@ -37,11 +37,13 @@ export function NewChatDrawer({
   chapters,
   strings,
   errors,
+  language,
 }: {
   home: string;
   chapters: { id: string; name: string }[];
   strings: ChatNewChatStrings;
   errors: ChatErrorStrings;
+  language: string;
 }) {
   const router = useRouter();
   const { creating, close } = useDrawerParam();
@@ -298,7 +300,7 @@ export function NewChatDrawer({
             ) : null}
 
             <p className="text-2sm text-ink-soft">
-              {fill(strings.people, { count: headcount })}
+              {formatMessage(strings.people, { count: headcount }, language)}
             </p>
 
             {headcount > GROUP_ANNOUNCEMENT_THRESHOLD ? (

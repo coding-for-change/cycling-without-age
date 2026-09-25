@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { haptics } from "@/lib/native/haptics";
 import type { FleetResult } from "../actions";
 import { PhotoGallery, type PhotoGalleryLabels } from "./photo-gallery";
+import type { Locale } from "@/lib/i18n/locales";
 
 export type DamageFormLabels = {
   description: string;
@@ -35,11 +36,13 @@ export function DamageForm({
   onSubmit,
   onDone,
   labels,
+  locale,
 }: {
   trishawName: string;
   onSubmit: (values: DamageFormValues) => Promise<FleetResult>;
   onDone: () => void;
   labels: DamageFormLabels;
+  locale: Locale;
 }) {
   const ids = { description: useId(), ground: useId() };
   const [description, setDescription] = useState("");
@@ -90,6 +93,7 @@ export function DamageForm({
           labels={labels.gallery}
           camera
           onChange={(next) => setPhotoFileId(next[0] ?? null)}
+          locale={locale}
         />
       </Field>
       <Field orientation="horizontal">

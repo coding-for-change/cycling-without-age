@@ -5,8 +5,9 @@ import { markdownToolLabels } from "@/components/markdown-editor";
 import { fleet } from "@/features/fleet";
 import { TypeCatalogue } from "@/features/fleet/components/type-catalogue";
 import { TypeCreateDrawer } from "@/features/fleet/components/type-create-drawer";
-import { formatPlural, wordsLocale } from "@/lib/format";
+import { wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
 import { AdminPageHeader, AdminPageShell } from "../../_components/admin-page";
 import { readActiveScope, type AdminSearchParams } from "../../active-scope";
 import { AdminTabs } from "../../_components/admin-tabs";
@@ -56,7 +57,7 @@ async function Types({
   const common = dict.fleet.common;
   const strings = dict.fleet.types;
   const words = wordsLocale(language);
-  const owners = ownerOptions(scope, active, chapters, dict);
+  const owners = ownerOptions(scope, active, chapters, dict, words);
 
   return (
     <>
@@ -64,6 +65,7 @@ async function Types({
         <TypeCreateDrawer
           owners={owners}
           scopeQuery={scopeQuery}
+          locale={language}
           labels={{
             ...strings.create,
             open: strings.new,
@@ -97,7 +99,11 @@ async function Types({
             scopeLabel: common.scopes[row.scope],
             ownerName: ownerNameOf(row),
             seats: row.seats,
-            seatsLabel: formatPlural(row.seats, common.seats, words),
+            seatsLabel: formatMessage(
+              common.seats,
+              { count: row.seats },
+              words,
+            ),
             wheelchair: row.wheelchairAccessible,
             trishaws: row._count.trishaws,
             photoFileId: row.photoFileId,
@@ -114,6 +120,7 @@ async function Types({
             scopes: common.scopes,
           }}
           table={dict.admin.table}
+          locale={language}
         />
       ) : (
         <EmptyState

@@ -1,0 +1,1792 @@
+{
+  "account": {
+    "calendar": {
+      "addTo": "Hinzufügen zu",
+      "apps": {
+        "apple": "Apple Kalender",
+        "google": "Google Kalender",
+        "outlook": "Outlook",
+        "outlookWork": "Outlook für Arbeit oder Schule"
+      },
+      "body": "Deine Fahrten in dem Kalender, den du sowieso nutzt. Einmal abonnieren, dann bleibt er von selbst aktuell: Neue Fahrten tauchen auf, verschobene wandern mit, abgesagte sind als abgesagt markiert.",
+      "cadence": "Kalender prüfen in ihrem eigenen Takt auf Änderungen – meist innerhalb weniger Stunden, bei Google manchmal erst nach einem Tag.",
+      "cancel": "Behalten",
+      "checked": "Zuletzt von einem Kalender abgerufen: {when}.",
+      "copied": "Kopiert",
+      "copy": "Link kopieren",
+      "disable": {
+        "body": "Der Link funktioniert nicht mehr, und Kalender, die ihn nutzen, werden nicht mehr aktualisiert. Einen neuen kannst du jederzeit erstellen.",
+        "confirm": "Ausschalten",
+        "done": "Kalender-Link ausgeschaltet.",
+        "open": "Ausschalten",
+        "title": "Kalender-Link ausschalten?"
+      },
+      "enable": "Kalender-Link erstellen",
+      "enabled": "Dein Kalender-Link ist bereit.",
+      "errors": {
+        "generic": "Das hat nicht geklappt. Versuch es noch mal.",
+        "rateLimited": "Einen Moment, dann versuch es noch mal."
+      },
+      "googleOnPhone": "Nutzt du Google Kalender? Google fügt einen Kalender per Link nur am Computer hinzu: Link kopieren, dort calendar.google.com öffnen und „Weitere Kalender“ → „Per URL“ wählen.",
+      "link": "Dein Kalender-Link",
+      "otherApps": "Andere App? Kopier den Link und such nach „Kalender abonnieren“ oder „Per URL hinzufügen“.",
+      "private": "Wer diesen Link hat, sieht, wann und wo deine Fahrten sind. Behalte ihn für dich – und erstell einen neuen, falls er doch mal in Umlauf gerät.",
+      "reset": {
+        "body": "Der aktuelle Link funktioniert sofort nicht mehr. Kalender, die ihn nutzen, bleiben stehen, bis du den neuen hinzufügst.",
+        "confirm": "Neuen Link erstellen",
+        "done": "Neuer Link ist bereit. Füg ihn deinem Kalender noch mal hinzu.",
+        "open": "Neuer Link",
+        "title": "Neuen Link erstellen?"
+      },
+      "title": "Kalender",
+      "waiting": "Noch hat kein Kalender den Link abgerufen."
+    },
+    "danger": {
+      "body": "Beim Abmelden bleibt alles erhalten. Beim Löschen gehen Konto, Ortsgruppen und Verlauf mit — gefahrene Ausfahrten bleiben im Protokoll.",
+      "delete": {
+        "blocked": "Du führst noch eine Ortsgruppe oder ein Land. Gib das zuerst ab — dann gehört dieser Knopf dir.",
+        "body": "Konto, Rollen, Anfragen und Verlauf gehen damit weg. Gefahrene Ausfahrten bleiben im Protokoll.",
+        "done": "Das Konto ist gelöscht. Danke für den Wind in unseren Haaren.",
+        "errors": {
+          "generic": "Das hat nicht geklappt. Versuch es noch mal.",
+          "handOverAdmin": "Gib zuerst deine Adminrolle ab.",
+          "rateLimited": "Einen Moment noch, dann versuch es erneut."
+        },
+        "label": "Tipp {word} zur Bestätigung",
+        "open": "Konto löschen",
+        "submit": "Konto löschen",
+        "title": "Konto endgültig löschen?",
+        "word": "DELETE"
+      },
+      "title": "Abmelden oder löschen"
+    },
+    "description": "Deine Angaben, deine Sprache, wie wir dich erreichen und wie du dich anmeldest.",
+    "field": {
+      "edit": "Bearbeiten",
+      "errors": {
+        "generic": "Das hat nicht geklappt. Versuch es noch mal."
+      },
+      "invalid": "Das sieht nicht richtig aus.",
+      "saved": "Gespeichert.",
+      "undo": "Rückgängig",
+      "undone": "Zurückgesetzt."
+    },
+    "language": {
+      "body": "E-Mails und Benachrichtigungen kommen ebenfalls in dieser Sprache.",
+      "title": "Sprache"
+    },
+    "notifications": {
+      "body": "Das Wichtige — eine bestätigte Ausfahrt, eine Antwort der Ortsgruppe — kommt immer an. Hier geht es um den Rest.",
+      "chat": {
+        "email": {
+          "hint": "Nur wenn dein Handy nicht erreichbar ist: eine Mail mit dem, was du verpasst hast.",
+          "label": "Nachrichten per E-Mail"
+        },
+        "push": {
+          "hint": "Ein Summen, wenn dir jemand schreibt — außer du hast den Chat gerade offen.",
+          "label": "Nachrichten"
+        }
+      },
+      "email": {
+        "hint": "Dieselben Neuigkeiten, im Postfach.",
+        "label": "E-Mail"
+      },
+      "permissionDenied": "Das Handy blockiert Benachrichtigungen. Erlaube sie in den Einstellungen und versuch es noch einmal.",
+      "push": {
+        "hint": "Ein kurzes Summen auf dem Handy, wenn etwas passiert.",
+        "label": "Push"
+      },
+      "title": "Benachrichtigungen"
+    },
+    "passkeys": {
+      "add": "Passkey hinzufügen",
+      "added": "Passkey hinzugefügt.",
+      "back": "Zurück",
+      "body": "Mit einem Passkey meldet dich dein eigenes Gerät an — Fingerabdruck, Gesicht oder PIN. Nichts zu merken, nichts zu tippen.",
+      "empty": "Noch keine Passkeys. Leg einen an, und dieses Gerät erkennt dich wieder.",
+      "failed": "Das hat nicht geklappt. Versuch es erneut.",
+      "nameLabel": "Passkey benennen (optional)",
+      "namePlaceholder": "Name (optional)",
+      "remove": "Entfernen",
+      "removeBody": "Zum Anmelden auf diesem Gerät brauchst du dann einen anderen Passkey oder einen Code per E-Mail oder SMS.",
+      "removeConfirm": "{name} entfernen?",
+      "signInAgain": "Es ist eine Weile her. Melde dich neu an, bevor du einen Passkey anlegst.",
+      "signInAgainAction": "Neu anmelden",
+      "synced": "Synchronisiert",
+      "thisDevice": "Dieses Gerät",
+      "title": "Passkeys",
+      "unnamed": "Passkey"
+    },
+    "perspective": {
+      "title": "Ansicht als"
+    },
+    "profile": {
+      "birthDate": "Geburtstag",
+      "birthDatePlaceholder": "Geburtstag ergänzen",
+      "gender": "Geschlecht",
+      "genderPlaceholder": "Nicht angegeben",
+      "genders": {
+        "female": "Weiblich",
+        "male": "Männlich",
+        "other": "Divers"
+      },
+      "invalidBirthDate": "Der Geburtstag sieht nicht richtig aus. Prüf das Jahr.",
+      "name": "Name",
+      "namePlaceholder": "Dein Name",
+      "title": "Profil"
+    },
+    "status": {
+      "saved": "Gespeichert {when}",
+      "saving": "Speichert"
+    },
+    "support": {
+      "body": "Kurz beschreiben, was passiert ist — wir schauen nach. Screenshots braucht es nicht, die technischen Details kommen von selbst mit.",
+      "drawer": {
+        "cancel": "Abbrechen",
+        "description": "Ein, zwei Sätze reichen völlig. Sie landen direkt bei den Leuten, die es reparieren.",
+        "done": "Danke. Das hilft mehr, als man denkt.",
+        "failed": "Das ging nicht raus. Gleich noch einmal versuchen.",
+        "placeholder": "Im Profil auf Speichern getippt, dann war der Bildschirm leer.",
+        "submit": "Abschicken",
+        "title": "Was ist passiert?",
+        "tooShort": "Ein paar Worte mehr bitte — mindestens zehn Zeichen."
+      },
+      "open": "Problem melden",
+      "title": "Etwas funktioniert nicht?"
+    },
+    "title": "Konto"
+  },
+  "admin": {
+    "chapters": {
+      "cancel": "Abbrechen",
+      "create": {
+        "addCountry": "{country} hinzufügen",
+        "address": {
+          "hint": "Tipp eine Adresse oder den Namen des Pflegeheims ein.",
+          "label": "Adresse finden",
+          "noResults": "Nichts gefunden. Versuch es mit der Straße oder dem Ort.",
+          "placeholder": "Straße, Pflegeheim oder Ort",
+          "searching": "Suche läuft"
+        },
+        "changeAddress": "Neu suchen",
+        "counter": "{count} / {max}",
+        "countryAdded": "{country} ist Teil der Bewegung.",
+        "countryDetected": "Aus der Adresse erkannt.",
+        "countryMissing": "{country} ist noch nicht im System.",
+        "done": {
+          "another": "Noch eine gründen",
+          "body": "Druck das Poster für die Wand im Pflegeheim, oder öffne die Ortsgruppe und füge ihre Leute hinzu.",
+          "open": "Ortsgruppe öffnen",
+          "title": "{name} steht auf der Karte."
+        },
+        "dragHint": "Zieh den Pin, um nachzujustieren. Die Adresse folgt.",
+        "intro": "Ein Name und eine Adresse reichen. Alles andere kann später kommen.",
+        "logoPreview": "So wird es aussehen",
+        "needCountryAdmin": "Bitte einen Superadmin, zuerst {country} anzulegen.",
+        "optional": "Optional",
+        "overlap": "Überschneidet sich mit {name}, {distance} entfernt.",
+        "pending": "Wird erstellt",
+        "radius": "Wie weit sie fährt",
+        "radiusValue": "{distance} rund um den Pin",
+        "shortcut": "⌘↵",
+        "slugChecking": "Prüfe",
+        "slugDone": "Fertig",
+        "slugEdit": "Ändern",
+        "slugFree": "Frei",
+        "slugTaken": "Vergeben",
+        "submit": "Ortsgruppe erstellen",
+        "webAddress": "Webadresse"
+      },
+      "created": "{name} steht auf der Karte.",
+      "detail": {
+        "about": "Über die Ortsgruppe",
+        "back": "Zurück zu den Ortsgruppen",
+        "country": "Land",
+        "createdLabel": "Gegründet",
+        "delete": {
+          "body": "Mitglieder, Fahrgäste und offene Anfragen gehen mit. Bereits gefahrene Fahrten bleiben erhalten.",
+          "done": "{name} ist weg.",
+          "footprint": "{members} Mitglieder · {passengers} Fahrgäste · {pending} wartend",
+          "label": "Tipp {word} zur Bestätigung",
+          "open": "Ortsgruppe löschen",
+          "submit": "Ortsgruppe löschen",
+          "title": "{name} endgültig löschen?",
+          "word": "DELETE"
+        },
+        "edit": "Bearbeiten",
+        "history": "Verlauf",
+        "historyEmpty": "Noch nichts zu erzählen. Jede Änderung an der Ortsgruppe landet hier.",
+        "invalidUrl": "Das ist keine Webadresse.",
+        "joinLink": "Beitrittslink",
+        "location": "Standort",
+        "members": "Mitglieder",
+        "passengers": "Fahrgäste",
+        "pending": "Warten auf Freigabe",
+        "people": "Menschen",
+        "placeholders": {
+          "careHome": "Pflegeheim ergänzen",
+          "description": "Erzähl, worum es in der Ortsgruppe geht",
+          "logo": "Webadresse eines Logos einfügen"
+        },
+        "properties": "Eigenschaften",
+        "radius": "Wie weit sie fährt",
+        "saved": "Gespeichert {when}",
+        "saving": "Speichert",
+        "slug": "Webadresse",
+        "started": "Gegründet am {date}",
+        "timeZone": "Zeitzone",
+        "timeZoneHint": "Fahrzeiten werden in dieser Zone angezeigt. Sie folgt der Stecknadel, solange du sie hier nicht festlegst.",
+        "undo": "Rückgängig",
+        "undone": "Zurückgesetzt."
+      },
+      "edit": "Ortsgruppe bearbeiten",
+      "empty": "Noch keine Ortsgruppen. Gründe die erste.",
+      "errors": {
+        "generic": "Das hat nicht geklappt. Versuch es noch mal.",
+        "slugTaken": "Diese Webadresse ist schon belegt. Nimm eine andere."
+      },
+      "fields": {
+        "address": "Adresse",
+        "careHomeName": "Pflegeheim",
+        "city": "Stadt",
+        "country": "Land",
+        "description": "Beschreibung",
+        "latitude": "Breitengrad",
+        "location": "Standort",
+        "logo": "Webadresse des Logos",
+        "longitude": "Längengrad",
+        "name": "Name der Ortsgruppe",
+        "serviceRadiusKm": "Wie weit sie fährt (km)",
+        "slug": "Webadresse"
+      },
+      "mapLabel": "Karte der Ortsgruppen",
+      "mapUnavailable": "Für die Karte fehlt ein Mapbox-Token. Setze NEXT_PUBLIC_MAPBOX_TOKEN.",
+      "new": "Neue Ortsgruppe",
+      "open": "Ortsgruppe öffnen",
+      "save": "Ortsgruppe speichern",
+      "saved": "Gespeichert.",
+      "views": {
+        "list": "Liste",
+        "map": "Karte"
+      }
+    },
+    "commands": {
+      "chapterMap": "Ortsgruppen auf der Karte zeigen",
+      "dialogDescription": "Spring zu einer Seite, wechsle die Perspektive oder starte eine Aktion über die Tastatur.",
+      "dialogTitle": "Befehlsleiste",
+      "empty": "Unter dem Namen gibt es nichts.",
+      "groups": {
+        "account": "Konto",
+        "create": "Erstellen",
+        "navigate": "Gehe zu",
+        "perspective": "Perspektive",
+        "scope": "Bereich"
+      },
+      "hint": "für alles",
+      "joinPool": "Einem Rikscha-Pool beitreten",
+      "language": "Sprache: {name}",
+      "newChapter": "Neue Ortsgruppe gründen",
+      "newCountry": "Neues Land anlegen",
+      "newLocation": "Standort hinzufügen",
+      "newPool": "Rikscha-Pool anlegen",
+      "newRide": "Neue Ausfahrt starten",
+      "newTrishaw": "Rikscha hinzufügen",
+      "newTrishawType": "Rikscha-Modell hinzufügen",
+      "open": "Befehlsleiste öffnen",
+      "placeholder": "Nach einer Seite oder einer Aktion suchen",
+      "signOut": "Abmelden",
+      "toggleSidebar": "Seitenleiste ein- oder ausblenden",
+      "viewAsAdmin": "Als Admin ansehen",
+      "viewAsPassenger": "Als Passagier ansehen",
+      "viewAsPilot": "Als Pilot ansehen"
+    },
+    "countries": {
+      "admins": "Länder-Admins",
+      "appoint": "Länder-Admin hinzufügen",
+      "appointBody": "Die Person muss sich einmal angemeldet haben.",
+      "appointed": "{email} verantwortet jetzt dieses Land.",
+      "appointLabel": "E-Mail-Adresse",
+      "appointPlaceholder": "name@beispiel.de",
+      "appointShort": "Admin hinzufügen",
+      "cancel": "Abbrechen",
+      "confirmRemoveAdmin": "{name} als Länder-Admin entfernen?",
+      "created": "{name} ist Teil der Bewegung.",
+      "delete": {
+        "body": "Jede Ortsgruppe in diesem Land geht mit — samt Mitgliedern, Fahrgästen und offenen Anfragen. Bereits gefahrene Fahrten bleiben erhalten.",
+        "done": "{name} ist weg.",
+        "footprint": "{chapters} Ortsgruppen · {members} Mitglieder · {passengers} Fahrgäste",
+        "label": "Tipp {word} zur Bestätigung",
+        "open": "Land löschen",
+        "submit": "Land löschen",
+        "title": "{name} endgültig löschen?",
+        "word": "DELETE"
+      },
+      "edit": "Land bearbeiten",
+      "empty": "Noch keine Länder.",
+      "errors": {
+        "codeTaken": "Dieser Ländercode ist schon belegt.",
+        "generic": "Das hat nicht geklappt. Versuch es noch mal.",
+        "noAccount": "Zu dieser E-Mail-Adresse gibt es noch kein Konto."
+      },
+      "fields": {
+        "code": "Ländercode",
+        "name": "Name des Landes"
+      },
+      "nameHint": "So erscheint es in der Seitenleiste und auf den Seiten der Ortsgruppen.",
+      "new": "Neues Land",
+      "pick": {
+        "empty": "Kein Land mit diesem Namen.",
+        "label": "Land",
+        "placeholder": "Land eintippen"
+      },
+      "removeAdmin": "{name} entfernen",
+      "save": "Land speichern",
+      "saved": "Gespeichert."
+    },
+    "history": {
+      "accountClaimed": "Diese Person hat das Konto übernommen",
+      "accountCreated": "{actor} hat dieses Konto angelegt",
+      "applicationApproved": "{actor} hat die Anfrage freigegeben",
+      "applicationRejected": "{actor} hat die Anfrage abgelehnt",
+      "applicationSubmitted": "{actor} hat gefragt, hier zu pilotieren",
+      "change": "{from} → {to}",
+      "chapterCreated": "{actor} hat die Ortsgruppe auf die Karte gesetzt",
+      "chapterDeleted": "{actor} hat die Ortsgruppe {name} gelöscht",
+      "chapterUpdated": "{actor} hat {field} geändert",
+      "countryAdminAppointed": "{actor} hat diese Person zum Länder-Admin gemacht",
+      "countryAdminRemoved": "{actor} hat diese Person als Länder-Admin abgelöst",
+      "countryDeleted": "{actor} hat das Land {name} gelöscht",
+      "emailSent": "Eine E-Mail ist raus — {template}",
+      "fields": {
+        "careHomeName": "das Pflegeheim",
+        "city": "den Ort",
+        "description": "die Beschreibung",
+        "location": "den Standort",
+        "logo": "das Logo",
+        "name": "den Namen",
+        "serviceRadiusKm": "die Reichweite"
+      },
+      "invited": "{actor} hat eine Einladung geschickt",
+      "memberRemoved": "{actor} hat diese Person aus der Ortsgruppe entfernt",
+      "nothing": "nichts",
+      "roleGranted": "{actor} hat eine neue Rolle vergeben",
+      "roleRevoked": "{actor} hat eine Rolle zurückgenommen",
+      "showMore": "Mehr anzeigen",
+      "someone": "Jemand",
+      "templates": {
+        "applicationSubmitted": "Neue Anfrage",
+        "approval": "Freigegeben",
+        "countryAdminAppointed": "Länder-Admin",
+        "countryAdminRemoved": "Länder-Admin abgelöst",
+        "damageReported": "Schaden gemeldet",
+        "invite": "Einladung",
+        "memberJoined": "Neues Mitglied",
+        "poolAccessDecided": "Pool-Antwort",
+        "poolAccessRequested": "Pool-Anfrage",
+        "rejection": "Abgelehnt",
+        "roleChanged": "Rollenänderung",
+        "welcome": "Willkommen"
+      },
+      "you": "Du"
+    },
+    "members": {
+      "actions": "Aktionen für {name}",
+      "columns": {
+        "joined": "Dabei seit",
+        "person": "Person",
+        "phone": "Telefon",
+        "role": "Rolle"
+      },
+      "demote": "Adminrechte entziehen",
+      "demoteBody": "Die Person bleibt in der Ortsgruppe — sie entscheidet nur nicht mehr mit.",
+      "demoted": "{name} ist kein Admin mehr.",
+      "demoteTitle": "{name} die Adminrechte entziehen?",
+      "empty": "Noch keine Mitglieder. Gib eine Pilotanfrage frei, und der erste Name steht hier.",
+      "errors": {
+        "alreadyDecided": "Das hat schon jemand entschieden.",
+        "generic": "Das hat nicht geklappt. Versuch es erneut.",
+        "lastAdmin": "Eine Ortsgruppe kann nicht ihren letzten Admin verlieren. Füge zuerst einen weiteren hinzu.",
+        "self": "Deine eigene Rolle kannst du nicht ändern. Bitte eine andere Admin darum."
+      },
+      "history": "Verlauf",
+      "invite": {
+        "cancel": "Abbrechen",
+        "description": "Die Person bekommt eine E-Mail mit einem Link zu {chapter}.",
+        "email": "E-Mail-Adresse",
+        "emailPlaceholder": "anna@beispiel.de",
+        "errors": {
+          "generic": "Das hat nicht geklappt. Versuch es noch mal.",
+          "invalid": "Prüf den Namen und die E-Mail-Adresse."
+        },
+        "name": "Name der Person",
+        "namePlaceholder": "Anna Schmidt",
+        "open": "Jemanden einladen",
+        "role": {
+          "admin": "Ortsgruppen-Admin",
+          "pilot": "Pilot"
+        },
+        "roleHint": {
+          "admin": "Leitet die Ortsgruppe, bestätigt neue Piloten und lädt Leute ein.",
+          "pilot": "Tritt in die Pedale und nimmt Passagiere auf eine Fahrt mit."
+        },
+        "sending": "Wird gesendet…",
+        "sent": "Einladung an {name} verschickt.",
+        "submit": "Einladung senden",
+        "title": "Jemanden einladen"
+      },
+      "promote": "Zum Ortsgruppen-Admin machen",
+      "promoteBody": "Damit kann die Person Piloten freigeben, Ausfahrten buchen und alle Angaben sehen.",
+      "promoted": "{name} ist Ortsgruppen-Admin.",
+      "promoteTitle": "{name} zum Ortsgruppen-Admin machen?",
+      "remove": "Aus der Ortsgruppe entfernen",
+      "removeBody": "Der Zugang zur Ortsgruppe ist damit weg. Gefahrene Ausfahrten bleiben im Protokoll.",
+      "removed": "{name} ist nicht mehr in der Ortsgruppe.",
+      "removeTitle": "{name} aus der Ortsgruppe entfernen?",
+      "title": "Alle in der Ortsgruppe"
+    },
+    "nav": {
+      "bikes": "Rikschas",
+      "chapters": "Ortsgruppen",
+      "chat": "Nachrichten",
+      "countries": "Länder",
+      "help": "Hilfe holen",
+      "locations": "Standorte",
+      "members": "Mitglieder",
+      "overview": "Überblick",
+      "passengers": "Passagiere",
+      "reports": "Berichte",
+      "rides": "Ausfahrten",
+      "settings": "Einstellungen"
+    },
+    "navGroups": {
+      "footer": "Konto",
+      "main": "Arbeit in der Ortsgruppe",
+      "organisation": "Organisation"
+    },
+    "navLabel": "Admin-Bereiche",
+    "newRide": "Neue Ausfahrt",
+    "openMenu": "Menü öffnen",
+    "pages": {
+      "bikes": {
+        "body": "Jede Rikscha, um die sich deine Ortsgruppe kümmert, wer sie zuletzt draußen hatte und wann sie wieder zur Wartung muss.",
+        "title": "Rikschas"
+      },
+      "chapters": {
+        "body": "Die Ortsgruppen, um die du dich kümmerst, und die, die du gründen kannst. Eine Ortsgruppe ist ein Ort, ein Pflegeheim und die Ehrenamtlichen drumherum.",
+        "title": "Ortsgruppen"
+      },
+      "countries": {
+        "body": "Jedes Land der Bewegung und die Admins, die es führen. Das sieht nur ein Superadmin.",
+        "title": "Länder"
+      },
+      "help": {
+        "body": "Anleitungen für Ortsgruppen-Admins — und ein Weg zu einem Menschen, wenn eine Anleitung nicht reicht.",
+        "title": "Hilfe holen"
+      },
+      "locations": {
+        "body": "Wo Ihre Rikschas stehen, wie man hineinkommt, und die Pools, die Ihre Ortsgruppe teilt.",
+        "title": "Standorte"
+      },
+      "members": {
+        "body": "Piloten, Ortsgruppen-Admins und die Leute, die auf ihre Freigabe warten. Freigeben kannst du sie genau hier.",
+        "title": "Mitglieder"
+      },
+      "overview": {
+        "body": "Sobald Ausfahrten gebucht werden, landet hier die kommende Woche — die Fahrten von heute, die Piloten, die sie übernehmen, und alles, was noch auf dich wartet.",
+        "title": "Überblick"
+      },
+      "passengers": {
+        "body": "Die Menschen, mit denen deine Ortsgruppe fährt — auch die, für die Angehörige oder Pflegekräfte buchen.",
+        "title": "Passagiere"
+      },
+      "reports": {
+        "body": "Gefahrene Ausfahrten, ehrenamtliche Stunden, zurückgelegte Kilometer — die Zahlen, die eine Ortsgruppe braucht, wenn jemand fragt, was sie eigentlich tut.",
+        "title": "Berichte"
+      },
+      "rides": {
+        "body": "Jede Fahrt, die deine Ortsgruppe gebucht hat, von der Anfrage bis zum Winken an der Tür. Noch ist nichts gebucht.",
+        "title": "Ausfahrten"
+      },
+      "settings": {
+        "body": "Wie weit deine Ortsgruppe fährt, wer zu erreichen ist und was auf der eigenen Seite der Ortsgruppe steht.",
+        "title": "Einstellungen"
+      }
+    },
+    "passengers": {
+      "add": {
+        "added": "{name} steht auf der Liste.",
+        "another": "Gleich noch jemanden hinzufügen",
+        "anotherHint": "Lässt das Formular für die nächste Person offen.",
+        "body": "Für alle, die sich an der Tür anmelden statt am Handy. Das Konto können sie später mit derselben E-Mail oder Nummer selbst übernehmen.",
+        "contact": "E-Mail oder Telefonnummer",
+        "errors": {
+          "exists": "Zu dieser E-Mail oder Nummer gibt es schon ein Konto.",
+          "generic": "Das hat nicht geklappt. Versuch es noch mal.",
+          "invalid": "Prüf die Angaben — da stimmt etwas nicht."
+        },
+        "helper": "Jemand unterstützt diese Person",
+        "helperContact": "E-Mail oder Telefonnummer der helfenden Person",
+        "helperIsAccountHolder": "Dieses Konto gehört dann {helper}, die sich um {passenger} kümmert.",
+        "helperName": "Name der helfenden Person",
+        "helperRelationship": "Beziehung",
+        "open": "Passagier hinzufügen",
+        "submit": "Passagier hinzufügen",
+        "title": "Passagier hinzufügen"
+      },
+      "columns": {
+        "born": "Geboren",
+        "chapter": "Ortsgruppe",
+        "joined": "Dabei seit",
+        "name": "Name"
+      },
+      "empty": "Noch keine Passagiere. Füg den ersten hinzu, oder warte, bis sich jemand über die Seite der Ortsgruppe meldet.",
+      "pickChapter": "Wähl eine einzelne Ortsgruppe, um ihr einen Passagier hinzuzufügen."
+    },
+    "person": {
+      "back": "Zurück zu den Mitgliedern",
+      "contact": "Kontakt",
+      "delete": {
+        "body": "Konto, Rollen, Anfragen und Verlauf gehen damit weg. Gefahrene Ausfahrten bleiben im Protokoll.",
+        "done": "{name} ist gelöscht.",
+        "errors": {
+          "generic": "Das hat nicht geklappt. Versuch es noch mal.",
+          "self": "Dein eigenes Konto kannst du hier nicht löschen."
+        },
+        "label": "Tipp {word} zur Bestätigung",
+        "open": "Konto löschen",
+        "submit": "Konto löschen",
+        "title": "{name} endgültig löschen?",
+        "word": "DELETE"
+      },
+      "history": "Verlauf",
+      "historyEmpty": "Noch nichts zu erzählen. Jede Freigabe, jede Rollenänderung und jede E-Mail landet hier.",
+      "joined": "Dabei seit {date}",
+      "noEmail": "Keine E-Mail-Adresse",
+      "noPhone": "Keine Telefonnummer",
+      "noRoles": "Noch keine Rolle",
+      "roles": "Rollen"
+    },
+    "perspectives": {
+      "admin": "Admin",
+      "passenger": "Passagier",
+      "pilot": "Pilot"
+    },
+    "requests": {
+      "approve": "Freigeben",
+      "approveBody": "Die Person bekommt eine E-Mail mit den drei Schritten bis zur ersten Ausfahrt.",
+      "approved": "{name} ist an Bord.",
+      "approveTitle": "{name} an Bord holen?",
+      "body": "Alle hier haben gefragt, ob sie für deine Ortsgruppe pilotieren dürfen. Lies, entscheide — und sie hören noch in derselben Minute von uns.",
+      "columns": {
+        "applied": "Gefragt",
+        "chapter": "Ortsgruppe",
+        "person": "Person"
+      },
+      "count": "{count} warten",
+      "empty": "Es wartet niemand. Wer als Nächstes fragt, landet genau hier.",
+      "noteLabel": "Eine Nachricht an {name} (optional)",
+      "notePlaceholder": "Ein Trainingstermin, eine Telefonnummer, ein freundliches Wort.",
+      "reject": "Absagen",
+      "rejectBody": "Die Person bekommt eine E-Mail und kann bei einer anderen Ortsgruppe anfragen.",
+      "rejected": "{name} ist informiert.",
+      "rejectTitle": "{name} absagen?",
+      "title": "Warten auf Freigabe"
+    },
+    "roles": {
+      "chapterAdmin": "Ortsgruppen-Admin",
+      "countryAdmin": "Länder-Admin",
+      "passenger": "Passagier",
+      "pilot": "Pilot",
+      "superadmin": "Superadmin"
+    },
+    "scope": {
+      "all": "Alle Ortsgruppen",
+      "allInCountry": "Alle Ortsgruppen in {country}",
+      "label": "Bereich",
+      "perspective": "Perspektive",
+      "switchLabel": "Perspektive oder Ortsgruppe wechseln"
+    },
+    "settings": {
+      "joinLink": {
+        "body": "Wer diesen Link öffnet, landet auf der Seite deiner Ortsgruppe und kann von dort beitreten. Druck das Plakat für die Wand im Pflegeheim.",
+        "copied": "Link kopiert.",
+        "copy": "Link kopieren",
+        "downloadPng": "QR-Code als PNG speichern",
+        "poster": "Plakat drucken",
+        "title": "Beitrittslink"
+      },
+      "notifications": {
+        "applicationPush": {
+          "hint": "Schalt es aus, dann wartet die Karte trotzdem im Posteingang — die E-Mail folgt zwei Minuten später, falls sie niemand vorher in der App gelesen hat.",
+          "label": "Pilotanfragen brummen aufs Handy"
+        },
+        "body": "Wer von einem neuen Gesicht erfährt — und was in der Post deiner Ortsgruppe steht, wenn sie ankommt.",
+        "damagePush": {
+          "hint": "Eine Pilotin meldet eine quietschende Bremse oder einen Platten. Sperrende Schäden erreichen immer alle Admins, unabhängig von dieser Einstellung.",
+          "label": "Auch kleine Schäden melden"
+        },
+        "field": {
+          "edit": "Bearbeiten",
+          "errors": {
+            "generic": "Das hat nicht geklappt. Versuch es noch mal."
+          },
+          "invalid": "Das sieht nicht richtig aus.",
+          "saved": "Gespeichert.",
+          "undo": "Rückgängig",
+          "undone": "Zurückgesetzt."
+        },
+        "memberJoined": {
+          "hint": "Eine Karte wartet im Admin-Posteingang, sobald ein neuer Passagier dazukommt.",
+          "label": "Jemand tritt der Ortsgruppe bei"
+        },
+        "replyTo": {
+          "hint": "Antwortet jemand auf eine Mail der Ortsgruppe, landet die Antwort hier.",
+          "invalid": "Das ist keine E-Mail-Adresse.",
+          "label": "Antwortadresse",
+          "placeholder": "hallo@beispiel.de"
+        },
+        "status": {
+          "saved": "Gespeichert {when}",
+          "saving": "Speichert"
+        },
+        "title": "Benachrichtigungen",
+        "welcomeNote": {
+          "hint": "Ein paar Zeilen von dir, hervorgehoben in der Willkommensmail, die jede neue Pilotin und jeder neue Passagier bekommt.",
+          "label": "Ein paar Willkommensworte",
+          "placeholder": "Wir fahren dienstags um zwei, und Kuchen gibt es immer."
+        }
+      },
+      "pickChapter": "Wähl links eine Ortsgruppe, um ihren Beitrittslink zu sehen.",
+      "postRide": {
+        "body": "Was Pilot:innen sehen, wenn sie eine Fahrt beenden: wohin mit der Rikscha, was zu prüfen ist, wen man anruft.",
+        "hint": "Markdown möglich: **fett**, Listen, Links.",
+        "label": "Hinweise nach der Fahrt",
+        "placeholder": "Ladegerät einstecken, Sitz abwischen und den Schlüssel zurück in den Tresor legen.",
+        "title": "Nach der Fahrt"
+      },
+      "support": {
+        "body": "Im Admin hakt etwas? Ein Satz genügt — er landet bei den Leuten, die das hier warten.",
+        "drawer": {
+          "cancel": "Abbrechen",
+          "description": "Ein, zwei Sätze reichen völlig. Sie landen direkt bei den Leuten, die es reparieren.",
+          "done": "Danke. Das hilft mehr, als man denkt.",
+          "failed": "Das ging nicht raus. Gleich noch einmal versuchen.",
+          "placeholder": "Im Profil auf Speichern getippt, dann war der Bildschirm leer.",
+          "submit": "Abschicken",
+          "title": "Was ist passiert?",
+          "tooShort": "Ein paar Worte mehr bitte — mindestens zehn Zeichen."
+        },
+        "open": "Problem melden",
+        "title": "Problem melden"
+      }
+    },
+    "table": {
+      "all": "Alle",
+      "clearSearch": "Suche löschen",
+      "columns": "Spalten",
+      "filterAria": "Nach {column} filtern",
+      "next": "Weiter",
+      "noResults": "Nichts passt.",
+      "page": "Seite {page}",
+      "pageInfo": "{from}–{to} von {total}",
+      "previous": "Zurück",
+      "search": "Suchen …",
+      "sortAria": "Nach {column} sortieren"
+    },
+    "user": {
+      "account": "Konto",
+      "menuLabel": "Dein Konto"
+    }
+  },
+  "calendar": {
+    "agendaEmpty": "Noch nichts gebucht. Sobald eine Fahrt eingeplant ist, steht sie hier.",
+    "cancelledOn": "Abgesagt",
+    "models": {
+      "event": "Gruppenfahrt",
+      "functional": "Zweckfahrt",
+      "pleasure": "Ausfahrt"
+    },
+    "nextWeek": "Nächste Woche",
+    "noRiders": "Noch keine Fahrgäste",
+    "noTrishaw": "Noch keine Rikscha",
+    "noTrishaws": "Noch keine Rikschas eingetragen.",
+    "pilotNeeded": "Pilot gesucht",
+    "previousWeek": "Vorige Woche",
+    "riders": "{count, plural, one {# Fahrgast} other {# Fahrgäste}}",
+    "roles": {
+      "pilot": "Pilot"
+    },
+    "statuses": {
+      "cancelled": "Abgesagt",
+      "completed": "Gefahren",
+      "scheduled": "Geplant"
+    },
+    "thisWeek": "Diese Woche",
+    "today": "Heute",
+    "trishaw": "Rikscha",
+    "trishawStatuses": {
+      "active": "Bereit",
+      "maintenance": "In der Werkstatt",
+      "retired": "Ausgemustert"
+    },
+    "upcoming": "Demnächst",
+    "via": "nach",
+    "weekEmpty": "Diese Woche keine Fahrten.",
+    "weekOf": "Woche ab {date}"
+  },
+  "chat": {
+    "composer": {
+      "cancelReply": "Antwort verwerfen",
+      "notSent": "Nicht gesendet",
+      "placeholder": "Nachricht schreiben",
+      "reply": "Antworten",
+      "replyingTo": "Antwort an {name}",
+      "retry": "Nochmal versuchen",
+      "send": "Senden"
+    },
+    "deletedAccount": "Gelöschtes Konto",
+    "errors": {
+      "announcementOnly": "Hier schreibt nur, wer die Gruppe gestartet hat.",
+      "frozen": "Dieser Chat ist abgeschlossen. Nimm ihn wieder auf, um zu schreiben.",
+      "generic": "Das hat nicht geklappt. Versuch es nochmal.",
+      "notMember": "Dieses Gespräch gehört nicht dir.",
+      "rateLimited": "Einen Moment, dann nochmal senden.",
+      "tooLong": "Das sind mehr als 4.000 Zeichen."
+    },
+    "list": {
+      "empty": {
+        "body": "Schreib dem Captain, der dich eingewiesen hat, oder dem Piloten von Samstag. Alle in deiner Ortsgruppe sind einen Tipp entfernt.",
+        "cta": "Chat starten",
+        "title": "Noch keine Nachrichten"
+      },
+      "mutedLabel": "Stumm",
+      "newChat": "Neu",
+      "noResults": "Kein Name und keine Gruppe passt dazu.",
+      "pane": {
+        "body": "Deine Chats stehen links. Öffne eins — oder starte ein neues mit jemandem aus deiner Ortsgruppe.",
+        "title": "Wähl ein Gespräch"
+      },
+      "search": "Namen und Gruppen durchsuchen",
+      "title": "Chat",
+      "unreads": "Ungelesen",
+      "you": "Du"
+    },
+    "newChat": {
+      "addPeople": "Leute hinzufügen",
+      "announcementHint": "Ab 100 Leuten schreibst nur noch du. Alle anderen lesen mit.",
+      "change": "Ändern",
+      "chapter": "Ortsgruppe",
+      "createGroup": "Gruppe erstellen",
+      "generic": "Das hat nicht geklappt. Versuch es nochmal.",
+      "group": "Gruppe",
+      "groupTitle": "Gruppenname",
+      "groupTitlePlaceholder": "Samstagsrunde",
+      "noMatches": "Niemand hier mit diesem Namen.",
+      "notFound": "Niemand mit dieser E-Mail oder Nummer.",
+      "notReachable": "Ihr seid noch in keiner gemeinsamen Ortsgruppe — deshalb bleibt diese Tür zu.",
+      "people": "{count} in dieser Gruppe",
+      "person": "Person",
+      "searching": "Suche…",
+      "searchLabel": "Name, E-Mail oder Telefonnummer",
+      "searchPlaceholder": "Anna",
+      "self": "Das bist du selbst.",
+      "startChat": "Chat starten",
+      "title": "Neuer Chat",
+      "tooFew": "Eine Gruppe braucht mindestens zwei weitere Leute.",
+      "tooMany": "In eine Gruppe passen höchstens 1.000 Leute."
+    },
+    "system": {
+      "announcementOff": "{name} hat die Gruppe wieder für alle geöffnet",
+      "announcementOn": "{name} hat daraus einen Ankündigungskanal gemacht",
+      "continued": "{name} hat das Gespräch wieder aufgenommen",
+      "left": "{name} hat die Gruppe verlassen"
+    },
+    "thread": {
+      "announcementLocked": "Hier schreibt nur, wer die Gruppe gestartet hat. Jede Ankündigung erreicht dich trotzdem.",
+      "back": "Alle Chats",
+      "deleted": "Nachricht gelöscht",
+      "edited": "bearbeitet",
+      "frozen": {
+        "body": "Er wurde mit dem Ende der Fahrt geschlossen. Ihr beide könnt ihn jederzeit wieder aufnehmen.",
+        "title": "Dieser Chat ist abgeschlossen"
+      },
+      "jumpToLatest": "Zur neuesten Nachricht",
+      "loadOlder": "Ältere Nachrichten laden",
+      "offline": "Offline",
+      "online": "Online",
+      "reconnecting": "Verbindung wird wiederhergestellt …",
+      "seen": "Gelesen",
+      "seenBy": "Von {count} gelesen",
+      "today": "Heute",
+      "typingMany": "{first} und {count} weitere schreiben …",
+      "typingOne": "{name} schreibt …",
+      "typingTwo": "{first} und {second} schreiben …",
+      "yesterday": "Gestern"
+    }
+  },
+  "common": {
+    "back": "Zurück",
+    "continue": "Fortfahren",
+    "language": "Sprache ändern",
+    "markdown": {
+      "bold": "Fett",
+      "code": "Code",
+      "italic": "Kursiv",
+      "link": "Link",
+      "list": "Liste",
+      "quote": "Zitat",
+      "strike": "Durchgestrichen"
+    },
+    "next": "Weiter",
+    "signOut": "Abmelden",
+    "skip": "Erst mal überspringen",
+    "stepProgress": "Schritt {current} von {total}"
+  },
+  "consent": {
+    "data": "Ich stimme der Speicherung und Verarbeitung meiner Daten zu.",
+    "dataSuffix": "Siehe {imprint} und {privacy}.",
+    "error": "Das konnten wir nicht speichern. Versuchen Sie es erneut.",
+    "imprint": "Impressum",
+    "joining": "Sie treten {chapter} bei.",
+    "notifications": "Ich möchte E-Mails und Push-Nachrichten zu wichtigen Dingen erhalten.",
+    "privacy": "Datenverarbeitungsvereinbarung",
+    "required": "Setzen Sie überall ein Häkchen, um fortzufahren.",
+    "safety": "Mir ist klar, dass die Ausfahrten von geschulten Freiwilligen gefahren werden, und ich halte mich an die Sicherheitsregeln der Ortsgruppe.",
+    "setUpBy": "{name} hat dieses Konto für Sie eingerichtet. Prüfen Sie die Angaben und stimmen Sie zu, um fortzufahren.",
+    "title": "Drei kurze Zusagen",
+    "titlePilot": "Zwei kurze Zusagen"
+  },
+  "fleet": {
+    "allocation": {
+      "booked": "Für eine überlappende Fahrt gebucht",
+      "description": "{when} · {chapter}",
+      "groundedOnRide": "{names} nicht fahrbereit",
+      "kept": "Nicht mehr fahrbereit — tauschen Sie sie nach Möglichkeit gegen eine andere Rikscha.",
+      "loadFailed": "Diese Fahrt konnte nicht geladen werden.",
+      "noMatch": "Keine Rikscha passt zu „{query}“.",
+      "none": "Diese Ortsgruppe hat noch keine Rikschas. Legen Sie zuerst unter Rikschas eine an.",
+      "nothingSelected": "Keine Rikscha ausgewählt — die Fahrt startet ohne.",
+      "open": "Rikschas zuteilen",
+      "saved": "Rikschas zugeteilt.",
+      "saving": "Wird gespeichert…",
+      "search": "Nach Name, Modell oder Standort suchen",
+      "selected": "{count, plural, one {1 Rikscha ausgewählt} other {# Rikschas ausgewählt}}",
+      "submit": "Zuteilung speichern",
+      "title": "Rikschas zuteilen"
+    },
+    "common": {
+      "damage": {
+        "clear": "Freigeben",
+        "cleared": "Schaden freigegeben.",
+        "clearedBy": "Freigegeben von {name}: {note}",
+        "clearNote": "Was ist passiert?",
+        "clearPlaceholder": "Repariert, neuer Reifen · Unbegründet",
+        "clearSubmit": "Schaden freigeben",
+        "clearTitle": "Schaden freigeben",
+        "description": "Was ist kaputt?",
+        "descriptionPlaceholder": "Hinterreifen platt, linke Bremse quietscht …",
+        "ground": "Rikscha sperren",
+        "groundHint": "Sie kann nicht gebucht werden, bis ein Admin den Schaden freigibt. Nutze das, wenn eine Fahrt unsicher wäre.",
+        "open": "{count, plural, one {1 offener Schaden} other {# offene Schäden}}",
+        "photo": "Foto",
+        "report": "Schaden melden",
+        "reportedBy": "Gemeldet von {name}",
+        "sent": "Danke – die Admins der Ortsgruppe wissen Bescheid.",
+        "submit": "Meldung senden",
+        "submitting": "Wird gesendet …",
+        "unknownPerson": "Jemand"
+      },
+      "damaged": "Schaden gemeldet",
+      "errors": {
+        "alreadyCleared": "Dieser Schaden wurde bereits freigegeben.",
+        "alreadyDecided": "Jemand hat diese Anfrage bereits beantwortet.",
+        "alreadyMember": "Ihre Ortsgruppe nutzt diesen Pool bereits.",
+        "defaultLocation": "Der Standard-Standort einer Ortsgruppe kann nicht entfernt werden.",
+        "frameNumberLocked": "Die Rahmennummer lässt sich nach dem Setzen nicht mehr ändern.",
+        "frameNumberTaken": "Eine andere Rikscha hat bereits diese Rahmennummer.",
+        "generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+        "invalidFile": "Diese Datei kann hier nicht verwendet werden.",
+        "locationNotEmpty": "Bringen Sie die Rikschas zuerst an einen anderen Ort.",
+        "poolInUse": "Ihre Ortsgruppe hat noch kommende Fahrten mit Rikschas aus diesem Pool. Teilen Sie sie zuerst neu zu oder sagen Sie sie ab.",
+        "rateLimited": "Zu viele Versuche. Bitte in ein paar Minuten erneut.",
+        "trishawGrounded": "Diese Rikscha hat einen offenen sperrenden Schaden. Geben Sie den Schaden frei, um sie wieder einzusetzen.",
+        "trishawNotInChapter": "Diese Ortsgruppe kann diese Rikscha nicht nutzen.",
+        "trishawReserved": "Diese Rikscha ist für eine überschneidende Fahrt schon gebucht.",
+        "trishawUnavailable": "Diese Rikscha ist nicht fahrbereit.",
+        "typeInUse": "Dieses Modell wird noch von Rikschas genutzt. Archivieren Sie es stattdessen.",
+        "typeNameTaken": "Ein Modell mit diesem Namen gibt es hier schon.",
+        "unknownPool": "Für Ihre Ortsgruppe gibt es keinen Pool mit diesem Code.",
+        "uploadRejected": "Die Datei konnte nicht hochgeladen werden."
+      },
+      "gallery": {
+        "add": "Fotos hinzufügen",
+        "close": "Schließen",
+        "cover": "Titelbild",
+        "failed": "{name} konnte nicht hochgeladen werden.",
+        "full": "Mehr als {max} Fotos gehen nicht.",
+        "hint": "JPEG, PNG oder WebP, je bis 10 MB. Dateien hierher ziehen.",
+        "next": "Nächstes Foto",
+        "open": "Foto {index} von {count} öffnen",
+        "position": "{index} / {count}",
+        "previous": "Vorheriges Foto",
+        "remove": "Foto entfernen",
+        "upload": "Fotos hochladen"
+      },
+      "grounded": "Gesperrt",
+      "kinds": {
+        "chapter": "Standort der Ortsgruppe",
+        "pool": "Pool"
+      },
+      "location": "Standort",
+      "locations": "Standorte",
+      "manual": {
+        "add": "PDF hochladen",
+        "failed": "Die Anleitung konnte nicht hochgeladen werden. Verwenden Sie ein PDF unter 20 MB.",
+        "hint": "Ein PDF, bis 20 MB. Hierher ziehen.",
+        "name": "Bedienungsanleitung (PDF)",
+        "open": "Anleitung öffnen",
+        "remove": "Entfernen",
+        "uploading": "Wird hochgeladen …"
+      },
+      "markdownHint": "Markdown möglich: **fett**, Listen, Links.",
+      "pool": "Pool",
+      "scopes": {
+        "chapter": "Ortsgruppe",
+        "country": "Land",
+        "global": "Global"
+      },
+      "seats": "{count, plural, one {1 Sitzplatz} other {# Sitzplätze}}",
+      "statuses": {
+        "active": "Bereit",
+        "maintenance": "In der Werkstatt",
+        "retired": "Ausgemustert"
+      },
+      "trishaw": "Rikscha",
+      "trishaws": "Rikschas",
+      "type": "Modell",
+      "types": "Modelle",
+      "wheelchair": "Rollstuhl"
+    },
+    "finish": {
+      "accessCode": "Zugangscode",
+      "accessNotes": "So kommst du rein",
+      "beforeYouLeave": "Bevor du gehst",
+      "done": "Fertig",
+      "entrance": "Eingang",
+      "entrancePhoto": "Eingang von {location}",
+      "homeCard": {
+        "body": "Bring die Rikscha zurück und sag uns, falls etwas kaputt ist.",
+        "title": "Schließ deine letzte Fahrt ab"
+      },
+      "intro": "Danke fürs Fahren! So bringst du alles zurück.",
+      "noLocation": "Für diese Rikscha ist kein Rückgabeort hinterlegt. Frag deine Ortsgruppe, wo sie hinkommt.",
+      "noTrishaws": "Dieser Fahrt war keine Rikscha zugeteilt, du musst also nichts zurückbringen.",
+      "openInMaps": "In Karten öffnen",
+      "reportBody": "Die Admins deiner Ortsgruppe bekommen deine Meldung sofort.",
+      "reported": "Von dir gemeldet",
+      "reportTitle": "Schaden an {name} melden",
+      "returnInstructions": "So stellst du sie ab",
+      "returnTitle": "Hier kommt sie hin",
+      "ride": "Deine Fahrt",
+      "thanks": "Danke fürs Fahren!",
+      "title": "Fahrt abschließen"
+    },
+    "locations": {
+      "actions": {
+        "join": "Pool beitreten",
+        "newLocation": "Neuer Standort",
+        "newPool": "Neuer Pool"
+      },
+      "address": {
+        "hint": "Wählen Sie einen Treffer, um die Nadel zu setzen; ziehen Sie sie zum Feinjustieren.",
+        "label": "Adresse",
+        "noResults": "Nichts gefunden. Versuchen Sie es mit Straße oder Ort.",
+        "placeholder": "Straße, Gebäude oder Ort",
+        "searching": "Suche läuft"
+      },
+      "back": "Standorte",
+      "cancel": "Abbrechen",
+      "code": {
+        "copied": "Kopiert",
+        "copy": "Kopieren",
+        "hint": "Ortsgruppen im selben Land treten mit diesem Code bei. Jede Anfrage bestätigen Sie selbst.",
+        "label": "Pool-Code",
+        "regenerate": "Neuer Code",
+        "regenerated": "Der neue Code lautet {code}. Der alte gilt nicht mehr."
+      },
+      "create": {
+        "accessCode": "Zugangscode",
+        "accessCodeHint": "Code für Tür oder Schlüsseltresor. Nur Admins und Pilot:innen sehen ihn.",
+        "accessNotes": "Zugangshinweise",
+        "accessNotesPlaceholder": "Schlüssel im Tresor, Lichtschalter rechts neben der Tür …",
+        "chapter": "Ortsgruppe",
+        "country": "Land",
+        "created": "{name} ist bereit.",
+        "entrance": "So findet man den Eingang",
+        "entrancePhoto": "Foto vom Eingang",
+        "entrancePlaceholder": "Graue Tür links neben der Laderampe",
+        "locationBody": "Ein Ort, an dem Ihre Ortsgruppe Rikschas abstellt.",
+        "locationTitle": "Neuer Standort",
+        "name": "Name",
+        "namePlaceholder": "Garage hinter dem Pflegeheim",
+        "nameRequired": "Geben Sie dem Standort einen Namen.",
+        "poolBody": "Ein Depot, das sich mehrere Ortsgruppen eines Landes teilen. Sie erhalten einen Code zum Weitergeben.",
+        "poolTitle": "Neuer Pool",
+        "returnInstructions": "Beim Zurückbringen",
+        "returnInstructionsPlaceholder": "Ladegerät einstecken, Hinterrad abschließen, Tor schließen …",
+        "submit": "Standort anlegen",
+        "submitPool": "Pool anlegen"
+      },
+      "decision": {
+        "approve": "Annehmen",
+        "approveBody": "Deren Admins sehen dann die Zugangshinweise und können die Rikschas des Pools buchen.",
+        "approved": "{name} darf den Pool jetzt nutzen.",
+        "approveTitle": "{name} diesen Pool nutzen lassen?",
+        "noteLabel": "Eine Notiz an {name} (optional)",
+        "notePlaceholder": "Willkommen – der Schlüssel liegt beim Hausmeister.",
+        "reject": "Ablehnen",
+        "rejectBody": "Die Admins der Ortsgruppe werden informiert. Sie können später erneut anfragen.",
+        "rejected": "{name} wurde abgelehnt.",
+        "rejectTitle": "{name} ablehnen?"
+      },
+      "detail": {
+        "access": "Hineinkommen",
+        "accessCode": "Zugangscode",
+        "accessCodePlaceholder": "Kein Code",
+        "accessNotes": "Zugangshinweise",
+        "accessNotesPlaceholder": "Noch nichts geschrieben. Wie kommen Pilot:innen hinein?",
+        "archive": {
+          "body": "Er verschwindet aus den Listen. Rikschas müssen vorher woandershin.",
+          "done": "{name} ist archiviert.",
+          "open": "Standort archivieren",
+          "submit": "Archivieren",
+          "title": "{name} archivieren?"
+        },
+        "danger": "Entfernen",
+        "defaultHint": "Der Standard-Standort einer Ortsgruppe kann nicht entfernt werden.",
+        "deletePool": {
+          "body": "Alle Mitglieds-Ortsgruppen verlieren den Zugang, der Code wird ungültig. Rikschas müssen vorher woandershin.",
+          "done": "{name} ist gelöscht.",
+          "label": "Geben Sie zur Bestätigung {word} ein",
+          "open": "Pool löschen",
+          "submit": "Pool löschen",
+          "title": "{name} löschen?",
+          "word": "DELETE"
+        },
+        "entrance": "Eingang",
+        "entrancePhoto": "Foto vom Eingang",
+        "entrancePlaceholder": "Beschreiben Sie, wie man die Tür findet",
+        "kind": "Art",
+        "name": "Name",
+        "noEntrancePhoto": "Noch kein Foto.",
+        "noTrishaws": "Hier stehen noch keine Rikschas.",
+        "owner": "Gehört zu",
+        "place": "Ort",
+        "properties": "Eigenschaften",
+        "readOnly": "Nur die Admins, die diesen Standort betreuen, können ihn ändern.",
+        "returnInstructions": "Beim Zurückbringen",
+        "returnInstructionsPlaceholder": "Noch nichts geschrieben. Was ist nach der Fahrt zu tun?",
+        "trishaws": "Rikschas hier"
+      },
+      "empty": {
+        "own": "Noch keine Standorte.",
+        "used": "Ihre Ortsgruppe nutzt noch keinen Pool. Haben Sie einen Code? Treten Sie bei."
+      },
+      "field": {
+        "edit": "Bearbeiten",
+        "invalid": "Das sieht nicht richtig aus.",
+        "saved": "Gespeichert.",
+        "undo": "Rückgängig",
+        "undone": "Zurückgesetzt."
+      },
+      "forChapter": "für {chapter}",
+      "isDefault": "Standard",
+      "join": {
+        "approved": "Ihre Ortsgruppe nutzt diesen Pool bereits.",
+        "body": "Den Code des Pools erhalten Sie von der Landes-Admin. Erst nach deren Zustimmung können Sie seine Rikschas buchen.",
+        "chapter": "Für die Ortsgruppe",
+        "code": "Pool-Code",
+        "codePlaceholder": "DE-ABCD-23",
+        "sent": "Anfrage gesendet. Sie hören von uns, sobald sie beantwortet ist.",
+        "submit": "Anfrage senden",
+        "title": "Pool beitreten"
+      },
+      "leave": {
+        "body": "{chapter} kann dann keine Rikschas mehr aus diesem Pool buchen. Mit dem Code können Sie erneut anfragen.",
+        "done": "{chapter} hat {name} verlassen.",
+        "open": "Verlassen",
+        "submit": "Pool verlassen",
+        "title": "{name} verlassen?"
+      },
+      "map": {
+        "label": "Karte des Standorts",
+        "unavailable": "Die Karte ist gerade nicht verfügbar."
+      },
+      "memberCount": "{count, plural, one {1 Ortsgruppe} other {# Ortsgruppen}}",
+      "members": "Mitglieds-Ortsgruppen",
+      "membersMayManage": {
+        "hint": "Admins der Mitglieds-Ortsgruppen dürfen die Rikschas in diesem Pool anlegen, bearbeiten und umstellen.",
+        "label": "Mitglieder dürfen Rikschas verwalten"
+      },
+      "noAddress": "Noch keine Adresse",
+      "noMembers": "Noch nutzt keine Ortsgruppe diesen Pool.",
+      "noPending": "Keine offenen Anfragen.",
+      "open": "Öffnen",
+      "openInGoogleMaps": "In Google Maps öffnen",
+      "pending": "Warten auf Sie",
+      "pendingBody": "Diese Ortsgruppen möchten den Pool nutzen. Bis Sie antworten, können sie keine Rikschas daraus buchen.",
+      "pools": {
+        "body": "Gemeinsame Depots für die Ortsgruppen Ihres Landes. Geben Sie den Code weiter – wer hinein darf, entscheiden Sie.",
+        "columns": {
+          "address": "Adresse",
+          "code": "Code",
+          "country": "Land",
+          "members": "Ortsgruppen",
+          "name": "Name",
+          "trishaws": "Rikschas",
+          "waiting": "Wartet"
+        },
+        "empty": "Noch keine Pools. Legen Sie einen an, wenn sich mehrere Ortsgruppen ein Depot teilen.",
+        "title": "Pools",
+        "waiting": "{count, plural, one {1 Anfrage} other {# Anfragen}}"
+      },
+      "remove": {
+        "body": "Die Ortsgruppe kann dann keine Rikschas mehr aus diesem Pool buchen.",
+        "done": "{chapter} wurde aus {name} entfernt.",
+        "open": "Entfernen",
+        "submit": "Ortsgruppe entfernen",
+        "title": "{chapter} aus {name} entfernen?"
+      },
+      "requestStatus": {
+        "approved": "Angenommen",
+        "pending": "Wartet auf Antwort",
+        "rejected": "Abgelehnt"
+      },
+      "sections": {
+        "own": "Ihre Standorte",
+        "ownBody": "Wo die Rikschas Ihrer Ortsgruppe stehen.",
+        "requests": "Anfragen",
+        "requestsBody": "Pools, denen Ihre Ortsgruppe beitreten möchte.",
+        "used": "Genutzte Pools",
+        "usedBody": "Gemeinsame Depots, aus denen Ihre Ortsgruppe fahren darf."
+      },
+      "status": {
+        "saved": "Gespeichert {when}",
+        "saving": "Wird gespeichert"
+      },
+      "tabs": {
+        "label": "Standort-Ansichten",
+        "locations": "Standorte",
+        "pools": "Pools"
+      },
+      "title": "Standorte",
+      "trishawCount": "{count, plural, =0 {Keine Rikschas} one {1 Rikscha} other {# Rikschas}}"
+    },
+    "trishaws": {
+      "clear": {
+        "cancel": "Abbrechen"
+      },
+      "columns": {
+        "damage": "Schaden",
+        "location": "Standort",
+        "model": "Modell",
+        "status": "Status",
+        "trishaw": "Rikscha",
+        "wheelchair": "Rollstuhl"
+      },
+      "composer": {
+        "added": "Kommentar hinzugefügt.",
+        "label": "Kommentar",
+        "placeholder": "Einen Kommentar zur Historie hinzufügen – z. B. neuer Akku eingebaut",
+        "submit": "Kommentieren"
+      },
+      "create": {
+        "body": "Geben Sie ihr einen Namen, den die Piloten wiedererkennen, und sagen Sie, wo sie steht.",
+        "created": "{name} gehört jetzt zur Flotte.",
+        "frameNumber": "Rahmennummer",
+        "frameNumberHint": "Steht auf dem Rahmen. Sie lässt sich später nicht ändern.",
+        "frameNumberPlaceholder": "z. B. TB-2024-00317",
+        "location": "Standort",
+        "model": "Modell",
+        "name": "Name",
+        "namePlaceholder": "Frieda",
+        "note": "Beschreibung",
+        "notePlaceholder": "Was diese Rikscha besonders macht – Farbe, Zubehör, Eigenheiten",
+        "photo": "Foto",
+        "submit": "Rikscha anlegen",
+        "title": "Neue Rikscha"
+      },
+      "damageFilter": {
+        "damaged": "Schaden gemeldet",
+        "grounded": "Gesperrt",
+        "none": "Kein offener Schaden"
+      },
+      "delete": {
+        "body": "Verlauf und Schadensmeldungen gehen mit. Fahrten, für die sie gebucht war, bleiben ohne sie erhalten.",
+        "cancel": "Abbrechen",
+        "done": "{name} wurde gelöscht.",
+        "label": "Tippen Sie {word} zur Bestätigung",
+        "open": "Rikscha löschen",
+        "submit": "Rikscha löschen",
+        "title": "{name} endgültig löschen?",
+        "word": "DELETE"
+      },
+      "detail": {
+        "about": "Über",
+        "back": "Alle Rikschas",
+        "calendar": "Kalender",
+        "calendarHint": "Fahrten, für die diese Rikscha gebucht ist, Woche für Woche.",
+        "damage": "Schäden",
+        "edit": "Bearbeiten",
+        "frameNumber": "Rahmennummer",
+        "frameNumberPlaceholder": "z. B. TB-2024-00317",
+        "history": "Verlauf",
+        "historyEmpty": "Mit dieser Rikscha ist noch nichts passiert.",
+        "invalid": "Das sieht nicht richtig aus.",
+        "location": "Standort",
+        "manual": "Anleitung",
+        "manualLabel": "Anleitung",
+        "model": "Modell",
+        "modelDescription": "Über das Modell",
+        "modelInfo": "Über das Modell",
+        "name": "Name",
+        "no": "Nein",
+        "noDamage": "Kein offener Schaden. Soweit bekannt fahrbereit.",
+        "note": "Beschreibung",
+        "notePlaceholder": "Farbe, Zubehör, Eigenheiten genau dieser Rikscha",
+        "photo": "Foto",
+        "photoHint": "Fotos genau dieser Rikscha – Farbe, Aufkleber, Kratzer –, damit Pilot:innen sie wiedererkennen. Ohne eigene Fotos werden die des Modells gezeigt.",
+        "photos": "Fotos",
+        "properties": "Eigenschaften",
+        "readOnly": "Ihre Ortsgruppe nutzt diese Rikscha. Um sie kümmern sich die Admins an ihrem Standort.",
+        "saved": "Gespeichert.",
+        "savedAt": "Gespeichert {when}",
+        "saving": "Wird gespeichert",
+        "seats": "Sitzplätze",
+        "since": "In der Flotte seit {date}",
+        "status": "Status",
+        "undo": "Rückgängig",
+        "undone": "Zurückgesetzt.",
+        "wheelchair": "Rollstuhl",
+        "yes": "Ja"
+      },
+      "empty": "Noch keine Rikschas. Legen Sie die erste an – dann kann sie für Fahrten gebucht werden.",
+      "history": {
+        "cleared": "Freigegeben",
+        "created": "{actor} hat diese Rikscha angelegt",
+        "damage": "{actor} hat einen Schaden gemeldet",
+        "moved": "{actor} hat sie von {from} nach {to} gebracht",
+        "noPilot": "Kein Pilot eingeteilt",
+        "note": "{actor} hat kommentiert",
+        "open": "Offen",
+        "pilotedBy": "gefahren von",
+        "ride": "Fahrt",
+        "rideAt": "Fahrt ab {place}",
+        "someone": "Jemand",
+        "statusChanged": "{actor} hat den Status von {from} auf {to} geändert",
+        "you": "Sie"
+      },
+      "new": "Neue Rikscha",
+      "noLocations": "Legen Sie zuerst einen Standort an – jede Rikscha steht irgendwo.",
+      "noModel": "Kein Modell",
+      "picker": {
+        "clear": "Leeren",
+        "locationEmpty": "Kein Standort passt.",
+        "locationPlaceholder": "Standort wählen …",
+        "modelEmpty": "Kein Modell passt.",
+        "modelPlaceholder": "Modelle suchen …"
+      },
+      "report": {
+        "body": "Sagen Sie den anderen Admins, was an {name} kaputt ist.",
+        "title": "Schaden melden"
+      },
+      "tabs": {
+        "label": "Flottenansichten",
+        "models": "Modelle",
+        "timeline": "Wochenplan",
+        "trishaws": "Rikschas"
+      },
+      "wheelchairFilter": {
+        "no": "Nicht rollstuhlgeeignet",
+        "yes": "Rollstuhlgeeignet"
+      }
+    },
+    "types": {
+      "archived": "Archiviert",
+      "back": "Modelle",
+      "body": "Die Rikschas, mit denen Ihre Ortsgruppen fahren – einmal beschrieben und so weit geteilt, wie Sie möchten: für eine Ortsgruppe, das ganze Land oder alle.",
+      "cancel": "Abbrechen",
+      "columns": {
+        "name": "Modell",
+        "scope": "Katalog",
+        "seats": "Sitzplätze",
+        "trishaws": "Rikschas",
+        "wheelchair": "Rollstuhl"
+      },
+      "create": {
+        "body": "Einmal beschreiben – jede Rikscha dieser Art verweist hierher.",
+        "created": "{name} ist im Katalog.",
+        "description": "Beschreibung",
+        "descriptionPlaceholder": "Was sie besonders macht, wie man den Sitz verstellt, wo der Akku sitzt …",
+        "manual": "Anleitung",
+        "name": "Name",
+        "namePlaceholder": "Christiania Classic, Van Raam O-Pair …",
+        "nameRequired": "Geben Sie dem Modell einen Namen.",
+        "owner": "Katalog",
+        "ownerChapter": "{name} – nur diese Ortsgruppe",
+        "ownerCountry": "{name} – jede Ortsgruppe im Land",
+        "ownerGlobal": "Global – jede Ortsgruppe weltweit",
+        "ownerHint": "Wer es sieht. Ein Modell einer Ortsgruppe lässt sich später ins Land übernehmen.",
+        "photo": "Foto",
+        "seats": "Sitzplätze für Fahrgäste",
+        "submit": "Modell anlegen",
+        "title": "Neues Modell",
+        "wheelchair": "Rollstuhlgerecht",
+        "wheelchairHint": "Ein Rollstuhl kann hineingerollt werden."
+      },
+      "detail": {
+        "archive": "Archivieren",
+        "archivedDone": "{name} ist archiviert.",
+        "archiveHint": "Ein archiviertes Modell kann für neue Rikschas nicht gewählt werden. Bestehende behalten es.",
+        "catalogue": "Katalog",
+        "deleteBlocked": "Noch nutzen Rikschas dieses Modell, deshalb kann es nur archiviert werden.",
+        "delete": {
+          "body": "Das Modell samt Foto und Anleitung verschwindet endgültig aus dem Katalog.",
+          "done": "{name} ist gelöscht.",
+          "label": "Geben Sie zur Bestätigung {word} ein",
+          "open": "Modell löschen",
+          "submit": "Modell löschen",
+          "title": "{name} löschen?",
+          "word": "DELETE"
+        },
+        "description": "Über dieses Modell",
+        "descriptionPlaceholder": "Noch nichts geschrieben. Beschreibung hinzufügen …",
+        "manage": "Verwalten",
+        "manual": "Anleitung",
+        "manualHint": "Die Bedienungsanleitung des Herstellers als PDF: Laden, Bremsen, Reifendruck, was bei einer Panne zu tun ist.",
+        "name": "Name",
+        "noManual": "Noch keine Anleitung hochgeladen.",
+        "photo": "Foto",
+        "photoHint": "Zeigen Sie das Modell von der Seite, von vorn und den Sitz für die Fahrgäste. Das erste Foto ist das Titelbild in Listen.",
+        "photos": "Fotos",
+        "promote": {
+          "country": "In {name} übernehmen",
+          "done": "{name} gehört jetzt zu einem größeren Katalog.",
+          "global": "Global freigeben",
+          "hint": "Macht es für mehr Ortsgruppen verfügbar. Das lässt sich nicht wieder einschränken."
+        },
+        "properties": "Eigenschaften",
+        "readOnly": "Dieses Modell gehört zum Katalog {owner}. Nur dessen Admins können es ändern.",
+        "restore": "Wiederherstellen",
+        "restoredDone": "{name} ist wieder im Katalog.",
+        "seats": "Sitzplätze",
+        "usage": "{count, plural, =0 {Keine Rikscha nutzt es} one {1 Rikscha nutzt es} other {# Rikschas nutzen es}}",
+        "wheelchair": "Rollstuhlgerecht"
+      },
+      "empty": "Noch keine Modelle. Beschreiben Sie das erste – jede Rikscha, die Sie anlegen, kann darauf verweisen.",
+      "field": {
+        "edit": "Bearbeiten",
+        "invalid": "Das sieht nicht richtig aus.",
+        "saved": "Gespeichert.",
+        "undo": "Rückgängig",
+        "undone": "Zurückgesetzt."
+      },
+      "new": "Neues Modell",
+      "photoAlt": "Foto von {name}",
+      "showArchived": "Archivierte zeigen",
+      "status": {
+        "saved": "Gespeichert {when}",
+        "saving": "Wird gespeichert"
+      },
+      "title": "Modelle",
+      "trishaws": "Rikschas",
+      "wheelchairNo": "Nein",
+      "wheelchairYes": "Ja"
+    }
+  },
+  "forbidden": {
+    "description": "Angemeldet — aber diese Seite ist nicht freigegeben.",
+    "returnHome": "Zurück zur Startseite",
+    "title": "Kein Schlüssel für diese Tür"
+  },
+  "home": {
+    "title": "Hallo Welt"
+  },
+  "join": {
+    "app": {
+      "appStore": "Laden im App Store",
+      "playStore": "Jetzt bei Google Play",
+      "title": "Fahren Sie mit der App"
+    },
+    "eyebrow": "Cycling Without Age",
+    "member": {
+      "cta": "Cycling Without Age öffnen",
+      "title": "Sie gehören schon zu dieser Ortsgruppe"
+    },
+    "passenger": {
+      "body": "Eine Freiwillige tritt in die Pedale. Sie sitzen vorne, im Schritttempo, zwischen Ihnen und der Straße nur der Fahrtwind.",
+      "cta": "Mit dieser Ortsgruppe fahren",
+      "title": "Kommen Sie mit auf eine Ausfahrt"
+    },
+    "pilot": {
+      "body": "Piloten nehmen Nachbarn für eine Stunde mit. Fragen Sie an, und ein Admin der Ortsgruppe meldet sich — meist innerhalb weniger Tage.",
+      "cta": "Hier als Pilot anfragen",
+      "pending": "Ihre Anfrage liegt bei der Ortsgruppe.",
+      "title": "In die Pedale treten"
+    },
+    "poster": {
+      "madeWith": "Buchung von Coding for Change",
+      "or": "oder öffnen Sie",
+      "scan": "Scannen und mitmachen",
+      "slogan": "Recht auf Wind im Haar"
+    },
+    "ride": {
+      "back": "Zurück zu {chapter}",
+      "confirm": "Weiter",
+      "cta": "Ausfahrt buchen",
+      "noDraft": "Wir haben Ihre Auswahl verloren. Wählen Sie auf der Seite der Ortsgruppe noch einmal eine Zeit.",
+      "note": "Die Buchung kommt bald — abgeschickt wurde noch nichts.",
+      "summary": "Sie möchten mit {chapter} fahren, {when}.",
+      "title": "Fast geschafft",
+      "when": {
+        "afternoon": "nachmittags",
+        "any": "jederzeit",
+        "morning": "vormittags"
+      },
+      "whenTitle": "Wann passt es Ihnen?"
+    }
+  },
+  "legal": {
+    "imprint": {
+      "body": "Hier stehen die rechtlichen Angaben der Ortsgruppe.",
+      "title": "Impressum"
+    },
+    "pending": "Diese Seite wird noch geschrieben. Fragen Sie bis dahin Ihre Ortsgruppe nach den Einzelheiten.",
+    "privacy": {
+      "body": "Hier steht, was wir speichern, warum wir es speichern und wie Sie es löschen lassen.",
+      "title": "Datenverarbeitungsvereinbarung"
+    }
+  },
+  "location": {
+    "distanceAway": "{distance} entfernt",
+    "errors": {
+      "alreadyPilot": "Du bist bereits Pilot in einer dieser Ortsgruppen.",
+      "generic": "Wir konnten das nicht speichern. Versuchen Sie es erneut.",
+      "maxChapters": "Du kannst höchstens {count} Ortsgruppen auf einmal anfragen.",
+      "unknownChapter": "Diese Ortsgruppe gibt es nicht mehr. Wählen Sie eine andere."
+    },
+    "home": {
+      "confirm": "Das ist meine Adresse",
+      "duration": "Etwa {duration} mit der Rikscha entfernt",
+      "hint": "Tippen Sie los und wählen Sie dann Ihre Adresse aus der Liste.",
+      "joinAnyway": "Trotzdem {chapter} beitreten",
+      "label": "Ihre Adresse",
+      "nearest": "Ihre nächste Ortsgruppe",
+      "noResults": "Keine Adresse passt dazu.",
+      "outOfRangeBody": "{chapter} liegt {distance} entfernt — weiter, als die Ortsgruppe fährt ({radius}). Mitfahren können Sie trotzdem: Kommen Sie selbst zur Ortsgruppe oder lassen Sie sich hinbringen, ab der Tür übernimmt ein Pilot.",
+      "outOfRangeTitle": "Wir erreichen Sie noch nicht",
+      "placeholder": "Straße und Hausnummer",
+      "searching": "Wird gesucht …"
+    },
+    "locating": "Ortsgruppen in Ihrer Nähe werden gesucht …",
+    "mapLabel": "Karte der Cycling-Without-Age-Ortsgruppen",
+    "mapUnavailable": "Die Karte ist gerade nicht verfügbar. Die Liste funktioniert weiterhin.",
+    "next": "Weiter",
+    "noResults": "Keine Ortsgruppe passt dazu.",
+    "pending": "Einen Moment …",
+    "permissionDenied": "Ohne Ihren Standort können wir nicht nach Entfernung sortieren — hier sind stattdessen alle Ortsgruppen.",
+    "request": "Beitritt anfragen",
+    "requestCount": "Beitritt zu {count} Ortsgruppen anfragen",
+    "searchLabel": "Nach einer Ortsgruppe suchen",
+    "searchPlaceholder": "Ortsgruppe oder Stadt",
+    "selectPrompt": "Wählen Sie eine Ortsgruppe, um fortzufahren.",
+    "subtitleAll": "Alle Ortsgruppen in alphabetischer Reihenfolge.",
+    "subtitleNearby": "Die Ortsgruppen in Ihrer Nähe.",
+    "tabs": {
+      "careHome": "Pflegeheim",
+      "home": "Eigene Adresse"
+    },
+    "title": "Wo möchten Sie fahren?",
+    "titlePassenger": "Wo sollen wir Sie abholen?"
+  },
+  "member": {
+    "action": {
+      "passenger": "Ausfahrt buchen",
+      "pilot": "Offene Ausfahrten finden"
+    },
+    "guest": {
+      "greeting": "Willkommen",
+      "hero": "Konto anlegen",
+      "heroHint": "Für eine Ausfahrt brauchen Sie eine E-Mail-Adresse oder eine Telefonnummer. Mehr nicht.",
+      "signIn": "Anmelden",
+      "subtitle": "Sie sehen sich um",
+      "tagline": "Sehen Sie sich erst einmal um — die gewählte Ortsgruppe steht gleich hier."
+    },
+    "home": {
+      "greeting": "Hallo {name}",
+      "nextRide": {
+        "passenger": {
+          "empty": "Noch nichts gebucht. Wenn Sie eine Ausfahrt buchen, stehen hier der Tag, die Uhrzeit und der Pilot, der Sie abholt."
+        },
+        "pilot": {
+          "empty": "Auf deiner Liste steht noch nichts. Sobald deine Ortsgruppe offene Ausfahrten ausschreibt, steht die nächste hier — Datum, Passagier, Treffpunkt."
+        },
+        "title": "Nächste Ausfahrt"
+      },
+      "passenger": {
+        "chooseChapter": "Ortsgruppe wählen",
+        "tagline": "Ihre nächste Ausfahrt beginnt hier."
+      },
+      "pilot": {
+        "tagline": "Bereit, wenn du es bist."
+      },
+      "yourChapter": "Ortsgruppe",
+      "yourChapters": "Ortsgruppen"
+    },
+    "nav": {
+      "calendar": "Kalender",
+      "chat": "Nachrichten",
+      "home": "Start",
+      "rides": "Meine Ausfahrten",
+      "training": "Training"
+    },
+    "navLabel": "Bereiche",
+    "pages": {
+      "calendar": {
+        "passenger": {
+          "body": "Noch nichts geplant. Ihre kommenden Ausfahrten stehen hier, mit dem Datum und der Uhrzeit, zu der Ihr Pilot kommt."
+        },
+        "pilot": {
+          "body": "Eine leere Woche, vorerst. Deine Ausfahrten, Trainingstermine und Treffen der Ortsgruppe reihen sich hier ein."
+        },
+        "title": "Kalender"
+      },
+      "rides": {
+        "passenger": {
+          "body": "Noch nichts gebucht. Sobald Ihre Ortsgruppe die Buchung öffnet, warten Ihre Ausfahrten hier — der Tag, die Uhrzeit und der Pilot, der klingelt."
+        },
+        "pilot": {
+          "body": "Deine erste Ausfahrt steht noch nicht auf der Liste. Sobald deine Ortsgruppe offene Ausfahrten ausschreibt, tauchen hier die auf, die einen Piloten brauchen — such dir eine aus, und die Rikscha gehört dir für den Nachmittag."
+        },
+        "title": "Meine Ausfahrten"
+      }
+    },
+    "perspective": {
+      "chapters": "{count} Ortsgruppen",
+      "label": "Perspektive",
+      "noChapter": "Noch keine Ortsgruppe",
+      "switchLabel": "Perspektive wechseln"
+    },
+    "tabBarLabel": "Hauptbereiche",
+    "topBar": {
+      "passenger": {
+        "account": "Ihr Konto",
+        "switchHint": "Doppeltippen, um die Perspektive zu wechseln"
+      },
+      "pilot": {
+        "account": "Dein Konto",
+        "switchHint": "Doppeltippen, um die Perspektive zu wechseln"
+      }
+    },
+    "user": {
+      "passenger": {
+        "account": "Konto",
+        "menuLabel": "Ihr Konto"
+      },
+      "pilot": {
+        "account": "Konto",
+        "menuLabel": "Dein Konto"
+      }
+    }
+  },
+  "notFound": {
+    "description": "Die gesuchte Seite gibt es nicht.",
+    "returnHome": "Zurück zur Startseite",
+    "title": "Seite nicht gefunden"
+  },
+  "notifications": {
+    "bell": "Benachrichtigungen",
+    "bellWithCount": "Benachrichtigungen, {count} neu",
+    "categories": {
+      "application": "Bewerbung",
+      "fleet": "Rikschas",
+      "invitation": "Einladung",
+      "membership": "Mitgliedschaft",
+      "welcome": "Willkommen"
+    },
+    "empty": {
+      "body": "Sobald etwas passiert — eine Ortsgruppe antwortet, eine Ausfahrt wird gebucht — landet es genau hier.",
+      "title": "Gerade ist alles ruhig"
+    },
+    "title": "Benachrichtigungen",
+    "unread": "Ungelesen"
+  },
+  "passenger": {
+    "browsing": "Sie sehen {chapter}",
+    "noChapter": "Sie haben noch keine Ortsgruppe gewählt"
+  },
+  "passkey": {
+    "admin": {
+      "body": "Dein Gerät wird dein Schlüssel zum Dashboard — Fingerabdruck, Gesicht oder PIN. Leg einen an, um es zu öffnen.",
+      "failed": "Das hat nicht geklappt — versuch es noch einmal. Deinen Passkey kannst du auch im Browser anlegen.",
+      "title": "Admins melden sich mit einem Passkey an"
+    },
+    "body": "Ihr Gerät erkennt Sie wieder — kein Passwort zum Merken.",
+    "create": "Passkey einrichten",
+    "failed": "Das hat nicht geklappt. Sie können einen Passkey später im Konto anlegen.",
+    "nameLabel": "Passkey benennen (optional)",
+    "namePlaceholder": "Arbeitslaptop",
+    "skip": "Jetzt nicht",
+    "title": "Passkey einrichten"
+  },
+  "pilot": {
+    "home": {
+      "celebration": {
+        "body": "{chapter} sagt willkommen. Schau die Trainingsvideos und triff dann eine Captain für deine erste Ausfahrt.",
+        "dismiss": "Alles klar",
+        "title": "Du bist dabei."
+      },
+      "title": "Bereit, wenn du es bist",
+      "training": "Training für die Wartezeit",
+      "trainingHint": "Rund 20 Minuten Video — danach kennst du die Rikscha, bevor du das erste Mal draufsitzt.",
+      "yourChapters": "Deine Ortsgruppen"
+    },
+    "status": {
+      "appliedOn": "Gefragt am {date}",
+      "applyElsewhere": "Andere Ortsgruppe finden",
+      "note": "Ihre Nachricht",
+      "pendingHint": "Ortsgruppen antworten meist innerhalb weniger Tage. Für dich gibt es nichts zu tun.",
+      "pendingTitle": "Deine Anfrage liegt bei {chapter}",
+      "rejectedBody": "Das passiert — Rikschas, Captains und Trainingstermine müssen alle zusammenpassen. Eine andere Ortsgruppe in der Nähe hat vielleicht Platz.",
+      "rejectedTitle": "{chapter} sagt diesmal nein",
+      "reviewers": "Gelesen von",
+      "reviewersNone": "Die Ortsgruppe hat noch keinen Admin benannt. Wir stoßen sie an.",
+      "steps": {
+        "1": "Angefragt",
+        "2": "Wird geprüft",
+        "3": "Willkommen"
+      }
+    },
+    "training": {
+      "body": "Die Videos werden noch gedreht. Sobald sie fertig sind, stehen sie hier — rund 20 Minuten, danach ein Workshop mit einer der Captains.",
+      "title": "Training für die Wartezeit"
+    }
+  },
+  "pilotNextSteps": {
+    "finish": "Weiter",
+    "steps": {
+      "1": "Schau die Trainingsvideos — rund 20 Minuten, direkt in dieser App.",
+      "2": "Komm zu einem praktischen Workshop mit einer der Captains.",
+      "3": "Übernimm deine erste Ausfahrt — beim ersten Mal fährt eine Captain mit."
+    },
+    "title": "So wirst du Pilot"
+  },
+  "profile": {
+    "birthDate": "Geburtstag",
+    "body": "Ihre Ortsgruppe braucht das, um eine Ausfahrt zu planen. Mehr vorerst nicht.",
+    "errors": {
+      "birthDate": "Der Geburtstag sieht nicht richtig aus. Prüfen Sie das Jahr.",
+      "generic": "Das konnten wir nicht speichern. Versuchen Sie es erneut.",
+      "incomplete": "Füllen Sie alle Felder aus, um fortzufahren."
+    },
+    "firstName": "Vorname",
+    "forSomeoneElse": "Ich lege das Konto an, damit jemand anderes mitfahren kann",
+    "gender": "Geschlecht",
+    "genders": {
+      "female": "Weiblich",
+      "male": "Männlich",
+      "other": "Divers"
+    },
+    "lastName": "Nachname",
+    "relationship": {
+      "label": "Ihre Beziehung zu der Person",
+      "options": {
+        "carer": "Pflegeperson",
+        "child": "Sohn oder Tochter",
+        "friend": "Freundin oder Freund",
+        "other": "Anderes",
+        "partner": "Partnerin oder Partner",
+        "relative": "Andere Angehörige"
+      }
+    },
+    "title": "Ein wenig über Sie",
+    "titlePilot": "Ein wenig über dich"
+  },
+  "signIn": {
+    "code": {
+      "change": "Andere E-Mail-Adresse oder Nummer verwenden",
+      "errors": {
+        "generic": "Da ist etwas schiefgelaufen. Versuchen Sie es erneut.",
+        "invalid": "Dieser Code stimmt nicht. Prüfen Sie ihn und versuchen Sie es erneut.",
+        "rateLimited": "Zu viele Versuche. Versuchen Sie es in einer Minute erneut."
+      },
+      "label": "6-stelliger Code",
+      "resend": "Neuen Code senden",
+      "resendWait": "Gleich können Sie einen neuen Code anfordern.",
+      "resent": "Neuer Code gesendet.",
+      "sentToEmail": "Wir haben einen 6-stelligen Code an {identifier} geschickt.",
+      "sentToPhone": "Wir haben eine SMS mit einem 6-stelligen Code an {identifier} geschickt.",
+      "title": "Geben Sie Ihren Code ein"
+    },
+    "country": {
+      "noResults": "Kein Land passt dazu.",
+      "searchLabel": "Nach einem Land suchen",
+      "searchPlaceholder": "Ländername",
+      "selected": "{country}, {dialCode}",
+      "title": "Woher stammt Ihre Telefonnummer?"
+    },
+    "identifier": {
+      "changeCountry": "Ländervorwahl ändern",
+      "errors": {
+        "empty": "Geben Sie eine E-Mail-Adresse oder eine Telefonnummer ein.",
+        "generic": "Da ist etwas schiefgelaufen. Versuchen Sie es erneut.",
+        "invalidEmail": "Diese E-Mail-Adresse sieht nicht richtig aus. Prüfen Sie sie auf Tippfehler.",
+        "invalidPhone": "Diese Nummer wirkt für {country} unvollständig. Prüfen Sie die Ziffern.",
+        "rateLimited": "Zu viele Versuche. Versuchen Sie es in einer Minute erneut."
+      },
+      "google": "Weiter mit Google",
+      "label": "E-Mail-Adresse oder Telefonnummer",
+      "passkey": "Passkey verwenden",
+      "placeholder": "sie@beispiel.de",
+      "separator": "oder",
+      "title": "Wie lautet Ihre E-Mail-Adresse oder Telefonnummer?"
+    },
+    "role": {
+      "passenger": {
+        "body": "Sie sitzen vorne und genießen den Wind in den Haaren.",
+        "title": "Ich möchte Passagier werden"
+      },
+      "pilot": {
+        "body": "Du trittst in die Pedale und nimmst Passagiere mit auf eine Fahrt.",
+        "title": "Ich möchte Pilot werden"
+      },
+      "title": "Wie möchten Sie mitmachen?"
+    }
+  },
+  "welcome": {
+    "carouselLabel": "Was Cycling Without Age ist",
+    "explore": "Ohne Anmeldung umsehen",
+    "progressLabel": "Schritt {current} von {total}",
+    "signIn": "Anmelden",
+    "slides": {
+      "1": {
+        "body": "Angefangen hat es 2012 in Kopenhagen, mit einer Rikscha und einer guten Idee.",
+        "headline": "Jeder hat ein Recht auf Wind in den Haaren."
+      },
+      "2": {
+        "body": "Ehrenamtliche fahren die Rikscha im Schritttempo. Sie sitzen vorne — nichts zwischen Ihnen und der Straße.",
+        "headline": "Die Piloten treten in die Pedale."
+      },
+      "3": {
+        "body": "Jede Ortsgruppe lebt von Ehrenamtlichen, die eine Stunde schenken — für die Menschen, die dieses Viertel aufgebaut haben.",
+        "headline": "Getragen von Nachbarn."
+      },
+      "4": {
+        "body": "Ortsgruppen in Europa, Nordamerika, Australien und Japan — mit großer Wahrscheinlichkeit auch bei Ihnen.",
+        "headline": "Finden Sie Ihre Ortsgruppe."
+      }
+    },
+    "subtitle": "Melden Sie sich an, um eine Fahrt zu buchen oder selbst in die Pedale zu treten. Oder sehen Sie sich erst einmal um.",
+    "title": "Kommen Sie mit."
+  }
+}

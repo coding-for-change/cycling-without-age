@@ -23,7 +23,8 @@ import {
   stopRowClick,
   type DataTableStrings,
 } from "@/components/ui/data-table";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 import { AppointByEmailDialog } from "../../_components/appoint-by-email-dialog";
 import { notify } from "@/components/action-feedback";
 import { useDrawerParam } from "../../_components/use-drawer-param";
@@ -64,13 +65,19 @@ function AdminChip({
   countryId,
   admin,
   labels,
+  locale,
 }: {
   countryId: string;
   admin: CountryAdmin;
   labels: CountriesTableLabels;
+  locale: Locale;
 }) {
   const [pending, startTransition] = useTransition();
-  const label = fill(labels.removeAdmin, { name: admin.name });
+  const label = formatMessage(
+    labels.removeAdmin,
+    { name: admin.name },
+    locale,
+  );
 
   const remove = () =>
     startTransition(async () => {
@@ -105,7 +112,11 @@ function AdminChip({
       <AlertDialogContent aria-describedby={undefined}>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {fill(labels.confirmRemoveAdmin, { name: admin.name })}
+            {formatMessage(
+              labels.confirmRemoveAdmin,
+              { name: admin.name },
+              locale,
+            )}
           </AlertDialogTitle>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -133,7 +144,7 @@ export function CountriesTable({
 }: {
   rows: CountryRow[];
   labels: CountriesTableLabels;
-  language: string;
+  language: Locale;
   table: DataTableStrings;
 }) {
   const router = useRouter();
@@ -185,6 +196,7 @@ export function CountriesTable({
               countryId={row.original.id}
               admin={admin}
               labels={labels}
+              locale={language}
             />
           ))}
           <AppointByEmailDialog
@@ -197,6 +209,7 @@ export function CountriesTable({
             action={(email) =>
               appointCountryAdminAction({ countryId: row.original.id, email })
             }
+            locale={language}
             trigger={(open) => (
               <Badge
                 asChild
@@ -235,7 +248,12 @@ export function CountriesTable({
           </Button>
           <ConfirmDeleteDialog
             name={row.original.name}
-            footprint={fill(labels.delete.footprint, row.original.footprint)}
+            locale={language}
+            footprint={formatMessage(
+              labels.delete.footprint,
+              row.original.footprint,
+              language,
+            )}
             labels={{ ...labels.delete, errors: labels.errors }}
             cancel={labels.cancel}
             action={() => deleteCountryAction(row.original.id)}
@@ -265,6 +283,7 @@ export function CountriesTable({
           columns={columns}
           data={rows}
           strings={table}
+          locale={language}
           getRowId={(row) => row.id}
         />
       )}

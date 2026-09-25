@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { chapters } from "@/features/chapters";
 import { requireAuth } from "@/lib/auth-guards";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionary, getLocale } from "@/lib/i18n";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RideConfirmation } from "../_components/ride-confirmation";
 
@@ -32,9 +32,10 @@ async function Ride({ params }: Params) {
   const { slug } = await params;
   await requireAuth();
 
-  const [chapter, dict] = await Promise.all([
+  const [chapter, dict, locale] = await Promise.all([
     chapters.getChapterBySlug(slug),
     getDictionary(),
+    getLocale(),
   ]);
 
   if (!chapter) notFound();
@@ -43,6 +44,7 @@ async function Ride({ params }: Params) {
     <RideConfirmation
       slug={slug}
       chapterName={chapter.name}
+      locale={locale}
       strings={dict.join.ride}
     />
   );

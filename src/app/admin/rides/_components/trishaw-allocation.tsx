@@ -9,7 +9,7 @@ import {
 } from "@/lib/format";
 import { trishawSummary } from "@/components/trishaw-summary";
 import { getDictionary, getLocale } from "@/lib/i18n";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { allocationChoices } from "@/use-cases/schedule-ride";
 import type { AdminSearchParams } from "../../active-scope";
 import {
@@ -57,6 +57,7 @@ export async function TrishawAllocation({
         description={null}
         options={null}
         labels={labels}
+        locale={language}
       />
     );
 
@@ -93,12 +94,17 @@ export async function TrishawAllocation({
     <AllocateTrishawsDrawer
       key={rideId}
       rideId={rideId}
-      description={fill(allocation.description, {
-        when: `${formatDateTime(choices.ride.startsAt, locale, zone)} – ${formatTime(choices.ride.endsAt, locale, zone)}`,
-        chapter: choices.ride.chapter.name,
-      })}
+      description={formatMessage(
+        allocation.description,
+        {
+          when: `${formatDateTime(choices.ride.startsAt, locale, zone)} – ${formatTime(choices.ride.endsAt, locale, zone)}`,
+          chapter: choices.ride.chapter.name,
+        },
+        words,
+      )}
       options={options}
       labels={labels}
+      locale={language}
     />
   );
 }

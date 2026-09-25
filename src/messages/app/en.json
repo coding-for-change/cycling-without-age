@@ -1,0 +1,1792 @@
+{
+  "account": {
+    "calendar": {
+      "addTo": "Add it to",
+      "apps": {
+        "apple": "Apple Calendar",
+        "google": "Google Calendar",
+        "outlook": "Outlook.com",
+        "outlookWork": "Outlook for work or school"
+      },
+      "body": "Your rides, in the calendar you already use. Subscribe once and it keeps up by itself: new rides turn up, moved ones move, cancelled ones say so.",
+      "cadence": "Calendars check for changes on their own schedule — usually within a few hours, on Google sometimes a day.",
+      "cancel": "Keep it",
+      "checked": "Last picked up by a calendar {when}.",
+      "copied": "Copied",
+      "copy": "Copy link",
+      "disable": {
+        "body": "The link stops working and calendars using it stop updating. You can make a new one any time.",
+        "confirm": "Turn off",
+        "done": "Calendar link turned off.",
+        "open": "Turn off",
+        "title": "Turn off your calendar link?"
+      },
+      "enable": "Create my calendar link",
+      "enabled": "Your calendar link is ready.",
+      "errors": {
+        "generic": "That didn't work. Try again.",
+        "rateLimited": "Give it a moment and try again."
+      },
+      "googleOnPhone": "Using Google Calendar? Google only adds a calendar from a link on a computer: copy the link, open calendar.google.com there, and choose Other calendars → From URL.",
+      "link": "Your calendar link",
+      "otherApps": "Another app? Copy the link and look for “Subscribe to calendar” or “Add from URL”.",
+      "private": "Anyone with this link can see when and where your rides are. Keep it to yourself, and make a new one if it ever gets out.",
+      "reset": {
+        "body": "The current link stops working straight away. Calendars using it stop updating until you add the new one.",
+        "confirm": "Make new link",
+        "done": "New link ready. Add it to your calendar again.",
+        "open": "New link",
+        "title": "Make a new link?"
+      },
+      "title": "Calendar",
+      "waiting": "No calendar has picked it up yet."
+    },
+    "danger": {
+      "body": "Signing out keeps everything. Deleting takes your account, your chapters and your history with it — rides already ridden stay on the record.",
+      "delete": {
+        "blocked": "You still run a chapter or a country. Hand that over to someone else first — then this button is yours.",
+        "body": "Your account, roles, requests and history go with it. Rides already ridden stay on the record.",
+        "done": "Your account is gone. Thank you for the wind in our hair.",
+        "errors": {
+          "generic": "That didn't work. Try again.",
+          "handOverAdmin": "Hand over your admin role first.",
+          "rateLimited": "Give it a moment and try again."
+        },
+        "label": "Type {word} to confirm",
+        "open": "Delete account",
+        "submit": "Delete account",
+        "title": "Delete your account for good?",
+        "word": "DELETE"
+      },
+      "title": "Sign out or delete"
+    },
+    "description": "Your details, your language, how we reach you, and how you sign in.",
+    "field": {
+      "edit": "Edit",
+      "errors": {
+        "generic": "That didn't work. Try again."
+      },
+      "invalid": "That doesn't look right.",
+      "saved": "Saved.",
+      "undo": "Undo",
+      "undone": "Put back."
+    },
+    "language": {
+      "body": "Emails and notifications come in this language too.",
+      "title": "Language"
+    },
+    "notifications": {
+      "body": "The essentials — a ride confirmed, a chapter answering — always reach you. These are the extras.",
+      "chat": {
+        "email": {
+          "hint": "Only when your phone can't be reached: one mail with what you missed.",
+          "label": "Messages by email"
+        },
+        "push": {
+          "hint": "A buzz when someone writes — unless you already have that chat open.",
+          "label": "Messages"
+        }
+      },
+      "email": {
+        "hint": "The same news, in your inbox.",
+        "label": "Email"
+      },
+      "permissionDenied": "Your phone is blocking notifications. Allow them in Settings, then try again.",
+      "push": {
+        "hint": "A tap on your phone when something happens.",
+        "label": "Push"
+      },
+      "title": "Notifications"
+    },
+    "passkeys": {
+      "add": "Add a passkey",
+      "added": "Passkey added.",
+      "back": "Back",
+      "body": "A passkey lets your own device sign you in — a fingerprint, a face, a PIN. Nothing to remember, nothing to type.",
+      "empty": "No passkeys yet. Add one and this device remembers you.",
+      "failed": "That didn't work. Try again.",
+      "nameLabel": "Name this passkey (optional)",
+      "namePlaceholder": "Name (optional)",
+      "remove": "Remove",
+      "removeBody": "To sign in on that device you'll need another passkey, or a code by email or text.",
+      "removeConfirm": "Remove {name}?",
+      "signInAgain": "It's been a while. Sign in again before adding a passkey.",
+      "signInAgainAction": "Sign in again",
+      "synced": "Synced",
+      "thisDevice": "This device",
+      "title": "Passkeys",
+      "unnamed": "Passkey"
+    },
+    "perspective": {
+      "title": "Viewing as"
+    },
+    "profile": {
+      "birthDate": "Birthday",
+      "birthDatePlaceholder": "Add your birthday",
+      "gender": "Gender",
+      "genderPlaceholder": "Not set",
+      "genders": {
+        "female": "Female",
+        "male": "Male",
+        "other": "Other"
+      },
+      "invalidBirthDate": "That birthday doesn't look right. Check the year.",
+      "name": "Name",
+      "namePlaceholder": "Your name",
+      "title": "Profile"
+    },
+    "status": {
+      "saved": "Saved {when}",
+      "saving": "Saving"
+    },
+    "support": {
+      "body": "Tell us what happened and we'll go looking. No screenshots needed — the technical details come along on their own.",
+      "drawer": {
+        "cancel": "Cancel",
+        "description": "A sentence or two is plenty. It goes straight to the people who can fix it.",
+        "done": "Thank you. That helps more than you'd think.",
+        "failed": "That didn't send. Try again in a moment.",
+        "placeholder": "I tapped Save on my profile and the screen went blank.",
+        "submit": "Send it",
+        "title": "Tell us what happened",
+        "tooShort": "A few more words, please — at least ten characters."
+      },
+      "open": "Report a problem",
+      "title": "Something not working?"
+    },
+    "title": "Account"
+  },
+  "admin": {
+    "chapters": {
+      "cancel": "Cancel",
+      "create": {
+        "addCountry": "Add {country}",
+        "address": {
+          "hint": "Type an address or the care home's name.",
+          "label": "Find the address",
+          "noResults": "Nothing found. Try the street or the town.",
+          "placeholder": "Street, care home or town",
+          "searching": "Searching"
+        },
+        "changeAddress": "Search again",
+        "counter": "{count} / {max}",
+        "countryAdded": "{country} joined the movement.",
+        "countryDetected": "Detected from the address.",
+        "countryMissing": "{country} isn't in the system yet.",
+        "done": {
+          "another": "Start another",
+          "body": "Print the poster for the care home wall, or open the chapter to add its people.",
+          "open": "Open chapter",
+          "title": "{name} is on the map."
+        },
+        "dragHint": "Drag the pin to fine-tune. The address follows.",
+        "intro": "A name and an address are all it takes. Everything else can follow later.",
+        "logoPreview": "How it will look",
+        "needCountryAdmin": "Ask a superadmin to add {country} first.",
+        "optional": "Optional",
+        "overlap": "Overlaps with {name}, {distance} away.",
+        "pending": "Creating",
+        "radius": "How far it rides",
+        "radiusValue": "{distance} around the pin",
+        "shortcut": "⌘↵",
+        "slugChecking": "Checking",
+        "slugDone": "Done",
+        "slugEdit": "Edit",
+        "slugFree": "Free",
+        "slugTaken": "Taken",
+        "submit": "Create chapter",
+        "webAddress": "Web address"
+      },
+      "created": "{name} is on the map.",
+      "detail": {
+        "about": "About",
+        "back": "Back to chapters",
+        "country": "Country",
+        "createdLabel": "Started",
+        "delete": {
+          "body": "Its members, passengers and open requests go with it. Rides already ridden stay on the record.",
+          "done": "{name} is gone.",
+          "footprint": "{members} members · {passengers} passengers · {pending} waiting",
+          "label": "Type {word} to confirm",
+          "open": "Delete chapter",
+          "submit": "Delete chapter",
+          "title": "Delete {name} for good?",
+          "word": "DELETE"
+        },
+        "edit": "Edit",
+        "history": "History",
+        "historyEmpty": "Nothing to tell yet. Every change to the chapter lands here.",
+        "invalidUrl": "That isn't a web address.",
+        "joinLink": "Join link",
+        "location": "Location",
+        "members": "Members",
+        "passengers": "Passengers",
+        "pending": "Waiting for approval",
+        "people": "People",
+        "placeholders": {
+          "careHome": "Add the care home",
+          "description": "Tell people what the chapter is about",
+          "logo": "Paste a logo web address"
+        },
+        "properties": "Properties",
+        "radius": "How far it rides",
+        "saved": "Saved {when}",
+        "saving": "Saving",
+        "slug": "Web address",
+        "started": "Started {date}",
+        "timeZone": "Time zone",
+        "timeZoneHint": "Ride times are shown in this zone. It follows the pin unless you set it here.",
+        "undo": "Undo",
+        "undone": "Put back."
+      },
+      "edit": "Edit chapter",
+      "empty": "No chapters yet. Start the first one.",
+      "errors": {
+        "generic": "That didn't work. Try again.",
+        "slugTaken": "That web address is taken. Pick another one."
+      },
+      "fields": {
+        "address": "Address",
+        "careHomeName": "Care home",
+        "city": "City",
+        "country": "Country",
+        "description": "Description",
+        "latitude": "Latitude",
+        "location": "Location",
+        "logo": "Logo web address",
+        "longitude": "Longitude",
+        "name": "Chapter name",
+        "serviceRadiusKm": "How far it rides (km)",
+        "slug": "Web address"
+      },
+      "mapLabel": "Map of chapters",
+      "mapUnavailable": "The map needs a Mapbox token. Set NEXT_PUBLIC_MAPBOX_TOKEN to see it.",
+      "new": "New chapter",
+      "open": "Open chapter",
+      "save": "Save chapter",
+      "saved": "Saved.",
+      "views": {
+        "list": "List",
+        "map": "Map"
+      }
+    },
+    "commands": {
+      "chapterMap": "Show chapters on the map",
+      "dialogDescription": "Jump to a page, change perspective, or run an action from the keyboard.",
+      "dialogTitle": "Command bar",
+      "empty": "Nothing goes by that name.",
+      "groups": {
+        "account": "Account",
+        "create": "Create",
+        "navigate": "Go to",
+        "perspective": "Perspective",
+        "scope": "Scope"
+      },
+      "hint": "for anything",
+      "joinPool": "Join a trishaw pool",
+      "language": "Language: {name}",
+      "newChapter": "Start a new chapter",
+      "newCountry": "Add a new country",
+      "newLocation": "Add a storage location",
+      "newPool": "Create a trishaw pool",
+      "newRide": "Start a new ride",
+      "newTrishaw": "Add a trishaw",
+      "newTrishawType": "Add a trishaw model",
+      "open": "Open the command bar",
+      "placeholder": "Search for a page or an action",
+      "signOut": "Sign out",
+      "toggleSidebar": "Toggle the sidebar",
+      "viewAsAdmin": "View as admin",
+      "viewAsPassenger": "View as passenger",
+      "viewAsPilot": "View as pilot"
+    },
+    "countries": {
+      "admins": "Country admins",
+      "appoint": "Add a country admin",
+      "appointBody": "They need to have signed in once.",
+      "appointed": "{email} runs this country now.",
+      "appointLabel": "Email address",
+      "appointPlaceholder": "name@example.com",
+      "appointShort": "Add admin",
+      "cancel": "Cancel",
+      "confirmRemoveAdmin": "Remove {name} as country admin?",
+      "created": "{name} joined the movement.",
+      "delete": {
+        "body": "Every chapter in this country goes with it — their members, passengers and open requests too. Rides already ridden stay on the record.",
+        "done": "{name} is gone.",
+        "footprint": "{chapters} chapters · {members} members · {passengers} passengers",
+        "label": "Type {word} to confirm",
+        "open": "Delete country",
+        "submit": "Delete country",
+        "title": "Delete {name} for good?",
+        "word": "DELETE"
+      },
+      "edit": "Edit country",
+      "empty": "No countries yet.",
+      "errors": {
+        "codeTaken": "That country code is taken.",
+        "generic": "That didn't work. Try again.",
+        "noAccount": "Nobody with that email address has an account yet."
+      },
+      "fields": {
+        "code": "Country code",
+        "name": "Country name"
+      },
+      "nameHint": "How it reads in the sidebar and on chapter pages.",
+      "new": "New country",
+      "pick": {
+        "empty": "No country goes by that name.",
+        "label": "Country",
+        "placeholder": "Type a country"
+      },
+      "removeAdmin": "Remove {name}",
+      "save": "Save country",
+      "saved": "Saved."
+    },
+    "history": {
+      "accountClaimed": "This person took the account over",
+      "accountCreated": "{actor} set this account up",
+      "applicationApproved": "{actor} approved the application",
+      "applicationRejected": "{actor} turned the application down",
+      "applicationSubmitted": "{actor} asked to pilot here",
+      "change": "{from} → {to}",
+      "chapterCreated": "{actor} put the chapter on the map",
+      "chapterDeleted": "{actor} deleted the chapter {name}",
+      "chapterUpdated": "{actor} changed {field}",
+      "countryAdminAppointed": "{actor} made this person a country admin",
+      "countryAdminRemoved": "{actor} stepped this person down as country admin",
+      "countryDeleted": "{actor} deleted the country {name}",
+      "emailSent": "An email went out — {template}",
+      "fields": {
+        "careHomeName": "the care home",
+        "city": "the town",
+        "description": "the description",
+        "location": "the location",
+        "logo": "the logo",
+        "name": "the name",
+        "serviceRadiusKm": "how far it rides"
+      },
+      "invited": "{actor} sent an invitation",
+      "memberRemoved": "{actor} removed this person from the chapter",
+      "nothing": "nothing",
+      "roleGranted": "{actor} handed over a new role",
+      "roleRevoked": "{actor} took a role back",
+      "showMore": "Show more",
+      "someone": "Someone",
+      "templates": {
+        "applicationSubmitted": "New application",
+        "approval": "Approved",
+        "countryAdminAppointed": "Country admin",
+        "countryAdminRemoved": "Country admin stepped down",
+        "damageReported": "Damage reported",
+        "invite": "Invitation",
+        "memberJoined": "New member",
+        "poolAccessDecided": "Pool answer",
+        "poolAccessRequested": "Pool request",
+        "rejection": "Turned down",
+        "roleChanged": "Role change",
+        "welcome": "Welcome"
+      },
+      "you": "You"
+    },
+    "members": {
+      "actions": "Actions for {name}",
+      "columns": {
+        "joined": "Joined",
+        "person": "Person",
+        "phone": "Phone",
+        "role": "Role"
+      },
+      "demote": "Take admin rights",
+      "demoteBody": "They stay in the chapter — they just stop deciding for it.",
+      "demoted": "{name} is no longer an admin.",
+      "demoteTitle": "Take {name}'s admin rights?",
+      "empty": "No members yet. Approve a pilot request and the first name appears here.",
+      "errors": {
+        "alreadyDecided": "Someone already decided this one.",
+        "generic": "That didn't work. Try again.",
+        "lastAdmin": "A chapter can't lose its last admin. Add another one first.",
+        "self": "You can't change your own role. Ask another admin."
+      },
+      "history": "History",
+      "invite": {
+        "cancel": "Cancel",
+        "description": "They get an email with a link to join {chapter}.",
+        "email": "Email address",
+        "emailPlaceholder": "anna@example.org",
+        "errors": {
+          "generic": "That didn't work. Try again.",
+          "invalid": "Check the name and the email address."
+        },
+        "name": "Their name",
+        "namePlaceholder": "Anna Schmidt",
+        "open": "Invite someone",
+        "role": {
+          "admin": "Chapter admin",
+          "pilot": "Pilot"
+        },
+        "roleHint": {
+          "admin": "Runs the chapter, approves new pilots and invites people.",
+          "pilot": "Does the pedalling and takes passengers out for a ride."
+        },
+        "sending": "Sending…",
+        "sent": "Invitation sent to {name}.",
+        "submit": "Send the invitation",
+        "title": "Invite someone"
+      },
+      "promote": "Make chapter admin",
+      "promoteBody": "They can approve pilots, book rides and see everyone's details.",
+      "promoted": "{name} is a chapter admin.",
+      "promoteTitle": "Make {name} a chapter admin?",
+      "remove": "Remove from chapter",
+      "removeBody": "Access to the chapter goes. The rides already ridden stay on the record.",
+      "removed": "{name} has left the chapter.",
+      "removeTitle": "Remove {name} from the chapter?",
+      "title": "Everyone in the chapter"
+    },
+    "nav": {
+      "bikes": "Trishaws",
+      "chapters": "Chapters",
+      "chat": "Messages",
+      "countries": "Countries",
+      "help": "Get help",
+      "locations": "Locations",
+      "members": "Members",
+      "overview": "Overview",
+      "passengers": "Passengers",
+      "reports": "Reports",
+      "rides": "Rides",
+      "settings": "Settings"
+    },
+    "navGroups": {
+      "footer": "Account",
+      "main": "Chapter work",
+      "organisation": "Organisation"
+    },
+    "navLabel": "Admin sections",
+    "newRide": "New ride",
+    "openMenu": "Open menu",
+    "pages": {
+      "bikes": {
+        "body": "Each trishaw your chapter looks after, who last had it out, and when it next needs a service.",
+        "title": "Trishaws"
+      },
+      "chapters": {
+        "body": "The chapters you look after, and the ones you can start. A chapter is a place, a care home and the volunteers around it.",
+        "title": "Chapters"
+      },
+      "countries": {
+        "body": "Every country in the movement and the admins who run it. Only a superadmin sees this.",
+        "title": "Countries"
+      },
+      "help": {
+        "body": "Guides for chapter admins, and a way to reach someone when a guide is not enough.",
+        "title": "Get help"
+      },
+      "locations": {
+        "body": "Where your trishaws are kept, how to get in, and the pools your chapter shares.",
+        "title": "Locations"
+      },
+      "members": {
+        "body": "Pilots, chapter admins and the people waiting to be approved. Approvals will happen right here.",
+        "title": "Members"
+      },
+      "overview": {
+        "body": "Once rides are booked, this is where the week ahead lands — today's trips, the pilots taking them out, and anything still waiting on you.",
+        "title": "Overview"
+      },
+      "passengers": {
+        "body": "The people your chapter rides with — including the ones a relative or carer books for.",
+        "title": "Passengers"
+      },
+      "reports": {
+        "body": "Rides ridden, hours volunteered, kilometres covered — the numbers a chapter needs when someone asks what it does.",
+        "title": "Reports"
+      },
+      "rides": {
+        "body": "Every trip your chapter has booked, from the request to the wave goodbye at the door. Nothing booked yet.",
+        "title": "Rides"
+      },
+      "settings": {
+        "body": "How far your chapter will ride, who to reach, and the details on the chapter's own page.",
+        "title": "Settings"
+      }
+    },
+    "passengers": {
+      "add": {
+        "added": "{name} is on the list.",
+        "another": "Add another right after",
+        "anotherHint": "Keeps the form open for the next resident.",
+        "body": "For someone who signs up at the door rather than on a phone. They can take the account over later with the same email or number.",
+        "contact": "Email or phone number",
+        "errors": {
+          "exists": "That email or number already has an account.",
+          "generic": "That didn't work. Try again.",
+          "invalid": "Check the details — something isn't quite right."
+        },
+        "helper": "Someone helps this person",
+        "helperContact": "Their email or phone number",
+        "helperIsAccountHolder": "This account will belong to {helper}, who manages {passenger}.",
+        "helperName": "Their name",
+        "helperRelationship": "Relationship",
+        "open": "Add a passenger",
+        "submit": "Add passenger",
+        "title": "Add a passenger"
+      },
+      "columns": {
+        "born": "Born",
+        "chapter": "Chapter",
+        "joined": "Joined",
+        "name": "Name"
+      },
+      "empty": "No passengers yet. Add the first one, or wait for someone to join from the chapter's page.",
+      "pickChapter": "Pick a single chapter to add a passenger to it."
+    },
+    "person": {
+      "back": "Back to members",
+      "contact": "Contact",
+      "delete": {
+        "body": "Their account, roles, requests and history go with them. Rides already ridden stay on the record.",
+        "done": "{name} is gone.",
+        "errors": {
+          "generic": "That didn't work. Try again.",
+          "self": "You can't delete your own account."
+        },
+        "label": "Type {word} to confirm",
+        "open": "Delete user",
+        "submit": "Delete user",
+        "title": "Delete {name} for good?",
+        "word": "DELETE"
+      },
+      "history": "History",
+      "historyEmpty": "Nothing to tell yet. Every approval, role change and email lands here.",
+      "joined": "Joined {date}",
+      "noEmail": "No email address",
+      "noPhone": "No phone number",
+      "noRoles": "No role yet",
+      "roles": "Roles"
+    },
+    "perspectives": {
+      "admin": "Admin",
+      "passenger": "Passenger",
+      "pilot": "Pilot"
+    },
+    "requests": {
+      "approve": "Approve",
+      "approveBody": "They get an email with the three steps to their first ride.",
+      "approved": "{name} is aboard.",
+      "approveTitle": "Welcome {name} aboard?",
+      "body": "Everyone here asked to pilot for your chapter. Read them, decide, and they hear from us the same minute.",
+      "columns": {
+        "applied": "Asked",
+        "chapter": "Chapter",
+        "person": "Person"
+      },
+      "count": "{count} waiting",
+      "empty": "Nobody is waiting. The next person who asks to pilot lands right here.",
+      "noteLabel": "A note for {name} (optional)",
+      "notePlaceholder": "A training date, a phone number, a friendly word.",
+      "reject": "Turn down",
+      "rejectBody": "They get an email, and can ask another chapter instead.",
+      "rejected": "{name} has been told.",
+      "rejectTitle": "Turn {name} down?",
+      "title": "Waiting for approval"
+    },
+    "roles": {
+      "chapterAdmin": "Chapter admin",
+      "countryAdmin": "Country admin",
+      "passenger": "Passenger",
+      "pilot": "Pilot",
+      "superadmin": "Superadmin"
+    },
+    "scope": {
+      "all": "All chapters",
+      "allInCountry": "All chapters in {country}",
+      "label": "Scope",
+      "perspective": "Perspective",
+      "switchLabel": "Switch perspective or chapter"
+    },
+    "settings": {
+      "joinLink": {
+        "body": "Anyone who opens this link lands on your chapter's page and can join from there. Print the poster for the care home wall.",
+        "copied": "Link copied.",
+        "copy": "Copy link",
+        "downloadPng": "Save QR code as PNG",
+        "poster": "Print the poster",
+        "title": "Join link"
+      },
+      "notifications": {
+        "applicationPush": {
+          "hint": "Switch it off and the card still waits in the inbox — with an email two minutes later, unless somebody has already read it in the app.",
+          "label": "Pilot applications buzz your phone"
+        },
+        "body": "Who hears about a new face, and what your chapter's mail says when it lands.",
+        "damagePush": {
+          "hint": "A pilot reports a squeaky brake or a flat. Grounding damage always reaches every admin, whatever this says.",
+          "label": "Minor damage reaches you too"
+        },
+        "field": {
+          "edit": "Edit",
+          "errors": {
+            "generic": "That didn't work. Try again."
+          },
+          "invalid": "That doesn't look right.",
+          "saved": "Saved.",
+          "undo": "Undo",
+          "undone": "Put back."
+        },
+        "memberJoined": {
+          "hint": "A card waits in the admin inbox whenever a new passenger joins.",
+          "label": "Someone joins the chapter"
+        },
+        "replyTo": {
+          "hint": "Hit reply on any mail the chapter sends and the answer lands here.",
+          "invalid": "That isn't an email address.",
+          "label": "Reply-to address",
+          "placeholder": "hello@example.com"
+        },
+        "status": {
+          "saved": "Saved {when}",
+          "saving": "Saving"
+        },
+        "title": "Notifications",
+        "welcomeNote": {
+          "hint": "A few lines from you, highlighted in the welcome mail every new pilot and passenger gets.",
+          "label": "A word of welcome",
+          "placeholder": "We ride Tuesdays at two, and there is always cake."
+        }
+      },
+      "pickChapter": "Pick a chapter in the sidebar to see its join link.",
+      "postRide": {
+        "body": "What pilots see when they finish a ride: where to return the trishaw, what to check, who to call.",
+        "hint": "Markdown works: **bold**, lists, links.",
+        "label": "Post-ride instructions",
+        "placeholder": "Plug in the charger, wipe the seat, and drop the key back in the safe.",
+        "title": "After the ride"
+      },
+      "support": {
+        "body": "Something in the admin acting up? One sentence is enough — it lands with the people who look after this.",
+        "drawer": {
+          "cancel": "Cancel",
+          "description": "A sentence or two is plenty. It goes straight to the people who can fix it.",
+          "done": "Thank you. That helps more than you'd think.",
+          "failed": "That didn't send. Try again in a moment.",
+          "placeholder": "I tapped Save on my profile and the screen went blank.",
+          "submit": "Send it",
+          "title": "Tell us what happened",
+          "tooShort": "A few more words, please — at least ten characters."
+        },
+        "open": "Report a problem",
+        "title": "Report a problem"
+      }
+    },
+    "table": {
+      "all": "All",
+      "clearSearch": "Clear search",
+      "columns": "Columns",
+      "filterAria": "Filter by {column}",
+      "next": "Next",
+      "noResults": "Nothing matches.",
+      "page": "Page {page}",
+      "pageInfo": "{from}–{to} of {total}",
+      "previous": "Previous",
+      "search": "Search…",
+      "sortAria": "Sort by {column}"
+    },
+    "user": {
+      "account": "Account",
+      "menuLabel": "Your account"
+    }
+  },
+  "calendar": {
+    "agendaEmpty": "Nothing booked yet. When a ride is scheduled for you, it turns up here.",
+    "cancelledOn": "Cancelled",
+    "models": {
+      "event": "Event ride",
+      "functional": "Functional ride",
+      "pleasure": "Pleasure ride"
+    },
+    "nextWeek": "Next week",
+    "noRiders": "No riders yet",
+    "noTrishaw": "No trishaw yet",
+    "noTrishaws": "No trishaws on the books yet.",
+    "pilotNeeded": "Pilot needed",
+    "previousWeek": "Previous week",
+    "riders": "{count, plural, one {# rider} other {# riders}}",
+    "roles": {
+      "pilot": "Pilot"
+    },
+    "statuses": {
+      "cancelled": "Cancelled",
+      "completed": "Completed",
+      "scheduled": "Scheduled"
+    },
+    "thisWeek": "This week",
+    "today": "Today",
+    "trishaw": "Trishaw",
+    "trishawStatuses": {
+      "active": "Ready",
+      "maintenance": "In for service",
+      "retired": "Retired"
+    },
+    "upcoming": "Coming up",
+    "via": "to",
+    "weekEmpty": "No rides this week.",
+    "weekOf": "Week of {date}"
+  },
+  "chat": {
+    "composer": {
+      "cancelReply": "Cancel reply",
+      "notSent": "Not sent",
+      "placeholder": "Write a message",
+      "reply": "Reply",
+      "replyingTo": "Replying to {name}",
+      "retry": "Try again",
+      "send": "Send"
+    },
+    "deletedAccount": "Deleted account",
+    "errors": {
+      "announcementOnly": "Only the person who started this group writes here.",
+      "frozen": "This chat has wrapped up. Pick it up again to write.",
+      "generic": "That didn't work. Try again.",
+      "notMember": "This conversation isn't yours to open.",
+      "rateLimited": "Give it a moment, then send again.",
+      "tooLong": "That is longer than 4,000 characters."
+    },
+    "list": {
+      "empty": {
+        "body": "Write to the captain who signed you off, or to the pilot you rode with on Saturday. Everyone in your chapter is one tap away.",
+        "cta": "Start a chat",
+        "title": "No messages yet"
+      },
+      "mutedLabel": "Muted",
+      "newChat": "New",
+      "noResults": "No name or group matches that.",
+      "pane": {
+        "body": "Your chats live on the left. Open one, or start a new chat with somebody from your chapter.",
+        "title": "Pick a conversation"
+      },
+      "search": "Search names and groups",
+      "title": "Chat",
+      "unreads": "Unreads",
+      "you": "You"
+    },
+    "newChat": {
+      "addPeople": "Add people",
+      "announcementHint": "Above 100 people only you can write. Everyone else reads along.",
+      "change": "Change",
+      "chapter": "Chapter",
+      "createGroup": "Create group",
+      "generic": "That didn't work. Try again.",
+      "group": "Group",
+      "groupTitle": "Group name",
+      "groupTitlePlaceholder": "Saturday crew",
+      "noMatches": "Nobody here by that name.",
+      "notFound": "Nobody here with that email or number.",
+      "notReachable": "You two don't share a chapter yet, so this door stays shut.",
+      "people": "{count} in this group",
+      "person": "Person",
+      "searching": "Looking…",
+      "searchLabel": "Name, email or phone number",
+      "searchPlaceholder": "Anna",
+      "self": "That one is you.",
+      "startChat": "Start chat",
+      "title": "New chat",
+      "tooFew": "A group needs at least two other people.",
+      "tooMany": "A group holds 1,000 people at most."
+    },
+    "system": {
+      "announcementOff": "{name} opened the group up again",
+      "announcementOn": "{name} turned this into an announcement channel",
+      "continued": "{name} kept the conversation going",
+      "left": "{name} left the group"
+    },
+    "thread": {
+      "announcementLocked": "Only the person who started this group writes here. You still get every announcement.",
+      "back": "All chats",
+      "deleted": "Message deleted",
+      "edited": "edited",
+      "frozen": {
+        "body": "It closed when the ride ended. Either of you can pick it up again.",
+        "title": "This chat has wrapped up"
+      },
+      "jumpToLatest": "Jump to the latest",
+      "loadOlder": "Load older messages",
+      "offline": "Offline",
+      "online": "Online",
+      "reconnecting": "Reconnecting…",
+      "seen": "Seen",
+      "seenBy": "Seen by {count}",
+      "today": "Today",
+      "typingMany": "{first} and {count} others are typing…",
+      "typingOne": "{name} is typing…",
+      "typingTwo": "{first} and {second} are typing…",
+      "yesterday": "Yesterday"
+    }
+  },
+  "common": {
+    "back": "Back",
+    "continue": "Continue",
+    "language": "Change language",
+    "markdown": {
+      "bold": "Bold",
+      "code": "Code",
+      "italic": "Italic",
+      "link": "Link",
+      "list": "List",
+      "quote": "Quote",
+      "strike": "Strikethrough"
+    },
+    "next": "Next",
+    "signOut": "Sign out",
+    "skip": "Skip for now",
+    "stepProgress": "Step {current} of {total}"
+  },
+  "consent": {
+    "data": "I agree to the storage and processing of my data.",
+    "dataSuffix": "See the {imprint} and the {privacy}.",
+    "error": "We couldn't save that. Try again.",
+    "imprint": "Imprint",
+    "joining": "You're joining {chapter}.",
+    "notifications": "I agree to receive email and push notifications for important messages.",
+    "privacy": "Data processing agreement",
+    "required": "Tick all of them to continue.",
+    "safety": "I understand that rides are provided by trained volunteers, and I agree to the safety guidelines of the chapter.",
+    "setUpBy": "{name} set this account up for you. Check the details and agree to continue.",
+    "title": "Three quick agreements",
+    "titlePilot": "Two quick agreements"
+  },
+  "fleet": {
+    "allocation": {
+      "booked": "Booked for an overlapping ride",
+      "description": "{when} · {chapter}",
+      "groundedOnRide": "{names} not ready to ride",
+      "kept": "Not ready any more — swap it for another trishaw if you can.",
+      "loadFailed": "This ride could not be loaded.",
+      "noMatch": "No trishaw matches “{query}”.",
+      "none": "This chapter has no trishaws yet. Add one under Trishaws first.",
+      "nothingSelected": "No trishaw selected — the ride goes out without one.",
+      "open": "Allocate trishaws",
+      "saved": "Trishaws allocated.",
+      "saving": "Saving…",
+      "search": "Search by name, model or location",
+      "selected": "{count, plural, one {1 trishaw selected} other {# trishaws selected}}",
+      "submit": "Save allocation",
+      "title": "Allocate trishaws"
+    },
+    "common": {
+      "damage": {
+        "clear": "Clear",
+        "cleared": "Damage cleared.",
+        "clearedBy": "Cleared by {name}: {note}",
+        "clearNote": "What happened?",
+        "clearPlaceholder": "Fixed, new tyre fitted · Unjustified",
+        "clearSubmit": "Clear damage",
+        "clearTitle": "Clear this damage",
+        "description": "What is wrong?",
+        "descriptionPlaceholder": "Flat rear tyre, the left brake squeaks …",
+        "ground": "Ground this trishaw",
+        "groundHint": "It can't be booked until an admin clears the damage. Use this when riding it would be unsafe.",
+        "open": "{count, plural, one {1 open damage} other {# open damages}}",
+        "photo": "Photo",
+        "report": "Report damage",
+        "reportedBy": "Reported by {name}",
+        "sent": "Thanks — the chapter admins have been told.",
+        "submit": "Send report",
+        "submitting": "Sending…",
+        "unknownPerson": "Someone"
+      },
+      "damaged": "Damage reported",
+      "errors": {
+        "alreadyCleared": "This damage was already cleared.",
+        "alreadyDecided": "Someone already answered this request.",
+        "alreadyMember": "Your chapter already uses this pool.",
+        "defaultLocation": "A chapter's default location cannot be removed.",
+        "frameNumberLocked": "The frame number can't be changed once it is set.",
+        "frameNumberTaken": "Another trishaw already has this frame number.",
+        "generic": "Something went wrong. Try again.",
+        "invalidFile": "That file cannot be used here.",
+        "locationNotEmpty": "Move the trishaws somewhere else first.",
+        "poolInUse": "Your chapter still has upcoming rides with trishaws from this pool. Reassign or cancel them first.",
+        "rateLimited": "Too many attempts. Try again in a few minutes.",
+        "trishawGrounded": "This trishaw has an open grounding damage. Clear the damage to put it back into service.",
+        "trishawNotInChapter": "This chapter cannot use that trishaw.",
+        "trishawReserved": "That trishaw is already booked for an overlapping ride.",
+        "trishawUnavailable": "That trishaw is not ready to ride.",
+        "typeInUse": "Trishaws still use this model. Archive it instead.",
+        "typeNameTaken": "A model with this name already exists here.",
+        "unknownPool": "No pool with this code is available to your chapter.",
+        "uploadRejected": "The file could not be uploaded."
+      },
+      "gallery": {
+        "add": "Add photos",
+        "close": "Close",
+        "cover": "Cover",
+        "failed": "{name} could not be uploaded.",
+        "full": "That's the maximum of {max} photos.",
+        "hint": "JPEG, PNG or WebP, up to 10 MB each. Drop files here.",
+        "next": "Next photo",
+        "open": "Open photo {index} of {count}",
+        "position": "{index} / {count}",
+        "previous": "Previous photo",
+        "remove": "Remove photo",
+        "upload": "Upload photos"
+      },
+      "grounded": "Grounded",
+      "kinds": {
+        "chapter": "Chapter location",
+        "pool": "Pool"
+      },
+      "location": "Location",
+      "locations": "Locations",
+      "manual": {
+        "add": "Upload PDF",
+        "failed": "The manual could not be uploaded. Use a PDF under 20 MB.",
+        "hint": "One PDF, up to 20 MB. Drop it here.",
+        "name": "Owner's manual (PDF)",
+        "open": "Open manual",
+        "remove": "Remove",
+        "uploading": "Uploading…"
+      },
+      "markdownHint": "Supports Markdown: **bold**, lists, links.",
+      "pool": "Pool",
+      "scopes": {
+        "chapter": "Chapter",
+        "country": "Country",
+        "global": "Global"
+      },
+      "seats": "{count, plural, one {1 seat} other {# seats}}",
+      "statuses": {
+        "active": "Ready",
+        "maintenance": "In the workshop",
+        "retired": "Retired"
+      },
+      "trishaw": "Trishaw",
+      "trishaws": "Trishaws",
+      "type": "Model",
+      "types": "Models",
+      "wheelchair": "Wheelchair"
+    },
+    "finish": {
+      "accessCode": "Access code",
+      "accessNotes": "Getting in",
+      "beforeYouLeave": "Before you leave",
+      "done": "Done",
+      "entrance": "Entrance",
+      "entrancePhoto": "Entrance of {location}",
+      "homeCard": {
+        "body": "Bring the trishaw back and tell us if anything broke.",
+        "title": "Finish your last ride"
+      },
+      "intro": "Thanks for riding! Here is how to bring everything back.",
+      "noLocation": "No return location is set for this trishaw. Ask your chapter where it goes.",
+      "noTrishaws": "No trishaw was allocated to this ride, so there is nothing to bring back.",
+      "openInMaps": "Open in Maps",
+      "reportBody": "The chapter admins get your report straight away.",
+      "reported": "You reported",
+      "reportTitle": "Report damage on {name}",
+      "returnInstructions": "Parking it",
+      "returnTitle": "Where it goes back",
+      "ride": "Your ride",
+      "thanks": "Thanks for riding!",
+      "title": "Finish your ride"
+    },
+    "locations": {
+      "actions": {
+        "join": "Join a pool",
+        "newLocation": "New location",
+        "newPool": "New pool"
+      },
+      "address": {
+        "hint": "Pick a result to place the pin; drag the pin to fine-tune.",
+        "label": "Address",
+        "noResults": "Nothing found. Try the street or the town.",
+        "placeholder": "Street, building or town",
+        "searching": "Searching"
+      },
+      "back": "Locations",
+      "cancel": "Cancel",
+      "code": {
+        "copied": "Copied",
+        "copy": "Copy",
+        "hint": "Chapters in the same country join with this code. You still approve every request.",
+        "label": "Pool code",
+        "regenerate": "New code",
+        "regenerated": "The new code is {code}. The old one no longer works."
+      },
+      "create": {
+        "accessCode": "Access code",
+        "accessCodeHint": "Door or key-safe code. Only admins and pilots see it.",
+        "accessNotes": "Access notes",
+        "accessNotesPlaceholder": "Key is in the safe, light switch on the right …",
+        "chapter": "Chapter",
+        "country": "Country",
+        "created": "{name} is ready.",
+        "entrance": "How to find the entrance",
+        "entrancePhoto": "Photo of the entrance",
+        "entrancePlaceholder": "Grey door on the left of the loading ramp",
+        "locationBody": "A place where your chapter keeps trishaws.",
+        "locationTitle": "New location",
+        "name": "Name",
+        "namePlaceholder": "Garage behind the care home",
+        "nameRequired": "Give the location a name.",
+        "poolBody": "A depot shared by several chapters of one country. You get a code to hand out.",
+        "poolTitle": "New pool",
+        "returnInstructions": "When bringing it back",
+        "returnInstructionsPlaceholder": "Plug in the charger, lock the back wheel, close the gate …",
+        "submit": "Add location",
+        "submitPool": "Start pool"
+      },
+      "decision": {
+        "approve": "Approve",
+        "approveBody": "Its admins will see the access notes and can book the pool's trishaws.",
+        "approved": "{name} may now use the pool.",
+        "approveTitle": "Let {name} use this pool?",
+        "noteLabel": "A note for {name} (optional)",
+        "notePlaceholder": "Welcome aboard — the key is with the caretaker.",
+        "reject": "Decline",
+        "rejectBody": "The chapter's admins are told. They can ask again later.",
+        "rejected": "{name} was declined.",
+        "rejectTitle": "Decline {name}?"
+      },
+      "detail": {
+        "access": "Getting in",
+        "accessCode": "Access code",
+        "accessCodePlaceholder": "No code",
+        "accessNotes": "Access notes",
+        "accessNotesPlaceholder": "Nothing written yet. How do pilots get in?",
+        "archive": {
+          "body": "It disappears from the lists. Trishaws must be moved elsewhere first.",
+          "done": "{name} is archived.",
+          "open": "Archive location",
+          "submit": "Archive",
+          "title": "Archive {name}?"
+        },
+        "danger": "Remove",
+        "defaultHint": "The chapter's default location can't be removed.",
+        "deletePool": {
+          "body": "Every member chapter loses access and the code stops working. Trishaws must be moved elsewhere first.",
+          "done": "{name} is deleted.",
+          "label": "Type {word} to confirm",
+          "open": "Delete pool",
+          "submit": "Delete pool",
+          "title": "Delete {name}?",
+          "word": "DELETE"
+        },
+        "entrance": "Entrance",
+        "entrancePhoto": "Photo of the entrance",
+        "entrancePlaceholder": "Describe how to find the door",
+        "kind": "Kind",
+        "name": "Name",
+        "noEntrancePhoto": "No photo yet.",
+        "noTrishaws": "No trishaws are kept here yet.",
+        "owner": "Belongs to",
+        "place": "Place",
+        "properties": "Properties",
+        "readOnly": "Only the admins who run this location can change it.",
+        "returnInstructions": "When bringing it back",
+        "returnInstructionsPlaceholder": "Nothing written yet. What should pilots do after the ride?",
+        "trishaws": "Trishaws here"
+      },
+      "empty": {
+        "own": "No locations yet.",
+        "used": "Your chapter doesn't use a pool yet. Got a code? Join one."
+      },
+      "field": {
+        "edit": "Edit",
+        "invalid": "That doesn't look right.",
+        "saved": "Saved.",
+        "undo": "Undo",
+        "undone": "Put back."
+      },
+      "forChapter": "for {chapter}",
+      "isDefault": "Default",
+      "join": {
+        "approved": "Your chapter already uses this pool.",
+        "body": "Ask the country admin for the pool's code. They approve your request before you can book its trishaws.",
+        "chapter": "For chapter",
+        "code": "Pool code",
+        "codePlaceholder": "DE-ABCD-23",
+        "sent": "Request sent. You'll hear back once it's answered.",
+        "submit": "Send request",
+        "title": "Join a pool"
+      },
+      "leave": {
+        "body": "{chapter} can no longer book trishaws from this pool. You can ask to join again with its code.",
+        "done": "{chapter} left {name}.",
+        "open": "Leave",
+        "submit": "Leave pool",
+        "title": "Leave {name}?"
+      },
+      "map": {
+        "label": "Map of the location",
+        "unavailable": "The map isn't available right now."
+      },
+      "memberCount": "{count, plural, one {1 chapter} other {# chapters}}",
+      "members": "Member chapters",
+      "membersMayManage": {
+        "hint": "Admins of member chapters may add, edit and move the trishaws in this pool.",
+        "label": "Members may manage trishaws"
+      },
+      "noAddress": "No address yet",
+      "noMembers": "No chapter uses this pool yet.",
+      "noPending": "No open requests.",
+      "open": "Open",
+      "openInGoogleMaps": "Open in Google Maps",
+      "pending": "Waiting for you",
+      "pendingBody": "These chapters asked to use this pool. They can't book its trishaws until you answer.",
+      "pools": {
+        "body": "Shared depots for the chapters of your country. Hand out the code; you decide who gets in.",
+        "columns": {
+          "address": "Address",
+          "code": "Code",
+          "country": "Country",
+          "members": "Chapters",
+          "name": "Name",
+          "trishaws": "Trishaws",
+          "waiting": "Waiting"
+        },
+        "empty": "No pools yet. Start one when several chapters share a depot.",
+        "title": "Pools",
+        "waiting": "{count, plural, one {1 request} other {# requests}}"
+      },
+      "remove": {
+        "body": "The chapter can no longer book trishaws from this pool.",
+        "done": "{chapter} was removed from {name}.",
+        "open": "Remove",
+        "submit": "Remove chapter",
+        "title": "Remove {chapter} from {name}?"
+      },
+      "requestStatus": {
+        "approved": "Approved",
+        "pending": "Waiting for an answer",
+        "rejected": "Declined"
+      },
+      "sections": {
+        "own": "Your locations",
+        "ownBody": "Where your chapter's trishaws sleep.",
+        "requests": "Requests",
+        "requestsBody": "Pools your chapter asked to join.",
+        "used": "Pools you use",
+        "usedBody": "Shared depots your chapter may ride from."
+      },
+      "status": {
+        "saved": "Saved {when}",
+        "saving": "Saving"
+      },
+      "tabs": {
+        "label": "Location views",
+        "locations": "Locations",
+        "pools": "Pools"
+      },
+      "title": "Locations",
+      "trishawCount": "{count, plural, =0 {No trishaws} one {1 trishaw} other {# trishaws}}"
+    },
+    "trishaws": {
+      "clear": {
+        "cancel": "Cancel"
+      },
+      "columns": {
+        "damage": "Damage",
+        "location": "Location",
+        "model": "Model",
+        "status": "Status",
+        "trishaw": "Trishaw",
+        "wheelchair": "Wheelchair"
+      },
+      "composer": {
+        "added": "Comment added.",
+        "label": "Comment",
+        "placeholder": "Add a comment to the history — e.g. new battery fitted",
+        "submit": "Comment"
+      },
+      "create": {
+        "body": "Give it a name the pilots will recognise and say where it is kept.",
+        "created": "{name} has joined the fleet.",
+        "frameNumber": "Frame number",
+        "frameNumberHint": "Stamped on the frame. It can't be changed later.",
+        "frameNumberPlaceholder": "e.g. TB-2024-00317",
+        "location": "Location",
+        "model": "Model",
+        "name": "Name",
+        "namePlaceholder": "Frieda",
+        "note": "Description",
+        "notePlaceholder": "What sets this one apart — colour, accessories, quirks",
+        "photo": "Photo",
+        "submit": "Add trishaw",
+        "title": "New trishaw"
+      },
+      "damageFilter": {
+        "damaged": "Damage reported",
+        "grounded": "Grounded",
+        "none": "No open damage"
+      },
+      "delete": {
+        "body": "Its history and damage reports go with it. Rides it was booked on keep their record without it.",
+        "cancel": "Cancel",
+        "done": "{name} was deleted.",
+        "label": "Type {word} to confirm",
+        "open": "Delete trishaw",
+        "submit": "Delete trishaw",
+        "title": "Delete {name} for good?",
+        "word": "DELETE"
+      },
+      "detail": {
+        "about": "About",
+        "back": "All trishaws",
+        "calendar": "Calendar",
+        "calendarHint": "Rides this trishaw is booked for, week by week.",
+        "damage": "Damage",
+        "edit": "Edit",
+        "frameNumber": "Frame number",
+        "frameNumberPlaceholder": "e.g. TB-2024-00317",
+        "history": "History",
+        "historyEmpty": "Nothing has happened with this trishaw yet.",
+        "invalid": "That does not look right.",
+        "location": "Location",
+        "manual": "Manual",
+        "manualLabel": "Manual",
+        "model": "Model",
+        "modelDescription": "About the model",
+        "modelInfo": "About the model",
+        "name": "Name",
+        "no": "No",
+        "noDamage": "No open damage. Ready to ride as far as anyone knows.",
+        "note": "Description",
+        "notePlaceholder": "Colour, accessories, quirks of this very trishaw",
+        "photo": "Photo",
+        "photoHint": "Photos of this very trishaw — its colour, stickers, any marks — so pilots recognise it. Without photos the model's photos are shown.",
+        "photos": "Photos",
+        "properties": "Properties",
+        "readOnly": "Your chapter uses this trishaw. The admins where it is kept look after it.",
+        "saved": "Saved.",
+        "savedAt": "Saved {when}",
+        "saving": "Saving",
+        "seats": "Seats",
+        "since": "In the fleet since {date}",
+        "status": "Status",
+        "undo": "Undo",
+        "undone": "Put back.",
+        "wheelchair": "Wheelchair",
+        "yes": "Yes"
+      },
+      "empty": "No trishaws yet. Add the first one and it is ready to be booked for a ride.",
+      "history": {
+        "cleared": "Cleared",
+        "created": "{actor} added this trishaw",
+        "damage": "{actor} reported damage",
+        "moved": "{actor} moved it from {from} to {to}",
+        "noPilot": "No pilot assigned",
+        "note": "{actor} commented",
+        "open": "Open",
+        "pilotedBy": "piloted by",
+        "ride": "Ride",
+        "rideAt": "Ride from {place}",
+        "someone": "Someone",
+        "statusChanged": "{actor} changed the status from {from} to {to}",
+        "you": "You"
+      },
+      "new": "New trishaw",
+      "noLocations": "Set up a location first — every trishaw lives somewhere.",
+      "noModel": "No model",
+      "picker": {
+        "clear": "Clear",
+        "locationEmpty": "No location matches.",
+        "locationPlaceholder": "Pick a location…",
+        "modelEmpty": "No model matches.",
+        "modelPlaceholder": "Search models…"
+      },
+      "report": {
+        "body": "Tell the other admins what is wrong with {name}.",
+        "title": "Report damage"
+      },
+      "tabs": {
+        "label": "Fleet views",
+        "models": "Models",
+        "timeline": "Week plan",
+        "trishaws": "Trishaws"
+      },
+      "wheelchairFilter": {
+        "no": "Not wheelchair accessible",
+        "yes": "Wheelchair accessible"
+      }
+    },
+    "types": {
+      "archived": "Archived",
+      "back": "Models",
+      "body": "The trishaws your chapters ride, described once and shared as widely as you like — a chapter's own, the whole country's, or everyone's.",
+      "cancel": "Cancel",
+      "columns": {
+        "name": "Model",
+        "scope": "Catalogue",
+        "seats": "Seats",
+        "trishaws": "Trishaws",
+        "wheelchair": "Wheelchair"
+      },
+      "create": {
+        "body": "Describe it once; every trishaw of this kind points here.",
+        "created": "{name} is in the catalogue.",
+        "description": "Description",
+        "descriptionPlaceholder": "What makes it special, how to adjust the seat, where the battery sits …",
+        "manual": "Manual",
+        "name": "Name",
+        "namePlaceholder": "Christiania Classic, Van Raam O-Pair …",
+        "nameRequired": "Give the model a name.",
+        "owner": "Catalogue",
+        "ownerChapter": "{name} — this chapter only",
+        "ownerCountry": "{name} — every chapter in the country",
+        "ownerGlobal": "Global — every chapter everywhere",
+        "ownerHint": "Who sees it. A chapter model can be promoted to its country later.",
+        "photo": "Photo",
+        "seats": "Passenger seats",
+        "submit": "Add model",
+        "title": "New model",
+        "wheelchair": "Wheelchair accessible",
+        "wheelchairHint": "A wheelchair can be rolled on board."
+      },
+      "detail": {
+        "archive": "Archive",
+        "archivedDone": "{name} is archived.",
+        "archiveHint": "An archived model can't be picked for new trishaws. The ones that use it keep it.",
+        "catalogue": "Catalogue",
+        "deleteBlocked": "Trishaws still use this model, so it can only be archived.",
+        "delete": {
+          "body": "The model and its photo and manual disappear from the catalogue for good.",
+          "done": "{name} is deleted.",
+          "label": "Type {word} to confirm",
+          "open": "Delete model",
+          "submit": "Delete model",
+          "title": "Delete {name}?",
+          "word": "DELETE"
+        },
+        "description": "About this model",
+        "descriptionPlaceholder": "Nothing written yet. Add a description …",
+        "manage": "Manage",
+        "manual": "Manual",
+        "manualHint": "The manufacturer's owner's manual as a PDF: charging, brakes, tyre pressure, what to do when something breaks.",
+        "name": "Name",
+        "noManual": "No manual uploaded yet.",
+        "photo": "Photo",
+        "photoHint": "Show the model from the side and from the front, and the passenger seat. The first photo is the cover in lists.",
+        "photos": "Photos",
+        "promote": {
+          "country": "Promote to {name}",
+          "done": "{name} now belongs to a wider catalogue.",
+          "global": "Promote to global",
+          "hint": "Makes it available to more chapters. It cannot be narrowed again."
+        },
+        "properties": "Properties",
+        "readOnly": "This model belongs to the {owner} catalogue. Only its admins can change it.",
+        "restore": "Restore",
+        "restoredDone": "{name} is back in the catalogue.",
+        "seats": "Seats",
+        "usage": "{count, plural, =0 {No trishaws use it} one {1 trishaw uses it} other {# trishaws use it}}",
+        "wheelchair": "Wheelchair accessible"
+      },
+      "empty": "No models yet. Describe the first one, and every trishaw you add can point at it.",
+      "field": {
+        "edit": "Edit",
+        "invalid": "That doesn't look right.",
+        "saved": "Saved.",
+        "undo": "Undo",
+        "undone": "Put back."
+      },
+      "new": "New model",
+      "photoAlt": "Photo of {name}",
+      "showArchived": "Show archived",
+      "status": {
+        "saved": "Saved {when}",
+        "saving": "Saving"
+      },
+      "title": "Models",
+      "trishaws": "Trishaws",
+      "wheelchairNo": "No",
+      "wheelchairYes": "Yes"
+    }
+  },
+  "forbidden": {
+    "description": "You are signed in, but this page is not yours to open.",
+    "returnHome": "Return home",
+    "title": "No key for this door"
+  },
+  "home": {
+    "title": "Hello World"
+  },
+  "join": {
+    "app": {
+      "appStore": "Download on the App Store",
+      "playStore": "Get it on Google Play",
+      "title": "Ride with the app"
+    },
+    "eyebrow": "Cycling Without Age",
+    "member": {
+      "cta": "Open Cycling Without Age",
+      "title": "You're already part of this chapter"
+    },
+    "passenger": {
+      "body": "A volunteer does the pedalling. You sit at the front, at walking pace, with nothing between you and the street.",
+      "cta": "Ride with this chapter",
+      "title": "Come along for a ride"
+    },
+    "pilot": {
+      "body": "Pilots take neighbours out for an hour at a time. Ask to join and a chapter admin gets back to you, usually within a few days.",
+      "cta": "Ask to pilot here",
+      "pending": "Your request is with the chapter.",
+      "title": "Do the pedalling"
+    },
+    "poster": {
+      "madeWith": "Booking by Coding for Change",
+      "or": "or go to",
+      "scan": "Scan to join",
+      "slogan": "The right to wind in your hair"
+    },
+    "ride": {
+      "back": "Back to {chapter}",
+      "confirm": "Continue",
+      "cta": "Book a ride",
+      "noDraft": "We lost track of what you picked. Choose a time again on the chapter's page.",
+      "note": "Ride booking is coming soon — nothing has been sent yet.",
+      "summary": "You'd like to ride with {chapter}, {when}.",
+      "title": "Almost there",
+      "when": {
+        "afternoon": "afternoons",
+        "any": "any time",
+        "morning": "mornings"
+      },
+      "whenTitle": "When suits you?"
+    }
+  },
+  "legal": {
+    "imprint": {
+      "body": "The chapter's legal details go here.",
+      "title": "Imprint"
+    },
+    "pending": "This page is still being written. Ask your chapter for the details in the meantime.",
+    "privacy": {
+      "body": "What we store, why we store it, and how to have it removed goes here.",
+      "title": "Data processing agreement"
+    }
+  },
+  "location": {
+    "distanceAway": "{distance} away",
+    "errors": {
+      "alreadyPilot": "You already pilot for one of those chapters.",
+      "generic": "We couldn't save that. Try again.",
+      "maxChapters": "You can request up to {count} chapters at once.",
+      "unknownChapter": "That chapter is no longer available. Pick another one."
+    },
+    "home": {
+      "confirm": "This is my address",
+      "duration": "About {duration} away by trishaw",
+      "hint": "Start typing, then pick your address from the list.",
+      "joinAnyway": "Join {chapter} anyway",
+      "label": "Your address",
+      "nearest": "Your nearest chapter",
+      "noResults": "No address matches that.",
+      "outOfRangeBody": "{chapter} is {distance} away — further than the {radius} it rides. You can still come along: travel to the chapter yourself, or have someone drive you there, and a pilot will take it from the door.",
+      "outOfRangeTitle": "We can't reach you yet",
+      "placeholder": "Street and number",
+      "searching": "Looking…"
+    },
+    "locating": "Finding chapters near you…",
+    "mapLabel": "Map of Cycling Without Age chapters",
+    "mapUnavailable": "The map isn't available right now. The list still works.",
+    "next": "Next",
+    "noResults": "No chapter matches that.",
+    "pending": "Just a moment…",
+    "permissionDenied": "Without your location we can't sort by distance — here is every chapter instead.",
+    "request": "Request to join",
+    "requestCount": "Request to join {count} chapters",
+    "searchLabel": "Search for a chapter",
+    "searchPlaceholder": "Chapter or city",
+    "selectPrompt": "Select a chapter to continue.",
+    "subtitleAll": "Every chapter, in alphabetical order.",
+    "subtitleNearby": "Chapters closest to you.",
+    "tabs": {
+      "careHome": "Care home",
+      "home": "My own address"
+    },
+    "title": "Where would you like to ride?",
+    "titlePassenger": "Where should we pick you up?"
+  },
+  "member": {
+    "action": {
+      "passenger": "Book a ride",
+      "pilot": "Find open rides"
+    },
+    "guest": {
+      "greeting": "Welcome",
+      "hero": "Create your account",
+      "heroHint": "Booking a ride takes an email or a phone number. That's all.",
+      "signIn": "Sign in",
+      "subtitle": "Looking around",
+      "tagline": "Have a look around first — the chapter you picked is right here."
+    },
+    "home": {
+      "greeting": "Hi {name}",
+      "nextRide": {
+        "passenger": {
+          "empty": "Nothing booked yet. When you book a ride, the day, the time and the pilot who's coming to collect you land here."
+        },
+        "pilot": {
+          "empty": "Nothing on your list yet. When your chapter posts open rides, the next one you take shows up here — date, passenger, meeting point."
+        },
+        "title": "Next ride"
+      },
+      "passenger": {
+        "chooseChapter": "Choose a chapter",
+        "tagline": "Your next ride starts here."
+      },
+      "pilot": {
+        "tagline": "Ready when you are."
+      },
+      "yourChapter": "Your chapter",
+      "yourChapters": "Your chapters"
+    },
+    "nav": {
+      "calendar": "Calendar",
+      "chat": "Chat",
+      "home": "Home",
+      "rides": "My rides",
+      "training": "Training"
+    },
+    "navLabel": "Sections",
+    "pages": {
+      "calendar": {
+        "passenger": {
+          "body": "Nothing planned yet. Your upcoming rides appear here, with the date and the time your pilot arrives."
+        },
+        "pilot": {
+          "body": "An empty week, for now. Your rides, training dates and chapter meet-ups will line up here."
+        },
+        "title": "Calendar"
+      },
+      "rides": {
+        "passenger": {
+          "body": "Nothing booked yet. Once your chapter opens booking, this is where your rides wait — the day, the time, and the pilot who rings the bell."
+        },
+        "pilot": {
+          "body": "Your first ride isn't on the list yet. When your chapter posts open rides, the ones that need a pilot appear here — pick one, and the trishaw is yours for the afternoon."
+        },
+        "title": "My rides"
+      }
+    },
+    "perspective": {
+      "chapters": "{count} chapters",
+      "label": "Perspective",
+      "noChapter": "No chapter yet",
+      "switchLabel": "Switch perspective"
+    },
+    "tabBarLabel": "Main",
+    "topBar": {
+      "passenger": {
+        "account": "Your account",
+        "switchHint": "Double-tap to switch perspective"
+      },
+      "pilot": {
+        "account": "Your account",
+        "switchHint": "Double-tap to switch perspective"
+      }
+    },
+    "user": {
+      "passenger": {
+        "account": "Account",
+        "menuLabel": "Your account"
+      },
+      "pilot": {
+        "account": "Account",
+        "menuLabel": "Your account"
+      }
+    }
+  },
+  "notFound": {
+    "description": "The page you are looking for does not exist.",
+    "returnHome": "Return home",
+    "title": "Page not found"
+  },
+  "notifications": {
+    "bell": "Notifications",
+    "bellWithCount": "Notifications, {count} new",
+    "categories": {
+      "application": "Application",
+      "fleet": "Trishaws",
+      "invitation": "Invitation",
+      "membership": "Membership",
+      "welcome": "Welcome"
+    },
+    "empty": {
+      "body": "The moment something happens — a chapter answers, a ride is booked — it lands right here.",
+      "title": "All quiet for now"
+    },
+    "title": "Notifications",
+    "unread": "Unread"
+  },
+  "passenger": {
+    "browsing": "Browsing {chapter}",
+    "noChapter": "No chapter chosen yet"
+  },
+  "passkey": {
+    "admin": {
+      "body": "Your device becomes your key to the dashboard — a fingerprint, a face, a PIN. Set one up to open it.",
+      "failed": "That didn't work — try again. You can also set your passkey up in a browser.",
+      "title": "Admins sign in with a passkey"
+    },
+    "body": "Your device remembers you — no password to keep.",
+    "create": "Create passkey",
+    "failed": "That didn't work. You can add a passkey later under Account.",
+    "nameLabel": "Name this passkey (optional)",
+    "namePlaceholder": "Work laptop",
+    "skip": "Not now",
+    "title": "Create your passkey"
+  },
+  "pilot": {
+    "home": {
+      "celebration": {
+        "body": "{chapter} says welcome. Watch the training videos, then meet a captain for your first ride.",
+        "dismiss": "Got it",
+        "title": "You're in."
+      },
+      "title": "Ready when you are",
+      "training": "Training while you wait",
+      "trainingHint": "About 20 minutes of video, and you'll know the trishaw before you sit on it.",
+      "yourChapters": "Your chapters"
+    },
+    "status": {
+      "appliedOn": "Asked on {date}",
+      "applyElsewhere": "Find another chapter",
+      "note": "Their note",
+      "pendingHint": "Chapters usually answer within a few days. Nothing for you to do.",
+      "pendingTitle": "Your request is with {chapter}",
+      "rejectedBody": "It happens — trishaws, captains and training dates all have to line up. Another chapter nearby may well have room.",
+      "rejectedTitle": "{chapter} said no this time",
+      "reviewers": "Being read by",
+      "reviewersNone": "The chapter hasn't named an admin yet. We'll nudge them.",
+      "steps": {
+        "1": "Applied",
+        "2": "Under review",
+        "3": "Welcome"
+      }
+    },
+    "training": {
+      "body": "The videos are still being filmed. The moment they're ready they show up here — about 20 minutes, then a workshop with one of the captains.",
+      "title": "Training while you wait"
+    }
+  },
+  "pilotNextSteps": {
+    "finish": "Next",
+    "steps": {
+      "1": "Watch the training videos — about 20 minutes, right in this app.",
+      "2": "Join a practical workshop with one of the captains.",
+      "3": "Grab your first ride — a captain rides along the first time."
+    },
+    "title": "How you become a pilot"
+  },
+  "profile": {
+    "birthDate": "Birthday",
+    "body": "Your chapter needs this to plan a ride. Nothing else, for now.",
+    "errors": {
+      "birthDate": "That birthday doesn't look right. Check the year.",
+      "generic": "We couldn't save that. Try again.",
+      "incomplete": "Fill in every field to continue."
+    },
+    "firstName": "First name",
+    "forSomeoneElse": "I'm creating this account for someone else to ride",
+    "gender": "Gender",
+    "genders": {
+      "female": "Female",
+      "male": "Male",
+      "other": "Other"
+    },
+    "lastName": "Last name",
+    "relationship": {
+      "label": "Your relationship to them",
+      "options": {
+        "carer": "Carer",
+        "child": "Son or daughter",
+        "friend": "Friend",
+        "other": "Other",
+        "partner": "Partner",
+        "relative": "Another relative"
+      }
+    },
+    "title": "A little about you",
+    "titlePilot": "A little about you"
+  },
+  "signIn": {
+    "code": {
+      "change": "Use a different email or number",
+      "errors": {
+        "generic": "Something went wrong. Try again.",
+        "invalid": "That code isn't right. Check it and try again.",
+        "rateLimited": "Too many attempts. Try again in a minute."
+      },
+      "label": "6-digit code",
+      "resend": "Send a new code",
+      "resendWait": "You can ask for a new code in a moment.",
+      "resent": "New code sent.",
+      "sentToEmail": "We emailed a 6-digit code to {identifier}.",
+      "sentToPhone": "We texted a 6-digit code to {identifier}.",
+      "title": "Enter your code"
+    },
+    "country": {
+      "noResults": "No country matches that.",
+      "searchLabel": "Search for a country",
+      "searchPlaceholder": "Country name",
+      "selected": "{country}, {dialCode}",
+      "title": "Where's your phone number from?"
+    },
+    "identifier": {
+      "changeCountry": "Change country code",
+      "errors": {
+        "empty": "Enter an email address or a phone number.",
+        "generic": "Something went wrong. Try again.",
+        "invalidEmail": "That email address doesn't look right. Check for a typo.",
+        "invalidPhone": "That number doesn't look complete for {country}. Check the digits.",
+        "rateLimited": "Too many attempts. Try again in a minute."
+      },
+      "google": "Continue with Google",
+      "label": "Email or phone number",
+      "passkey": "Use a passkey",
+      "placeholder": "you@example.com",
+      "separator": "or",
+      "title": "What's your email or phone number?"
+    },
+    "role": {
+      "passenger": {
+        "body": "You sit at the front and enjoy the wind in your hair.",
+        "title": "I want to be a Passenger"
+      },
+      "pilot": {
+        "body": "You do the pedalling and take passengers out for a ride.",
+        "title": "I want to be a Pilot"
+      },
+      "title": "How would you like to take part?"
+    }
+  },
+  "welcome": {
+    "carouselLabel": "What Cycling Without Age is",
+    "explore": "Explore without signing in",
+    "progressLabel": "Step {current} of {total}",
+    "signIn": "Sign in",
+    "slides": {
+      "1": {
+        "body": "It started in Copenhagen in 2012, with one trishaw and one good idea.",
+        "headline": "Everyone has the right to wind in their hair."
+      },
+      "2": {
+        "body": "A volunteer cycles the trishaw at walking pace. You sit at the front, with nothing between you and the street.",
+        "headline": "Pilots do the pedalling."
+      },
+      "3": {
+        "body": "Every chapter is local volunteers giving an hour to the people who built the neighbourhood.",
+        "headline": "It runs on neighbours."
+      },
+      "4": {
+        "body": "Chapters across Europe, North America, Australia and Japan — very likely one near you.",
+        "headline": "Find your chapter."
+      }
+    },
+    "subtitle": "Sign in to book a ride or start pedalling. Or look around first.",
+    "title": "Come along for the ride."
+  }
+}

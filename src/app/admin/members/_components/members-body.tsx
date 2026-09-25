@@ -4,8 +4,8 @@ import { membership } from "@/features/membership";
 import { parseRoles, type ChapterRole } from "@/lib/access";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { formatDate, formatNumber, resolveLocale } from "@/lib/format";
-import { getDictionary } from "@/lib/i18n";
-import { fill } from "@/lib/utils";
+import { getDictionary, getLocale } from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
 import { AdminPageHeader } from "../../_components/admin-page";
 import { ICONS } from "@/components/icons";
 import { readActiveScope } from "../../active-scope";
@@ -22,11 +22,12 @@ export async function MembersBody({
   const { active, scopeQuery, chapters, chapterIds } =
     await readActiveScope(searchParams);
 
-  const [pending, members, dict, head] = await Promise.all([
+  const [pending, members, dict, head, locale] = await Promise.all([
     membership.listApplications(chapterIds, "pending"),
     membership.listMembersOfChapters(chapterIds),
     getDictionary(),
     headers(),
+    getLocale(),
   ]);
 
   const notation = resolveLocale(head.get("accept-language"));
@@ -78,6 +79,7 @@ export async function MembersBody({
             chapterName={active.chapter.name}
             roleLabel={dict.admin.members.columns.role}
             labels={dict.admin.members.invite}
+            locale={locale}
           />
         ) : null}
       </AdminPageHeader>
@@ -91,9 +93,12 @@ export async function MembersBody({
           phoneColumn={dict.admin.members.columns.phone}
           errors={dict.admin.members.errors}
           table={dict.admin.table}
-          count={fill(dict.admin.requests.count, {
-            count: formatNumber(requests.length, notation),
-          })}
+          locale={locale}
+          count={formatMessage(
+            dict.admin.requests.count,
+            { count: formatNumber(requests.length, notation) },
+            locale,
+          )}
         />
       ) : null}
 
@@ -107,6 +112,7 @@ export async function MembersBody({
             labels={dict.admin.members}
             chapterColumn={dict.admin.requests.columns.chapter}
             table={dict.admin.table}
+            locale={locale}
           />
         ) : (
           <EmptyState icon={MembersIcon}>{dict.admin.members.empty}</EmptyState>

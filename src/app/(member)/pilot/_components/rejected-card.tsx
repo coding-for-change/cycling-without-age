@@ -1,16 +1,19 @@
 import { XCircle } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 
 type StatusStrings = Dictionary["pilot"]["status"];
 
 export function RejectedCard({
   chapterName,
   note,
+  language,
   strings,
 }: {
   chapterName: string;
   note: string | null;
+  language: Locale;
   strings: StatusStrings;
 }) {
   return (
@@ -21,7 +24,11 @@ export function RejectedCard({
       />
       <div className="min-w-0">
         <h2 className="font-display font-bold">
-          {fill(strings.rejectedTitle, { chapter: chapterName })}
+          {formatMessage(
+            strings.rejectedTitle,
+            { chapter: chapterName },
+            language,
+          )}
         </h2>
         <p className="mt-1 text-sm text-ink-soft">{strings.rejectedBody}</p>
         {note ? (

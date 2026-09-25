@@ -9,6 +9,7 @@ import {
   type DataTableStrings,
 } from "@/components/ui/data-table";
 import { mutedColumn } from "../../_components/table-columns";
+import type { Locale } from "@/lib/i18n/locales";
 import { PersonAvatar } from "@/components/person-avatar";
 
 export type MemberRow = {
@@ -36,6 +37,7 @@ export function MembersTable({
   labels,
   chapterColumn,
   table,
+  locale,
 }: {
   rows: MemberRow[];
   showChapter: boolean;
@@ -43,6 +45,7 @@ export function MembersTable({
   labels: MembersTableLabels;
   chapterColumn: string;
   table: DataTableStrings;
+  locale: Locale;
 }) {
   const href = (row: MemberRow) => `/admin/members/${row.userId}${scopeQuery}`;
 
@@ -106,6 +109,7 @@ export function MembersTable({
       columns={columns}
       data={rows}
       strings={table}
+      locale={locale}
       initialHidden={showChapter ? ["phone"] : ["chapter", "phone"]}
       rowHref={href}
       getRowId={(row) => `${row.chapterId}:${row.userId}`}

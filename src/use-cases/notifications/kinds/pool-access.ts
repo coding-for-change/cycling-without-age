@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ORG_NAME } from "@/lib/brand";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import {
   chapterAdminIds,
   countryAdminIds,
@@ -28,17 +28,17 @@ export const poolAccessRequested = defineKind({
     return { chapterName, poolName: pool };
   },
   href: (event) => `/admin/locations/${event.poolId}`,
-  message: ({ chapterName, poolName }, strings) => {
+  message: ({ chapterName, poolName }, strings, locale) => {
     const copy = strings.poolAccessRequested;
     const values = {
       chapter: chapterName ?? ORG_NAME,
       pool: poolName ?? copy.unnamed,
     };
     return {
-      subject: fill(copy.subject, values),
+      subject: formatMessage(copy.subject, values, locale),
       preview: copy.preview,
       heading: copy.heading,
-      body: fill(copy.intro, values),
+      body: formatMessage(copy.intro, values, locale),
       cta: copy.cta,
       footer: copy.footer,
       template: "poolAccessRequested",
@@ -71,28 +71,31 @@ export const poolAccessDecided = defineKind({
     };
   },
   href: () => "/admin/locations",
-  message: ({ chapterName, poolName, approved, note }, strings) => {
+  message: ({ chapterName, poolName, approved, note }, strings, locale) => {
     const copy = strings.poolAccessDecided;
     const values = {
       chapter: chapterName ?? ORG_NAME,
       pool: poolName ?? copy.unnamed,
       note: note ?? "",
     };
-    const body = fill(
+    const body = formatMessage(
       approved ? copy.introApproved : copy.introRejected,
       values,
+      locale,
     );
     return {
-      subject: fill(
+      subject: formatMessage(
         approved ? copy.subjectApproved : copy.subjectRejected,
         values,
+        locale,
       ),
       preview: copy.preview,
-      heading: fill(
+      heading: formatMessage(
         approved ? copy.headingApproved : copy.headingRejected,
         values,
+        locale,
       ),
-      body: note ? `${body} ${fill(copy.note, values)}` : body,
+      body: note ? `${body} ${formatMessage(copy.note, values, locale)}` : body,
       cta: copy.cta,
       footer: copy.footer,
       template: "poolAccessDecided",

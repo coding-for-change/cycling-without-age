@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 import {
   ConfirmDeleteDialog,
   type ConfirmDeleteLabels,
@@ -17,6 +18,7 @@ export function DeleteChapterDialog({
   backHref,
   labels,
   cancel,
+  locale,
 }: {
   chapterId: string;
   name: string;
@@ -28,17 +30,23 @@ export function DeleteChapterDialog({
   backHref: string;
   labels: DeleteChapterLabels;
   cancel: string;
+  locale: Locale;
 }) {
   const router = useRouter();
 
   return (
     <ConfirmDeleteDialog
       name={name}
-      footprint={fill(labels.footprint, {
-        members: footprint.members,
-        passengers: footprint.passengers,
-        pending: footprint.pendingApplications,
-      })}
+      locale={locale}
+      footprint={formatMessage(
+        labels.footprint,
+        {
+          members: footprint.members,
+          passengers: footprint.passengers,
+          pending: footprint.pendingApplications,
+        },
+        locale,
+      )}
       labels={labels}
       cancel={cancel}
       action={() => deleteChapterAction(chapterId)}

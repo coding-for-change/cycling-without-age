@@ -28,7 +28,8 @@ import { Switch } from "@/components/ui/switch";
 import { addAssistedPassenger } from "@/features/accounts/actions";
 import { assistedPassengerInput } from "@/features/accounts/schemas";
 import { parseIdentity, type CountryCode } from "@/lib/identity";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
 import { notify } from "@/components/action-feedback";
 import { useDrawerParam } from "../../_components/use-drawer-param";
@@ -105,10 +106,12 @@ export function AddPassengerDrawer({
   country,
   labels,
   person,
+  locale,
 }: {
   chapterId: string;
   country: CountryCode;
   labels: AddPassengerLabels;
+  locale: Locale;
   person: {
     firstName: string;
     lastName: string;
@@ -185,9 +188,11 @@ export function AddPassengerDrawer({
           : undefined,
       });
       notify(result, {
-        done: fill(labels.added, {
-          name: `${data.firstName} ${data.lastName}`.trim(),
-        }),
+        done: formatMessage(
+          labels.added,
+          { name: `${data.firstName} ${data.lastName}`.trim() },
+          locale,
+        ),
         errors: labels.errors,
       });
       if (!result.ok) return;
@@ -400,10 +405,14 @@ export function AddPassengerDrawer({
                     role="status"
                     className="rounded-xl bg-mint-tint px-3 py-2 text-sm text-ink sm:col-span-2"
                   >
-                    {fill(labels.helperIsAccountHolder, {
-                      helper: helperName.trim(),
-                      passenger: `${firstName} ${lastName}`.trim(),
-                    })}
+                    {formatMessage(
+                      labels.helperIsAccountHolder,
+                      {
+                        helper: helperName.trim(),
+                        passenger: `${firstName} ${lastName}`.trim(),
+                      },
+                      locale,
+                    )}
                   </p>
                 ) : null}
               </div>

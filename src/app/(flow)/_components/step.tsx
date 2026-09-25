@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { cn, fill } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export type StepProgress = {
@@ -7,6 +8,21 @@ export type StepProgress = {
   total: number;
   label: string;
 };
+
+export function withStepLabel(
+  at: { index: number; total: number },
+  template: string,
+  locale: string,
+): StepProgress {
+  return {
+    ...at,
+    label: formatMessage(
+      template,
+      { current: at.index + 1, total: at.total },
+      locale,
+    ),
+  };
+}
 
 export function Step({
   title,
@@ -85,7 +101,7 @@ export function StepDots({
       aria-valuemin={1}
       aria-valuemax={total}
       aria-valuenow={index + 1}
-      aria-valuetext={fill(label, { current: index + 1, total })}
+      aria-valuetext={label}
       className={cn("flex items-center justify-center gap-2", className)}
     >
       {Array.from({ length: total }, (_, dot) => (

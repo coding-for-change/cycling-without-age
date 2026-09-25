@@ -2,9 +2,10 @@ import { Check } from "lucide-react";
 import { membership } from "@/features/membership";
 import { formatDate, type Locale } from "@/lib/format";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
-import { cn, fill, firstName } from "@/lib/utils";
+import { cn, firstName } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { PersonAvatar } from "@/components/person-avatar";
-import type { Dictionary } from "@/lib/i18n";
+import { getLocale, type Dictionary } from "@/lib/i18n";
 
 type StatusStrings = Dictionary["pilot"]["status"];
 
@@ -21,15 +22,22 @@ export async function PendingChapterCard({
   locale: Locale;
   strings: StatusStrings;
 }) {
-  const reviewers = await membership.listChapterAdmins(chapterId);
+  const [reviewers, language] = await Promise.all([
+    membership.listChapterAdmins(chapterId),
+    getLocale(),
+  ]);
 
   return (
     <article className="rounded-2xl border border-line p-5">
       <h2 className="font-display text-lg font-bold">
-        {fill(strings.pendingTitle, { chapter: chapterName })}
+        {formatMessage(strings.pendingTitle, { chapter: chapterName }, language)}
       </h2>
       <p className="mt-1 text-sm text-ink-soft">
-        {fill(strings.appliedOn, { date: formatDate(appliedAt, locale) })}
+        {formatMessage(
+          strings.appliedOn,
+          { date: formatDate(appliedAt, locale) },
+          language,
+        )}
       </p>
 
       <ApplicationTimeline steps={strings.steps} />
@@ -63,7 +71,12 @@ export async function PendingChapterCard({
 
 const ACTIVE_STEP = 1;
 
-function ApplicationTimeline({ steps }: { steps: StatusStrings["steps"] }) {
+function ApplicationTimeline({
+  steps: labels,
+}: {
+  steps: StatusStrings["steps"];
+}) {
+  const steps = Object.values(labels);
   return (
     <ol className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-3">
       {steps.map((label, index) => {

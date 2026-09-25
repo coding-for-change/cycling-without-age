@@ -1,6 +1,6 @@
-import en from "@/lib/i18n/en";
-import da from "@/lib/i18n/da";
-import de from "@/lib/i18n/de";
+import en from "@/messages/app/en.json";
+import da from "@/messages/app/da.json";
+import de from "@/messages/app/de.json";
 import { StaticText, maskUnlessStatic } from "./replay-mask";
 
 const staticText = new StaticText().add(en).add(da).add(de);
@@ -25,6 +25,20 @@ describe("replay text masking", () => {
     expect(maskFn("Step 2 of 5")).toBe("Step 2 of 5");
     expect(maskFn("1,201–1,250 of 12,480")).toBe("1,201–1,250 of 12,480");
     expect(maskFn("Type DELETE to confirm")).toBe("Type DELETE to confirm");
+  });
+
+  it("shows every branch of a plural message", () => {
+    expect(maskFn("1 seat")).toBe("1 seat");
+    expect(maskFn("12 seats")).toBe("12 seats");
+    expect(maskFn("3 Sitzplätze")).toBe("3 Sitzplätze");
+    expect(maskFn("No trishaws use it")).toBe("No trishaws use it");
+    expect(maskFn("1.250 rickshawer bruger den")).toBe(
+      "1.250 rickshawer bruger den",
+    );
+  });
+
+  it("masks a plural branch whose number is replaced by words", () => {
+    expect(maskFn("many seats")).toBe("**** *****");
   });
 
   it("masks templates whose placeholders carry personal data", () => {
