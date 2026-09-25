@@ -44,7 +44,7 @@
     "@formatjs/intl-localematcher": "^0.8.13",
     "@hookform/resolvers": "^5.9.1",
     "@photostructure/tz-lookup": "^11.6.1",
-    "@prisma/client": "^6.19.2",
+    "@prisma/client": "^7.10.0",
     "@react-email/components": "^1.0.12",
     "@sentry/core": "^10.75.0",
     "@sentry/nextjs": "^10.75.0",
