@@ -9,6 +9,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { ArrowDown, ChevronLeft, Megaphone } from "lucide-react";
+import type { MarkdownToolLabels } from "@/components/markdown-editor";
 import { Marker, MarkerContent, MarkerIcon } from "@/components/ui/marker";
 import {
   MessageScroller,
@@ -75,12 +76,14 @@ export function ConversationThread({
   view,
   home,
   strings,
+  markdown,
   language,
   notation,
 }: {
   view: ConversationView;
   home: string;
   strings: ChatStrings;
+  markdown: MarkdownToolLabels;
   language: string;
   notation: Locale;
 }) {
@@ -398,6 +401,7 @@ export function ConversationThread({
           onCancelReply={() => setReplyTo(null)}
           disabled={frozenAt !== null}
           strings={strings.composer}
+          markdown={markdown}
           errors={strings.errors}
         />
       )}

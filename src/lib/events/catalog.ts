@@ -66,6 +66,34 @@ export const eventSchema = z.discriminatedUnion("type", [
     userId: z.string().min(1),
     actorUserId: z.string().min(1),
   }),
+  z.object({
+    type: z.literal("trishaw.damageReported"),
+    damageId: z.string().min(1),
+    trishawId: z.string().min(1),
+    poolCountryId: z.string().min(1).nullable(),
+    reachingChapterIds: z.array(z.string().min(1)),
+    chapterId: z.string().min(1).nullable(),
+    actorUserId: z.string().min(1),
+    grounding: z.boolean(),
+    affectedRideIds: z.array(z.string().min(1)),
+  }),
+  z.object({
+    type: z.literal("pool.accessRequested"),
+    membershipId: z.string().min(1),
+    poolId: z.string().min(1),
+    countryId: z.string().min(1),
+    chapterId: z.string().min(1),
+    actorUserId: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal("pool.accessDecided"),
+    membershipId: z.string().min(1),
+    poolId: z.string().min(1),
+    chapterId: z.string().min(1),
+    actorUserId: z.string().min(1),
+    approved: z.boolean(),
+    note: z.string().nullable(),
+  }),
 ]);
 
 export type DomainEvent = z.infer<typeof eventSchema>;

@@ -52,6 +52,9 @@ graph TD
     RT2["app/chat/[id] deep-link route"]
     RT3["app/api/calendar/[file] feed route"]
     ACT13[features/calendar-feeds/actions]
+    ACT14[features/fleet/actions]
+    ACT15[app/admin/rides/actions]
+    RT4["app/api/files/[id] route"]
     ACT0[app/actions setLocale]
   end
   subgraph Orchestration
@@ -81,6 +84,11 @@ graph TD
     U28[use-cases/chat-notifications/deliver-chat-push]
     U29[use-cases/chat-notifications/deliver-chat-digest]
     U30[use-cases/calendar-feed]
+    U31[use-cases/schedule-ride]
+    U32[use-cases/report-damage]
+    U33[use-cases/leave-pool]
+    U34[use-cases/trishaw-history]
+    U35[use-cases/finish-ride]
   end
   subgraph Worker
     W1["worker/index (dispatcher, sweeper, prune-devices, prune-chat, email + push workers)"]
@@ -98,6 +106,8 @@ graph TD
     F8[features/chat facade]
     F9[features/rides facade]
     F10[features/calendar-feeds facade]
+    F11[features/fleet facade]
+    CM6[features/fleet/commands]
     CM1[features/chapters/commands]
     CM2[features/membership/commands]
     CM3[features/profile/commands]
@@ -114,6 +124,7 @@ graph TD
     S8[chat/services]
     S9[rides/services]
     S10[calendar-feeds/services]
+    S11[fleet/services]
     DB[(MySQL via lib/prisma)]
   end
   subgraph Infrastructure
@@ -132,6 +143,8 @@ graph TD
     ICS[lib/ics]
     BA[lib/auth BetterAuth admin API]
     COOKIE[(guest chapter + join preset cookies)]
+    STO["lib/storage (S3 presign, sharp)"]
+    NC[lib/native/camera]
   end
 
   A --> G
@@ -354,6 +367,45 @@ graph TD
   F10 --> S10
   F10 --> FSIG
   S10 --> DB
+  CMD --> CM6
+  ADM --> F11
+  MEM --> F11
+  ADM --> ACT14
+  MEM --> ACT14
+  ADM --> ACT15
+  MEM --> NC
+  ACT14 --> G
+  ACT14 --> F11
+  ACT14 --> F1
+  ACT14 --> F9
+  ACT14 --> U32
+  ACT14 --> U33
+  ACT15 --> G
+  ACT15 --> F9
+  ACT15 --> U31
+  RT4 --> G
+  RT4 --> F11
+  RT4 --> STO
+  ADM --> U31
+  ADM --> U34
+  MEM --> U35
+  U13 --> F11
+  U31 --> F11
+  U31 --> F9
+  U32 --> F11
+  U32 --> F9
+  U33 --> F11
+  U33 --> F9
+  U34 --> F11
+  U34 --> F9
+  U35 --> F1
+  U35 --> F9
+  U35 --> F11
+  U19 --> F11
+  F11 --> S11
+  F11 --> EV
+  F11 --> STO
+  S11 --> DB
   F2 --> S2
   F2 --> F5
   F6 --> F5
@@ -398,6 +450,11 @@ graph TD
 | `chat-notifications/notify-chat-message` | `chat`, `profile`, `notifications` (+ `lib/realtime` presence, BullMQ) | The `chat.messageSent` listener. Drops the sender, then per recipient in chunks of 25: mute, `presence.isFocusedOn`, preference, device tokens — a `chat` push job for anyone reachable, a debounced `chat-digest` mail job for anyone not. Writes no `Notification` row: chat never appears in the bell. |
 | `chat-notifications/deliver-chat-push` | `chat`, `profile`, `notifications` (+ `lib/push`) | One banner for one message, re-deciding at wake-up: still unread, still unmuted, still opted in. Titled "Anna Berg" or "Anna Berg · Saturday crew", body stripped of markdown to 140 characters, collapsed per conversation so ten messages are one banner. |
 | `calendar-feed` | `calendar-feeds`, `membership`, `passengers`, `rides` (+ `lib/ics`) | One poll of a subscribed calendar: `calendar-feeds` turns the address into an owner (signature first, then the row, then the ban check), `membership` says where that owner may read rides as a pilot (`/pilot`'s rule: the pilot role somewhere, current membership of the ride's chapter), `passengers` names the riders they manage, and `rides` returns the union with nobody's name in it. The strings come from the owner's stored locale, because a poll carries no session. Called only from the feed route (RT3). |
+| `schedule-ride` | `fleet`, `rides` | Whether a chapter may use a trishaw (its location, a pool it was approved for, the status) is the fleet's rule; the reservation under a row lock is the calendar's. `allocateTrishaws` checks only the trishaws being *added*, so one grounded after allocation stays on the ride with a warning instead of blocking every other edit. `allocationChoices` reads overlapping rides across every chapter that shares a pool, because a pooled bike booked by the neighbour is still booked. |
+| `report-damage` | `fleet`, `rides` | A pilot may report only on a ride they were assigned to and a trishaw that was on it (`rides`); the damage, the grounding and the `trishaw.damageReported` event are `fleet`'s. The upcoming rides a grounding endangers come from `rides` and travel in the event. |
+| `leave-pool` | `fleet`, `rides` | Leaving is blocked while the chapter still has future rides with the pool's trishaws — that count is the calendar's. |
+| `trishaw-history` | `fleet`, `rides` | One timeline from rides (with pilots), damages and the trishaw log. |
+| `finish-ride` | `chapters`, `fleet`, `rides` | The pilot's post-ride page: the chapter's post-ride instructions, and per trishaw its location's return instructions and access code — only for the ride's own pilots. |
 | `chat-notifications/deliver-chat-digest` | `chat`, `profile`, `notifications` (+ `lib/mailer`) | One grouped mail for everything unread in one conversation, for a recipient push cannot reach. Re-checks membership, unread, mute, preference and *still no push* before decrypting a single row. |
 
 The chat use cases exist for the reason the manifesto gives: a facade may not call another
@@ -525,3 +582,26 @@ better-auth. Every other mail in the product is a notification kind, so no use c
 any more. `lib/push` has one, `deliver-push`, and one import site for `firebase-admin`
 (lint-enforced) so service-account credentials cannot reach a browser bundle. Its client
 counterpart `lib/native/push` is the only place `@capacitor-firebase/messaging` is imported.
+
+### Fleet (trishaws, models, locations, pools, damages)
+
+`features/fleet` (F11) owns `TrishawType`, `StorageLocation`, `StorageLocationChapter` (pool
+membership), `Trishaw`, `TrishawDamage`, `TrishawLogEntry` and `StoredFile`. `rides` keeps
+`RideTrishaw` and the reservation lock; it no longer knows who may use a trishaw. Everything
+that needs both goes through U31–U35. `manage-chapter` (U13) now also creates the chapter's
+default location, which is why it coordinates `fleet` as well.
+
+Authority is data: the facade answers `locationAuthority`, `locationTrishawManagers`,
+`trishawReaders`, `damageAuthority`, … as an `AdminAuthority` (chapters + countries), and the
+Action passes it to `requireAdminOf` in `lib/auth-guards`, which evaluates it with
+`allowsAdmin` from `lib/access`. The facade never sees a session.
+
+`RT4` (`/api/files/[id]`) is the only way a stored file is served: `getSession`, then
+`fleet.readableFile` decides per kind, then a 302 to a five-minute signed GET. `lib/storage`
+(STO) is infrastructure like `lib/mailer`: presigned PUTs to the private bucket, then a commit
+step that HEADs the staged object, re-encodes images to WebP with `sharp` (PDFs must start with
+`%PDF-`) and writes the final key. Nothing a browser uploaded is served unprocessed.
+`lib/native/camera` (NC) is the only importer of `@capacitor/camera`.
+
+The notification kinds (U19) now reach `fleet` for trishaw and pool names:
+`trishaw.damageReported`, `pool.accessRequested` and `pool.accessDecided`, category `fleet`.

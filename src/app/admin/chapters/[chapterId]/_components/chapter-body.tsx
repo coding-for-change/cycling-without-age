@@ -3,7 +3,18 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Armchair, Inbox, Users } from "lucide-react";
 import { QrCode } from "@/components/qr-code";
-import { BackLink, DetailSection } from "../../../_components/detail-page";
+import { BackLink } from "../../../_components/detail-page";
+import {
+  PropertyList,
+  PropertyRow,
+  PropertyValue,
+} from "../../../_components/properties";
+import { historyShown } from "../../../_components/history-more";
+import {
+  HistorySection,
+  historyTake,
+} from "../../../_components/history-section";
+import { SidePanel } from "../../../_components/side-panel";
 import { JoinLinkActions } from "../../../_components/join-link-actions";
 import { activity } from "@/lib/activity";
 import { chapters } from "@/features/chapters";
@@ -11,9 +22,7 @@ import { joinUrl } from "@/lib/app-url";
 import { formatDate, resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { supportedTimeZones } from "@/lib/time-zone";
-import { fill } from "@/lib/utils";
 import { readActiveScope } from "../../../active-scope";
-import { ActivityFeed } from "../../../members/[userId]/_components/activity-feed";
 import { ChapterEditor } from "./chapter-editor";
 import { DeleteChapterDialog } from "./delete-chapter-dialog";
 import type { AdminSearchParams } from "../../../active-scope";
@@ -25,15 +34,20 @@ export async function ChapterBody({
   params: Promise<{ chapterId: string }>;
   searchParams: Promise<AdminSearchParams>;
 }) {
-  const [{ session, scopeQuery, chapters: inScope }, { chapterId }] =
-    await Promise.all([readActiveScope(searchParams, "chapters"), params]);
+  const [{ session, scopeQuery, chapters: inScope }, { chapterId }, query] =
+    await Promise.all([
+      readActiveScope(searchParams, "chapters"),
+      params,
+      searchParams,
+    ]);
+  const shown = historyShown(query);
   if (!inScope.some((entry) => entry.id === chapterId)) notFound();
 
   const [chapter, footprint, events, all, dict, language, head] =
     await Promise.all([
       chapters.getChapter(chapterId),
       chapters.getChapterFootprint(chapterId),
-      activity.listForChapter(chapterId),
+      activity.listForChapter(chapterId, historyTake(shown)),
       chapters.listChapters(),
       getDictionary(),
       getLocale(),
@@ -83,19 +97,54 @@ export async function ChapterBody({
     },
   ];
 
-  const compact = "h-9 min-h-9 justify-start text-2sm";
+  const compact = "h-8 min-h-8 justify-start text-2sm";
 
   const properties = (
-    <aside className="grid content-start gap-6 text-2sm lg:col-start-2 lg:row-span-2 lg:row-start-1">
-      <section className="grid gap-3">
-        <h2 className="font-medium">{detail.joinLink}</h2>
+    <>
+      <SidePanel title={detail.properties}>
+        <PropertyList>
+          <PropertyRow label={detail.slug}>
+            <PropertyValue className="font-mono">{chapter.slug}</PropertyValue>
+          </PropertyRow>
+          <PropertyRow label={detail.country}>
+            <PropertyValue>{country?.name ?? "–"}</PropertyValue>
+          </PropertyRow>
+          <PropertyRow label={detail.createdLabel}>
+            <PropertyValue>
+              {formatDate(chapter.createdAt, notation)}
+            </PropertyValue>
+          </PropertyRow>
+        </PropertyList>
+      </SidePanel>
+
+      <SidePanel title={detail.people}>
+        <ul className="grid gap-0.5">
+          {people.map(({ icon: Icon, label, count, href }) => (
+            <li key={label}>
+              <Link
+                href={href}
+                className="-mx-2 flex h-8 items-center gap-2 rounded-md px-2 text-2sm transition-colors hover:bg-canvas-deeper"
+              >
+                <Icon
+                  aria-hidden
+                  className="size-3.5 shrink-0 text-ink-soft"
+                />
+                <span className="min-w-0 flex-1 truncate">{label}</span>
+                <span className="tabular-nums text-ink-soft">{count}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </SidePanel>
+
+      <SidePanel title={detail.joinLink}>
         <div className="w-fit rounded-(--r-card) bg-mint-tint p-3">
           <QrCode
             value={url}
-            className="size-28"
+            className="size-24"
           />
         </div>
-        <p className="font-mono break-all text-ink-soft">{url}</p>
+        <p className="font-mono text-xs break-all text-ink-soft">{url}</p>
         <JoinLinkActions
           url={url}
           slug={chapter.slug}
@@ -103,44 +152,7 @@ export async function ChapterBody({
           className="grid gap-1"
           buttonClassName={compact}
         />
-      </section>
-
-      <section className="grid gap-2">
-        <h2 className="font-medium">{detail.people}</h2>
-        <ul className="grid">
-          {people.map(({ icon: Icon, label, count, href }) => (
-            <li key={label}>
-              <Link
-                href={href}
-                className="-mx-2 flex min-h-9 items-center gap-2 rounded-(--r-card) px-2 transition-colors hover:bg-canvas-deep"
-              >
-                <Icon
-                  aria-hidden
-                  className="size-4 shrink-0 text-ink-soft"
-                />
-                <span className="min-w-0 flex-1 truncate">{label}</span>
-                <span className="tabular-nums">{count}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="grid gap-2">
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="text-ink-soft">{detail.slug}</span>
-          <span className="font-mono break-all">{chapter.slug}</span>
-        </div>
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="text-ink-soft">{detail.country}</span>
-          <span>{country?.name ?? ""}</span>
-        </div>
-        <p className="text-ink-soft">
-          {fill(detail.started, {
-            date: formatDate(chapter.createdAt, notation),
-          })}
-        </p>
-      </section>
+      </SidePanel>
 
       <div className="grid gap-1">
         <DeleteChapterDialog
@@ -152,20 +164,22 @@ export async function ChapterBody({
           cancel={strings.cancel}
         />
       </div>
-    </aside>
+    </>
   );
 
   const history = (
-    <DetailSection title={detail.history}>
-      <ActivityFeed
-        events={events}
-        viewerId={session.user.id}
-        labels={dict.admin.history}
-        empty={detail.historyEmpty}
-        notation={notation}
-        words={language}
-      />
-    </DetailSection>
+    <HistorySection
+      title={detail.history}
+      pathname={`/admin/chapters/${chapterId}`}
+      query={query}
+      shown={shown}
+      events={events}
+      viewerId={session.user.id}
+      labels={dict.admin.history}
+      empty={detail.historyEmpty}
+      notation={notation}
+      words={language}
+    />
   );
 
   return (

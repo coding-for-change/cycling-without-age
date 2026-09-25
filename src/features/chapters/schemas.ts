@@ -95,12 +95,15 @@ export const chapterUpdateInput = chapterInput
 export type ChapterUpdateInput = z.infer<typeof chapterUpdateInput>;
 
 export const CHAPTER_WELCOME_NOTE_MAX = 600;
+export const CHAPTER_POST_RIDE_MAX = 5_000;
 
 export type ChapterSettings = {
   notifyOnMemberJoined: boolean;
   applicationAlertPush: boolean;
   replyToEmail: string | null;
   welcomeNote: string | null;
+  postRideInstructions: string | null;
+  damageAlertPush: boolean;
 };
 
 export const DEFAULT_CHAPTER_SETTINGS: ChapterSettings = {
@@ -108,6 +111,8 @@ export const DEFAULT_CHAPTER_SETTINGS: ChapterSettings = {
   applicationAlertPush: true,
   replyToEmail: null,
   welcomeNote: null,
+  postRideInstructions: null,
+  damageAlertPush: true,
 };
 
 export const chapterSettingsInput = z
@@ -130,6 +135,13 @@ export const chapterSettingsInput = z
       .min(1)
       .max(CHAPTER_WELCOME_NOTE_MAX)
       .nullable(),
+    postRideInstructions: z
+      .string()
+      .trim()
+      .min(1)
+      .max(CHAPTER_POST_RIDE_MAX)
+      .nullable(),
+    damageAlertPush: z.boolean(),
   })
   .partial();
 export type ChapterSettingsInput = z.infer<typeof chapterSettingsInput>;
