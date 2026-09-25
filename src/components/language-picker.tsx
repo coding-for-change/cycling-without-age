@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { Check, ChevronDown, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SettingsRowButton } from "@/components/settings-group";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,10 +24,12 @@ const LANGUAGES = locales.map((locale) => ({
 export function LanguagePicker({
   locale,
   label,
+  variant = "pill",
   className,
 }: {
   locale: Locale;
   label: string;
+  variant?: "pill" | "row";
   className?: string;
 }) {
   const [pending, startTransition] = useTransition();
@@ -35,27 +38,38 @@ export function LanguagePicker({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          aria-label={`${label} — ${active.name}`}
-          disabled={pending}
-          className={cn(
-            "group h-11 gap-2 rounded-full border-line bg-canvas px-4 shadow-none hover:bg-grey-tint",
-            className,
-          )}
-        >
-          <Languages
-            aria-hidden
-            className="size-4"
+        {variant === "row" ? (
+          <SettingsRowButton
+            icon={Languages}
+            label={label}
+            value={active.name}
+            chevron
+            disabled={pending}
+            className={className}
           />
-          <span className="font-display text-sm">
-            {active.locale.toUpperCase()}
-          </span>
-          <ChevronDown
-            aria-hidden
-            className="size-4 transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none"
-          />
-        </Button>
+        ) : (
+          <Button
+            variant="outline"
+            aria-label={`${label} — ${active.name}`}
+            disabled={pending}
+            className={cn(
+              "group h-11 gap-2 rounded-full border-line bg-canvas px-4 shadow-none hover:bg-grey-tint",
+              className,
+            )}
+          >
+            <Languages
+              aria-hidden
+              className="size-4"
+            />
+            <span className="font-display text-sm">
+              {active.locale.toUpperCase()}
+            </span>
+            <ChevronDown
+              aria-hidden
+              className="size-4 transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none"
+            />
+          </Button>
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"

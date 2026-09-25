@@ -1,7 +1,9 @@
 import { Suspense } from "react";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { readNextPath, requireAuth } from "@/lib/auth-guards";
+import { isHandheldRequest } from "@/lib/device";
 import { readJoinPreset } from "@/lib/join-preset";
 import { resolveDestination } from "@/use-cases/onboarding-progress";
 
@@ -26,6 +28,17 @@ function Waiting() {
 
 async function Resolve(): Promise<null> {
   const session = await requireAuth();
-  const [preset, next] = await Promise.all([readJoinPreset(), readNextPath()]);
-  redirect(await resolveDestination(session, preset, next));
+  const [preset, next, requestHeaders] = await Promise.all([
+    readJoinPreset(),
+    readNextPath(),
+    headers(),
+  ]);
+  redirect(
+    await resolveDestination(
+      session,
+      preset,
+      next,
+      isHandheldRequest(requestHeaders),
+    ),
+  );
 }

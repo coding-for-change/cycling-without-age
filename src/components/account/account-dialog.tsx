@@ -103,7 +103,7 @@ export function AccountDialog({
               </SidebarGroup>
             </SidebarContent>
           </Sidebar>
-          <div className="flex h-[520px] flex-1 flex-col overflow-hidden">
+          <div className="flex h-[520px] min-w-0 flex-1 flex-col overflow-hidden bg-canvas-deep">
             <header className="flex h-16 shrink-0 items-center justify-between gap-3 px-4">
               <Breadcrumb>
                 <BreadcrumbList>
@@ -123,7 +123,7 @@ export function AccountDialog({
                 words={data.language}
               />
             </header>
-            <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-4 pt-0">
+            <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-4 pt-0">
               <AccountSectionBody
                 section={section}
                 data={data}

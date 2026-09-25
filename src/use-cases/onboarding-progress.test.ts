@@ -93,6 +93,41 @@ describe("resolveDestination", () => {
   });
 });
 
+describe("where an admin lands", () => {
+  const admin = (roles: string[]) => ({
+    user: { id: "u1" },
+    access: {
+      role: null,
+      countryAdminOf: [],
+      memberships: [{ chapterId: CHAPTER, roles }],
+    } as Access,
+  });
+
+  it("starts a pilot-admin on a phone in the pilot view", async () => {
+    await expect(
+      resolveDestination(admin(["admin", "pilot"]), EMPTY_PRESET, null, true),
+    ).resolves.toBe("/pilot");
+  });
+
+  it("keeps the admin home on a desktop", async () => {
+    await expect(
+      resolveDestination(admin(["admin", "pilot"]), EMPTY_PRESET),
+    ).resolves.toBe("/admin");
+  });
+
+  it("keeps the admin home for an admin who does not ride", async () => {
+    await expect(
+      resolveDestination(admin(["admin"]), EMPTY_PRESET, null, true),
+    ).resolves.toBe("/admin");
+  });
+
+  it("lets a parked destination win over the device", async () => {
+    await expect(
+      resolveDestination(admin(["admin", "pilot"]), EMPTY_PRESET, NEXT, true),
+    ).resolves.toBe(NEXT);
+  });
+});
+
 describe("the passkey re-prompt", () => {
   const promptedAgo = (ms: number) =>
     account({

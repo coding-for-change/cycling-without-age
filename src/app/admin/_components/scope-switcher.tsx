@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Check, ChevronsUpDown } from "lucide-react";
@@ -16,7 +17,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { getInitials } from "@/lib/utils";
 import type { Perspective } from "@/lib/access";
 import type { ScopeArg } from "@/lib/commands";
 import type { PerspectiveChoice } from "@/lib/perspectives";
@@ -57,9 +57,15 @@ export function ScopeSwitcher({
     <>
       <span
         aria-hidden
-        className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-mint text-xs font-semibold text-ink"
+        className="flex aspect-square size-8 shrink-0 items-center justify-center"
       >
-        {getInitials(activeLabel)}
+        <Image
+          src="/cwa-mark.png"
+          alt=""
+          width={32}
+          height={32}
+          className="size-8 object-contain"
+        />
       </span>
       <span className="grid flex-1 text-left leading-tight">
         <span className="truncate font-medium">{activeLabel}</span>

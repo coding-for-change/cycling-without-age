@@ -1,7 +1,7 @@
 import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { profile } from "@/features/profile";
-import { getHighestRole } from "@/lib/access";
+import { availablePerspectives, getHighestRole } from "@/lib/access";
 import type { Access } from "@/lib/access";
 import type { JoinPreset } from "@/lib/join-preset";
 import {
@@ -10,7 +10,7 @@ import {
   STEP_PATH,
 } from "@/lib/onboarding";
 import type { OnboardingProgress, OnboardingRole } from "@/lib/onboarding";
-import { HOME_BY_ROLE } from "@/lib/redirects";
+import { HOME_BY_ROLE, PERSPECTIVE_HOME } from "@/lib/redirects";
 
 export type OnboardingState = {
   progress: OnboardingProgress;
@@ -85,6 +85,7 @@ export async function resolveDestination(
   session: { user: { id: string }; access: Access },
   preset: JoinPreset,
   next: string | null = null,
+  preferMember = false,
 ): Promise<string> {
   const role = getHighestRole(session.access);
   if (
@@ -92,7 +93,12 @@ export async function resolveDestination(
     role === "countryAdmin" ||
     role === "chapterAdmin"
   ) {
-    return next ?? HOME_BY_ROLE[role];
+    return (
+      next ??
+      (preferMember && availablePerspectives(session.access).includes("pilot")
+        ? PERSPECTIVE_HOME.pilot
+        : HOME_BY_ROLE[role])
+    );
   }
 
   const { progress } = await getOnboardingState(session.user.id, preset);

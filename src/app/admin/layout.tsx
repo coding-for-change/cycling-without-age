@@ -34,12 +34,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
 function ChromeFallback() {
   return (
-    <div className="flex h-16 shrink-0 items-center gap-3 px-4 pt-[env(safe-area-inset-top)] lg:px-6">
-      <Skeleton className="size-7 rounded-md" />
-      <Skeleton className="h-4 w-32" />
+    <div className="flex min-h-16 shrink-0 items-center gap-3 px-4 pt-safe lg:px-6">
+      <Skeleton className="-ml-2 size-9 rounded-md md:ml-0 md:size-7" />
+      <Skeleton className="hidden h-4 w-32 md:block" />
       <div className="ml-auto flex items-center gap-2">
         <NotificationBellSkeleton className="size-9" />
-        <Skeleton className="h-9 w-20 rounded-full" />
+        <Skeleton className="hidden h-9 w-20 rounded-full md:block" />
       </div>
     </div>
   );

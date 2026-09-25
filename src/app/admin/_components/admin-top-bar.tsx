@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { Menu } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,7 +11,8 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { LanguagePicker } from "@/components/language-picker";
 import type { Locale } from "@/lib/i18n";
 import type { ScopeArg } from "@/lib/commands";
@@ -25,6 +27,7 @@ export function AdminTopBar({
   defaultScope,
   locale,
   languageLabel,
+  menuLabel,
   bell,
 }: {
   items: ResolvedNavItem[];
@@ -32,10 +35,12 @@ export function AdminTopBar({
   defaultScope: ScopeArg;
   locale: Locale;
   languageLabel: string;
+  menuLabel: string;
   bell: ReactNode;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { toggleSidebar } = useSidebar();
 
   const activeScope = readScopeArg(
     searchParams,
@@ -50,11 +55,20 @@ export function AdminTopBar({
     ) ?? items.find((item) => item.href === "/admin");
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2 px-4 pt-[env(safe-area-inset-top)] lg:px-6">
-      <SidebarTrigger className="-ml-1" />
+    <header className="flex min-h-16 shrink-0 items-center gap-2 px-4 pt-safe lg:px-6">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="-ml-2 size-9 md:hidden"
+        aria-label={menuLabel}
+        onClick={toggleSidebar}
+      >
+        <Menu className="size-5" />
+      </Button>
+      <SidebarTrigger className="-ml-1 hidden md:flex" />
       <Separator
         orientation="vertical"
-        className="mr-2 bg-line data-[orientation=vertical]:h-4"
+        className="mr-2 hidden bg-line data-[orientation=vertical]:h-4 md:block"
       />
       <Breadcrumb>
         <BreadcrumbList>
@@ -66,7 +80,7 @@ export function AdminTopBar({
               <BreadcrumbSeparator className="hidden md:block" />
             </>
           )}
-          <BreadcrumbItem>
+          <BreadcrumbItem className="hidden md:inline-flex">
             <BreadcrumbPage>{section?.label}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
@@ -76,7 +90,7 @@ export function AdminTopBar({
         <LanguagePicker
           locale={locale}
           label={languageLabel}
-          className="h-9 px-3"
+          className="hidden h-9 px-3 md:inline-flex"
         />
       </div>
     </header>
