@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Check, ChevronsUpDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -22,7 +22,8 @@ import type { ScopeArg } from "@/lib/commands";
 import type { PerspectiveChoice } from "@/lib/perspectives";
 import type { ScopeChoice } from "../scopes";
 import { ICONS } from "@/components/icons";
-import { readScopeArg, scopeHref } from "./scope-url";
+import { readScopeArg } from "./scope-url";
+import { useSwitchScope } from "./use-switch-scope";
 
 export function ScopeSwitcher({
   perspectives,
@@ -39,8 +40,8 @@ export function ScopeSwitcher({
   roleLabel: string;
   strings: { switchLabel: string; perspective: string; label: string };
 }) {
-  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { switchScope } = useSwitchScope();
   const activeScope = readScopeArg(
     searchParams,
     scopes.map((s) => s.arg),
@@ -154,25 +155,23 @@ export function ScopeSwitcher({
                   return (
                     <DropdownMenuItem
                       key={option.arg}
-                      asChild
+                      aria-current={current ? "true" : undefined}
+                      onSelect={() => {
+                        if (!current) switchScope(option.arg);
+                      }}
                       className="gap-3 rounded-xl py-2.5"
                     >
-                      <Link
-                        href={scopeHref(pathname, option.arg)}
-                        aria-current={current ? "true" : undefined}
-                      >
-                        <Icon
+                      <Icon
+                        aria-hidden
+                        className="size-4 text-ink-soft"
+                      />
+                      <span className="truncate">{option.label}</span>
+                      {current && (
+                        <Check
                           aria-hidden
-                          className="size-4 text-ink-soft"
+                          className="ml-auto size-4 shrink-0"
                         />
-                        <span className="truncate">{option.label}</span>
-                        {current && (
-                          <Check
-                            aria-hidden
-                            className="ml-auto size-4 shrink-0"
-                          />
-                        )}
-                      </Link>
+                      )}
                     </DropdownMenuItem>
                   );
                 })}

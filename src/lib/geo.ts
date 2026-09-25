@@ -43,3 +43,17 @@ export function circleRing(
   }
   return ring;
 }
+
+export function googleMapsUrl(place: {
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+}): string | null {
+  const query =
+    place.latitude != null && place.longitude != null
+      ? `${place.latitude},${place.longitude}`
+      : place.address?.trim();
+  return query
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+    : null;
+}

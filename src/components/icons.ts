@@ -17,6 +17,7 @@ import {
   Settings,
   ShieldCheck,
   Users,
+  Warehouse,
   type LucideIcon,
 } from "lucide-react";
 import type { IconKey } from "@/lib/commands";
@@ -30,6 +31,7 @@ export const ICONS: Record<IconKey, LucideIcon> = {
   members: Users,
   passengers: Armchair,
   bikes: Bike,
+  locations: Warehouse,
   chat: MessagesSquare,
   reports: ChartNoAxesColumn,
   chapters: MapPinned,

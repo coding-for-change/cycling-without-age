@@ -3,7 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
+import { fleet } from "@/features/fleet";
 import { rides } from "@/features/rides";
+import { scheduleRide } from "@/use-cases/schedule-ride";
+import { defaultLocationFor } from "@/use-cases/manage-chapter";
 import type { ChapterRole } from "@/lib/access";
 
 if (process.env.NODE_ENV === "production") {
@@ -174,6 +177,11 @@ async function seedChapters(countryIds: Map<string, string>) {
       (await chapters.createChapter({ ...chapter, countryId })).id,
     );
   }
+  for (const id of ids.values()) {
+    if (await fleet.getDefaultLocation(id)) continue;
+    const chapter = (await chapters.getChapter(id))!;
+    await fleet.createDefaultLocation(defaultLocationFor(chapter));
+  }
   return ids;
 }
 
@@ -201,7 +209,28 @@ async function seedUser(persona: Persona) {
   return user.id;
 }
 
-const TRISHAWS: Record<string, { name: string; type: string }[]> = {
+const TRISHAW_TYPES = {
+  "Triobike Taxi": {
+    seats: 2,
+    wheelchairAccessible: false,
+    description:
+      "Electric-assist trishaw with a covered bench for **two passengers**.",
+  },
+  VeloPlus: {
+    seats: 1,
+    wheelchairAccessible: true,
+    description:
+      "Front-loading platform that takes a **wheelchair** without a transfer.",
+  },
+} satisfies Record<
+  string,
+  { seats: number; wheelchairAccessible: boolean; description: string }
+>;
+
+const TRISHAWS: Record<
+  string,
+  { name: string; type: keyof typeof TRISHAW_TYPES }[]
+> = {
   muenchen: [
     { name: "Sonnenstrahl", type: "Triobike Taxi" },
     { name: "Isarwind", type: "VeloPlus" },
@@ -238,63 +267,88 @@ async function seedRides(
     where: { chapterId: { in: slugs.map(chapterId) } },
   });
 
-  // The catalogue. `03-roles.md` names these two; the rest arrive as rows once
-  // CWA tells us, which is the whole reason this is a table and not an enum.
   const typeIds = new Map<string, string>();
-  for (const name of new Set(
-    Object.values(TRISHAWS).flatMap((list) => list.map((t) => t.type)),
-  )) {
+  for (const [name, spec] of Object.entries(TRISHAW_TYPES)) {
     const row = await prisma.trishawType.upsert({
-      where: { name },
-      update: {},
-      create: { name },
+      where: { scopeKey_name: { scopeKey: "global", name } },
+      update: spec,
+      create: { name, ...spec },
     });
     typeIds.set(name, row.id);
   }
 
+  const muenchen = chapterId("muenchen");
+  const muenchenChapter = await chapters.getChapter(muenchen);
+  const pool =
+    (await prisma.storageLocation.findFirst({
+      where: { kind: "pool", name: "Depot Sonnenhof" },
+      select: { id: true },
+    })) ??
+    (await fleet.createPool(
+      {
+        countryId: muenchenChapter!.countryId,
+        name: "Depot Sonnenhof",
+        address: "Sonnenstraße 12, 80331 München",
+        latitude: 48.1371,
+        longitude: 11.5654,
+        entrance: "Gate B on the courtyard side, next to the bike racks.",
+        accessCode: "4711",
+        returnInstructions:
+          "Plug the battery into the charger by the door and lock the gate.",
+      },
+      "seed",
+    ));
+  await prisma.storageLocationChapter.upsert({
+    where: {
+      storageLocationId_chapterId: {
+        storageLocationId: pool.id,
+        chapterId: muenchen,
+      },
+    },
+    update: {},
+    create: {
+      storageLocationId: pool.id,
+      chapterId: muenchen,
+      status: "approved",
+    },
+  });
+
   const trishawIds = new Map<string, string>();
   for (const [slug, list] of Object.entries(TRISHAWS)) {
+    const home =
+      slug === "muenchen"
+        ? pool.id
+        : (await fleet.getDefaultLocation(chapterId(slug)))!.id;
     for (const trishaw of list) {
       const existing = await prisma.trishaw.findFirst({
-        where: { chapterId: chapterId(slug), name: trishaw.name },
+        where: {
+          name: trishaw.name,
+          storageLocation: {
+            OR: [{ id: home }, { ownerChapterId: chapterId(slug) }],
+          },
+        },
       });
+      if (existing && existing.storageLocationId !== home)
+        await prisma.trishaw.update({
+          where: { id: existing.id },
+          data: { storageLocationId: home },
+        });
       trishawIds.set(
         `${slug}/${trishaw.name}`,
         existing?.id ??
           (
-            await rides.addTrishaw({
-              name: trishaw.name,
-              chapterId: chapterId(slug),
-              typeId: typeIds.get(trishaw.type)!,
-            })
+            await fleet.addTrishaw(
+              {
+                name: trishaw.name,
+                storageLocationId: home,
+                typeId: typeIds.get(trishaw.type)!,
+              },
+              null,
+            )
           ).id,
       );
     }
   }
-
-  // Where München keeps its bikes. The case the model exists for is one site
-  // shared by several chapters, but no two seeded chapters are in the same
-  // city, so that path is covered in `features/rides/facade.test.ts` instead.
-  const site = await prisma.storageLocation.upsert({
-    where: { id: "seed-site-sonnenhof" },
-    update: {},
-    create: {
-      id: "seed-site-sonnenhof",
-      name: "Seniorenheim Sonnenhof",
-      address: "Sonnenstraße 12, 80331 München",
-      latitude: 48.1371,
-      longitude: 11.5654,
-      chapters: { create: [{ chapterId: chapterId("muenchen") }] },
-    },
-  });
-  await prisma.trishaw.updateMany({
-    where: {
-      id: {
-        in: TRISHAWS.muenchen.map((t) => trishawIds.get(`muenchen/${t.name}`)!),
-      },
-    },
-    data: { storageLocationId: site.id },
-  });
 
   const today = startOfToday();
   const pilot = userIds.get("pilot@cwa.local")!;
@@ -380,7 +434,7 @@ async function seedRides(
   ];
 
   for (const item of plan) {
-    const ride = await rides.scheduleRide({
+    const ride = await scheduleRide({
       chapterId: chapterId(item.chapter),
       trishawIds: item.trishaws.map((key) => trishawIds.get(key)!),
       model: item.model,

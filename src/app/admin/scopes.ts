@@ -1,4 +1,3 @@
-import { defaultActiveScope } from "@/lib/access";
 import type { AdminScope } from "@/lib/access";
 import type { IconKey, ScopeArg } from "@/lib/commands";
 import type { Dictionary } from "@/lib/i18n";
@@ -34,12 +33,4 @@ export function scopeChoices(
       icon: "chapters" as IconKey,
     })),
   ];
-}
-
-export function defaultScopeArg(scope: AdminScope): ScopeArg {
-  const active = defaultActiveScope(scope);
-
-  if (active.kind === "country") return `country:${active.country.code}`;
-  if (active.kind === "chapter") return `chapter:${active.chapter.slug}`;
-  return "all";
 }

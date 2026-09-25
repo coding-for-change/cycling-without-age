@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { chapters } from "@/features/chapters";
 import { profile } from "@/features/profile";
 import {
+  allowsAdmin,
   availablePerspectives,
   getHighestRole as highestRole,
   hasAnyAdminScope,
@@ -19,6 +20,7 @@ import { HOME_BY_ROLE, NEXT_COOKIE, safeNextPath } from "@/lib/redirects";
 import type { MemberPerspective } from "@/lib/redirects";
 import type {
   Access,
+  AdminAuthority,
   AdminScope,
   ChapterRole,
   HighestRole,
@@ -94,6 +96,13 @@ export async function requireCountryAdminOfChapter(chapterId: string) {
   const session = await requireAuth();
   const countryId = await chapters.getChapterCountryId(chapterId);
   if (!countryId || !isCountryAdmin(session.access, countryId)) deny();
+  await ensureAdminPasskey(session.user.id);
+  return session;
+}
+
+export async function requireAdminOf(authority: AdminAuthority) {
+  const session = await requireAuth();
+  if (!allowsAdmin(session.access, authority)) deny();
   await ensureAdminPasskey(session.user.id);
   return session;
 }

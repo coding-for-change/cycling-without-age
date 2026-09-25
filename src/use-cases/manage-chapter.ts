@@ -1,7 +1,20 @@
 import { activity } from "@/lib/activity";
 import { DomainError } from "@/lib/domain-error";
 import { chapters } from "@/features/chapters";
+import { fleet } from "@/features/fleet";
 import type { ChapterInput, ChapterUpdateInput } from "@/features/chapters";
+
+export const defaultLocationFor = (
+  chapter: Parameters<typeof fleet.createDefaultLocation>[0] & {
+    careHomeName: string | null;
+  },
+) => ({
+  id: chapter.id,
+  name: chapter.careHomeName ?? chapter.name,
+  address: chapter.address,
+  latitude: chapter.latitude,
+  longitude: chapter.longitude,
+});
 
 export async function createChapter({
   input,
@@ -11,6 +24,7 @@ export async function createChapter({
   actorUserId: string;
 }) {
   const chapter = await chapters.createChapter(input);
+  await fleet.createDefaultLocation(defaultLocationFor(chapter));
   await activity.record({
     userId: actorUserId,
     actorUserId,

@@ -67,6 +67,10 @@ model User {
   chatReactions        ChatReaction[]
   rideAssignments      RideAssignment[]
   calendarFeed         CalendarFeed?
+  uploadedFiles        StoredFile[]         @relation("fileUploader")
+  reportedDamages      TrishawDamage[]      @relation("damageReporter")
+  clearedDamages       TrishawDamage[]      @relation("damageClearer")
+  trishawLogEntries    TrishawLogEntry[]    @relation("trishawLogActor")
 
   @@unique([email])
   @@unique([phoneNumber])
@@ -169,9 +173,10 @@ model Organization {
   timeZone        String                   @db.VarChar(64)
   settings        ChapterSettings?
   conversations   Conversation[]
-  trishaws        Trishaw[]
+  trishawTypes    TrishawType[]
   rides           Ride[]
   storageSites    StorageLocationChapter[]
+  ownedLocations  StorageLocation[]        @relation("ownedLocations")
 
   @@unique([slug])
   @@index([countryId])
@@ -230,8 +235,10 @@ model Country {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  chapters Organization[]
-  admins   CountryAdmin[]
+  chapters     Organization[]
+  admins       CountryAdmin[]
+  trishawTypes TrishawType[]
+  pools        StorageLocation[]
 
   @@unique([code])
   @@map("country")
@@ -257,6 +264,8 @@ model ChapterSettings {
   applicationAlertPush Boolean      @default(true)
   replyToEmail         String?      @db.VarChar(254)
   welcomeNote          String?      @db.Text
+  postRideInstructions String?      @db.Text
+  damageAlertPush      Boolean      @default(true)
   updatedAt            DateTime     @updatedAt
 
   @@map("chapter_settings")
@@ -575,88 +584,246 @@ enum TrishawStatus {
   retired
 }
 
+enum StoredFileKind {
+  typePhoto
+  typeManual
+  trishawPhoto
+  entrancePhoto
+  damagePhoto
+}
+
+/// An object in the private bucket. Served only through `/api/files/[id]`,
+/// which decides per kind who may read it.
+model StoredFile {
+  id               String         @id @default(cuid())
+  key              String         @unique @db.VarChar(255)
+  kind             StoredFileKind
+  mime             String         @db.VarChar(100)
+  size             Int
+  uploadedByUserId String?
+  uploadedBy       User?          @relation("fileUploader", fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+  createdAt        DateTime       @default(now())
+
+  typePhotos     TrishawType[]      @relation("typePhoto")
+  typeManuals    TrishawType[]      @relation("typeManual")
+  trishawPhotos  Trishaw[]          @relation("trishawPhoto")
+  entrancePhotos StorageLocation[]  @relation("entrancePhoto")
+  damagePhotos   TrishawDamage[]    @relation("damagePhoto")
+  typeGallery    TrishawTypePhoto[]
+  trishawGallery TrishawPhoto[]
+
+  @@map("stored_file")
+}
+
+enum CatalogueScope {
+  global
+  country
+  chapter
+}
+
 /**
- * Where trishaws are kept. A care home or depot can serve more than one chapter
- * — the equipment lives at the place, not at the chapter — so the link to
- * chapters is a join table rather than a column. This is separate from a
- * trishaw's owning chapter: who bought it and who reports on it does not change
- * because it is parked somewhere shared.
+ * A trishaw model — "Triobike Taxi", "VeloPlus". Super admins keep the global
+ * catalogue, a country admin adds what only their country rides, and a chapter
+ * can always add the one model nobody listed. A chapter sees global ∪ its
+ * country ∪ its own. `scopeKey` folds scope and owner into one column so a name
+ * is unique within its catalogue, which MySQL cannot express over nullable
+ * owner columns.
+ */
+model TrishawType {
+  id                   String             @id @default(cuid())
+  name                 String             @db.VarChar(80)
+  scope                CatalogueScope     @default(global)
+  scopeKey             String             @default("global") @db.VarChar(200)
+  countryId            String?
+  country              Country?           @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  chapterId            String?
+  chapter              Organization?      @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  description          String?            @db.Text
+  seats                Int                @default(2)
+  wheelchairAccessible Boolean            @default(false)
+  photoFileId          String?
+  photo                StoredFile?        @relation("typePhoto", fields: [photoFileId], references: [id], onDelete: SetNull)
+  manualFileId         String?
+  manual               StoredFile?        @relation("typeManual", fields: [manualFileId], references: [id], onDelete: SetNull)
+  archivedAt           DateTime?
+  createdByUserId      String?
+  trishaws             Trishaw[]
+  photos               TrishawTypePhoto[]
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@unique([scopeKey, name])
+  @@index([countryId])
+  @@index([chapterId])
+  @@map("trishaw_type")
+}
+
+enum StorageLocationKind {
+  chapter
+  pool
+}
+
+/**
+ * Where trishaws are kept. A `chapter` location belongs to one chapter, which
+ * gets a default one on creation. A `pool` belongs to a country: chapters of
+ * that country ask to join with its code, a country admin decides, and every
+ * approved chapter may schedule the trishaws parked there.
  */
 model StorageLocation {
-  id        String  @id @default(cuid())
-  name      String  @db.Text
-  address   String? @db.Text
-  latitude  Float?
-  longitude Float?
+  id                  String              @id @default(cuid())
+  kind                StorageLocationKind @default(chapter)
+  name                String              @db.Text
+  ownerChapterId      String?
+  ownerChapter        Organization?       @relation("ownedLocations", fields: [ownerChapterId], references: [id], onDelete: Cascade)
+  countryId           String?
+  country             Country?            @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  isDefault           Boolean             @default(false)
+  poolCode            String?             @unique @db.VarChar(16)
+  membersMayManage    Boolean             @default(false)
+  address             String?             @db.Text
+  latitude            Float?
+  longitude           Float?
+  entrance            String?             @db.Text
+  entrancePhotoFileId String?
+  entrancePhoto       StoredFile?         @relation("entrancePhoto", fields: [entrancePhotoFileId], references: [id], onDelete: SetNull)
+  accessCode          String?             @db.VarChar(64)
+  accessNotes         String?             @db.Text
+  returnInstructions  String?             @db.Text
+  archivedAt          DateTime?
 
   chapters  StorageLocationChapter[]
   trishaws  Trishaw[]
   createdAt DateTime                 @default(now())
   updatedAt DateTime                 @updatedAt
 
+  @@index([ownerChapterId])
+  @@index([countryId, kind])
   @@map("storage_location")
 }
 
 model StorageLocationChapter {
-  id                String          @id @default(cuid())
+  id                String            @id @default(cuid())
   storageLocationId String
-  storageLocation   StorageLocation @relation(fields: [storageLocationId], references: [id], onDelete: Cascade)
+  storageLocation   StorageLocation   @relation(fields: [storageLocationId], references: [id], onDelete: Cascade)
   chapterId         String
-  chapter           Organization    @relation(fields: [chapterId], references: [id], onDelete: Cascade)
-  createdAt         DateTime        @default(now())
+  chapter           Organization      @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  status            ApplicationStatus @default(pending)
+  requestedByUserId String?
+  decidedByUserId   String?
+  decidedAt         DateTime?
+  decisionNote      String?           @db.Text
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   @@unique([storageLocationId, chapterId])
-  @@index([chapterId])
+  @@index([chapterId, status])
   @@map("storage_location_chapter")
 }
 
-/**
- * A trishaw model — "Triobike Taxi", "VeloPlus". A table rather than an enum
- * because it is a manufacturer's catalogue that grows: CWA's own roles
- * reference writes the set open-endedly, "(Triobike Taxi, VeloPlus, …)". A
- * table rather than free text because three requirements *compare* types —
- * pilot qualification is per trishaw type (`03-roles.md`), a client chooses a
- * bike type when booking, and the negotiation loop offers another type when one
- * is unavailable (`07-functional-ride-user-stories.md`). None of those survive
- * an unconstrained string.
- * Whether a type also fixes the seat count and wheelchair access is still open
- * with CWA; both become columns here when answered, which is the point of a
- * table.
- */
-model TrishawType {
-  id        String    @id @default(cuid())
-  name      String    @db.VarChar(80)
-  trishaws  Trishaw[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  @@unique([name])
-  @@map("trishaw_type")
-}
-
 model Trishaw {
-  id        String        @id @default(cuid())
-  chapterId String
-  chapter   Organization  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
-  name      String        @db.Text
-  typeId    String?
-  type      TrishawType?  @relation(fields: [typeId], references: [id], onDelete: SetNull)
-  seats     Int           @default(2)
-  status    TrishawStatus @default(active)
+  id                String          @id @default(cuid())
+  name              String          @db.Text
+  /// Stamped on the frame by the manufacturer. Set once, when the trishaw is added.
+  frameNumber       String?         @unique @db.VarChar(64)
+  typeId            String?
+  type              TrishawType?    @relation(fields: [typeId], references: [id], onDelete: SetNull)
+  status            TrishawStatus   @default(active)
+  storageLocationId String
+  storageLocation   StorageLocation @relation(fields: [storageLocationId], references: [id], onDelete: Restrict)
+  photoFileId       String?
+  photo             StoredFile?     @relation("trishawPhoto", fields: [photoFileId], references: [id], onDelete: SetNull)
+  note              String?         @db.Text
 
-  /// Null means the bike sits at its owning chapter's own address; a row here
-  /// is a shared site, and every chapter linked to it may schedule the bike.
-  storageLocationId String?
-  storageLocation   StorageLocation? @relation(fields: [storageLocationId], references: [id], onDelete: SetNull)
-
+  photos    TrishawPhoto[]
   rides     RideTrishaw[]
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  damages   TrishawDamage[]
+  log       TrishawLogEntry[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
 
-  @@index([chapterId, status])
-  @@index([storageLocationId])
+  @@index([storageLocationId, status])
   @@index([typeId])
   @@map("trishaw")
+}
+
+/// The model's gallery, in display order. `TrishawType.photoFileId` mirrors
+/// position 0 so list views can show a cover without joining.
+model TrishawTypePhoto {
+  id        String      @id @default(cuid())
+  typeId    String
+  type      TrishawType @relation(fields: [typeId], references: [id], onDelete: Cascade)
+  fileId    String      @unique
+  file      StoredFile  @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  position  Int
+  createdAt DateTime    @default(now())
+
+  @@index([typeId, position])
+  @@map("trishaw_type_photo")
+}
+
+/// Same as `TrishawTypePhoto`, for one trishaw; `Trishaw.photoFileId` is the cover.
+model TrishawPhoto {
+  id        String     @id @default(cuid())
+  trishawId String
+  trishaw   Trishaw    @relation(fields: [trishawId], references: [id], onDelete: Cascade)
+  fileId    String     @unique
+  file      StoredFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  position  Int
+  createdAt DateTime   @default(now())
+
+  @@index([trishawId, position])
+  @@map("trishaw_photo")
+}
+
+/**
+ * A damage or flaw on one trishaw. A grounding damage takes the trishaw out of
+ * scheduling until an admin clears it; clearing always carries a sentence,
+ * because "fixed" and "unjustified" are different stories in the history.
+ */
+model TrishawDamage {
+  id               String      @id @default(cuid())
+  trishawId        String
+  trishaw          Trishaw     @relation(fields: [trishawId], references: [id], onDelete: Cascade)
+  rideId           String?
+  ride             Ride?       @relation(fields: [rideId], references: [id], onDelete: SetNull)
+  reportedByUserId String?
+  reportedBy       User?       @relation("damageReporter", fields: [reportedByUserId], references: [id], onDelete: SetNull)
+  description      String      @db.Text
+  photoFileId      String?
+  photo            StoredFile? @relation("damagePhoto", fields: [photoFileId], references: [id], onDelete: SetNull)
+  grounding        Boolean     @default(false)
+  reportedAt       DateTime    @default(now())
+  clearedAt        DateTime?
+  clearedByUserId  String?
+  clearedBy        User?       @relation("damageClearer", fields: [clearedByUserId], references: [id], onDelete: SetNull)
+  clearNote        String?     @db.Text
+
+  @@index([trishawId, clearedAt])
+  @@index([rideId])
+  @@map("trishaw_damage")
+}
+
+enum TrishawLogType {
+  created
+  statusChanged
+  moved
+  note
+  damageReported
+  damageCleared
+}
+
+model TrishawLogEntry {
+  id          String         @id @default(cuid())
+  trishawId   String
+  trishaw     Trishaw        @relation(fields: [trishawId], references: [id], onDelete: Cascade)
+  actorUserId String?
+  actor       User?          @relation("trishawLogActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  type        TrishawLogType
+  payload     Json?
+  createdAt   DateTime       @default(now())
+
+  @@index([trishawId, createdAt])
+  @@map("trishaw_log_entry")
 }
 
 model Ride {
@@ -689,6 +856,7 @@ model Ride {
   trishaws    RideTrishaw[]
   assignments RideAssignment[]
   roster      RideRosterEntry[]
+  damages     TrishawDamage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

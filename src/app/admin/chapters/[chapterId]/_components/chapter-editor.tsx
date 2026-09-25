@@ -4,7 +4,12 @@ import type { ReactNode } from "react";
 import type { AddressSearchStrings } from "@/components/address-search";
 import type { Locale } from "@/lib/format";
 import type { Coords } from "@/lib/geo";
-import { DetailSection } from "../../../_components/detail-page";
+import { DetailTitle } from "../../../_components/detail-title";
+import {
+  DetailHeader,
+  DetailLayout,
+  DetailSection,
+} from "../../../_components/detail-page";
 import {
   CHAPTER_DESCRIPTION_MAX,
   isHttpUrl,
@@ -88,117 +93,117 @@ export function ChapterEditor({
 
   return (
     <SaveStatusProvider>
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-x-12">
-        <header className="flex flex-wrap items-start gap-4">
-          <ChapterLogo
-            logo={logo}
-            name={name}
-            className="size-14 text-lg"
-          />
-          <div className="grid min-w-0 flex-1 gap-1">
-            <h1 className="leading-none">
-              <InlineField
-                required
+      <DetailLayout
+        header={
+          <DetailHeader
+            media={
+              <ChapterLogo
+                logo={logo}
+                name={name}
+                className="size-14 text-lg"
+              />
+            }
+            title={
+              <DetailTitle
                 value={name}
                 label={labels.fields.name}
-                placeholder={labels.fields.name}
+                onSave={(next) => updateChapterAction(id, { name: next })}
+                labels={labels.field}
+              />
+            }
+            aside={
+              <SaveStatus
+                labels={labels.status}
+                words={language}
+              />
+            }
+          >
+            <p className="text-2sm text-ink-soft">{subline}</p>
+          </DetailHeader>
+        }
+        sidebar={properties}
+      >
+        <ChapterLocation
+          id={id}
+          server={{ coords, address, city, radiusKm }}
+          timeZone={timeZone}
+          zones={zones}
+          others={others}
+          mapEnabled={mapEnabled}
+          language={language}
+          notation={notation}
+          labels={labels}
+        />
+
+        <DetailSection title={labels.about}>
+          <dl className="grid gap-4">
+            <AboutRow label={labels.fields.careHomeName}>
+              <InlineField
+                value={careHomeName}
+                label={labels.fields.careHomeName}
+                placeholder={labels.placeholders.careHome}
                 onSave={(next) =>
-                  updateChapterAction(id, { name: next ?? undefined })
+                  updateChapterAction(id, { careHomeName: next })
                 }
                 labels={labels.field}
-                className="-my-1 min-h-0 py-1 font-display text-xl leading-tight font-bold tracking-tight md:text-2xl"
-                inputClassName="h-12 font-display text-xl font-bold tracking-tight md:text-2xl"
               />
-            </h1>
-            <p className="text-2sm text-ink-soft">{subline}</p>
-          </div>
-          <SaveStatus
-            labels={labels.status}
-            words={language}
-            className="ml-auto"
-          />
-        </header>
+            </AboutRow>
+            <AboutRow label={labels.fields.description}>
+              <InlineField
+                multiline
+                maxLength={CHAPTER_DESCRIPTION_MAX}
+                value={description}
+                label={labels.fields.description}
+                placeholder={labels.placeholders.description}
+                onSave={(next) =>
+                  updateChapterAction(id, { description: next })
+                }
+                labels={labels.field}
+              />
+            </AboutRow>
+            <AboutRow
+              label={labels.fields.logo}
+              className="flex items-start gap-4"
+            >
+              <ChapterLogo
+                logo={logo}
+                name={name}
+                className="mt-1 size-11"
+              />
+              <InlineField
+                type="url"
+                inputMode="url"
+                value={logo}
+                label={labels.fields.logo}
+                placeholder={labels.placeholders.logo}
+                validate={isHttpUrl}
+                onSave={(next) => updateChapterAction(id, { logo: next })}
+                labels={labels.field}
+                className="min-w-0 flex-1 font-mono text-2sm break-all"
+              />
+            </AboutRow>
+          </dl>
+        </DetailSection>
 
-        {properties}
-
-        <div className="grid gap-6 lg:col-start-1">
-          <ChapterLocation
-            id={id}
-            server={{ coords, address, city, radiusKm }}
-            timeZone={timeZone}
-            zones={zones}
-            others={others}
-            mapEnabled={mapEnabled}
-            language={language}
-            notation={notation}
-            labels={labels}
-          />
-
-          <DetailSection title={labels.about}>
-            <dl className="grid gap-4">
-              <div className="grid gap-1 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-4">
-                <dt className="pt-2 text-2sm text-ink-soft">
-                  {labels.fields.careHomeName}
-                </dt>
-                <dd>
-                  <InlineField
-                    value={careHomeName}
-                    label={labels.fields.careHomeName}
-                    placeholder={labels.placeholders.careHome}
-                    onSave={(next) =>
-                      updateChapterAction(id, { careHomeName: next })
-                    }
-                    labels={labels.field}
-                  />
-                </dd>
-              </div>
-              <div className="grid gap-1 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-4">
-                <dt className="pt-2 text-2sm text-ink-soft">
-                  {labels.fields.description}
-                </dt>
-                <dd>
-                  <InlineField
-                    multiline
-                    maxLength={CHAPTER_DESCRIPTION_MAX}
-                    value={description}
-                    label={labels.fields.description}
-                    placeholder={labels.placeholders.description}
-                    onSave={(next) =>
-                      updateChapterAction(id, { description: next })
-                    }
-                    labels={labels.field}
-                  />
-                </dd>
-              </div>
-              <div className="grid gap-1 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-4">
-                <dt className="pt-2 text-2sm text-ink-soft">
-                  {labels.fields.logo}
-                </dt>
-                <dd className="flex items-start gap-4">
-                  <ChapterLogo
-                    logo={logo}
-                    name={name}
-                    className="mt-1 size-11"
-                  />
-                  <InlineField
-                    type="url"
-                    inputMode="url"
-                    value={logo}
-                    label={labels.fields.logo}
-                    placeholder={labels.placeholders.logo}
-                    validate={isHttpUrl}
-                    onSave={(next) => updateChapterAction(id, { logo: next })}
-                    labels={labels.field}
-                    className="min-w-0 flex-1 font-mono text-2sm break-all"
-                  />
-                </dd>
-              </div>
-            </dl>
-          </DetailSection>
-
-          {history}
-        </div>
-      </div>
+        {history}
+      </DetailLayout>
     </SaveStatusProvider>
+  );
+}
+
+function AboutRow({
+  label,
+  className,
+  children,
+}: {
+  label: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="grid gap-1 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-4">
+      <dt className="pt-2 text-2sm text-ink-soft">{label}</dt>
+      <dd className={className}>{children}</dd>
+    </div>
   );
 }

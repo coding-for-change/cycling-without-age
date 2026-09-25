@@ -1,8 +1,12 @@
 import { z } from "zod";
 import { chapters } from "@/features/chapters";
-import { membership } from "@/features/membership";
 import { fill } from "@/lib/utils";
-import { nameOfChapter, nameOfPerson } from "./lookups";
+import {
+  chapterAdminIds,
+  excluding,
+  nameOfChapter,
+  nameOfPerson,
+} from "./lookups";
 import { defineKind } from "./types";
 import { ORG_NAME } from "@/lib/brand";
 
@@ -17,11 +21,11 @@ export const chapterMemberJoined = defineKind({
   recipients: async (event) => {
     const settings = await chapters.getSettings(event.chapterId);
     if (!settings.notifyOnMemberJoined) return [];
-    return (await membership.listChapterAdmins(event.chapterId))
-      .map((m) => m.userId)
-      .filter(
-        (userId) => userId !== event.actorUserId && userId !== event.userId,
-      );
+    return excluding(
+      await chapterAdminIds(event.chapterId),
+      event.actorUserId,
+      event.userId,
+    );
   },
   params: async (event) => {
     const [memberName, chapterName] = await Promise.all([

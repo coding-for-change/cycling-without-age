@@ -18,13 +18,13 @@ import {
 import { PersonAvatar } from "@/components/person-avatar";
 import type { ActivityType } from "@/lib/activity";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
-import {
-  formatDate,
-  formatRelativeTime,
-  wordsLocale,
-  type Locale,
-} from "@/lib/format";
+import type { Locale } from "@/lib/format";
 import { fill } from "@/lib/utils";
+import {
+  payloadStrings,
+  RelativeTime,
+  TimelineEntry,
+} from "../../../_components/timeline";
 
 export type FeedEvent = {
   id: string;
@@ -63,15 +63,6 @@ const ICON: Record<ActivityType, LucideIcon> = {
   countryDeleted: Trash2,
 };
 
-const strings = (payload: unknown): Record<string, string> =>
-  payload && typeof payload === "object" && !Array.isArray(payload)
-    ? Object.fromEntries(
-        Object.entries(payload).filter(
-          ([, value]) => typeof value === "string",
-        ),
-      )
-    : {};
-
 export function ActivityFeed({
   events,
   viewerId,
@@ -95,7 +86,7 @@ export function ActivityFeed({
   return (
     <ol>
       {events.map((event) => {
-        const payload = strings(event.payload);
+        const payload = payloadStrings(event.payload);
         const actor =
           event.actorUserId && event.actorUserId === viewerId
             ? labels.you
@@ -104,69 +95,55 @@ export function ActivityFeed({
           labels.templates[payload.template] ?? labels.templates.approval;
         const field = labels.fields[payload.field] ?? payload.field ?? "";
         const changed = "from" in payload || "to" in payload;
-        const Icon = ICON[event.type];
 
         return (
-          <li
+          <TimelineEntry
             key={event.id}
-            className="group flex gap-2"
+            icon={ICON[event.type]}
+            marker={
+              event.actorUserId ? (
+                <PersonAvatar
+                  svg={avatarSvg(
+                    event.actor
+                      ? avatarSeed(event.actor.email)
+                      : event.actorUserId,
+                  )}
+                  className="size-4"
+                />
+              ) : undefined
+            }
           >
-            <div className="flex w-4 shrink-0 flex-col items-center">
-              <span className="flex h-5 items-center">
-                {event.actorUserId ? (
-                  <PersonAvatar
-                    svg={avatarSvg(
-                      event.actor
-                        ? avatarSeed(event.actor.email)
-                        : event.actorUserId,
-                    )}
-                    className="size-4"
-                  />
-                ) : (
-                  <Icon
-                    aria-hidden
-                    className="size-3.5 text-ink-soft"
-                  />
-                )}
+            <p className="text-2sm text-ink-soft">
+              <span className="text-ink">
+                {fill(labels[event.type], {
+                  ...payload,
+                  actor,
+                  template,
+                  field,
+                })}
               </span>
-              <span
-                aria-hidden
-                className="w-px flex-1 bg-line group-last:hidden"
+              {" · "}
+              <RelativeTime
+                at={event.createdAt}
+                notation={notation}
+                words={words}
+                now={now}
               />
-            </div>
-            <div className="grid min-w-0 flex-1 gap-2 pb-3 group-last:pb-0">
-              <p className="text-2sm text-ink-soft">
-                <span className="text-ink">
-                  {fill(labels[event.type], {
-                    ...payload,
-                    actor,
-                    template,
-                    field,
-                  })}
-                </span>
-                {" · "}
-                <time
-                  dateTime={event.createdAt.toISOString()}
-                  title={formatDate(event.createdAt, notation)}
-                >
-                  {formatRelativeTime(event.createdAt, wordsLocale(words), now)}
-                </time>
+            </p>
+            {payload.note ? (
+              <p className="rounded-xl bg-mint-tint px-3 py-2 text-2sm whitespace-pre-wrap text-ink">
+                {payload.note}
               </p>
-              {payload.note ? (
-                <p className="rounded-xl bg-mint-tint px-3 py-2 text-2sm whitespace-pre-wrap text-ink">
-                  {payload.note}
-                </p>
-              ) : null}
-              {changed ? (
-                <p className="rounded-xl bg-canvas-deep px-3 py-2 text-2sm break-words text-ink-soft">
-                  {fill(labels.change, {
-                    from: payload.from || labels.nothing,
-                    to: payload.to || labels.nothing,
-                  })}
-                </p>
-              ) : null}
-            </div>
-          </li>
+            ) : null}
+            {changed ? (
+              <p className="rounded-xl bg-canvas-deep px-3 py-2 text-2sm break-words text-ink-soft">
+                {fill(labels.change, {
+                  from: payload.from || labels.nothing,
+                  to: payload.to || labels.nothing,
+                })}
+              </p>
+            ) : null}
+          </TimelineEntry>
         );
       })}
     </ol>

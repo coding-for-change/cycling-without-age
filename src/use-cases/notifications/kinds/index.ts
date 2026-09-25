@@ -7,6 +7,8 @@ import { memberInvited } from "./member-invited";
 import { memberRoleChanged } from "./member-role-changed";
 import { pilotApplicationDecided } from "./pilot-application-decided";
 import { pilotApplicationSubmitted } from "./pilot-application-submitted";
+import { poolAccessDecided, poolAccessRequested } from "./pool-access";
+import { trishawDamageReported } from "./trishaw-damage-reported";
 import { userOnboarded } from "./user-onboarded";
 
 export const kinds: AnyKind[] = [
@@ -17,6 +19,9 @@ export const kinds: AnyKind[] = [
   memberRoleChanged,
   pilotApplicationDecided,
   pilotApplicationSubmitted,
+  poolAccessDecided,
+  poolAccessRequested,
+  trishawDamageReported,
   userOnboarded,
 ];
 

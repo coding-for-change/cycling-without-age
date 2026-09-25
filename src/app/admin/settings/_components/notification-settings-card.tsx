@@ -16,6 +16,7 @@ export type NotificationSettingsLabels = {
   body: string;
   memberJoined: { label: string; hint: string };
   applicationPush: { label: string; hint: string };
+  damagePush: { label: string; hint: string };
   replyTo: {
     label: string;
     hint: string;
@@ -69,6 +70,13 @@ export function NotificationSettingsCard({
             hint={labels.applicationPush.hint}
             labels={labels.field}
             onSave={(next) => save({ applicationAlertPush: next })}
+          />
+          <ToggleRow
+            value={settings.damageAlertPush}
+            label={labels.damagePush.label}
+            hint={labels.damagePush.hint}
+            labels={labels.field}
+            onSave={(next) => save({ damageAlertPush: next })}
           />
           <FieldRow
             label={labels.replyTo.label}
