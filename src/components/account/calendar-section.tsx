@@ -1,17 +1,38 @@
 "use client";
 
+import { useId, useState, useSyncExternalStore, useTransition } from "react";
 import {
-  useId,
-  useState,
-  useSyncExternalStore,
-  useTransition,
-  type ReactNode,
-} from "react";
-import { ArrowUpRight, CalendarPlus, LockKeyhole } from "lucide-react";
-import { notify } from "@/components/action-feedback";
-import { ConfirmButton } from "@/components/confirm-button";
-import { CopyButton } from "@/components/copy-button";
-import { Button } from "@/components/ui/button";
+  CalendarPlus,
+  Check,
+  Copy,
+  LockKeyhole,
+  RefreshCw,
+  type LucideIcon,
+} from "lucide-react";
+import {
+  notify,
+  type ActionResult,
+  type NotifyLabels,
+} from "@/components/action-feedback";
+import {
+  SettingsGroup,
+  SettingsItem,
+  SettingsRow,
+  SettingsRowButton,
+  SettingsRowLink,
+  type SettingsRowTone,
+} from "@/components/settings-group";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import {
   disableCalendarFeedAction,
@@ -21,6 +42,7 @@ import {
   type CalendarFeedState,
 } from "@/features/calendar-feeds/actions";
 import { formatRelativeTime, wordsLocale } from "@/lib/format";
+import { haptics } from "@/lib/native/haptics";
 import { nativePlatform } from "@/lib/native/platform";
 import { fill } from "@/lib/utils";
 import type { AccountData } from "./types";
@@ -48,7 +70,13 @@ const subscribeLinks = (url: string) => {
   };
 };
 
-export function CalendarSection({ data }: { data: AccountData }) {
+export function CalendarSection({
+  data,
+  label,
+}: {
+  data: AccountData;
+  label?: string;
+}) {
   const strings = data.strings.calendar;
   const [feed, setFeed] = useState<CalendarFeedState | null>(data.calendarFeed);
   const [pending, startTransition] = useTransition();
@@ -67,40 +95,44 @@ export function CalendarSection({ data }: { data: AccountData }) {
       });
     });
 
-  return (
-    <div className="grid gap-4">
-      <p className="max-w-prose text-sm text-ink-soft">{strings.body}</p>
-      {feed ? (
-        <FeedDetails
-          feed={feed}
-          strings={strings}
-          language={data.language}
-          onReset={() => change(resetCalendarFeedAction)}
-          onDisable={() => change(disableCalendarFeedAction)}
-        />
-      ) : (
-        <Button
-          variant="outline"
+  if (!feed)
+    return (
+      <SettingsGroup
+        label={label}
+        footer={strings.body}
+      >
+        <SettingsRow
+          icon={CalendarPlus}
+          tone="action"
+          label={strings.enable}
           disabled={pending}
           onClick={enable}
-          className="min-h-11 justify-self-start rounded-full border-line"
-        >
-          <CalendarPlus aria-hidden />
-          {strings.enable}
-        </Button>
-      )}
-    </div>
+        />
+      </SettingsGroup>
+    );
+
+  return (
+    <FeedDetails
+      feed={feed}
+      label={label}
+      strings={strings}
+      language={data.language}
+      onReset={() => change(resetCalendarFeedAction)}
+      onDisable={() => change(disableCalendarFeedAction)}
+    />
   );
 }
 
 function FeedDetails({
   feed,
+  label,
   strings,
   language,
   onReset,
   onDisable,
 }: {
   feed: CalendarFeedState;
+  label?: string;
   strings: CalendarStrings;
   language: string;
   onReset: () => Promise<CalendarFeedActionResult>;
@@ -114,88 +146,103 @@ function FeedDetails({
   return (
     <div
       data-sentry-block
-      className="grid gap-4"
+      className="grid min-w-0 gap-5"
     >
-      <div className="grid gap-2">
-        <label
-          htmlFor={id}
-          className="text-2sm font-medium"
-        >
-          {strings.link}
-        </label>
-        <div className="flex flex-wrap items-center gap-2">
+      <SettingsGroup
+        label={label}
+        footer={
+          <p>
+            {feed.lastFetchedAt
+              ? fill(strings.checked, {
+                  when: formatRelativeTime(
+                    feed.lastFetchedAt,
+                    wordsLocale(language),
+                  ),
+                })
+              : strings.waiting}{" "}
+            {strings.cadence}
+          </p>
+        }
+      >
+        <SettingsItem className="focus-within:bg-canvas-deep">
+          <label
+            htmlFor={id}
+            className="sr-only"
+          >
+            {strings.link}
+          </label>
           <Input
             id={id}
             readOnly
             value={feed.url}
             onFocus={(event) => event.currentTarget.select()}
-            className="min-h-11 flex-1 basis-60 border-line bg-canvas-deep font-mono text-2sm text-ink-soft md:text-2sm"
+            className="h-11 rounded-none border-0 bg-transparent px-0 font-mono text-base text-ink-soft shadow-none focus-visible:ring-0 md:text-sm"
           />
-          <CopyButton
-            value={feed.url}
-            label={strings.copy}
-            copiedLabel={strings.copied}
-            className="border-line"
-          />
-        </div>
-        <p className="text-2sm text-ink-soft">
-          {feed.lastFetchedAt
-            ? fill(strings.checked, {
-                when: formatRelativeTime(
-                  feed.lastFetchedAt,
-                  wordsLocale(language),
-                ),
-              })
-            : strings.waiting}{" "}
-          {strings.cadence}
-        </p>
-      </div>
-
-      <div className="grid gap-2">
-        <span className="text-2sm font-medium">{strings.addTo}</span>
-        <div className="flex flex-wrap gap-2">
-          {platform !== "android" && (
-            <AppLink href={links.apple}>{strings.apps.apple}</AppLink>
-          )}
-          {!phone && (
-            <AppLink
-              href={links.google}
-              external
-            >
-              {strings.apps.google}
-            </AppLink>
-          )}
-          <AppLink
-            href={links.outlook}
-            external
-          >
-            {strings.apps.outlook}
-          </AppLink>
-          <AppLink
-            href={links.outlookWork}
-            external
-          >
-            {strings.apps.outlookWork}
-          </AppLink>
-        </div>
-        {phone && (
-          <p className="text-2sm text-ink-soft">{strings.googleOnPhone}</p>
-        )}
-        <p className="text-2sm text-ink-soft">{strings.otherApps}</p>
-      </div>
-
-      <p className="flex items-start gap-3 rounded-(--r-card) bg-mint-tint p-3 text-2sm">
-        <LockKeyhole
-          aria-hidden
-          className="mt-0.5 size-4 shrink-0"
+        </SettingsItem>
+        <CopyRow
+          value={feed.url}
+          label={strings.copy}
+          copiedLabel={strings.copied}
         />
-        {strings.private}
-      </p>
+      </SettingsGroup>
 
-      <div className="flex flex-wrap gap-2">
-        <ConfirmButton
-          variant="ghost"
-          size="default"
+      <SettingsGroup
+        label={strings.addTo}
+        footer={
+          <>
+            {phone && <p>{strings.googleOnPhone}</p>}
+            <p>{strings.otherApps}</p>
+          </>
+        }
+      >
+        {platform !== "android" && (
+          <SettingsItem>
+            <SettingsRowLink
+              href={links.apple}
+              label={strings.apps.apple}
+              chevron
+            />
+          </SettingsItem>
+        )}
+        {!phone && (
+          <SettingsItem>
+            <SettingsRowLink
+              href={links.google}
+              label={strings.apps.google}
+              external
+            />
+          </SettingsItem>
+        )}
+        <SettingsItem>
+          <SettingsRowLink
+            href={links.outlook}
+            label={strings.apps.outlook}
+            external
+          />
+        </SettingsItem>
+        <SettingsItem>
+          <SettingsRowLink
+            href={links.outlookWork}
+            label={strings.apps.outlookWork}
+            external
+          />
+        </SettingsItem>
+      </SettingsGroup>
+
+      <SettingsGroup
+        footer={
+          <p className="flex items-start gap-2">
+            <LockKeyhole
+              aria-hidden
+              className="mt-0.5 size-4 shrink-0"
+            />
+            {strings.private}
+          </p>
+        }
+      >
+        <ConfirmRow
+          icon={RefreshCw}
+          tone="action"
           label={strings.reset.open}
           title={strings.reset.title}
           body={strings.reset.body}
@@ -204,11 +251,9 @@ function FeedDetails({
           done={strings.reset.done}
           errors={strings.errors}
           action={onReset}
-          className="min-h-11 text-ink-soft hover:text-ink"
         />
-        <ConfirmButton
-          variant="ghost"
-          size="default"
+        <ConfirmRow
+          tone="destructive"
           label={strings.disable.open}
           title={strings.disable.title}
           body={strings.disable.body}
@@ -217,41 +262,125 @@ function FeedDetails({
           done={strings.disable.done}
           errors={strings.errors}
           action={onDisable}
-          destructive
-          className="min-h-11 text-ink-soft hover:text-ink"
         />
-      </div>
+      </SettingsGroup>
     </div>
   );
 }
 
-function AppLink({
-  href,
-  external = false,
-  children,
+function CopyRow({
+  value,
+  label,
+  copiedLabel,
 }: {
-  href: string;
-  external?: boolean;
-  children: ReactNode;
+  value: string;
+  label: string;
+  copiedLabel: string;
 }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = () => {
+    navigator.clipboard.writeText(value).then(
+      () => {
+        haptics.tap();
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      },
+      () => {},
+    );
+  };
+
   return (
-    <Button
-      asChild
-      variant="outline"
-      className="min-h-11 rounded-full border-line"
-    >
-      <a
-        href={href}
-        {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+    <SettingsRow
+      icon={copied ? Check : Copy}
+      tone="action"
+      label={copied ? copiedLabel : label}
+      aria-live="polite"
+      onClick={copy}
+    />
+  );
+}
+
+function ConfirmRow({
+  icon,
+  tone,
+  label,
+  title,
+  body,
+  confirm,
+  cancel,
+  done,
+  errors,
+  action,
+}: {
+  icon?: LucideIcon;
+  tone: SettingsRowTone;
+  label: string;
+  title: string;
+  body: string;
+  confirm: string;
+  cancel: string;
+  done: string;
+  errors: NotifyLabels["errors"];
+  action: () => Promise<ActionResult>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const destructive = tone === "destructive";
+
+  const run = () => {
+    if (destructive) haptics.tap();
+    startTransition(async () => {
+      const result = await action();
+      notify(result, { done, errors });
+      if (result.ok) setOpen(false);
+    });
+  };
+
+  return (
+    <SettingsItem>
+      <AlertDialog
+        open={open}
+        onOpenChange={(next) => {
+          if (!pending) setOpen(next);
+        }}
       >
-        {children}
-        {external && (
-          <ArrowUpRight
-            aria-hidden
-            className="text-ink-soft"
+        <AlertDialogTrigger asChild>
+          <SettingsRowButton
+            icon={icon}
+            tone={tone}
+            label={label}
+            disabled={pending}
           />
-        )}
-      </a>
-    </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent aria-busy={pending}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{title}</AlertDialogTitle>
+            <AlertDialogDescription className="text-ink-soft">
+              {body}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={pending}
+              className="min-h-11 border-line"
+            >
+              {cancel}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={pending}
+              onClick={(event) => {
+                event.preventDefault();
+                run();
+              }}
+              variant={destructive ? "brand" : "default"}
+              className="min-h-11"
+            >
+              {confirm}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </SettingsItem>
   );
 }

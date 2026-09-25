@@ -1,8 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
+import { NATIVE_UA } from "@/lib/device";
 import { NEXT_COOKIE, NEXT_MAX_AGE, safeNextPath } from "@/lib/redirects";
-
-const NATIVE_UA = "CWA-Native";
 
 // The session check is cookie presence only: middleware has no database.
 // `requireAuth` must not redirect back to `/`, or it would loop against this.

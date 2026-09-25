@@ -140,8 +140,8 @@ const de: Dictionary = {
     selectPrompt: "Wählen Sie eine Ortsgruppe, um fortzufahren.",
     titlePassenger: "Wo sollen wir Sie abholen?",
     tabs: {
-      careHome: "In einem Pflegeheim",
-      home: "Unter meiner eigenen Adresse",
+      careHome: "Pflegeheim",
+      home: "Eigene Adresse",
     },
     home: {
       label: "Ihre Adresse",
@@ -311,6 +311,7 @@ const de: Dictionary = {
       footer: "Konto",
     },
     navLabel: "Admin-Bereiche",
+    openMenu: "Menü öffnen",
     newRide: "Neue Ausfahrt",
     scope: {
       switchLabel: "Perspektive oder Ortsgruppe wechseln",
@@ -1242,7 +1243,7 @@ const de: Dictionary = {
       body: "Mit einem Passkey meldet dich dein eigenes Gerät an — Fingerabdruck, Gesicht oder PIN. Nichts zu merken, nichts zu tippen.",
       add: "Passkey hinzufügen",
       nameLabel: "Passkey benennen (optional)",
-      namePlaceholder: "Arbeitslaptop",
+      namePlaceholder: "Name (optional)",
       unnamed: "Passkey",
       thisDevice: "Dieses Gerät",
       synced: "Synchronisiert",
