@@ -10,13 +10,13 @@ import {
   TriangleAlert,
   type LucideIcon,
 } from "lucide-react";
-import { ReportProblemButton } from "@/components/report-problem/report-problem-button";
 import { CalendarSection } from "./calendar-section";
 import { DangerSection } from "./danger-section";
 import { LanguageSection } from "./language-section";
 import { NotificationsSection } from "./notifications-section";
 import { PasskeysSection } from "./passkeys-section";
 import { ProfileSection } from "./profile-section";
+import { SupportSection } from "./support-section";
 import type { AccountData, AccountStrings } from "./types";
 
 export type AccountSectionKey =
@@ -56,32 +56,62 @@ export const sectionTitle = (strings: AccountStrings, key: AccountSectionKey) =>
 
 export function AccountSectionBody({
   section,
+  label,
   data,
 }: {
   section: AccountSectionKey;
+  label?: string;
   data: AccountData;
 }) {
   switch (section) {
     case "profile":
-      return <ProfileSection data={data} />;
+      return (
+        <ProfileSection
+          data={data}
+          label={label}
+        />
+      );
     case "language":
-      return <LanguageSection data={data} />;
+      return (
+        <LanguageSection
+          data={data}
+          label={label}
+        />
+      );
     case "notifications":
-      return <NotificationsSection data={data} />;
+      return (
+        <NotificationsSection
+          data={data}
+          label={label}
+        />
+      );
     case "calendar":
-      return <CalendarSection data={data} />;
+      return (
+        <CalendarSection
+          data={data}
+          label={label}
+        />
+      );
     case "passkeys":
-      return <PasskeysSection data={data} />;
+      return (
+        <PasskeysSection
+          data={data}
+          label={label}
+        />
+      );
     case "support":
       return (
-        <div className="grid justify-items-start gap-3">
-          <p className="max-w-prose text-sm text-ink-soft">
-            {data.strings.support.body}
-          </p>
-          <ReportProblemButton strings={data.strings.support} />
-        </div>
+        <SupportSection
+          data={data}
+          label={label}
+        />
       );
     case "danger":
-      return <DangerSection data={data} />;
+      return (
+        <DangerSection
+          data={data}
+          label={label}
+        />
+      );
   }
 }

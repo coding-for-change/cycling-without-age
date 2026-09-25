@@ -39,8 +39,8 @@ export function AccountSheet({
       repositionInputs={false}
     >
       {trigger && <DrawerTrigger asChild>{trigger}</DrawerTrigger>}
-      <DrawerContent className="bg-canvas data-[vaul-drawer-direction=bottom]:max-h-[94svh] data-[vaul-drawer-direction=bottom]:rounded-t-(--r-tile)">
-        <DrawerHeader className="shrink-0 gap-1 border-b border-line px-5 py-4 text-left">
+      <DrawerContent className="bg-canvas-deep data-[vaul-drawer-direction=bottom]:max-h-[94svh] data-[vaul-drawer-direction=bottom]:rounded-t-(--r-tile)">
+        <DrawerHeader className="shrink-0 gap-1 border-b border-line px-4 py-4 text-left">
           <div className="flex items-center justify-between gap-3">
             <DrawerTitle className="font-display text-lg font-bold tracking-tight text-ink">
               {strings.title}
@@ -54,7 +54,7 @@ export function AccountSheet({
             {strings.description}
           </DrawerDescription>
         </DrawerHeader>
-        <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto px-5 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+        <div className="grid min-h-0 flex-1 content-start gap-5 overflow-y-auto px-4 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
           <ProfileHeader
             name={data.profile.name}
             email={data.profile.email}
@@ -66,22 +66,12 @@ export function AccountSheet({
             onOpenChange={onOpenChange}
           />
           {accountSections(data).map((item) => (
-            <section
+            <AccountSectionBody
               key={item.key}
-              className="grid gap-3 rounded-2xl border border-line p-4"
-            >
-              <h2 className="flex items-center gap-2 text-sm font-medium">
-                <item.icon
-                  aria-hidden
-                  className="size-4 text-ink-soft"
-                />
-                {sectionTitle(strings, item.key)}
-              </h2>
-              <AccountSectionBody
-                section={item.key}
-                data={data}
-              />
-            </section>
+              section={item.key}
+              label={sectionTitle(strings, item.key)}
+              data={data}
+            />
           ))}
         </div>
       </DrawerContent>

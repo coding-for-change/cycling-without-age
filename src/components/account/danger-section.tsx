@@ -3,18 +3,26 @@
 import { LogOut, Trash2 } from "lucide-react";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import {
+  SettingsGroup,
+  SettingsItem,
+  SettingsRow,
+  SettingsRowButton,
+} from "@/components/settings-group";
+import {
   finishSignOut,
   forgetDevice,
   useSignOut,
 } from "@/components/sign-out-button";
-import { Button } from "@/components/ui/button";
 import { deleteOwnAccountAction } from "@/features/accounts/actions";
 import type { AccountData } from "./types";
 
-const DELETE_TRIGGER =
-  "min-h-11 justify-start border-line text-2sm text-red hover:bg-red-tint hover:text-red";
-
-export function DangerSection({ data }: { data: AccountData }) {
+export function DangerSection({
+  data,
+  label,
+}: {
+  data: AccountData;
+  label?: string;
+}) {
   const { signOut, pending } = useSignOut();
   const labels = data.strings.danger.delete;
 
@@ -24,52 +32,47 @@ export function DangerSection({ data }: { data: AccountData }) {
   };
 
   return (
-    <div className="grid justify-items-start gap-3">
-      <p className="max-w-prose text-sm text-ink-soft">
-        {data.strings.danger.body}
-      </p>
-      <Button
-        variant="outline"
-        disabled={pending}
-        onClick={signOut}
-        className="min-h-11 gap-2 rounded-full border-line"
+    <div className="grid min-w-0 gap-5">
+      <SettingsGroup label={label}>
+        <SettingsRow
+          icon={LogOut}
+          tone="destructive"
+          label={data.signOutLabel}
+          disabled={pending}
+          onClick={signOut}
+        />
+      </SettingsGroup>
+      <SettingsGroup
+        footer={
+          data.canDeleteAccount ? data.strings.danger.body : labels.blocked
+        }
       >
-        <LogOut
-          aria-hidden
-          className="size-4"
-        />
-        {data.signOutLabel}
-      </Button>
-      {data.canDeleteAccount ? (
-        <ConfirmDeleteDialog
-          name={data.profile.name}
-          labels={labels}
-          cancel={data.cancelLabel}
-          action={remove}
-          onDone={() => void finishSignOut()}
-          trigger={
-            <Button
-              variant="outline"
-              className={DELETE_TRIGGER}
-            >
-              <Trash2 aria-hidden />
-              {labels.open}
-            </Button>
-          }
-        />
-      ) : (
-        <>
-          <Button
-            variant="outline"
+        {data.canDeleteAccount ? (
+          <SettingsItem>
+            <ConfirmDeleteDialog
+              name={data.profile.name}
+              labels={labels}
+              cancel={data.cancelLabel}
+              action={remove}
+              onDone={() => void finishSignOut()}
+              trigger={
+                <SettingsRowButton
+                  icon={Trash2}
+                  tone="destructive"
+                  label={labels.open}
+                />
+              }
+            />
+          </SettingsItem>
+        ) : (
+          <SettingsRow
+            icon={Trash2}
+            tone="destructive"
+            label={labels.open}
             disabled
-            className={DELETE_TRIGGER}
-          >
-            <Trash2 aria-hidden />
-            {labels.open}
-          </Button>
-          <p className="max-w-prose text-2sm text-ink-soft">{labels.blocked}</p>
-        </>
-      )}
+          />
+        )}
+      </SettingsGroup>
     </div>
   );
 }

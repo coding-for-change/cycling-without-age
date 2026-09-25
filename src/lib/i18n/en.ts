@@ -130,8 +130,8 @@ const en = {
     selectPrompt: "Select a chapter to continue.",
     titlePassenger: "Where should we pick you up?",
     tabs: {
-      careHome: "In a care home",
-      home: "At my own address",
+      careHome: "Care home",
+      home: "My own address",
     },
     home: {
       label: "Your address",
@@ -292,6 +292,7 @@ const en = {
       footer: "Account",
     },
     navLabel: "Admin sections",
+    openMenu: "Open menu",
     newRide: "New ride",
     scope: {
       switchLabel: "Switch perspective or chapter",
@@ -1191,7 +1192,7 @@ const en = {
       body: "A passkey lets your own device sign you in — a fingerprint, a face, a PIN. Nothing to remember, nothing to type.",
       add: "Add a passkey",
       nameLabel: "Name this passkey (optional)",
-      namePlaceholder: "Work laptop",
+      namePlaceholder: "Name (optional)",
       unnamed: "Passkey",
       thisDevice: "This device",
       synced: "Synced",

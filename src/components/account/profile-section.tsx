@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { InlineField } from "@/components/inline-field";
+import { SettingsGroup } from "@/components/settings-group";
 import { FieldRow, SelectRow } from "@/components/settings-rows";
 import { updateOwnDetailsAction } from "@/features/profile/actions";
 import { formatDate, toIsoDateLocal } from "@/lib/format";
@@ -12,17 +13,29 @@ const GENDERS = ["female", "male", "other"] as const;
 
 const EARLIEST_BIRTH_DATE = "1900-01-01";
 
+const INLINE = "mx-0 w-full text-right text-ink-soft";
+
 const rejected: ActionResult = { ok: false, error: "invalid" };
 
-export function ProfileSection({ data }: { data: AccountData }) {
+export function ProfileSection({
+  data,
+  label,
+}: {
+  data: AccountData;
+  label?: string;
+}) {
   const strings = data.strings;
   const today = useMemo(() => toIsoDateLocal(new Date()), []);
 
   return (
-    <ul className="grid divide-y divide-line">
-      <FieldRow label={strings.profile.name}>
+    <SettingsGroup label={label}>
+      <FieldRow
+        inline
+        label={strings.profile.name}
+      >
         <InlineField
           value={data.profile.name}
+          className={INLINE}
           label={strings.profile.name}
           placeholder={strings.profile.namePlaceholder}
           maxLength={120}
@@ -35,11 +48,15 @@ export function ProfileSection({ data }: { data: AccountData }) {
           }
         />
       </FieldRow>
-      <FieldRow label={strings.profile.birthDate}>
+      <FieldRow
+        inline
+        label={strings.profile.birthDate}
+      >
         <InlineField
           type="date"
           max={today}
           value={data.profile.birthDate}
+          className={INLINE}
           label={strings.profile.birthDate}
           placeholder={strings.profile.birthDatePlaceholder}
           required
@@ -75,6 +92,6 @@ export function ProfileSection({ data }: { data: AccountData }) {
             : updateOwnDetailsAction({ gender: next })
         }
       />
-    </ul>
+    </SettingsGroup>
   );
 }

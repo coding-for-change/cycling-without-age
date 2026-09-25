@@ -116,12 +116,22 @@ export function SelectRow({
 export function FieldRow({
   label,
   hint,
+  inline = false,
   children,
 }: {
   label: string;
   hint?: string;
+  inline?: boolean;
   children: ReactNode;
 }) {
+  if (inline)
+    return (
+      <li className="flex min-h-11 min-w-0 items-center justify-between gap-3">
+        <span className="shrink-0 text-sm font-medium">{label}</span>
+        <div className="flex min-w-0 flex-1 justify-end">{children}</div>
+      </li>
+    );
+
   return (
     <li className="grid gap-1 py-3">
       <span className="text-sm font-medium">{label}</span>

@@ -133,8 +133,8 @@ const da: Dictionary = {
     selectPrompt: "Vælg en afdeling for at fortsætte.",
     titlePassenger: "Hvor skal vi hente dig?",
     tabs: {
-      careHome: "På et plejehjem",
-      home: "På min egen adresse",
+      careHome: "Plejehjem",
+      home: "Egen adresse",
     },
     home: {
       label: "Din adresse",
@@ -296,6 +296,7 @@ const da: Dictionary = {
       footer: "Konto",
     },
     navLabel: "Adminafsnit",
+    openMenu: "Åbn menu",
     newRide: "Ny tur",
     scope: {
       switchLabel: "Skift perspektiv eller afdeling",
@@ -1193,7 +1194,7 @@ const da: Dictionary = {
       body: "Med en adgangsnøgle logger din egen enhed dig ind — fingeraftryk, ansigt eller pinkode. Intet at huske, intet at skrive.",
       add: "Tilføj en adgangsnøgle",
       nameLabel: "Giv adgangsnøglen et navn (valgfrit)",
-      namePlaceholder: "Arbejdscomputer",
+      namePlaceholder: "Navn (valgfrit)",
       unnamed: "Adgangsnøgle",
       thisDevice: "Denne enhed",
       synced: "Synkroniseret",

@@ -44,7 +44,7 @@ export async function AdminSidebar() {
       variant="inset"
       collapsible="icon"
     >
-      <SidebarHeader className="pt-[env(safe-area-inset-top)]">
+      <SidebarHeader className="pt-safe">
         <ScopeSwitcher
           perspectives={perspectiveChoices(session.access, dict)}
           activePerspective="admin"
@@ -87,7 +87,7 @@ export async function AdminSidebar() {
         />
       </SidebarContent>
 
-      <SidebarFooter className="pb-[env(safe-area-inset-bottom)]">
+      <SidebarFooter className="pb-safe">
         <AdminNav
           items={inGroup("footer")}
           groupLabel={dict.admin.navGroups.footer}

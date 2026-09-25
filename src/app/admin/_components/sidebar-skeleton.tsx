@@ -45,7 +45,7 @@ export function AdminSidebarSkeleton() {
       variant="inset"
       collapsible="icon"
     >
-      <SidebarHeader className="pt-[env(safe-area-inset-top)]">
+      <SidebarHeader className="pt-safe">
         <Identity />
       </SidebarHeader>
       <SidebarContent>
@@ -67,7 +67,7 @@ export function AdminSidebarSkeleton() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="pb-[env(safe-area-inset-bottom)]">
+      <SidebarFooter className="pb-safe">
         <Identity />
       </SidebarFooter>
     </Sidebar>
