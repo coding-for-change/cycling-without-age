@@ -8,6 +8,7 @@
     "dev:worker": "dotenv -e .env.local -- node --watch --import tsx --import ./src/worker/instrument.ts src/worker/index.ts",
     "build": "next build",
     "build:worker": "esbuild src/worker/index.ts --bundle --platform=node --target=node22 --format=cjs --packages=external --outfile=worker.js && esbuild src/worker/instrument.ts --bundle --platform=node --target=node22 --format=cjs --packages=external --outfile=worker-instrument.js",
+    "build:seed": "esbuild prisma/seed.ts --bundle --platform=node --target=node22 --format=cjs --packages=external --outfile=seed.js",
     "start": "next start",
     "lint": "eslint && node scripts/check-brand-tokens.mjs",
     "format": "prettier --write .",

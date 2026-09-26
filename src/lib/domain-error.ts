@@ -43,6 +43,7 @@ export type DomainErrorCode =
   | "selfChange"
   | "slugTaken"
   | "tooLong"
+  | "trishawBooked"
   | "trishawGrounded"
   | "trishawNotInChapter"
   | "trishawNotOnRide"

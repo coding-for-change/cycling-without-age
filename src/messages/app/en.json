@@ -709,6 +709,7 @@
   },
   "calendar": {
     "agendaEmpty": "Nothing booked yet. When a ride is scheduled for you, it turns up here.",
+    "bookedElsewhere": "Booked by another chapter",
     "cancelledOn": "Cancelled",
     "models": {
       "event": "Event ride",
@@ -918,6 +919,7 @@
         "locationNotEmpty": "Move the trishaws somewhere else first.",
         "poolInUse": "Your chapter still has upcoming rides with trishaws from this pool. Reassign or cancel them first.",
         "rateLimited": "Too many attempts. Try again in a few minutes.",
+        "trishawBooked": "Another chapter still has upcoming rides with this trishaw and would lose it at the new location. Remove it from those rides first.",
         "trishawGrounded": "This trishaw has an open grounding damage. Clear the damage to put it back into service.",
         "trishawNotInChapter": "This chapter cannot use that trishaw.",
         "trishawReserved": "That trishaw is already booked for an overlapping ride.",

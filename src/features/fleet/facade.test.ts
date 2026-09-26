@@ -305,6 +305,109 @@ describe("pool access", () => {
   });
 });
 
+describe("reaching a pool as country admin", () => {
+  const poolOfCountry = { kind: "pool", countryId: { in: [DE] } };
+
+  it("offers the country's pools even before any chapter has joined", async () => {
+    mocked(locations.findLocations).mockResolvedValue([]);
+    await fleet.listLocationsForChapters([], [DE]);
+    expect(locations.findLocations).toHaveBeenCalledWith({
+      OR: expect.arrayContaining([poolOfCountry]),
+      archivedAt: null,
+    });
+  });
+
+  it("keeps a pool's bikes listed after its last member leaves", async () => {
+    mocked(trishaws.findTrishawsOfChapters).mockResolvedValue([]);
+    await fleet.listTrishaws([MUENCHEN], [DE]);
+    expect(trishaws.findTrishawsOfChapters).toHaveBeenCalledWith(
+      [MUENCHEN],
+      [DE],
+    );
+    expect(
+      locations.reachableLocationWhere([MUENCHEN], [DE]).OR,
+    ).toContainEqual(poolOfCountry);
+  });
+
+  it("reaches no pool by country for a chapter admin", async () => {
+    expect(locations.reachableLocationWhere([MUENCHEN]).OR).toHaveLength(2);
+    expect(await fleet.listLocationsForChapters([], [])).toEqual([]);
+    expect(locations.findLocations).not.toHaveBeenCalled();
+  });
+});
+
+describe("moving a trishaw", () => {
+  const AUGSBURG = "chapter-augsburg";
+  const depotSued = pool({
+    id: "pool-sued",
+    chapters: [
+      {
+        id: "m-1",
+        chapterId: MUENCHEN,
+        status: "approved",
+        chapter: { id: MUENCHEN, name: "München", countryId: DE },
+      },
+      {
+        id: "m-2",
+        chapterId: AUGSBURG,
+        status: "approved",
+        chapter: { id: AUGSBURG, name: "Augsburg", countryId: DE },
+      },
+      {
+        id: "m-3",
+        chapterId: HAMBURG,
+        status: "pending",
+        chapter: { id: HAMBURG, name: "Hamburg", countryId: DE },
+      },
+    ],
+  });
+  const muenchenDepot = {
+    ...trishaw().storageLocation,
+    id: "loc-muenchen-2",
+    archivedAt: null,
+  };
+
+  it("names the chapters a move from the pool to one member's depot cuts off", async () => {
+    mocked(trishaws.findTrishawById).mockResolvedValue(
+      trishaw({ storageLocation: depotSued }),
+    );
+    mocked(locations.findLocationById).mockResolvedValue(muenchenDepot);
+    expect(
+      await fleet.chaptersLosingAccess("trishaw-1", "loc-muenchen-2"),
+    ).toEqual([AUGSBURG]);
+  });
+
+  it("cuts nobody off when the bike moves into a pool its chapter is in", async () => {
+    mocked(trishaws.findTrishawById).mockResolvedValue(trishaw());
+    mocked(locations.findLocationById).mockResolvedValue(depotSued);
+    expect(await fleet.chaptersLosingAccess("trishaw-1", "pool-sued")).toEqual(
+      [],
+    );
+  });
+
+  it("refuses the move while a chapter losing the bike has rides with it", async () => {
+    mocked(trishaws.findTrishawById).mockResolvedValue(
+      trishaw({ storageLocation: depotSued }),
+    );
+    mocked(locations.findLocationById).mockResolvedValue(muenchenDepot);
+    const move = (futureRideCount: number) =>
+      fleet.moveTrishaw({
+        id: "trishaw-1",
+        storageLocationId: "loc-muenchen-2",
+        actorUserId: "user-1",
+        futureRideCount,
+      });
+    expect(await codeOf(move(2))).toBe("trishawBooked");
+    expect(trishaws.updateTrishawById).not.toHaveBeenCalled();
+    await move(0);
+    expect(trishaws.updateTrishawById).toHaveBeenCalledWith(
+      "trishaw-1",
+      { storageLocationId: "loc-muenchen-2" },
+      {},
+    );
+  });
+});
+
 describe("damage and status", () => {
   const report = (grounding: boolean) =>
     fleet.reportDamage({
@@ -485,28 +588,33 @@ describe("who may read a file", () => {
     ],
   };
 
-  it("shows a damage photo to its reporter and the pool's admins only", async () => {
+  it("lets a damage photo's reporter and the pool's readers see it", async () => {
     mocked(files.findFileOwners).mockResolvedValue(damagePhoto);
     mocked(locations.findLocationById).mockResolvedValue(pool());
-    expect(
-      await fleet.readableFile("file-1", "pilot-1", access()),
-    ).toBeTruthy();
-    expect(
-      await fleet.readableFile("file-1", "x", access({ countryAdminOf: [DE] })),
-    ).toBeTruthy();
-    expect(
-      await fleet.readableFile("file-1", "x", chapterAdmin(HAMBURG)),
-    ).toBeTruthy();
-    expect(
-      await fleet.readableFile(
-        "file-1",
-        "x",
-        access({ memberships: [{ chapterId: HAMBURG, roles: ["pilot"] }] }),
-      ),
-    ).toBeNull();
-    expect(
-      await fleet.readableFile("file-1", "x", chapterAdmin(MUENCHEN)),
-    ).toBeNull();
+    expect((await fleet.fileReadRule("file-1"))?.rule).toEqual({
+      kind: "reporterOrAdmins",
+      reporterId: "pilot-1",
+      admins: {
+        countryIds: [DE],
+        chapters: [{ chapterId: HAMBURG, countryId: DE }],
+      },
+    });
+  });
+
+  it("gives a trishaw photo to the pool's members and admins", async () => {
+    mocked(files.findFileOwners).mockResolvedValue({
+      ...damagePhoto,
+      kind: "trishawPhoto",
+      damagePhotos: [],
+      trishawPhotos: [{ storageLocationId: "pool-1" }],
+      trishawGallery: [],
+    });
+    mocked(locations.findLocationById).mockResolvedValue(pool());
+    expect((await fleet.fileReadRule("file-1"))?.rule).toMatchObject({
+      kind: "members",
+      chapterIds: [HAMBURG],
+      roles: ["admin", "pilot", "passenger"],
+    });
   });
 
   it("keeps an unattached upload private to its uploader", async () => {
@@ -515,10 +623,10 @@ describe("who may read a file", () => {
       kind: "entrancePhoto",
       damagePhotos: [],
     });
-    expect(
-      await fleet.readableFile("file-1", "pilot-1", access()),
-    ).toBeTruthy();
-    expect(await fleet.readableFile("file-1", "x", access())).toBeNull();
+    expect((await fleet.fileReadRule("file-1"))?.rule).toEqual({
+      kind: "uploader",
+      userId: "pilot-1",
+    });
   });
 });
 

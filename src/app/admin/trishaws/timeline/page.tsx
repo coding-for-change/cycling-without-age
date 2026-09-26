@@ -2,12 +2,17 @@ import { Suspense } from "react";
 import { headers } from "next/headers";
 import { chapters as chapterFeature } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
-import { TrishawTimeline } from "@/features/rides/components/trishaw-timeline";
+import {
+  foreignBooking,
+  TrishawTimeline,
+  type TimelineRide,
+} from "@/features/rides/components/trishaw-timeline";
 import { getDictionary } from "@/lib/i18n";
 import { AdminPageHeader, AdminPageShell } from "../../_components/admin-page";
 import { AdminTabs } from "../../_components/admin-tabs";
 import { WeekSwitcher } from "../../_components/week-switcher";
 import { readActiveScope, type AdminSearchParams } from "../../active-scope";
+import { scopeCountries } from "../../scope-countries";
 import { readCalendarWeek } from "../../calendar-week";
 import { fleetTabs } from "../_components/options";
 import { TimelineSkeleton } from "./_components/timeline-skeleton";
@@ -31,16 +36,19 @@ async function Timeline({
 }: {
   searchParams: Promise<AdminSearchParams>;
 }) {
-  const { scopeQuery, chapterIds } = await readActiveScope(
+  const { scope, active, scopeQuery, chapterIds } = await readActiveScope(
     searchParams,
     "bikes",
+  );
+  const poolCountryIds = scopeCountries(scope, active).map(
+    (country) => country.id,
   );
   const [params, dict, head, zones, trishaws] = await Promise.all([
     searchParams,
     getDictionary(),
     headers(),
     chapterFeature.getChapterTimeZones(chapterIds),
-    fleet.listTrishaws(chapterIds),
+    fleet.listTrishaws(chapterIds, poolCountryIds),
   ]);
 
   const {
@@ -51,7 +59,26 @@ async function Timeline({
     now,
     anchor,
     rides: weekRides,
-  } = await readCalendarWeek({ week: params.week, zones, head, chapterIds });
+  } = await readCalendarWeek({
+    week: params.week,
+    zones,
+    head,
+    chapterIds: [
+      ...new Set([
+        ...chapterIds,
+        ...trishaws.flatMap(fleet.chapterIdsReaching),
+      ]),
+    ],
+  });
+  const administered = new Set(scope.chapters.map((chapter) => chapter.id));
+  const listed = new Set(trishaws.map((trishaw) => trishaw.id));
+  const rides = weekRides.flatMap<TimelineRide>((ride) =>
+    administered.has(ride.chapterId)
+      ? [ride]
+      : ride.status === "cancelled"
+        ? []
+        : [foreignBooking(ride, listed)],
+  );
 
   return (
     <>
@@ -76,7 +103,7 @@ async function Timeline({
       <div className="-mx-4 md:mx-0">
         <TrishawTimeline
           trishaws={trishaws}
-          rides={weekRides}
+          rides={rides}
           anchor={anchor}
           timeZone={timeZone}
           weekStartsOn={weekStartsOn}

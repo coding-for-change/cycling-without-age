@@ -1,6 +1,12 @@
 "use client";
 
-import { useId, useRef, useState, type ChangeEvent } from "react";
+import {
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import { flushSync } from "react-dom";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -38,6 +44,11 @@ type Pending = { key: string; preview: string };
 const sameIds = (a: string[], b: string[]) =>
   a.length === b.length && a.every((id, index) => id === b[index]);
 
+const cameraFile = (photo: Blob) =>
+  new File([photo], `photo-${Date.now()}.jpg`, {
+    type: photo.type || "image/jpeg",
+  });
+
 export function PhotoGallery({
   kind,
   value,
@@ -70,17 +81,30 @@ export function PhotoGallery({
     setSynced(value);
     setPhotos(value);
   }
+  const latest = useRef(photos);
+  useLayoutEffect(() => {
+    latest.current = photos;
+  }, [photos]);
   const [pending, setPending] = useState<Pending[]>([]);
   const [open, setOpen] = useState<number | null>(null);
   const [active, setActive] = useState<string | null>(null);
 
   const room = max - photos.length - pending.length;
 
-  async function persist(next: string[], previous: string[]) {
+  function commit(next: string[]) {
+    latest.current = next;
     setPhotos(next);
+  }
+
+  async function persist(
+    change: (current: string[]) => string[],
+    undo: (current: string[]) => string[],
+  ) {
+    const next = change(latest.current);
+    commit(next);
     const result = await onChange(next);
     if (result && !result.ok) {
-      setPhotos(previous);
+      commit(undo(latest.current));
       haptics.error();
       toast.error(labels.errors[result.error] ?? labels.errors.generic);
     }
@@ -112,19 +136,16 @@ export function PhotoGallery({
         );
     }
     if (!uploaded.length) return;
-    const previous = photos;
-    if (await persist([...previous, ...uploaded], previous)) haptics.success();
+    const added = (current: string[]) => [...current, ...uploaded];
+    const withoutAdded = (current: string[]) =>
+      current.filter((id) => !uploaded.includes(id));
+    if (await persist(added, withoutAdded)) haptics.success();
   }
 
   async function pick() {
     if (camera && canTakePhoto()) {
       const photo = await takePhoto();
-      if (photo)
-        await add([
-          new File([photo], `photo-${Date.now()}.jpg`, {
-            type: photo.type || "image/jpeg",
-          }),
-        ]);
+      if (photo) await add([cameraFile(photo)]);
       return;
     }
     input.current?.click();
@@ -132,9 +153,13 @@ export function PhotoGallery({
 
   function remove(fileId: string) {
     haptics.tap();
+    const index = latest.current.indexOf(fileId);
     void persist(
-      photos.filter((id) => id !== fileId),
-      photos,
+      (current) => current.filter((id) => id !== fileId),
+      (current) =>
+        current.includes(fileId)
+          ? current
+          : [...current.slice(0, index), fileId, ...current.slice(index)],
     );
   }
 

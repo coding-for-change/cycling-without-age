@@ -709,6 +709,7 @@
   },
   "calendar": {
     "agendaEmpty": "Der er ikke booket noget endnu. Så snart en tur er planlagt, dukker den op her.",
+    "bookedElsewhere": "Booket af en anden afdeling",
     "cancelledOn": "Aflyst",
     "models": {
       "event": "Fællestur",
@@ -918,6 +919,7 @@
         "locationNotEmpty": "Flyt rickshawerne et andet sted hen først.",
         "poolInUse": "Jeres afdeling har stadig kommende ture med rickshawer fra denne pulje. Omfordel eller aflys dem først.",
         "rateLimited": "For mange forsøg. Prøv igen om et par minutter.",
+        "trishawBooked": "En anden afdeling har stadig kommende ture med denne rickshaw og kan ikke nå den på den nye lokation. Fjern den fra de ture først.",
         "trishawGrounded": "Denne rickshaw har en åben skade, der har taget den ud af brug. Afslut skaden for at tage den i brug igen.",
         "trishawNotInChapter": "Denne afdeling kan ikke bruge den rickshaw.",
         "trishawReserved": "Den rickshaw er allerede booket til en overlappende tur.",

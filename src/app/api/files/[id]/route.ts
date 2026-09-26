@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { fleet } from "@/features/fleet";
-import { getSession } from "@/lib/auth-guards";
+import { canReadFile, getSession } from "@/lib/auth-guards";
 import { extensionOf, presignGet } from "@/lib/storage";
 
 const PRIVATE = {
@@ -24,8 +24,9 @@ export async function GET(
   if (!session)
     return new Response("Unauthorized", { status: 401, headers: PRIVATE });
 
-  const file = await fleet.readableFile(id, session.user.id, session.access);
-  if (!file) return notFound();
+  const found = await fleet.fileReadRule(id);
+  if (!found || !canReadFile(session, found.rule)) return notFound();
+  const { file } = found;
 
   const url = await presignGet(
     file.key,

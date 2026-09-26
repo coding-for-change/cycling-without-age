@@ -7,6 +7,14 @@ on:
         description: "Translator mode: Alt+click texts to edit them in Tolgee"
         type: boolean
         default: false
+      seed:
+        description: "Seed the demo data when the database has no accounts yet"
+        type: boolean
+        default: true
+      seed_mailbox:
+        description: "Inbox for the seeded accounts' OTPs (you@example.com becomes you+superadmin@example.com, …). Defaults to the SEED_MAILBOX repo variable."
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -17,6 +25,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Check seed mailbox
+        if: ${{ inputs.seed }}
+        env:
+          SEED_MAILBOX: ${{ inputs.seed_mailbox || vars.SEED_MAILBOX }}
+        run: |
+          if [ -z "$SEED_MAILBOX" ]; then
+            echo "::warning::No seed_mailbox input or SEED_MAILBOX variable, so the database stays empty."
+          elif ! printf '%s' "$SEED_MAILBOX" | grep -Eq '^[A-Za-z0-9._-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'; then
+            echo "::error::seed_mailbox must be a plain address like you@example.com (no +tag)."
+            exit 1
+          fi
+
       - name: Checkout
         uses: actions/checkout@v7
 
@@ -195,6 +215,24 @@ jobs:
             docker compose up -d && \
             sudo systemctl reload caddy"
 
+      - name: Seed demo data
+        if: ${{ inputs.seed && (inputs.seed_mailbox || vars.SEED_MAILBOX) }}
+        env:
+          SEED_MAILBOX: ${{ inputs.seed_mailbox || vars.SEED_MAILBOX }}
+        run: |
+          set -o pipefail
+          SSH="ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key"
+          SSH_TARGET="deploy-cwa@codingforchange.com"
+          BRANCH_NAME_SAFE=$(grep BRANCH_NAME_SAFE env_vars.txt | cut -d'=' -f2)
+          TARGET_DIR="/var/www/cwa-feature-${BRANCH_NAME_SAFE}"
+
+          # The app container migrates on start, so wait until the schema is there before seeding.
+          $SSH $SSH_TARGET "cd ${TARGET_DIR} && \
+            docker compose run --rm -T -e SEED_MAILBOX=${SEED_MAILBOX} app sh -c \
+              'for i in \$(seq 1 30); do npx prisma migrate deploy >/dev/null 2>&1 && exec node seed.js --if-empty --list-accounts; sleep 5; done; echo \"Database never became ready\" >&2; exit 1'" \
+            | tee seed.log
+          grep '^SEED_ACCOUNT' seed.log | cut -f2- > seed-accounts.tsv || true
+
       - name: Comment deployment URL on PR
         env:
           GH_TOKEN: ${{ github.token }}
@@ -202,9 +240,18 @@ jobs:
         run: |
           URL="https://${{ env.BRANCH_NAME_SAFE }}.cwa.codingforchange.com"
           PR=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+          BODY="🚀 Feature branch deployed: $URL"
+          if [ -s seed-accounts.tsv ]; then
+            BODY="$BODY
+
+          Seeded accounts, sign in with an email OTP:
+
+          | Email | Roles |
+          | --- | --- |
+          $(awk -F'\t' '{ printf "| `%s` | %s |\n", $1, $2 }' seed-accounts.tsv)"
+          fi
           if [ -n "$PR" ]; then
-            gh pr comment "$PR" --edit-last --create-if-none \
-              --body "🚀 Feature branch deployed: $URL"
+            gh pr comment "$PR" --edit-last --create-if-none --body "$BODY"
           else
             echo "No open PR for branch $BRANCH — skipping comment"
           fi

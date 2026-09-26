@@ -43,6 +43,7 @@ RUN --mount=type=secret,id=sentry_token \
 
 # The queue worker ships in the same image as a second command.
 RUN npm run build:worker
+RUN npm run build:seed
 
 FROM node:22-bookworm-slim AS runner
 WORKDIR /app
@@ -69,6 +70,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/worker.js ./worker.js
 COPY --from=builder /app/worker-instrument.js ./worker-instrument.js
+COPY --from=builder /app/seed.js ./seed.js
 COPY --from=builder /app/src/generated/prisma ./src/generated/prisma
 
 USER nextjs

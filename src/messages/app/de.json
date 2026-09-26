@@ -709,6 +709,7 @@
   },
   "calendar": {
     "agendaEmpty": "Noch nichts gebucht. Sobald eine Fahrt eingeplant ist, steht sie hier.",
+    "bookedElsewhere": "Von einer anderen Ortsgruppe gebucht",
     "cancelledOn": "Abgesagt",
     "models": {
       "event": "Gruppenfahrt",
@@ -918,6 +919,7 @@
         "locationNotEmpty": "Bringen Sie die Rikschas zuerst an einen anderen Ort.",
         "poolInUse": "Ihre Ortsgruppe hat noch kommende Fahrten mit Rikschas aus diesem Pool. Teilen Sie sie zuerst neu zu oder sagen Sie sie ab.",
         "rateLimited": "Zu viele Versuche. Bitte in ein paar Minuten erneut.",
+        "trishawBooked": "Eine andere Ortsgruppe hat noch anstehende Ausfahrten mit dieser Rikscha und käme am neuen Standort nicht mehr an sie heran. Nimm sie zuerst aus diesen Ausfahrten.",
         "trishawGrounded": "Diese Rikscha hat einen offenen sperrenden Schaden. Geben Sie den Schaden frei, um sie wieder einzusetzen.",
         "trishawNotInChapter": "Diese Ortsgruppe kann diese Rikscha nicht nutzen.",
         "trishawReserved": "Diese Rikscha ist für eine überschneidende Fahrt schon gebucht.",

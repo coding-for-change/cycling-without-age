@@ -9,8 +9,18 @@ import { scheduleRide } from "@/use-cases/schedule-ride";
 import { defaultLocationFor } from "@/use-cases/manage-chapter";
 import type { ChapterRole } from "@/lib/access";
 
-if (process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV === "production" && !process.env.FEATURE_BRANCH) {
   throw new Error("Refusing to seed: NODE_ENV=production");
+}
+
+const seedMailbox = process.env.SEED_MAILBOX?.trim();
+
+function address(name: string) {
+  if (!seedMailbox) return `${name}@cwa.local`;
+  const [local, domain] = seedMailbox.split("@");
+  if (!local || !domain)
+    throw new Error("SEED_MAILBOX is not an email address");
+  return `${local}+${name}@${domain}`;
 }
 
 type CountrySeed = { code: string; name: string };
@@ -91,29 +101,29 @@ const CHAPTERS: ChapterSeed[] = [
 ];
 
 const PERSONAS: Persona[] = [
-  { email: "superadmin@cwa.local", name: "Sanne Superadmin", superadmin: true },
+  { email: address("superadmin"), name: "Sanne Superadmin", superadmin: true },
   {
-    email: "country.de@cwa.local",
+    email: address("country.de"),
     name: "Clara Country (DE)",
     countryAdminOf: ["DE"],
   },
   {
-    email: "admin.muenchen@cwa.local",
+    email: address("admin.muenchen"),
     name: "Anke Admin (München)",
     chapterRoles: { muenchen: ["admin"] },
   },
   {
-    email: "pilot@cwa.local",
+    email: address("pilot"),
     name: "Piet Pilot",
     chapterRoles: { muenchen: ["pilot"], hamburg: ["pilot"] },
   },
   {
-    email: "pilot.pending@cwa.local",
+    email: address("pilot.pending"),
     name: "Pernille Pending",
     pendingPilotApplications: ["muenchen"],
   },
   {
-    email: "passenger@cwa.local",
+    email: address("passenger"),
     name: "Peter Passenger",
     phoneNumber: "+4915112345678",
     chapterRoles: { muenchen: ["passenger"] },
@@ -126,7 +136,7 @@ const PERSONAS: Persona[] = [
     },
   },
   {
-    email: "multi@cwa.local",
+    email: address("multi"),
     name: "Malou Multi",
     chapterRoles: { hamburg: ["pilot", "admin"] },
     countryAdminOf: ["DK"],
@@ -351,10 +361,10 @@ async function seedRides(
   }
 
   const today = startOfToday();
-  const pilot = userIds.get("pilot@cwa.local")!;
-  const multi = userIds.get("multi@cwa.local")!;
+  const pilot = userIds.get(address("pilot"))!;
+  const multi = userIds.get(address("multi"))!;
   const rider = await passengers.getOwnPassenger(
-    userIds.get("passenger@cwa.local")!,
+    userIds.get(address("passenger"))!,
   );
 
   // Offsets are days from today, not from Monday: the seed must leave something
@@ -455,7 +465,46 @@ async function seedRides(
   return plan.length;
 }
 
+function describeRoles(persona: Persona) {
+  return [
+    persona.superadmin ? "superadmin" : null,
+    ...(persona.countryAdminOf ?? []).map((c) => `country admin ${c}`),
+    ...Object.entries(persona.chapterRoles ?? {}).map(
+      ([slug, roles]) => `${roles.join("+")} @ ${slug}`,
+    ),
+    ...(persona.pendingPilotApplications ?? []).map(
+      (s) => `pilot pending @ ${s}`,
+    ),
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
+
+async function listAccounts() {
+  const existing = new Set(
+    (
+      await prisma.user.findMany({
+        where: { email: { in: PERSONAS.map((p) => p.email) } },
+        select: { email: true },
+      })
+    ).map((user) => user.email),
+  );
+  for (const persona of PERSONAS) {
+    if (existing.has(persona.email))
+      console.log(`SEED_ACCOUNT\t${persona.email}\t${describeRoles(persona)}`);
+  }
+}
+
 async function main() {
+  if (process.argv.includes("--if-empty") && (await prisma.user.count()) > 0) {
+    console.log("Database already has accounts, skipping the seed.");
+  } else {
+    await seed();
+  }
+  if (process.argv.includes("--list-accounts")) await listAccounts();
+}
+
+async function seed() {
   const countryIds = await seedCountries();
   const chapterIds = await seedChapters(countryIds);
 
@@ -509,26 +558,19 @@ async function main() {
   const rideCount = await seedRides(chapterId, userIds);
 
   console.table(
-    PERSONAS.map((p) => ({
-      email: p.email,
-      roles: [
-        p.superadmin ? "superadmin" : null,
-        ...(p.countryAdminOf ?? []).map((c) => `country admin ${c}`),
-        ...Object.entries(p.chapterRoles ?? {}).map(
-          ([slug, roles]) => `${roles.join("+")} @ ${slug}`,
-        ),
-        ...(p.pendingPilotApplications ?? []).map(
-          (s) => `pilot pending @ ${s}`,
-        ),
-      ]
-        .filter(Boolean)
-        .join(", "),
-    })),
+    PERSONAS.map((p) => ({ email: p.email, roles: describeRoles(p) })),
   );
   console.log(
     `${COUNTRIES.length} countries, ${CHAPTERS.length} chapters, ${PERSONAS.length} accounts, ${rideCount} rides. Sign in with an email OTP — see docs-internal/DEV-ACCOUNTS.md.`,
   );
 }
 
-await main();
-await prisma.$disconnect();
+main()
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+    process.exit();
+  });

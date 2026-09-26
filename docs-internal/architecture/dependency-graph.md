@@ -89,6 +89,7 @@ graph TD
     U33[use-cases/leave-pool]
     U34[use-cases/trishaw-history]
     U35[use-cases/finish-ride]
+    U36[use-cases/move-trishaw]
   end
   subgraph Worker
     W1["worker/index (dispatcher, sweeper, prune-devices, prune-chat, email + push workers)"]
@@ -380,6 +381,7 @@ graph TD
   ACT14 --> F9
   ACT14 --> U32
   ACT14 --> U33
+  ACT14 --> U36
   ACT15 --> G
   ACT15 --> F9
   ACT15 --> U31
@@ -401,6 +403,8 @@ graph TD
   U35 --> F1
   U35 --> F9
   U35 --> F11
+  U36 --> F11
+  U36 --> F9
   U19 --> F11
   F11 --> S11
   F11 --> EV
@@ -453,6 +457,7 @@ graph TD
 | `schedule-ride` | `fleet`, `rides` | Whether a chapter may use a trishaw (its location, a pool it was approved for, the status) is the fleet's rule; the reservation under a row lock is the calendar's. `allocateTrishaws` checks only the trishaws being *added*, so one grounded after allocation stays on the ride with a warning instead of blocking every other edit. `allocationChoices` reads overlapping rides across every chapter that shares a pool, because a pooled bike booked by the neighbour is still booked. |
 | `report-damage` | `fleet`, `rides` | A pilot may report only on a ride they were assigned to and a trishaw that was on it (`rides`); the damage, the grounding and the `trishaw.damageReported` event are `fleet`'s. The upcoming rides a grounding endangers come from `rides` and travel in the event. |
 | `leave-pool` | `fleet`, `rides` | Leaving is blocked while the chapter still has future rides with the pool's trishaws — that count is the calendar's. |
+| `move-trishaw` | `fleet`, `rides` | A move is refused while a chapter that would lose the trishaw (it reaches the old location but not the new one) still has future rides with it. Who reaches a location is the fleet's rule; the count is the calendar's. |
 | `trishaw-history` | `fleet`, `rides` | One timeline from rides (with pilots), damages and the trishaw log. |
 | `finish-ride` | `chapters`, `fleet`, `rides` | The pilot's post-ride page: the chapter's post-ride instructions, and per trishaw its location's return instructions and access code — only for the ride's own pilots. |
 | `chat-notifications/deliver-chat-digest` | `chat`, `profile`, `notifications` (+ `lib/mailer`) | One grouped mail for everything unread in one conversation, for a recipient push cannot reach. Re-checks membership, unread, mute, preference and *still no push* before decrypting a single row. |
@@ -588,7 +593,7 @@ counterpart `lib/native/push` is the only place `@capacitor-firebase/messaging` 
 `features/fleet` (F11) owns `TrishawType`, `StorageLocation`, `StorageLocationChapter` (pool
 membership), `Trishaw`, `TrishawDamage`, `TrishawLogEntry` and `StoredFile`. `rides` keeps
 `RideTrishaw` and the reservation lock; it no longer knows who may use a trishaw. Everything
-that needs both goes through U31–U35. `manage-chapter` (U13) now also creates the chapter's
+that needs both goes through U31–U36. `manage-chapter` (U13) now also creates the chapter's
 default location, which is why it coordinates `fleet` as well.
 
 Authority is data: the facade answers `locationAuthority`, `locationTrishawManagers`,
@@ -597,7 +602,9 @@ Action passes it to `requireAdminOf` in `lib/auth-guards`, which evaluates it wi
 `allowsAdmin` from `lib/access`. The facade never sees a session.
 
 `RT4` (`/api/files/[id]`) is the only way a stored file is served: `getSession`, then
-`fleet.readableFile` decides per kind, then a 302 to a five-minute signed GET. `lib/storage`
+`fleet.fileReadRule` describes per kind who may read it as plain data (anyone, the uploader,
+the location's members and admins, or a damage's reporter and admins), `canReadFile` in
+`lib/auth-guards` decides for the session, then a 302 to a five-minute signed GET. `lib/storage`
 (STO) is infrastructure like `lib/mailer`: presigned PUTs to the private bucket, then a commit
 step that HEADs the staged object, re-encodes images to WebP with `sharp` (PDFs must start with
 `%PDF-`) and writes the final key. Nothing a browser uploaded is served unprocessed.
