@@ -35,6 +35,9 @@ jobs:
                       "REGISTRY_USERNAME": REGISTRY_USERNAME | default(""),
                       "REGISTRY_PASSWORD": REGISTRY_PASSWORD | default(""),
                       "CHAT_MASTER_KEY": CHAT_MASTER_KEY | default(""),
+                      "RESEND_API_KEY": RESEND_API_KEY | default(""),
+                      "MAPBOX_TOKEN": MAPBOX_TOKEN | default(""),
+                      "NEXT_PUBLIC_MAPBOX_TOKEN": NEXT_PUBLIC_MAPBOX_TOKEN | default(""),
                       "SENTRY_AUTH_TOKEN": SENTRY_AUTH_TOKEN | default(""),
                       "NEXT_PUBLIC_SENTRY_DSN": NEXT_PUBLIC_SENTRY_DSN | default(""),
                       "SENTRY_DSN_WEB": SENTRY_DSN_WEB | default(""),
@@ -51,7 +54,7 @@ jobs:
           echo "::add-mask::$(jq -r '.REGISTRY_PASSWORD // empty' decrypted.json)"
           CHAT_MASTER_KEY=$(jq -r '.CHAT_MASTER_KEY // empty' decrypted.json)
           if [ -n "$CHAT_MASTER_KEY" ]; then echo "::add-mask::$CHAT_MASTER_KEY"; fi
-          for key in SENTRY_AUTH_TOKEN NEXT_PUBLIC_SENTRY_DSN SENTRY_DSN_WEB SENTRY_DSN_WORKER; do
+          for key in SENTRY_AUTH_TOKEN NEXT_PUBLIC_SENTRY_DSN SENTRY_DSN_WEB SENTRY_DSN_WORKER RESEND_API_KEY MAPBOX_TOKEN NEXT_PUBLIC_MAPBOX_TOKEN; do
             value=$(jq -r --arg k "$key" '.[$k] // empty' decrypted.json)
             if [ -n "$value" ]; then echo "::add-mask::$value"; fi
           done
@@ -75,6 +78,7 @@ jobs:
           export SENTRY_AUTH_TOKEN
           docker build \
             --build-arg NEXT_PUBLIC_APP_URL=https://${{ env.BRANCH_NAME_SAFE }}.cwa.codingforchange.com \
+            --build-arg NEXT_PUBLIC_MAPBOX_TOKEN="$(jq -r '.NEXT_PUBLIC_MAPBOX_TOKEN // empty' decrypted.json)" \
             --build-arg NEXT_PUBLIC_SENTRY_ENVIRONMENT=feature-${{ env.BRANCH_NAME_SAFE }} \
             --build-arg SENTRY_RELEASE=${{ github.sha }} \
             --build-arg NEXT_PUBLIC_SENTRY_DSN="$(jq -r '.NEXT_PUBLIC_SENTRY_DSN // empty' decrypted.json)" \
@@ -126,13 +130,15 @@ jobs:
           echo "DB_PASSWORD=${DB_PASSWORD}" >> .env
           echo "DATABASE_URL=mysql://root:${DB_PASSWORD}@db:3306/cwa" >> .env
           echo "NEXT_PUBLIC_APP_URL=https://${{ env.BRANCH_NAME_SAFE }}.cwa.codingforchange.com" >> .env
+          echo "BETTER_AUTH_URL=https://${{ env.BRANCH_NAME_SAFE }}.cwa.codingforchange.com" >> .env
+          echo "EMAIL_FROM=cwa@codingforchange.com" >> .env
           echo "REDIS_URL=redis://redis:6379" >> .env
           echo "CHAT_MASTER_KEY=$(jq -r '.CHAT_MASTER_KEY // empty' decrypted.json)" >> .env
           echo "IMAGE_TAG=${{ github.sha }}" >> .env
           echo "SENTRY_ENVIRONMENT=feature-${{ env.BRANCH_NAME_SAFE }}" >> .env
           echo "SENTRY_RELEASE=${{ github.sha }}" >> .env
           echo "METRICS_PORT=9464" >> .env
-          for key in NEXT_PUBLIC_SENTRY_DSN SENTRY_DSN_WEB SENTRY_DSN_WORKER; do
+          for key in NEXT_PUBLIC_SENTRY_DSN SENTRY_DSN_WEB SENTRY_DSN_WORKER RESEND_API_KEY MAPBOX_TOKEN; do
             value=$(jq -r --arg k "$key" '.[$k] // empty' decrypted.json)
             if [ -n "$value" ]; then echo "$key=$value" >> .env; fi
           done
@@ -150,6 +156,13 @@ jobs:
           $SCP docker-compose.feature.yml ${SSH_TARGET}:${TARGET_DIR}/docker-compose.yml
           $SCP Caddyfile ${SSH_TARGET}:${TARGET_DIR}/Caddyfile
           $SCP .env ${SSH_TARGET}:${TARGET_DIR}/.env
+
+          # Each branch keeps its own auth secret next to the deployment, so sessions survive
+          # redeploys, never share production's secret and vanish with cleanup-feature.
+          $SSH $SSH_TARGET "cd ${TARGET_DIR} && \
+            umask 077 && \
+            { [ -s .auth-secret ] || openssl rand -base64 32 > .auth-secret; } && \
+            echo \"BETTER_AUTH_SECRET=\$(cat .auth-secret)\" >> .env"
 
           $SSH $SSH_TARGET "cd ${TARGET_DIR} && \
             docker compose pull && \
