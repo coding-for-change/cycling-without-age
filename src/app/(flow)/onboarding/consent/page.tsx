@@ -21,7 +21,11 @@ export default function ConsentPage() {
           chapterName={presetChapterName}
           setUpBy={
             claimBanner
-              ? formatMessage(dict.consent.setUpBy, { name: claimBanner }, locale)
+              ? formatMessage(
+                  dict.consent.setUpBy,
+                  { name: claimBanner },
+                  locale,
+                )
               : null
           }
           defaults={defaults}

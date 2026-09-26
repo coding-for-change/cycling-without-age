@@ -30,7 +30,11 @@ export async function PendingChapterCard({
   return (
     <article className="rounded-2xl border border-line p-5">
       <h2 className="font-display text-lg font-bold">
-        {formatMessage(strings.pendingTitle, { chapter: chapterName }, language)}
+        {formatMessage(
+          strings.pendingTitle,
+          { chapter: chapterName },
+          language,
+        )}
       </h2>
       <p className="mt-1 text-sm text-ink-soft">
         {formatMessage(

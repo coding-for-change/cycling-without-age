@@ -103,7 +103,9 @@ export function ConfirmDeleteDialog({
           className="grid gap-4"
         >
           <DialogHeader>
-            <DialogTitle>{formatMessage(labels.title, { name }, locale)}</DialogTitle>
+            <DialogTitle>
+              {formatMessage(labels.title, { name }, locale)}
+            </DialogTitle>
             <DialogDescription className="text-ink-soft">
               {labels.body}
             </DialogDescription>

@@ -715,7 +715,10 @@ export function ChapterCreateDrawer({
                             strings.create.overlap,
                             {
                               name: overlap.pin.name,
-                              distance: formatDistance(overlap.metres, notation),
+                              distance: formatDistance(
+                                overlap.metres,
+                                notation,
+                              ),
                             },
                             language,
                           )}

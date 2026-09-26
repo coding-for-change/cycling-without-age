@@ -73,11 +73,7 @@ function AdminChip({
   locale: Locale;
 }) {
   const [pending, startTransition] = useTransition();
-  const label = formatMessage(
-    labels.removeAdmin,
-    { name: admin.name },
-    locale,
-  );
+  const label = formatMessage(labels.removeAdmin, { name: admin.name }, locale);
 
   const remove = () =>
     startTransition(async () => {

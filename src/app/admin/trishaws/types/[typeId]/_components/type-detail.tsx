@@ -317,7 +317,11 @@ export function TypeDetail({
               locale={language}
               value={type.photoFileIds}
               readOnly={!canManage}
-              alt={formatMessage(labels.photoAlt, { name: type.name }, language)}
+              alt={formatMessage(
+                labels.photoAlt,
+                { name: type.name },
+                language,
+              )}
               labels={labels.gallery}
               onChange={(fileIds) => setTypePhotosAction(type.id, fileIds)}
             />
