@@ -34,5 +34,6 @@ export function useDrawerParam() {
       });
     },
     go,
+    withParam,
   };
 }

@@ -27,7 +27,9 @@ export const findCountryByCode = (code: string) =>
 const footprintSelect = {
   _count: { select: { chapters: true, admins: true } },
   chapters: {
-    select: { _count: { select: { members: true, passengers: true } } },
+    select: {
+      _count: { select: { members: true, passengers: true, rides: true } },
+    },
   },
 } as const;
 

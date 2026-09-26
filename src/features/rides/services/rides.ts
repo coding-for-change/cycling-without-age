@@ -20,7 +20,16 @@ const calendarSelect = {
   chapter: { select: { id: true, name: true, timeZone: true } },
   trishaws: {
     orderBy: { trishaw: { name: "asc" } },
-    select: { trishaw: { select: { id: true, name: true, type: true } } },
+    select: {
+      trishaw: {
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          type: { select: { id: true, name: true } },
+        },
+      },
+    },
   },
   assignments: {
     select: {
@@ -70,6 +79,12 @@ const overlapping = (from: Date, to: Date) => ({
   endsAt: { gt: from },
 });
 
+const upcomingFrom = (now: Date) =>
+  ({
+    status: "scheduled",
+    endsAt: { gt: now },
+  }) satisfies Prisma.RideWhereInput;
+
 export const findRidesInRange = (chapterIds: string[], from: Date, to: Date) =>
   prisma.ride.findMany({
     where: { chapterId: { in: chapterIds }, ...overlapping(from, to) },
@@ -83,13 +98,15 @@ export const findRidesInRange = (chapterIds: string[], from: Date, to: Date) =>
  * rows outlive it. Without this clause a removed pilot would keep reading that
  * chapter's rides — location, trishaw and roster size included.
  */
+const pilotRideWhere = (userId: string) =>
+  ({
+    assignments: { some: { userId } },
+    chapter: { members: { some: { userId } } },
+  }) satisfies Prisma.RideWhereInput;
+
 export const findRidesForPilot = (userId: string, from: Date, to: Date) =>
   prisma.ride.findMany({
-    where: {
-      assignments: { some: { userId } },
-      chapter: { members: { some: { userId } } },
-      ...overlapping(from, to),
-    },
+    where: { ...pilotRideWhere(userId), ...overlapping(from, to) },
     orderBy: [{ startsAt: "asc" }, { id: "asc" }],
     select: pilotSelect,
   });
@@ -332,4 +349,87 @@ export const countRosterEntries = (rideId: string) =>
 export const deleteRosterEntry = (rideId: string, passengerId: string) =>
   prisma.rideRosterEntry.delete({
     where: { rideId_passengerId: { rideId, passengerId } },
+  });
+
+const trishawRideSelect = {
+  id: true,
+  chapterId: true,
+  model: true,
+  status: true,
+  startsAt: true,
+  endsAt: true,
+  locationName: true,
+  chapter: { select: { id: true, name: true, timeZone: true } },
+  assignments: {
+    select: { role: true, user: { select: { id: true, name: true } } },
+  },
+} satisfies Prisma.RideSelect;
+
+export type TrishawRideRow = Prisma.RideGetPayload<{
+  select: typeof trishawRideSelect;
+}>;
+
+export const findRidesOfTrishaw = (trishawId: string, take: number) =>
+  prisma.ride.findMany({
+    where: { trishaws: { some: { trishawId } } },
+    orderBy: [{ startsAt: "desc" }, { id: "desc" }],
+    select: trishawRideSelect,
+    take,
+  });
+
+export const findRideIdsWithTrishawFrom = async (
+  trishawId: string,
+  now: Date,
+) =>
+  (
+    await prisma.ride.findMany({
+      where: { trishaws: { some: { trishawId } }, ...upcomingFrom(now) },
+      select: { id: true },
+    })
+  ).map((ride) => ride.id);
+
+export const countFutureRidesWithTrishaws = (
+  chapterId: string,
+  trishawIds: string[],
+  now: Date,
+) =>
+  prisma.ride.count({
+    where: {
+      chapterId,
+      ...upcomingFrom(now),
+      trishaws: { some: { trishawId: { in: trishawIds } } },
+    },
+  });
+
+const FINISH_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * The finish page shows the storage access code, so it stays readable only
+ * until a day after the ride ends.
+ */
+const finishableAt = (now: Date) =>
+  ({
+    endsAt: { gte: new Date(now.getTime() - FINISH_WINDOW_MS) },
+  }) satisfies Prisma.RideWhereInput;
+
+export const findFinishableRideForPilot = (
+  rideId: string,
+  userId: string,
+  now: Date,
+) =>
+  prisma.ride.findFirst({
+    where: { id: rideId, ...pilotRideWhere(userId), ...finishableAt(now) },
+    select: calendarSelect,
+  });
+
+export const findLatestRideForPilot = (userId: string, now: Date) =>
+  prisma.ride.findFirst({
+    where: {
+      ...pilotRideWhere(userId),
+      ...finishableAt(now),
+      status: { not: "cancelled" },
+      startsAt: { lte: now },
+    },
+    orderBy: [{ startsAt: "desc" }, { id: "desc" }],
+    select: pilotSelect,
   });

@@ -45,7 +45,7 @@ export type CountryRow = {
   name: string;
   code: string;
   admins: CountryAdmin[];
-  footprint: { chapters: number; members: number; passengers: number };
+  consequences: string[];
 };
 
 export type CountriesTableLabels = CountryFormLabels & {
@@ -57,7 +57,7 @@ export type CountriesTableLabels = CountryFormLabels & {
   removeAdmin: string;
   confirmRemoveAdmin: string;
   appointDialog: { emailLabel: string; hint: string; placeholder: string };
-  delete: Omit<ConfirmDeleteLabels, "errors"> & { footprint: string };
+  delete: Omit<ConfirmDeleteLabels, "errors">;
 };
 
 function AdminChip({
@@ -235,7 +235,7 @@ export function CountriesTable({
           </Button>
           <ConfirmDeleteDialog
             name={row.original.name}
-            footprint={fill(labels.delete.footprint, row.original.footprint)}
+            consequences={row.original.consequences}
             labels={{ ...labels.delete, errors: labels.errors }}
             cancel={labels.cancel}
             action={() => deleteCountryAction(row.original.id)}

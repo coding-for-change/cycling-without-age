@@ -3,9 +3,12 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { chapters } from "@/features/chapters";
+import { fleet } from "@/features/fleet";
+import { wordsLocale } from "@/lib/format";
 import { readActiveScope, type AdminSearchParams } from "../active-scope";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
+import { deletionConsequences } from "../_components/deletion-consequences";
 import { CountriesTable, type CountryRow } from "./_components/countries-table";
 import { PageFallback } from "@/components/page-fallback";
 
@@ -35,10 +38,12 @@ async function Countries({
     chapters.listCountries(),
   ]);
   const countryIds = countries.map((country) => country.id);
-  const [admins, footprints] = await Promise.all([
+  const [admins, footprints, fleetFootprints] = await Promise.all([
     chapters.listAdminsByCountry(countryIds),
     chapters.listCountryFootprints(countryIds),
+    fleet.listCountryFleetFootprints(countryIds),
   ]);
+  const words = wordsLocale(language);
 
   const rows: CountryRow[] = countries.map((country) => {
     const footprint = footprints.get(country.id);
@@ -47,11 +52,17 @@ async function Countries({
       name: country.name,
       code: country.code,
       admins: admins.get(country.id) ?? [],
-      footprint: {
-        chapters: footprint?.chapters ?? 0,
-        members: footprint?.members ?? 0,
-        passengers: footprint?.passengers ?? 0,
-      },
+      consequences: deletionConsequences(
+        {
+          chapters: footprint?.chapters,
+          members: footprint?.members,
+          passengers: footprint?.passengers,
+          rides: footprint?.rides,
+          ...fleetFootprints.get(country.id),
+        },
+        dict.admin.deletion,
+        words,
+      ),
     };
   });
 
@@ -76,6 +87,10 @@ async function Countries({
         language={language}
         labels={{
           ...dict.admin.countries,
+          delete: {
+            ...dict.admin.countries.delete,
+            consequences: dict.admin.deletion.consequences,
+          },
           appointDialog: {
             emailLabel: dict.admin.countries.appointLabel,
             hint: dict.admin.countries.appointBody,

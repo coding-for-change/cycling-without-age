@@ -1,26 +1,21 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { CircleAlert } from "lucide-react";
-import { toast } from "sonner";
-import { AddressSearch } from "@/components/address-search";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import { formatDistance, type Locale } from "@/lib/format";
 import { nearestOverlap, type Coords } from "@/lib/geo";
+import type { ResolvedPlace } from "@/lib/mapbox";
 import { DetailSection } from "../../../_components/detail-page";
+import { PlaceSearch } from "../../../_components/place-search";
 import { CHAPTER_RADIUS_KM } from "@/features/chapters/schemas";
-import { haptics } from "@/lib/native/haptics";
-import { cn, fill } from "@/lib/utils";
+import { fill } from "@/lib/utils";
 import { reportSave } from "@/components/action-feedback";
 import { useSaveStatus } from "@/components/save-status";
 import type { MapPin } from "../../_components/chapter-map";
-import {
-  resolveChapterPlace,
-  suggestChapterPlaces,
-  updateChapterAction,
-} from "../../actions";
+import { updateChapterAction } from "../../actions";
 import type { ChapterLabels } from "./chapter-editor";
 import { ChapterTimeZone } from "./chapter-time-zone";
 
@@ -61,7 +56,6 @@ export function ChapterLocation({
   labels: ChapterLabels;
 }) {
   const report = useSaveStatus();
-  const sessionToken = useMemo(() => crypto.randomUUID(), []);
   // ponytail: the optimistic value holds only until the server moves off the
   // value it replaced — same trick as InlineField, including its one wart,
   // that an Undo shows the server value for the length of one refresh.
@@ -69,7 +63,6 @@ export function ChapterLocation({
     null,
   );
   const [dragging, setDragging] = useState<number | null>(null);
-  const [resolving, setResolving] = useState(false);
 
   const key = keyOf(server);
   const place = override && override.from === key ? override.to : server;
@@ -94,15 +87,7 @@ export function ChapterLocation({
     if (!ok) setOverride(null);
   };
 
-  const pick = async (mapboxId: string) => {
-    setResolving(true);
-    const found = await resolveChapterPlace({ mapboxId, sessionToken });
-    setResolving(false);
-    if (!found) {
-      haptics.error();
-      toast.error(labels.field.errors.generic);
-      return;
-    }
+  const pick = async (found: ResolvedPlace) => {
     const previous = place;
     await persist(
       {
@@ -120,21 +105,13 @@ export function ChapterLocation({
 
   return (
     <DetailSection title={labels.location}>
-      <div
-        aria-busy={resolving}
-        className={cn(resolving && "pointer-events-none opacity-60")}
-      >
-        <AddressSearch
-          key={place.address ?? ""}
-          defaultQuery={place.address ?? ""}
-          search={(query) =>
-            suggestChapterPlaces({ query, sessionToken, language })
-          }
-          strings={labels.address}
-          onPick={(suggestion) => void pick(suggestion.id)}
-          inputClassName="h-11 rounded-(--r-card)"
-        />
-      </div>
+      <PlaceSearch
+        address={place.address}
+        language={language}
+        strings={labels.address}
+        failed={labels.field.errors.generic}
+        onPlace={pick}
+      />
 
       {mapEnabled ? (
         <div className="h-72 overflow-hidden rounded-(--r-tile) border border-line md:h-80">

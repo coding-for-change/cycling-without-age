@@ -1,33 +1,32 @@
 import { Suspense } from "react";
 import { headers } from "next/headers";
 import { chapters as chapterFeature } from "@/features/chapters";
-import { rides } from "@/features/rides";
+import { fleet } from "@/features/fleet";
 import { TrishawTimeline } from "@/features/rides/components/trishaw-timeline";
-import { addDays, firstDayOfWeek, startOfWeek } from "@/lib/calendar";
-import { resolveLocale } from "@/lib/format";
 import { getDictionary } from "@/lib/i18n";
-import { PageFallback } from "@/components/page-fallback";
-import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
-import { WeekSwitcher } from "../_components/week-switcher";
-import { readActiveScope, type AdminSearchParams } from "../active-scope";
-import { calendarTimeZone } from "../calendar-scope";
-import { readWeekAnchor } from "../week-param";
+import { AdminPageHeader, AdminPageShell } from "../../_components/admin-page";
+import { AdminTabs } from "../../_components/admin-tabs";
+import { WeekSwitcher } from "../../_components/week-switcher";
+import { readActiveScope, type AdminSearchParams } from "../../active-scope";
+import { readCalendarWeek } from "../../calendar-week";
+import { fleetTabs } from "../_components/options";
+import { TimelineSkeleton } from "./_components/timeline-skeleton";
 
-export default function BikesPage({
+export default function TrishawTimelinePage({
   searchParams,
 }: {
   searchParams: Promise<AdminSearchParams>;
 }) {
   return (
     <AdminPageShell>
-      <Suspense fallback={<PageFallback />}>
-        <Bikes searchParams={searchParams} />
+      <Suspense fallback={<TimelineSkeleton />}>
+        <Timeline searchParams={searchParams} />
       </Suspense>
     </AdminPageShell>
   );
 }
 
-async function Bikes({
+async function Timeline({
   searchParams,
 }: {
   searchParams: Promise<AdminSearchParams>;
@@ -41,27 +40,24 @@ async function Bikes({
     getDictionary(),
     headers(),
     chapterFeature.getChapterTimeZones(chapterIds),
-    rides.listTrishaws(chapterIds),
+    fleet.listTrishaws(chapterIds),
   ]);
 
-  const locale = resolveLocale(head.get("accept-language"));
-  const weekStartsOn = firstDayOfWeek(locale);
-  const { timeZone, label } = calendarTimeZone(zones);
-  const now = new Date();
-  const anchor = readWeekAnchor(params.week, timeZone, weekStartsOn, now);
-  const weekStart = startOfWeek(anchor, timeZone, weekStartsOn);
-
-  const weekRides = await rides.listRidesInRange(
-    chapterIds,
-    weekStart,
-    addDays(weekStart, 7, timeZone),
-  );
+  const {
+    locale,
+    weekStartsOn,
+    timeZone,
+    label,
+    now,
+    anchor,
+    rides: weekRides,
+  } = await readCalendarWeek({ week: params.week, zones, head, chapterIds });
 
   return (
     <>
       <AdminPageHeader title={dict.admin.pages.bikes.title}>
         <WeekSwitcher
-          pathname="/admin/bikes"
+          pathname="/admin/trishaws/timeline"
           scopeQuery={scopeQuery}
           anchor={anchor}
           timeZone={timeZone}
@@ -70,7 +66,13 @@ async function Bikes({
           now={now}
         />
       </AdminPageHeader>
-      {label ? <p className="text-2sm text-ink-soft -mt-3">{label}</p> : null}
+      <AdminTabs
+        tabs={fleetTabs(dict.fleet.trishaws.tabs)}
+        current="timeline"
+        scopeQuery={scopeQuery}
+        label={dict.fleet.trishaws.tabs.label}
+      />
+      {label ? <p className="text-2sm text-ink-soft">{label}</p> : null}
       <div className="-mx-4 md:mx-0">
         <TrishawTimeline
           trishaws={trishaws}

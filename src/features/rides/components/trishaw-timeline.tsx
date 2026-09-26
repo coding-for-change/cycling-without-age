@@ -2,7 +2,7 @@ import { Bike } from "lucide-react";
 import { calendarDate, dayKey, daysTouched, weekDays } from "@/lib/calendar";
 import { formatTime, type Locale } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { RideCalendarRow, TrishawRow } from "../facade";
+import type { RideCalendarRow } from "../facade";
 import { DayHeading } from "./day-heading";
 import {
   rideTone,
@@ -11,8 +11,15 @@ import {
   type CalendarStrings,
 } from "./ride-presentation";
 
+export type TimelineTrishaw = {
+  id: string;
+  name: string;
+  status: RideCalendarRow["trishaws"][number]["trishaw"]["status"];
+  type: { name: string } | null;
+};
+
 type Props = {
-  trishaws: TrishawRow[];
+  trishaws: TimelineTrishaw[];
   rides: RideCalendarRow[];
   anchor: Date;
   timeZone: string;
@@ -162,7 +169,7 @@ function TrishawLabel({
   trishaw,
   strings,
 }: {
-  trishaw: TrishawRow;
+  trishaw: TimelineTrishaw;
   strings: CalendarStrings;
 }) {
   return (
