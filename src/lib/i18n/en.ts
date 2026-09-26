@@ -312,6 +312,29 @@ const en = {
       pilot: "Pilot",
       passenger: "Passenger",
     },
+    deletion: {
+      consequences: "This also deletes, for good:",
+      chapters: { one: "1 chapter", other: "{count} chapters" },
+      members: {
+        one: "1 membership (the account stays)",
+        other: "{count} memberships (the accounts stay)",
+      },
+      passengers: { one: "1 passenger", other: "{count} passengers" },
+      pending: {
+        one: "1 open application",
+        other: "{count} open applications",
+      },
+      rides: {
+        one: "1 ride, past ones included",
+        other: "{count} rides, past ones included",
+      },
+      trishaws: { one: "1 trishaw", other: "{count} trishaws" },
+      locations: {
+        one: "1 storage location",
+        other: "{count} storage locations",
+      },
+      models: { one: "1 trishaw model", other: "{count} trishaw models" },
+    },
     table: {
       search: "Search…",
       clearSearch: "Clear search",
@@ -664,9 +687,7 @@ const en = {
         delete: {
           open: "Delete chapter",
           title: "Delete {name} for good?",
-          body: "Its members, passengers and open requests go with it. Rides already ridden stay on the record.",
-          footprint:
-            "{members} members \u00b7 {passengers} passengers \u00b7 {pending} waiting",
+          body: "Everything that belongs to the chapter goes with it. This cannot be undone.",
           label: "Type {word} to confirm",
           word: "DELETE",
           submit: "Delete chapter",
@@ -694,9 +715,7 @@ const en = {
       delete: {
         open: "Delete country",
         title: "Delete {name} for good?",
-        body: "Every chapter in this country goes with it — their members, passengers and open requests too. Rides already ridden stay on the record.",
-        footprint:
-          "{chapters} chapters \u00b7 {members} members \u00b7 {passengers} passengers",
+        body: "Every chapter in this country goes with it, and everything that belongs to them. This cannot be undone.",
         label: "Type {word} to confirm",
         word: "DELETE",
         submit: "Delete country",

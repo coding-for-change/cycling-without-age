@@ -331,6 +331,23 @@ const de: Dictionary = {
       pilot: "Pilot",
       passenger: "Passagier",
     },
+    deletion: {
+      consequences: "Damit wird endgültig mitgelöscht:",
+      chapters: { one: "1 Ortsgruppe", other: "{count} Ortsgruppen" },
+      members: {
+        one: "1 Mitgliedschaft (das Konto bleibt)",
+        other: "{count} Mitgliedschaften (die Konten bleiben)",
+      },
+      passengers: { one: "1 Fahrgast", other: "{count} Fahrgäste" },
+      pending: { one: "1 offene Anfrage", other: "{count} offene Anfragen" },
+      rides: {
+        one: "1 Ausfahrt, vergangene eingeschlossen",
+        other: "{count} Ausfahrten, vergangene eingeschlossen",
+      },
+      trishaws: { one: "1 Rikscha", other: "{count} Rikschas" },
+      locations: { one: "1 Standort", other: "{count} Standorte" },
+      models: { one: "1 Rikscha-Modell", other: "{count} Rikscha-Modelle" },
+    },
     table: {
       search: "Suchen …",
       clearSearch: "Suche löschen",
@@ -688,9 +705,7 @@ const de: Dictionary = {
         delete: {
           open: "Ortsgruppe löschen",
           title: "{name} endgültig löschen?",
-          body: "Mitglieder, Fahrgäste und offene Anfragen gehen mit. Bereits gefahrene Fahrten bleiben erhalten.",
-          footprint:
-            "{members} Mitglieder · {passengers} Fahrgäste · {pending} wartend",
+          body: "Alles, was zur Ortsgruppe gehört, geht mit. Das lässt sich nicht rückgängig machen.",
           label: "Tipp {word} zur Bestätigung",
           word: "DELETE",
           submit: "Ortsgruppe löschen",
@@ -718,9 +733,7 @@ const de: Dictionary = {
       delete: {
         open: "Land löschen",
         title: "{name} endgültig löschen?",
-        body: "Jede Ortsgruppe in diesem Land geht mit — samt Mitgliedern, Fahrgästen und offenen Anfragen. Bereits gefahrene Fahrten bleiben erhalten.",
-        footprint:
-          "{chapters} Ortsgruppen · {members} Mitglieder · {passengers} Fahrgäste",
+        body: "Jede Ortsgruppe in diesem Land geht mit, samt allem, was zu ihr gehört. Das lässt sich nicht rückgängig machen.",
         label: "Tipp {word} zur Bestätigung",
         word: "DELETE",
         submit: "Land löschen",
