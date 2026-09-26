@@ -60,6 +60,7 @@ import {
   type TypeOption,
   type TypePickerLabels,
 } from "@/features/fleet/components/type-picker";
+import type { Locale } from "@/lib/i18n/locales";
 
 export type TrishawEditorLabels = {
   field: InlineFieldLabels;
@@ -127,7 +128,7 @@ export type TrishawEditorProps = {
   types: TypeOption[];
   locations: LocationOption[];
   backHref: string;
-  language: string;
+  language: Locale;
   labels: TrishawEditorLabels;
   panels: ReactNode;
   children: ReactNode;
@@ -415,6 +416,7 @@ function EditorLayout({
           {canManage ? (
             <ConfirmDeleteDialog
               name={trishaw.name}
+              locale={language}
               labels={labels.delete}
               cancel={labels.cancel}
               action={() => deleteTrishawAction(id)}
@@ -431,6 +433,7 @@ function EditorLayout({
         >
           <PhotoGallery
             kind="trishawPhoto"
+            locale={language}
             value={trishaw.photoFileIds}
             readOnly={!canManage}
             alt={trishaw.name}

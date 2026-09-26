@@ -2,9 +2,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { perspectiveViewerSession } from "@/lib/auth-guards";
 import { cacheLife } from "next/cache";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionary, getLocale } from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
-import { fill, firstName } from "@/lib/utils";
+import { firstName } from "@/lib/utils";
 import { primaryAction, type MemberPerspective } from "../../nav";
 import { MEMBER_LIFE } from "../instant";
 import { signInHref } from "@/lib/redirects";
@@ -17,14 +18,19 @@ export async function Greeting({
   "use cache: private";
   cacheLife(MEMBER_LIFE);
 
-  const [session, dict] = await Promise.all([
+  const [session, dict, locale] = await Promise.all([
     perspectiveViewerSession(perspective),
     getDictionary(),
+    getLocale(),
   ]);
   const { guest, home, action } = dict.member;
 
   const heading = session
-    ? fill(home.greeting, { name: firstName(session.user.name) })
+    ? formatMessage(
+        home.greeting,
+        { name: firstName(session.user.name) },
+        locale,
+      )
     : guest.greeting;
   const tagline = session ? home[perspective].tagline : guest.tagline;
   const hero = session

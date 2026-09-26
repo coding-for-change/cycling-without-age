@@ -8,7 +8,8 @@ import { canTakePhoto, takePhoto } from "@/lib/native/camera";
 import type { NotifyLabels } from "@/components/action-feedback";
 import { haptics } from "@/lib/native/haptics";
 import { acceptAttribute, type FileKind } from "@/lib/storage/limits";
-import { cn, fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import { cn } from "@/lib/utils";
 import type { FleetResult } from "../actions";
 import { fileUrl } from "./file-image";
 import {
@@ -18,6 +19,7 @@ import {
 } from "./photo-lightbox";
 import { TileRemoveButton, UploadDropzone, useFileDrop } from "./upload-parts";
 import { useUpload } from "./use-upload";
+import type { Locale } from "@/lib/i18n/locales";
 
 export type PhotoGalleryLabels = LightboxLabels & {
   upload: string;
@@ -46,6 +48,7 @@ export function PhotoGallery({
   readOnly = false,
   camera = false,
   className,
+  locale,
 }: {
   kind: FileKind;
   value: string[];
@@ -56,6 +59,7 @@ export function PhotoGallery({
   readOnly?: boolean;
   camera?: boolean;
   className?: string;
+  locale: Locale;
 }) {
   const inputId = useId();
   const input = useRef<HTMLInputElement>(null);
@@ -87,7 +91,7 @@ export function PhotoGallery({
     const images = files.filter((file) => file.type.startsWith("image/"));
     if (!images.length) return;
     if (images.length > room)
-      toast.message(fill(labels.full, { max: String(max) }));
+      toast.message(formatMessage(labels.full, { max: String(max) }, locale));
     const batch = images.slice(0, Math.max(room, 0)).map((file) => ({
       file,
       key: `${file.name}-${file.size}-${Math.random()}`,
@@ -102,7 +106,10 @@ export function PhotoGallery({
       setPending((current) => current.filter((p) => p.key !== item.key));
       URL.revokeObjectURL(item.preview);
       if (result.ok) uploaded.push(result.fileId);
-      else toast.error(fill(labels.failed, { name: item.file.name }));
+      else
+        toast.error(
+          formatMessage(labels.failed, { name: item.file.name }, locale),
+        );
     }
     if (!uploaded.length) return;
     const previous = photos;
@@ -210,10 +217,14 @@ export function PhotoGallery({
         >
           <button
             type="button"
-            aria-label={fill(labels.open, {
-              index: String(index + 1),
-              count: String(count),
-            })}
+            aria-label={formatMessage(
+              labels.open,
+              {
+                index: String(index + 1),
+                count: String(count),
+              },
+              locale,
+            )}
             onClick={() => show(index)}
             className="block size-full cursor-zoom-in outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-inset"
           >
@@ -291,6 +302,7 @@ export function PhotoGallery({
           }}
           onClose={close}
           labels={labels}
+          locale={locale}
         />
       ) : null}
     </div>

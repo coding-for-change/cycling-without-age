@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { useCharacter } from "@/components/character";
 import { haptics } from "@/lib/native/haptics";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 import { Button } from "@/components/ui/button";
 import {
   InputOTP,
@@ -29,7 +30,13 @@ type Strings = {
   errors: Record<string, string>;
 };
 
-export function CodeStep({ strings }: { strings: Strings }) {
+export function CodeStep({
+  strings,
+  locale,
+}: {
+  strings: Strings;
+  locale: Locale;
+}) {
   const router = useRouter();
   const { flow, update } = useFlow();
   const { say, oops } = useCharacter();
@@ -110,9 +117,10 @@ export function CodeStep({ strings }: { strings: Strings }) {
   return (
     <Step
       title={strings.title}
-      description={fill(
+      description={formatMessage(
         channel === "email" ? strings.sentToEmail : strings.sentToPhone,
         { identifier: display ?? identifier },
+        locale,
       )}
       action={
         <div className="space-y-3 text-center">

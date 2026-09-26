@@ -15,7 +15,7 @@ import type {
 import type { Dictionary, Locale } from "@/lib/i18n";
 import { LOCALE_LABELS, locales } from "@/lib/i18n/locales";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { NAV, type NavItem, type NavKey } from "./nav";
 import { scopeChoices } from "./scopes";
 
@@ -114,11 +114,15 @@ const perspectiveCommands = (
         keywords: [],
       }));
 
-function scopeCommands(dict: Dictionary, scope: AdminScope): ResolvedCommand[] {
+function scopeCommands(
+  dict: Dictionary,
+  scope: AdminScope,
+  locale: Locale,
+): ResolvedCommand[] {
   // Same list the sidebar switcher renders, from the same builder — the two had
   // already drifted on when "All chapters" is on offer. A single choice is not a
   // choice: every pick would be the view they are already looking at.
-  const choices = scopeChoices(scope, dict);
+  const choices = scopeChoices(scope, dict, locale);
   if (choices.length < 2) return [];
 
   return choices.map(({ arg, label, icon }) => ({
@@ -140,9 +144,11 @@ const accountCommands = (
     .map((locale) => ({
       id: `locale:${locale}`,
       group: "account" as const,
-      label: fill(dict.admin.commands.language, {
-        name: LOCALE_LABELS[locale].name,
-      }),
+      label: formatMessage(
+        dict.admin.commands.language,
+        { name: LOCALE_LABELS[locale].name },
+        active,
+      ),
       icon: "language" as const,
       run: { kind: "action" as const, id: "locale.set" as const, arg: locale },
       keywords: [],
@@ -174,7 +180,7 @@ export function adminCommands(
   return [
     ...collectCommands(staticEntries(dict), scope),
     ...perspectiveCommands(dict, ctx.perspectives),
-    ...scopeCommands(dict, scope),
+    ...scopeCommands(dict, scope, ctx.locale),
     ...accountCommands(dict, ctx.locale),
   ];
 }

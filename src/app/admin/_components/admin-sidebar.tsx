@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/sidebar";
 import { chat } from "@/features/chat";
 import { requireAdminScope } from "@/lib/auth-guards";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionary, getLocale } from "@/lib/i18n";
 import { loadAccount } from "@/components/account/load-account";
 import { UserMenu } from "@/components/user-menu";
 import { resolveNav } from "../nav";
@@ -26,10 +26,11 @@ import { CommandHint } from "./command-hint";
 import { ScopeSwitcher } from "./scope-switcher";
 
 export async function AdminSidebar() {
-  const [{ session, scope }, dict, account] = await Promise.all([
+  const [{ session, scope }, dict, account, locale] = await Promise.all([
     requireAdminScope(),
     getDictionary(),
     loadAccount(),
+    getLocale(),
   ]);
 
   const [unread, stored] = await Promise.all([
@@ -48,7 +49,7 @@ export async function AdminSidebar() {
         <ScopeSwitcher
           perspectives={perspectiveChoices(session.access, dict)}
           activePerspective="admin"
-          scopes={scopeChoices(scope, dict)}
+          scopes={scopeChoices(scope, dict, locale)}
           defaultScope={scopeArgOf(stored)}
           roleLabel={roleLabel(session.access, dict)}
           strings={dict.admin.scope}

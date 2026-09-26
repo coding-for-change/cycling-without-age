@@ -1,5 +1,6 @@
-import { formatPlural, type Locale } from "@/lib/format";
+import type { Locale } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
 
 export const trishawSummary = (
   trishaw: {
@@ -22,7 +23,11 @@ export const trishawSummary = (
   photoFileId: trishaw.photoFileId ?? trishaw.type?.photoFileId ?? null,
   model: trishaw.type?.name ?? null,
   seats: trishaw.type
-    ? formatPlural(trishaw.type.seats, dict.fleet.common.seats, words)
+    ? formatMessage(
+        dict.fleet.common.seats,
+        { count: trishaw.type.seats },
+        words,
+      )
     : null,
   wheelchair: trishaw.type?.wheelchairAccessible ?? false,
   location: trishaw.storageLocation.name,

@@ -1,11 +1,11 @@
 import { Bike, MapPin, UserRound } from "lucide-react";
 import { calendarDate, dayKey } from "@/lib/calendar";
 import {
-  formatPlural,
   formatShortDateWithWeekday,
   formatTime,
   type Locale,
 } from "@/lib/format";
+import { formatMessage } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
 import type { PilotRideRow, RideCalendarRow } from "../facade";
 import {
@@ -162,7 +162,11 @@ function AgendaRow({
           {ride.roster?.length
             ? rideRiderNames(ride.roster)
             : ride._count.roster
-              ? formatPlural(ride._count.roster, strings.riders, words)
+              ? formatMessage(
+                  strings.riders,
+                  { count: ride._count.roster },
+                  words,
+                )
               : strings.noRiders}
         </span>
       </div>

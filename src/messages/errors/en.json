@@ -1,0 +1,17 @@
+{
+  "body": "This page stopped mid-ride. Try again — and if it keeps happening, tell us what you were doing.",
+  "drawer": {
+    "cancel": "Cancel",
+    "description": "A sentence or two is plenty. It goes straight to the people who can fix it.",
+    "done": "Thank you. That helps more than you'd think.",
+    "failed": "That didn't send. Try again in a moment.",
+    "placeholder": "I tapped Save on my profile and the screen went blank.",
+    "submit": "Send it",
+    "title": "Tell us what happened",
+    "tooShort": "A few more words, please — at least ten characters."
+  },
+  "errorId": "Error ID: {id}",
+  "report": "Tell us what happened",
+  "retry": "Try again",
+  "title": "The chain came off"
+}

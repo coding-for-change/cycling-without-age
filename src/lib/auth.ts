@@ -17,6 +17,7 @@ import { APP_URL } from "@/lib/app-url";
 import { createElement } from "react";
 import { sendMail } from "@/lib/mailer";
 import { getLocale } from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
 import { getEmailStrings } from "@/emails/strings";
 import { OtpEmail } from "@/emails/otp";
 import { sendSms } from "@/lib/sms";
@@ -111,7 +112,7 @@ export const auth = betterAuth({
         const strings = getEmailStrings(locale).otp;
         await sendMail({
           to: email,
-          subject: strings.subject.replace("{otp}", otp),
+          subject: formatMessage(strings.subject, { otp }, locale),
           text: `${strings.heading}: ${otp}. ${strings.expiry}`,
           react: createElement(OtpEmail, { locale, otp, strings }),
         });

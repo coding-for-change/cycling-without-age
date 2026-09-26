@@ -4,7 +4,6 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
-import { wordsLocale } from "@/lib/format";
 import { readActiveScope, type AdminSearchParams } from "../active-scope";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
@@ -43,7 +42,6 @@ async function Countries({
     chapters.listCountryFootprints(countryIds),
     fleet.listCountryFleetFootprints(countryIds),
   ]);
-  const words = wordsLocale(language);
 
   const rows: CountryRow[] = countries.map((country) => {
     const footprint = footprints.get(country.id);
@@ -61,7 +59,7 @@ async function Countries({
           ...fleetFootprints.get(country.id),
         },
         dict.admin.deletion,
-        words,
+        language,
       ),
     };
   });

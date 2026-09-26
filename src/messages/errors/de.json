@@ -1,0 +1,17 @@
+{
+  "body": "Diese Seite ist mitten in der Fahrt stehen geblieben. Noch einmal versuchen — und wenn es wieder passiert, gern kurz Bescheid geben.",
+  "drawer": {
+    "cancel": "Abbrechen",
+    "description": "Ein, zwei Sätze reichen völlig. Sie landen direkt bei den Leuten, die es reparieren.",
+    "done": "Danke. Das hilft mehr, als man denkt.",
+    "failed": "Das ging nicht raus. Gleich noch einmal versuchen.",
+    "placeholder": "Im Profil auf Speichern getippt, dann war der Bildschirm leer.",
+    "submit": "Abschicken",
+    "title": "Was ist passiert?",
+    "tooShort": "Ein paar Worte mehr bitte — mindestens zehn Zeichen."
+  },
+  "errorId": "Fehler-ID: {id}",
+  "report": "Erzählen, was passiert ist",
+  "retry": "Noch einmal versuchen",
+  "title": "Die Kette ist abgesprungen"
+}

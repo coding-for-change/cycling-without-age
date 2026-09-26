@@ -12,12 +12,8 @@ import {
   wallClock,
   weekDays,
 } from "@/lib/calendar";
-import {
-  formatHour,
-  formatPlural,
-  formatTime,
-  type Locale,
-} from "@/lib/format";
+import { formatHour, formatTime, type Locale } from "@/lib/format";
+import { formatMessage } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
 import type { RideCalendarRow } from "../facade";
 import { DayHeading } from "./day-heading";
@@ -243,7 +239,7 @@ function DayColumn({
         const { lane, lanes: width } = packed[index];
         const clampedTop = Math.max(0, top);
         const cancelled = ride.status === "cancelled";
-        const groundedNote = rideGroundedNote(ride, now, fleet);
+        const groundedNote = rideGroundedNote(ride, now, fleet, words);
         const where = rideWhere(ride, strings) ?? strings.models[ride.model];
 
         return (
@@ -308,7 +304,11 @@ function DayColumn({
               {rideTrishawNames(ride, strings)}
               {" · "}
               {ride._count.roster
-                ? formatPlural(ride._count.roster, strings.riders, words)
+                ? formatMessage(
+                    strings.riders,
+                    { count: ride._count.roster },
+                    words,
+                  )
                 : ridePilots(ride).length
                   ? strings.roles.pilot
                   : strings.pilotNeeded}

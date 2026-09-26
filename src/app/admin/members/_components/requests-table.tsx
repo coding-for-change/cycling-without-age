@@ -10,6 +10,7 @@ import {
   stopRowClick,
   type DataTableStrings,
 } from "@/components/ui/data-table";
+import type { Locale } from "@/lib/i18n/locales";
 import { mutedColumn } from "../../_components/table-columns";
 import {
   DecisionDialog,
@@ -48,6 +49,7 @@ export function RequestsTable({
   errors,
   count,
   table,
+  locale,
 }: {
   rows: RequestRow[];
   showChapter: boolean;
@@ -57,6 +59,7 @@ export function RequestsTable({
   errors: NotifyLabels["errors"];
   count: string;
   table: DataTableStrings;
+  locale: Locale;
 }) {
   const [target, setTarget] = useState<DecisionTarget | null>(null);
 
@@ -152,6 +155,7 @@ export function RequestsTable({
         columns={columns}
         data={rows}
         strings={table}
+        locale={locale}
         initialHidden={showChapter ? ["phone"] : ["chapter", "phone"]}
         rowHref={(row) => `/admin/members/${row.userId}${scopeQuery}`}
         getRowId={(row) => row.applicationId}
@@ -162,6 +166,7 @@ export function RequestsTable({
         onClose={() => setTarget(null)}
         labels={labels}
         errors={errors}
+        locale={locale}
       />
     </section>
   );

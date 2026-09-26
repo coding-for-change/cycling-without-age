@@ -26,8 +26,13 @@ import {
   type Locale,
 } from "@/lib/format";
 import { trishawSummary } from "@/components/trishaw-summary";
-import { getDictionary, getLocale, type Dictionary } from "@/lib/i18n";
-import { fill } from "@/lib/utils";
+import {
+  getDictionary,
+  getLocale,
+  type Dictionary,
+  type Locale as UiLocale,
+} from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
 import { finishRideView } from "@/use-cases/finish-ride";
 import { DoneButton } from "./done-button";
 
@@ -124,6 +129,7 @@ export async function FinishRide({
             dict={dict}
             damageLabels={damageLabels}
             locale={locale}
+            language={language}
             words={words}
             timeZone={zone}
           />
@@ -154,6 +160,7 @@ function TrishawReturn({
   dict,
   damageLabels,
   locale,
+  language,
   words,
   timeZone,
 }: {
@@ -162,6 +169,7 @@ function TrishawReturn({
   dict: Dictionary;
   damageLabels: DamageFormLabels;
   locale: Locale;
+  language: UiLocale;
   words: Locale;
   timeZone: string;
 }) {
@@ -277,9 +285,11 @@ function TrishawReturn({
                 {location.entrancePhotoFileId ? (
                   <FileImage
                     fileId={location.entrancePhotoFileId}
-                    alt={fill(finish.entrancePhoto, {
-                      location: location.name,
-                    })}
+                    alt={formatMessage(
+                      finish.entrancePhoto,
+                      { location: location.name },
+                      words,
+                    )}
                     className="aspect-video w-full rounded-xl"
                   />
                 ) : null}
@@ -347,6 +357,7 @@ function TrishawReturn({
         ) : null}
         <DamageReportDrawer
           rideId={rideId}
+          locale={language}
           trishawId={trishaw.id}
           trishawName={trishaw.name}
           paramValue={trishaw.id}
@@ -354,7 +365,11 @@ function TrishawReturn({
           labels={{
             ...damageLabels,
             open: common.damage.report,
-            title: fill(finish.reportTitle, { name: trishaw.name }),
+            title: formatMessage(
+              finish.reportTitle,
+              { name: trishaw.name },
+              words,
+            ),
             body: finish.reportBody,
           }}
         />

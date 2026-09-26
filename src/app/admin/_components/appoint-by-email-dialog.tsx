@@ -6,7 +6,8 @@ import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 import {
   notify,
   type ActionResult,
@@ -23,6 +24,7 @@ export function AppointByEmailDialog({
   labels,
   action,
   trigger,
+  locale,
 }: {
   triggerLabel: string;
   title: string;
@@ -32,6 +34,7 @@ export function AppointByEmailDialog({
   labels: NotifyLabels;
   action: (email: string) => Promise<ActionResult>;
   trigger?: (open: () => void) => ReactNode;
+  locale: Locale;
 }) {
   const formId = useId();
   const inputId = useId();
@@ -44,7 +47,10 @@ export function AppointByEmailDialog({
     const value = email.trim();
     startTransition(async () => {
       const result = await action(value);
-      notify(result, { ...labels, done: fill(labels.done, { email: value }) });
+      notify(result, {
+        ...labels,
+        done: formatMessage(labels.done, { email: value }, locale),
+      });
       if (!result.ok) return;
       setEmail("");
       setOpen(false);

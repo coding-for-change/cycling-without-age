@@ -59,8 +59,9 @@ import { formatDistance, type Locale } from "@/lib/format";
 import { nearestOverlap, type Coords } from "@/lib/geo";
 import { regionName } from "@/lib/countries";
 import type { ResolvedPlace } from "@/lib/mapbox";
+import { formatMessage } from "@/lib/i18n/format";
 import { haptics } from "@/lib/native/haptics";
-import { cn, fill } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
 import { notify, type NotifyLabels } from "@/components/action-feedback";
 import { TextField } from "../../_components/text-field";
@@ -326,7 +327,11 @@ export function ChapterCreateDrawer({
       notify(
         { ok: true },
         {
-          done: fill(strings.create.countryAdded, { country: name }),
+          done: formatMessage(
+            strings.create.countryAdded,
+            { country: name },
+            language,
+          ),
           errors: strings.errors,
         },
       );
@@ -401,7 +406,11 @@ export function ChapterCreateDrawer({
       onOpenChange={close}
       title={
         created
-          ? fill(strings.create.done.title, { name: created.name })
+          ? formatMessage(
+              strings.create.done.title,
+              { name: created.name },
+              language,
+            )
           : strings.new
       }
       description={created ? undefined : strings.create.intro}
@@ -464,6 +473,7 @@ export function ChapterCreateDrawer({
           slug={created.slug}
           url={joinLink}
           strings={strings}
+          language={language}
         />
       ) : (
         <div className="grid gap-6 md:h-full md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -636,9 +646,11 @@ export function ChapterCreateDrawer({
                 {detected && !detected.known ? (
                   <div className="grid gap-2 rounded-(--r-card) bg-mint-tint p-3 text-2sm">
                     <p>
-                      {fill(strings.create.countryMissing, {
-                        country: regionName(detected.code, language),
-                      })}
+                      {formatMessage(
+                        strings.create.countryMissing,
+                        { country: regionName(detected.code, language) },
+                        language,
+                      )}
                     </p>
                     {canCreateCountry ? (
                       <Button
@@ -648,15 +660,19 @@ export function ChapterCreateDrawer({
                         className="min-h-11 justify-self-start"
                         onClick={() => addCountry(detected.code)}
                       >
-                        {fill(strings.create.addCountry, {
-                          country: regionName(detected.code, language),
-                        })}
+                        {formatMessage(
+                          strings.create.addCountry,
+                          { country: regionName(detected.code, language) },
+                          language,
+                        )}
                       </Button>
                     ) : (
                       <p className="text-ink-soft">
-                        {fill(strings.create.needCountryAdmin, {
-                          country: regionName(detected.code, language),
-                        })}
+                        {formatMessage(
+                          strings.create.needCountryAdmin,
+                          { country: regionName(detected.code, language) },
+                          language,
+                        )}
                       </p>
                     )}
                   </div>
@@ -682,9 +698,11 @@ export function ChapterCreateDrawer({
                       />
                     </FormControl>
                     <p className="text-2sm tabular-nums text-ink-soft">
-                      {fill(strings.create.radiusValue, {
-                        distance: formatDistance(radiusKm * 1000, notation),
-                      })}
+                      {formatMessage(
+                        strings.create.radiusValue,
+                        { distance: formatDistance(radiusKm * 1000, notation) },
+                        language,
+                      )}
                     </p>
                     {overlap ? (
                       <p className="flex items-start gap-2 text-2sm text-ink-soft">
@@ -693,10 +711,17 @@ export function ChapterCreateDrawer({
                           aria-hidden
                         />
                         <span>
-                          {fill(strings.create.overlap, {
-                            name: overlap.pin.name,
-                            distance: formatDistance(overlap.metres, notation),
-                          })}
+                          {formatMessage(
+                            strings.create.overlap,
+                            {
+                              name: overlap.pin.name,
+                              distance: formatDistance(
+                                overlap.metres,
+                                notation,
+                              ),
+                            },
+                            language,
+                          )}
                         </span>
                       </p>
                     ) : null}
@@ -733,10 +758,14 @@ export function ChapterCreateDrawer({
                         />
                       </FormControl>
                       <p className="text-right text-xs tabular-nums text-ink-faint">
-                        {fill(strings.create.counter, {
-                          count: (field.value ?? "").length,
-                          max: CHAPTER_DESCRIPTION_MAX,
-                        })}
+                        {formatMessage(
+                          strings.create.counter,
+                          {
+                            count: (field.value ?? "").length,
+                            max: CHAPTER_DESCRIPTION_MAX,
+                          },
+                          language,
+                        )}
                       </p>
                       <FormMessage />
                     </FormItem>
@@ -910,11 +939,13 @@ function DonePanel({
   slug,
   url,
   strings,
+  language,
 }: {
   name: string;
   slug: string;
   url: string;
   strings: ChapterCreateStrings;
+  language: string;
 }) {
   return (
     <div className="mx-auto grid max-w-lg content-start justify-items-center gap-4 py-6 text-center">
@@ -925,7 +956,7 @@ function DonePanel({
         />
       </span>
       <h2 className="font-display text-xl font-bold tracking-tight text-ink">
-        {fill(strings.create.done.title, { name })}
+        {formatMessage(strings.create.done.title, { name }, language)}
       </h2>
       <p className="max-w-prose text-sm text-ink-soft">
         {strings.create.done.body}

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { BellOff } from "lucide-react";
 import { formatBadge } from "@/components/notifications/inbox-row";
 import { formatDate, type Locale } from "@/lib/format";
-import { cn, fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import { cn } from "@/lib/utils";
 import { ChatAvatar } from "./chat-avatar";
 import { RelativeTime } from "./local-time";
 import { previewLine } from "./preview";
@@ -15,6 +16,7 @@ export function conversationPreview(
   item: InboxItem,
   viewerId: string,
   strings: ChatStrings,
+  language: string,
 ): string {
   const message = item.lastMessage;
   if (!message) return "";
@@ -24,7 +26,11 @@ export function conversationPreview(
     const actor =
       message.meta.actorUserId === viewerId ? strings.list.you : null;
     if (!actor) return "";
-    return fill(strings.system[message.meta.type], { name: actor });
+    return formatMessage(
+      strings.system[message.meta.type],
+      { name: actor },
+      language,
+    );
   }
 
   if (message.deletedAt) return strings.thread.deleted;
@@ -58,7 +64,7 @@ export function ConversationRow({
 }) {
   const unread = Math.max(0, item.lastSeq - item.me.lastReadSeq);
   const muted = item.me.mutedUntil !== null;
-  const preview = conversationPreview(item, viewerId, strings);
+  const preview = conversationPreview(item, viewerId, strings, language);
 
   return (
     <Link

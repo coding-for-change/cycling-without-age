@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { formatList, wordsLocale } from "@/lib/format";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { nameOfChapter, nameOfPerson } from "./lookups";
 import { defineKind } from "./types";
 import { ORG_NAME } from "@/lib/brand";
@@ -42,14 +42,18 @@ export const memberInvited = defineKind({
       wordsLocale(locale),
     );
     return {
-      subject: fill(copy.subject, { chapter }),
+      subject: formatMessage(copy.subject, { chapter }, locale),
       preview: copy.preview,
       heading: copy.heading,
-      body: fill(copy.intro, {
-        inviter: inviterName ?? ORG_NAME,
-        chapter,
-        role,
-      }),
+      body: formatMessage(
+        copy.intro,
+        {
+          inviter: inviterName ?? ORG_NAME,
+          chapter,
+          role,
+        },
+        locale,
+      ),
       steps: { items: [copy.how] },
       cta: copy.cta,
       footer: copy.footer,

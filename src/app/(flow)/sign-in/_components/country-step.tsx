@@ -7,7 +7,8 @@ import type { CountryCode } from "libphonenumber-js";
 import { collator, regionNames } from "@/lib/format";
 import { COUNTRIES, dialCodeOf } from "@/lib/identity";
 import { haptics } from "@/lib/native/haptics";
-import { cn, fill } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Step } from "../../_components/step";
@@ -157,10 +158,11 @@ export function CountryStep({
                 <button
                   type="button"
                   onClick={() => choose(country.code)}
-                  aria-label={fill(strings.selected, {
-                    country: country.name,
-                    dialCode: country.dial,
-                  })}
+                  aria-label={formatMessage(
+                    strings.selected,
+                    { country: country.name, dialCode: country.dial },
+                    locale,
+                  )}
                   className={cn(
                     "flex w-full items-baseline gap-3 px-1 py-2 text-left font-bold transition-all hover:text-ink motion-reduce:transition-none",
                     isActive ? "text-2xl text-ink" : "text-xl text-ink-faint",

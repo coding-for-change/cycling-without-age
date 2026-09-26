@@ -1,4 +1,4 @@
-import en from "@/lib/i18n/en";
+import en from "@/messages/app/en.json";
 import { deletionConsequences } from "./deletion-consequences";
 
 describe("deletionConsequences", () => {
@@ -13,14 +13,14 @@ describe("deletionConsequences", () => {
           models: undefined,
         },
         en.admin.deletion,
-        "en-GB",
+        "en",
       ),
     ).toEqual(["2 chapters", "1 trishaw", "3 storage locations"]);
   });
 
   it("says nothing when nothing else is deleted", () => {
     expect(
-      deletionConsequences({ trishaws: 0 }, en.admin.deletion, "en-GB"),
+      deletionConsequences({ trishaws: 0 }, en.admin.deletion, "en"),
     ).toEqual([]);
   });
 });

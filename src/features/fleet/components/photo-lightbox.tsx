@@ -3,8 +3,9 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { fileUrl } from "./file-image";
+import type { Locale } from "@/lib/i18n/locales";
 
 export type LightboxLabels = {
   close: string;
@@ -22,6 +23,7 @@ export function PhotoLightbox({
   onIndex,
   onClose,
   labels,
+  locale,
 }: {
   fileIds: string[];
   index: number;
@@ -29,6 +31,7 @@ export function PhotoLightbox({
   onIndex: (next: number) => void;
   onClose: () => void;
   labels: LightboxLabels;
+  locale: Locale;
 }) {
   const count = fileIds.length;
   const fileId = fileIds[index];
@@ -93,10 +96,14 @@ export function PhotoLightbox({
             <ChevronRight className="size-6" />
           </LightboxStep>
           <p className="text-2sm absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-3 py-1 text-white tabular-nums">
-            {fill(labels.position, {
-              index: String(index + 1),
-              count: String(count),
-            })}
+            {formatMessage(
+              labels.position,
+              {
+                index: String(index + 1),
+                count: String(count),
+              },
+              locale,
+            )}
           </p>
         </>
       ) : null}

@@ -19,7 +19,8 @@ import { getPosition, type GeoFailure } from "@/lib/native/geolocation";
 import { haptics } from "@/lib/native/haptics";
 import { AddressSearch } from "@/components/address-search";
 import { Character, useCharacter } from "@/components/character";
-import { cn, fill } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -130,9 +131,11 @@ export function LocationScreen({
     ) {
       haptics.warning();
       setError(
-        fill(strings.errors.maxChapters, {
-          count: formatNumber(MAX_PILOT_CHAPTERS, notation),
-        }),
+        formatMessage(
+          strings.errors.maxChapters,
+          { count: formatNumber(MAX_PILOT_CHAPTERS, notation) },
+          words,
+        ),
       );
       return;
     }
@@ -214,14 +217,20 @@ export function LocationScreen({
     ? strings.pending
     : atHome
       ? home && !home.inRange && home.chapter
-        ? fill(strings.home.joinAnyway, { chapter: home.chapter.name })
+        ? formatMessage(
+            strings.home.joinAnyway,
+            { chapter: home.chapter.name },
+            words,
+          )
         : strings.home.confirm
       : !multi
         ? strings.next
         : selected.length > 1
-          ? fill(strings.requestCount, {
-              count: formatNumber(selected.length, notation),
-            })
+          ? formatMessage(
+              strings.requestCount,
+              { count: formatNumber(selected.length, notation) },
+              words,
+            )
           : strings.request;
 
   return (
@@ -394,12 +403,16 @@ export function LocationScreen({
                       </span>
                       {chapter.distance !== null && (
                         <span className="shrink-0 text-sm tabular-nums text-ink-soft">
-                          {fill(strings.distanceAway, {
-                            distance: formatDistance(
-                              chapter.distance,
-                              notation,
-                            ),
-                          })}
+                          {formatMessage(
+                            strings.distanceAway,
+                            {
+                              distance: formatDistance(
+                                chapter.distance,
+                                notation,
+                              ),
+                            },
+                            words,
+                          )}
                         </span>
                       )}
                     </button>
@@ -502,13 +515,17 @@ function HomePanel({
           </p>
           <p className="mt-2 text-sm text-ink">
             {home.route
-              ? fill(strings.home.duration, {
-                  duration: formatDuration(
-                    home.route.durationSec,
-                    wordsLocale(language),
-                  ),
-                })
-              : fill(strings.distanceAway, { distance })}
+              ? formatMessage(
+                  strings.home.duration,
+                  {
+                    duration: formatDuration(
+                      home.route.durationSec,
+                      wordsLocale(language),
+                    ),
+                  },
+                  language,
+                )
+              : formatMessage(strings.distanceAway, { distance }, language)}
           </p>
         </div>
       ) : (
@@ -523,11 +540,15 @@ function HomePanel({
             {strings.home.outOfRangeTitle}
           </p>
           <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-            {fill(strings.home.outOfRangeBody, {
-              chapter: home.chapter.name,
-              distance,
-              radius: formatDistance(home.chapter.radiusKm * 1000, notation),
-            })}
+            {formatMessage(
+              strings.home.outOfRangeBody,
+              {
+                chapter: home.chapter.name,
+                distance,
+                radius: formatDistance(home.chapter.radiusKm * 1000, notation),
+              },
+              language,
+            )}
           </p>
         </div>
       )}

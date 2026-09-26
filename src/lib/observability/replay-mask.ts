@@ -1,3 +1,9 @@
+import {
+  parse,
+  TYPE,
+  type MessageFormatElement,
+} from "@formatjs/icu-messageformat-parser";
+
 const NUMBER = "\\d[\\d.,\\u00a0\\u202f]*";
 
 const FILLERS: Record<string, string> = {
@@ -15,10 +21,12 @@ const FILLERS: Record<string, string> = {
   word: "\\p{Lu}+",
 };
 
-const PLACEHOLDER = /\{(\w+)\}/g;
 const HAS_LETTER = /\p{L}/u;
 const TYPED_BY_USER = "input, textarea, [contenteditable]";
 const SAMPLE_INPUT = /placeholder/i;
+
+type Part = { text: string } | { filler: string | null };
+type Variant = Part[];
 
 const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -31,13 +39,67 @@ const leaves = (node: unknown): string[] => {
   return [];
 };
 
-const templatePattern = (template: string): string | null => {
-  const names = [...template.matchAll(PLACEHOLDER)].map(([, name]) => name);
-  if (!names.every((name) => Object.hasOwn(FILLERS, name))) return null;
-  const parts = template.split(PLACEHOLDER);
-  return parts
-    .map((part, index) => (index % 2 === 0 ? escape(part) : FILLERS[part]))
+const product = (heads: Variant[], tails: Variant[]): Variant[] =>
+  heads.flatMap((head) => tails.map((tail) => [...head, ...tail]));
+
+const branches = (element: MessageFormatElement): Variant[] => {
+  switch (element.type) {
+    case TYPE.literal:
+      return [[{ text: element.value }]];
+    case TYPE.argument:
+      return [[{ filler: FILLERS[element.value] ?? null }]];
+    case TYPE.number:
+    case TYPE.pound:
+      return [[{ filler: NUMBER }]];
+    case TYPE.plural:
+    case TYPE.select:
+      return Object.values(element.options).flatMap((option) =>
+        variants(option.value),
+      );
+    case TYPE.tag:
+      return variants(element.children);
+    default:
+      return [[{ filler: null }]];
+  }
+};
+
+const variants = (elements: MessageFormatElement[]): Variant[] =>
+  elements.reduce<Variant[]>(
+    (acc, element) => product(acc, branches(element)),
+    [[]],
+  );
+
+const segments = (variant: Variant): string[] =>
+  variant.reduce<string[]>(
+    (acc, part) => {
+      if ("text" in part) acc[acc.length - 1] += part.text;
+      else acc.push("");
+      return acc;
+    },
+    [""],
+  );
+
+const variantPattern = (variant: Variant): string | null => {
+  const fillers = variant.flatMap((part) =>
+    "filler" in part ? [part.filler] : [],
+  );
+  if (fillers.some((filler) => filler === null)) return null;
+  const texts = segments(variant);
+  texts[0] = texts[0].trimStart();
+  texts[texts.length - 1] = texts[texts.length - 1].trimEnd();
+  return texts
+    .map((text, index) =>
+      index === 0 ? escape(text) : `${fillers[index - 1]}${escape(text)}`,
+    )
     .join("");
+};
+
+const parsed = (template: string): Variant[] => {
+  try {
+    return variants(parse(template));
+  } catch {
+    return [[{ text: template }]];
+  }
 };
 
 export class StaticText {
@@ -47,19 +109,20 @@ export class StaticText {
 
   add(dictionary: unknown): this {
     for (const leaf of leaves(dictionary)) {
-      const text = leaf.trim();
-      if (!text.includes("{")) {
-        this.exact.add(text);
-        continue;
+      for (const variant of parsed(leaf)) {
+        const texts = segments(variant);
+        if (texts.length === 1) {
+          const text = texts[0].trim();
+          if (text) this.exact.add(text);
+          continue;
+        }
+        for (const fragment of texts) {
+          const trimmed = fragment.trim();
+          if (HAS_LETTER.test(trimmed)) this.exact.add(trimmed);
+        }
+        const pattern = variantPattern(variant);
+        if (pattern) this.patterns.push(pattern);
       }
-      for (const fragment of text
-        .split(PLACEHOLDER)
-        .filter((_, i) => i % 2 === 0)) {
-        const trimmed = fragment.trim();
-        if (HAS_LETTER.test(trimmed)) this.exact.add(trimmed);
-      }
-      const pattern = templatePattern(text);
-      if (pattern) this.patterns.push(pattern);
     }
     this.combined = this.patterns.length
       ? new RegExp(`^(?:${this.patterns.join("|")})$`, "u")

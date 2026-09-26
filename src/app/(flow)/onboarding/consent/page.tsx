@@ -1,4 +1,4 @@
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { OnboardingStepPage } from "../_components/step-page";
 import { ConsentStep } from "../_components/consent-step";
 
@@ -13,6 +13,7 @@ export default function ConsentPage() {
         claimBanner,
         defaults,
         dict,
+        locale,
       }) => (
         <ConsentStep
           role={role}
@@ -20,12 +21,17 @@ export default function ConsentPage() {
           chapterName={presetChapterName}
           setUpBy={
             claimBanner
-              ? fill(dict.consent.setUpBy, { name: claimBanner })
+              ? formatMessage(
+                  dict.consent.setUpBy,
+                  { name: claimBanner },
+                  locale,
+                )
               : null
           }
           defaults={defaults}
           strings={dict.consent}
           continueLabel={dict.common.continue}
+          locale={locale}
         />
       )}
     />

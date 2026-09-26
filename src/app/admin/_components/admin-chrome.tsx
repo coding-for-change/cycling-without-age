@@ -15,7 +15,7 @@ export async function AdminChrome() {
     getLocale(),
   ]);
 
-  const scopes = scopeChoices(scope, dict);
+  const scopes = scopeChoices(scope, dict, locale);
   const active = scopeArgOf(await storedActiveScope(scope));
 
   return (

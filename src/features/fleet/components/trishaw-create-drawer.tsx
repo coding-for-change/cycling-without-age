@@ -11,7 +11,7 @@ import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useDrawerParam } from "@/hooks/use-drawer-param";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { createTrishawAction } from "../actions";
 import {
   LocationPicker,
@@ -24,6 +24,7 @@ import {
   type TypeOption,
   type TypePickerLabels,
 } from "./type-picker";
+import type { Locale } from "@/lib/i18n/locales";
 
 export type TrishawCreateLabels = {
   open: string;
@@ -54,12 +55,14 @@ export function TrishawCreateDrawer({
   defaultLocationId,
   scopeQuery,
   labels,
+  locale,
 }: {
   types: TypeOption[];
   locations: LocationOption[];
   defaultLocationId: string;
   scopeQuery: string;
   labels: TrishawCreateLabels;
+  locale: Locale;
 }) {
   const router = useRouter();
   const { creating: open, openHref, close: clearParam } = useDrawerParam();
@@ -111,7 +114,7 @@ export function TrishawCreateDrawer({
         note,
       });
       notify(result, {
-        done: fill(labels.created, { name: name.trim() }),
+        done: formatMessage(labels.created, { name: name.trim() }, locale),
         errors: labels.errors,
       });
       if (!result.ok) return;
@@ -220,6 +223,7 @@ export function TrishawCreateDrawer({
               labels={labels.gallery}
               camera
               onChange={setPhotoFileIds}
+              locale={locale}
             />
           </Field>
           <Field>

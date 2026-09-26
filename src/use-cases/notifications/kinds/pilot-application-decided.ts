@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { nameOfChapter } from "./lookups";
 import { defineKind } from "./types";
 import { ORG_NAME } from "@/lib/brand";
@@ -21,16 +21,16 @@ export const pilotApplicationDecided = defineKind({
     note: event.note,
   }),
   href: () => PERSPECTIVE_HOME.pilot,
-  message: ({ chapterName, approved, note }, strings) => {
+  message: ({ chapterName, approved, note }, strings, locale) => {
     const copy = approved
       ? strings.applicationApproved
       : strings.applicationRejected;
     const chapter = chapterName ?? ORG_NAME;
     return {
-      subject: fill(copy.subject, { chapter }),
+      subject: formatMessage(copy.subject, { chapter }, locale),
       preview: copy.preview,
       heading: copy.heading,
-      body: fill(copy.intro, { chapter }),
+      body: formatMessage(copy.intro, { chapter }, locale),
       note: note ? { heading: copy.noteHeading, text: note } : null,
       cta: copy.cta,
       footer: copy.footer,

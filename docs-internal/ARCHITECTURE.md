@@ -129,6 +129,35 @@ Counters and histograms live in `observability/metrics.ts` and are scraped from 
 which both the web process (`src/instrumentation.ts`) and the worker serve through
 `startMetricsServer`; the worker also registers the queue, outbox and worker-up collectors.
 
+## Internationalization (COD-255)
+
+Messages are data, not code: `src/messages/{namespace}/{locale}.json` in ICU message format,
+one Tolgee namespace per folder — `app` (UI), `email` (mail, push, inbox, calendar feed) and
+`errors` (the root error boundary, which renders without a layout). Git is the source of
+truth; Tolgee Cloud is where people edit, synced with `npm run i18n:push` / `i18n:pull`.
+Production never calls Tolgee.
+
+- **Locale**: `getLocale()` in `src/lib/i18n` — `NEXT_LOCALE` cookie, then Accept-Language.
+  No locale in the URL. `User.locale` drives email, push and the calendar feed only.
+- **Loading**: `loadMessages(locale)` in `src/lib/i18n/messages.ts` is the one loader.
+  `getDictionary()` returns the typed raw messages for server components, which pass
+  finished strings or raw slices to Client Components as props. next-intl is wired in
+  (`src/lib/i18n/request.ts`, `withNextIntl` in `next.config.ts`, `AppConfig` in
+  `app-config.d.ts`) so `getTranslations()` works on the server; there is no
+  `NextIntlClientProvider` and no client-side next-intl.
+- **Formatting**: `formatMessage(template, values, locale)` in `src/lib/i18n/format.ts` —
+  memoised `IntlMessageFormat`, client-safe. Plurals are ICU plurals so every language gets
+  its own categories.
+- **Emails**: `getEmailStrings(locale)` in `src/emails/strings` over `messages/email`, the
+  same `formatMessage` for interpolation; the worker bundle inlines the JSON.
+- **Translator mode**: a feature-branch build with `NEXT_PUBLIC_TRANSLATOR_MODE=1` makes
+  `loadMessages` fetch live translations from Tolgee (server-side `TOLGEE_API_KEY`) and append
+  Tolgee's invisible key marker to every `app` message; `<TranslatorTools />` in the root
+  layout starts Tolgee's observer so Alt+click opens the in-context editor. The translator's
+  own key comes from the Tolgee Tools browser extension, never from the bundle. Production
+  builds compile the path away (`translatorModeBuilt` is false) and the server refuses it
+  when `SENTRY_ENVIRONMENT=production`.
+
 ## Roles & Organisation Structure (COD-158)
 
 ### Chapter = BetterAuth organization (decision)

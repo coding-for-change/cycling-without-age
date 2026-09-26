@@ -13,7 +13,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 import { changeMemberRoleAction } from "../actions";
 import { notify, type NotifyLabels } from "@/components/action-feedback";
 
@@ -55,16 +56,19 @@ export function MemberActions({
   target,
   labels,
   cancel,
+  locale,
 }: {
   target: MemberActionTarget;
   labels: MemberActionLabels;
   cancel: string;
+  locale: Locale;
 }) {
   const [change, setChange] = useState<Change | null>(null);
   const [pending, startTransition] = useTransition();
 
   const copy = change ? COPY[change] : null;
-  const named = (key: TextKey) => fill(labels[key], { name: target.name });
+  const named = (key: TextKey) =>
+    formatMessage(labels[key], { name: target.name }, locale);
 
   const canToggleAdmin = !(target.isSelf && target.isAdmin);
   const canRemove = !target.isSelf;

@@ -46,7 +46,7 @@ Imports must only flow downward. Violation of these rules is a build-breaking er
 - **Loading**: Strictly adhere to the best practices from Next.js. Pages that might have loading time should always have skeletons, using <Suspense> and loading.tsx
 - **Goal**: Always go the extra mile. Try to deliver a stelar clean and beatiful user experience. For dashboard opt for a style like "Linear"
 - **Navigation**: Should always be instant. Use the guides: https://nextjs.org/docs/app/guides/instant-navigation. Use lazy loading. Use ViewTransition Library where it makes sense to create a smooth native App like feeling and experience
-- **Internationlazation**: The WebApp will be multilingual. Users language will be saved as preference. Every text should and string should 
+- **Internationalization**: The WebApp is multilingual and the user's language is saved as a preference. Every user-facing string lives in `src/messages/{app,email,errors}/{locale}.json` (ICU message format, managed in Tolgee Cloud), never inline. Read `docs-internal/TRANSLATION.md` before adding keys or a language.
 - **Text wrapping**: headings MUST use `text-balance`, body text MUST use `text-pretty`. Both are set once in `src/app/globals.css` (`h1`–`h6` balance, `body` pretty — `text-wrap` inherits), so only a heading that is not an `h*` element adds the utility itself.
 - **Spacing**:
   - MUST use a 4px grid for spacing

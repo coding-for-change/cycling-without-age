@@ -5,7 +5,8 @@ import Link from "next/link";
 import useEmblaCarousel from "embla-carousel-react";
 import { useCharacter } from "@/components/character";
 import { haptics } from "@/lib/native/haptics";
-import { cn, fill } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import { useSetCharacterPose } from "../../_components/character-stage";
@@ -16,7 +17,7 @@ import { Globe } from "./globe";
 const AUTOPLAY_MS = 4000;
 
 type Strings = {
-  slides: { headline: string; body: string }[];
+  slides: Record<string, { headline: string; body: string }>;
   title: string;
   subtitle: string;
   signIn: string;
@@ -43,7 +44,7 @@ export function WelcomeCarousel({
   const setCharacterPose = useSetCharacterPose();
   const { play } = useCharacter();
   const tapOrigin = useRef<number | null>(null);
-  const { slides } = strings;
+  const slides = Object.values(strings.slides);
 
   useEffect(() => {
     setCharacterPose(current === 0 ? "hero" : "away");
@@ -86,10 +87,11 @@ export function WelcomeCarousel({
           aria-valuemin={1}
           aria-valuemax={slides.length}
           aria-valuenow={current + 1}
-          aria-label={fill(strings.progressLabel, {
-            current: current + 1,
-            total: slides.length,
-          })}
+          aria-label={formatMessage(
+            strings.progressLabel,
+            { current: current + 1, total: slides.length },
+            locale,
+          )}
           className="flex gap-1.5 px-6 pt-[max(1rem,env(safe-area-inset-top))] lg:px-10 lg:pt-10"
         >
           {slides.map((slide, index) => (
@@ -148,10 +150,11 @@ export function WelcomeCarousel({
               <section
                 key={slide.headline}
                 aria-roledescription="slide"
-                aria-label={fill(strings.progressLabel, {
-                  current: index + 1,
-                  total: slides.length,
-                })}
+                aria-label={formatMessage(
+                  strings.progressLabel,
+                  { current: index + 1, total: slides.length },
+                  locale,
+                )}
                 className="flex min-w-0 flex-[0_0_100%] flex-col justify-end px-6 lg:px-10"
               >
                 {/* Slide one belongs to the character, which floats above this

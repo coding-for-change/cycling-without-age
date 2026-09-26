@@ -30,8 +30,9 @@ import {
 import { PhotoGallery } from "@/features/fleet/components/photo-gallery";
 import { useDrawerParam } from "@/hooks/use-drawer-param";
 import type { Dictionary } from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 import { haptics } from "@/lib/native/haptics";
-import { fill } from "@/lib/utils";
 import { LocationPlace, type Place } from "./location-place";
 
 type Option = { id: string; name: string };
@@ -56,7 +57,7 @@ export function LocationCreateDrawer({
   countries: Option[];
   scopeQuery: string;
   mapEnabled: boolean;
-  language: string;
+  language: Locale;
   strings: Strings;
   common: Common;
   markdown: MarkdownToolLabels;
@@ -135,7 +136,7 @@ function LocationCreateForm({
   chapters: Option[];
   countries: Option[];
   mapEnabled: boolean;
-  language: string;
+  language: Locale;
   strings: Strings;
   common: Common;
   markdown: MarkdownToolLabels;
@@ -187,7 +188,7 @@ function LocationCreateForm({
           ? await createPoolAction({ ...fields, countryId, membersMayManage })
           : await createLocationAction({ ...fields, chapterId });
       notify(result, {
-        done: fill(create.created, { name: trimmed }),
+        done: formatMessage(create.created, { name: trimmed }, language),
         errors: common.errors,
       });
       if (result.ok) onCreated(result.id);
@@ -274,6 +275,7 @@ function LocationCreateForm({
           kind="entrancePhoto"
           max={1}
           camera
+          locale={language}
           value={entrancePhoto ? [entrancePhoto] : []}
           alt={create.entrancePhoto}
           labels={{ ...common.gallery, errors: common.errors }}

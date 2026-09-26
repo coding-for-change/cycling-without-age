@@ -11,7 +11,7 @@ import type { ResolvedPlace } from "@/lib/mapbox";
 import { DetailSection } from "../../../_components/detail-page";
 import { PlaceSearch } from "../../../_components/place-search";
 import { CHAPTER_RADIUS_KM } from "@/features/chapters/schemas";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { reportSave } from "@/components/action-feedback";
 import { useSaveStatus } from "@/components/save-status";
 import type { MapPin } from "../../_components/chapter-map";
@@ -132,9 +132,11 @@ export function ChapterLocation({
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <span className="text-2sm font-medium">{labels.radius}</span>
           <span className="text-2sm tabular-nums text-ink-soft">
-            {fill(labels.radiusValue, {
-              distance: formatDistance(radiusKm * 1000, notation),
-            })}
+            {formatMessage(
+              labels.radiusValue,
+              { distance: formatDistance(radiusKm * 1000, notation) },
+              language,
+            )}
           </span>
         </div>
         <Slider
@@ -157,10 +159,14 @@ export function ChapterLocation({
               aria-hidden
               className="mt-0.5 size-4 shrink-0"
             />
-            {fill(labels.overlap, {
-              name: overlap.pin.name,
-              distance: formatDistance(overlap.metres, notation),
-            })}
+            {formatMessage(
+              labels.overlap,
+              {
+                name: overlap.pin.name,
+                distance: formatDistance(overlap.metres, notation),
+              },
+              language,
+            )}
           </p>
         ) : null}
 

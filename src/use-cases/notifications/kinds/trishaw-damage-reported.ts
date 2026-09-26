@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { pluralForm } from "@/emails/strings";
 import { chapters } from "@/features/chapters";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import {
   chapterAdminIds,
   countryAdminIds,
@@ -77,18 +76,30 @@ export const trishawDamageReported = defineKind({
     const values = {
       name: reporterName ?? copy.anonymous,
       trishaw: trishawName ?? copy.unnamed,
-      count: affectedCount,
+      count,
     };
     const affected =
       grounding && count > 0
-        ? ` ${fill(pluralForm(locale, count, copy.affected), values)}`
+        ? ` ${formatMessage(copy.affected, values, locale)}`
         : "";
     return {
-      subject: fill(grounding ? copy.subjectGrounded : copy.subject, values),
+      subject: formatMessage(
+        grounding ? copy.subjectGrounded : copy.subject,
+        values,
+        locale,
+      ),
       preview: copy.preview,
-      heading: fill(grounding ? copy.headingGrounded : copy.heading, values),
+      heading: formatMessage(
+        grounding ? copy.headingGrounded : copy.heading,
+        values,
+        locale,
+      ),
       body:
-        fill(grounding ? copy.introGrounded : copy.intro, values) + affected,
+        formatMessage(
+          grounding ? copy.introGrounded : copy.intro,
+          values,
+          locale,
+        ) + affected,
       cta: copy.cta,
       footer: copy.footer,
       template: "damageReported",

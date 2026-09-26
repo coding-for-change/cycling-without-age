@@ -3,8 +3,9 @@ import { fleet, type LocationRow, type TrishawTypeRow } from "@/features/fleet";
 import type { LocationOption } from "@/features/fleet/components/location-picker";
 import type { TypeOption } from "@/features/fleet/components/type-picker";
 import { allowsAdmin, type Access } from "@/lib/access";
-import { formatPlural, wordsLocale } from "@/lib/format";
+import { wordsLocale } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
 import type { AdminTab } from "../../_components/admin-tabs";
 
 export const fleetTabs = (
@@ -23,9 +24,9 @@ export const typeOptions = (
   types.map((type) => ({
     id: type.id,
     name: type.name,
-    seats: formatPlural(
-      type.seats,
+    seats: formatMessage(
       dict.fleet.common.seats,
+      { count: type.seats },
       wordsLocale(language),
     ),
     wheelchairAccessible: type.wheelchairAccessible,

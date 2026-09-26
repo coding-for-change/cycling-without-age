@@ -17,7 +17,8 @@ import {
 } from "@/features/fleet/components/damage-clear-dialog";
 import { formatDateTime, formatTime, type Locale } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
-import { cn, fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import { cn } from "@/lib/utils";
 import type { TrishawHistoryItem } from "@/use-cases/trishaw-history";
 import {
   payloadStrings,
@@ -108,7 +109,11 @@ export function TrishawHistory({
               <p className="text-2sm text-ink-soft">
                 <span className="text-ink">
                   {ride.locationName
-                    ? fill(labels.rideAt, { place: ride.locationName })
+                    ? formatMessage(
+                        labels.rideAt,
+                        { place: ride.locationName },
+                        words,
+                      )
                     : labels.ride}
                 </span>
                 {" · "}
@@ -168,9 +173,11 @@ export function TrishawHistory({
             >
               <p className="text-2sm text-ink-soft">
                 <span className="text-ink">
-                  {fill(labels.damage, {
-                    actor: actorName(damage.reportedBy),
-                  })}
+                  {formatMessage(
+                    labels.damage,
+                    { actor: actorName(damage.reportedBy) },
+                    words,
+                  )}
                 </span>
                 {" · "}
                 {when(damage.reportedAt)}
@@ -234,12 +241,16 @@ export function TrishawHistory({
                 </div>
                 {!open ? (
                   <p className="rounded-lg bg-canvas-deep px-3 py-2 text-2sm text-ink-soft">
-                    {fill(common.damage.clearedBy, {
-                      name: damage.clearedBy
-                        ? actorName(damage.clearedBy)
-                        : common.damage.unknownPerson,
-                      note: damage.clearNote ?? "",
-                    })}
+                    {formatMessage(
+                      common.damage.clearedBy,
+                      {
+                        name: damage.clearedBy
+                          ? actorName(damage.clearedBy)
+                          : common.damage.unknownPerson,
+                        note: damage.clearNote ?? "",
+                      },
+                      words,
+                    )}
                     {damage.clearedAt ? (
                       <>
                         {" · "}
@@ -258,20 +269,24 @@ export function TrishawHistory({
         const actor = actorName(entry.actor);
         const sentence =
           entry.type === "statusChanged"
-            ? fill(labels.statusChanged, {
-                actor,
-                from: status(payload.from),
-                to: status(payload.to),
-              })
-            : entry.type === "moved"
-              ? fill(labels.moved, {
+            ? formatMessage(
+                labels.statusChanged,
+                {
                   actor,
-                  from: payload.from ?? "",
-                  to: payload.to ?? "",
-                })
+                  from: status(payload.from),
+                  to: status(payload.to),
+                },
+                words,
+              )
+            : entry.type === "moved"
+              ? formatMessage(
+                  labels.moved,
+                  { actor, from: payload.from ?? "", to: payload.to ?? "" },
+                  words,
+                )
               : entry.type === "note"
-                ? fill(labels.note, { actor })
-                : fill(labels.created, { actor });
+                ? formatMessage(labels.note, { actor }, words)
+                : formatMessage(labels.created, { actor }, words);
 
         return (
           <TimelineEntry

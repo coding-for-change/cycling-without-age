@@ -21,7 +21,7 @@ import { activity } from "@/lib/activity";
 import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
 import { joinUrl } from "@/lib/app-url";
-import { formatDate, resolveLocale, wordsLocale } from "@/lib/format";
+import { formatDate, resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { supportedTimeZones } from "@/lib/time-zone";
 import { readActiveScope } from "../../../active-scope";
@@ -178,7 +178,7 @@ export async function ChapterBody({
               ...fleetFootprint,
             },
             dict.admin.deletion,
-            wordsLocale(language),
+            language,
           )}
           backHref={backHref}
           labels={{
@@ -187,6 +187,7 @@ export async function ChapterBody({
             errors: strings.errors,
           }}
           cancel={strings.cancel}
+          locale={language}
         />
       </div>
     </>

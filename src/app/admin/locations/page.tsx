@@ -7,11 +7,10 @@ import { markdownToolLabels } from "@/components/markdown-editor";
 import { fleet, type LocationRow } from "@/features/fleet";
 import { wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
 import { MAP_ENABLED } from "@/lib/mapbox-map";
-import { fill } from "@/lib/utils";
 import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
 import { AdminTabs } from "../_components/admin-tabs";
-import { countOrNone } from "../_components/count-or-none";
 import { DetailSection } from "../_components/detail-page";
 import { hrefWith } from "../_components/href-with";
 import { readActiveScope, type AdminSearchParams } from "../active-scope";
@@ -65,7 +64,11 @@ async function Locations({
   const detailHref = (id: string) => `/admin/locations/${id}${scopeQuery}`;
 
   const trishawCount = (location: LocationRow) =>
-    countOrNone(location._count.trishaws, strings.trishawCount, words);
+    formatMessage(
+      strings.trishawCount,
+      { count: location._count.trishaws },
+      words,
+    );
 
   const own = reachable.filter((location) => location.kind === "chapter");
   const reachablePools = new Map(
@@ -176,7 +179,7 @@ async function Locations({
                     name={membership.storageLocation.name}
                     meta={[
                       multiChapter
-                        ? fill(strings.forChapter, { chapter })
+                        ? formatMessage(strings.forChapter, { chapter }, words)
                         : null,
                       pool?.address ?? strings.noAddress,
                     ]
@@ -191,6 +194,7 @@ async function Locations({
                         chapterName={chapter}
                         strings={strings}
                         errors={common.errors}
+                        locale={language}
                       />
                     }
                   />
@@ -230,9 +234,11 @@ async function Locations({
                   </div>
                   {multiChapter ? (
                     <span className="text-2sm text-ink-soft">
-                      {fill(strings.forChapter, {
-                        chapter: request.chapter.name,
-                      })}
+                      {formatMessage(
+                        strings.forChapter,
+                        { chapter: request.chapter.name },
+                        words,
+                      )}
                     </span>
                   ) : null}
                   {request.decisionNote ? (

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ORG_NAME } from "@/lib/brand";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { nameOfCountry, nameOfPerson } from "./lookups";
 import { defineKind } from "./types";
 
@@ -26,17 +26,17 @@ const countryAdminKind = (
       return { countryName, actorName };
     },
     href: () => PERSPECTIVE_HOME.admin,
-    message: ({ countryName, actorName }, strings) => {
+    message: ({ countryName, actorName }, strings, locale) => {
       const copy = strings[copyKey];
       const values = {
         country: countryName ?? ORG_NAME,
         actor: actorName ?? ORG_NAME,
       };
       return {
-        subject: fill(copy.subject, values),
+        subject: formatMessage(copy.subject, values, locale),
         preview: copy.preview,
-        heading: fill(copy.heading, values),
-        body: fill(copy.intro, values),
+        heading: formatMessage(copy.heading, values, locale),
+        body: formatMessage(copy.intro, values, locale),
         cta: copy.cta,
         footer: copy.footer,
         template: copyKey,
