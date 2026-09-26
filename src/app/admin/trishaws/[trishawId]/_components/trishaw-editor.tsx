@@ -280,6 +280,7 @@ function EditorLayout({
                     onSave={(next) =>
                       updateTrishawAction(id, { frameNumber: next })
                     }
+                    undoable={false}
                     labels={labels.field}
                     className="font-mono text-2sm"
                   />

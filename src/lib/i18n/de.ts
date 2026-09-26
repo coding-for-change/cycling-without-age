@@ -1113,6 +1113,7 @@ const de: Dictionary = {
       "Noch nichts gebucht. Sobald eine Fahrt eingeplant ist, steht sie hier.",
     weekEmpty: "Diese Woche keine Fahrten.",
     trishaw: "Rikscha",
+    bookedElsewhere: "Von einer anderen Ortsgruppe gebucht",
     noTrishaws: "Noch keine Rikschas eingetragen.",
     riders: { one: "{count} Fahrgast", other: "{count} Fahrgäste" },
     noRiders: "Noch keine Fahrgäste",
@@ -1397,6 +1398,8 @@ const de: Dictionary = {
         invalidFile: "Diese Datei kann hier nicht verwendet werden.",
         locationNotEmpty:
           "Bringen Sie die Rikschas zuerst an einen anderen Ort.",
+        trishawBooked:
+          "Eine andere Ortsgruppe hat noch anstehende Ausfahrten mit dieser Rikscha und käme am neuen Standort nicht mehr an sie heran. Nimm sie zuerst aus diesen Ausfahrten.",
         poolInUse:
           "Ihre Ortsgruppe hat noch kommende Fahrten mit Rikschas aus diesem Pool. Teilen Sie sie zuerst neu zu oder sagen Sie sie ab.",
         rateLimited: "Zu viele Versuche. Bitte in ein paar Minuten erneut.",

@@ -83,6 +83,7 @@ export function ChapterLocation({
       report,
       labels: labels.field,
       undo: undoable ? () => void persist(previous, next, false) : undefined,
+      undoing: !undoable,
     });
     if (!ok) setOverride(null);
   };

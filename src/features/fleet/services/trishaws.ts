@@ -48,9 +48,14 @@ export type TrishawRow = Prisma.TrishawGetPayload<{
   select: typeof trishawSelect;
 }>;
 
-export const findTrishawsOfChapters = (chapterIds: string[]) =>
+export const findTrishawsOfChapters = (
+  chapterIds: string[],
+  poolCountryIds: string[] = [],
+) =>
   prisma.trishaw.findMany({
-    where: { storageLocation: reachableLocationWhere(chapterIds) },
+    where: {
+      storageLocation: reachableLocationWhere(chapterIds, poolCountryIds),
+    },
     orderBy: [{ name: "asc" }],
     select: trishawSelect,
   });

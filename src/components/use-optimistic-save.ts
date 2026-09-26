@@ -17,13 +17,21 @@ export function useOptimisticSave<V>(
   const [override, setOverride] = useState<{ from: V; to: V } | null>(null);
   const shown = override && override.from === value ? override.to : value;
 
-  const persist = async (next: V, previous: V, undoable = true) => {
+  const persist = async (
+    next: V,
+    previous: V,
+    undoable = true,
+    undoing = false,
+  ) => {
     setOverride({ from: previous, to: next });
     report("saving");
     const ok = reportSave(await onSave(next, previous), {
       report,
       labels,
-      undo: undoable ? () => void persist(previous, next, false) : undefined,
+      undo: undoable
+        ? () => void persist(previous, next, false, true)
+        : undefined,
+      undoing,
     });
     if (!ok) setOverride(null);
   };

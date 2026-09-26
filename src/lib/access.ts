@@ -53,6 +53,21 @@ export type AdminAuthority = {
   countryIds: string[];
 };
 
+export type FileReadRule =
+  | { kind: "anyone" }
+  | { kind: "uploader"; userId: string | null }
+  | {
+      kind: "members";
+      chapterIds: string[];
+      roles: ChapterRole[];
+      admins: AdminAuthority;
+    }
+  | {
+      kind: "reporterOrAdmins";
+      reporterId: string | null;
+      admins: AdminAuthority;
+    };
+
 export const allowsAdmin = (access: Access, authority: AdminAuthority) =>
   isSuperAdmin(access) ||
   authority.countryIds.some((id) => isCountryAdmin(access, id)) ||

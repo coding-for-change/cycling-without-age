@@ -1080,6 +1080,7 @@ const da: Dictionary = {
       "Der er ikke booket noget endnu. Så snart en tur er planlagt, dukker den op her.",
     weekEmpty: "Ingen ture i denne uge.",
     trishaw: "Rickshaw",
+    bookedElsewhere: "Booket af en anden afdeling",
     noTrishaws: "Ingen rickshaws oprettet endnu.",
     riders: { one: "{count} passager", other: "{count} passagerer" },
     noRiders: "Ingen passagerer endnu",
@@ -1355,6 +1356,8 @@ const da: Dictionary = {
         defaultLocation: "En afdelings standardlokation kan ikke fjernes.",
         invalidFile: "Den fil kan ikke bruges her.",
         locationNotEmpty: "Flyt rickshawerne et andet sted hen først.",
+        trishawBooked:
+          "En anden afdeling har stadig kommende ture med denne rickshaw og kan ikke nå den på den nye lokation. Fjern den fra de ture først.",
         poolInUse:
           "Jeres afdeling har stadig kommende ture med rickshawer fra denne pulje. Omfordel eller aflys dem først.",
         rateLimited: "For mange forsøg. Prøv igen om et par minutter.",

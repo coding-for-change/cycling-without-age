@@ -43,6 +43,7 @@ export type LocationRow = Prisma.StorageLocationGetPayload<{
 
 export const reachableLocationWhere = (
   chapterIds: string[],
+  poolCountryIds: string[] = [],
 ): Prisma.StorageLocationWhereInput => ({
   OR: [
     { ownerChapterId: { in: chapterIds } },
@@ -50,6 +51,9 @@ export const reachableLocationWhere = (
       kind: "pool",
       chapters: { some: { chapterId: { in: chapterIds }, status: "approved" } },
     },
+    ...(poolCountryIds.length
+      ? [{ kind: "pool" as const, countryId: { in: poolCountryIds } }]
+      : []),
   ],
 });
 

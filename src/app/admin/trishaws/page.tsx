@@ -13,6 +13,7 @@ import { getDictionary, getLocale } from "@/lib/i18n";
 import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
 import { AdminTabs } from "../_components/admin-tabs";
 import { readActiveScope, type AdminSearchParams } from "../active-scope";
+import { scopeCountries } from "../scope-countries";
 import {
   fleetTabs,
   locationOption,
@@ -44,13 +45,16 @@ async function Trishaws({
 }: {
   searchParams: Promise<AdminSearchParams>;
 }) {
-  const { session, active, scopeQuery, chapters, chapterIds } =
+  const { session, scope, active, scopeQuery, chapters, chapterIds } =
     await readActiveScope(searchParams, "bikes");
   const countryIds = [...new Set(chapters.map((chapter) => chapter.countryId))];
+  const poolCountryIds = scopeCountries(scope, active).map(
+    (country) => country.id,
+  );
 
   const [list, locations, types, dict, language] = await Promise.all([
-    fleet.listTrishaws(chapterIds),
-    fleet.listLocationsForChapters(chapterIds),
+    fleet.listTrishaws(chapterIds, poolCountryIds),
+    fleet.listLocationsForChapters(chapterIds, poolCountryIds),
     fleet.listTypes({ countryIds, chapterIds }),
     getDictionary(),
     getLocale(),

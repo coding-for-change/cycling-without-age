@@ -1084,6 +1084,7 @@ const en = {
       "Nothing booked yet. When a ride is scheduled for you, it turns up here.",
     weekEmpty: "No rides this week.",
     trishaw: "Trishaw",
+    bookedElsewhere: "Booked by another chapter",
     noTrishaws: "No trishaws on the books yet.",
     riders: { one: "{count} rider", other: "{count} riders" },
     noRiders: "No riders yet",
@@ -1358,6 +1359,8 @@ const en = {
         defaultLocation: "A chapter's default location cannot be removed.",
         invalidFile: "That file cannot be used here.",
         locationNotEmpty: "Move the trishaws somewhere else first.",
+        trishawBooked:
+          "Another chapter still has upcoming rides with this trishaw and would lose it at the new location. Remove it from those rides first.",
         poolInUse:
           "Your chapter still has upcoming rides with trishaws from this pool. Reassign or cancel them first.",
         rateLimited: "Too many attempts. Try again in a few minutes.",

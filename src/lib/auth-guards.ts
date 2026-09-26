@@ -23,6 +23,7 @@ import type {
   AdminAuthority,
   AdminScope,
   ChapterRole,
+  FileReadRule,
   HighestRole,
   Perspective,
 } from "@/lib/access";
@@ -143,6 +144,31 @@ export const requireAdminScope = cache(
     };
   },
 );
+
+export function canReadFile(
+  session: { user: { id: string }; access: Access },
+  rule: FileReadRule,
+): boolean {
+  switch (rule.kind) {
+    case "anyone":
+      return true;
+    case "uploader":
+      return rule.userId === session.user.id;
+    case "members":
+      return (
+        rule.chapterIds.some((chapterId) =>
+          rule.roles.some((role) =>
+            hasChapterRole(session.access, chapterId, role),
+          ),
+        ) || allowsAdmin(session.access, rule.admins)
+      );
+    case "reporterOrAdmins":
+      return (
+        rule.reporterId === session.user.id ||
+        allowsAdmin(session.access, rule.admins)
+      );
+  }
+}
 
 export function getHighestRole(session: { access: Access }): HighestRole {
   return highestRole(session.access);

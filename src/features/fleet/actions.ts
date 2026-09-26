@@ -16,6 +16,7 @@ import {
 import { actionFailure, type DomainErrorCode } from "@/lib/domain-error";
 import { withinRateLimit } from "@/lib/rate-limit";
 import { leavePool } from "@/use-cases/leave-pool";
+import { moveTrishaw } from "@/use-cases/move-trishaw";
 import {
   reportDamageAsAdmin,
   reportDamageAsPilot,
@@ -51,6 +52,7 @@ const MAPPED_ERRORS = [
   "invalidFile",
   "locationNotEmpty",
   "poolInUse",
+  "trishawBooked",
   "trishawGrounded",
   "trishawNotInChapter",
   "trishawReserved",
@@ -266,11 +268,7 @@ export async function moveTrishawAction(
     await requireAdminOf(
       await fleet.locationTrishawManagers(parsedLocation.data),
     );
-    await fleet.moveTrishaw(
-      parsedId.data,
-      parsedLocation.data,
-      session.user.id,
-    );
+    await moveTrishaw(parsedId.data, parsedLocation.data, session.user.id);
   });
 }
 

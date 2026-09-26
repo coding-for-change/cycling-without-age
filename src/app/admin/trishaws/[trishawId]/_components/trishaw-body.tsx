@@ -3,7 +3,11 @@ import { notFound } from "next/navigation";
 import { Info } from "lucide-react";
 import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
-import { TrishawTimeline } from "@/features/rides/components/trishaw-timeline";
+import {
+  foreignBooking,
+  TrishawTimeline,
+  type TimelineRide,
+} from "@/features/rides/components/trishaw-timeline";
 import { DamageReportDrawer } from "@/features/fleet/components/damage-report-drawer";
 import { damageStateOf } from "@/features/fleet/components/trishaw-badges";
 import { TrishawNoteComposer } from "@/features/fleet/components/trishaw-note-composer";
@@ -16,6 +20,7 @@ import { trishawHistory } from "@/use-cases/trishaw-history";
 import { BackLink, DetailSection } from "../../../_components/detail-page";
 import { SidePanel } from "../../../_components/side-panel";
 import { readActiveScope, type AdminSearchParams } from "../../../active-scope";
+import { scopeCountries } from "../../../scope-countries";
 import { readCalendarWeek } from "../../../calendar-week";
 import { WeekSwitcher } from "../../../_components/week-switcher";
 import { HistoryMore, historyShown } from "../../../_components/history-more";
@@ -34,12 +39,15 @@ export async function TrishawBody({
   params: Promise<{ trishawId: string }>;
   searchParams: Promise<AdminSearchParams>;
 }) {
-  const [{ session, scopeQuery, chapterIds }, { trishawId }, query] =
-    await Promise.all([
-      readActiveScope(searchParams, "bikes"),
-      params,
-      searchParams,
-    ]);
+  const [
+    { session, scope, active, scopeQuery, chapterIds },
+    { trishawId },
+    query,
+  ] = await Promise.all([
+    readActiveScope(searchParams, "bikes"),
+    params,
+    searchParams,
+  ]);
 
   const trishaw = await fleet.getTrishaw(trishawId);
   if (!trishaw) notFound();
@@ -73,7 +81,10 @@ export async function TrishawBody({
         : Promise.resolve([]),
       canManage
         ? fleet
-            .listLocationsForChapters(nearby)
+            .listLocationsForChapters(
+              nearby,
+              scopeCountries(scope, active).map((country) => country.id),
+            )
             .then((rows) => manageableLocations(session.access, rows))
         : Promise.resolve([]),
       getDictionary(),
@@ -89,9 +100,18 @@ export async function TrishawBody({
     chapterIds: reaching,
   });
   const { locale, now, anchor, weekStartsOn } = calendar;
-  const weekRides = calendar.rides.filter((ride) =>
-    ride.trishaws.some((entry) => entry.trishaw.id === trishaw.id),
-  );
+  const administered = new Set(scope.chapters.map((chapter) => chapter.id));
+  const weekRides = calendar.rides
+    .filter((ride) =>
+      ride.trishaws.some((entry) => entry.trishaw.id === trishaw.id),
+    )
+    .flatMap<TimelineRide>((ride) =>
+      administered.has(ride.chapterId)
+        ? [ride]
+        : ride.status === "cancelled"
+          ? []
+          : [foreignBooking(ride, new Set([trishaw.id]))],
+    );
 
   const shown = historyShown(query);
 

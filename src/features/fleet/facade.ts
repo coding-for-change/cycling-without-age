@@ -1,13 +1,7 @@
 import { randomInt } from "node:crypto";
 import { DomainError, isUniqueViolation, mapping } from "@/lib/domain-error";
 import { transaction } from "@/lib/events";
-import {
-  allowsAdmin,
-  hasChapterRole,
-  type Access,
-  type AdminAuthority,
-  type ChapterRole,
-} from "@/lib/access";
+import type { AdminAuthority, FileReadRule } from "@/lib/access";
 import {
   commitUpload as commitStoredObject,
   prepareUpload,
@@ -179,32 +173,25 @@ const reachingChapterIds = (location: {
     .map((link) => link.chapterId),
 ];
 
-const isMemberOfAny = (
-  access: Access,
-  chapterIds: string[],
-  roles: ChapterRole[],
-) =>
-  chapterIds.some((chapterId) =>
-    roles.some((role) => hasChapterRole(access, chapterId, role)),
-  );
-
 /**
  * Product photos and manuals are catalogue material, so any signed-in person
  * may read them. What a location or a damage shows is not: an entrance photo
  * tells a stranger how to get to the bikes.
  */
-export async function readableFile(
-  fileId: string,
-  userId: string,
-  access: Access,
-) {
+export async function fileReadRule(fileId: string) {
   const file = await findFileOwners(fileId);
   if (!file) return null;
 
   const location = async (id: string | undefined) =>
     id ? findLocationById(id) : null;
+  const readable = (rule: FileReadRule) => ({ file, rule });
+  const uploader = readable({
+    kind: "uploader",
+    userId: file.uploadedByUserId,
+  });
 
-  if (file.kind === "typePhoto" || file.kind === "typeManual") return file;
+  if (file.kind === "typePhoto" || file.kind === "typeManual")
+    return readable({ kind: "anyone" });
 
   if (file.kind === "trishawPhoto" || file.kind === "entrancePhoto") {
     const locationId =
@@ -213,24 +200,27 @@ export async function readableFile(
           file.trishawGallery[0]?.trishaw.storageLocationId)
         : file.entrancePhotos[0]?.id;
     const site = await location(locationId);
-    if (!site) return file.uploadedByUserId === userId ? file : null;
-    const authority = locationAuthorityOf(site);
-    const roles: ChapterRole[] =
-      file.kind === "entrancePhoto"
-        ? ["admin", "pilot"]
-        : ["admin", "pilot", "passenger"];
-    return isMemberOfAny(access, reachingChapterIds(site), roles) ||
-      allowsAdmin(access, authority)
-      ? file
-      : null;
+    if (!site) return uploader;
+    return readable({
+      kind: "members",
+      chapterIds: reachingChapterIds(site),
+      roles:
+        file.kind === "entrancePhoto"
+          ? ["admin", "pilot"]
+          : ["admin", "pilot", "passenger"],
+      admins: locationAuthorityOf(site),
+    });
   }
 
   const damage = file.damagePhotos[0];
-  if (!damage) return file.uploadedByUserId === userId ? file : null;
-  if (damage.reportedByUserId === userId) return file;
+  if (!damage) return uploader;
   const site = await location(damage.trishaw.storageLocationId);
   if (!site) return null;
-  return allowsAdmin(access, readersOf(site)) ? file : null;
+  return readable({
+    kind: "reporterOrAdmins",
+    reporterId: damage.reportedByUserId,
+    admins: readersOf(site),
+  });
 }
 
 const ownerColumns = (owner: TypeOwner) => ({
@@ -399,10 +389,16 @@ export const trishawManagersOfLocation = trishawManagersOf;
 export const locationTrishawManagers = async (id: string) =>
   trishawManagersOf(await requireLocation(id));
 
-export const listLocationsForChapters = (chapterIds: string[]) =>
-  whenAny(chapterIds, (ids) =>
-    findLocations({ ...reachableLocationWhere(ids), archivedAt: null }),
-  );
+export const listLocationsForChapters = (
+  chapterIds: string[],
+  poolCountryIds: string[] = [],
+) =>
+  chapterIds.length || poolCountryIds.length
+    ? findLocations({
+        ...reachableLocationWhere(chapterIds, poolCountryIds),
+        archivedAt: null,
+      })
+    : Promise.resolve([]);
 
 export const listPools = (countryIds: string[]) =>
   whenAny(countryIds, (ids) =>
@@ -607,8 +603,13 @@ export async function leavePool(input: {
   return membership;
 }
 
-export const listTrishaws = (chapterIds: string[]) =>
-  whenAny(chapterIds, findTrishawsOfChapters);
+export const listTrishaws = (
+  chapterIds: string[],
+  poolCountryIds: string[] = [],
+) =>
+  chapterIds.length || poolCountryIds.length
+    ? findTrishawsOfChapters(chapterIds, poolCountryIds)
+    : Promise.resolve([]);
 
 export const getTrishaw = (id: string) => findTrishawById(id);
 
@@ -709,15 +710,30 @@ export async function setTrishawPhotos(
   return transaction((tx) => replaceTrishawPhotos(id, ids, tx));
 }
 
-export async function moveTrishaw(
-  id: string,
+export async function chaptersLosingAccess(
+  trishawId: string,
   storageLocationId: string,
-  actorUserId: string,
 ) {
+  const existing = await requireTrishaw(trishawId);
+  const target = await requireLocation(storageLocationId);
+  const keeping = new Set(reachingChapterIds(target));
+  return reachingChapterIds(existing.storageLocation).filter(
+    (chapterId) => !keeping.has(chapterId),
+  );
+}
+
+export async function moveTrishaw(input: {
+  id: string;
+  storageLocationId: string;
+  actorUserId: string;
+  futureRideCount: number;
+}) {
+  const { id, storageLocationId, actorUserId } = input;
   const existing = await requireTrishaw(id);
   const target = await requireLocation(storageLocationId);
   if (target.archivedAt) throw new DomainError("unknownLocation");
   if (existing.storageLocation.id === target.id) return existing;
+  if (input.futureRideCount > 0) throw new DomainError("trishawBooked");
   return transaction(async (tx) => {
     const trishaw = await updateTrishawById(id, { storageLocationId }, tx);
     await insertLogEntry(

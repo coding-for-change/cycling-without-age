@@ -44,6 +44,7 @@ export function InlineField({
   validate,
   display,
   onSave,
+  undoable = true,
   labels,
   markdown,
   compact = false,
@@ -62,6 +63,7 @@ export function InlineField({
   validate?: (next: string) => boolean;
   display?: (value: string) => ReactNode;
   onSave: (next: Value, previous: Value) => Promise<ActionResult>;
+  undoable?: boolean;
   labels: InlineFieldLabels;
   markdown?: MarkdownToolLabels;
   compact?: boolean;
@@ -98,7 +100,7 @@ export function InlineField({
     }
     setEditing(false);
     if (next === shown) return;
-    void persist(next, shown);
+    void persist(next, shown, undoable);
   };
 
   const cancel = () => {
