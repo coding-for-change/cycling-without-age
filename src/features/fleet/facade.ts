@@ -388,9 +388,6 @@ async function requireLocation(id: string) {
 
 export const getLocation = (id: string) => findLocationById(id);
 
-export const getLocations = (ids: string[]) =>
-  whenAny(ids, (ids) => findLocations({ id: { in: ids } }));
-
 export const locationAuthority = async (id: string) =>
   locationAuthorityOf(await requireLocation(id));
 

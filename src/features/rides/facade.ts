@@ -11,6 +11,7 @@ import {
   deleteAssignment,
   deleteRosterEntry,
   findLatestRideForPilot,
+  findFinishableRideForPilot,
   findRideById,
   findRideIdsWithTrishawFrom,
   findRidesForCalendarFeed,
@@ -169,6 +170,12 @@ export const countFutureRidesUsing = (
   trishawIds.length
     ? countFutureRidesWithTrishaws(chapterId, trishawIds, now)
     : Promise.resolve(0);
+
+export const getFinishableRideForPilot = (
+  rideId: string,
+  userId: string,
+  now = new Date(),
+) => findFinishableRideForPilot(rideId, userId, now);
 
 export const latestRideForPilot = (userId: string, now = new Date()) =>
   findLatestRideForPilot(userId, now);

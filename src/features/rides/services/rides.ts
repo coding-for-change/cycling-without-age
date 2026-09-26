@@ -401,10 +401,32 @@ export const countFutureRidesWithTrishaws = (
     },
   });
 
+const FINISH_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * The finish page shows the storage access code, so it stays readable only
+ * until a day after the ride ends.
+ */
+const finishableAt = (now: Date) =>
+  ({
+    endsAt: { gte: new Date(now.getTime() - FINISH_WINDOW_MS) },
+  }) satisfies Prisma.RideWhereInput;
+
+export const findFinishableRideForPilot = (
+  rideId: string,
+  userId: string,
+  now: Date,
+) =>
+  prisma.ride.findFirst({
+    where: { id: rideId, ...pilotRideWhere(userId), ...finishableAt(now) },
+    select: calendarSelect,
+  });
+
 export const findLatestRideForPilot = (userId: string, now: Date) =>
   prisma.ride.findFirst({
     where: {
       ...pilotRideWhere(userId),
+      ...finishableAt(now),
       status: { not: "cancelled" },
       startsAt: { lte: now },
     },

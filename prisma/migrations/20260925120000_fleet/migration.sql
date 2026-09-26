@@ -57,6 +57,21 @@ ALTER TABLE `trishaw_type` ADD COLUMN `archivedAt` DATETIME(3) NULL,
     ADD COLUMN `seats` INTEGER NOT NULL DEFAULT 2,
     ADD COLUMN `wheelchairAccessible` BOOLEAN NOT NULL DEFAULT false;
 
+-- Backfill: from here on the storage location alone decides who uses a bike.
+-- A bike parked at a site its own chapter isn't linked to goes back to its
+-- chapter (the default-location update below picks it up), and a site nobody
+-- is linked to and nothing is parked at is dropped rather than left ownerless.
+UPDATE `trishaw` t
+   SET t.`storageLocationId` = NULL
+ WHERE t.`storageLocationId` IS NOT NULL
+   AND NOT EXISTS (SELECT 1 FROM `storage_location_chapter` slc
+                    WHERE slc.`storageLocationId` = t.`storageLocationId`
+                      AND slc.`chapterId` = t.`chapterId`);
+
+DELETE sl FROM `storage_location` sl
+ WHERE NOT EXISTS (SELECT 1 FROM `storage_location_chapter` slc WHERE slc.`storageLocationId` = sl.`id`)
+   AND NOT EXISTS (SELECT 1 FROM `trishaw` t WHERE t.`storageLocationId` = sl.`id`);
+
 -- Backfill: a site linked to exactly one chapter becomes that chapter's own
 -- location; a site shared by several becomes a pool of their country.
 UPDATE `storage_location` sl
