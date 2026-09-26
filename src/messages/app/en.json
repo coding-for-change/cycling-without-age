@@ -204,9 +204,8 @@
         "country": "Country",
         "createdLabel": "Started",
         "delete": {
-          "body": "Its members, passengers and open requests go with it. Rides already ridden stay on the record.",
+          "body": "Everything that belongs to the chapter goes with it. This cannot be undone.",
           "done": "{name} is gone.",
-          "footprint": "{members} members · {passengers} passengers · {pending} waiting",
           "label": "Type {word} to confirm",
           "open": "Delete chapter",
           "submit": "Delete chapter",
@@ -312,9 +311,8 @@
       "confirmRemoveAdmin": "Remove {name} as country admin?",
       "created": "{name} joined the movement.",
       "delete": {
-        "body": "Every chapter in this country goes with it — their members, passengers and open requests too. Rides already ridden stay on the record.",
+        "body": "Every chapter in this country goes with it, and everything that belongs to them. This cannot be undone.",
         "done": "{name} is gone.",
-        "footprint": "{chapters} chapters · {members} members · {passengers} passengers",
         "label": "Type {word} to confirm",
         "open": "Delete country",
         "submit": "Delete country",
@@ -342,6 +340,17 @@
       "removeAdmin": "Remove {name}",
       "save": "Save country",
       "saved": "Saved."
+    },
+    "deletion": {
+      "chapters": "{count, plural, one {1 chapter} other {# chapters}}",
+      "consequences": "This also deletes, for good:",
+      "locations": "{count, plural, one {1 storage location} other {# storage locations}}",
+      "members": "{count, plural, one {1 membership (the account stays)} other {# memberships (the accounts stay)}}",
+      "models": "{count, plural, one {1 trishaw model} other {# trishaw models}}",
+      "passengers": "{count, plural, one {1 passenger} other {# passengers}}",
+      "pending": "{count, plural, one {1 open application} other {# open applications}}",
+      "rides": "{count, plural, one {1 ride, past ones included} other {# rides, past ones included}}",
+      "trishaws": "{count, plural, one {1 trishaw} other {# trishaws}}"
     },
     "history": {
       "accountClaimed": "This person took the account over",

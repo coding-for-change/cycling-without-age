@@ -204,9 +204,8 @@
         "country": "Land",
         "createdLabel": "Gegründet",
         "delete": {
-          "body": "Mitglieder, Fahrgäste und offene Anfragen gehen mit. Bereits gefahrene Fahrten bleiben erhalten.",
+          "body": "Alles, was zur Ortsgruppe gehört, geht mit. Das lässt sich nicht rückgängig machen.",
           "done": "{name} ist weg.",
-          "footprint": "{members} Mitglieder · {passengers} Fahrgäste · {pending} wartend",
           "label": "Tipp {word} zur Bestätigung",
           "open": "Ortsgruppe löschen",
           "submit": "Ortsgruppe löschen",
@@ -312,9 +311,8 @@
       "confirmRemoveAdmin": "{name} als Länder-Admin entfernen?",
       "created": "{name} ist Teil der Bewegung.",
       "delete": {
-        "body": "Jede Ortsgruppe in diesem Land geht mit — samt Mitgliedern, Fahrgästen und offenen Anfragen. Bereits gefahrene Fahrten bleiben erhalten.",
+        "body": "Jede Ortsgruppe in diesem Land geht mit, samt allem, was zu ihr gehört. Das lässt sich nicht rückgängig machen.",
         "done": "{name} ist weg.",
-        "footprint": "{chapters} Ortsgruppen · {members} Mitglieder · {passengers} Fahrgäste",
         "label": "Tipp {word} zur Bestätigung",
         "open": "Land löschen",
         "submit": "Land löschen",
@@ -342,6 +340,17 @@
       "removeAdmin": "{name} entfernen",
       "save": "Land speichern",
       "saved": "Gespeichert."
+    },
+    "deletion": {
+      "chapters": "{count, plural, one {1 Ortsgruppe} other {# Ortsgruppen}}",
+      "consequences": "Damit wird endgültig mitgelöscht:",
+      "locations": "{count, plural, one {1 Standort} other {# Standorte}}",
+      "members": "{count, plural, one {1 Mitgliedschaft (das Konto bleibt)} other {# Mitgliedschaften (die Konten bleiben)}}",
+      "models": "{count, plural, one {1 Rikscha-Modell} other {# Rikscha-Modelle}}",
+      "passengers": "{count, plural, one {1 Fahrgast} other {# Fahrgäste}}",
+      "pending": "{count, plural, one {1 offene Anfrage} other {# offene Anfragen}}",
+      "rides": "{count, plural, one {1 Ausfahrt, vergangene eingeschlossen} other {# Ausfahrten, vergangene eingeschlossen}}",
+      "trishaws": "{count, plural, one {1 Rikscha} other {# Rikschas}}"
     },
     "history": {
       "accountClaimed": "Diese Person hat das Konto übernommen",

@@ -18,6 +18,7 @@ env:
     GATEWAYAPI_TOKEN GATEWAYAPI_SENDER GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET
     FIREBASE_SERVICE_ACCOUNT PASSKEY_ANDROID_ORIGINS ANDROID_CERT_SHA256_FINGERPRINTS
     CHAT_MASTER_KEY SENTRY_DSN_WEB SENTRY_DSN_WORKER
+    S3_BUCKET S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY
   SENTRY_ORG: codingforchange
   SENTRY_PROJECT: cycling-without-age
   HEALTH_URL: https://cwa.codingforchange.com/api/health
@@ -28,7 +29,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -145,7 +146,10 @@ jobs:
             echo "SENTRY_ENVIRONMENT=production"
             echo "SENTRY_RELEASE=${{ github.sha }}"
             echo "METRICS_PORT=9464"
+            echo "S3_REGION=auto"
           } > /tmp/.env
+          S3_ENDPOINT=$(jq -r '.S3_ENDPOINT // empty' decrypted.json | sed -E 's#^(https://[^/]+).*#\1#')
+          if [ -n "$S3_ENDPOINT" ]; then echo "S3_ENDPOINT=$S3_ENDPOINT" >> /tmp/.env; fi
           for key in $RUNTIME_KEYS; do
             value=$(jq -r --arg k "$key" '.[$k] // empty' decrypted.json)
             if [ -n "$value" ]; then echo "$key=$value" >> /tmp/.env; fi

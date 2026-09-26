@@ -729,7 +729,7 @@ model Trishaw {
   type              TrishawType?    @relation(fields: [typeId], references: [id], onDelete: SetNull)
   status            TrishawStatus   @default(active)
   storageLocationId String
-  storageLocation   StorageLocation @relation(fields: [storageLocationId], references: [id], onDelete: Restrict)
+  storageLocation   StorageLocation @relation(fields: [storageLocationId], references: [id], onDelete: Cascade)
   photoFileId       String?
   photo             StoredFile?     @relation("trishawPhoto", fields: [photoFileId], references: [id], onDelete: SetNull)
   note              String?         @db.Text

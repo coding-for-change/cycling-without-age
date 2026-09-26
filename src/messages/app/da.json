@@ -204,9 +204,8 @@
         "country": "Land",
         "createdLabel": "Startet",
         "delete": {
-          "body": "Medlemmer, passagerer og åbne ansøgninger følger med. Ture, der allerede er kørt, bliver stående.",
+          "body": "Alt, hvad der hører til afdelingen, følger med. Det kan ikke fortrydes.",
           "done": "{name} er væk.",
-          "footprint": "{members} medlemmer · {passengers} passagerer · {pending} venter",
           "label": "Skriv {word} for at bekræfte",
           "open": "Slet afdeling",
           "submit": "Slet afdeling",
@@ -312,9 +311,8 @@
       "confirmRemoveAdmin": "Fjern {name} som landeadmin?",
       "created": "{name} er med i bevægelsen.",
       "delete": {
-        "body": "Alle afdelinger i landet følger med — deres medlemmer, passagerer og åbne ansøgninger også. Ture, der allerede er kørt, bliver stående.",
+        "body": "Alle afdelinger i landet følger med, og alt, hvad der hører til dem. Det kan ikke fortrydes.",
         "done": "{name} er væk.",
-        "footprint": "{chapters} afdelinger · {members} medlemmer · {passengers} passagerer",
         "label": "Skriv {word} for at bekræfte",
         "open": "Slet land",
         "submit": "Slet land",
@@ -342,6 +340,17 @@
       "removeAdmin": "Fjern {name}",
       "save": "Gem land",
       "saved": "Gemt."
+    },
+    "deletion": {
+      "chapters": "{count, plural, one {1 afdeling} other {# afdelinger}}",
+      "consequences": "Dette sletter også for altid:",
+      "locations": "{count, plural, one {1 lokation} other {# lokationer}}",
+      "members": "{count, plural, one {1 medlemskab (kontoen bliver)} other {# medlemskaber (kontiene bliver)}}",
+      "models": "{count, plural, one {1 rickshawmodel} other {# rickshawmodeller}}",
+      "passengers": "{count, plural, one {1 passager} other {# passagerer}}",
+      "pending": "{count, plural, one {1 åben ansøgning} other {# åbne ansøgninger}}",
+      "rides": "{count, plural, one {1 tur, også tidligere} other {# ture, også tidligere}}",
+      "trishaws": "{count, plural, one {1 rickshaw} other {# rickshawer}}"
     },
     "history": {
       "accountClaimed": "Personen overtog selv kontoen",

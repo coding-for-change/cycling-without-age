@@ -139,6 +139,17 @@ export const auth = betterAuth({
     organization({
       allowUserToCreateOrganization: false,
       roles: organizationRoles,
+      schema: {
+        organization: {
+          additionalFields: {
+            countryId: { type: "string", required: true, input: false },
+            city: { type: "string", required: true, input: false },
+            latitude: { type: "number", required: true, input: false },
+            longitude: { type: "number", required: true, input: false },
+            timeZone: { type: "string", required: true, input: false },
+          },
+        },
+      },
     }),
     customSession(async ({ user, session }) => ({
       user,

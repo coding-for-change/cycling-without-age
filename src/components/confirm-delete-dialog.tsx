@@ -18,6 +18,7 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
+import { confirmationWord, matchesConfirmationWord } from "./confirmation-word";
 import {
   notify,
   type ActionResult,
@@ -32,12 +33,13 @@ export type ConfirmDeleteLabels = {
   word: string;
   submit: string;
   done: string;
+  consequences?: string;
   errors: NotifyLabels["errors"];
 };
 
 export function ConfirmDeleteDialog({
   name,
-  footprint,
+  consequences = [],
   labels,
   locale,
   cancel,
@@ -46,7 +48,7 @@ export function ConfirmDeleteDialog({
   trigger,
 }: {
   name: string;
-  footprint?: string;
+  consequences?: string[];
   labels: ConfirmDeleteLabels;
   locale: Locale;
   cancel: string;
@@ -58,7 +60,9 @@ export function ConfirmDeleteDialog({
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState("");
   const [pending, startTransition] = useTransition();
-  const armed = typed === labels.word;
+  const word = confirmationWord(labels.word, name);
+  const armed = matchesConfirmationWord(typed, word);
+  const [labelBefore, labelAfter = ""] = labels.label.split("{word}");
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -110,12 +114,38 @@ export function ConfirmDeleteDialog({
               {labels.body}
             </DialogDescription>
           </DialogHeader>
-          {footprint ? (
-            <p className="text-2sm text-ink-soft">{footprint}</p>
+          {consequences.length > 0 ? (
+            <div className="grid gap-2 rounded-md bg-red-tint p-3">
+              {labels.consequences ? (
+                <p className="text-2sm font-medium text-red">
+                  {labels.consequences}
+                </p>
+              ) : null}
+              <ul className="grid gap-1 text-2sm text-ink">
+                {consequences.map((line) => (
+                  <li
+                    key={line}
+                    className="flex items-center gap-2"
+                  >
+                    <span
+                      aria-hidden
+                      className="size-1 shrink-0 rounded-full bg-red"
+                    />
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : null}
           <Field>
             <FieldLabel htmlFor={inputId}>
-              {formatMessage(labels.label, { word: labels.word }, locale)}
+              <span>
+                {labelBefore}
+                <code className="rounded-sm bg-canvas-deeper px-1 font-mono text-ink">
+                  {word}
+                </code>
+                {labelAfter}
+              </span>
             </FieldLabel>
             <Input
               id={inputId}
@@ -123,7 +153,7 @@ export function ConfirmDeleteDialog({
               autoComplete="off"
               autoCapitalize="characters"
               spellCheck={false}
-              placeholder={labels.word}
+              placeholder={word}
               value={typed}
               onChange={(event) => setTyped(event.target.value)}
               className="h-11 border-line text-base"
