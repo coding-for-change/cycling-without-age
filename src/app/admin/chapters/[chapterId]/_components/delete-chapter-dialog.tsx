@@ -1,32 +1,25 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { fill } from "@/lib/utils";
 import {
   ConfirmDeleteDialog,
   type ConfirmDeleteLabels,
 } from "@/components/confirm-delete-dialog";
 import { deleteChapterAction } from "../../actions";
 
-export type DeleteChapterLabels = ConfirmDeleteLabels & { footprint: string };
-
 export function DeleteChapterDialog({
   chapterId,
   name,
-  footprint,
+  consequences,
   backHref,
   labels,
   cancel,
 }: {
   chapterId: string;
   name: string;
-  footprint: {
-    members: number;
-    passengers: number;
-    pendingApplications: number;
-  };
+  consequences: string[];
   backHref: string;
-  labels: DeleteChapterLabels;
+  labels: ConfirmDeleteLabels;
   cancel: string;
 }) {
   const router = useRouter();
@@ -34,11 +27,7 @@ export function DeleteChapterDialog({
   return (
     <ConfirmDeleteDialog
       name={name}
-      footprint={fill(labels.footprint, {
-        members: footprint.members,
-        passengers: footprint.passengers,
-        pending: footprint.pendingApplications,
-      })}
+      consequences={consequences}
       labels={labels}
       cancel={cancel}
       action={() => deleteChapterAction(chapterId)}

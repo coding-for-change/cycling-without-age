@@ -316,6 +316,23 @@ const da: Dictionary = {
       pilot: "Pilot",
       passenger: "Passager",
     },
+    deletion: {
+      consequences: "Dette sletter også for altid:",
+      chapters: { one: "1 afdeling", other: "{count} afdelinger" },
+      members: {
+        one: "1 medlemskab (kontoen bliver)",
+        other: "{count} medlemskaber (kontiene bliver)",
+      },
+      passengers: { one: "1 passager", other: "{count} passagerer" },
+      pending: { one: "1 åben ansøgning", other: "{count} åbne ansøgninger" },
+      rides: {
+        one: "1 tur, også tidligere",
+        other: "{count} ture, også tidligere",
+      },
+      trishaws: { one: "1 rickshaw", other: "{count} rickshawer" },
+      locations: { one: "1 lokation", other: "{count} lokationer" },
+      models: { one: "1 rickshawmodel", other: "{count} rickshawmodeller" },
+    },
     table: {
       search: "Søg …",
       clearSearch: "Ryd søgning",
@@ -668,9 +685,7 @@ const da: Dictionary = {
         delete: {
           open: "Slet afdeling",
           title: "Slet {name} for altid?",
-          body: "Medlemmer, passagerer og åbne ansøgninger følger med. Ture, der allerede er kørt, bliver stående.",
-          footprint:
-            "{members} medlemmer \u00b7 {passengers} passagerer \u00b7 {pending} venter",
+          body: "Alt, hvad der hører til afdelingen, følger med. Det kan ikke fortrydes.",
           label: "Skriv {word} for at bekræfte",
           word: "DELETE",
           submit: "Slet afdeling",
@@ -698,9 +713,7 @@ const da: Dictionary = {
       delete: {
         open: "Slet land",
         title: "Slet {name} for altid?",
-        body: "Alle afdelinger i landet følger med — deres medlemmer, passagerer og åbne ansøgninger også. Ture, der allerede er kørt, bliver stående.",
-        footprint:
-          "{chapters} afdelinger \u00b7 {members} medlemmer \u00b7 {passengers} passagerer",
+        body: "Alle afdelinger i landet følger med, og alt, hvad der hører til dem. Det kan ikke fortrydes.",
         label: "Skriv {word} for at bekræfte",
         word: "DELETE",
         submit: "Slet land",

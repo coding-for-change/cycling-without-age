@@ -15,11 +15,13 @@ import {
   historyTake,
 } from "../../../_components/history-section";
 import { SidePanel } from "../../../_components/side-panel";
+import { deletionConsequences } from "../../../_components/deletion-consequences";
 import { JoinLinkActions } from "../../../_components/join-link-actions";
 import { activity } from "@/lib/activity";
 import { chapters } from "@/features/chapters";
+import { fleet } from "@/features/fleet";
 import { joinUrl } from "@/lib/app-url";
-import { formatDate, resolveLocale } from "@/lib/format";
+import { formatDate, resolveLocale, wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { supportedTimeZones } from "@/lib/time-zone";
 import { readActiveScope } from "../../../active-scope";
@@ -43,16 +45,25 @@ export async function ChapterBody({
   const shown = historyShown(query);
   if (!inScope.some((entry) => entry.id === chapterId)) notFound();
 
-  const [chapter, footprint, events, all, dict, language, head] =
-    await Promise.all([
-      chapters.getChapter(chapterId),
-      chapters.getChapterFootprint(chapterId),
-      activity.listForChapter(chapterId, historyTake(shown)),
-      chapters.listChapters(),
-      getDictionary(),
-      getLocale(),
-      headers(),
-    ]);
+  const [
+    chapter,
+    footprint,
+    fleetFootprint,
+    events,
+    all,
+    dict,
+    language,
+    head,
+  ] = await Promise.all([
+    chapters.getChapter(chapterId),
+    chapters.getChapterFootprint(chapterId),
+    fleet.getChapterFleetFootprint(chapterId),
+    activity.listForChapter(chapterId, historyTake(shown)),
+    chapters.listChapters(),
+    getDictionary(),
+    getLocale(),
+    headers(),
+  ]);
   if (!chapter || !footprint) notFound();
 
   const country = await chapters.getCountry(chapter.countryId);
@@ -158,9 +169,23 @@ export async function ChapterBody({
         <DeleteChapterDialog
           chapterId={chapter.id}
           name={chapter.name}
-          footprint={footprint}
+          consequences={deletionConsequences(
+            {
+              members: footprint.members,
+              passengers: footprint.passengers,
+              pending: footprint.pendingApplications,
+              rides: footprint.rides,
+              ...fleetFootprint,
+            },
+            dict.admin.deletion,
+            wordsLocale(language),
+          )}
           backHref={backHref}
-          labels={{ ...detail.delete, errors: strings.errors }}
+          labels={{
+            ...detail.delete,
+            consequences: dict.admin.deletion.consequences,
+            errors: strings.errors,
+          }}
           cancel={strings.cancel}
         />
       </div>

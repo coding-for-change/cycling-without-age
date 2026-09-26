@@ -57,6 +57,7 @@ import {
   insertDamage,
   type DamageRow,
 } from "./services/damages";
+import { countChapterFleet, countCountryFleet } from "./services/footprint";
 import {
   findFileOwners,
   findStoredFileById,
@@ -911,4 +912,31 @@ export async function addNote(input: TrishawNoteInput, actorUserId: string) {
   const { trishawId, text } = trishawNoteInput.parse(input);
   await requireTrishaw(trishawId);
   return insertLogEntry(trishawId, actorUserId, "note", { text });
+}
+
+export type FleetFootprint = {
+  trishaws: number;
+  locations: number;
+  models: number;
+};
+
+const toFleetFootprint = ([trishaws, locations, models]: number[]) => ({
+  trishaws,
+  locations,
+  models,
+});
+
+export const getChapterFleetFootprint = async (
+  chapterId: string,
+): Promise<FleetFootprint> =>
+  toFleetFootprint(await countChapterFleet(chapterId));
+
+export async function listCountryFleetFootprints(countryIds: string[]) {
+  const rows = await Promise.all(
+    countryIds.map(
+      async (id) =>
+        [id, toFleetFootprint(await countCountryFleet(id))] as const,
+    ),
+  );
+  return new Map<string, FleetFootprint>(rows);
 }
