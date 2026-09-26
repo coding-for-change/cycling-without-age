@@ -49,7 +49,9 @@ export function Step({
           {title}
         </h1>
         {description && (
-          <p className="mt-3 text-base text-ink-soft">{description}</p>
+          <p className="mt-3 text-base break-words text-ink-soft [overflow-wrap:anywhere]">
+            {description}
+          </p>
         )}
         <div className="flex flex-1 flex-col justify-center py-8 lg:flex-none">
           {children}

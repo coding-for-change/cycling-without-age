@@ -1,7 +1,13 @@
 "use client";
 
-import { useId, useState, useTransition, type FormEvent } from "react";
-import { KeyRound } from "lucide-react";
+import {
+  useId,
+  useState,
+  useTransition,
+  type FormEvent,
+  type ReactNode,
+} from "react";
+import { KeyRound, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { addPasskey } from "@/lib/passkey-client";
@@ -19,11 +25,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  SettingsGroup,
+  SettingsItem,
+  SettingsRowButton,
+} from "@/components/settings-group";
 
 export type PasskeyManagerStrings = {
   add: string;
@@ -46,9 +55,13 @@ export type PasskeyManagerStrings = {
 export function PasskeyManager({
   strings,
   locale,
+  label,
+  footer,
 }: {
   strings: PasskeyManagerStrings;
   locale: Locale;
+  label?: string;
+  footer?: ReactNode;
 }) {
   const { data, isPending } = authClient.useListPasskeys();
   const nameId = useId();
@@ -92,57 +105,65 @@ export function PasskeyManager({
     });
 
   return (
-    <div className="grid gap-6">
-      {isPending && !data ? (
-        <div className="grid gap-2">
-          <Skeleton className="h-16 rounded-(--r-card)" />
-          <Skeleton className="h-16 rounded-(--r-card)" />
-        </div>
-      ) : passkeys.length === 0 ? (
-        <p className="text-sm text-ink-soft">{strings.empty}</p>
-      ) : (
-        <ul className="divide-y divide-line rounded-(--r-card) border border-line">
-          {passkeys.map((passkey) => {
-            const label = passkey.name?.trim() || strings.unnamed;
+    <form
+      onSubmit={add}
+      aria-busy={busy}
+      className="grid min-w-0 gap-5"
+    >
+      <SettingsGroup
+        label={label}
+        footer={footer}
+      >
+        {isPending && !data ? (
+          <>
+            <SettingsItem>
+              <Skeleton className="h-5 w-40" />
+            </SettingsItem>
+            <SettingsItem>
+              <Skeleton className="h-5 w-32" />
+            </SettingsItem>
+          </>
+        ) : passkeys.length === 0 ? (
+          <SettingsItem className="py-3 text-sm text-ink-soft">
+            {strings.empty}
+          </SettingsItem>
+        ) : (
+          passkeys.map((passkey) => {
+            const name = passkey.name?.trim() || strings.unnamed;
             return (
-              <li
+              <SettingsItem
                 key={passkey.id}
-                className="flex flex-wrap items-center gap-3 px-4 py-3"
+                className="py-2"
               >
                 <span
                   aria-hidden
-                  className="grid size-9 shrink-0 place-items-center rounded-full bg-mint-tint"
+                  className="grid size-8 shrink-0 place-items-center rounded-full bg-mint-tint"
                 >
                   <KeyRound className="size-4" />
                 </span>
-                <span className="grid min-w-0 flex-1 gap-0.5">
-                  <span className="truncate text-sm font-medium">{label}</span>
-                  <span className="text-xs text-ink-soft">
-                    {formatDate(passkey.createdAt, locale)}
+                <span className="grid min-w-0 flex-1">
+                  <span className="truncate text-sm font-medium">{name}</span>
+                  <span className="truncate text-2sm text-ink-soft">
+                    {formatDate(passkey.createdAt, locale)} ·{" "}
+                    {passkey.deviceType === "multiDevice"
+                      ? strings.synced
+                      : strings.thisDevice}
                   </span>
                 </span>
-                <Badge
-                  variant="outline"
-                  className="border-line text-ink-soft"
-                >
-                  {passkey.deviceType === "multiDevice"
-                    ? strings.synced
-                    : strings.thisDevice}
-                </Badge>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
+                    <button
+                      type="button"
                       disabled={busy}
-                      className="min-h-11 text-ink-soft hover:text-ink"
+                      className="-mr-2 min-h-11 shrink-0 rounded-(--r-card) px-2 text-sm font-medium text-red transition-colors hover:text-red-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none"
                     >
                       {strings.remove}
-                    </Button>
+                    </button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
-                        {fill(strings.removeConfirm, { name: label })}
+                        {fill(strings.removeConfirm, { name })}
                       </AlertDialogTitle>
                       <AlertDialogDescription className="text-ink-soft">
                         {strings.removeBody}
@@ -153,19 +174,41 @@ export function PasskeyManager({
                         {strings.back}
                       </AlertDialogCancel>
                       <AlertDialogAction
+                        variant="brand"
                         onClick={() => remove(passkey.id)}
-                        className="min-h-11 bg-red text-white hover:bg-red-hover"
+                        className="min-h-11"
                       >
                         {strings.remove}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-              </li>
+              </SettingsItem>
             );
-          })}
-        </ul>
-      )}
+          })
+        )}
+        <SettingsItem className="focus-within:bg-canvas-deep">
+          <Input
+            id={nameId}
+            value={name}
+            maxLength={64}
+            autoComplete="off"
+            aria-label={strings.nameLabel}
+            placeholder={strings.namePlaceholder}
+            onChange={(event) => setName(event.target.value)}
+            className="h-11 rounded-none border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
+          />
+        </SettingsItem>
+        <SettingsItem>
+          <SettingsRowButton
+            type="submit"
+            icon={Plus}
+            tone="action"
+            label={strings.add}
+            disabled={busy}
+          />
+        </SettingsItem>
+      </SettingsGroup>
 
       {error && (
         <div
@@ -175,43 +218,17 @@ export function PasskeyManager({
           {error === "stale" ? strings.signInAgain : strings.failed}
           {error === "stale" && (
             <Button
+              type="button"
               variant="outline"
               disabled={busy}
               onClick={signInAgain}
-              className="min-h-11 border-line bg-transparent"
+              className="min-h-11 rounded-full border-line bg-transparent"
             >
               {strings.signInAgainAction}
             </Button>
           )}
         </div>
       )}
-
-      <form
-        onSubmit={add}
-        aria-busy={busy}
-        className="grid gap-3"
-      >
-        <Field>
-          <FieldLabel htmlFor={nameId}>{strings.nameLabel}</FieldLabel>
-          <Input
-            id={nameId}
-            value={name}
-            maxLength={64}
-            autoComplete="off"
-            placeholder={strings.namePlaceholder}
-            onChange={(event) => setName(event.target.value)}
-            className="h-11 border-line text-base"
-          />
-        </Field>
-        <Button
-          type="submit"
-          disabled={busy}
-          className="min-h-11 justify-self-start bg-red text-white hover:bg-red-hover"
-        >
-          <KeyRound aria-hidden />
-          {strings.add}
-        </Button>
-      </form>
-    </div>
+    </form>
   );
 }

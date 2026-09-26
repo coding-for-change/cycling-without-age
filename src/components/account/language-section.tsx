@@ -1,18 +1,28 @@
 "use client";
 
 import { LanguagePicker } from "@/components/language-picker";
+import { SettingsGroup, SettingsItem } from "@/components/settings-group";
 import type { AccountData } from "./types";
 
-export function LanguageSection({ data }: { data: AccountData }) {
+export function LanguageSection({
+  data,
+  label,
+}: {
+  data: AccountData;
+  label?: string;
+}) {
   return (
-    <div className="grid justify-items-start gap-3">
-      <p className="max-w-prose text-sm text-ink-soft">
-        {data.strings.language.body}
-      </p>
-      <LanguagePicker
-        locale={data.language}
-        label={data.strings.language.title}
-      />
-    </div>
+    <SettingsGroup
+      label={label}
+      footer={data.strings.language.body}
+    >
+      <SettingsItem>
+        <LanguagePicker
+          variant="row"
+          locale={data.language}
+          label={data.strings.language.title}
+        />
+      </SettingsItem>
+    </SettingsGroup>
   );
 }
