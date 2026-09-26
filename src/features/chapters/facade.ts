@@ -124,23 +124,25 @@ export type CountryFootprint = {
   admins: number;
   members: number;
   passengers: number;
+  rides: number;
 };
+
+type ChapterCounts = { members: number; passengers: number; rides: number };
 
 const toFootprint = (row: {
   _count: { chapters: number; admins: number };
-  chapters: { _count: { members: number; passengers: number } }[];
-}): CountryFootprint => ({
-  chapters: row._count.chapters,
-  admins: row._count.admins,
-  members: row.chapters.reduce(
-    (sum, chapter) => sum + chapter._count.members,
-    0,
-  ),
-  passengers: row.chapters.reduce(
-    (sum, chapter) => sum + chapter._count.passengers,
-    0,
-  ),
-});
+  chapters: { _count: ChapterCounts }[];
+}): CountryFootprint => {
+  const total = (key: keyof ChapterCounts) =>
+    row.chapters.reduce((sum, chapter) => sum + chapter._count[key], 0);
+  return {
+    chapters: row._count.chapters,
+    admins: row._count.admins,
+    members: total("members"),
+    passengers: total("passengers"),
+    rides: total("rides"),
+  };
+};
 
 export async function getCountryFootprint(
   id: string,
@@ -243,6 +245,7 @@ export const isSlugAvailable = async (slug: string) =>
 export type ChapterFootprint = {
   members: number;
   passengers: number;
+  rides: number;
   pendingApplications: number;
 };
 
@@ -254,6 +257,7 @@ export async function getChapterFootprint(
   return {
     members: row._count.members,
     passengers: row._count.passengers,
+    rides: row._count.rides,
     pendingApplications: row._count.applications,
   };
 }

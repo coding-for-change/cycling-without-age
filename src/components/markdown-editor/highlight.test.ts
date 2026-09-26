@@ -1,4 +1,4 @@
-import { tokenize } from "./composer-highlight";
+import { tokenize } from "./highlight";
 
 const roundTrip = (text: string) =>
   tokenize(text)

@@ -19,7 +19,8 @@ import { loadAccount } from "@/components/account/load-account";
 import { UserMenu } from "@/components/user-menu";
 import { resolveNav } from "../nav";
 import { perspectiveChoices, roleLabel } from "@/lib/perspectives";
-import { defaultScopeArg, scopeChoices } from "../scopes";
+import { scopeChoices } from "../scopes";
+import { scopeArgOf, storedActiveScope } from "../scope-cookie";
 import { AdminNav } from "./admin-nav";
 import { CommandHint } from "./command-hint";
 import { ScopeSwitcher } from "./scope-switcher";
@@ -31,7 +32,10 @@ export async function AdminSidebar() {
     loadAccount(),
   ]);
 
-  const unread = await chat.countUnreadConversations(session.user.id);
+  const [unread, stored] = await Promise.all([
+    chat.countUnreadConversations(session.user.id),
+    storedActiveScope(scope),
+  ]);
   const items = resolveNav(scope, dict.admin.nav);
   const inGroup = (group: string) => items.filter((i) => i.group === group);
 
@@ -45,7 +49,7 @@ export async function AdminSidebar() {
           perspectives={perspectiveChoices(session.access, dict)}
           activePerspective="admin"
           scopes={scopeChoices(scope, dict)}
-          defaultScope={defaultScopeArg(scope)}
+          defaultScope={scopeArgOf(stored)}
           roleLabel={roleLabel(session.access, dict)}
           strings={dict.admin.scope}
         />

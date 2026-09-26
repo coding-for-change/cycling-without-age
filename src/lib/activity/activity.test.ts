@@ -41,7 +41,7 @@ describe("reading a person's history", () => {
   const where = () => db.activityEvent.findMany.mock.calls[0][0].where;
 
   it("asks for the chapters in scope only", async () => {
-    await activity.listForUser("u1", { chapterIds: ["c1"] });
+    await activity.listForUser("u1", { chapterIds: ["c1"], take: 20 });
     expect(where()).toEqual({
       userId: "u1",
       OR: [{ chapterId: { in: ["c1"] } }],
@@ -52,6 +52,7 @@ describe("reading a person's history", () => {
     await activity.listForUser("u1", {
       chapterIds: ["c1"],
       includeGlobal: true,
+      take: 20,
     });
     expect(where().OR).toEqual([
       { chapterId: { in: ["c1"] } },

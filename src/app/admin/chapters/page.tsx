@@ -10,6 +10,7 @@ import { resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
+import { hrefWith } from "../_components/href-with";
 import { readActiveScope, type AdminSearchParams } from "../active-scope";
 import type { ChapterPin } from "./_components/chapters-map-view";
 import { ChaptersTable, type ChapterRow } from "./_components/chapters-table";
@@ -86,12 +87,8 @@ async function Chapters({
     radiusKm: chapter.serviceRadiusKm ?? CHAPTER_RADIUS_KM.default,
   }));
 
-  const href = (extra: Record<string, string>) => {
-    const query = new URLSearchParams(scopeQuery);
-    for (const [key, value] of Object.entries(extra)) query.set(key, value);
-    const search = query.toString();
-    return search ? `/admin/chapters?${search}` : "/admin/chapters";
-  };
+  const href = (extra: Record<string, string>) =>
+    hrefWith("/admin/chapters", scopeQuery, extra);
 
   const keepView: Record<string, string> =
     view === "map" ? { view: "map" } : {};

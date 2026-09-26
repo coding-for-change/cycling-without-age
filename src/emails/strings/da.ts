@@ -150,6 +150,51 @@ const da: EmailStrings = {
     footer:
       "Du modtager denne e-mail, fordi din rolle i Cycling Without Age er ændret.",
   },
+  damageReported: {
+    subject: "Skade meldt på {trishaw}",
+    subjectGrounded: "{trishaw} er taget ud af brug",
+    preview: "En rickshaw skal ses efter",
+    heading: "Skade meldt på {trishaw}",
+    headingGrounded: "{trishaw} er taget ud af brug",
+    intro: "{name} har meldt et problem med {trishaw}.",
+    introGrounded:
+      "{name} har meldt et problem med {trishaw} og taget den ud af brug. Den kan ikke bookes, før en admin har afsluttet skaden.",
+    affected: {
+      one: "Den er stadig tildelt 1 kommende tur.",
+      other: "Den er stadig tildelt {count} kommende ture.",
+    },
+    cta: "Se rickshawen",
+    footer:
+      "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling, der bruger denne rickshaw.",
+    anonymous: "En pilot",
+    unnamed: "rickshawen",
+  },
+  poolAccessRequested: {
+    subject: "{chapter} vil gerne bruge {pool}",
+    preview: "En anmodning om en pulje",
+    heading: "En anmodning om en pulje",
+    intro:
+      "{chapter} har bedt om at bruge rickshawerne i {pool}. Godkend eller afvis anmodningen.",
+    cta: "Se anmodningen",
+    footer:
+      "Du modtager denne e-mail, fordi du er landeadmin i Cycling Without Age.",
+    unnamed: "puljen",
+  },
+  poolAccessDecided: {
+    subjectApproved: "{chapter} kan nu bruge {pool}",
+    subjectRejected: "Jeres anmodning om {pool} blev afvist",
+    preview: "Et svar på jeres anmodning",
+    headingApproved: "Velkommen til {pool}",
+    headingRejected: "Ikke denne gang",
+    introApproved:
+      "Jeres afdeling kan nu tildele rickshawerne i {pool} til sine ture.",
+    introRejected: "Anmodningen fra {chapter} om at bruge {pool} blev afvist.",
+    note: "Bemærkning: {note}",
+    unnamed: "puljen",
+    cta: "Åbn lokationer",
+    footer:
+      "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling.",
+  },
   chatDigest: {
     subjectDirect: "{name} har skrevet til dig",
     subjectGroup: {

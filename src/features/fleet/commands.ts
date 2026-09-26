@@ -1,0 +1,61 @@
+import type { CommandContributor } from "@/lib/commands";
+
+export const commands: CommandContributor = (dict) => [
+  {
+    id: "trishaws",
+    group: "navigate",
+    label: dict.admin.nav.bikes,
+    icon: "bikes",
+    run: { kind: "navigate", href: "/admin/trishaws" },
+    keywords: ["bikes", "rickshaw", "trishaw", "fleet", "damage", "grounded"],
+  },
+  {
+    id: "locations",
+    group: "navigate",
+    label: dict.admin.nav.locations,
+    icon: "locations",
+    run: { kind: "navigate", href: "/admin/locations" },
+    keywords: ["storage", "depot", "pool", "garage", "access code"],
+  },
+  {
+    id: "new-trishaw",
+    group: "create",
+    label: dict.admin.commands.newTrishaw,
+    icon: "bikes",
+    run: { kind: "navigate", href: "/admin/trishaws?new=1" },
+    keywords: ["add", "create", "bike"],
+  },
+  {
+    id: "new-trishaw-type",
+    group: "create",
+    label: dict.admin.commands.newTrishawType,
+    icon: "bikes",
+    run: { kind: "navigate", href: "/admin/trishaws/types?new=1" },
+    keywords: ["add", "create", "model"],
+  },
+  {
+    id: "new-location",
+    group: "create",
+    label: dict.admin.commands.newLocation,
+    icon: "locations",
+    run: { kind: "navigate", href: "/admin/locations?new=location" },
+    keywords: ["add", "create", "storage", "depot"],
+  },
+  {
+    id: "join-pool",
+    group: "create",
+    label: dict.admin.commands.joinPool,
+    icon: "locations",
+    run: { kind: "navigate", href: "/admin/locations?join=1" },
+    keywords: ["pool", "code", "share", "request"],
+  },
+  {
+    id: "new-pool",
+    group: "create",
+    label: dict.admin.commands.newPool,
+    icon: "locations",
+    run: { kind: "navigate", href: "/admin/locations/pools?new=pool" },
+    keywords: ["pool", "share", "country"],
+    visible: (scope) => scope.countries.length > 0,
+  },
+];

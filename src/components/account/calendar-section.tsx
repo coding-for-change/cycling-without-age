@@ -9,18 +9,8 @@ import {
 } from "react";
 import { ArrowUpRight, CalendarPlus, LockKeyhole } from "lucide-react";
 import { notify } from "@/components/action-feedback";
+import { ConfirmButton } from "@/components/confirm-button";
 import { CopyButton } from "@/components/copy-button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,7 +22,7 @@ import {
 } from "@/features/calendar-feeds/actions";
 import { formatRelativeTime, wordsLocale } from "@/lib/format";
 import { nativePlatform } from "@/lib/native/platform";
-import { cn, fill } from "@/lib/utils";
+import { fill } from "@/lib/utils";
 import type { AccountData } from "./types";
 
 type CalendarStrings = AccountData["strings"]["calendar"];
@@ -63,11 +53,18 @@ export function CalendarSection({ data }: { data: AccountData }) {
   const [feed, setFeed] = useState<CalendarFeedState | null>(data.calendarFeed);
   const [pending, startTransition] = useTransition();
 
-  const run = (action: () => Promise<CalendarFeedActionResult>, done: string) =>
+  const change = async (action: () => Promise<CalendarFeedActionResult>) => {
+    const result = await action();
+    if (result.ok) setFeed(result.feed);
+    return result;
+  };
+
+  const enable = () =>
     startTransition(async () => {
-      const result = await action();
-      if (result.ok) setFeed(result.feed);
-      notify(result, { done, errors: strings.errors });
+      notify(await change(enableCalendarFeedAction), {
+        done: strings.enabled,
+        errors: strings.errors,
+      });
     });
 
   return (
@@ -78,15 +75,14 @@ export function CalendarSection({ data }: { data: AccountData }) {
           feed={feed}
           strings={strings}
           language={data.language}
-          pending={pending}
-          onReset={() => run(resetCalendarFeedAction, strings.reset.done)}
-          onDisable={() => run(disableCalendarFeedAction, strings.disable.done)}
+          onReset={() => change(resetCalendarFeedAction)}
+          onDisable={() => change(disableCalendarFeedAction)}
         />
       ) : (
         <Button
           variant="outline"
           disabled={pending}
-          onClick={() => run(enableCalendarFeedAction, strings.enabled)}
+          onClick={enable}
           className="min-h-11 justify-self-start rounded-full border-line"
         >
           <CalendarPlus aria-hidden />
@@ -101,16 +97,14 @@ function FeedDetails({
   feed,
   strings,
   language,
-  pending,
   onReset,
   onDisable,
 }: {
   feed: CalendarFeedState;
   strings: CalendarStrings;
   language: string;
-  pending: boolean;
-  onReset: () => void;
-  onDisable: () => void;
+  onReset: () => Promise<CalendarFeedActionResult>;
+  onDisable: () => Promise<CalendarFeedActionResult>;
 }) {
   const id = useId();
   const links = subscribeLinks(feed.url);
@@ -200,23 +194,31 @@ function FeedDetails({
 
       <div className="flex flex-wrap gap-2">
         <ConfirmButton
+          variant="ghost"
+          size="default"
           label={strings.reset.open}
           title={strings.reset.title}
           body={strings.reset.body}
           confirm={strings.reset.confirm}
           cancel={strings.cancel}
-          pending={pending}
-          onConfirm={onReset}
+          done={strings.reset.done}
+          errors={strings.errors}
+          action={onReset}
+          className="min-h-11 text-ink-soft hover:text-ink"
         />
         <ConfirmButton
+          variant="ghost"
+          size="default"
           label={strings.disable.open}
           title={strings.disable.title}
           body={strings.disable.body}
           confirm={strings.disable.confirm}
           cancel={strings.cancel}
-          pending={pending}
-          onConfirm={onDisable}
+          done={strings.disable.done}
+          errors={strings.errors}
+          action={onDisable}
           destructive
+          className="min-h-11 text-ink-soft hover:text-ink"
         />
       </div>
     </div>
@@ -251,61 +253,5 @@ function AppLink({
         )}
       </a>
     </Button>
-  );
-}
-
-function ConfirmButton({
-  label,
-  title,
-  body,
-  confirm,
-  cancel,
-  pending,
-  onConfirm,
-  destructive = false,
-}: {
-  label: string;
-  title: string;
-  body: string;
-  confirm: string;
-  cancel: string;
-  pending: boolean;
-  onConfirm: () => void;
-  destructive?: boolean;
-}) {
-  return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button
-          variant="ghost"
-          disabled={pending}
-          className="min-h-11 text-ink-soft hover:text-ink"
-        >
-          {label}
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription className="text-ink-soft">
-            {body}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel className="min-h-11 border-line">
-            {cancel}
-          </AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onConfirm}
-            className={cn(
-              "min-h-11",
-              destructive && "bg-red text-white hover:bg-red-hover",
-            )}
-          >
-            {confirm}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   );
 }

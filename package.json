@@ -8,6 +8,7 @@
     "dev:worker": "dotenv -e .env.local -- node --watch --import tsx --import ./src/worker/instrument.ts src/worker/index.ts",
     "build": "next build",
     "build:worker": "esbuild src/worker/index.ts --bundle --platform=node --target=node22 --format=cjs --packages=external --outfile=worker.js && esbuild src/worker/instrument.ts --bundle --platform=node --target=node22 --format=cjs --packages=external --outfile=worker-instrument.js",
+    "build:seed": "esbuild prisma/seed.ts --bundle --platform=node --target=node22 --format=cjs --packages=external --outfile=seed.js",
     "start": "next start",
     "lint": "eslint && node scripts/check-brand-tokens.mjs",
     "format": "prettier --write .",
@@ -26,6 +27,8 @@
     "test": "jest"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1140.0",
+    "@aws-sdk/s3-request-presigner": "^3.1140.0",
     "@base-ui/react": "^1.7.0",
     "@better-auth/passkey": "^1.7.5",
     "@bull-board/api": "^9.8.0",
@@ -33,6 +36,7 @@
     "@capacitor-firebase/messaging": "^8.5.2",
     "@capacitor/android": "^8.5.0",
     "@capacitor/app": "^8.1.1",
+    "@capacitor/camera": "^8.2.4",
     "@capacitor/core": "^8.5.0",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/ios": "^8.5.0",
@@ -84,6 +88,7 @@
     "recharts": "^3.8.0",
     "remark-gfm": "^4.0.1",
     "resend": "^6.25.0",
+    "sharp": "^0.35.4",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "tw-animate-css": "^1.4.0",

@@ -15,6 +15,10 @@ import { haptics } from "@/lib/native/haptics";
 import { cn } from "@/lib/utils";
 import type { ActionResult } from "@/components/action-feedback";
 import { useOptimisticSave } from "@/components/use-optimistic-save";
+import {
+  MarkdownEditor,
+  type MarkdownToolLabels,
+} from "@/components/markdown-editor";
 
 export type InlineFieldLabels = {
   edit: string;
@@ -40,7 +44,10 @@ export function InlineField({
   validate,
   display,
   onSave,
+  undoable = true,
   labels,
+  markdown,
+  compact = false,
   className,
   inputClassName,
 }: {
@@ -56,7 +63,10 @@ export function InlineField({
   validate?: (next: string) => boolean;
   display?: (value: string) => ReactNode;
   onSave: (next: Value, previous: Value) => Promise<ActionResult>;
+  undoable?: boolean;
   labels: InlineFieldLabels;
+  markdown?: MarkdownToolLabels;
+  compact?: boolean;
   className?: string;
   inputClassName?: string;
 }) {
@@ -90,7 +100,7 @@ export function InlineField({
     }
     setEditing(false);
     if (next === shown) return;
-    void persist(next, shown);
+    void persist(next, shown, undoable);
   };
 
   const cancel = () => {
@@ -131,7 +141,21 @@ export function InlineField({
     };
     return (
       <div className={cn("grid gap-1", className)}>
-        {multiline ? (
+        {markdown ? (
+          <MarkdownEditor
+            id={id}
+            aria-label={label}
+            value={draft}
+            maxLength={maxLength}
+            autoFocus
+            labels={markdown}
+            placeholder={placeholder}
+            onChange={setDraft}
+            onBlur={commit}
+            onKeyDown={onKeyDown}
+            className={inputClassName}
+          />
+        ) : multiline ? (
           <Textarea
             {...shared}
             rows={3}
@@ -144,7 +168,7 @@ export function InlineField({
             max={max}
             inputMode={inputMode}
             autoComplete="off"
-            className={cn("h-11", inputClass)}
+            className={cn(compact ? "h-8 text-2sm" : "h-11", inputClass)}
           />
         )}
         {maxLength ? (
@@ -162,7 +186,8 @@ export function InlineField({
       onClick={open}
       aria-label={`${labels.edit}: ${label}`}
       className={cn(
-        "group/inline -mx-2 flex min-h-11 w-[calc(100%+1rem)] items-start gap-2 rounded-(--r-card) px-2 py-2 text-left transition-colors",
+        "group/inline -mx-2 flex w-[calc(100%+1rem)] items-start gap-2 rounded-(--r-card) px-2 text-left transition-colors",
+        compact ? "min-h-8 py-1.5" : "min-h-11 py-2",
         "hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none",
         className,
       )}
@@ -177,7 +202,12 @@ export function InlineField({
       </span>
       <Pencil
         aria-hidden
-        className="mt-1 size-3.5 shrink-0 text-ink-faint transition-colors group-hover/inline:text-ink group-focus-visible/inline:text-ink"
+        className={cn(
+          "size-3.5 shrink-0 text-ink-faint transition group-hover/inline:text-ink group-focus-visible/inline:text-ink",
+          compact
+            ? "mt-0.5 opacity-0 group-hover/inline:opacity-100 group-focus-visible/inline:opacity-100 pointer-coarse:opacity-100"
+            : "mt-1",
+        )}
       />
     </button>
   );

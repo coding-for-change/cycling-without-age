@@ -3,11 +3,24 @@ import { prisma } from "@/lib/prisma";
 import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
+import { fleet } from "@/features/fleet";
 import { rides } from "@/features/rides";
+import { scheduleRide } from "@/use-cases/schedule-ride";
+import { defaultLocationFor } from "@/use-cases/manage-chapter";
 import type { ChapterRole } from "@/lib/access";
 
-if (process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV === "production" && !process.env.FEATURE_BRANCH) {
   throw new Error("Refusing to seed: NODE_ENV=production");
+}
+
+const seedMailbox = process.env.SEED_MAILBOX?.trim();
+
+function address(name: string) {
+  if (!seedMailbox) return `${name}@cwa.local`;
+  const [local, domain] = seedMailbox.split("@");
+  if (!local || !domain)
+    throw new Error("SEED_MAILBOX is not an email address");
+  return `${local}+${name}@${domain}`;
 }
 
 type CountrySeed = { code: string; name: string };
@@ -88,29 +101,29 @@ const CHAPTERS: ChapterSeed[] = [
 ];
 
 const PERSONAS: Persona[] = [
-  { email: "superadmin@cwa.local", name: "Sanne Superadmin", superadmin: true },
+  { email: address("superadmin"), name: "Sanne Superadmin", superadmin: true },
   {
-    email: "country.de@cwa.local",
+    email: address("country.de"),
     name: "Clara Country (DE)",
     countryAdminOf: ["DE"],
   },
   {
-    email: "admin.muenchen@cwa.local",
+    email: address("admin.muenchen"),
     name: "Anke Admin (München)",
     chapterRoles: { muenchen: ["admin"] },
   },
   {
-    email: "pilot@cwa.local",
+    email: address("pilot"),
     name: "Piet Pilot",
     chapterRoles: { muenchen: ["pilot"], hamburg: ["pilot"] },
   },
   {
-    email: "pilot.pending@cwa.local",
+    email: address("pilot.pending"),
     name: "Pernille Pending",
     pendingPilotApplications: ["muenchen"],
   },
   {
-    email: "passenger@cwa.local",
+    email: address("passenger"),
     name: "Peter Passenger",
     phoneNumber: "+4915112345678",
     chapterRoles: { muenchen: ["passenger"] },
@@ -123,7 +136,7 @@ const PERSONAS: Persona[] = [
     },
   },
   {
-    email: "multi@cwa.local",
+    email: address("multi"),
     name: "Malou Multi",
     chapterRoles: { hamburg: ["pilot", "admin"] },
     countryAdminOf: ["DK"],
@@ -174,6 +187,11 @@ async function seedChapters(countryIds: Map<string, string>) {
       (await chapters.createChapter({ ...chapter, countryId })).id,
     );
   }
+  for (const id of ids.values()) {
+    if (await fleet.getDefaultLocation(id)) continue;
+    const chapter = (await chapters.getChapter(id))!;
+    await fleet.createDefaultLocation(defaultLocationFor(chapter));
+  }
   return ids;
 }
 
@@ -201,7 +219,28 @@ async function seedUser(persona: Persona) {
   return user.id;
 }
 
-const TRISHAWS: Record<string, { name: string; type: string }[]> = {
+const TRISHAW_TYPES = {
+  "Triobike Taxi": {
+    seats: 2,
+    wheelchairAccessible: false,
+    description:
+      "Electric-assist trishaw with a covered bench for **two passengers**.",
+  },
+  VeloPlus: {
+    seats: 1,
+    wheelchairAccessible: true,
+    description:
+      "Front-loading platform that takes a **wheelchair** without a transfer.",
+  },
+} satisfies Record<
+  string,
+  { seats: number; wheelchairAccessible: boolean; description: string }
+>;
+
+const TRISHAWS: Record<
+  string,
+  { name: string; type: keyof typeof TRISHAW_TYPES }[]
+> = {
   muenchen: [
     { name: "Sonnenstrahl", type: "Triobike Taxi" },
     { name: "Isarwind", type: "VeloPlus" },
@@ -238,69 +277,94 @@ async function seedRides(
     where: { chapterId: { in: slugs.map(chapterId) } },
   });
 
-  // The catalogue. `03-roles.md` names these two; the rest arrive as rows once
-  // CWA tells us, which is the whole reason this is a table and not an enum.
   const typeIds = new Map<string, string>();
-  for (const name of new Set(
-    Object.values(TRISHAWS).flatMap((list) => list.map((t) => t.type)),
-  )) {
+  for (const [name, spec] of Object.entries(TRISHAW_TYPES)) {
     const row = await prisma.trishawType.upsert({
-      where: { name },
-      update: {},
-      create: { name },
+      where: { scopeKey_name: { scopeKey: "global", name } },
+      update: spec,
+      create: { name, ...spec },
     });
     typeIds.set(name, row.id);
   }
 
+  const muenchen = chapterId("muenchen");
+  const muenchenChapter = await chapters.getChapter(muenchen);
+  const pool =
+    (await prisma.storageLocation.findFirst({
+      where: { kind: "pool", name: "Depot Sonnenhof" },
+      select: { id: true },
+    })) ??
+    (await fleet.createPool(
+      {
+        countryId: muenchenChapter!.countryId,
+        name: "Depot Sonnenhof",
+        address: "Sonnenstraße 12, 80331 München",
+        latitude: 48.1371,
+        longitude: 11.5654,
+        entrance: "Gate B on the courtyard side, next to the bike racks.",
+        accessCode: "4711",
+        returnInstructions:
+          "Plug the battery into the charger by the door and lock the gate.",
+      },
+      "seed",
+    ));
+  await prisma.storageLocationChapter.upsert({
+    where: {
+      storageLocationId_chapterId: {
+        storageLocationId: pool.id,
+        chapterId: muenchen,
+      },
+    },
+    update: {},
+    create: {
+      storageLocationId: pool.id,
+      chapterId: muenchen,
+      status: "approved",
+    },
+  });
+
   const trishawIds = new Map<string, string>();
   for (const [slug, list] of Object.entries(TRISHAWS)) {
+    const home =
+      slug === "muenchen"
+        ? pool.id
+        : (await fleet.getDefaultLocation(chapterId(slug)))!.id;
     for (const trishaw of list) {
       const existing = await prisma.trishaw.findFirst({
-        where: { chapterId: chapterId(slug), name: trishaw.name },
+        where: {
+          name: trishaw.name,
+          storageLocation: {
+            OR: [{ id: home }, { ownerChapterId: chapterId(slug) }],
+          },
+        },
       });
+      if (existing && existing.storageLocationId !== home)
+        await prisma.trishaw.update({
+          where: { id: existing.id },
+          data: { storageLocationId: home },
+        });
       trishawIds.set(
         `${slug}/${trishaw.name}`,
         existing?.id ??
           (
-            await rides.addTrishaw({
-              name: trishaw.name,
-              chapterId: chapterId(slug),
-              typeId: typeIds.get(trishaw.type)!,
-            })
+            await fleet.addTrishaw(
+              {
+                name: trishaw.name,
+                storageLocationId: home,
+                typeId: typeIds.get(trishaw.type)!,
+              },
+              null,
+            )
           ).id,
       );
     }
   }
 
-  // Where München keeps its bikes. The case the model exists for is one site
-  // shared by several chapters, but no two seeded chapters are in the same
-  // city, so that path is covered in `features/rides/facade.test.ts` instead.
-  const site = await prisma.storageLocation.upsert({
-    where: { id: "seed-site-sonnenhof" },
-    update: {},
-    create: {
-      id: "seed-site-sonnenhof",
-      name: "Seniorenheim Sonnenhof",
-      address: "Sonnenstraße 12, 80331 München",
-      latitude: 48.1371,
-      longitude: 11.5654,
-      chapters: { create: [{ chapterId: chapterId("muenchen") }] },
-    },
-  });
-  await prisma.trishaw.updateMany({
-    where: {
-      id: {
-        in: TRISHAWS.muenchen.map((t) => trishawIds.get(`muenchen/${t.name}`)!),
-      },
-    },
-    data: { storageLocationId: site.id },
-  });
-
   const today = startOfToday();
-  const pilot = userIds.get("pilot@cwa.local")!;
-  const multi = userIds.get("multi@cwa.local")!;
+  const pilot = userIds.get(address("pilot"))!;
+  const multi = userIds.get(address("multi"))!;
   const rider = await passengers.getOwnPassenger(
-    userIds.get("passenger@cwa.local")!,
+    userIds.get(address("passenger"))!,
   );
 
   // Offsets are days from today, not from Monday: the seed must leave something
@@ -380,7 +444,7 @@ async function seedRides(
   ];
 
   for (const item of plan) {
-    const ride = await rides.scheduleRide({
+    const ride = await scheduleRide({
       chapterId: chapterId(item.chapter),
       trishawIds: item.trishaws.map((key) => trishawIds.get(key)!),
       model: item.model,
@@ -401,7 +465,46 @@ async function seedRides(
   return plan.length;
 }
 
+function describeRoles(persona: Persona) {
+  return [
+    persona.superadmin ? "superadmin" : null,
+    ...(persona.countryAdminOf ?? []).map((c) => `country admin ${c}`),
+    ...Object.entries(persona.chapterRoles ?? {}).map(
+      ([slug, roles]) => `${roles.join("+")} @ ${slug}`,
+    ),
+    ...(persona.pendingPilotApplications ?? []).map(
+      (s) => `pilot pending @ ${s}`,
+    ),
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
+
+async function listAccounts() {
+  const existing = new Set(
+    (
+      await prisma.user.findMany({
+        where: { email: { in: PERSONAS.map((p) => p.email) } },
+        select: { email: true },
+      })
+    ).map((user) => user.email),
+  );
+  for (const persona of PERSONAS) {
+    if (existing.has(persona.email))
+      console.log(`SEED_ACCOUNT\t${persona.email}\t${describeRoles(persona)}`);
+  }
+}
+
 async function main() {
+  if (process.argv.includes("--if-empty") && (await prisma.user.count()) > 0) {
+    console.log("Database already has accounts, skipping the seed.");
+  } else {
+    await seed();
+  }
+  if (process.argv.includes("--list-accounts")) await listAccounts();
+}
+
+async function seed() {
   const countryIds = await seedCountries();
   const chapterIds = await seedChapters(countryIds);
 
@@ -455,26 +558,19 @@ async function main() {
   const rideCount = await seedRides(chapterId, userIds);
 
   console.table(
-    PERSONAS.map((p) => ({
-      email: p.email,
-      roles: [
-        p.superadmin ? "superadmin" : null,
-        ...(p.countryAdminOf ?? []).map((c) => `country admin ${c}`),
-        ...Object.entries(p.chapterRoles ?? {}).map(
-          ([slug, roles]) => `${roles.join("+")} @ ${slug}`,
-        ),
-        ...(p.pendingPilotApplications ?? []).map(
-          (s) => `pilot pending @ ${s}`,
-        ),
-      ]
-        .filter(Boolean)
-        .join(", "),
-    })),
+    PERSONAS.map((p) => ({ email: p.email, roles: describeRoles(p) })),
   );
   console.log(
     `${COUNTRIES.length} countries, ${CHAPTERS.length} chapters, ${PERSONAS.length} accounts, ${rideCount} rides. Sign in with an email OTP — see docs-internal/DEV-ACCOUNTS.md.`,
   );
 }
 
-await main();
-await prisma.$disconnect();
+main()
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+    process.exit();
+  });

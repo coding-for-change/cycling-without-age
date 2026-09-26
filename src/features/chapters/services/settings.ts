@@ -6,6 +6,8 @@ const COLUMNS = {
   applicationAlertPush: true,
   replyToEmail: true,
   welcomeNote: true,
+  postRideInstructions: true,
+  damageAlertPush: true,
 } as const;
 
 export const findChapterSettings = (chapterId: string) =>

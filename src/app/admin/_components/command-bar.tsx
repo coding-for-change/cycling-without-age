@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   CommandDialog,
   CommandEmpty,
@@ -22,7 +22,7 @@ import type {
 } from "@/lib/commands";
 import { setLocale } from "@/app/actions";
 import { ICONS } from "@/components/icons";
-import { scopeHref } from "./scope-url";
+import { useSwitchScope } from "./use-switch-scope";
 
 export type CommandBarStrings = {
   dialogTitle: string;
@@ -42,7 +42,7 @@ export function CommandBar({
   const [open, setOpen] = useState(false);
   const [, startTransition] = useTransition();
   const router = useRouter();
-  const pathname = usePathname();
+  const { switchScope } = useSwitchScope();
   const { toggleSidebar } = useSidebar();
   const { signOut } = useSignOut();
 
@@ -69,7 +69,7 @@ export function CommandBar({
 
     switch (id) {
       case "scope.set":
-        if (arg) router.push(scopeHref(pathname, arg as ScopeArg));
+        if (arg) switchScope(arg as ScopeArg);
         return;
       case "sidebar.toggle":
         toggleSidebar();

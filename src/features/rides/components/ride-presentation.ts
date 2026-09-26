@@ -1,4 +1,5 @@
 import type { Dictionary } from "@/lib/i18n";
+import { fill } from "@/lib/utils";
 import type { RideCalendarRow } from "../facade";
 
 export type CalendarStrings = Dictionary["calendar"];
@@ -59,3 +60,27 @@ export const rideRiderNames = (
       `${passenger.firstName} ${passenger.lastName}`.trim(),
     )
     .join(", ");
+
+export type RideFleetStrings = { grounded: string; groundedOnRide: string };
+
+export type RideAllocationLink = {
+  href: (rideId: string) => string;
+  label: string;
+};
+
+export function rideGroundedNote(
+  ride: Pick<RideCalendarRow, "trishaws" | "status" | "endsAt">,
+  now: Date,
+  fleet: RideFleetStrings,
+): string | null {
+  if (ride.status !== "scheduled" || ride.endsAt.getTime() <= now.getTime())
+    return null;
+  const grounded = rideTrishaws(ride).filter(
+    (trishaw) => trishaw.status !== "active",
+  );
+  return grounded.length
+    ? fill(fleet.groundedOnRide, {
+        names: grounded.map((trishaw) => trishaw.name).join(", "),
+      })
+    : null;
+}

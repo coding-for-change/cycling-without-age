@@ -10,6 +10,7 @@ export type IconKey =
   | "members"
   | "passengers"
   | "bikes"
+  | "locations"
   | "chat"
   | "reports"
   | "chapters"

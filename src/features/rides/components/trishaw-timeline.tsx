@@ -2,18 +2,51 @@ import { Bike } from "lucide-react";
 import { calendarDate, dayKey, daysTouched, weekDays } from "@/lib/calendar";
 import { formatTime, type Locale } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { RideCalendarRow, TrishawRow } from "../facade";
+import type { RideCalendarRow } from "../facade";
 import { DayHeading } from "./day-heading";
-import {
-  rideTone,
-  rideTrishaws,
-  rideWhere,
-  type CalendarStrings,
-} from "./ride-presentation";
+import { rideTone, rideWhere, type CalendarStrings } from "./ride-presentation";
+
+export type TimelineTrishaw = {
+  id: string;
+  name: string;
+  status: RideCalendarRow["trishaws"][number]["trishaw"]["status"];
+  type: { name: string } | null;
+};
+
+export type TimelineRide = Pick<
+  RideCalendarRow,
+  | "id"
+  | "startsAt"
+  | "endsAt"
+  | "status"
+  | "model"
+  | "locationName"
+  | "destinationName"
+> & {
+  trishaws: { trishaw: { id: string } }[];
+  foreign?: boolean;
+};
+
+export const foreignBooking = (
+  ride: RideCalendarRow,
+  trishawIds: Set<string>,
+): TimelineRide => ({
+  id: ride.id,
+  startsAt: ride.startsAt,
+  endsAt: ride.endsAt,
+  status: ride.status,
+  model: ride.model,
+  locationName: null,
+  destinationName: null,
+  trishaws: ride.trishaws
+    .filter(({ trishaw }) => trishawIds.has(trishaw.id))
+    .map(({ trishaw }) => ({ trishaw: { id: trishaw.id } })),
+  foreign: true,
+});
 
 type Props = {
-  trishaws: TrishawRow[];
-  rides: RideCalendarRow[];
+  trishaws: TimelineTrishaw[];
+  rides: TimelineRide[];
   anchor: Date;
   timeZone: string;
   weekStartsOn: number;
@@ -56,9 +89,9 @@ export function TrishawTimeline({
   // which is the whole point of the view: every bike it consumes shows as busy.
   // It occupies every day it touches too, so a ride running past midnight keeps
   // the bike blocked on the following morning rather than vanishing from it.
-  const byTrishawDay = new Map<string, RideCalendarRow[]>();
+  const byTrishawDay = new Map<string, TimelineRide[]>();
   for (const ride of rides) {
-    for (const trishaw of rideTrishaws(ride)) {
+    for (const { trishaw } of ride.trishaws) {
       for (const day of daysTouched(ride, timeZone)) {
         const key = `${trishaw.id}/${day}`;
         const bucket = byTrishawDay.get(key);
@@ -162,7 +195,7 @@ function TrishawLabel({
   trishaw,
   strings,
 }: {
-  trishaw: TrishawRow;
+  trishaw: TimelineTrishaw;
   strings: CalendarStrings;
 }) {
   return (
@@ -189,7 +222,7 @@ function Reservation({
   strings,
   locale,
 }: {
-  ride: RideCalendarRow;
+  ride: TimelineRide;
   timeZone: string;
   strings: CalendarStrings;
   locale: Locale;
@@ -204,7 +237,9 @@ function Reservation({
     <div
       className={cn(
         "rounded border border-l-2 p-1 text-xs @3xl:border-l-4 @3xl:px-2 @3xl:py-1",
-        rideTone(ride),
+        ride.foreign
+          ? "border-line bg-canvas-deeper text-ink-soft"
+          : rideTone(ride),
       )}
       title={range}
     >
@@ -218,7 +253,9 @@ function Reservation({
         <span className="sr-only">{range}</span>
       </p>
       <p className="line-clamp-3 hyphens-auto wrap-break-word opacity-70 @3xl:line-clamp-1">
-        {rideWhere(ride, strings) ?? strings.models[ride.model]}
+        {ride.foreign
+          ? strings.bookedElsewhere
+          : (rideWhere(ride, strings) ?? strings.models[ride.model])}
       </p>
       {ride.status === "cancelled" ? (
         <span className="sr-only">{strings.statuses.cancelled}</span>

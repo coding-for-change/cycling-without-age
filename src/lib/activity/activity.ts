@@ -23,8 +23,9 @@ export const listForUser = (
   {
     chapterIds,
     includeGlobal = false,
-  }: { chapterIds: string[]; includeGlobal?: boolean },
-) => findEventsOfUser(userId, chapterIds, includeGlobal);
+    take,
+  }: { chapterIds: string[]; includeGlobal?: boolean; take: number },
+) => findEventsOfUser(userId, chapterIds, includeGlobal, take);
 
-export const listForChapter = (chapterId: string) =>
-  findEventsOfChapter(chapterId);
+export const listForChapter = (chapterId: string, take: number) =>
+  findEventsOfChapter(chapterId, take);

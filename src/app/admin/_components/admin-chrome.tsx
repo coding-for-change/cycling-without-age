@@ -4,7 +4,8 @@ import { NotificationBellSkeleton } from "@/components/notifications/notificatio
 import { requireAdminScope } from "@/lib/auth-guards";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { resolveNav } from "../nav";
-import { defaultScopeArg, scopeChoices } from "../scopes";
+import { scopeChoices } from "../scopes";
+import { scopeArgOf, storedActiveScope } from "../scope-cookie";
 import { AdminTopBar } from "./admin-top-bar";
 
 export async function AdminChrome() {
@@ -15,7 +16,7 @@ export async function AdminChrome() {
   ]);
 
   const scopes = scopeChoices(scope, dict);
-  const active = defaultScopeArg(scope);
+  const active = scopeArgOf(await storedActiveScope(scope));
 
   return (
     <AdminTopBar

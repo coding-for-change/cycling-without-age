@@ -8,6 +8,7 @@ export const findEventsOfUser = (
   userId: string,
   chapterIds: string[],
   includeGlobal: boolean,
+  take: number,
 ) =>
   prisma.activityEvent.findMany({
     where: {
@@ -19,11 +20,13 @@ export const findEventsOfUser = (
     },
     orderBy: { createdAt: "desc" },
     include: { actor: { select: { name: true, email: true } } },
+    take,
   });
 
-export const findEventsOfChapter = (chapterId: string) =>
+export const findEventsOfChapter = (chapterId: string, take: number) =>
   prisma.activityEvent.findMany({
     where: { chapterId },
     orderBy: { createdAt: "desc" },
     include: { actor: { select: { name: true, email: true } } },
+    take,
   });

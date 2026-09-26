@@ -65,6 +65,7 @@ export function ChapterTimeZone({
       report,
       labels: labels.field,
       undo: undoable ? () => void save(previous, false) : undefined,
+      undoing: !undoable,
     });
     if (!ok) setOverride(null);
   };

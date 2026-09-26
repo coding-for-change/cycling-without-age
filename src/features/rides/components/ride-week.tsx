@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { TriangleAlert } from "lucide-react";
 import {
   calendarDate,
   dayKey,
@@ -20,11 +22,14 @@ import { cn } from "@/lib/utils";
 import type { RideCalendarRow } from "../facade";
 import { DayHeading } from "./day-heading";
 import {
+  rideGroundedNote,
   ridePilots,
   rideTone,
   rideTrishawNames,
   rideWhere,
   type CalendarStrings,
+  type RideAllocationLink,
+  type RideFleetStrings,
 } from "./ride-presentation";
 
 type Props = {
@@ -36,7 +41,9 @@ type Props = {
   strings: CalendarStrings;
   locale: Locale;
   words: Locale;
-  now?: Date;
+  now: Date;
+  fleet: RideFleetStrings;
+  allocate: RideAllocationLink;
 };
 
 /** 56px an hour — dense enough for a working week, tall enough to read. */
@@ -74,6 +81,8 @@ export function RideWeek({
   locale,
   words,
   now,
+  fleet,
+  allocate,
 }: Props) {
   const columns = buildColumns(rides, anchor, timeZone, weekStartsOn);
   const band = visibleBand(columns.flatMap((column) => column.segments));
@@ -81,7 +90,7 @@ export function RideWeek({
     { length: band.to - band.from },
     (_, i) => band.from + i,
   );
-  const todayKey = now ? dayKey(now, timeZone) : null;
+  const todayKey = dayKey(now, timeZone);
 
   return (
     <div className="@container">
@@ -138,6 +147,9 @@ export function RideWeek({
             strings={strings}
             locale={locale}
             words={words}
+            now={now}
+            fleet={fleet}
+            allocate={allocate}
           />
         ))}
       </div>
@@ -192,6 +204,9 @@ function DayColumn({
   strings,
   locale,
   words,
+  now,
+  fleet,
+  allocate,
 }: {
   column: Column;
   band: { from: number; to: number };
@@ -200,6 +215,9 @@ function DayColumn({
   strings: CalendarStrings;
   locale: Locale;
   words: Locale;
+  now: Date;
+  fleet: RideFleetStrings;
+  allocate: RideAllocationLink;
 }) {
   const bandStart = band.from * 60;
   const bandMinutes = (band.to - band.from) * 60;
@@ -225,6 +243,8 @@ function DayColumn({
         const { lane, lanes: width } = packed[index];
         const clampedTop = Math.max(0, top);
         const cancelled = ride.status === "cancelled";
+        const groundedNote = rideGroundedNote(ride, now, fleet);
+        const where = rideWhere(ride, strings) ?? strings.models[ride.model];
 
         return (
           <article
@@ -238,8 +258,36 @@ function DayColumn({
             className={cn(
               "absolute flex flex-col overflow-hidden rounded-md border border-l-2 p-1 text-xs @3xl:border-l-4 @3xl:px-2 @3xl:py-1.25",
               rideTone(ride),
+              !cancelled &&
+                "has-[a:focus-visible]:ring-ring/50 transition-shadow has-[a:focus-visible]:ring-2 has-[a:hover]:shadow-lift motion-reduce:transition-none",
             )}
           >
+            {!cancelled ? (
+              <Link
+                href={allocate.href(ride.id)}
+                scroll={false}
+                aria-label={`${allocate.label} · ${formatTime(ride.startsAt, locale, timeZone)} ${where}`}
+                className="absolute inset-0 z-10 rounded-md outline-none"
+              />
+            ) : null}
+            {groundedNote ? (
+              <p
+                title={groundedNote}
+                className="bg-red-tint text-ink order-first mb-0.5 flex w-fit max-w-full items-center gap-1 rounded-full px-1 py-0.5 @3xl:px-1.25"
+              >
+                <TriangleAlert
+                  aria-hidden
+                  className="text-red size-3 shrink-0"
+                />
+                <span
+                  aria-hidden
+                  className="hidden truncate @3xl:inline"
+                >
+                  {fleet.grounded}
+                </span>
+                <span className="sr-only">{groundedNote}</span>
+              </p>
+            ) : null}
             <p
               className={cn(
                 "font-display order-2 @3xl:order-1 @3xl:truncate",
@@ -254,7 +302,7 @@ function DayColumn({
                 cancelled && "line-through @3xl:no-underline",
               )}
             >
-              {rideWhere(ride, strings) ?? strings.models[ride.model]}
+              {where}
             </p>
             <p className="order-3 hidden truncate opacity-70 @3xl:block">
               {rideTrishawNames(ride, strings)}

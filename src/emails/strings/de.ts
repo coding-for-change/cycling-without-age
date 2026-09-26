@@ -153,6 +153,51 @@ const de: EmailStrings = {
     footer:
       "Du erhältst diese E-Mail, weil sich deine Rolle bei Cycling Without Age geändert hat.",
   },
+  damageReported: {
+    subject: "Schaden an {trishaw} gemeldet",
+    subjectGrounded: "{trishaw} ist gesperrt",
+    preview: "Eine Rikscha muss angeschaut werden",
+    heading: "Schaden an {trishaw} gemeldet",
+    headingGrounded: "{trishaw} ist gesperrt",
+    intro: "{name} hat ein Problem an {trishaw} gemeldet.",
+    introGrounded:
+      "{name} hat ein Problem an {trishaw} gemeldet und sie gesperrt. Sie kann nicht gebucht werden, bis ein Admin den Schaden freigibt.",
+    affected: {
+      one: "Sie ist noch 1 kommenden Fahrt zugeteilt.",
+      other: "Sie ist noch {count} kommenden Fahrten zugeteilt.",
+    },
+    cta: "Rikscha ansehen",
+    footer:
+      "Sie erhalten diese E-Mail, weil Sie eine Ortsgruppe von Cycling Without Age mitgestalten, die diese Rikscha nutzt.",
+    anonymous: "Ein Pilot",
+    unnamed: "die Rikscha",
+  },
+  poolAccessRequested: {
+    subject: "{chapter} möchte {pool} nutzen",
+    preview: "Eine Anfrage für einen Pool",
+    heading: "Eine Anfrage für einen Pool",
+    intro:
+      "{chapter} möchte die Rikschas von {pool} nutzen. Bitte nehmen Sie die Anfrage an oder lehnen Sie sie ab.",
+    cta: "Anfrage ansehen",
+    footer:
+      "Sie erhalten diese E-Mail, weil Sie Landes-Admin bei Cycling Without Age sind.",
+    unnamed: "den Pool",
+  },
+  poolAccessDecided: {
+    subjectApproved: "{chapter} kann jetzt {pool} nutzen",
+    subjectRejected: "Ihre Anfrage für {pool} wurde abgelehnt",
+    preview: "Eine Antwort auf Ihre Pool-Anfrage",
+    headingApproved: "Willkommen bei {pool}",
+    headingRejected: "Diesmal nicht",
+    introApproved:
+      "Ihre Ortsgruppe kann die Rikschas von {pool} jetzt ihren Fahrten zuteilen.",
+    introRejected: "Die Anfrage von {chapter} für {pool} wurde abgelehnt.",
+    note: "Hinweis: {note}",
+    unnamed: "den Pool",
+    cta: "Standorte öffnen",
+    footer:
+      "Sie erhalten diese E-Mail, weil Sie eine Ortsgruppe von Cycling Without Age mitgestalten.",
+  },
   chatDigest: {
     subjectDirect: "{name} hat Ihnen geschrieben",
     subjectGroup: {

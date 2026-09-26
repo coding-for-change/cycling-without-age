@@ -2,6 +2,7 @@ import { getEmailStrings } from "@/emails/strings";
 import { chapters } from "@/features/chapters";
 import { DEFAULT_CHAPTER_SETTINGS } from "@/features/chapters/schemas";
 import { membership } from "@/features/membership";
+import { fleet } from "@/features/fleet";
 import { profile } from "@/features/profile";
 import da from "@/lib/i18n/da";
 import de from "@/lib/i18n/de";
@@ -16,7 +17,11 @@ jest.mock("@/features/chapters", () => ({
     getChapter: jest.fn(),
     getCountry: jest.fn(),
     getSettings: jest.fn(),
+    listCountryAdmins: jest.fn(),
   },
+}));
+jest.mock("@/features/fleet", () => ({
+  fleet: { getTrishaw: jest.fn(), getLocation: jest.fn() },
 }));
 jest.mock("@/features/membership", () => ({
   membership: { listChapterAdmins: jest.fn() },
@@ -28,6 +33,9 @@ const getCountry = chapters.getCountry as jest.Mock;
 const getSettings = chapters.getSettings as jest.Mock;
 const listChapterAdmins = membership.listChapterAdmins as jest.Mock;
 const getProfile = profile.getProfile as jest.Mock;
+const getTrishaw = fleet.getTrishaw as jest.Mock;
+const getLocation = fleet.getLocation as jest.Mock;
+const listCountryAdmins = chapters.listCountryAdmins as jest.Mock;
 
 const DICTIONARIES = { en, da, de } as Record<Locale, typeof en>;
 
@@ -100,6 +108,34 @@ const EVENTS: Record<EventType, DomainEvent> = {
     userId: SUBJECT,
     actorUserId: ACTOR,
   },
+  "trishaw.damageReported": {
+    type: "trishaw.damageReported",
+    damageId: "damage-1",
+    trishawId: "trishaw-1",
+    poolCountryId: COUNTRY,
+    reachingChapterIds: [CHAPTER],
+    chapterId: CHAPTER,
+    actorUserId: SUBJECT,
+    grounding: true,
+    affectedRideIds: ["ride-1", "ride-2"],
+  },
+  "pool.accessRequested": {
+    type: "pool.accessRequested",
+    membershipId: "membership-1",
+    poolId: "pool-1",
+    countryId: COUNTRY,
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+  },
+  "pool.accessDecided": {
+    type: "pool.accessDecided",
+    membershipId: "membership-1",
+    poolId: "pool-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+    approved: true,
+    note: "Welcome aboard.",
+  },
 };
 
 const APP_RELATIVE = /^\/(?!\/)/;
@@ -123,17 +159,22 @@ const known = () => {
   getChapter.mockResolvedValue({ name: "München" });
   getCountry.mockResolvedValue({ name: "Deutschland" });
   getProfile.mockResolvedValue({ name: "Anke Weiss" });
+  getTrishaw.mockResolvedValue({ name: "Sonnenstrahl" });
+  getLocation.mockResolvedValue({ name: "Depot Sonnenhof" });
 };
 
 const unknown = () => {
   getChapter.mockResolvedValue(null);
   getCountry.mockResolvedValue(null);
   getProfile.mockResolvedValue(null);
+  getTrishaw.mockResolvedValue(null);
+  getLocation.mockResolvedValue(null);
 };
 
 beforeEach(() => {
   jest.clearAllMocks();
   listChapterAdmins.mockResolvedValue([{ userId: ACTOR }]);
+  listCountryAdmins.mockResolvedValue([{ userId: ACTOR }]);
   getSettings.mockResolvedValue(DEFAULT_CHAPTER_SETTINGS);
   known();
 });
@@ -203,8 +244,11 @@ describe("the templates the history feed has to label", () => {
       "approval",
       "countryAdminAppointed",
       "countryAdminRemoved",
+      "damageReported",
       "invite",
       "memberJoined",
+      "poolAccessDecided",
+      "poolAccessRequested",
       "rejection",
       "roleChanged",
       "welcome",

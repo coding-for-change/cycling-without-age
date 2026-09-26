@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { chapters } from "@/features/chapters";
 import { profile } from "@/features/profile";
 import {
+  canReadFile,
   getHighestRole,
   getSession,
   homeOf,
@@ -17,7 +18,7 @@ import {
   requireSuperAdmin,
 } from "@/lib/auth-guards";
 import { NEXT_COOKIE } from "@/lib/redirects";
-import type { Access } from "@/lib/access";
+import type { Access, FileReadRule } from "@/lib/access";
 
 jest.mock("react", () => ({
   ...jest.requireActual("react"),
@@ -471,5 +472,68 @@ describe("the admin passkey gate", () => {
 
     await expect(requireChapterRole(BERLIN, "pilot")).resolves.toBeTruthy();
     expect(getProfile).not.toHaveBeenCalled();
+  });
+});
+
+describe("canReadFile", () => {
+  const DE = "country-de";
+  const HAMBURG = "chapter-hamburg";
+  const MUENCHEN = "chapter-muenchen";
+  const poolAdmins = {
+    countryIds: [DE],
+    chapters: [{ chapterId: HAMBURG, countryId: DE }],
+  };
+  const viewer = (id: string, over: Partial<Access> = {}) => ({
+    user: { id },
+    access: { role: null, countryAdminOf: [], memberships: [], ...over },
+  });
+  const adminOf = (chapterId: string) =>
+    viewer("x", { memberships: [{ chapterId, roles: ["admin"] }] });
+
+  it("shows a damage photo to its reporter and the pool's admins only", () => {
+    const rule = {
+      kind: "reporterOrAdmins",
+      reporterId: "pilot-1",
+      admins: poolAdmins,
+    } as const;
+    expect(canReadFile(viewer("pilot-1"), rule)).toBe(true);
+    expect(canReadFile(viewer("x", { countryAdminOf: [DE] }), rule)).toBe(true);
+    expect(canReadFile(adminOf(HAMBURG), rule)).toBe(true);
+    expect(
+      canReadFile(
+        viewer("x", {
+          memberships: [{ chapterId: HAMBURG, roles: ["pilot"] }],
+        }),
+        rule,
+      ),
+    ).toBe(false);
+    expect(canReadFile(adminOf(MUENCHEN), rule)).toBe(false);
+  });
+
+  it("shows an entrance photo to the location's pilots but not its passengers", () => {
+    const rule: FileReadRule = {
+      kind: "members",
+      chapterIds: [HAMBURG],
+      roles: ["admin", "pilot"],
+      admins: poolAdmins,
+    };
+    const member = (role: "pilot" | "passenger") =>
+      viewer("x", { memberships: [{ chapterId: HAMBURG, roles: [role] }] });
+    expect(canReadFile(member("pilot"), rule)).toBe(true);
+    expect(canReadFile(member("passenger"), rule)).toBe(false);
+    expect(canReadFile(viewer("x", { countryAdminOf: [DE] }), rule)).toBe(true);
+  });
+
+  it("keeps an unattached upload private to its uploader", () => {
+    const rule = { kind: "uploader", userId: "pilot-1" } as const;
+    expect(canReadFile(viewer("pilot-1"), rule)).toBe(true);
+    expect(canReadFile(viewer("x"), rule)).toBe(false);
+    expect(canReadFile(viewer("x"), { kind: "uploader", userId: null })).toBe(
+      false,
+    );
+  });
+
+  it("shows catalogue material to anyone signed in", () => {
+    expect(canReadFile(viewer("x"), { kind: "anyone" })).toBe(true);
   });
 });

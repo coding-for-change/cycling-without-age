@@ -1,20 +1,24 @@
 import { DomainError } from "@/lib/domain-error";
 import {
   rideInput,
-  trishawInput,
+  trishawIdList,
   type RideInput,
   type RideRole,
-  type TrishawInput,
 } from "./schemas";
 import {
+  countFutureRidesWithTrishaws,
   countRosterEntries,
   deleteAssignment,
   deleteRosterEntry,
+  findLatestRideForPilot,
+  findFinishableRideForPilot,
   findRideById,
+  findRideIdsWithTrishawFrom,
   findRidesForCalendarFeed,
   findRidesForPassengers,
   findRidesForPilot,
   findRidesInRange,
+  findRidesOfTrishaw,
   insertRideReserving,
   updateRideById,
   updateRideReserving,
@@ -24,22 +28,15 @@ import {
   type PilotRideRow,
   type RideCalendarRow,
   type RideFeedRow,
+  type TrishawRideRow,
 } from "./services/rides";
-import {
-  findTrishawById,
-  findTrishawTypeById,
-  findTrishawsOfChapters,
-  insertTrishaw,
-  updateTrishawById,
-  type TrishawRow,
-} from "./services/trishaws";
 
 export type {
   FeedAudience,
   PilotRideRow,
   RideCalendarRow,
   RideFeedRow,
-  TrishawRow,
+  TrishawRideRow,
 };
 
 export const listRidesInRange = (chapterIds: string[], from: Date, to: Date) =>
@@ -93,49 +90,14 @@ export async function listRidesForCalendarFeed(
 
 export const getRide = (id: string) => findRideById(id);
 
-export const listTrishaws = (chapterIds: string[]) =>
-  chapterIds.length ? findTrishawsOfChapters(chapterIds) : Promise.resolve([]);
-
 /**
  * Scheduling commits the equipment: lifecycle phase 2C reserves the trishaw for
  * the ride's window, after which it is "no longer available to others". A
- * cancelled ride releases it, which is why cancelled rides are excluded from the
- * conflict query rather than filtered here.
+ * cancelled ride releases it. Whether the chapter may use the trishaw at all is
+ * the fleet's question, asked by the use case before this runs.
  */
-/**
- * A chapter may schedule a trishaw it owns, and one parked at a storage site it
- * shares — a care home or depot can serve several chapters, and the bike lives
- * at the place rather than at the chapter. Ownership is still its own column,
- * because who bought the bike and who reports on it does not change because it
- * is parked somewhere shared.
- */
-function reachableFrom(trishaw: TrishawRow, chapterId: string) {
-  if (trishaw.chapterId === chapterId) return true;
-  return (trishaw.storageLocation?.chapters ?? []).some(
-    (link) => link.chapterId === chapterId,
-  );
-}
-
-/**
- * Which chapters can reach a trishaw and whether it is roadworthy are stable
- * facts, so they are checked here. Whether its window is free is not — that
- * check has to happen inside the write's own transaction, or two schedulers
- * both pass it. See `insertRideReserving`.
- */
-async function assertTrishawsUsable(trishawIds: string[], chapterId: string) {
-  for (const trishawId of trishawIds) {
-    const trishaw = await findTrishawById(trishawId);
-    if (!trishaw) throw new DomainError("unknownTrishaw");
-    if (!reachableFrom(trishaw, chapterId))
-      throw new DomainError("trishawNotInChapter");
-    if (trishaw.status !== "active")
-      throw new DomainError("trishawUnavailable");
-  }
-}
-
 export async function scheduleRide(input: RideInput) {
   const { trishawIds, ...data } = rideInput.parse(input);
-  await assertTrishawsUsable(trishawIds, data.chapterId);
   const ride = await insertRideReserving(
     data,
     trishawIds,
@@ -150,7 +112,6 @@ export async function rescheduleRide(id: string, input: RideInput) {
   const existing = await findRideById(id);
   if (!existing) throw new DomainError("unknownRide");
   const { trishawIds, ...data } = rideInput.parse(input);
-  await assertTrishawsUsable(trishawIds, data.chapterId);
   const ride = await updateRideReserving(
     id,
     data,
@@ -177,27 +138,47 @@ export async function cancelRide(id: string, reason?: string | null) {
   });
 }
 
-/**
- * The model is checked here rather than left to the foreign key: `trishaw` has
- * two of them, so a rejected write cannot say whether the chapter or the type
- * was the unknown one. Same reason `createChapter` looks up its country.
- */
-export async function addTrishaw(input: TrishawInput) {
-  const data = trishawInput.parse(input);
-  const typeId = data.typeId ?? null;
-  if (typeId && !(await findTrishawTypeById(typeId)))
-    throw new DomainError("unknownTrishawType");
-  return insertTrishaw({ ...data, typeId });
+export async function setRideTrishaws(rideId: string, trishawIds: string[]) {
+  const ids = trishawIdList.parse(trishawIds);
+  const existing = await findRideById(rideId);
+  if (!existing || existing.status === "cancelled")
+    throw new DomainError("unknownRide");
+  const ride = await updateRideReserving(
+    rideId,
+    {},
+    ids,
+    existing.startsAt,
+    existing.endsAt,
+  );
+  if (!ride) throw new DomainError("trishawReserved");
+  return ride;
 }
 
-export async function setTrishawStatus(
-  id: string,
-  status: TrishawInput["status"],
-) {
-  const trishaw = await findTrishawById(id);
-  if (!trishaw) throw new DomainError("unknownTrishaw");
-  return updateTrishawById(id, { status });
-}
+export const listRidesOfTrishaw = (trishawId: string, take = 50) =>
+  findRidesOfTrishaw(trishawId, take);
+
+export const upcomingRideIdsWithTrishaw = (
+  trishawId: string,
+  now = new Date(),
+) => findRideIdsWithTrishawFrom(trishawId, now);
+
+export const countFutureRidesUsing = (
+  chapterId: string,
+  trishawIds: string[],
+  now = new Date(),
+) =>
+  trishawIds.length
+    ? countFutureRidesWithTrishaws(chapterId, trishawIds, now)
+    : Promise.resolve(0);
+
+export const getFinishableRideForPilot = (
+  rideId: string,
+  userId: string,
+  now = new Date(),
+) => findFinishableRideForPilot(rideId, userId, now);
+
+export const latestRideForPilot = (userId: string, now = new Date()) =>
+  findLatestRideForPilot(userId, now);
 
 /** Lifecycle phase 3 — a volunteer commits to a role on this ride. */
 export async function assignVolunteer(

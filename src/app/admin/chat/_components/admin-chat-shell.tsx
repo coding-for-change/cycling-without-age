@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { ChatEmptyPane } from "@/features/chat/components/chat-empty-pane";
 import { ChatLayout } from "@/features/chat/components/chat-layout";
+import { markdownToolLabels } from "@/components/markdown-editor";
 import { ConversationThread } from "@/features/chat/components/conversation-thread";
 import { requireAdminScope } from "@/lib/auth-guards";
 import { resolveLocale } from "@/lib/format";
@@ -70,6 +71,7 @@ export async function AdminChatThread({
       view={view}
       home={HOME}
       strings={dict.chat}
+      markdown={markdownToolLabels(dict)}
       language={language}
       notation={resolveLocale(head.get("accept-language"))}
     />

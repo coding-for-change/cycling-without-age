@@ -2,6 +2,7 @@
 
 import { useRef, useState, type PointerEvent } from "react";
 import { Check, CheckCheck, Reply } from "lucide-react";
+import { RichText } from "@/components/markdown";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import {
   Message,
@@ -16,7 +17,6 @@ import type { Locale } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { ChatMessageView } from "../schemas";
 import { ChatAvatar } from "./chat-avatar";
-import { ChatMarkdown } from "./chat-markdown";
 import { LocalTime } from "./local-time";
 import { stripPreview } from "./preview";
 import type { ChatStrings } from "./strings";
@@ -175,7 +175,10 @@ export function MessageRow({
                         {strings.thread.deleted}
                       </span>
                     ) : (
-                      <ChatMarkdown text={message.text} />
+                      <RichText
+                        text={message.text}
+                        variant="chat"
+                      />
                     )}
                   </div>
                   <span className="ml-auto flex shrink-0 items-center gap-1 text-xs leading-4 opacity-70 select-none">

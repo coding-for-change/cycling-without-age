@@ -148,6 +148,51 @@ const en = {
     footer:
       "You received this email because your role at Cycling Without Age changed.",
   },
+  damageReported: {
+    subject: "Damage reported on {trishaw}",
+    subjectGrounded: "{trishaw} is grounded",
+    preview: "A trishaw needs a look",
+    heading: "Damage reported on {trishaw}",
+    headingGrounded: "{trishaw} is grounded",
+    intro: "{name} reported a problem with {trishaw}.",
+    introGrounded:
+      "{name} reported a problem with {trishaw} and grounded it, so it cannot be booked until an admin clears the damage.",
+    affected: {
+      one: "It is still allocated to 1 upcoming ride.",
+      other: "It is still allocated to {count} upcoming rides.",
+    },
+    cta: "Look at the trishaw",
+    footer:
+      "You received this email because you help run a Cycling Without Age chapter that uses this trishaw.",
+    anonymous: "A pilot",
+    unnamed: "the trishaw",
+  },
+  poolAccessRequested: {
+    subject: "{chapter} wants to use {pool}",
+    preview: "A pool access request",
+    heading: "A pool access request",
+    intro:
+      "{chapter} has asked to use the trishaws at {pool}. Approve or decline the request.",
+    cta: "Review the request",
+    footer:
+      "You received this email because you are a country admin at Cycling Without Age.",
+    unnamed: "the pool",
+  },
+  poolAccessDecided: {
+    subjectApproved: "{chapter} can now use {pool}",
+    subjectRejected: "Your request to use {pool} was declined",
+    preview: "An answer to your pool request",
+    headingApproved: "Welcome to {pool}",
+    headingRejected: "Not this time",
+    introApproved:
+      "Your chapter can now allocate the trishaws at {pool} to its rides.",
+    introRejected: "The request from {chapter} to use {pool} was declined.",
+    note: "Note: {note}",
+    unnamed: "the pool",
+    cta: "Open locations",
+    footer:
+      "You received this email because you help run a Cycling Without Age chapter.",
+  },
   chatDigest: {
     subjectDirect: "{name} wrote to you",
     subjectGroup: {

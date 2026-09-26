@@ -3,6 +3,7 @@ import { resolveActiveScope, scopeChapters } from "@/lib/access";
 import type { ActiveScope } from "@/lib/access";
 import { requireAdminScope } from "@/lib/auth-guards";
 import { canReach, type NavKey } from "./nav";
+import { storedActiveScope } from "./scope-cookie";
 
 export type AdminSearchParams = Record<string, string | string[] | undefined>;
 
@@ -24,10 +25,15 @@ export async function readActiveScope(
   if (nav && !canReach(scope, nav)) forbidden();
   const params = await searchParams;
 
-  const active = resolveActiveScope(scope, {
+  const requested = {
     chapter: first(params.chapter),
     country: first(params.country),
-  });
+  };
+  const explicit = Boolean(requested.chapter || requested.country);
+
+  const active = explicit
+    ? resolveActiveScope(scope, requested)
+    : await storedActiveScope(scope);
   if (!active) forbidden();
 
   const chapters = scopeChapters(scope, active);
@@ -35,7 +41,7 @@ export async function readActiveScope(
     session,
     scope,
     active,
-    scopeQuery: scopeQuery(active),
+    scopeQuery: explicit ? scopeQuery(active) : "",
     chapters,
     chapterIds: chapters.map((c) => c.id),
   };

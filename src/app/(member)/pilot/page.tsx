@@ -20,6 +20,7 @@ import { NextRideCard } from "../_components/home/next-ride-card";
 import { MEMBER_LIFE } from "../_components/instant";
 import { MemberPageShell } from "../_components/member-page";
 import { ApprovalCelebration } from "./_components/approval-celebration";
+import { FinishRideCard } from "./_components/finish-ride-card";
 import { PendingChapterCard } from "./_components/pending-chapter-card";
 import { RejectedCard } from "./_components/rejected-card";
 
@@ -31,6 +32,9 @@ export default function PilotHomePage() {
       </Suspense>
       <Suspense fallback={null}>
         <PilotStatus />
+      </Suspense>
+      <Suspense fallback={null}>
+        <FinishRideCard />
       </Suspense>
       <Suspense fallback={<SectionFallback />}>
         <NextRideCard perspective="pilot" />

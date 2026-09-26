@@ -7,7 +7,9 @@ import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
 import { readActiveScope, type AdminSearchParams } from "../active-scope";
 import { JoinLinkCard } from "./_components/join-link-card";
 import { NotificationSettingsCard } from "./_components/notification-settings-card";
+import { PostRideInstructionsCard } from "./_components/post-ride-instructions-card";
 import { PageFallback } from "@/components/page-fallback";
+import { markdownToolLabels } from "@/components/markdown-editor";
 
 export default function SettingsPage({
   searchParams,
@@ -54,6 +56,17 @@ async function Settings({
               settings={settings}
               language={language}
               labels={strings.notifications}
+            />
+            <PostRideInstructionsCard
+              chapterId={chapter.id}
+              value={settings.postRideInstructions}
+              language={language}
+              labels={{
+                markdown: markdownToolLabels(dict),
+                ...strings.postRide,
+                status: strings.notifications.status,
+                field: strings.notifications.field,
+              }}
             />
           </>
         ) : (

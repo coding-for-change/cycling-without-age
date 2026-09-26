@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { chapters } from "@/features/chapters";
 import { ChatEmptyPane } from "@/features/chat/components/chat-empty-pane";
 import { ChatLayout } from "@/features/chat/components/chat-layout";
+import { markdownToolLabels } from "@/components/markdown-editor";
 import { ConversationThread } from "@/features/chat/components/conversation-thread";
 import { membership } from "@/features/membership";
 import { requirePerspective } from "@/lib/auth-guards";
@@ -89,6 +90,7 @@ export async function MemberChatThread({
       view={view}
       home={PERSPECTIVE_HOME[perspective]}
       strings={dict.chat}
+      markdown={markdownToolLabels(dict)}
       language={language}
       notation={resolveLocale(head.get("accept-language"))}
     />

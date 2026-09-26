@@ -33,10 +33,12 @@ export function reportSave(
     report,
     labels,
     undo,
+    undoing = false,
   }: {
     report: (state: "saving" | "saved" | "failed") => void;
     labels: SaveLabels;
     undo?: () => void;
+    undoing?: boolean;
   },
 ): boolean {
   if (!result.ok) {
@@ -47,7 +49,7 @@ export function reportSave(
   }
   report("saved");
   haptics.success();
-  toast.success(undo ? labels.saved : labels.undone, {
+  toast.success(undoing ? labels.undone : labels.saved, {
     action: undo ? { label: labels.undo, onClick: undo } : undefined,
   });
   return true;

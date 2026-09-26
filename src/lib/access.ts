@@ -44,6 +44,37 @@ export const isChapterAdmin = (
   hasChapterRole(access, chapterId, "admin") ||
   (chapterCountryId !== null && isCountryAdmin(access, chapterCountryId));
 
+/**
+ * A record administered from several places at once — a pooled location is
+ * run by its country's admins, a pooled trishaw also by its member chapters'.
+ */
+export type AdminAuthority = {
+  chapters: { chapterId: string; countryId: string }[];
+  countryIds: string[];
+};
+
+export type FileReadRule =
+  | { kind: "anyone" }
+  | { kind: "uploader"; userId: string | null }
+  | {
+      kind: "members";
+      chapterIds: string[];
+      roles: ChapterRole[];
+      admins: AdminAuthority;
+    }
+  | {
+      kind: "reporterOrAdmins";
+      reporterId: string | null;
+      admins: AdminAuthority;
+    };
+
+export const allowsAdmin = (access: Access, authority: AdminAuthority) =>
+  isSuperAdmin(access) ||
+  authority.countryIds.some((id) => isCountryAdmin(access, id)) ||
+  authority.chapters.some(({ chapterId, countryId }) =>
+    isChapterAdmin(access, chapterId, countryId),
+  );
+
 export function getHighestRole(access: Access): HighestRole {
   if (isSuperAdmin(access)) return "superadmin";
   if (access.countryAdminOf.length > 0) return "countryAdmin";

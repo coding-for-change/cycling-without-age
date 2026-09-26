@@ -54,6 +54,7 @@ export const findChapterFootprint = (id: string) =>
         select: {
           members: true,
           passengers: true,
+          rides: true,
           applications: { where: { status: "pending" } },
         },
       },

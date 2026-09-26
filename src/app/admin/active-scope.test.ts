@@ -9,6 +9,13 @@ jest.mock("next/navigation", () => ({
 }));
 jest.mock("@/lib/auth-guards", () => ({ requireAdminScope: jest.fn() }));
 
+let storedScope: string | undefined;
+jest.mock("next/headers", () => ({
+  cookies: async () => ({
+    get: () => (storedScope ? { value: storedScope } : undefined),
+  }),
+}));
+
 const DE = "country-de";
 const BERLIN = {
   id: "c-berlin",
@@ -38,6 +45,7 @@ const read = (params: Record<string, string | string[] | undefined>) =>
   readActiveScope(Promise.resolve(params));
 
 beforeEach(() => {
+  storedScope = undefined;
   (requireAdminScope as jest.Mock).mockResolvedValue({
     session: { user: { id: "u1" } },
     scope,
@@ -69,5 +77,32 @@ describe("readActiveScope", () => {
   it("reads a repeated param as its first value", async () => {
     const { active } = await read({ chapter: ["berlin", "aarhus"] });
     expect(active).toEqual({ kind: "chapter", chapter: BERLIN });
+  });
+
+  it("keeps the stored scope when the URL asks for none", async () => {
+    storedScope = "chapter:hamburg";
+    const { active, scopeQuery, chapterIds } = await read({});
+    expect(active).toEqual({ kind: "chapter", chapter: HAMBURG });
+    expect(chapterIds).toEqual([HAMBURG.id]);
+    expect(scopeQuery).toBe("");
+  });
+
+  it("lets an explicit param win over the stored scope", async () => {
+    storedScope = "chapter:hamburg";
+    const { active, scopeQuery } = await read({ chapter: "berlin" });
+    expect(active).toEqual({ kind: "chapter", chapter: BERLIN });
+    expect(scopeQuery).toBe("?chapter=berlin");
+  });
+
+  it("falls back to the default when the stored scope is out of reach", async () => {
+    storedScope = "country:DK";
+    const { active } = await read({});
+    expect(active).toEqual({ kind: "country", country: scope.countries[0] });
+  });
+
+  it("ignores a malformed stored scope", async () => {
+    storedScope = "garbage";
+    const { active } = await read({});
+    expect(active).toEqual({ kind: "country", country: scope.countries[0] });
   });
 });

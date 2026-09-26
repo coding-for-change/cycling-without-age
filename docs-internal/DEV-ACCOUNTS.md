@@ -7,7 +7,7 @@ npm run db:seed
 ```
 
 The seed is idempotent — run it as often as you like — and refuses to run when
-`NODE_ENV=production`.
+`NODE_ENV=production`, unless `FEATURE_BRANCH` is set (only feature environments set it).
 
 ## Signing in
 
@@ -24,6 +24,29 @@ running, the mailer prints the code to the `next dev` console instead.)
 | `pilot.pending@cwa.local` | pending pilot application for **München**, no membership yet |
 | `passenger@cwa.local` | passenger in **München**, phone `+4915112345678` (pre-verified) |
 | `multi@cwa.local` | pilot **and** chapter admin in **Hamburg**, plus country admin **DK** (role-stacking case) |
+
+## Feature environments
+
+**Deploy Feature Branch** seeds the branch's database on deploy when it has no accounts
+yet (`node seed.js --if-empty`, bundled into the image by `npm run build:seed`). A
+database that already holds data is never touched; `cleanup-feature` wipes it, so the next
+deploy seeds again.
+
+Feature environments send mail through Resend, so `@cwa.local` cannot receive an OTP.
+The accounts are plus-addressed onto a real inbox instead: with `seed_mailbox` =
+`you@example.com` the superadmin is `you+superadmin@example.com`, the München admin
+`you+admin.muenchen@example.com`, and so on for every row in the table above. The inbox
+comes from the `seed_mailbox` input, falling back to the `SEED_MAILBOX` repository
+variable; with neither, the deploy warns and leaves the database empty. Untick `seed` to
+skip it.
+
+The deploy comment on the branch's PR lists every seed account that exists for that inbox,
+with its roles, on first seed and on every redeploy after it. The repository is public, so
+the inbox address is public there too.
+
+```bash
+gh workflow run deploy-feature.yml --ref feature/cod-123 -f seed_mailbox=you@example.com
+```
 
 ## Walking the core loop
 

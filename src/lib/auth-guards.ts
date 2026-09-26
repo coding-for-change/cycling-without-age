@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { chapters } from "@/features/chapters";
 import { profile } from "@/features/profile";
 import {
+  allowsAdmin,
   availablePerspectives,
   getHighestRole as highestRole,
   hasAnyAdminScope,
@@ -19,8 +20,10 @@ import { HOME_BY_ROLE, NEXT_COOKIE, safeNextPath } from "@/lib/redirects";
 import type { MemberPerspective } from "@/lib/redirects";
 import type {
   Access,
+  AdminAuthority,
   AdminScope,
   ChapterRole,
+  FileReadRule,
   HighestRole,
   Perspective,
 } from "@/lib/access";
@@ -98,6 +101,13 @@ export async function requireCountryAdminOfChapter(chapterId: string) {
   return session;
 }
 
+export async function requireAdminOf(authority: AdminAuthority) {
+  const session = await requireAuth();
+  if (!allowsAdmin(session.access, authority)) deny();
+  await ensureAdminPasskey(session.user.id);
+  return session;
+}
+
 export async function requireChapterRole(chapterId: string, role: ChapterRole) {
   const session = await requireAuth();
   if (hasChapterRole(session.access, chapterId, role)) return session;
@@ -134,6 +144,31 @@ export const requireAdminScope = cache(
     };
   },
 );
+
+export function canReadFile(
+  session: { user: { id: string }; access: Access },
+  rule: FileReadRule,
+): boolean {
+  switch (rule.kind) {
+    case "anyone":
+      return true;
+    case "uploader":
+      return rule.userId === session.user.id;
+    case "members":
+      return (
+        rule.chapterIds.some((chapterId) =>
+          rule.roles.some((role) =>
+            hasChapterRole(session.access, chapterId, role),
+          ),
+        ) || allowsAdmin(session.access, rule.admins)
+      );
+    case "reporterOrAdmins":
+      return (
+        rule.reporterId === session.user.id ||
+        allowsAdmin(session.access, rule.admins)
+      );
+  }
+}
 
 export function getHighestRole(session: { access: Access }): HighestRole {
   return highestRole(session.access);

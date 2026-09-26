@@ -68,6 +68,10 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Cycling Without Age uses the camera so you can photograph damage on a trishaw.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Cycling Without Age lets you pick a photo of a trishaw or its storage location.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Cycling Without Age uses your location to show the chapters closest to you.</string>
 	<!-- Dev-only: WKWebView refuses http:// under App Transport Security, which

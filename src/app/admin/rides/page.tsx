@@ -1,17 +1,17 @@
 import { Suspense } from "react";
 import { headers } from "next/headers";
 import { chapters as chapterFeature } from "@/features/chapters";
-import { rides } from "@/features/rides";
 import { RideWeek } from "@/features/rides/components/ride-week";
-import { addDays, firstDayOfWeek, startOfWeek } from "@/lib/calendar";
-import { resolveLocale, wordsLocale } from "@/lib/format";
+import { wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { PageFallback } from "@/components/page-fallback";
 import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
+import { hrefWith } from "../_components/href-with";
 import { WeekSwitcher } from "../_components/week-switcher";
 import { readActiveScope, type AdminSearchParams } from "../active-scope";
-import { calendarTimeZone } from "../calendar-scope";
-import { readWeekAnchor } from "../week-param";
+import { readCalendarWeek } from "../calendar-week";
+import { ALLOCATION_PARAM } from "./_components/allocation-param";
+import { TrishawAllocation } from "./_components/trishaw-allocation";
 
 export default function RidesPage({
   searchParams,
@@ -22,6 +22,9 @@ export default function RidesPage({
     <AdminPageShell>
       <Suspense fallback={<PageFallback />}>
         <Rides searchParams={searchParams} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <TrishawAllocation searchParams={searchParams} />
       </Suspense>
     </AdminPageShell>
   );
@@ -44,17 +47,18 @@ async function Rides({
     chapterFeature.getChapterTimeZones(chapterIds),
   ]);
 
-  const locale = resolveLocale(head.get("accept-language"));
-  const weekStartsOn = firstDayOfWeek(locale);
-  const { timeZone, label } = calendarTimeZone(zones);
-  const now = new Date();
-  const anchor = readWeekAnchor(params.week, timeZone, weekStartsOn, now);
+  const {
+    locale,
+    weekStartsOn,
+    timeZone,
+    label,
+    now,
+    anchor,
+    rides: weekRides,
+  } = await readCalendarWeek({ week: params.week, zones, head, chapterIds });
 
-  const weekRides = await rides.listRidesInRange(
-    chapterIds,
-    startOfWeek(anchor, timeZone, weekStartsOn),
-    addDays(startOfWeek(anchor, timeZone, weekStartsOn), 7, timeZone),
-  );
+  const allocationHref = (rideId: string) =>
+    hrefWith("/admin/rides", params, { [ALLOCATION_PARAM]: rideId });
 
   return (
     <>
@@ -80,6 +84,14 @@ async function Rides({
           locale={locale}
           words={wordsLocale(language)}
           now={now}
+          fleet={{
+            grounded: dict.fleet.common.grounded,
+            groundedOnRide: dict.fleet.allocation.groundedOnRide,
+          }}
+          allocate={{
+            href: allocationHref,
+            label: dict.fleet.allocation.open,
+          }}
         />
       </div>
     </>
