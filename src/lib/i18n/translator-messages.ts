@@ -1,5 +1,7 @@
+import { IntlMessageFormat } from "intl-messageformat";
 import { logger } from "@/lib/observability/logger";
 import type { Locale } from "./locales";
+import { messageArguments } from "./message-arguments";
 import type { Dictionary } from "./messages";
 import { keyMarker } from "./translator-marker";
 import { TOLGEE_API_URL, TOLGEE_NAMESPACE } from "./translator-mode";
@@ -30,7 +32,35 @@ async function fetchLive(locale: Locale): Promise<Tree | null> {
   }
 }
 
-function tag(bundled: Tree, live: Tree | undefined, path: string): Tree {
+const argumentsOf = (message: string, locale: Locale) =>
+  messageArguments(new IntlMessageFormat(message, locale).getAst()).join();
+
+function usable(live: string, bundled: string, locale: Locale): boolean {
+  try {
+    return argumentsOf(live, locale) === argumentsOf(bundled, locale);
+  } catch {
+    return false;
+  }
+}
+
+function pick(
+  live: string | Tree | undefined,
+  bundled: string,
+  id: string,
+  locale: Locale,
+): string {
+  if (typeof live !== "string" || !live || live === bundled) return bundled;
+  if (usable(live, bundled, locale)) return live;
+  logger.warn({ key: id, locale }, "tolgee translation rejected");
+  return bundled;
+}
+
+function tag(
+  bundled: Tree,
+  live: Tree | undefined,
+  path: string,
+  locale: Locale,
+): Tree {
   return Object.fromEntries(
     Object.entries(bundled).map(([key, value]) => {
       const id = path ? `${path}.${key}` : key;
@@ -38,10 +68,17 @@ function tag(bundled: Tree, live: Tree | undefined, path: string): Tree {
       if (typeof value !== "string")
         return [
           key,
-          tag(value, typeof current === "object" ? current : undefined, id),
+          tag(
+            value,
+            typeof current === "object" ? current : undefined,
+            id,
+            locale,
+          ),
         ];
-      const text = typeof current === "string" && current ? current : value;
-      return [key, text + keyMarker(id, TOLGEE_NAMESPACE)];
+      return [
+        key,
+        pick(current, value, id, locale) + keyMarker(id, TOLGEE_NAMESPACE),
+      ];
     }),
   );
 }
@@ -51,5 +88,5 @@ export async function liveMessages(
   bundled: Dictionary,
 ): Promise<Dictionary> {
   const live = await fetchLive(locale);
-  return tag(bundled, live ?? undefined, "") as Dictionary;
+  return tag(bundled, live ?? undefined, "", locale) as Dictionary;
 }

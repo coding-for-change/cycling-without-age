@@ -1,8 +1,4 @@
-import {
-  parse,
-  TYPE,
-  type MessageFormatElement,
-} from "@formatjs/icu-messageformat-parser";
+import { parse, TYPE } from "@formatjs/icu-messageformat-parser";
 import { IntlMessageFormat } from "intl-messageformat";
 import appDa from "@/messages/app/da.json";
 import appDe from "@/messages/app/de.json";
@@ -14,6 +10,7 @@ import errorsDa from "@/messages/errors/da.json";
 import errorsDe from "@/messages/errors/de.json";
 import errorsEn from "@/messages/errors/en.json";
 import { locales, type Locale } from "./locales";
+import { messageArguments, walkMessage } from "./message-arguments";
 
 const NAMESPACES: Record<string, Record<Locale, unknown>> = {
   app: { en: appEn, da: appDa, de: appDe },
@@ -31,33 +28,13 @@ const flatten = (node: unknown, path = ""): Map<string, unknown> => {
   return new Map([[path, node]]);
 };
 
-const walk = (
-  elements: MessageFormatElement[],
-  visit: (element: MessageFormatElement) => void,
-) => {
-  for (const element of elements) {
-    visit(element);
-    if (element.type === TYPE.plural || element.type === TYPE.select)
-      for (const option of Object.values(element.options))
-        walk(option.value, visit);
-    if (element.type === TYPE.tag) walk(element.children, visit);
-  }
-};
-
-const argumentNames = (message: string) => {
-  const names = new Set<string>();
-  walk(parse(message), (element) => {
-    if ("value" in element && element.type !== TYPE.literal)
-      names.add(element.value);
-  });
-  return [...names].sort();
-};
+const argumentNames = (message: string) => messageArguments(parse(message));
 
 const missingCategories = (message: string, locale: Locale) => {
   const required = new Intl.PluralRules(locale).resolvedOptions()
     .pluralCategories;
   const missing: string[] = [];
-  walk(parse(message), (element) => {
+  walkMessage(parse(message), (element) => {
     if (element.type !== TYPE.plural || element.pluralType === "ordinal")
       return;
     for (const category of required)
