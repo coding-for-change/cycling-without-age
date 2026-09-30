@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -67,8 +69,36 @@ jobs:
       - name: Check messages
         run: npx jest src/lib/i18n
 
-      - name: Push to Tolgee
+      - name: Push new keys and remove deleted ones
         run: npx tolgee push --remove-other-keys
+
+      - name: Find the texts this merge changed
+        id: changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BEFORE: ${{ github.event.before }}
+          OUT: ${{ runner.temp }}/i18n-changed
+        run: |
+          HEAD_REF=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '.[0].head.ref // empty')
+          if [ "$HEAD_REF" = "$SYNC_BRANCH" ]; then
+            echo "Sync PR merge: its texts came from Tolgee, nothing to override."
+            echo "any=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          node scripts/i18n-changed.mjs "$BEFORE" "$OUT"
+          if [ -d "$OUT" ]; then
+            echo "any=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "any=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push changed texts over Tolgee's
+        if: steps.changed.outputs.any == 'true'
+        run: >
+          npx tolgee push
+          --files-template "${{ runner.temp }}/i18n-changed/{namespace}/{languageTag}.json"
+          --force-mode OVERRIDE
+          --override-mode ALL
 
   pull:
     name: Pull translations into a PR

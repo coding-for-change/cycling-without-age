@@ -37,7 +37,7 @@ different placeholders than English, lacks a plural category, or doesn't parse.
 
 | Job | Trigger | What it does |
 |---|---|---|
-| Push | A merge to `main` that touches `src/messages/**` | Checks the messages, then `tolgee push --remove-other-keys`. New keys appear in Tolgee, and keys deleted in git are deleted in Tolgee along with their translations. Translations already edited in Tolgee are kept (`forceMode: KEEP`), so a changed English text in git doesn't overwrite a newer one from Tolgee. |
+| Push | A merge to `main` that touches `src/messages/**` | Checks the messages, then `tolgee push --remove-other-keys`. New keys appear in Tolgee, and keys deleted in git are deleted in Tolgee along with their translations. Texts that already exist in Tolgee are kept (`forceMode: KEEP`). Then `scripts/i18n-changed.mjs` collects exactly the texts this merge changed in git, in any language, and pushes them again with `OVERRIDE`, so a developer's edit replaces the one in Tolgee while translator edits to other texts stay. Merging the sync PR skips that second push, because its texts came from Tolgee. |
 | Pull | Every night at 03:00 UTC, or **Run workflow** by hand | `tolgee pull`, Prettier, then type check and tests. If anything changed, it opens or updates one PR from `i18n/tolgee-sync`. |
 
 Review the sync PR's wording, then merge it. A job that fails means Tolgee holds something the
@@ -51,7 +51,8 @@ The workflow reads `TOLGEE_API_KEY` from the vault: a project API key with the `
 ## Running a sync by hand
 
 `npm run i18n:pull` and `npm run i18n:push` do the same with the key in `.env.local`. The local
-push never deletes keys. Deleting only happens from `main`, so a branch that's behind can't remove
+push never deletes keys and never replaces a text that's already in Tolgee; changed texts reach
+Tolgee when they merge to `main`. Deleting only happens from `main`, so a branch that's behind can't remove
 keys another branch just added.
 
 ## Translator mode (in-context editing)
