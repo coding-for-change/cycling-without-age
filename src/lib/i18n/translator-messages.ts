@@ -12,7 +12,7 @@ const TIMEOUT_MS = 5000;
 
 async function fetchLive(locale: Locale): Promise<Tree | null> {
   const projectId = process.env.TOLGEE_PROJECT_ID;
-  const apiKey = process.env.TOLGEE_API_KEY;
+  const apiKey = process.env.TOLGEE_READ_KEY;
   if (!projectId || !apiKey) return null;
   const url = `${TOLGEE_API_URL}/v2/projects/${projectId}/translations/${locale}?ns=${TOLGEE_NAMESPACE}`;
   try {

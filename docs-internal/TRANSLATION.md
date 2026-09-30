@@ -46,7 +46,8 @@ Tolgee and re-run the job. GitHub doesn't start the CI workflow for PRs a bot op
 why the pull job runs the checks itself.
 
 The workflow reads `TOLGEE_API_KEY` from the vault: a project API key with the `translations.view`,
-`translations.edit`, `keys.edit` and `keys.delete` scopes.
+`translations.edit`, `keys.edit` and `keys.delete` scopes. Only the sync workflow gets this key;
+it never leaves GitHub Actions.
 
 ## Running a sync by hand
 
@@ -60,8 +61,9 @@ keys another branch just added.
 For someone who edits texts directly on the site:
 
 1. Run the **Deploy Feature Branch** workflow with **translator_mode** ticked. The build gets
-   `NEXT_PUBLIC_TRANSLATOR_MODE=1`, and the server gets `TOLGEE_API_KEY` / `TOLGEE_PROJECT_ID`
-   from the vault. The vault key only needs `translations.view`.
+   `NEXT_PUBLIC_TRANSLATOR_MODE=1`, and the server gets `TOLGEE_READ_KEY` / `TOLGEE_PROJECT_ID`
+   from the vault. `TOLGEE_READ_KEY` is a separate project API key with only `translations.view`,
+   because it sits in plain text in the feature server's `.env`. The deploy fails if it's missing.
 2. The translator installs the **Tolgee Tools** extension (Chrome or Firefox), opens the feature
    URL, and enters their own personal API key in the extension.
 3. They hold **Alt** (⌥ on a Mac), move the mouse over a text and click it. The first Alt press

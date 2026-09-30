@@ -31,7 +31,7 @@ const load = async () =>
 
 beforeEach(() => {
   process.env.TOLGEE_PROJECT_ID = "35299";
-  process.env.TOLGEE_API_KEY = "tgpak_test";
+  process.env.TOLGEE_READ_KEY = "tgpak_test";
   jest.mocked(logger.warn).mockClear();
 });
 

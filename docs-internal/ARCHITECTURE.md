@@ -151,7 +151,7 @@ Production never calls Tolgee.
 - **Emails**: `getEmailStrings(locale)` in `src/emails/strings` over `messages/email`, the
   same `formatMessage` for interpolation; the worker bundle inlines the JSON.
 - **Translator mode**: a feature-branch build with `NEXT_PUBLIC_TRANSLATOR_MODE=1` makes
-  `loadMessages` fetch live translations from Tolgee (server-side `TOLGEE_API_KEY`) and append
+  `loadMessages` fetch live translations from Tolgee (server-side `TOLGEE_READ_KEY`, `translations.view` only) and append
   Tolgee's invisible key marker to every `app` message; `<TranslatorTools />` in the root
   layout starts Tolgee's observer so Alt+click opens the in-context editor. The translator's
   own key comes from the Tolgee Tools browser extension, never from the bundle. Production
