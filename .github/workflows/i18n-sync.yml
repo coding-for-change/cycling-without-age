@@ -160,7 +160,7 @@ jobs:
       - name: Detect changes
         id: diff
         run: |
-          if git diff --quiet -- src/messages; then
+          if [ -z "$(git status --porcelain -- src/messages)" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"

@@ -189,7 +189,7 @@ the two in full, with page references. Don't cite the book for a rule it doesn't
   `next/headers`). `en.json` is the source of truth for the *shape*; `da.json`/`de.json` are
   typed against it and `src/lib/i18n/messages.test.ts` checks keys, arguments and plural
   categories. **Pass strings down as props** — Client Components get finished strings or raw
-  message slices, never keys, and never use next-intl hooks. German uses Sie-form for
+  message slices, never keys. German uses Sie-form for
   passenger-facing copy and du-form for pilot-facing copy, so the same English sentence
   sometimes needs two German ones. Interpolate with `formatMessage(template, values, locale)`
   from `@/lib/i18n/format`; counts are ICU plurals (`{count, plural, one {…} other {# …}}`),

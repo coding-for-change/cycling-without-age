@@ -141,10 +141,8 @@ Production never calls Tolgee.
   No locale in the URL. `User.locale` drives email, push and the calendar feed only.
 - **Loading**: `loadMessages(locale)` in `src/lib/i18n/messages.ts` is the one loader.
   `getDictionary()` returns the typed raw messages for server components, which pass
-  finished strings or raw slices to Client Components as props. next-intl is wired in
-  (`src/lib/i18n/request.ts`, `withNextIntl` in `next.config.ts`, `AppConfig` in
-  `app-config.d.ts`) so `getTranslations()` works on the server; there is no
-  `NextIntlClientProvider` and no client-side next-intl.
+  finished strings or raw slices to Client Components as props. It is wrapped in React
+  `cache()`, so a render loads the messages once however many components ask.
 - **Formatting**: `formatMessage(template, values, locale)` in `src/lib/i18n/format.ts` —
   memoised `IntlMessageFormat`, client-safe. Plurals are ICU plurals so every language gets
   its own categories.

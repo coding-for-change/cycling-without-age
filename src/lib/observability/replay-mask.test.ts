@@ -51,6 +51,11 @@ describe("replay text masking", () => {
     );
   });
 
+  it("treats a placeholder named like an object built-in as personal data", () => {
+    const text = new StaticText().add({ greeting: "Hi {constructor}" });
+    expect(maskUnlessStatic(text)("Hi Anna")).toBe("** ****");
+  });
+
   it("shows the static fragments around a placeholder rendered on its own", () => {
     expect(maskFn("See the")).toBe("See the");
   });

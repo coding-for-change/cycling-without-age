@@ -2,11 +2,15 @@
 
 import { useEffect } from "react";
 import { defaultLocale, hasLocale, locales } from "@/lib/i18n/locales";
-import { TOLGEE_API_URL, TOLGEE_NAMESPACE } from "@/lib/i18n/translator-mode";
+import {
+  TOLGEE_API_URL,
+  TOLGEE_NAMESPACE,
+  translatorModeBuilt,
+} from "@/lib/i18n/translator-mode";
 
 export function TranslatorTools() {
   useEffect(() => {
-    if (process.env.NEXT_PUBLIC_TRANSLATOR_MODE !== "1") return;
+    if (!translatorModeBuilt) return;
     let stop: (() => void) | undefined;
     let cancelled = false;
     const start = async (event: KeyboardEvent) => {

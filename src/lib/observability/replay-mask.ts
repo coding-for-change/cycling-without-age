@@ -21,6 +21,9 @@ const FILLERS: Record<string, string> = {
   word: "\\p{Lu}+",
 };
 
+const fillerFor = (name: string) =>
+  Object.hasOwn(FILLERS, name) ? FILLERS[name] : null;
+
 const HAS_LETTER = /\p{L}/u;
 const TYPED_BY_USER = "input, textarea, [contenteditable]";
 const SAMPLE_INPUT = /placeholder/i;
@@ -47,7 +50,7 @@ const branches = (element: MessageFormatElement): Variant[] => {
     case TYPE.literal:
       return [[{ text: element.value }]];
     case TYPE.argument:
-      return [[{ filler: FILLERS[element.value] ?? null }]];
+      return [[{ filler: fillerFor(element.value) }]];
     case TYPE.number:
     case TYPE.pound:
       return [[{ filler: NUMBER }]];

@@ -29,6 +29,6 @@ export const getLocale = cache(async (): Promise<Locale> => {
   }
 });
 
-export async function getDictionary(): Promise<Dictionary> {
-  return loadMessages(await getLocale());
-}
+export const getDictionary = cache(async (): Promise<Dictionary> =>
+  loadMessages(await getLocale()),
+);
