@@ -37,8 +37,8 @@ different placeholders than English, lacks a plural category, or doesn't parse.
 
 | Job | Trigger | What it does |
 |---|---|---|
-| Push | A merge to `main` that touches `src/messages/**` | Checks the messages, then `tolgee push --remove-other-keys`. New keys appear in Tolgee, and keys deleted in git are deleted in Tolgee along with their translations. Texts that already exist in Tolgee are kept (`forceMode: KEEP`). Then `scripts/i18n-changed.mjs` collects exactly the texts this merge changed in git, in any language, and pushes them again with `OVERRIDE`, so a developer's edit replaces the one in Tolgee while translator edits to other texts stay. Merging the sync PR skips that second push, because its texts came from Tolgee. |
-| Pull | Every night at 03:00 UTC, or **Run workflow** by hand | `tolgee pull`, Prettier, then type check and tests. If anything changed, it opens or updates one PR from `i18n/tolgee-sync`. |
+| Push | A merge to `main` that touches `src/messages/**` | Checks the messages, then `tolgee push`: new keys appear in Tolgee, and texts that already exist there are kept (`forceMode: KEEP`). Then `scripts/i18n-sync.mjs changed` collects exactly the texts this merge changed in git, in any language, and pushes them again with `OVERRIDE`, so a developer's edit replaces the one in Tolgee while translator edits to other texts stay. Merging the sync PR skips that second push, because its texts came from Tolgee. Last, `scripts/i18n-sync.mjs removed` deletes from Tolgee exactly the keys this merge removed from git. Keys that only an unmerged branch has are never touched. |
+| Pull | Every night at 03:00 UTC, or **Run workflow** by hand | `tolgee pull`, then `scripts/i18n-sync.mjs prune` drops every key `main`'s `en.json` doesn't have, so keys from unmerged branches wait in Tolgee until their branch merges. Then Prettier, type check and tests. If anything changed, it opens or updates one PR from `i18n/tolgee-sync`. |
 
 Review the sync PR's wording, then merge it. A job that fails means Tolgee holds something the
 app can't use, such as broken ICU, a deleted placeholder or a missing plural form. Fix it in
@@ -53,8 +53,9 @@ it never leaves GitHub Actions.
 
 `npm run i18n:pull` and `npm run i18n:push` do the same with the key in `.env.local`. The local
 push never deletes keys and never replaces a text that's already in Tolgee; changed texts reach
-Tolgee when they merge to `main`. Deleting only happens from `main`, so a branch that's behind can't remove
-keys another branch just added.
+Tolgee when they merge to `main`. Pushing a branch's new keys early is safe: translators can
+start on them, and nothing deletes them before the branch merges. The local pull only keeps keys
+the branch has committed, so commit new keys before pulling.
 
 ## Translator mode (in-context editing)
 

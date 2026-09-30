@@ -56,7 +56,7 @@ jobs:
               - copy:
                   dest: decrypted.json
                   content: >
-                    {{ { "TOLGEE_API_KEY": TOLGEE_API_KEY | default("") } | to_json }}
+                    {{ { "TOLGEE_API_KEY": TOLGEE_API_KEY | default(""), "TOLGEE_PROJECT_ID": TOLGEE_PROJECT_ID | default("") } | to_json }}
                 no_log: true
           EOF
           ansible-playbook dump.yml --vault-password-file .vault_pass
@@ -64,13 +64,14 @@ jobs:
           if [ -z "$TOLGEE_API_KEY" ]; then echo "TOLGEE_API_KEY missing from the vault"; exit 1; fi
           echo "::add-mask::$TOLGEE_API_KEY"
           echo "TOLGEE_API_KEY=$TOLGEE_API_KEY" >> "$GITHUB_ENV"
+          echo "TOLGEE_PROJECT_ID=$(jq -r '.TOLGEE_PROJECT_ID // empty' decrypted.json)" >> "$GITHUB_ENV"
           rm -f .vault_pass dump.yml decrypted.json
 
       - name: Check messages
         run: npx jest src/lib/i18n
 
-      - name: Push new keys and remove deleted ones
-        run: npx tolgee push --remove-other-keys
+      - name: Push new keys
+        run: npx tolgee push
 
       - name: Find the texts this merge changed
         id: changed
@@ -85,7 +86,7 @@ jobs:
             echo "any=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          node scripts/i18n-changed.mjs "$BEFORE" "$OUT"
+          node scripts/i18n-sync.mjs changed "$BEFORE" "$OUT"
           if [ -d "$OUT" ]; then
             echo "any=true" >> "$GITHUB_OUTPUT"
           else
@@ -99,6 +100,11 @@ jobs:
           --files-template "${{ runner.temp }}/i18n-changed/{namespace}/{languageTag}.json"
           --force-mode OVERRIDE
           --override-mode ALL
+
+      - name: Delete the keys this merge removed
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: node scripts/i18n-sync.mjs removed "$BEFORE"
 
   pull:
     name: Pull translations into a PR
@@ -148,6 +154,7 @@ jobs:
       - name: Pull from Tolgee
         run: |
           npx tolgee pull
+          node scripts/i18n-sync.mjs prune
           npx prettier --write src/messages
 
       - name: Detect changes
