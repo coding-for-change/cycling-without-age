@@ -52,6 +52,7 @@ export function DangerSection({
             <ConfirmDeleteDialog
               name={data.profile.name}
               labels={labels}
+              locale={data.language}
               cancel={data.cancelLabel}
               action={remove}
               onDone={() => void finishSignOut()}

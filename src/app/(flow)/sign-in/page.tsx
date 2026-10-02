@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getSession, readNextPath } from "@/lib/auth-guards";
 import { readJoinPreset } from "@/lib/join-preset";
 import { resolveDestination } from "@/use-cases/onboarding-progress";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionary, getLocale } from "@/lib/i18n";
 import { resolveLocale } from "@/lib/format";
 import { defaultCountryFor } from "@/lib/identity";
 import { IdentifierStep } from "./_components/identifier-step";
@@ -38,13 +38,18 @@ async function Identifier() {
     redirect(await resolveDestination(session, preset, next));
   }
 
-  const [dict, head] = await Promise.all([getDictionary(), headers()]);
+  const [dict, language, head] = await Promise.all([
+    getDictionary(),
+    getLocale(),
+    headers(),
+  ]);
   const locale = resolveLocale(head.get("accept-language"));
 
   return (
     <IdentifierStep
       strings={dict.signIn.identifier}
       common={dict.common}
+      language={language}
       defaultCountry={defaultCountryFor(locale)}
       googleEnabled={Boolean(
         process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,

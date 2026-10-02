@@ -11,7 +11,8 @@ import { APP_URL } from "@/lib/app-url";
 import { renderIcs, type IcsEvent } from "@/lib/ics";
 import { serializeError } from "@/lib/observability/errors";
 import { logger } from "@/lib/observability/logger";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 
 type FeedStrings = EmailStrings["calendarFeed"];
 
@@ -55,11 +56,14 @@ function toEvent(
   ride: rides.RideFeedRow,
   strings: FeedStrings,
   pilotChapterIds: string[],
+  locale: Locale,
 ): IcsEvent {
   const piloting =
     ride.assignments.length > 0 && pilotChapterIds.includes(ride.chapterId);
   const model = strings.models[ride.model];
-  const title = piloting ? fill(strings.pilot, { model }) : model;
+  const title = piloting
+    ? formatMessage(strings.pilot, { model }, locale)
+    : model;
   const cancelled = ride.status === "cancelled";
   const destination = place(ride.destinationName, ride.destinationAddress);
   const trishaws = ride.trishaws.map(({ trishaw }) => trishaw.name);
@@ -70,14 +74,17 @@ function toEvent(
     start: ride.startsAt,
     end: ride.endsAt,
     stamp: ride.updatedAt,
-    summary: cancelled ? fill(strings.cancelled, { title }) : title,
+    summary: cancelled
+      ? formatMessage(strings.cancelled, { title }, locale)
+      : title,
     location: place(ride.locationName, ride.locationAddress),
     description: [
       ride.chapter.name,
-      destination && fill(strings.destination, { place: destination }),
+      destination &&
+        formatMessage(strings.destination, { place: destination }, locale),
       trishaws.length > 0 &&
-        fill(strings.trishaws, { names: trishaws.join(", ") }),
-      fill(strings.details, { url: href }),
+        formatMessage(strings.trishaws, { names: trishaws.join(", ") }, locale),
+      formatMessage(strings.details, { url: href }, locale),
     ]
       .filter(Boolean)
       .join("\n"),
@@ -117,7 +124,8 @@ export async function renderCalendarFeed(
       ),
   ]);
 
-  const strings = getEmailStrings(resolveEmailLocale(feed.locale)).calendarFeed;
+  const locale = resolveEmailLocale(feed.locale);
+  const strings = getEmailStrings(locale).calendarFeed;
 
   return renderIcs({
     prodId: PROD_ID,
@@ -125,7 +133,7 @@ export async function renderCalendarFeed(
     description: strings.description,
     refreshMinutes: REFRESH_MINUTES,
     events: list.map((ride) =>
-      toEvent(ride, strings, audience.pilotChapterIds),
+      toEvent(ride, strings, audience.pilotChapterIds, locale),
     ),
   });
 }

@@ -133,6 +133,7 @@ export function ChatLayout({
         chapters={chapters}
         strings={strings.newChat}
         errors={strings.errors}
+        language={language}
       />
     </ChatRealtimeProvider>
   );

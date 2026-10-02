@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { useDrawerParam } from "@/hooks/use-drawer-param";
 import type { CatalogueScopeName } from "../schemas";
 import { FileThumb } from "./file-image";
+import type { Locale } from "@/lib/i18n/locales";
 
 export type TypeCatalogueRow = {
   id: string;
@@ -50,12 +51,14 @@ export function TypeCatalogue({
   scopeQuery,
   labels,
   table,
+  locale,
 }: {
   rows: TypeCatalogueRow[];
   showArchived: boolean;
   scopeQuery: string;
   labels: TypeCatalogueLabels;
   table: DataTableStrings;
+  locale: Locale;
 }) {
   const { go } = useDrawerParam();
   const toggleId = useId();
@@ -196,6 +199,7 @@ export function TypeCatalogue({
         ]}
         rowHref={href}
         getRowId={(row) => row.id}
+        locale={locale}
       />
     </div>
   );

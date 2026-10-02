@@ -59,7 +59,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn, fill } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 
 declare module "@tanstack/react-table" {
   interface ColumnMeta<TData extends RowData, TValue> {
@@ -152,11 +154,13 @@ function HeaderFilter({
   value,
   onChange,
   strings,
+  locale,
 }: {
   filter: DataTableFilter;
   value: string;
   onChange: (value: string) => void;
   strings: DataTableStrings;
+  locale: Locale;
 }) {
   const active = value !== ALL;
   return (
@@ -165,7 +169,11 @@ function HeaderFilter({
         <Button
           variant="ghost"
           size="icon"
-          aria-label={fill(strings.filterAria, { column: filter.label })}
+          aria-label={formatMessage(
+            strings.filterAria,
+            { column: filter.label },
+            locale,
+          )}
           className={cn(
             "size-8 text-ink-soft",
             active && "bg-mint text-ink hover:bg-mint",
@@ -208,6 +216,7 @@ export function DataTable<TData>({
   columns,
   data,
   strings,
+  locale,
   searchable = true,
   filters = [],
   rowHref,
@@ -217,6 +226,7 @@ export function DataTable<TData>({
   columns: ColumnDef<TData, unknown>[];
   data: TData[];
   strings: DataTableStrings;
+  locale: Locale;
   searchable?: boolean;
   filters?: DataTableFilter[];
   rowHref?: (row: TData) => string | undefined;
@@ -325,9 +335,11 @@ export function DataTable<TData>({
                           <button
                             type="button"
                             onClick={header.column.getToggleSortingHandler()}
-                            aria-label={fill(strings.sortAria, {
-                              column: label,
-                            })}
+                            aria-label={formatMessage(
+                              strings.sortAria,
+                              { column: label },
+                              locale,
+                            )}
                             className="group -mx-2 inline-flex min-h-11 items-center gap-1.5 rounded-md px-2"
                           >
                             {label}
@@ -412,6 +424,7 @@ export function DataTable<TData>({
                               )
                             }
                             strings={strings}
+                            locale={locale}
                           />
                         ) : null}
                         {withColumns ? (
@@ -505,7 +518,11 @@ export function DataTable<TData>({
                     <PaginationLink
                       href="#"
                       isActive={page === pageIndex}
-                      aria-label={fill(strings.page, { page: page + 1 })}
+                      aria-label={formatMessage(
+                        strings.page,
+                        { page: page + 1 },
+                        locale,
+                      )}
                       className="min-h-11"
                       onClick={(event) => {
                         event.preventDefault();
@@ -538,7 +555,7 @@ export function DataTable<TData>({
           </Pagination>
         ) : null}
         <span className="ml-auto">
-          {fill(strings.pageInfo, { from, to, total })}
+          {formatMessage(strings.pageInfo, { from, to, total }, locale)}
         </span>
       </div>
     </div>

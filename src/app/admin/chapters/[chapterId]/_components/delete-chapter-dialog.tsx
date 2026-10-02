@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import type { Locale } from "@/lib/i18n/locales";
 import {
   ConfirmDeleteDialog,
   type ConfirmDeleteLabels,
@@ -14,6 +15,7 @@ export function DeleteChapterDialog({
   backHref,
   labels,
   cancel,
+  locale,
 }: {
   chapterId: string;
   name: string;
@@ -21,12 +23,14 @@ export function DeleteChapterDialog({
   backHref: string;
   labels: ConfirmDeleteLabels;
   cancel: string;
+  locale: Locale;
 }) {
   const router = useRouter();
 
   return (
     <ConfirmDeleteDialog
       name={name}
+      locale={locale}
       consequences={consequences}
       labels={labels}
       cancel={cancel}

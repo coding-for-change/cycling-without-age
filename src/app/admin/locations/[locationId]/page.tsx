@@ -6,9 +6,9 @@ import { allowsAdmin } from "@/lib/access";
 import { requireAdminOf } from "@/lib/auth-guards";
 import { wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
 import { MAP_ENABLED } from "@/lib/mapbox-map";
 import { AdminPageShell } from "../../_components/admin-page";
-import { countOrNone } from "../../_components/count-or-none";
 import { BackLink } from "../../_components/detail-page";
 import { readActiveScope, type AdminSearchParams } from "../../active-scope";
 import { DetailSkeleton } from "../../_components/detail-skeleton";
@@ -96,7 +96,7 @@ async function LocationBody({
           accessNotes: location.accessNotes,
           returnInstructions: location.returnInstructions,
           ownerName: locationOwnerName(location),
-          trishawCount: countOrNone(count, strings.trishawCount, words),
+          trishawCount: formatMessage(strings.trishawCount, { count }, words),
         }}
         trishaws={[...trishaws]
           .sort((a, b) => a.name.localeCompare(b.name, language))

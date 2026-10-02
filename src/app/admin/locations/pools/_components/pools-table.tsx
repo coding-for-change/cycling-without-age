@@ -4,6 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type DataTableStrings } from "@/components/ui/data-table";
 import { mutedColumn } from "../../../_components/table-columns";
+import type { Locale } from "@/lib/i18n/locales";
 
 export type PoolTableRow = {
   id: string;
@@ -33,12 +34,14 @@ export function PoolsTable({
   scopeQuery,
   labels,
   table,
+  locale,
 }: {
   rows: PoolTableRow[];
   showCountry: boolean;
   scopeQuery: string;
   labels: PoolTableLabels;
   table: DataTableStrings;
+  locale: Locale;
 }) {
   const columns: ColumnDef<PoolTableRow, unknown>[] = [
     {
@@ -102,6 +105,7 @@ export function PoolsTable({
       columns={columns}
       data={rows}
       strings={table}
+      locale={locale}
       getRowId={(row) => row.id}
       rowHref={(row) => `/admin/locations/${row.id}${scopeQuery}`}
     />

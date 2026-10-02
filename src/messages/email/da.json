@@ -1,0 +1,194 @@
+{
+  "applicationApproved": {
+    "cta": "Åbn Cycling Without Age",
+    "footer": "Du modtager denne e-mail, fordi du har søgt om at være pilot i en Cycling Without Age-afdeling.",
+    "heading": "Velkommen om bord",
+    "intro": "{chapter} har godkendt dig som pilot. Næste skridt: træningsvideoerne, en workshop med en af kaptajnerne — og så din første tur.",
+    "noteHeading": "Fra din afdeling",
+    "preview": "Din afdeling siger ja",
+    "subject": "Du er pilot i {chapter}"
+  },
+  "applicationRejected": {
+    "cta": "Find en anden afdeling",
+    "footer": "Du modtager denne e-mail, fordi du har søgt om at være pilot i en Cycling Without Age-afdeling.",
+    "heading": "Ikke denne gang",
+    "intro": "{chapter} kan ikke tage dig ind som pilot lige nu. Rickshawer, kaptajner og træningsdatoer skal passe sammen — en anden afdeling i nærheden har måske plads.",
+    "noteHeading": "Fra din afdeling",
+    "preview": "Et svar fra din afdeling",
+    "subject": "Om din pilotansøgning i {chapter}"
+  },
+  "applicationSubmitted": {
+    "anonymous": "Nogen",
+    "cta": "Se ansøgningen",
+    "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling.",
+    "heading": "En ny pilotansøgning",
+    "intro": "{name} har søgt om at være pilot i {chapter}. Kig på den, og svar ja — eller ikke denne gang.",
+    "preview": "En ny pilotansøgning",
+    "subject": "{name} vil være pilot i {chapter}"
+  },
+  "calendarFeed": {
+    "cancelled": "Aflyst: {title}",
+    "description": "Dine ture med Cykling uden alder. Holder sig selv opdateret.",
+    "destination": "Til {place}",
+    "details": "Detaljer i appen: {url}",
+    "models": {
+      "event": "Fællestur",
+      "functional": "Ærindetur",
+      "pleasure": "Fornøjelsestur"
+    },
+    "name": "Cykling uden alder",
+    "pilot": "Pilot · {model}",
+    "trishaws": "Rickshaw: {names}"
+  },
+  "chatDigest": {
+    "cta": "Åbn samtalen",
+    "footer": "Du modtager denne e-mail, fordi push ikke kan nå dig.",
+    "heading": "Mens du var væk",
+    "intro": "{count, plural, one {# ulæst besked i {title}.} other {# ulæste beskeder i {title}.}}",
+    "more": "og {count} mere",
+    "preview": "Beskederne, der venter på dig",
+    "someone": "Nogen",
+    "subjectDirect": "{name} har skrevet til dig",
+    "subjectGroup": "{count, plural, one {# ny besked i {title}} other {# nye beskeder i {title}}}"
+  },
+  "countryAdminAppointed": {
+    "cta": "Åbn dashboardet",
+    "footer": "Du modtager denne e-mail, fordi din rolle i Cycling Without Age er ændret.",
+    "heading": "Du står for {country}",
+    "intro": "{actor} har gjort dig til landeadmin for {country}. Alle afdelinger i landet er dine at støtte fra nu af.",
+    "preview": "Et land at tage vare på",
+    "subject": "Du står for {country} nu"
+  },
+  "countryAdminRemoved": {
+    "cta": "Åbn Cycling Without Age",
+    "footer": "Du modtager denne e-mail, fordi din rolle i Cycling Without Age er ændret.",
+    "heading": "Ikke længere landeadmin",
+    "intro": "{actor} har afsluttet din rolle som landeadmin for {country}. Det, du laver i dine egne afdelinger, er uændret.",
+    "preview": "En ændring af din rolle",
+    "subject": "Din rolle som landeadmin for {country} er slut"
+  },
+  "damageReported": {
+    "affected": "{count, plural, one {Den er stadig tildelt 1 kommende tur.} other {Den er stadig tildelt # kommende ture.}}",
+    "anonymous": "En pilot",
+    "cta": "Se rickshawen",
+    "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling, der bruger denne rickshaw.",
+    "heading": "Skade meldt på {trishaw}",
+    "headingGrounded": "{trishaw} er taget ud af brug",
+    "intro": "{name} har meldt et problem med {trishaw}.",
+    "introGrounded": "{name} har meldt et problem med {trishaw} og taget den ud af brug. Den kan ikke bookes, før en admin har afsluttet skaden.",
+    "preview": "En rickshaw skal ses efter",
+    "subject": "Skade meldt på {trishaw}",
+    "subjectGrounded": "{trishaw} er taget ud af brug",
+    "unnamed": "rickshawen"
+  },
+  "invite": {
+    "cta": "Tag imod invitationen",
+    "footer": "Du modtager denne e-mail, fordi en afdelingsadmin i Cycling Without Age har inviteret din adresse.",
+    "heading": "Du er inviteret",
+    "how": "Log ind med denne e-mailadresse, så sender vi dig en kode — du skal ikke finde på en adgangskode.",
+    "intro": "{inviter} har inviteret dig til {chapter} som {role}.",
+    "preview": "En afdeling venter på dig",
+    "subject": "Du er inviteret til {chapter}"
+  },
+  "memberJoined": {
+    "anonymous": "Nogen",
+    "cta": "Se medlemmet",
+    "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling.",
+    "heading": "En ny passager",
+    "intro": "{name} er nu passager i {chapter}.",
+    "preview": "En ny passager",
+    "subject": "{name} er kommet med i {chapter}"
+  },
+  "memberRemoved": {
+    "cta": "Find en afdeling",
+    "footer": "Du modtager denne e-mail, fordi dit medlemskab af en Cycling Without Age-afdeling er ændret.",
+    "heading": "Du har forladt {chapter}",
+    "intro": "{actor} har fjernet dig fra {chapter}. Din konto er stadig din, og enhver afdeling må gerne tage dig ind igen.",
+    "preview": "En ændring af dit medlemskab",
+    "subject": "Du er ikke længere med i {chapter}"
+  },
+  "otp": {
+    "expiry": "Koden udløber om 10 minutter.",
+    "footer": "Du modtager denne e-mail, fordi der blev anmodet om en login-kode til din adresse.",
+    "heading": "Din login-kode",
+    "ignore": "Har du ikke bedt om den? Så kan du roligt ignorere denne e-mail.",
+    "intro": "Indtast denne kode for at fuldføre dit login.",
+    "preview": "Din login-kode til Cycling Without Age",
+    "subject": "{otp} er din Cycling Without Age-kode"
+  },
+  "poolAccessDecided": {
+    "cta": "Åbn lokationer",
+    "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling.",
+    "headingApproved": "Velkommen til {pool}",
+    "headingRejected": "Ikke denne gang",
+    "introApproved": "Jeres afdeling kan nu tildele rickshawerne i {pool} til sine ture.",
+    "introRejected": "Anmodningen fra {chapter} om at bruge {pool} blev afvist.",
+    "note": "Bemærkning: {note}",
+    "preview": "Et svar på jeres anmodning",
+    "subjectApproved": "{chapter} kan nu bruge {pool}",
+    "subjectRejected": "Jeres anmodning om {pool} blev afvist",
+    "unnamed": "puljen"
+  },
+  "poolAccessRequested": {
+    "cta": "Se anmodningen",
+    "footer": "Du modtager denne e-mail, fordi du er landeadmin i Cycling Without Age.",
+    "heading": "En anmodning om en pulje",
+    "intro": "{chapter} har bedt om at bruge rickshawerne i {pool}. Godkend eller afvis anmodningen.",
+    "preview": "En anmodning om en pulje",
+    "subject": "{chapter} vil gerne bruge {pool}",
+    "unnamed": "puljen"
+  },
+  "roleDemoted": {
+    "cta": "Åbn Cycling Without Age",
+    "footer": "Du modtager denne e-mail, fordi din rolle i en Cycling Without Age-afdeling er ændret.",
+    "heading": "Ikke længere admin",
+    "intro": "{actor} har afsluttet din adminrolle i {chapter}. Alt andet er som før — du kører stadig med afdelingen.",
+    "preview": "En ændring af din rolle",
+    "subject": "Din adminrolle i {chapter} er slut"
+  },
+  "rolePromoted": {
+    "cta": "Åbn afdelingen",
+    "footer": "Du modtager denne e-mail, fordi din rolle i en Cycling Without Age-afdeling er ændret.",
+    "heading": "Du er afdelingsadmin",
+    "intro": "{actor} har gjort dig til admin i {chapter}. Du kan invitere folk, svare på pilotansøgninger og holde afdelingens oplysninger i orden.",
+    "preview": "Nyt ansvar i din afdeling",
+    "subject": "Du er afdelingsadmin i {chapter}"
+  },
+  "roles": {
+    "admin": "afdelingsadmin",
+    "passenger": "passager",
+    "pilot": "pilot"
+  },
+  "welcomePassenger": {
+    "cta": "Bestil din første tur",
+    "footer": "Du modtager denne e-mail, fordi der blev oprettet en konto til din adresse.",
+    "heading": "Vind i håret, når du har lyst",
+    "how": {
+      "1": "Bed om en tur i appen — vælg en dag og et tidspunkt, der passer dig.",
+      "2": "En frivillig pilot tager turen og møder dig ved døren.",
+      "3": "Du sidder forrest. Kun brisen mellem dig og gaden."
+    },
+    "howHeading": "Sådan foregår en tur",
+    "intro": "Din konto er klar. {chapter} har dine oplysninger, og en pilot står klar til at træde i pedalerne.",
+    "noteHeading": "En hilsen fra {chapter}",
+    "preview": "Din plads forrest er klar",
+    "subject": "Velkommen til Cycling Without Age",
+    "title": "Velkommen til {chapter}"
+  },
+  "welcomePilot": {
+    "cta": "Åbn Cycling Without Age",
+    "footer": "Du modtager denne e-mail, fordi du har søgt om at være pilot i en Cycling Without Age-afdeling.",
+    "heading": "Velkommen om bord",
+    "how": {
+      "1": "Se træningsvideoerne — cirka 20 minutter, direkte i appen.",
+      "2": "Deltag i en praktisk workshop med en af kaptajnerne.",
+      "3": "Tag din første tur — en kaptajn kører med første gang."
+    },
+    "howHeading": "Sådan bliver du pilot",
+    "intro": "Din ansøgning om at være pilot for {chapter} er sendt. En afdelingsadministrator kigger på den — som regel inden for et par dage.",
+    "noteHeading": "En hilsen fra {chapter}",
+    "preview": "Din pilotansøgning er hos afdelingen",
+    "subject": "Velkommen om bord — tre skridt til din første tur",
+    "title": "Velkommen til {chapter}"
+  }
+}

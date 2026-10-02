@@ -19,9 +19,9 @@ const staticText = new StaticText();
 const loadedLocales = new Set<Locale>();
 
 const dictionaryLoaders: Record<Locale, () => Promise<{ default: unknown }>> = {
-  en: () => import("@/lib/i18n/en"),
-  da: () => import("@/lib/i18n/da"),
-  de: () => import("@/lib/i18n/de"),
+  en: () => import("@/messages/app/en.json"),
+  da: () => import("@/messages/app/da.json"),
+  de: () => import("@/messages/app/de.json"),
 };
 
 const loadStaticText = () => {

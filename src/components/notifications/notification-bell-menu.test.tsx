@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import en from "@/lib/i18n/en";
+import en from "@/messages/app/en.json";
 import { NotificationBellMenu } from "./notification-bell-menu";
 import type { InboxRow } from "./inbox-row";
 
@@ -31,6 +31,7 @@ const render = (rows: InboxRow[], unseen: number) =>
       rows={rows}
       unseen={unseen}
       strings={en.notifications}
+      locale="en"
     />,
   );
 

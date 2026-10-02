@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { nameOfChapter, nameOfPerson } from "./lookups";
 import { defineKind } from "./types";
 import { ORG_NAME } from "@/lib/brand";
@@ -40,17 +40,17 @@ export const memberRoleChanged = defineKind({
     if (event.roles.includes("passenger")) return PERSPECTIVE_HOME.passenger;
     return "/location";
   },
-  message: ({ chapterName, actorName, change }, strings) => {
+  message: ({ chapterName, actorName, change }, strings, locale) => {
     const copy = strings[COPY[change]];
     const values = {
       chapter: chapterName ?? ORG_NAME,
       actor: actorName ?? ORG_NAME,
     };
     return {
-      subject: fill(copy.subject, values),
+      subject: formatMessage(copy.subject, values, locale),
       preview: copy.preview,
-      heading: fill(copy.heading, values),
-      body: fill(copy.intro, values),
+      heading: formatMessage(copy.heading, values, locale),
+      body: formatMessage(copy.intro, values, locale),
       cta: copy.cta,
       footer: copy.footer,
       template: "roleChanged",

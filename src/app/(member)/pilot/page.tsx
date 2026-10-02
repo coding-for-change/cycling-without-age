@@ -7,8 +7,8 @@ import { ArrowRight, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { requirePerspective } from "@/lib/auth-guards";
 import { resolveLocale } from "@/lib/format";
-import { getDictionary } from "@/lib/i18n";
-import { fill } from "@/lib/utils";
+import { getDictionary, getLocale } from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
 import { getMemberHome } from "@/use-cases/member-home";
 import { ChapterCards } from "../_components/home/chapter-cards";
 import { Greeting } from "../_components/home/greeting";
@@ -54,8 +54,9 @@ async function PilotStatus() {
   cacheLife(MEMBER_LIFE);
 
   const session = await requirePerspective("pilot");
-  const [dict, head, home] = await Promise.all([
+  const [dict, language, head, home] = await Promise.all([
     getDictionary(),
+    getLocale(),
     headers(),
     getMemberHome(session.user.id),
   ]);
@@ -84,7 +85,11 @@ async function PilotStatus() {
       {celebrate ? (
         <ApprovalCelebration
           title={celebration.title}
-          body={fill(celebration.body, { chapter: celebrate.chapter.name })}
+          body={formatMessage(
+            celebration.body,
+            { chapter: celebrate.chapter.name },
+            language,
+          )}
           dismiss={celebration.dismiss}
         />
       ) : null}
@@ -105,6 +110,7 @@ async function PilotStatus() {
           key={application.id}
           chapterName={application.chapter.name}
           note={application.decisionNote}
+          language={language}
           strings={status}
         />
       ))}

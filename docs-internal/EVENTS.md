@@ -59,9 +59,9 @@ its transaction commits.
    the href, and `message`, which turns the payload, the recipient's strings and their
    locale into a subject, heading, body, note and call to action. The inbox row, the push
    banner and the mail all render from that one message.
-5. **Copy** goes into `src/emails/strings/{en,da,de}.ts`. When the message sets a
+5. **Copy** goes into `src/messages/email/{en,da,de}.json`. When the message sets a
    `template`, that id must exist under `admin.history.templates` in
-   `src/lib/i18n/{en,da,de}.ts` too — the activity feed falls back to "approval" for an
+   `src/messages/app/{en,da,de}.json` too — the activity feed falls back to "approval" for an
    id it does not know. `src/use-cases/notifications/kinds/messages.test.ts` pins the set.
 6. **If it should show in the member history**, add a builder to
    `src/worker/listeners/record-activity.ts` and list `recordActivity` next to `notify` in

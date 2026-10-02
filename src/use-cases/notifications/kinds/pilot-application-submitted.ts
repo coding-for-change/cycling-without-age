@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { nameOfChapter, nameOfPerson } from "./lookups";
 import { defineKind } from "./types";
 import { ORG_NAME } from "@/lib/brand";
@@ -27,17 +27,17 @@ export const pilotApplicationSubmitted = defineKind({
   chapterAllowsPush: async (chapterId) =>
     chapterId === null ||
     (await chapters.getSettings(chapterId)).applicationAlertPush,
-  message: ({ applicantName, chapterName }, strings) => {
+  message: ({ applicantName, chapterName }, strings, locale) => {
     const copy = strings.applicationSubmitted;
     const values = {
       name: applicantName ?? copy.anonymous,
       chapter: chapterName ?? ORG_NAME,
     };
     return {
-      subject: fill(copy.subject, values),
+      subject: formatMessage(copy.subject, values, locale),
       preview: copy.preview,
       heading: copy.heading,
-      body: fill(copy.intro, values),
+      body: formatMessage(copy.intro, values, locale),
       cta: copy.cta,
       footer: copy.footer,
       template: "applicationSubmitted",

@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { perspectiveViewerSession } from "@/lib/auth-guards";
 import { readGuestChapterId } from "@/lib/guest-chapter";
 import { cacheLife } from "next/cache";
-import { getDictionary } from "@/lib/i18n";
-import { fill } from "@/lib/utils";
+import { getDictionary, getLocale } from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
 import { getMemberHome } from "@/use-cases/member-home";
 import type { MemberPerspective } from "../../nav";
 import { MEMBER_LIFE } from "../instant";
@@ -19,9 +19,10 @@ export async function ChapterCards({
   "use cache: private";
   cacheLife(MEMBER_LIFE);
 
-  const [session, dict] = await Promise.all([
+  const [session, dict, locale] = await Promise.all([
     perspectiveViewerSession(perspective),
     getDictionary(),
+    getLocale(),
   ]);
   const home = session ? await getMemberHome(session.user.id) : null;
 
@@ -73,7 +74,11 @@ export async function ChapterCards({
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line px-4 py-3">
         <p className="min-w-0">
           {chapter
-            ? fill(dict.passenger.browsing, { chapter: chapter.name })
+            ? formatMessage(
+                dict.passenger.browsing,
+                { chapter: chapter.name },
+                locale,
+              )
             : dict.passenger.noChapter}
         </p>
         <Button

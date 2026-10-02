@@ -19,7 +19,7 @@ import { PersonAvatar } from "@/components/person-avatar";
 import type { ActivityType } from "@/lib/activity";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import type { Locale } from "@/lib/format";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import {
   payloadStrings,
   RelativeTime,
@@ -115,12 +115,11 @@ export function ActivityFeed({
           >
             <p className="text-2sm text-ink-soft">
               <span className="text-ink">
-                {fill(labels[event.type], {
-                  ...payload,
-                  actor,
-                  template,
-                  field,
-                })}
+                {formatMessage(
+                  labels[event.type],
+                  { name: "", ...payload, actor, template, field },
+                  words,
+                )}
               </span>
               {" · "}
               <RelativeTime
@@ -137,10 +136,14 @@ export function ActivityFeed({
             ) : null}
             {changed ? (
               <p className="rounded-xl bg-canvas-deep px-3 py-2 text-2sm break-words text-ink-soft">
-                {fill(labels.change, {
-                  from: payload.from || labels.nothing,
-                  to: payload.to || labels.nothing,
-                })}
+                {formatMessage(
+                  labels.change,
+                  {
+                    from: payload.from || labels.nothing,
+                    to: payload.to || labels.nothing,
+                  },
+                  words,
+                )}
               </p>
             ) : null}
           </TimelineEntry>

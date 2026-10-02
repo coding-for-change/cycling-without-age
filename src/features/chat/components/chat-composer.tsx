@@ -17,7 +17,7 @@ import {
   InputGroupTextarea,
 } from "@/components/ui/input-group";
 import { haptics } from "@/lib/native/haptics";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { typingAction, type ChatActionError } from "../actions";
 import { MAX_MESSAGE_CHARS, type ChatMessageView } from "../schemas";
 import { getDraft, setDraft } from "./chat-store";
@@ -60,6 +60,7 @@ export function ChatComposer({
   strings,
   markdown,
   errors,
+  language,
 }: {
   conversationId: string;
   senderId: string;
@@ -70,6 +71,7 @@ export function ChatComposer({
   strings: ChatComposerStrings;
   markdown: MarkdownToolLabels;
   errors: ChatErrorStrings;
+  language: string;
 }) {
   const field = useRef<HTMLTextAreaElement>(null);
   const lastTyping = useRef(0);
@@ -155,7 +157,11 @@ export function ChatComposer({
         <div className="flex items-start gap-2 rounded-lg bg-canvas-deep px-3 py-2">
           <span className="min-w-0 flex-1">
             <span className="block text-xs font-medium text-ink">
-              {fill(strings.replyingTo, { name: replyName ?? "" })}
+              {formatMessage(
+                strings.replyingTo,
+                { name: replyName ?? "" },
+                language,
+              )}
             </span>
             <span className="block truncate text-2sm text-ink-soft">
               {stripPreview(replyTo.text, 120)}

@@ -12,7 +12,8 @@ import {
 } from "react";
 import { Check, Loader2 } from "lucide-react";
 import { formatRelativeTime, wordsLocale } from "@/lib/format";
-import { cn, fill } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 
 type Status =
   { kind: "idle" } | { kind: "saving" } | { kind: "saved"; at: Date };
@@ -91,13 +92,17 @@ export function SaveStatus({
             aria-hidden
             className="size-3.5"
           />
-          {fill(labels.saved, {
-            when: formatRelativeTime(
-              status.at,
-              wordsLocale(words),
-              now > status.at ? now : status.at,
-            ),
-          })}
+          {formatMessage(
+            labels.saved,
+            {
+              when: formatRelativeTime(
+                status.at,
+                wordsLocale(words),
+                now > status.at ? now : status.at,
+              ),
+            },
+            words,
+          )}
         </>
       )}
     </p>

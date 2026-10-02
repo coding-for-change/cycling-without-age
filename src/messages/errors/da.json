@@ -1,0 +1,17 @@
+{
+  "body": "Siden gik i stå midt i turen. Prøv igen — og sker det igen, så fortæl os gerne, hvad du lavede.",
+  "drawer": {
+    "cancel": "Annuller",
+    "description": "En sætning eller to er rigeligt. Den går direkte til dem, der kan rette det.",
+    "done": "Tak. Det hjælper mere, end du tror.",
+    "failed": "Det blev ikke sendt. Prøv igen om lidt.",
+    "placeholder": "Jeg trykkede Gem på min profil, og så blev skærmen tom.",
+    "submit": "Send",
+    "title": "Hvad skete der?",
+    "tooShort": "Et par ord mere, tak — mindst ti tegn."
+  },
+  "errorId": "Fejl-ID: {id}",
+  "report": "Fortæl hvad der skete",
+  "retry": "Prøv igen",
+  "title": "Kæden røg af"
+}

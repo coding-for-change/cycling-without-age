@@ -8,7 +8,7 @@ import { haptics } from "@/lib/native/haptics";
 import { Step, type StepProgress } from "../../_components/step";
 import { finishPilotNextSteps } from "../actions";
 
-type Strings = { title: string; steps: string[]; finish: string };
+type Strings = { title: string; steps: Record<string, string>; finish: string };
 
 const ICONS = [Play, Users, Bike] as const;
 
@@ -45,7 +45,7 @@ export function PilotNextSteps({
       }
     >
       <ol className="space-y-3">
-        {strings.steps.map((line, index) => {
+        {Object.values(strings.steps).map((line, index) => {
           const Icon = ICONS[index] ?? Bike;
           return (
             <li

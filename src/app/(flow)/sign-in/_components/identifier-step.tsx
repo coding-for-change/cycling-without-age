@@ -8,7 +8,9 @@ import { useCharacter } from "@/components/character";
 import { dialCodeOf, looksLikePhone, parseIdentity } from "@/lib/identity";
 import { haptics } from "@/lib/native/haptics";
 import { isNative } from "@/lib/native/platform";
-import { cn, fill } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 import { Button } from "@/components/ui/button";
 import { Step } from "../../_components/step";
 import { useFlow } from "../../_components/flow-state";
@@ -29,11 +31,13 @@ type Strings = {
 export function IdentifierStep({
   strings,
   common,
+  language,
   defaultCountry,
   googleEnabled,
 }: {
   strings: Strings;
   common: { continue: string };
+  language: Locale;
   defaultCountry: CountryCode;
   googleEnabled: boolean;
 }) {
@@ -84,9 +88,11 @@ export function IdentifierStep({
       say("confus");
       setError(
         result.problem === "invalidPhone"
-          ? fill(strings.errors.invalidPhone, {
-              country: dialCodeOf(country),
-            })
+          ? formatMessage(
+              strings.errors.invalidPhone,
+              { country: dialCodeOf(country) },
+              language,
+            )
           : strings.errors[result.problem],
       );
       input.current?.focus();

@@ -9,6 +9,7 @@ import { stepProgress } from "@/lib/onboarding";
 import { LocationScreen } from "./_components/location-screen";
 import { LocationSkeleton } from "./_components/location-skeleton";
 import { StepTransition } from "../_components/step-transition";
+import { withStepLabel } from "../_components/step";
 
 /* Deliberately not `"use cache"`: a cached scope with no request-scoped inputs
    is filled during prerendering, which makes `next build` open a database
@@ -80,7 +81,7 @@ async function Location({
       strings={dict.location}
       words={words}
       notation={resolveLocale(head.get("accept-language"))}
-      progress={at && { ...at, label: dict.common.stepProgress }}
+      progress={at && withStepLabel(at, dict.common.stepProgress, words)}
     />
   );
 }

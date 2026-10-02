@@ -4,7 +4,8 @@ import { useId, useState, useTransition, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 import { decideApplicationAction } from "../actions";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
 import { notify, type NotifyLabels } from "@/components/action-feedback";
@@ -33,11 +34,13 @@ export function DecisionDialog({
   onClose,
   labels,
   errors,
+  locale,
 }: {
   target: DecisionTarget | null;
   onClose: () => void;
   labels: DecisionLabels;
   errors: NotifyLabels["errors"];
+  locale: Locale;
 }) {
   const formId = useId();
   const noteId = useId();
@@ -60,9 +63,11 @@ export function DecisionDialog({
         note: trimmed || undefined,
       });
       notify(result, {
-        done: fill(target.approve ? labels.approved : labels.rejected, {
-          name: target.name,
-        }),
+        done: formatMessage(
+          target.approve ? labels.approved : labels.rejected,
+          { name: target.name },
+          locale,
+        ),
         errors,
       });
       if (!result.ok) return;
@@ -79,9 +84,11 @@ export function DecisionDialog({
         if (!open && !pending) close();
       }}
       dismissible={!pending}
-      title={fill(target.approve ? labels.approveTitle : labels.rejectTitle, {
-        name: target.name,
-      })}
+      title={formatMessage(
+        target.approve ? labels.approveTitle : labels.rejectTitle,
+        { name: target.name },
+        locale,
+      )}
       description={target.approve ? labels.approveBody : labels.rejectBody}
       footer={
         <Button
@@ -104,7 +111,7 @@ export function DecisionDialog({
       >
         <Field>
           <FieldLabel htmlFor={noteId}>
-            {fill(labels.noteLabel, { name: target.name })}
+            {formatMessage(labels.noteLabel, { name: target.name }, locale)}
           </FieldLabel>
           <Textarea
             id={noteId}

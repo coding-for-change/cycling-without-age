@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useDrawerParam } from "@/hooks/use-drawer-param";
 import { reportDamageAction, reportRideDamageAction } from "../actions";
 import { DamageForm, type DamageFormLabels } from "./damage-form";
+import type { Locale } from "@/lib/i18n/locales";
 
 const PARAM = "report";
 
@@ -18,6 +19,7 @@ export function DamageReportDrawer({
   paramValue = "1",
   triggerClassName,
   labels,
+  locale,
 }: {
   trishawId: string;
   trishawName: string;
@@ -25,6 +27,7 @@ export function DamageReportDrawer({
   paramValue?: string;
   triggerClassName?: string;
   labels: DamageFormLabels & { open: string; title: string; body: string };
+  locale: Locale;
 }) {
   const searchParams = useSearchParams();
   const { go, withParam } = useDrawerParam();
@@ -66,6 +69,7 @@ export function DamageReportDrawer({
             }
             onDone={close}
             labels={labels}
+            locale={locale}
           />
         ) : null}
       </AppDrawer>

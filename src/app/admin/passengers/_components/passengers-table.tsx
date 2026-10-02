@@ -8,6 +8,7 @@ import {
   type DataTableStrings,
 } from "@/components/ui/data-table";
 import { mutedColumn } from "../../_components/table-columns";
+import type { Locale } from "@/lib/i18n/locales";
 import { PersonAvatar } from "@/components/person-avatar";
 
 export type PassengerRow = {
@@ -32,6 +33,7 @@ export function PassengersTable({
   labels,
   phoneColumn,
   table,
+  locale,
 }: {
   rows: PassengerRow[];
   showChapter: boolean;
@@ -39,6 +41,7 @@ export function PassengersTable({
   labels: { name: string; born: string; joined: string; chapter: string };
   phoneColumn: string;
   table: DataTableStrings;
+  locale: Locale;
 }) {
   const href = (row: PassengerRow) =>
     row.userId ? `/admin/members/${row.userId}${scopeQuery}` : undefined;
@@ -104,6 +107,7 @@ export function PassengersTable({
       columns={columns}
       data={rows}
       strings={table}
+      locale={locale}
       initialHidden={["phone"]}
       rowHref={href}
       getRowId={(row) => row.id}

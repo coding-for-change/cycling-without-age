@@ -17,7 +17,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useDrawerParam } from "@/hooks/use-drawer-param";
 import { haptics } from "@/lib/native/haptics";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { createTypeAction } from "../actions";
 import { parseOwnerKey } from "../schemas";
 import { ManualField, type ManualFieldLabels } from "./manual-field";
@@ -27,6 +27,7 @@ import {
   type MarkdownToolLabels,
 } from "@/components/markdown-editor";
 import { PhotoGallery, type PhotoGalleryLabels } from "./photo-gallery";
+import type { Locale } from "@/lib/i18n/locales";
 
 export type TypeOwnerOption = { value: string; label: string };
 
@@ -62,10 +63,12 @@ export function TypeCreateDrawer({
   owners,
   scopeQuery,
   labels,
+  locale,
 }: {
   owners: TypeOwnerOption[];
   scopeQuery: string;
   labels: TypeCreateLabels;
+  locale: Locale;
 }) {
   const router = useRouter();
   const { creating, openHref, close } = useDrawerParam();
@@ -118,7 +121,7 @@ export function TypeCreateDrawer({
         manualFileId: manual,
       });
       notify(result, {
-        done: fill(labels.created, { name: trimmed }),
+        done: formatMessage(labels.created, { name: trimmed }, locale),
         errors: labels.errors,
       });
       if (!result.ok) return;
@@ -274,6 +277,7 @@ export function TypeCreateDrawer({
               alt={name}
               labels={labels.gallery}
               onChange={setPhotos}
+              locale={locale}
             />
           </div>
 

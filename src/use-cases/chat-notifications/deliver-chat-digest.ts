@@ -1,11 +1,7 @@
 import { createElement } from "react";
 import { ChatDigestEmail } from "@/emails/chat-digest";
 import type { ChatDigestGroup, ChatDigestMessage } from "@/emails/chat-digest";
-import {
-  getEmailStrings,
-  pluralForm,
-  resolveEmailLocale,
-} from "@/emails/strings";
+import { getEmailStrings, resolveEmailLocale } from "@/emails/strings";
 import { chat } from "@/features/chat";
 import type { ChatMessageView } from "@/features/chat";
 import { notifications } from "@/features/notifications";
@@ -15,7 +11,7 @@ import { formatTime, resolveLocale } from "@/lib/format";
 import type { Locale as NotationLocale } from "@/lib/format";
 import { isPhoneTempEmail } from "@/lib/identity";
 import { sendMail } from "@/lib/mailer";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { isMuted } from "./digest-window";
 import { stripMarkdown } from "./preview";
 
@@ -134,14 +130,11 @@ export async function deliverChatDigest({
   const message: ChatDigestMessage = {
     subject:
       conversation.kind === "group"
-        ? fill(pluralForm(locale, count, strings.subjectGroup), {
-            count,
-            title,
-          })
-        : fill(strings.subjectDirect, { name: title }),
+        ? formatMessage(strings.subjectGroup, { count, title }, locale)
+        : formatMessage(strings.subjectDirect, { name: title }, locale),
     preview: strings.preview,
     heading: strings.heading,
-    intro: fill(pluralForm(locale, count, strings.intro), { count, title }),
+    intro: formatMessage(strings.intro, { count, title }, locale),
     cta: strings.cta,
     footer: strings.footer,
     groups: groupBySender(
@@ -149,7 +142,10 @@ export async function deliverChatDigest({
       (senderId) => (senderId ? names.get(senderId) : null) ?? strings.someone,
       (iso) => formatTime(iso, notation, timeZone),
     ),
-    more: remaining > 0 ? fill(strings.more, { count: remaining }) : null,
+    more:
+      remaining > 0
+        ? formatMessage(strings.more, { count: remaining }, locale)
+        : null,
   };
 
   const href = `${APP_URL}/chat/${conversationId}`;

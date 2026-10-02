@@ -41,6 +41,7 @@ export async function NotificationBell({ className }: { className?: string }) {
       rows={rows}
       unseen={unseen}
       strings={dict.notifications}
+      locale={language}
       className={className}
     />
   );

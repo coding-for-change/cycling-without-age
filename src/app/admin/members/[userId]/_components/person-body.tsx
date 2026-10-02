@@ -16,7 +16,7 @@ import type { ChapterRole } from "@/lib/access";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { formatDate, resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { historyShown } from "../../../_components/history-more";
 import {
   HistorySection,
@@ -149,6 +149,7 @@ export async function PersonBody({
                         }}
                         labels={dict.admin.members}
                         cancel={dict.admin.chapters.cancel}
+                        locale={words}
                       />
                     </li>
                   ))}
@@ -167,6 +168,7 @@ export async function PersonBody({
                 backHref={backHref}
                 labels={dict.admin.person.delete}
                 cancel={dict.admin.chapters.cancel}
+                locale={words}
               />
             ) : null}
           </>
@@ -189,16 +191,20 @@ export async function PersonBody({
                     </Badge>
                   ) : (
                     <span className="text-ink-soft">
-                      {fill(dict.pilot.status.rejectedTitle, {
-                        chapter: application.chapter.name,
-                      })}
+                      {formatMessage(
+                        dict.pilot.status.rejectedTitle,
+                        { chapter: application.chapter.name },
+                        words,
+                      )}
                     </span>
                   )}
                 </div>
                 <span className="text-ink-soft">
-                  {fill(dict.pilot.status.appliedOn, {
-                    date: formatDate(application.createdAt, notation),
-                  })}
+                  {formatMessage(
+                    dict.pilot.status.appliedOn,
+                    { date: formatDate(application.createdAt, notation) },
+                    words,
+                  )}
                 </span>
                 {application.decisionNote ? (
                   <p className="rounded-xl bg-mint-tint px-3 py-2 whitespace-pre-wrap text-ink">

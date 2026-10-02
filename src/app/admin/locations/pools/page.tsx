@@ -6,8 +6,9 @@ import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { markdownToolLabels } from "@/components/markdown-editor";
 import { fleet } from "@/features/fleet";
-import { formatPlural, wordsLocale } from "@/lib/format";
+import { wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
 import { MAP_ENABLED } from "@/lib/mapbox-map";
 import { AdminPageHeader, AdminPageShell } from "../../_components/admin-page";
 import { AdminTabs } from "../../_components/admin-tabs";
@@ -100,7 +101,11 @@ async function Pools({
                 (link) => link.status === "approved",
               ).length,
               waiting,
-              waitingLabel: formatPlural(waiting, strings.pools.waiting, words),
+              waitingLabel: formatMessage(
+                strings.pools.waiting,
+                { count: waiting },
+                words,
+              ),
               trishaws: pool._count.trishaws,
               code: pool.poolCode,
             };
@@ -109,6 +114,7 @@ async function Pools({
           scopeQuery={scopeQuery}
           labels={strings.pools.columns}
           table={dict.admin.table}
+          locale={language}
         />
       ) : (
         <EmptyState

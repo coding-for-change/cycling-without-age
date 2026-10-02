@@ -3,16 +3,19 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useDraft } from "@/lib/auth-wall";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 import { rideDraft, type RideWhen } from "./ride-draft";
 
 export function RideConfirmation({
   slug,
   chapterName,
+  locale,
   strings,
 }: {
   slug: string;
   chapterName: string;
+  locale: Locale;
   strings: {
     title: string;
     summary: string;
@@ -32,10 +35,11 @@ export function RideConfirmation({
       </h1>
       <p className="mt-4 text-lg leading-relaxed">
         {mine
-          ? fill(strings.summary, {
-              chapter: chapterName,
-              when: strings.when[mine.when],
-            })
+          ? formatMessage(
+              strings.summary,
+              { chapter: chapterName, when: strings.when[mine.when] },
+              locale,
+            )
           : strings.noDraft}
       </p>
       <p className="mt-6 rounded-(--r-card) bg-mint-tint p-4 text-sm text-ink-soft">
@@ -49,7 +53,7 @@ export function RideConfirmation({
           className="size-4"
           aria-hidden
         />
-        {fill(strings.back, { chapter: chapterName })}
+        {formatMessage(strings.back, { chapter: chapterName }, locale)}
       </Link>
     </>
   );

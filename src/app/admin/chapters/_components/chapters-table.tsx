@@ -9,6 +9,7 @@ import { ICONS } from "@/components/icons";
 import { mutedColumn } from "../../_components/table-columns";
 import { useDrawerParam } from "../../_components/use-drawer-param";
 import type { Locale } from "@/lib/format";
+import type { Locale as UiLocale } from "@/lib/i18n/locales";
 import {
   ChapterCreateDrawer,
   type ChapterCreateStrings,
@@ -58,7 +59,7 @@ export function ChaptersTable({
   canCreateCountry: boolean;
   pins: ChapterPin[];
   view: "list" | "map";
-  language: string;
+  language: UiLocale;
   notation: Locale;
   joinBase: string;
   scopeQuery: string;
@@ -139,6 +140,7 @@ export function ChaptersTable({
           columns={columns}
           data={optimisticRows}
           strings={table}
+          locale={language}
           filters={
             countries.length > 1
               ? [

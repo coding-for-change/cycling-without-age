@@ -5,9 +5,8 @@ import { fleet } from "@/features/fleet";
 import { allowsAdmin, isCountryAdmin, isSuperAdmin } from "@/lib/access";
 import { wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { AdminPageShell } from "../../../_components/admin-page";
-import { countOrNone } from "../../../_components/count-or-none";
 import { BackLink } from "../../../_components/detail-page";
 import { readActiveScope, type AdminSearchParams } from "../../../active-scope";
 import { DetailSkeleton } from "../../../_components/detail-skeleton";
@@ -72,9 +71,11 @@ async function TypeBody({
         : null
       : target?.scope === "country" &&
           isCountryAdmin(session.access, target.countryId)
-        ? fill(detail.promote.country, {
-            name: targetCountry?.name ?? common.scopes.country,
-          })
+        ? formatMessage(
+            detail.promote.country,
+            { name: targetCountry?.name ?? common.scopes.country },
+            words,
+          )
         : null;
 
   const ownerName = ownerNameOf(type);
@@ -100,7 +101,7 @@ async function TypeBody({
           archived: type.archivedAt !== null,
           scopeLabel: common.scopes[type.scope],
           ownerName,
-          usage: countOrNone(count, detail.usage, words),
+          usage: formatMessage(detail.usage, { count }, words),
           inUse: count > 0,
         }}
         canManage={canManage}
@@ -109,9 +110,11 @@ async function TypeBody({
         language={language}
         labels={{
           ...detail,
-          readOnly: fill(detail.readOnly, {
-            owner: ownerName ?? common.scopes[type.scope],
-          }),
+          readOnly: formatMessage(
+            detail.readOnly,
+            { owner: ownerName ?? common.scopes[type.scope] },
+            words,
+          ),
           promoteHint: detail.promote.hint,
           promoteDone: detail.promote.done,
           archivedBadge: strings.archived,

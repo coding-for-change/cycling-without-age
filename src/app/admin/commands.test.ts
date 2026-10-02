@@ -7,7 +7,7 @@ import type {
   ScopeCountry,
 } from "@/lib/access";
 import type { ResolvedCommand } from "@/lib/commands";
-import en from "@/lib/i18n/en";
+import en from "@/messages/app/en.json";
 import { adminCommands, type AdminCommandContext } from "./commands";
 import { navFor } from "./nav";
 

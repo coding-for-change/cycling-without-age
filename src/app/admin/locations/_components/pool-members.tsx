@@ -13,7 +13,8 @@ import {
   leavePoolAction,
 } from "@/features/fleet/actions";
 import type { Dictionary } from "@/lib/i18n";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 import { ConfirmButton } from "@/components/confirm-button";
 
 export type PoolMember = {
@@ -31,10 +32,12 @@ export function PoolRequests({
   members,
   strings,
   errors,
+  locale,
 }: {
   members: PoolMember[];
   strings: Strings;
   errors: Errors;
+  locale: Locale;
 }) {
   const [decision, setDecision] = useState<Decision | null>(null);
   const pending = members.filter((member) => member.status === "pending");
@@ -114,6 +117,7 @@ export function PoolRequests({
         onClose={() => setDecision(null)}
         strings={strings.decision}
         errors={errors}
+        locale={locale}
       />
     </section>
   );
@@ -125,12 +129,14 @@ export function PoolMembers({
   members,
   strings,
   errors,
+  locale,
 }: {
   poolId: string;
   poolName: string;
   members: PoolMember[];
   strings: Strings;
   errors: Errors;
+  locale: Locale;
 }) {
   const approved = members.filter((member) => member.status === "approved");
 
@@ -151,18 +157,20 @@ export function PoolMembers({
           <ConfirmButton
             icon={<UserMinus aria-hidden />}
             label={strings.remove.open}
-            title={fill(strings.remove.title, {
-              chapter: member.name,
-              name: poolName,
-            })}
+            title={formatMessage(
+              strings.remove.title,
+              { chapter: member.name, name: poolName },
+              locale,
+            )}
             body={strings.remove.body}
             confirm={strings.remove.submit}
             cancel={strings.cancel}
             destructive
-            done={fill(strings.remove.done, {
-              chapter: member.name,
-              name: poolName,
-            })}
+            done={formatMessage(
+              strings.remove.done,
+              { chapter: member.name, name: poolName },
+              locale,
+            )}
             errors={errors}
             action={() =>
               leavePoolAction({ poolId, chapterId: member.chapterId })
@@ -182,11 +190,13 @@ function DecisionDrawer({
   onClose,
   strings,
   errors,
+  locale,
 }: {
   decision: Decision | null;
   onClose: () => void;
   strings: Strings["decision"];
   errors: Errors;
+  locale: Locale;
 }) {
   const formId = useId();
   const noteId = useId();
@@ -210,9 +220,11 @@ function DecisionDrawer({
         note: trimmed || undefined,
       });
       notify(result, {
-        done: fill(decision.approve ? strings.approved : strings.rejected, {
-          name: decision.name,
-        }),
+        done: formatMessage(
+          decision.approve ? strings.approved : strings.rejected,
+          { name: decision.name },
+          locale,
+        ),
         errors,
       });
       if (result.ok) close();
@@ -226,9 +238,10 @@ function DecisionDrawer({
         if (!open && !pending) close();
       }}
       dismissible={!pending}
-      title={fill(
+      title={formatMessage(
         decision.approve ? strings.approveTitle : strings.rejectTitle,
         { name: decision.name },
+        locale,
       )}
       description={decision.approve ? strings.approveBody : strings.rejectBody}
       footer={
@@ -252,7 +265,7 @@ function DecisionDrawer({
       >
         <Field>
           <FieldLabel htmlFor={noteId}>
-            {fill(strings.noteLabel, { name: decision.name })}
+            {formatMessage(strings.noteLabel, { name: decision.name }, locale)}
           </FieldLabel>
           <Textarea
             id={noteId}

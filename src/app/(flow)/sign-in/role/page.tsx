@@ -1,8 +1,8 @@
 import { Suspense } from "react";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionary, getLocale } from "@/lib/i18n";
 import { stepProgress } from "@/lib/onboarding";
 import { RoleStep } from "../_components/role-step";
-import { StepSkeleton } from "../../_components/step";
+import { StepSkeleton, withStepLabel } from "../../_components/step";
 import { StepTransition } from "../../_components/step-transition";
 
 export default function RolePage() {
@@ -16,7 +16,7 @@ export default function RolePage() {
 }
 
 async function Role() {
-  const dict = await getDictionary();
+  const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
 
   const at = stepProgress(
     { role: null, presetRole: false, presetChapter: false },
@@ -25,7 +25,7 @@ async function Role() {
   return (
     <RoleStep
       strings={dict.signIn.role}
-      progress={at && { ...at, label: dict.common.stepProgress }}
+      progress={at && withStepLabel(at, dict.common.stepProgress, locale)}
     />
   );
 }

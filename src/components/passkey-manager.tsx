@@ -13,7 +13,7 @@ import { authClient } from "@/lib/auth-client";
 import { addPasskey } from "@/lib/passkey-client";
 import { haptics } from "@/lib/native/haptics";
 import { formatDate, type Locale } from "@/lib/format";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -163,7 +163,7 @@ export function PasskeyManager({
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
-                        {fill(strings.removeConfirm, { name })}
+                        {formatMessage(strings.removeConfirm, { name }, locale)}
                       </AlertDialogTitle>
                       <AlertDialogDescription className="text-ink-soft">
                         {strings.removeBody}

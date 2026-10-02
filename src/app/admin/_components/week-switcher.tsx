@@ -4,8 +4,8 @@ import { buttonVariants } from "@/components/ui/button";
 import { calendarDate } from "@/lib/calendar";
 import { formatShortDateWithWeekday, type Locale } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
-import { fill } from "@/lib/utils";
 import { weekHref, weekNeighbours, weekParam } from "../week-param";
 
 type Props = {
@@ -69,12 +69,16 @@ export function WeekSwitcher({
         />
       </Link>
       <p className="text-2sm text-ink-soft pl-2">
-        {fill(strings.weekOf, {
-          date: formatShortDateWithWeekday(
-            calendarDate(anchor, timeZone),
-            locale,
-          ),
-        })}
+        {formatMessage(
+          strings.weekOf,
+          {
+            date: formatShortDateWithWeekday(
+              calendarDate(anchor, timeZone),
+              locale,
+            ),
+          },
+          locale,
+        )}
       </p>
     </div>
   );

@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/form";
 import { countryInput, type CountryInput } from "@/features/chapters/schemas";
 import { REGION_CODES, regionName } from "@/lib/countries";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
 import { TextField } from "../../_components/text-field";
 import { notify, type NotifyLabels } from "@/components/action-feedback";
@@ -93,7 +93,7 @@ export function CountryDrawer({
       notify(result, {
         done: country
           ? labels.saved
-          : fill(labels.created, { name: values.name }),
+          : formatMessage(labels.created, { name: values.name }, language),
         errors: labels.errors,
       });
       if (result.ok) onDone();

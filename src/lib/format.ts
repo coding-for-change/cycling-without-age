@@ -412,30 +412,3 @@ export function formatDuration(seconds: number, locale: Locale): string {
     ? unit(hours, "hour")
     : `${unit(hours, "hour")} ${unit(rest, "minute")}`;
 }
-
-const pluralRules = new Map<string, Intl.PluralRules>();
-
-/** The plural forms a dictionary entry carries. */
-export type PluralForms = { one: string; other: string };
-
-/**
- * Picks the plural form and fills `{count}`. English, German and Danish all
- * have two categories, but `Intl.PluralRules` is what keeps that true for the
- * next language rather than an `=== 1`.
- *
- * Takes a words locale (`wordsLocale(language)`), not a notation locale — the
- * result is read as words, so an English UI must not pick a German form.
- */
-export function formatPlural(
-  count: number,
-  forms: PluralForms,
-  locale: Locale,
-): string {
-  let rules = pluralRules.get(locale);
-  if (!rules) {
-    rules = new Intl.PluralRules(locale);
-    pluralRules.set(locale, rules);
-  }
-  const form = rules.select(count) === "one" ? forms.one : forms.other;
-  return form.replace("{count}", formatNumber(count, locale));
-}

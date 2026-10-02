@@ -1,0 +1,13 @@
+{
+  "$schema": "https://docs.tolgee.io/cli-schema.json",
+  "format": "JSON_ICU",
+  "push": {
+    "filesTemplate": "./src/messages/{namespace}/{languageTag}.json",
+    "forceMode": "KEEP"
+  },
+  "pull": {
+    "path": "./src/messages",
+    "fileStructureTemplate": "{namespace}/{languageTag}.{extension}",
+    "delimiter": "."
+  }
+}

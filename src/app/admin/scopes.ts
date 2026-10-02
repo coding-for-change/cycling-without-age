@@ -1,7 +1,7 @@
 import type { AdminScope } from "@/lib/access";
 import type { IconKey, ScopeArg } from "@/lib/commands";
-import type { Dictionary } from "@/lib/i18n";
-import { fill } from "@/lib/utils";
+import type { Dictionary, Locale } from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
 
 export type ScopeChoice = { arg: ScopeArg; label: string; icon: IconKey };
 
@@ -11,6 +11,7 @@ export const canWidenScope = (scope: AdminScope) =>
 export function scopeChoices(
   scope: AdminScope,
   dict: Dictionary,
+  locale: Locale,
 ): ScopeChoice[] {
   return [
     ...(canWidenScope(scope)
@@ -24,7 +25,11 @@ export function scopeChoices(
       : []),
     ...scope.countries.map(({ code, name }) => ({
       arg: `country:${code}` as ScopeArg,
-      label: fill(dict.admin.scope.allInCountry, { country: name }),
+      label: formatMessage(
+        dict.admin.scope.allInCountry,
+        { country: name },
+        locale,
+      ),
       icon: "countries" as IconKey,
     })),
     ...scope.chapters.map(({ slug, name }) => ({

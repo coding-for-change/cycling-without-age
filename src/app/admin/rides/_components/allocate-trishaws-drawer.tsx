@@ -17,7 +17,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { FileThumb } from "@/features/fleet/components/file-image";
 import { useDrawerParam } from "@/hooks/use-drawer-param";
-import { cn, fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
+import { cn } from "@/lib/utils";
 import { allocateTrishawsAction } from "../actions";
 import { ALLOCATION_PARAM } from "./allocation-param";
 
@@ -41,7 +43,7 @@ export type AllocationLabels = {
   search: string;
   noMatch: string;
   none: string;
-  selected: { one: string; other: string };
+  selected: string;
   nothingSelected: string;
   submit: string;
   saving: string;
@@ -58,11 +60,13 @@ export function AllocateTrishawsDrawer({
   description,
   options,
   labels,
+  locale,
 }: {
   rideId: string;
   description: string | null;
   options: AllocationOption[] | null;
   labels: AllocationLabels;
+  locale: Locale;
 }) {
   const { go } = useDrawerParam();
   const searchParams = useSearchParams();
@@ -130,10 +134,7 @@ export function AllocateTrishawsDrawer({
             >
               {count === 0
                 ? labels.nothingSelected
-                : fill(
-                    count === 1 ? labels.selected.one : labels.selected.other,
-                    { count },
-                  )}
+                : formatMessage(labels.selected, { count }, locale)}
             </p>
             <Button
               type="submit"
@@ -186,7 +187,11 @@ export function AllocateTrishawsDrawer({
             </p>
           ) : visible.length === 0 ? (
             <p className="text-2sm text-ink-soft px-5 py-5 md:px-6">
-              {fill(labels.noMatch, { query: deferredQuery.trim() })}
+              {formatMessage(
+                labels.noMatch,
+                { query: deferredQuery.trim() },
+                locale,
+              )}
             </p>
           ) : (
             <ul className="flex flex-col px-3 py-3 md:px-4">

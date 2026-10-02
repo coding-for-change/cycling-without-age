@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { useCharacter } from "@/components/character";
 import { haptics } from "@/lib/native/haptics";
 import { requestNotificationPermission } from "@/lib/native/push";
-import { cn, fill } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 import type { OnboardingRole } from "@/lib/onboarding";
 import type { StepDefaults } from "./step-page";
 import { Step, StepError, type StepProgress } from "../../_components/step";
@@ -37,6 +39,7 @@ export function ConsentStep({
   defaults,
   strings,
   continueLabel,
+  locale,
 }: {
   role: OnboardingRole;
   progress: StepProgress | null;
@@ -45,6 +48,7 @@ export function ConsentStep({
   defaults: StepDefaults;
   strings: Strings;
   continueLabel: string;
+  locale: Locale;
 }) {
   const router = useRouter();
   const { oops } = useCharacter();
@@ -111,7 +115,7 @@ export function ConsentStep({
       description={
         setUpBy ??
         (chapterName
-          ? fill(strings.joining, { chapter: chapterName })
+          ? formatMessage(strings.joining, { chapter: chapterName }, locale)
           : undefined)
       }
       progress={progress ?? undefined}

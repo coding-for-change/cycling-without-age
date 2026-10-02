@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { chapters } from "@/features/chapters";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import {
   chapterAdminIds,
   excluding,
@@ -35,17 +35,17 @@ export const chapterMemberJoined = defineKind({
     return { memberName, chapterName };
   },
   href: (event) => `/admin/members/${event.userId}`,
-  message: ({ memberName, chapterName }, strings) => {
+  message: ({ memberName, chapterName }, strings, locale) => {
     const copy = strings.memberJoined;
     const values = {
       name: memberName ?? copy.anonymous,
       chapter: chapterName ?? ORG_NAME,
     };
     return {
-      subject: fill(copy.subject, values),
+      subject: formatMessage(copy.subject, values, locale),
       preview: copy.preview,
       heading: copy.heading,
-      body: fill(copy.intro, values),
+      body: formatMessage(copy.intro, values, locale),
       cta: copy.cta,
       footer: copy.footer,
       template: "memberJoined",

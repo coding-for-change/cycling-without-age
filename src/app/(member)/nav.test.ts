@@ -1,4 +1,4 @@
-import en from "@/lib/i18n/en";
+import en from "@/messages/app/en.json";
 import {
   MEMBER_NAV,
   activeItem,

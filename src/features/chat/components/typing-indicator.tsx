@@ -1,7 +1,7 @@
 "use client";
 
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
-import { fill } from "@/lib/utils";
+import { formatMessage } from "@/lib/i18n/format";
 import type { ChatThreadStrings } from "./strings";
 
 const DOTS = [0, 1, 2];
@@ -9,27 +9,36 @@ const DOTS = [0, 1, 2];
 export function typingLabel(
   names: string[],
   strings: ChatThreadStrings,
+  language: string,
 ): string | null {
   if (names.length === 0) return null;
-  if (names.length === 1) return fill(strings.typingOne, { name: names[0] });
+  if (names.length === 1)
+    return formatMessage(strings.typingOne, { name: names[0] }, language);
   if (names.length === 2)
-    return fill(strings.typingTwo, { first: names[0], second: names[1] });
-  return fill(strings.typingMany, {
-    first: names[0],
-    count: names.length - 1,
-  });
+    return formatMessage(
+      strings.typingTwo,
+      { first: names[0], second: names[1] },
+      language,
+    );
+  return formatMessage(
+    strings.typingMany,
+    { first: names[0], count: names.length - 1 },
+    language,
+  );
 }
 
 export function TypingIndicator({
   names,
   strings,
+  language,
   showNames = false,
 }: {
   names: string[];
   strings: ChatThreadStrings;
+  language: string;
   showNames?: boolean;
 }) {
-  const label = typingLabel(names, strings);
+  const label = typingLabel(names, strings, language);
   if (!label) return null;
 
   return (
