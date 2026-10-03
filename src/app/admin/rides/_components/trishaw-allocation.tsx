@@ -7,32 +7,35 @@ import {
   resolveLocale,
   wordsLocale,
 } from "@/lib/format";
-import { trishawSummary } from "@/components/trishaw-summary";
+import { trishawOptions } from "@/features/rides/components/trishaw-options";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { allocationChoices } from "@/use-cases/schedule-ride";
 import type { AdminSearchParams } from "../../active-scope";
-import {
-  AllocateTrishawsDrawer,
-  type AllocationOption,
-} from "./allocate-trishaws-drawer";
-import { ALLOCATION_PARAM } from "./allocation-param";
+import { AllocateTrishawsDrawer } from "./allocate-trishaws-drawer";
+import { ALLOCATION_OPEN, ALLOCATION_PARAM } from "./allocation-param";
 
+/**
+ * Rendered by the ride's detail page; the drawer only loads its options while
+ * `?trishaws=1` asks for it, and only for a ride that can still change.
+ */
 export async function TrishawAllocation({
+  params,
   searchParams,
 }: {
+  params: Promise<{ rideId: string }>;
   searchParams: Promise<AdminSearchParams>;
 }) {
-  const params = await searchParams;
-  const raw = params[ALLOCATION_PARAM];
-  const rideId = Array.isArray(raw) ? raw[0] : raw;
-  if (!rideId || rideId.length > 64) return null;
+  const [{ rideId }, query] = await Promise.all([params, searchParams]);
+  const raw = query[ALLOCATION_PARAM];
+  if ((Array.isArray(raw) ? raw[0] : raw) !== ALLOCATION_OPEN) return null;
 
   const ride = await rides.getRide(rideId);
-  if (ride) await requireChapterAdmin(ride.chapterId);
+  if (!ride || ride.status !== "scheduled") return null;
+  await requireChapterAdmin(ride.chapterId);
 
   const [choices, dict, language, head] = await Promise.all([
-    ride ? allocationChoices(rideId) : null,
+    allocationChoices(rideId),
     getDictionary(),
     getLocale(),
     headers(),
@@ -46,7 +49,7 @@ export async function TrishawAllocation({
     pool: common.pool,
     wheelchair: common.wheelchair,
     damaged: common.damaged,
-    errors: common.errors,
+    errors: { ...common.errors, ...dict.rides.errors },
   };
 
   if (!choices)
@@ -66,30 +69,6 @@ export async function TrishawAllocation({
     choices.ride.trishaws.map(({ trishaw }) => trishaw.id),
   );
 
-  const options: AllocationOption[] = choices.trishaws.map((trishaw) => {
-    const allocated = allocatedIds.has(trishaw.id);
-    const busy = choices.busy[trishaw.id] === true;
-    const grounded = trishaw.damages.some((damage) => damage.grounding);
-    const ready = trishaw.status === "active" && !grounded;
-    const notReady =
-      trishaw.status === "active"
-        ? common.grounded
-        : common.statuses[trishaw.status];
-    return {
-      ...trishawSummary(trishaw, dict, words),
-      allocated,
-      blocked: !ready ? notReady : busy ? allocation.booked : null,
-      warning: allocated
-        ? !ready
-          ? `${notReady} · ${allocation.kept}`
-          : busy
-            ? allocation.booked
-            : null
-        : null,
-      damaged: !grounded && trishaw.damages.length > 0,
-    };
-  });
-
   return (
     <AllocateTrishawsDrawer
       key={rideId}
@@ -102,7 +81,7 @@ export async function TrishawAllocation({
         },
         words,
       )}
-      options={options}
+      options={trishawOptions(choices, allocatedIds, dict, words)}
       labels={labels}
       locale={language}
     />

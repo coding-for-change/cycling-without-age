@@ -18,6 +18,7 @@ type EmittedEvent = {
 
 export async function transaction<T>(
   fn: (tx: Prisma.TransactionClient, emit: Emit) => Promise<T>,
+  options?: { isolationLevel?: Prisma.TransactionIsolationLevel },
 ): Promise<T> {
   const emitted: EmittedEvent[] = [];
 
@@ -27,7 +28,7 @@ export async function transaction<T>(
       emitted.push({ id, type: event.type, ...scopeOf(event) });
     };
     return fn(tx, emit);
-  });
+  }, options);
 
   for (const event of emitted) {
     logDomainEvent(event);

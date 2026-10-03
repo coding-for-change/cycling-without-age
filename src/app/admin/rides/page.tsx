@@ -1,5 +1,9 @@
+import Link from "next/link";
 import { Suspense } from "react";
+import { Plus } from "lucide-react";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { chapters as chapterFeature } from "@/features/chapters";
 import { RideWeek } from "@/features/rides/components/ride-week";
 import { wordsLocale } from "@/lib/format";
@@ -10,8 +14,16 @@ import { hrefWith } from "../_components/href-with";
 import { WeekSwitcher } from "../_components/week-switcher";
 import { readActiveScope, type AdminSearchParams } from "../active-scope";
 import { readCalendarWeek } from "../calendar-week";
-import { ALLOCATION_PARAM } from "./_components/allocation-param";
-import { TrishawAllocation } from "./_components/trishaw-allocation";
+import {
+  ALLOCATION_OPEN,
+  ALLOCATION_PARAM,
+} from "./_components/allocation-param";
+import { ScheduleRide } from "./_components/schedule-ride";
+
+const RIDE_ID = /^[A-Za-z0-9_-]{1,64}$/;
+
+const first = (value: string | string[] | undefined) =>
+  Array.isArray(value) ? value[0] : value;
 
 export default function RidesPage({
   searchParams,
@@ -24,7 +36,7 @@ export default function RidesPage({
         <Rides searchParams={searchParams} />
       </Suspense>
       <Suspense fallback={null}>
-        <TrishawAllocation searchParams={searchParams} />
+        <ScheduleRide searchParams={searchParams} />
       </Suspense>
     </AdminPageShell>
   );
@@ -39,8 +51,16 @@ async function Rides({
     searchParams,
     "rides",
   );
-  const [params, dict, language, head, zones] = await Promise.all([
-    searchParams,
+  const params = await searchParams;
+  const allocating = first(params[ALLOCATION_PARAM]);
+  if (allocating && allocating !== ALLOCATION_OPEN && RIDE_ID.test(allocating))
+    redirect(
+      hrefWith(`/admin/rides/${allocating}`, params, {
+        [ALLOCATION_PARAM]: "1",
+      }),
+    );
+
+  const [dict, language, head, zones] = await Promise.all([
     getDictionary(),
     getLocale(),
     headers(),
@@ -57,8 +77,11 @@ async function Rides({
     rides: weekRides,
   } = await readCalendarWeek({ week: params.week, zones, head, chapterIds });
 
-  const allocationHref = (rideId: string) =>
-    hrefWith("/admin/rides", params, { [ALLOCATION_PARAM]: rideId });
+  const rideHref = (rideId: string) =>
+    hrefWith(`/admin/rides/${rideId}`, params, {
+      new: null,
+      [ALLOCATION_PARAM]: null,
+    });
 
   return (
     <>
@@ -72,6 +95,18 @@ async function Rides({
           locale={locale}
           now={now}
         />
+        {chapterIds.length > 0 ? (
+          <Button
+            asChild
+            variant="brand"
+            className="min-h-11"
+          >
+            <Link href={hrefWith("/admin/rides", params, { new: "1" })}>
+              <Plus aria-hidden />
+              {dict.admin.newRide}
+            </Link>
+          </Button>
+        ) : null}
       </AdminPageHeader>
       {label ? <p className="text-2sm text-ink-soft -mt-3">{label}</p> : null}
       <div className="-mx-4 md:mx-0">
@@ -88,9 +123,10 @@ async function Rides({
             grounded: dict.fleet.common.grounded,
             groundedOnRide: dict.fleet.allocation.groundedOnRide,
           }}
-          allocate={{
-            href: allocationHref,
-            label: dict.fleet.allocation.open,
+          link={{
+            href: rideHref,
+            open: dict.rides.week.open,
+            cancelled: dict.rides.week.cancelledHint,
           }}
         />
       </div>

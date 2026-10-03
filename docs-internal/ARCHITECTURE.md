@@ -800,13 +800,73 @@ membership can express them. Pilot qualification is per trishaw *type*, which is
 ### Reserving the equipment
 
 Lifecycle phase 2C commits resources: a scheduled ride holds **each** of its trishaws for its
-window, and they are "no longer available to others". `rides.scheduleRide` and
-`rides.rescheduleRide` enforce that in the facade over the whole set — `trishawReserved` when
-any of them is already out in an overlapping window, `trishawNotInChapter` when the scheduling
-chapter cannot reach it, `trishawUnavailable` when one is in for service. Rescheduling
-**replaces** the reservation set rather than merging into it. Cancelling **releases** the
-equipment but keeps the ride on the calendar, because the glossary says cancellation does not
-free the square.
+window, and they are "no longer available to others". `rides.scheduleRide`,
+`rides.rescheduleRide` and `rides.setRideTrishaws` enforce that over the whole set —
+`trishawReserved` when any of them is already out in an overlapping window,
+`trishawNotInChapter` when the scheduling chapter cannot reach it, `trishawUnavailable` when one
+is in for service. Reachability and readiness are the fleet's questions, asked by the use case
+(`fleet.assertUsable`) before the write; the window is checked inside the write.
+
+The facade owns the transaction. Each write opens `transaction((tx, emit) => …, {
+isolationLevel: "ReadCommitted" })` from `lib/events`, and inside it `conflictsUnderLock(tx,
+trishawIds, windows, exceptRideIds)` locks the trishaw rows `FOR UPDATE` *before* it reads the
+overlapping reservations; the same `tx` then writes the ride. Two admins booking the same bike
+serialise on that lock, and the second sees the first one's reservation. READ COMMITTED is
+load-bearing: under MySQL's default REPEATABLE READ a transaction's snapshot is fixed by its
+first read, and a reschedule reads the ride before it waits for the trishaw lock, so its
+conflict check would still miss the booking it waited for.
+
+Every write on an existing ride also locks the ride row first, together with the other leg of a
+round trip, in id order (`lockRides`). Two admins editing one ride queue up, and the second
+reads what the first wrote: a reschedule and an allocation cannot each check a different
+window, and a rider cannot be booked onto a ride that is being cancelled. The lock order is
+always rides, then trishaws. Rescheduling **replaces** the reservation set rather than merging
+into it, and moving a ride re-reserves its trishaws for the new window under the same lock.
+Cancelling **releases** the equipment by status alone — the conflict check skips cancelled
+rides — so the `RideTrishaw` rows stay as history.
+
+### Writing a ride
+
+Every write on a ride (`scheduleRide`, `rescheduleRide`, `updateRideDetails`, `cancelRide`,
+`setRideTrishaws`, `assignVolunteer`, `unassignVolunteer`, `bookRider`, `cancelBooking`) runs in
+one transaction that writes the change, **one `RideLogEntry` per ride row** and **one domain
+event**, and does nothing at all when nothing changed (assigning a pilot twice is silent). Only
+a `scheduled` ride can be changed (`rideClosed` otherwise). A cancelled one can only be deleted,
+and deleting is what frees its square on the calendar (`rideNotCancelled` for anything else).
+
+- **History is ride-scoped.** `RideLogEntry` mirrors `TrishawLogEntry`: a type, the actor, a
+  JSON payload. It is not `ActivityEvent`, which is about a user as its subject. The payload
+  holds ids, never a person's name: `rides.listRideLog` looks names up as it reads, so deleting
+  an account or a rider removes their name from every ride's history ("a former member"), and
+  coordinates stay out of the change diff. The note for pilots (`Ride.note`) is a field, and its
+  text never goes into the log or an event. Deleting a ride deletes its history; the
+  `ride.deleted` event is what records who did it.
+- **A round trip is written once.** `scheduleRide` with a `returnLeg` checks both windows under
+  one lock and inserts both rows in the same transaction, the way back mirrored (origin and
+  destination swapped) and linked by `returnLegOfId`. Either both legs exist or neither does.
+  Moving a leg keeps the way there before the way back (`legsOverlap`), a leg of a round trip
+  stays functional (`partOfRoundTrip`), and cancelling the way there takes the way back with it
+  unless the admin unticks it.
+- **Cancellation has a reason code.** `Ride.cancellationReasonCode` is one of the Report 3
+  buckets (`weather`, `rider`, `facility`, `volunteers`, `equipment`, `noRiders`, `other`);
+  `cancellationNote` is the free text beside it and `cancelledByUserId` who did it. Rides
+  cancelled before the codes existed were migrated as `other`.
+- **Wall clock in, instants stored.** The scheduling drawer sends a date, a start and a length
+  on the chapter's wall clock (`wallSlot`). `use-cases/schedule-ride.ts` reads the chapter's
+  zone and turns it into instants with `slotWindow`; `slotOf` goes the other way for the detail
+  page. A length is real minutes, so a two-hour ride across a DST change still lasts two hours.
+- **Who may do it.** Every action in `features/rides/actions.ts` loads the ride and calls
+  `requireChapterAdmin(ride.chapterId)`: the chapter comes from the database, never from the
+  client. Putting a pilot on a ride goes through `use-cases/staff-ride.ts`, which requires the
+  `pilot` role in the ride's own chapter (being its admin is not enough). Booking a rider goes
+  through `use-cases/book-rider.ts`, which requires the rider to belong to the ride's chapter.
+- **`seriesId`** is on every ride and unused. Recurrence will fill it; adding it now means no
+  backfill then.
+
+The admin surfaces are the week grid at `/admin/rides` (`?new=1` opens the scheduling drawer,
+and ⌘K "Schedule a ride" lands there) and the detail page `/admin/rides/[rideId]`, where the
+trishaw allocation drawer lives at `?trishaws=1`. Old `/admin/rides?trishaws=<id>` links
+redirect to it.
 
 ### Storage locations: a bike lives at a place, not at a chapter
 
@@ -827,9 +887,8 @@ lists a shared bike for every chapter entitled to it. Sharing the shed does not 
 other two checks: a bike in for service is still `trishawUnavailable`, and the window is still
 reserved inside the write's transaction.
 
-There is **no admin surface for storage locations yet** — no create, edit or link screen, and
-`prisma/seed.ts` is the only thing that writes one. Until there is, a shared site has to be
-created by hand. That is the missing piece, not a design gap.
+Storage locations are managed at `/admin/locations`: chapter sites and the country-wide pools
+other chapters join by code.
 
 ### Time zones: the chapter's clock, never the server's or the reader's
 

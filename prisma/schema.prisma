@@ -65,7 +65,11 @@ model User {
   conversations        ConversationMember[]
   chatMessages         ChatMessage[]        @relation("chatMessageSender")
   chatReactions        ChatReaction[]
-  rideAssignments      RideAssignment[]
+  rideAssignments      RideAssignment[]     @relation("rideAssignee")
+  rideAssignmentsMade  RideAssignment[]     @relation("rideAssigner")
+  rideBookingsMade     RideRosterEntry[]    @relation("rideBooker")
+  ridesCancelled       Ride[]               @relation("rideCanceller")
+  rideLogEntries       RideLogEntry[]       @relation("rideLogActor")
   calendarFeed         CalendarFeed?
   uploadedFiles        StoredFile[]         @relation("fileUploader")
   reportedDamages      TrishawDamage[]      @relation("damageReporter")
@@ -578,6 +582,30 @@ enum RideRole {
   pilot
 }
 
+/// The Report 3 buckets: why a ride did not happen.
+enum RideCancellationReason {
+  weather
+  rider
+  facility
+  volunteers
+  equipment
+  noRiders
+  other
+}
+
+enum RideLogType {
+  scheduled
+  rescheduled
+  edited
+  cancelled
+  trishawsChanged
+  pilotAssigned
+  pilotUnassigned
+  riderBooked
+  riderRemoved
+  note
+}
+
 enum TrishawStatus {
   active
   maintenance
@@ -850,20 +878,50 @@ model Ride {
   returnLegOf   Ride?   @relation("roundTrip", fields: [returnLegOfId], references: [id], onDelete: SetNull)
   returnLeg     Ride?   @relation("roundTrip")
 
-  cancelledAt        DateTime?
-  cancellationReason String?   @db.Text
+  /// Pilots the ride needs; staffing compares the assignments against it.
+  requiredPilots Int     @default(1)
+  /// What the pilots should know before they set off.
+  note           String? @db.Text
+  /// Shared by every ride of a recurring series, once recurrence exists.
+  seriesId       String?
+
+  cancelledAt            DateTime?
+  cancellationReasonCode RideCancellationReason?
+  cancellationNote       String?                 @db.Text
+  cancelledByUserId      String?
+  cancelledBy            User?                   @relation("rideCanceller", fields: [cancelledByUserId], references: [id], onDelete: SetNull)
 
   trishaws    RideTrishaw[]
   assignments RideAssignment[]
   roster      RideRosterEntry[]
   damages     TrishawDamage[]
+  log         RideLogEntry[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([chapterId, startsAt])
   @@index([status, startsAt])
+  @@index([seriesId])
+  @@index([cancelledByUserId])
   @@map("ride")
+}
+
+/// A ride's own history, the way `TrishawLogEntry` is a trishaw's. The payload
+/// holds ids, never names, so deleting a person removes them from it too.
+model RideLogEntry {
+  id          String      @id @default(cuid())
+  rideId      String
+  ride        Ride        @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  actorUserId String?
+  actor       User?       @relation("rideLogActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  type        RideLogType
+  payload     Json?
+  createdAt   DateTime    @default(now())
+
+  @@index([rideId, createdAt])
+  @@index([actorUserId])
+  @@map("ride_log_entry")
 }
 
 /**
@@ -887,33 +945,40 @@ model RideTrishaw {
 }
 
 model RideAssignment {
-  id        String   @id @default(cuid())
-  rideId    String
-  ride      Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role      RideRole @default(pilot)
-  createdAt DateTime @default(now())
+  id               String   @id @default(cuid())
+  rideId           String
+  ride             Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User     @relation("rideAssignee", fields: [userId], references: [id], onDelete: Cascade)
+  role             RideRole @default(pilot)
+  /// Null when the pilot signed up themselves.
+  assignedByUserId String?
+  assignedBy       User?    @relation("rideAssigner", fields: [assignedByUserId], references: [id], onDelete: SetNull)
+  createdAt        DateTime @default(now())
 
   @@unique([rideId, userId, role])
   @@index([userId])
   @@index([rideId])
+  @@index([assignedByUserId])
   @@map("ride_assignment")
 }
 
 model RideRosterEntry {
-  id          String    @id @default(cuid())
-  rideId      String
-  ride        Ride      @relation(fields: [rideId], references: [id], onDelete: Cascade)
-  passengerId String
-  passenger   Passenger @relation(fields: [passengerId], references: [id], onDelete: Cascade)
-  position    Int       @default(0)
-  checkedInAt DateTime?
-  createdAt   DateTime  @default(now())
+  id             String    @id @default(cuid())
+  rideId         String
+  ride           Ride      @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  passengerId    String
+  passenger      Passenger @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  position       Int       @default(0)
+  checkedInAt    DateTime?
+  bookedByUserId String?
+  bookedBy       User?     @relation("rideBooker", fields: [bookedByUserId], references: [id], onDelete: SetNull)
+  createdAt      DateTime  @default(now())
 
   @@unique([rideId, passengerId])
   @@index([passengerId])
   @@index([rideId, position])
+  @@index([bookedByUserId])
   @@map("ride_roster_entry")
 }
 

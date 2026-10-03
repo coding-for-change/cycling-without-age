@@ -16,27 +16,15 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { FileThumb } from "@/features/fleet/components/file-image";
+import type { TrishawOption } from "@/features/rides/components/trishaw-options";
 import { useDrawerParam } from "@/hooks/use-drawer-param";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
-import { allocateTrishawsAction } from "../actions";
-import { ALLOCATION_PARAM } from "./allocation-param";
+import { allocateTrishawsAction } from "@/features/rides/actions";
+import { ALLOCATION_OPEN, ALLOCATION_PARAM } from "./allocation-param";
 
-export type AllocationOption = {
-  id: string;
-  name: string;
-  photoFileId: string | null;
-  model: string | null;
-  seats: string | null;
-  wheelchair: boolean;
-  location: string;
-  isPool: boolean;
-  allocated: boolean;
-  blocked: string | null;
-  warning: string | null;
-  damaged: boolean;
-};
+export type AllocationOption = TrishawOption;
 
 export type AllocationLabels = {
   title: string;
@@ -70,7 +58,7 @@ export function AllocateTrishawsDrawer({
 }) {
   const { go } = useDrawerParam();
   const searchParams = useSearchParams();
-  const open = searchParams.get(ALLOCATION_PARAM) === rideId;
+  const open = searchParams.get(ALLOCATION_PARAM) === ALLOCATION_OPEN;
   const formId = useId();
   const [pending, startTransition] = useTransition();
   const [query, setQuery] = useState("");

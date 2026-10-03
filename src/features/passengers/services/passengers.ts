@@ -19,6 +19,12 @@ export const upsertOwnPassenger = (
     },
   });
 
+export const findPassengerById = (id: string) =>
+  prisma.passenger.findUnique({
+    where: { id },
+    select: { id: true, chapterId: true, firstName: true, lastName: true },
+  });
+
 export const findPassengerOfUser = (userId: string) =>
   prisma.passenger.findUnique({ where: { userId } });
 
