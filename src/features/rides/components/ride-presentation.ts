@@ -64,9 +64,10 @@ export const rideRiderNames = (
 
 export type RideFleetStrings = { grounded: string; groundedOnRide: string };
 
-export type RideAllocationLink = {
+export type RideLink = {
   href: (rideId: string) => string;
-  label: string;
+  open: string;
+  cancelled: string;
 };
 
 export function rideGroundedNote(

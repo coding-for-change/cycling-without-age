@@ -444,22 +444,30 @@ async function seedRides(
   ];
 
   for (const item of plan) {
-    const ride = await scheduleRide({
-      chapterId: chapterId(item.chapter),
-      trishawIds: item.trishaws.map((key) => trishawIds.get(key)!),
-      model: item.model,
-      startsAt: at(today, item.day, item.from),
-      endsAt: at(today, item.day, item.to),
-      locationName: item.location,
-      destinationName: item.destination ?? null,
-    });
+    const ride = await scheduleRide(
+      {
+        chapterId: chapterId(item.chapter),
+        trishawIds: item.trishaws.map((key) => trishawIds.get(key)!),
+        model: item.model,
+        startsAt: at(today, item.day, item.from),
+        endsAt: at(today, item.day, item.to),
+        locationName: item.location,
+        destinationName: item.destination ?? null,
+      },
+      null,
+    );
     for (const userId of item.staff) {
-      await rides.assignVolunteer(ride.id, userId);
+      await rides.assignVolunteer(ride.id, userId, null);
     }
     for (const passengerId of item.riders) {
-      await rides.bookRider(ride.id, passengerId);
+      await rides.bookRider(ride.id, passengerId, null);
     }
-    if (item.cancel) await rides.cancelRide(ride.id, item.cancel);
+    if (item.cancel)
+      await rides.cancelRide(
+        ride.id,
+        { reasonCode: "weather", note: item.cancel },
+        null,
+      );
   }
 
   return plan.length;

@@ -2,6 +2,22 @@ import { z } from "zod";
 
 import { chapterRole } from "@/lib/access";
 
+const rideScope = {
+  rideId: z.string().min(1),
+  chapterId: z.string().min(1),
+  actorUserId: z.string().min(1).nullable(),
+};
+
+const rideReasons = z.enum([
+  "weather",
+  "rider",
+  "facility",
+  "volunteers",
+  "equipment",
+  "noRiders",
+  "other",
+]);
+
 export const eventSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("pilotApplication.decided"),
@@ -93,6 +109,47 @@ export const eventSchema = z.discriminatedUnion("type", [
     actorUserId: z.string().min(1),
     approved: z.boolean(),
     note: z.string().nullable(),
+  }),
+  z.object({
+    type: z.literal("ride.scheduled"),
+    ...rideScope,
+    returnLegId: z.string().min(1).nullable(),
+  }),
+  z.object({
+    type: z.literal("ride.rescheduled"),
+    ...rideScope,
+    changes: z.array(z.enum(["time", "location", "destination"])).min(1),
+  }),
+  z.object({
+    type: z.literal("ride.cancelled"),
+    ...rideScope,
+    reasonCode: rideReasons,
+  }),
+  z.object({
+    type: z.literal("ride.deleted"),
+    ...rideScope,
+  }),
+  z.object({
+    type: z.literal("ride.pilotAssigned"),
+    ...rideScope,
+    userId: z.string().min(1),
+    self: z.boolean(),
+  }),
+  z.object({
+    type: z.literal("ride.pilotUnassigned"),
+    ...rideScope,
+    userId: z.string().min(1),
+    self: z.boolean(),
+  }),
+  z.object({
+    type: z.literal("ride.riderBooked"),
+    ...rideScope,
+    passengerId: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal("ride.riderRemoved"),
+    ...rideScope,
+    passengerId: z.string().min(1),
   }),
 ]);
 

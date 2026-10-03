@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { rides } from "@/features/rides";
 import { domainCode } from "@/lib/domain-error";
+import { transaction } from "@/lib/events";
+
+const emitted: { type: string }[] = [];
 
 jest.mock("@/lib/prisma", () => {
   const client: Record<string, unknown> = {
@@ -9,14 +12,40 @@ jest.mock("@/lib/prisma", () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      delete: jest.fn(),
     },
     rideTrishaw: { findMany: jest.fn() },
-    rideAssignment: { upsert: jest.fn(), delete: jest.fn() },
-    rideRosterEntry: { upsert: jest.fn(), count: jest.fn(), delete: jest.fn() },
+    rideAssignment: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      deleteMany: jest.fn(),
+    },
+    rideRosterEntry: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      deleteMany: jest.fn(),
+      aggregate: jest.fn(),
+    },
+    rideLogEntry: { create: jest.fn(), findMany: jest.fn() },
+    user: { findMany: jest.fn() },
+    passenger: { findMany: jest.fn() },
     $queryRaw: jest.fn(),
   };
   client.$transaction = jest.fn((run: (tx: unknown) => unknown) => run(client));
   return { prisma: client };
+});
+
+jest.mock("@/lib/events", () => {
+  const { prisma: client } = jest.requireMock("@/lib/prisma");
+  return {
+    transaction: jest.fn((run: (tx: unknown, emit: unknown) => unknown) =>
+      client.$transaction((tx: unknown) =>
+        run(tx, async (event: { type: string }) => {
+          emitted.push(event);
+        }),
+      ),
+    ),
+  };
 });
 
 const db = prisma as unknown as {
@@ -25,22 +54,60 @@ const db = prisma as unknown as {
     findUnique: jest.Mock;
     create: jest.Mock;
     update: jest.Mock;
+    delete: jest.Mock;
   };
   rideTrishaw: { findMany: jest.Mock };
-  rideAssignment: { upsert: jest.Mock; delete: jest.Mock };
-  rideRosterEntry: { upsert: jest.Mock; count: jest.Mock; delete: jest.Mock };
+  rideAssignment: {
+    findUnique: jest.Mock;
+    create: jest.Mock;
+    deleteMany: jest.Mock;
+  };
+  rideRosterEntry: {
+    findUnique: jest.Mock;
+    create: jest.Mock;
+    deleteMany: jest.Mock;
+    aggregate: jest.Mock;
+  };
+  rideLogEntry: { create: jest.Mock; findMany: jest.Mock };
+  user: { findMany: jest.Mock };
+  passenger: { findMany: jest.Mock };
   $queryRaw: jest.Mock;
   $transaction: jest.Mock;
 };
 
 const CHAPTER = "chapter-muenchen";
 const TRISHAW = "trishaw-1";
+const ADMIN = "user-admin";
 
 const base = {
   chapterId: CHAPTER,
   startsAt: new Date("2026-09-08T08:00:00Z"),
   endsAt: new Date("2026-09-08T10:00:00Z"),
 };
+
+const scheduled = (overrides: Record<string, unknown> = {}) => ({
+  id: "ride-1",
+  chapterId: CHAPTER,
+  model: "event",
+  status: "scheduled",
+  startsAt: base.startsAt,
+  endsAt: base.endsAt,
+  locationName: "Sonnenhof",
+  locationAddress: null,
+  latitude: null,
+  longitude: null,
+  destinationName: null,
+  destinationAddress: null,
+  destinationLatitude: null,
+  destinationLongitude: null,
+  requiredPilots: 1,
+  note: null,
+  trishaws: [],
+  returnLeg: null,
+  returnLegOf: null,
+  chapter: { id: CHAPTER, name: "München", timeZone: "Europe/Berlin" },
+  ...overrides,
+});
 
 const codeOf = async (run: Promise<unknown>) => {
   try {
@@ -51,48 +118,66 @@ const codeOf = async (run: Promise<unknown>) => {
   }
 };
 
+const logTypes = () =>
+  db.rideLogEntry.create.mock.calls.map(([args]) => args.data.type);
+const eventTypes = () => emitted.map((event) => event.type);
+const lockedSql = () =>
+  db.$queryRaw.mock.calls.map(([sql]) => String(sql.strings.join("?")));
+
 beforeEach(() => {
   jest.clearAllMocks();
-  db.ride.create.mockResolvedValue({ id: "ride-new" });
-  db.ride.update.mockResolvedValue({ id: "ride-new" });
+  emitted.length = 0;
+  let created = 0;
+  db.ride.create.mockImplementation(({ data }) =>
+    Promise.resolve({
+      id: `ride-new-${++created}`,
+      chapterId: data.chapterId,
+      startsAt: data.startsAt,
+      endsAt: data.endsAt,
+      trishaws: [],
+    }),
+  );
+  db.ride.update.mockResolvedValue(scheduled());
   db.ride.findMany.mockResolvedValue([]);
   db.rideTrishaw.findMany.mockResolvedValue([]);
+  db.rideLogEntry.create.mockResolvedValue({ id: "log-1" });
+  db.rideRosterEntry.aggregate.mockResolvedValue({ _max: { position: null } });
   db.$queryRaw.mockResolvedValue([]);
 });
 
 describe("scheduleRide", () => {
   it("rejects a ride that ends before it starts", async () => {
     await expect(
-      rides.scheduleRide({
-        ...base,
-        endsAt: new Date("2026-09-08T07:00:00Z"),
-      }),
+      rides.scheduleRide(
+        { ...base, endsAt: new Date("2026-09-08T07:00:00Z") },
+        ADMIN,
+      ),
     ).rejects.toThrow();
     expect(db.ride.create).not.toHaveBeenCalled();
   });
 
   it("rejects a ride shorter than the minimum", async () => {
     await expect(
-      rides.scheduleRide({
-        ...base,
-        endsAt: new Date("2026-09-08T08:05:00Z"),
-      }),
+      rides.scheduleRide(
+        { ...base, endsAt: new Date("2026-09-08T08:05:00Z") },
+        ADMIN,
+      ),
     ).rejects.toThrow();
     expect(db.ride.create).not.toHaveBeenCalled();
   });
 
   it("rejects a ride longer than a day's work", async () => {
     await expect(
-      rides.scheduleRide({
-        ...base,
-        endsAt: new Date("2026-09-08T23:00:00Z"),
-      }),
+      rides.scheduleRide(
+        { ...base, endsAt: new Date("2026-09-08T23:00:00Z") },
+        ADMIN,
+      ),
     ).rejects.toThrow();
     expect(db.ride.create).not.toHaveBeenCalled();
   });
 
   it("schedules with no trishaw at all, asking the database nothing", async () => {
-    await rides.scheduleRide(base);
+    await rides.scheduleRide(base, ADMIN);
     expect(db.rideTrishaw.findMany).not.toHaveBeenCalled();
     expect(db.$queryRaw).not.toHaveBeenCalled();
     expect(db.ride.create).toHaveBeenCalledWith(
@@ -107,24 +192,19 @@ describe("scheduleRide", () => {
       { trishawId: TRISHAW, rideId: "ride-existing" },
     ]);
     expect(
-      await codeOf(rides.scheduleRide({ ...base, trishawIds: [TRISHAW] })),
+      await codeOf(
+        rides.scheduleRide({ ...base, trishawIds: [TRISHAW] }, ADMIN),
+      ),
     ).toBe("trishawReserved");
     expect(db.ride.create).not.toHaveBeenCalled();
-  });
-
-  it("reserves a free trishaw", async () => {
-    await rides.scheduleRide({ ...base, trishawIds: [TRISHAW] });
-    expect(db.ride.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          trishaws: { create: [{ trishawId: TRISHAW }] },
-        }),
-      }),
-    );
+    expect(emitted).toEqual([]);
   });
 
   it("reserves several trishaws for one ride", async () => {
-    await rides.scheduleRide({ ...base, trishawIds: [TRISHAW, "trishaw-2"] });
+    await rides.scheduleRide(
+      { ...base, trishawIds: [TRISHAW, "trishaw-2"] },
+      ADMIN,
+    );
     expect(db.ride.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -138,34 +218,27 @@ describe("scheduleRide", () => {
 
   it("refuses the same trishaw booked onto one ride twice", async () => {
     await expect(
-      rides.scheduleRide({ ...base, trishawIds: [TRISHAW, TRISHAW] }),
+      rides.scheduleRide({ ...base, trishawIds: [TRISHAW, TRISHAW] }, ADMIN),
     ).rejects.toThrow();
     expect(db.ride.create).not.toHaveBeenCalled();
   });
 
   it("locks the trishaws and writes inside one transaction", async () => {
-    await rides.scheduleRide({ ...base, trishawIds: [TRISHAW] });
+    await rides.scheduleRide({ ...base, trishawIds: [TRISHAW] }, ADMIN);
     // The conflict check alone cannot stop a concurrent booking — the row lock
-    // inside the same transaction is what serialises them.
+    // inside the same transaction as the write is what serialises them.
     expect(db.$transaction).toHaveBeenCalledTimes(1);
     expect(db.$queryRaw).toHaveBeenCalledTimes(1);
     const sql = String(db.$queryRaw.mock.calls[0][0].strings.join("?"));
     expect(sql).toContain("FOR UPDATE");
     expect(sql).toContain("trishaw");
-  });
-
-  it("does not write when the window was taken", async () => {
-    db.rideTrishaw.findMany.mockResolvedValue([
-      { trishawId: TRISHAW, rideId: "ride-existing" },
-    ]);
-    expect(
-      await codeOf(rides.scheduleRide({ ...base, trishawIds: [TRISHAW] })),
-    ).toBe("trishawReserved");
-    expect(db.ride.create).not.toHaveBeenCalled();
+    expect(db.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+      db.ride.create.mock.invocationCallOrder[0],
+    );
   });
 
   it("asks only about overlapping, non-cancelled rides", async () => {
-    await rides.scheduleRide({ ...base, trishawIds: [TRISHAW] });
+    await rides.scheduleRide({ ...base, trishawIds: [TRISHAW] }, ADMIN);
     expect(db.rideTrishaw.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
@@ -179,100 +252,620 @@ describe("scheduleRide", () => {
       }),
     );
   });
+
+  it("writes one log row and emits one event", async () => {
+    await rides.scheduleRide(base, ADMIN);
+    expect(logTypes()).toEqual(["scheduled"]);
+    expect(emitted).toEqual([
+      {
+        type: "ride.scheduled",
+        rideId: "ride-new-1",
+        chapterId: CHAPTER,
+        actorUserId: ADMIN,
+        returnLegId: null,
+      },
+    ]);
+  });
+
+  describe("a round trip", () => {
+    const back = {
+      startsAt: new Date("2026-09-08T11:00:00Z"),
+      endsAt: new Date("2026-09-08T13:00:00Z"),
+    };
+    const trip = {
+      ...base,
+      model: "functional" as const,
+      locationName: "Sonnenhof",
+      destinationName: "Dr. Weber",
+      trishawIds: [TRISHAW],
+      returnLeg: back,
+    };
+
+    it("is two rides, the way back mirrored and linked to the way there", async () => {
+      const ride = await rides.scheduleRide(trip, ADMIN);
+      expect(db.ride.create).toHaveBeenCalledTimes(2);
+      expect(db.ride.create.mock.calls[1][0].data).toEqual(
+        expect.objectContaining({
+          startsAt: back.startsAt,
+          endsAt: back.endsAt,
+          locationName: "Dr. Weber",
+          destinationName: "Sonnenhof",
+          returnLegOfId: "ride-new-1",
+          trishaws: { create: [{ trishawId: TRISHAW }] },
+        }),
+      );
+      expect(ride.returnLegId).toBe("ride-new-2");
+      expect(logTypes()).toEqual(["scheduled", "scheduled"]);
+      expect(eventTypes()).toEqual(["ride.scheduled"]);
+    });
+
+    it("checks both windows under one lock, before either row is written", async () => {
+      await rides.scheduleRide(trip, ADMIN);
+      expect(db.$transaction).toHaveBeenCalledTimes(1);
+      expect(db.rideTrishaw.findMany.mock.calls[0][0].where.ride.OR).toEqual([
+        { startsAt: { lt: base.endsAt }, endsAt: { gt: base.startsAt } },
+        { startsAt: { lt: back.endsAt }, endsAt: { gt: back.startsAt } },
+      ]);
+    });
+
+    it("books neither leg when the way back is taken", async () => {
+      db.rideTrishaw.findMany.mockResolvedValue([
+        { trishawId: TRISHAW, rideId: "ride-existing" },
+      ]);
+      expect(await codeOf(rides.scheduleRide(trip, ADMIN))).toBe(
+        "trishawReserved",
+      );
+      expect(db.ride.create).not.toHaveBeenCalled();
+    });
+
+    it("is for functional rides only", async () => {
+      await expect(
+        rides.scheduleRide({ ...trip, model: "event" }, ADMIN),
+      ).rejects.toThrow();
+      expect(db.ride.create).not.toHaveBeenCalled();
+    });
+
+    it("cannot start back before it arrived", async () => {
+      await expect(
+        rides.scheduleRide(
+          {
+            ...trip,
+            returnLeg: {
+              startsAt: new Date("2026-09-08T09:00:00Z"),
+              endsAt: new Date("2026-09-08T11:00:00Z"),
+            },
+          },
+          ADMIN,
+        ),
+      ).rejects.toThrow();
+    });
+  });
 });
 
 describe("rescheduleRide", () => {
+  const later = {
+    startsAt: new Date("2026-09-09T08:00:00Z"),
+    endsAt: new Date("2026-09-09T10:00:00Z"),
+  };
+
   it("refuses a ride that is not there", async () => {
     db.ride.findUnique.mockResolvedValue(null);
-    expect(await codeOf(rides.rescheduleRide("ride-1", base))).toBe(
+    expect(await codeOf(rides.rescheduleRide("ride-1", later, ADMIN))).toBe(
       "unknownRide",
     );
   });
 
-  it("ignores the ride's own reservations when checking for conflicts", async () => {
-    db.ride.findUnique.mockResolvedValue({ id: "ride-1" });
-    await rides.rescheduleRide("ride-1", { ...base, trishawIds: [TRISHAW] });
-    expect(db.rideTrishaw.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          ride: expect.objectContaining({ id: { not: "ride-1" } }),
-        }),
-      }),
+  it("refuses a cancelled ride", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ status: "cancelled" }));
+    expect(await codeOf(rides.rescheduleRide("ride-1", later, ADMIN))).toBe(
+      "rideClosed",
     );
   });
 
-  it("replaces the reservation set rather than adding to it", async () => {
-    db.ride.findUnique.mockResolvedValue({ id: "ride-1" });
-    await rides.rescheduleRide("ride-1", { ...base, trishawIds: [TRISHAW] });
-    expect(db.ride.update).toHaveBeenCalledWith(
+  it("re-reserves its own trishaws, ignoring its own reservation", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ trishaws: [{ trishaw: { id: TRISHAW, name: "Isarwind" } }] }),
+    );
+    await rides.rescheduleRide("ride-1", later, ADMIN);
+    expect(lockedSql()).toEqual([
+      expect.stringContaining("FROM `ride`"),
+      expect.stringContaining("FROM `trishaw`"),
+    ]);
+    expect(db.rideTrishaw.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({
-          trishaws: { deleteMany: {}, create: [{ trishawId: TRISHAW }] },
+        where: expect.objectContaining({
+          trishawId: { in: [TRISHAW] },
+          ride: expect.objectContaining({ id: { notIn: ["ride-1"] } }),
         }),
       }),
     );
+    expect(db.ride.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "ride-1" }, data: later }),
+    );
+  });
+
+  it("refuses when the new window is taken", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ trishaws: [{ trishaw: { id: TRISHAW, name: "Isarwind" } }] }),
+    );
+    db.rideTrishaw.findMany.mockResolvedValue([
+      { trishawId: TRISHAW, rideId: "ride-other" },
+    ]);
+    expect(await codeOf(rides.rescheduleRide("ride-1", later, ADMIN))).toBe(
+      "trishawReserved",
+    );
+    expect(db.ride.update).not.toHaveBeenCalled();
+  });
+
+  it("keeps the way there before the way back", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        returnLeg: {
+          id: "ride-back",
+          startsAt: new Date("2026-09-08T11:00:00Z"),
+          endsAt: new Date("2026-09-08T12:00:00Z"),
+          status: "scheduled",
+        },
+      }),
+    );
+    expect(await codeOf(rides.rescheduleRide("ride-1", later, ADMIN))).toBe(
+      "legsOverlap",
+    );
+  });
+
+  it("logs from and to, and emits once", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    await rides.rescheduleRide("ride-1", later, ADMIN);
+    expect(logTypes()).toEqual(["rescheduled"]);
+    expect(emitted).toEqual([
+      expect.objectContaining({
+        type: "ride.rescheduled",
+        rideId: "ride-1",
+        changes: ["time"],
+      }),
+    ]);
+  });
+
+  it("stays silent when nothing moved", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    await rides.rescheduleRide("ride-1", base, ADMIN);
+    expect(db.ride.update).not.toHaveBeenCalled();
+    expect(logTypes()).toEqual([]);
+    expect(emitted).toEqual([]);
+  });
+});
+
+describe("updateRideDetails", () => {
+  it("writes only what changed and tells riders when the place moved", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    await rides.updateRideDetails(
+      "ride-1",
+      { locationName: "Englischer Garten", requiredPilots: 1 },
+      ADMIN,
+    );
+    expect(db.ride.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { locationName: "Englischer Garten" } }),
+    );
+    expect(eventTypes()).toEqual(["ride.rescheduled"]);
+    expect(emitted[0]).toEqual(
+      expect.objectContaining({ changes: ["location"] }),
+    );
+  });
+
+  it("keeps the note for pilots out of the event and the log payload", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    await rides.updateRideDetails("ride-1", { note: "Ring twice." }, ADMIN);
+    expect(emitted).toEqual([]);
+    const payload = db.rideLogEntry.create.mock.calls[0][0].data.payload;
+    expect(payload.fields).toEqual(["note"]);
+    expect(JSON.stringify(payload)).not.toContain("Ring twice.");
+  });
+
+  it("stays silent when nothing changed", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    await rides.updateRideDetails(
+      "ride-1",
+      { locationName: "Sonnenhof", requiredPilots: 1 },
+      ADMIN,
+    );
+    expect(db.ride.update).not.toHaveBeenCalled();
+    expect(logTypes()).toEqual([]);
+  });
+
+  it("drops the destination when a ride stops being functional", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ model: "functional", destinationName: "Dr. Weber" }),
+    );
+    await rides.updateRideDetails("ride-1", { model: "event" }, ADMIN);
+    expect(db.ride.update.mock.calls[0][0].data).toEqual({
+      model: "event",
+      destinationName: null,
+    });
+  });
+
+  it("keeps both legs of a round trip functional", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        model: "functional",
+        returnLeg: { id: "ride-back", status: "scheduled" },
+      }),
+    );
+    expect(
+      await codeOf(
+        rides.updateRideDetails("ride-1", { model: "pleasure" }, ADMIN),
+      ),
+    ).toBe("partOfRoundTrip");
   });
 });
 
 describe("cancelRide", () => {
-  it("keeps the ride on the calendar and records why", async () => {
-    db.ride.findUnique.mockResolvedValue({ id: "ride-1" });
-    await rides.cancelRide("ride-1", "  Weather  ");
+  it("keeps the ride on the calendar and records code, note, who and when", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    await rides.cancelRide(
+      "ride-1",
+      { reasonCode: "weather", note: "  Storm warning  " },
+      ADMIN,
+    );
     expect(db.ride.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: "ride-1" },
         data: expect.objectContaining({
           status: "cancelled",
-          cancellationReason: "Weather",
+          cancelledAt: expect.any(Date),
+          cancellationReasonCode: "weather",
+          cancellationNote: "Storm warning",
+          cancelledByUserId: ADMIN,
         }),
+      }),
+    );
+    expect(db.ride.delete).not.toHaveBeenCalled();
+    expect(logTypes()).toEqual(["cancelled"]);
+    expect(emitted).toEqual([
+      expect.objectContaining({
+        type: "ride.cancelled",
+        reasonCode: "weather",
+      }),
+    ]);
+  });
+
+  it("stores no note rather than an empty one", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    await rides.cancelRide(
+      "ride-1",
+      { reasonCode: "other", note: "  " },
+      ADMIN,
+    );
+    expect(db.ride.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ cancellationNote: null }),
       }),
     );
   });
 
-  it("stores no reason rather than an empty one", async () => {
-    db.ride.findUnique.mockResolvedValue({ id: "ride-1" });
-    await rides.cancelRide("ride-1", "   ");
-    expect(db.ride.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ cancellationReason: null }),
-      }),
+  // The conflict check skips cancelled rides; nothing else has to be undone.
+  it("frees the trishaws by status, so their rows stay as history", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ trishaws: [{ trishaw: { id: TRISHAW, name: "Isarwind" } }] }),
     );
+    await rides.cancelRide("ride-1", { reasonCode: "weather" }, ADMIN);
+    expect(db.ride.update.mock.calls[0][0].data.trishaws).toBeUndefined();
+  });
+
+  it("takes the way back with it", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ returnLeg: { id: "ride-back", status: "scheduled" } }),
+    );
+    const { cancelledIds } = await rides.cancelRide(
+      "ride-1",
+      { reasonCode: "rider" },
+      ADMIN,
+    );
+    expect(cancelledIds).toEqual(["ride-1", "ride-back"]);
+    expect(eventTypes()).toEqual(["ride.cancelled", "ride.cancelled"]);
+  });
+
+  it("leaves the way back when asked to", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ returnLeg: { id: "ride-back", status: "scheduled" } }),
+    );
+    const { cancelledIds } = await rides.cancelRide(
+      "ride-1",
+      { reasonCode: "rider", includeReturnLeg: false },
+      ADMIN,
+    );
+    expect(cancelledIds).toEqual(["ride-1"]);
+  });
+
+  it("is silent for a ride already cancelled", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ status: "cancelled" }));
+    await rides.cancelRide("ride-1", { reasonCode: "weather" }, ADMIN);
+    expect(db.ride.update).not.toHaveBeenCalled();
+    expect(emitted).toEqual([]);
   });
 
   it("refuses a ride that is not there", async () => {
     db.ride.findUnique.mockResolvedValue(null);
-    expect(await codeOf(rides.cancelRide("ride-1"))).toBe("unknownRide");
+    expect(
+      await codeOf(rides.cancelRide("ride-1", { reasonCode: "other" }, ADMIN)),
+    ).toBe("unknownRide");
+  });
+});
+
+describe("deleteRide", () => {
+  it("deletes only a cancelled ride", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    expect(await codeOf(rides.deleteRide("ride-1", ADMIN))).toBe(
+      "rideNotCancelled",
+    );
+    expect(db.ride.delete).not.toHaveBeenCalled();
+
+    db.ride.findUnique.mockResolvedValue(scheduled({ status: "cancelled" }));
+    await rides.deleteRide("ride-1", ADMIN);
+    expect(db.ride.delete).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "ride-1" } }),
+    );
+  });
+
+  // The history goes with the ride; the event is what is left of who did it.
+  it("leaves an event behind", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ status: "cancelled" }));
+    await rides.deleteRide("ride-1", ADMIN);
+    expect(emitted).toEqual([
+      {
+        type: "ride.deleted",
+        rideId: "ride-1",
+        chapterId: CHAPTER,
+        actorUserId: ADMIN,
+      },
+    ]);
+  });
+});
+
+/**
+ * MySQL's default REPEATABLE READ fixes a transaction's snapshot at its first
+ * read. A ride write reads the ride before it waits for the trishaw lock, so
+ * only READ COMMITTED lets the conflict check see the booking it waited for.
+ */
+describe("serialising writes", () => {
+  it("runs every write at READ COMMITTED", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    await rides.scheduleRide(base, ADMIN);
+    await rides.rescheduleRide(
+      "ride-1",
+      {
+        startsAt: new Date("2026-09-09T08:00:00Z"),
+        endsAt: new Date("2026-09-09T10:00:00Z"),
+      },
+      ADMIN,
+    );
+    await rides.cancelRide("ride-1", { reasonCode: "weather" }, ADMIN);
+    for (const [, options] of (transaction as jest.Mock).mock.calls)
+      expect(options).toEqual({ isolationLevel: "ReadCommitted" });
+  });
+
+  it("locks the ride and its other leg, in id order, before reading it", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ id: "ride-b", returnLegOfId: "ride-a", returnLeg: null }),
+    );
+    await rides.bookRider("ride-b", "passenger-1", ADMIN);
+    const [first] = db.$queryRaw.mock.calls;
+    expect(String(first[0].strings.join("?"))).toContain("FOR UPDATE");
+    expect(first[0].values).toEqual(["ride-a", "ride-b"]);
+    expect(db.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+      db.rideRosterEntry.findUnique.mock.invocationCallOrder[0],
+    );
+  });
+});
+
+describe("listRideLog", () => {
+  it("names people as it reads, and names nobody who is gone", async () => {
+    db.rideLogEntry.findMany.mockResolvedValue([
+      { id: "1", type: "pilotAssigned", payload: { userId: "user-1" } },
+      { id: "2", type: "riderBooked", payload: { passengerId: "gone" } },
+      { id: "3", type: "note", payload: { text: "Blanket" } },
+    ]);
+    db.user.findMany.mockResolvedValue([{ id: "user-1", name: "Pernille" }]);
+    db.passenger.findMany.mockResolvedValue([]);
+    const log = await rides.listRideLog("ride-1");
+    expect(log.map((entry) => entry.payload)).toEqual([
+      { userId: "user-1", name: "Pernille" },
+      { passengerId: "gone", name: null },
+      { text: "Blanket" },
+    ]);
+  });
+});
+
+describe("setRideTrishaws", () => {
+  it("replaces the reservation set under the lock and logs what moved", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ trishaws: [{ trishaw: { id: "old", name: "Isarwind" } }] }),
+    );
+    db.ride.update.mockResolvedValue(
+      scheduled({
+        trishaws: [{ trishaw: { id: TRISHAW, name: "Alsterschwan" } }],
+      }),
+    );
+    await rides.setRideTrishaws("ride-1", [TRISHAW], ADMIN);
+    expect(lockedSql()).toEqual([
+      expect.stringContaining("FROM `ride`"),
+      expect.stringContaining("FROM `trishaw`"),
+    ]);
+    expect(db.ride.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          trishaws: { deleteMany: {}, create: [{ trishawId: TRISHAW }] },
+        },
+      }),
+    );
+    expect(db.rideLogEntry.create.mock.calls[0][0].data).toEqual(
+      expect.objectContaining({
+        type: "trishawsChanged",
+        payload: {
+          added: [{ id: TRISHAW, name: "Alsterschwan" }],
+          removed: [{ id: "old", name: "Isarwind" }],
+        },
+      }),
+    );
+  });
+
+  it("stays silent when the set is unchanged", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ trishaws: [{ trishaw: { id: TRISHAW, name: "Isarwind" } }] }),
+    );
+    await rides.setRideTrishaws("ride-1", [TRISHAW], ADMIN);
+    expect(db.ride.update).not.toHaveBeenCalled();
+    expect(logTypes()).toEqual([]);
+  });
+
+  it("refuses a cancelled ride", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ status: "cancelled" }));
+    expect(
+      await codeOf(rides.setRideTrishaws("ride-1", [TRISHAW], ADMIN)),
+    ).toBe("rideClosed");
   });
 });
 
 describe("roster and staffing", () => {
+  beforeEach(() => db.ride.findUnique.mockResolvedValue(scheduled()));
+
   it("appends a rider to the end of the roster", async () => {
-    db.ride.findUnique.mockResolvedValue({ id: "ride-1" });
-    db.rideRosterEntry.count.mockResolvedValue(2);
-    await rides.bookRider("ride-1", "passenger-1");
-    expect(db.rideRosterEntry.upsert).toHaveBeenCalledWith(
+    db.rideRosterEntry.findUnique.mockResolvedValue(null);
+    db.rideRosterEntry.aggregate.mockResolvedValue({ _max: { position: 1 } });
+    db.rideRosterEntry.create.mockResolvedValue({
+      id: "entry-1",
+      passenger: { firstName: "Erna", lastName: "Huber" },
+    });
+    await rides.bookRider("ride-1", "passenger-1", ADMIN);
+    expect(db.rideRosterEntry.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        create: { rideId: "ride-1", passengerId: "passenger-1", position: 2 },
+        data: {
+          rideId: "ride-1",
+          passengerId: "passenger-1",
+          position: 2,
+          bookedByUserId: ADMIN,
+        },
       }),
     );
+    expect(logTypes()).toEqual(["riderBooked"]);
+    expect(db.rideLogEntry.create.mock.calls[0][0].data.payload).toEqual({
+      passengerId: "passenger-1",
+    });
+    expect(emitted).toEqual([
+      expect.objectContaining({
+        type: "ride.riderBooked",
+        passengerId: "passenger-1",
+      }),
+    ]);
   });
 
-  it("defaults a volunteer to the pilot role", async () => {
-    db.ride.findUnique.mockResolvedValue({ id: "ride-1" });
-    await rides.assignVolunteer("ride-1", "user-1");
-    expect(db.rideAssignment.upsert).toHaveBeenCalledWith(
+  it("does not book the same rider twice, and says nothing", async () => {
+    db.rideRosterEntry.findUnique.mockResolvedValue({ id: "entry-1" });
+    expect(await rides.bookRider("ride-1", "passenger-1", ADMIN)).toBe(false);
+    expect(db.rideRosterEntry.create).not.toHaveBeenCalled();
+    expect(emitted).toEqual([]);
+  });
+
+  it("removes a rider once, with one event", async () => {
+    db.rideRosterEntry.findUnique.mockResolvedValue({
+      id: "entry-1",
+      passenger: { firstName: "Erna", lastName: "Huber" },
+    });
+    await rides.cancelBooking("ride-1", "passenger-1", ADMIN);
+    expect(db.rideRosterEntry.deleteMany).toHaveBeenCalledWith({
+      where: { rideId: "ride-1", passengerId: "passenger-1" },
+    });
+    expect(eventTypes()).toEqual(["ride.riderRemoved"]);
+  });
+
+  it("records who assigned a pilot, and that it was not self sign-up", async () => {
+    db.rideAssignment.findUnique.mockResolvedValue(null);
+    db.rideAssignment.create.mockResolvedValue({
+      id: "assignment-1",
+      user: { name: "Pernille" },
+    });
+    await rides.assignVolunteer("ride-1", "user-1", ADMIN);
+    expect(db.rideAssignment.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        create: { rideId: "ride-1", userId: "user-1", role: "pilot" },
+        data: {
+          rideId: "ride-1",
+          userId: "user-1",
+          role: "pilot",
+          assignedByUserId: ADMIN,
+        },
       }),
     );
+    expect(emitted).toEqual([
+      expect.objectContaining({
+        type: "ride.pilotAssigned",
+        userId: "user-1",
+        self: false,
+      }),
+    ]);
+  });
+
+  it("marks a pilot who signed up themself", async () => {
+    db.rideAssignment.findUnique.mockResolvedValue(null);
+    db.rideAssignment.create.mockResolvedValue({
+      id: "assignment-1",
+      user: { name: "Pernille" },
+    });
+    await rides.assignVolunteer("ride-1", "user-1", "user-1");
+    expect(
+      db.rideAssignment.create.mock.calls[0][0].data.assignedByUserId,
+    ).toBe(null);
+    expect(emitted[0]).toEqual(expect.objectContaining({ self: true }));
+  });
+
+  it("is silent when the pilot is already on the ride", async () => {
+    db.rideAssignment.findUnique.mockResolvedValue({ id: "assignment-1" });
+    expect(await rides.assignVolunteer("ride-1", "user-1", ADMIN)).toBe(false);
+    expect(emitted).toEqual([]);
   });
 
   it("refuses to staff a ride that is not there", async () => {
     db.ride.findUnique.mockResolvedValue(null);
-    expect(await codeOf(rides.assignVolunteer("ride-1", "user-1"))).toBe(
+    expect(await codeOf(rides.assignVolunteer("ride-1", "user-1", ADMIN))).toBe(
       "unknownRide",
     );
-    expect(db.rideAssignment.upsert).not.toHaveBeenCalled();
+    expect(db.rideAssignment.create).not.toHaveBeenCalled();
+  });
+
+  it("refuses to staff a cancelled ride", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ status: "cancelled" }));
+    expect(await codeOf(rides.assignVolunteer("ride-1", "user-1", ADMIN))).toBe(
+      "rideClosed",
+    );
+  });
+
+  it("unassigns with one event, and only when assigned", async () => {
+    db.rideAssignment.findUnique.mockResolvedValueOnce(null);
+    expect(await rides.unassignVolunteer("ride-1", "user-1", ADMIN)).toBe(
+      false,
+    );
+    db.rideAssignment.findUnique.mockResolvedValueOnce({
+      id: "assignment-1",
+      user: { name: "Pernille" },
+    });
+    await rides.unassignVolunteer("ride-1", "user-1", ADMIN);
+    expect(eventTypes()).toEqual(["ride.pilotUnassigned"]);
+  });
+});
+
+describe("who a ride concerns", () => {
+  it("is its pilots and every account managing or being one of its riders", async () => {
+    db.ride.findUnique.mockResolvedValue({
+      chapterId: CHAPTER,
+      assignments: [{ userId: "pilot-1" }, { userId: "pilot-1" }],
+      roster: [
+        { passenger: { managedByUserId: "carer-1", userId: null } },
+        { passenger: { managedByUserId: "carer-1", userId: "rider-2" } },
+      ],
+    });
+    expect(await rides.listRideParticipants("ride-1")).toEqual({
+      chapterId: CHAPTER,
+      pilotUserIds: ["pilot-1"],
+      riderAccountUserIds: ["carer-1", "rider-2"],
+    });
   });
 });
 

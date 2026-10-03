@@ -3,6 +3,7 @@ import { DomainError } from "@/lib/domain-error";
 import type { OwnRiderDetailsPatchInput, PassengerInput } from "./schemas";
 import {
   countPassengersManagedBy,
+  findPassengerById,
   findPassengerOfUser,
   findPassengersManagedBy,
   findPassengersOfChapters,
@@ -12,6 +13,7 @@ import {
 } from "./services/passengers";
 
 export const getOwnPassenger = (userId: string) => findPassengerOfUser(userId);
+export const getPassenger = (id: string) => findPassengerById(id);
 export const listPassengersManagedBy = (userId: string) =>
   findPassengersManagedBy(userId);
 export const listPassengersOfChapters = (chapterIds: string[]) =>

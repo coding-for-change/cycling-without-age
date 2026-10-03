@@ -24,8 +24,8 @@ import {
   rideTrishawNames,
   rideWhere,
   type CalendarStrings,
-  type RideAllocationLink,
   type RideFleetStrings,
+  type RideLink,
 } from "./ride-presentation";
 
 type Props = {
@@ -39,7 +39,7 @@ type Props = {
   words: Locale;
   now: Date;
   fleet: RideFleetStrings;
-  allocate: RideAllocationLink;
+  link: RideLink;
 };
 
 /** 56px an hour — dense enough for a working week, tall enough to read. */
@@ -78,7 +78,7 @@ export function RideWeek({
   words,
   now,
   fleet,
-  allocate,
+  link,
 }: Props) {
   const columns = buildColumns(rides, anchor, timeZone, weekStartsOn);
   const band = visibleBand(columns.flatMap((column) => column.segments));
@@ -145,7 +145,7 @@ export function RideWeek({
             words={words}
             now={now}
             fleet={fleet}
-            allocate={allocate}
+            link={link}
           />
         ))}
       </div>
@@ -202,7 +202,7 @@ function DayColumn({
   words,
   now,
   fleet,
-  allocate,
+  link,
 }: {
   column: Column;
   band: { from: number; to: number };
@@ -213,7 +213,7 @@ function DayColumn({
   words: Locale;
   now: Date;
   fleet: RideFleetStrings;
-  allocate: RideAllocationLink;
+  link: RideLink;
 }) {
   const bandStart = band.from * 60;
   const bandMinutes = (band.to - band.from) * 60;
@@ -241,10 +241,12 @@ function DayColumn({
         const cancelled = ride.status === "cancelled";
         const groundedNote = rideGroundedNote(ride, now, fleet, words);
         const where = rideWhere(ride, strings) ?? strings.models[ride.model];
+        const time = formatTime(ride.startsAt, locale, timeZone);
 
         return (
           <article
             key={ride.id}
+            title={cancelled ? link.cancelled : undefined}
             style={{
               top: `${clampedTop}%`,
               height: `${Math.min(Math.max(height, 4), 100 - clampedTop)}%`,
@@ -254,18 +256,18 @@ function DayColumn({
             className={cn(
               "absolute flex flex-col overflow-hidden rounded-md border border-l-2 p-1 text-xs @3xl:border-l-4 @3xl:px-2 @3xl:py-1.25",
               rideTone(ride),
-              !cancelled &&
-                "has-[a:focus-visible]:ring-ring/50 transition-shadow has-[a:focus-visible]:ring-2 has-[a:hover]:shadow-lift motion-reduce:transition-none",
+              "has-[a:focus-visible]:ring-ring/50 has-[a:hover]:shadow-lift transition-shadow has-[a:focus-visible]:ring-2 motion-reduce:transition-none",
             )}
           >
-            {!cancelled ? (
-              <Link
-                href={allocate.href(ride.id)}
-                scroll={false}
-                aria-label={`${allocate.label} · ${formatTime(ride.startsAt, locale, timeZone)} ${where}`}
-                className="absolute inset-0 z-10 rounded-md outline-none"
-              />
-            ) : null}
+            <Link
+              href={link.href(ride.id)}
+              aria-label={
+                cancelled
+                  ? `${link.cancelled} · ${time} ${where}`
+                  : `${link.open} · ${time} ${where}`
+              }
+              className="absolute inset-0 z-10 rounded-md outline-none"
+            />
             {groundedNote ? (
               <p
                 title={groundedNote}
@@ -290,7 +292,7 @@ function DayColumn({
                 cancelled && "line-through",
               )}
             >
-              {formatTime(ride.startsAt, locale, timeZone)}
+              {time}
             </p>
             <p
               className={cn(

@@ -136,6 +136,63 @@ const EVENTS: Record<EventType, DomainEvent> = {
     approved: true,
     note: "Welcome aboard.",
   },
+  "ride.scheduled": {
+    type: "ride.scheduled",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+    returnLegId: "ride-2",
+  },
+  "ride.rescheduled": {
+    type: "ride.rescheduled",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+    changes: ["time", "location"],
+  },
+  "ride.cancelled": {
+    type: "ride.cancelled",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+    reasonCode: "weather",
+  },
+  "ride.deleted": {
+    type: "ride.deleted",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+  },
+  "ride.pilotAssigned": {
+    type: "ride.pilotAssigned",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+    userId: SUBJECT,
+    self: false,
+  },
+  "ride.pilotUnassigned": {
+    type: "ride.pilotUnassigned",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: SUBJECT,
+    userId: SUBJECT,
+    self: true,
+  },
+  "ride.riderBooked": {
+    type: "ride.riderBooked",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+    passengerId: "passenger-1",
+  },
+  "ride.riderRemoved": {
+    type: "ride.riderRemoved",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+    passengerId: "passenger-1",
+  },
 };
 
 const APP_RELATIVE = /^\/(?!\/)/;
