@@ -4,6 +4,7 @@ import {
   activeItem,
   activeTabKey,
   isConversationPath,
+  isDrillDown,
   memberNav,
   nextPerspective,
   primaryAction,
@@ -56,14 +57,45 @@ describe("memberNav", () => {
   });
 });
 
+describe("the native tab bar", () => {
+  it("gives every tab an SF Symbol of its own", () => {
+    const symbols = MEMBER_NAV.filter((row) => row.tab).map(
+      (row) => row.symbol,
+    );
+    expect(symbols).toEqual([
+      "house.fill",
+      "bicycle",
+      "calendar",
+      "bubble.left.and.bubble.right.fill",
+    ]);
+    expect(new Set(symbols).size).toBe(symbols.length);
+  });
+
+  it("hides on an open conversation and keeps its lit tab elsewhere", () => {
+    const items = resolveMemberNav("passenger", LABELS);
+    expect(isConversationPath("/passenger/chat/abc123")).toBe(true);
+    expect(activeTabKey("/passenger/chat/abc123", items)).toBe("chat");
+    expect(isConversationPath("/passenger/rides/ride-42")).toBe(false);
+    expect(activeTabKey("/passenger/rides/ride-42", items)).toBe("rides");
+  });
+});
+
 describe("resolveMemberNav", () => {
   it("hands the client finished strings, never keys", () => {
     expect(resolveMemberNav("pilot", LABELS)).toEqual([
-      { key: "home", href: "/pilot", icon: "home", tab: true, label: "Home" },
+      {
+        key: "home",
+        href: "/pilot",
+        icon: "home",
+        symbol: "house.fill",
+        tab: true,
+        label: "Home",
+      },
       {
         key: "rides",
         href: "/pilot/rides",
         icon: "rides",
+        symbol: "bicycle",
         tab: true,
         label: "My rides",
       },
@@ -71,6 +103,7 @@ describe("resolveMemberNav", () => {
         key: "calendar",
         href: "/pilot/calendar",
         icon: "calendar",
+        symbol: "calendar",
         tab: true,
         label: "Calendar",
       },
@@ -78,6 +111,7 @@ describe("resolveMemberNav", () => {
         key: "chat",
         href: "/pilot/chat",
         icon: "chat",
+        symbol: "bubble.left.and.bubble.right.fill",
         tab: true,
         label: "Chat",
       },
@@ -85,6 +119,7 @@ describe("resolveMemberNav", () => {
         key: "training",
         href: "/pilot/training",
         icon: "training",
+        symbol: "graduationcap.fill",
         tab: false,
         parent: "home",
         label: "Training",
@@ -136,6 +171,35 @@ describe("which row is active", () => {
     const passenger = resolveMemberNav("passenger", LABELS);
     expect(activeItem("/pilot/chat", passenger)).toBeNull();
     expect(activeTabKey("/passenger/chat", passenger)).toBe("chat");
+  });
+});
+
+describe("isDrillDown", () => {
+  const pilot = memberNav("pilot");
+
+  it("keeps swipe-back off on every tab root", () => {
+    for (const href of [
+      "/pilot",
+      "/pilot/rides",
+      "/pilot/calendar",
+      "/pilot/chat",
+      "/pilot/chat/",
+    ])
+      expect(isDrillDown(href, pilot)).toBe(false);
+  });
+
+  it("turns it on one level below a tab", () => {
+    expect(isDrillDown("/pilot/chat/abc123", pilot)).toBe(true);
+    expect(isDrillDown("/pilot/rides/42/finish", pilot)).toBe(true);
+  });
+
+  it("treats a page that is not a tab as a drill-down of its parent", () => {
+    expect(isDrillDown("/pilot/training", pilot)).toBe(true);
+  });
+
+  it("stays off outside the member shell", () => {
+    expect(isDrillDown("/admin", pilot)).toBe(false);
+    expect(isDrillDown("/passenger/chat/abc", pilot)).toBe(false);
   });
 });
 

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/message-scroller";
 import { formatDate, type Locale } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
+import { lockWebViewScroll } from "@/lib/native/keyboard";
 import { cn } from "@/lib/utils";
 import { loadMessagesAction, markReadAction } from "../actions";
 import type { ChatMessageView } from "../schemas";
@@ -90,6 +91,8 @@ export function ConversationThread({
 }) {
   const conversationId = view.conversation.id;
   const viewerId = view.viewerId;
+
+  useEffect(() => lockWebViewScroll(), []);
 
   const initialReads = useMemo(
     () =>
@@ -200,10 +203,11 @@ export function ConversationThread({
     conversation.announcementOnly && conversation.me.role !== "owner";
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-canvas md:static md:z-auto md:min-h-0 md:w-full md:flex-1">
+    <div className="fixed inset-0 z-40 flex flex-col bg-canvas pb-[var(--keyboard-inset,0px)] transition-[padding] duration-250 ease-[cubic-bezier(0.32,0.72,0,1)] md:static md:z-auto md:min-h-0 md:w-full md:flex-1">
       <header className="flex shrink-0 items-center gap-3 border-b border-line px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 md:pt-3">
         <Link
           href={`${home}/chat`}
+          transitionTypes={["pop"]}
           aria-label={strings.thread.back}
           className="-ml-2 grid size-9 place-items-center rounded-full text-ink-soft hover:bg-canvas-deep hover:text-ink md:hidden"
         >

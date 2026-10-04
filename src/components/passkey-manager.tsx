@@ -11,6 +11,7 @@ import { KeyRound, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { addPasskey } from "@/lib/passkey-client";
+import { finishSignOut } from "@/components/sign-out-button";
 import { haptics } from "@/lib/native/haptics";
 import { formatDate, type Locale } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
@@ -100,8 +101,9 @@ export function PasskeyManager({
 
   const signInAgain = () =>
     startTransition(async () => {
-      await authClient.signOut();
-      window.location.href = `/sign-in?next=${encodeURIComponent(window.location.pathname)}`;
+      await finishSignOut(
+        `/sign-in?next=${encodeURIComponent(window.location.pathname)}`,
+      );
     });
 
   return (

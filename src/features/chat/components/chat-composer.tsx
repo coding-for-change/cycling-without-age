@@ -152,7 +152,7 @@ export function ChatComposer({
   };
 
   return (
-    <div className="flex flex-col gap-2 px-4 pt-1 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+    <div className="flex flex-col gap-2 px-4 pt-1 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)-var(--keyboard-inset,0px)))]">
       {replyTo ? (
         <div className="flex items-start gap-2 rounded-lg bg-canvas-deep px-3 py-2">
           <span className="min-w-0 flex-1">

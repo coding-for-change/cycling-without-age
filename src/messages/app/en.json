@@ -1632,6 +1632,12 @@
     "title": "Notifications",
     "unread": "Unread"
   },
+  "offline": {
+    "description": "This page isn't saved on this device yet. As soon as you're back online, we'll pick up where you left off.",
+    "goBack": "Go back",
+    "retry": "Try again",
+    "title": "No connection right now"
+  },
   "passenger": {
     "browsing": "Browsing {chapter}",
     "noChapter": "No chapter chosen yet"

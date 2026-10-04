@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useId, useState, useTransition } from "react";
 import { KeyRound } from "lucide-react";
 import { MintPillButton } from "../../_components/mint-pill-button";
-import { authClient } from "@/lib/auth-client";
+import { finishSignOut } from "@/components/sign-out-button";
 import { addPasskey } from "@/lib/passkey-client";
 import { Input } from "@/components/ui/input";
 import { haptics } from "@/lib/native/haptics";
@@ -48,8 +48,7 @@ export function PasskeyStep({
       const result = await addPasskey({ name: name.trim() || undefined });
       if (result.error) {
         if (result.error.code === "SESSION_NOT_FRESH") {
-          await authClient.signOut();
-          router.replace(
+          await finishSignOut(
             requiredNext
               ? `/sign-in?next=${encodeURIComponent(requiredNext)}`
               : "/sign-in",

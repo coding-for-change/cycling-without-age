@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, ViewTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
 import { Plus, Search } from "lucide-react";
@@ -20,6 +20,18 @@ import { NewChatDrawer } from "./new-chat-drawer";
 import { ChatRealtimeProvider } from "./realtime-provider";
 import type { ChatStrings } from "./strings";
 import type { InboxItem } from "./types";
+
+const THREAD_ENTER = {
+  push: "push-in",
+  pop: "pop-in",
+  default: "none",
+} as const;
+
+const THREAD_EXIT = {
+  push: "push-out",
+  pop: "pop-out",
+  default: "none",
+} as const;
 
 export function ChatLayout({
   home,
@@ -124,7 +136,14 @@ export function ChatLayout({
             segment ? "flex" : "hidden",
           )}
         >
-          {children}
+          <ViewTransition
+            key={segment ?? "list"}
+            enter={THREAD_ENTER}
+            exit={THREAD_EXIT}
+            default="none"
+          >
+            {children}
+          </ViewTransition>
         </div>
       </div>
 

@@ -23,7 +23,7 @@ export function DoneButton({
       onClick={() => {
         haptics.success();
         toast.success(thanks);
-        router.push("/pilot");
+        router.push("/pilot", { transitionTypes: ["pop"] });
       }}
     >
       <Check aria-hidden />

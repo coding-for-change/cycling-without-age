@@ -5,6 +5,7 @@ import { LogOut } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { haptics } from "@/lib/native/haptics";
+import { clearOfflineCaches } from "@/lib/offline-caches";
 import { deletePushToken, getPushToken } from "@/lib/native/push";
 import { unregisterDevice } from "@/features/notifications/actions";
 
@@ -16,14 +17,17 @@ export async function forgetDevice() {
   } catch {}
 }
 
-export async function finishSignOut() {
+export async function finishSignOut(href = "/sign-in") {
   try {
     await authClient.signOut();
   } catch {}
   try {
     sessionStorage.clear();
   } catch {}
-  window.location.href = "/sign-in";
+  try {
+    await clearOfflineCaches();
+  } catch {}
+  window.location.replace(href);
 }
 
 export function useSignOut() {

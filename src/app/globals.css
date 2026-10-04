@@ -200,7 +200,14 @@
 
 @utility pb-tabbar {
   padding-bottom: calc(
-    var(--tabbar-h) + max(0.75rem, env(safe-area-inset-bottom)) + 1rem
+    max(
+        var(
+          --cap-native-navigation-bottom,
+          calc(var(--tabbar-h) + max(0.75rem, env(safe-area-inset-bottom)))
+        ),
+        env(safe-area-inset-bottom)
+      ) +
+      1rem
   );
 }
 
@@ -413,6 +420,59 @@ body {
   }
 }
 
+::view-transition-old(.push-out),
+::view-transition-old(.pop-out) {
+  animation: 120ms ease-in both member-fade reverse;
+}
+::view-transition-new(.push-in),
+::view-transition-new(.pop-in) {
+  animation: 180ms ease-out both member-fade;
+}
+
+:root[data-shell="ios"] {
+  --ios-push: 350ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+:root[data-shell="ios"]::view-transition-group(.push-in),
+:root[data-shell="ios"]::view-transition-group(.pop-out) {
+  z-index: 2;
+}
+:root[data-shell="ios"]::view-transition-new(.push-in) {
+  animation: var(--ios-push) ios-slide-from-edge;
+}
+:root[data-shell="ios"]::view-transition-old(.push-out) {
+  animation: var(--ios-push) ios-slide-under reverse;
+}
+:root[data-shell="ios"]::view-transition-old(.pop-out) {
+  animation: var(--ios-push) ios-slide-from-edge reverse;
+}
+:root[data-shell="ios"]::view-transition-new(.pop-in) {
+  animation: var(--ios-push) ios-slide-under;
+}
+:root[data-ua-transition]::view-transition-old(*),
+:root[data-ua-transition]::view-transition-new(*),
+:root[data-ua-transition]::view-transition-group(*) {
+  animation: none;
+}
+
+@keyframes ios-slide-from-edge {
+  from {
+    translate: 100% 0;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+@keyframes ios-slide-under {
+  from {
+    translate: -30% 0;
+    filter: brightness(0.85);
+  }
+  to {
+    translate: 0 0;
+    filter: brightness(1);
+  }
+}
+
 ::view-transition {
   pointer-events: none;
 }
@@ -603,4 +663,72 @@ body {
 @page {
   size: A4;
   margin: 0;
+}
+
+@layer base {
+  :root[data-shell] {
+    -webkit-tap-highlight-color: transparent;
+  }
+  :root[data-shell="ios"] {
+    overscroll-behavior-y: auto;
+  }
+  @media (width < 48rem) {
+    :root[data-shell="ios"]:has([data-slot="sidebar-wrapper"]) {
+      background-color: var(--canvas);
+    }
+  }
+  :root[data-shell] body {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  :root[data-shell]
+    :where(input, textarea, [contenteditable]:not([contenteditable="false"])) {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+  }
+  :root[data-shell] :where(img, svg, a) {
+    -webkit-user-drag: none;
+  }
+  :root[data-shell]
+    :where(
+      a[href],
+      button:not(:disabled),
+      [role="button"],
+      [role="tab"],
+      [role="menuitem"],
+      [role="option"],
+      [role="switch"],
+      summary
+    ) {
+    transition: opacity 180ms ease-out;
+  }
+  :root[data-shell]
+    :where(
+      a[href],
+      button:not(:disabled),
+      [role="button"],
+      [role="tab"],
+      [role="menuitem"],
+      [role="option"],
+      [role="switch"],
+      summary
+    ):active {
+    opacity: 0.55;
+    transition-duration: 0s;
+  }
+}
+
+@media (width < 48rem) {
+  :root[data-shell="ios"] [data-slot="member-top-bar"] {
+    position: fixed;
+    inset-inline: 0;
+    top: 0;
+    z-index: 30;
+    height: calc(4rem + env(safe-area-inset-top));
+  }
+  :root[data-shell="ios"] [data-member-inset] {
+    padding-top: calc(4rem + env(safe-area-inset-top));
+  }
 }

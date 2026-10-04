@@ -25,7 +25,10 @@ export function MemberShell({
         <MemberSidebar perspective={perspective} />
       </Suspense>
 
-      <SidebarInset className="bg-canvas pb-tabbar md:pb-0 md:peer-data-[variant=inset]:shadow-soft">
+      <SidebarInset
+        data-member-inset
+        className="bg-canvas pb-tabbar md:pb-0 md:peer-data-[variant=inset]:shadow-soft"
+      >
         <Suspense fallback={<MemberChromeFallback />}>
           <MemberChrome perspective={perspective} />
         </Suspense>

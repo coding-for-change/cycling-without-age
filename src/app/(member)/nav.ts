@@ -12,20 +12,40 @@ export type MemberNavRow = {
   key: MemberNavKey;
   path: string;
   icon: IconKey;
+  symbol: string;
   tab: boolean;
   parent?: MemberNavKey;
   only?: MemberPerspective;
 };
 
 export const MEMBER_NAV: readonly MemberNavRow[] = [
-  { key: "home", path: "", icon: "home", tab: true },
-  { key: "rides", path: "/rides", icon: "rides", tab: true },
-  { key: "calendar", path: "/calendar", icon: "calendar", tab: true },
-  { key: "chat", path: "/chat", icon: "chat", tab: true },
+  { key: "home", path: "", icon: "home", symbol: "house.fill", tab: true },
+  {
+    key: "rides",
+    path: "/rides",
+    icon: "rides",
+    symbol: "bicycle",
+    tab: true,
+  },
+  {
+    key: "calendar",
+    path: "/calendar",
+    icon: "calendar",
+    symbol: "calendar",
+    tab: true,
+  },
+  {
+    key: "chat",
+    path: "/chat",
+    icon: "chat",
+    symbol: "bubble.left.and.bubble.right.fill",
+    tab: true,
+  },
   {
     key: "training",
     path: "/training",
     icon: "training",
+    symbol: "graduationcap.fill",
     tab: false,
     parent: "home",
     only: "pilot",
@@ -36,6 +56,7 @@ export type MemberNavItem = {
   key: MemberNavKey;
   href: string;
   icon: IconKey;
+  symbol: string;
   tab: boolean;
   parent?: MemberNavKey;
 };
@@ -45,10 +66,11 @@ export type ResolvedMemberNavItem = MemberNavItem & { label: string };
 export const memberNav = (perspective: MemberPerspective): MemberNavItem[] =>
   MEMBER_NAV.filter(
     ({ only }) => only === undefined || only === perspective,
-  ).map(({ key, path, icon, tab, parent }) => ({
+  ).map(({ key, path, icon, symbol, tab, parent }) => ({
     key,
     href: `${PERSPECTIVE_HOME[perspective]}${path}`,
     icon,
+    symbol,
     tab,
     parent,
   }));
@@ -82,6 +104,18 @@ export const activeTabKey = <
 ): MemberNavKey | null => {
   const item = activeItem(pathname, items);
   return item === null ? null : (item.parent ?? item.key);
+};
+
+const trimSlash = (pathname: string) =>
+  pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+
+export const isDrillDown = <T extends { href: string; tab: boolean }>(
+  pathname: string,
+  items: readonly T[],
+): boolean => {
+  const item = activeItem(pathname, items);
+  if (item === null) return false;
+  return !item.tab || trimSlash(pathname) !== trimSlash(item.href);
 };
 
 const CONVERSATION_PATH = /^\/(?:pilot|passenger)\/chat\/[^/]+\/?$/;

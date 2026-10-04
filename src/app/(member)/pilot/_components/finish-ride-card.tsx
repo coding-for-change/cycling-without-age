@@ -19,6 +19,7 @@ export async function FinishRideCard() {
   return (
     <Link
       href={`/pilot/rides/${ride.id}/finish`}
+      transitionTypes={["push"]}
       className="flex items-center gap-4 rounded-2xl border border-mint bg-mint-tint p-4 transition-colors hover:bg-mint motion-reduce:transition-none"
     >
       <Flag

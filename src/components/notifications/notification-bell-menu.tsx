@@ -108,7 +108,7 @@ export function NotificationBellMenu({
     setOpen(false);
     startTransition(async () => {
       await markNotificationRead(row.id);
-      router.push(row.href);
+      router.push(row.href, { transitionTypes: ["push"] });
     });
   }
 
