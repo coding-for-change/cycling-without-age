@@ -90,6 +90,7 @@ graph TD
     U34[use-cases/trishaw-history]
     U35[use-cases/finish-ride]
     U36[use-cases/move-trishaw]
+    U37[use-cases/activity-report]
   end
   subgraph Worker
     W1["worker/index (dispatcher, sweeper, prune-devices, prune-chat, email + push workers)"]
@@ -405,6 +406,16 @@ graph TD
   U35 --> F11
   U36 --> F11
   U36 --> F9
+  ADM --> U37
+  ACT5 --> U37
+  ACT6 --> U37
+  ACT7 --> U37
+  ACT8 --> U37
+  U37 --> F1
+  U37 --> F2
+  U37 --> F4
+  U37 --> F6
+  U37 --> F9
   U19 --> F11
   F11 --> S11
   F11 --> EV
@@ -457,6 +468,7 @@ graph TD
 | `schedule-ride` | `fleet`, `rides` | Whether a chapter may use a trishaw (its location, a pool it was approved for, the status) is the fleet's rule; the reservation under a row lock is the calendar's. `allocateTrishaws` checks only the trishaws being *added*, so one grounded after allocation stays on the ride with a warning instead of blocking every other edit. `allocationChoices` reads overlapping rides across every chapter that shares a pool, because a pooled bike booked by the neighbour is still booked. |
 | `report-damage` | `fleet`, `rides` | A pilot may report only on a ride they were assigned to and a trishaw that was on it (`rides`); the damage, the grounding and the `trishaw.damageReported` event are `fleet`'s. The upcoming rides a grounding endangers come from `rides` and travel in the event. |
 | `leave-pool` | `fleet`, `rides` | Leaving is blocked while the chapter still has future rides with the pool's trishaws — that count is the calendar's. |
+| `activity-report` | `chapters`, `membership`, `passengers`, `accounts`, `rides` | The Reports dashboard and the Overview KPI strip. `chapters` gives the scope's zones, pins and countries; `rides` the ride facts, the pure aggregation and who rode in the last 12 months; `membership` the pilot members and `passengers` the riders of the scope for active/inactive; names come from `accounts` and `passengers` only when `includePeople` (chapter scope). `"use cache"` + `cacheTag("reports")`; the admin actions ACT5–ACT8 import its `REPORTS_TAG` for `updateTag`. |
 | `move-trishaw` | `fleet`, `rides` | A move is refused while a chapter that would lose the trishaw (it reaches the old location but not the new one) still has future rides with it. Who reaches a location is the fleet's rule; the count is the calendar's. |
 | `trishaw-history` | `fleet`, `rides` | One timeline from rides (with pilots), damages and the trishaw log. |
 | `finish-ride` | `chapters`, `fleet`, `rides` | The pilot's post-ride page: the chapter's post-ride instructions, and per trishaw its location's return instructions and access code — only for the ride's own pilots. |

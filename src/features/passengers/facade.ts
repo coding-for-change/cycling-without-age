@@ -6,6 +6,8 @@ import {
   findPassengerOfUser,
   findPassengersManagedBy,
   findPassengersOfChapters,
+  findPassengerIdsOfChapters,
+  findPassengerNames,
   insertPassenger,
   updatePassengerOfUser,
   upsertOwnPassenger,
@@ -66,3 +68,20 @@ export async function updateOwnRiderDetails(
   if (Object.keys(data).length === 0) return { count: 0 };
   return updatePassengerOfUser(userId, data);
 }
+
+export const listPassengerIdsOfChapters = (chapterIds: string[]) =>
+  chapterIds.length
+    ? findPassengerIdsOfChapters(chapterIds)
+    : Promise.resolve([]);
+
+export const passengerNames = async (
+  ids: string[],
+): Promise<Record<string, string>> =>
+  ids.length
+    ? Object.fromEntries(
+        (await findPassengerNames(ids)).map((p) => [
+          p.id,
+          `${p.firstName} ${p.lastName}`.trim(),
+        ]),
+      )
+    : {};

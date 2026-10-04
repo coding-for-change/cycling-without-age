@@ -580,6 +580,192 @@
       "passenger": "Passenger",
       "pilot": "Pilot"
     },
+    "reports": {
+      "tabs": {
+        "label": "Report sections",
+        "activity": "Activity",
+        "finance": "Finance",
+        "soon": "Soon"
+      },
+      "filters": {
+        "label": "Report filters",
+        "timeframe": "Timeframe",
+        "presets": {
+          "7d": "7D",
+          "30d": "30D",
+          "90d": "90D",
+          "ytd": "YTD",
+          "12m": "12M",
+          "all": "All"
+        },
+        "presetNames": {
+          "7d": "Last 7 days",
+          "30d": "Last 30 days",
+          "90d": "Last 90 days",
+          "ytd": "Year to date",
+          "12m": "Last 12 months",
+          "all": "All time"
+        },
+        "custom": "Custom",
+        "customTitle": "Pick a date range",
+        "apply": "Apply",
+        "cancel": "Cancel",
+        "scope": "Scope",
+        "open": "Filters",
+        "sheetTitle": "Filters",
+        "period": "{from} – {to}",
+        "comparing": "Compared with {from} – {to}",
+        "updated": "Updated {time}"
+      },
+      "kpis": {
+        "label": "Key figures",
+        "rides": "Rides",
+        "trips": "Trips",
+        "riders": "Riders",
+        "hours": "Hours",
+        "cancellations": "Cancellations",
+        "ridesHint": "One ride per rider on a trip",
+        "new": "New",
+        "previous": "{value} in the previous period",
+        "rate": "{rate} of trips",
+        "select": "Show {metric} in the chart"
+      },
+      "trend": {
+        "title": "Activity over time",
+        "previous": "Previous period",
+        "total": "Total",
+        "models": {
+          "event": "Event",
+          "pleasure": "Pleasure",
+          "functional": "Functional"
+        },
+        "weekOf": "Week of {date}",
+        "zoom": "Click a bar to zoom in",
+        "zoomTo": "Zoom to {period}",
+        "label": "{metric} per {grain, select, day {day} week {week} other {month}}"
+      },
+      "empty": {
+        "title": "Nothing ridden yet",
+        "body": "No rides between {from} and {to}. A longer timeframe might tell a fuller story.",
+        "showYear": "Show 12 months"
+      },
+      "overview": {
+        "title": "Last 30 days",
+        "subtitle": "Compared with the 30 days before",
+        "open": "Open reports"
+      },
+      "map": {
+        "title": "Where the rides happened",
+        "label": "Map of chapters, sized by rides",
+        "hint": "Bubble size shows rides. Zoom with Ctrl/⌘ + scroll or two fingers, pick a chapter to open it.",
+        "unavailable": "The map needs a Mapbox token. The leaderboard still lists every chapter."
+      },
+      "rankings": {
+        "title": "Leaderboard",
+        "tabsLabel": "What to rank",
+        "metricLabel": "Rank by",
+        "tabs": {
+          "chapters": "Chapters",
+          "countries": "Countries",
+          "pilots": "Pilots",
+          "riders": "Riders"
+        },
+        "metrics": {
+          "rides": "Rides",
+          "hours": "Hours",
+          "perPilot": "Per pilot"
+        },
+        "values": {
+          "rides": "{value}",
+          "hours": "{value} h",
+          "perPilot": "{value} per pilot"
+        },
+        "seeAll": "See all",
+        "open": "Open {name}",
+        "up": "Up {count, plural, one {# place} other {# places}}",
+        "down": "Down {count, plural, one {# place} other {# places}}",
+        "same": "Same place as last period",
+        "new": "New",
+        "newAria": "New in the ranking this period",
+        "empty": {
+          "title": "Nothing to rank yet",
+          "body": "The leaderboard fills in as soon as rides end in this period."
+        },
+        "drawer": {
+          "chapters": "All chapters",
+          "countries": "All countries",
+          "pilots": "All pilots",
+          "riders": "All riders",
+          "description": "{period}, compared with the period before. Sort by any column."
+        },
+        "columns": {
+          "rank": "#",
+          "name": "Name",
+          "rides": "Rides",
+          "trips": "Trips",
+          "hours": "Hours",
+          "activePilots": "Active pilots",
+          "perPilot": "Rides per pilot",
+          "change": "Change"
+        }
+      },
+      "cancellations": {
+        "title": "Cancellations",
+        "rate": "Cancellation rate",
+        "count": "{count, plural, one {# cancelled trip} other {# cancelled trips}}",
+        "points": "{points} pts",
+        "byCategory": "Why trips were cancelled",
+        "share": "{share} of cancellations",
+        "categories": {
+          "weather": "Weather",
+          "rider": "Rider",
+          "facility": "Care facility",
+          "cwa": "On our side",
+          "other": "Other",
+          "uncategorised": "No reason given"
+        },
+        "empty": {
+          "title": "No cancellations",
+          "body": "Every planned trip in this period went ahead. Wind in their hair, every time."
+        }
+      },
+      "models": {
+        "title": "Ride models",
+        "share": "{share} of rides",
+        "hours": "{value} h on the road",
+        "names": {
+          "event": "Event",
+          "pleasure": "Pleasure",
+          "functional": "Functional"
+        },
+        "empty": {
+          "title": "No rides yet",
+          "body": "Once rides end in this period, you see how they split across event, pleasure and functional rides."
+        }
+      },
+      "people": {
+        "title": "People",
+        "window": "Last 12 months",
+        "windowHint": "Active means at least one ride in the last 12 months, whatever timeframe is picked above.",
+        "pilots": "Pilots",
+        "riders": "Riders",
+        "active": "{count, plural, one {# active} other {# active}}",
+        "inactive": "{count, plural, one {# inactive} other {# inactive}}",
+        "activeShare": "{share} active",
+        "newRiders": "New riders",
+        "newRidersHint": "First ride ever in the selected period",
+        "empty": {
+          "title": "No pilots or riders yet",
+          "body": "Pilots and riders show up here as soon as they join a chapter in this scope."
+        }
+      },
+      "delta": {
+        "up": "Up {value} vs. previous period",
+        "down": "Down {value} vs. previous period",
+        "flat": "Same as previous period",
+        "none": "Nothing to compare with"
+      }
+    },
     "requests": {
       "approve": "Approve",
       "approveBody": "They get an email with the three steps to their first ride.",

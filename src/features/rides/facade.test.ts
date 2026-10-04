@@ -243,6 +243,34 @@ describe("cancelRide", () => {
     db.ride.findUnique.mockResolvedValue(null);
     expect(await codeOf(rides.cancelRide("ride-1"))).toBe("unknownRide");
   });
+
+  it("records the category a report groups cancellations by", async () => {
+    db.ride.findUnique.mockResolvedValue({ id: "ride-1" });
+    await rides.cancelRide("ride-1", null, "weather");
+    expect(db.ride.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ cancellationCategory: "weather" }),
+      }),
+    );
+  });
+
+  it("leaves a cancellation without a category uncategorised", async () => {
+    db.ride.findUnique.mockResolvedValue({ id: "ride-1" });
+    await rides.cancelRide("ride-1");
+    expect(db.ride.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ cancellationCategory: null }),
+      }),
+    );
+  });
+
+  it("refuses a category that does not exist", async () => {
+    db.ride.findUnique.mockResolvedValue({ id: "ride-1" });
+    await expect(
+      rides.cancelRide("ride-1", null, "rain" as never),
+    ).rejects.toThrow();
+    expect(db.ride.update).not.toHaveBeenCalled();
+  });
 });
 
 describe("roster and staffing", () => {

@@ -3,6 +3,13 @@ import { isValidTimeZone } from "@/lib/time-zone";
 
 export const RIDE_MODELS = ["event", "pleasure", "functional"] as const;
 export const RIDE_STATUSES = ["scheduled", "cancelled", "completed"] as const;
+export const RIDE_CANCELLATION_CATEGORIES = [
+  "weather",
+  "rider",
+  "facility",
+  "cwa",
+  "other",
+] as const;
 /**
  * Only `pilot` is modelled. CWA does staff rides with ambassadors and
  * transporters (`references/02-glossary.md`), but nobody can *be* one here —
@@ -72,6 +79,14 @@ export const rangeInput = z
   .refine((r) => r.to > r.from, { message: "endsAfterStart", path: ["to"] });
 export type RangeInput = z.infer<typeof rangeInput>;
 
+export const cancelRideInput = z.object({
+  reason: z.string().max(2000).nullable().optional(),
+  category: z.enum(RIDE_CANCELLATION_CATEGORIES).nullable().optional(),
+});
+export type CancelRideInput = z.input<typeof cancelRideInput>;
+
 export type RideRole = (typeof RIDE_ROLES)[number];
 export type RideModelName = (typeof RIDE_MODELS)[number];
 export type RideStatusName = (typeof RIDE_STATUSES)[number];
+export type RideCancellationCategoryName =
+  (typeof RIDE_CANCELLATION_CATEGORIES)[number];

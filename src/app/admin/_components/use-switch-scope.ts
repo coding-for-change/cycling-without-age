@@ -9,7 +9,7 @@ export function useSwitchScope() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [, startTransition] = useTransition();
+  const [pending, startTransition] = useTransition();
 
   const switchScope = (arg: ScopeArg) =>
     startTransition(async () => {
@@ -23,5 +23,5 @@ export function useSwitchScope() {
       router.replace(query ? `${pathname}?${query}` : pathname);
     });
 
-  return { switchScope };
+  return { switchScope, pending };
 }

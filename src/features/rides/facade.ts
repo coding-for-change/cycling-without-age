@@ -1,7 +1,9 @@
 import { DomainError } from "@/lib/domain-error";
 import {
+  cancelRideInput,
   rideInput,
   trishawIdList,
+  type CancelRideInput,
   type RideInput,
   type RideRole,
 } from "./schemas";
@@ -30,6 +32,14 @@ import {
   type RideFeedRow,
   type TrishawRideRow,
 } from "./services/rides";
+import {
+  findEarliestRideStart,
+  findPassengersWithRideBefore,
+  findRiddenPassengers,
+  findRiddenPilots,
+  findRideFacts,
+} from "./services/report-facts";
+import type { ActiveParticipantRows, ReportFact } from "./report";
 
 export type {
   FeedAudience,
@@ -128,13 +138,19 @@ export async function rescheduleRide(id: string, input: RideInput) {
  * cancellation "does not automatically remove the event from the Chapter
  * Operating Calendar" — but it does release the trishaw for the window.
  */
-export async function cancelRide(id: string, reason?: string | null) {
+export async function cancelRide(
+  id: string,
+  reason?: string | null,
+  category?: CancelRideInput["category"],
+) {
+  const input = cancelRideInput.parse({ reason, category });
   const existing = await findRideById(id);
   if (!existing) throw new DomainError("unknownRide");
   return updateRideById(id, {
     status: "cancelled",
     cancelledAt: new Date(),
-    cancellationReason: reason?.trim() || null,
+    cancellationReason: input.reason?.trim() || null,
+    cancellationCategory: input.category ?? null,
   });
 }
 
@@ -210,3 +226,63 @@ export async function bookRider(rideId: string, passengerId: string) {
 
 export const cancelBooking = (rideId: string, passengerId: string) =>
   deleteRosterEntry(rideId, passengerId);
+
+export const activityFacts = async (
+  chapterIds: string[],
+  from: Date,
+  to: Date,
+): Promise<ReportFact[]> =>
+  chapterIds.length
+    ? (await findRideFacts(chapterIds, from, to)).map(
+        ({ assignments, roster, ...ride }) => ({
+          ...ride,
+          pilotIds: assignments.map((a) => a.userId),
+          passengerIds: roster.map((r) => r.passengerId),
+        }),
+      )
+    : [];
+
+export const passengersWithRideBefore = async (
+  passengerIds: string[],
+  before: Date,
+) =>
+  passengerIds.length
+    ? (await findPassengersWithRideBefore(passengerIds, before)).map(
+        (r) => r.passengerId,
+      )
+    : [];
+
+export async function activeParticipants(
+  chapterIds: string[],
+  since: Date,
+  until: Date,
+): Promise<ActiveParticipantRows> {
+  if (!chapterIds.length) return { pilots: [], passengers: [] };
+  const [pilots, passengers] = await Promise.all([
+    findRiddenPilots(chapterIds, since, until),
+    findRiddenPassengers(chapterIds, since, until),
+  ]);
+  const unique = <T>(rows: T[], key: (row: T) => string) => [
+    ...new Map(rows.map((row) => [key(row), row])).values(),
+  ];
+  return {
+    pilots: unique(
+      pilots.map((p) => ({ userId: p.userId, chapterId: p.ride.chapterId })),
+      (p) => `${p.chapterId}:${p.userId}`,
+    ),
+    passengers: unique(
+      passengers.map((p) => ({
+        passengerId: p.passengerId,
+        chapterId: p.ride.chapterId,
+      })),
+      (p) => `${p.chapterId}:${p.passengerId}`,
+    ),
+  };
+}
+
+export const earliestRideStart = async (chapterIds: string[]) =>
+  chapterIds.length
+    ? ((await findEarliestRideStart(chapterIds))?.startsAt ?? null)
+    : null;
+
+export { aggregateActivity, peopleHealth } from "./report";

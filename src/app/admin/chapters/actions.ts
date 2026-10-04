@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { REPORTS_TAG } from "@/use-cases/activity-report";
 import { actionFailure } from "@/lib/domain-error";
 import { z } from "zod";
 import {
@@ -52,6 +53,7 @@ export async function createChapterAction(
       actorUserId: session.user.id,
     });
     revalidatePath("/admin", "layout");
+    updateTag(REPORTS_TAG);
     return { ok: true, id: chapter.id, slug: chapter.slug, name: chapter.name };
   } catch (error) {
     return failed(error);
@@ -75,6 +77,7 @@ export async function updateChapterAction(
       actorUserId: session.user.id,
     });
     revalidatePath("/admin", "layout");
+    updateTag(REPORTS_TAG);
     return { ok: true };
   } catch (error) {
     return failed(error);
@@ -94,6 +97,7 @@ export async function deleteChapterAction(
       actorUserId: session.user.id,
     });
     revalidatePath("/admin", "layout");
+    updateTag(REPORTS_TAG);
     return { ok: true };
   } catch (error) {
     return failed(error);

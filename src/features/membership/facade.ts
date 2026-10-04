@@ -21,6 +21,7 @@ import {
   findMembersMatchingName,
   findMembersOfChapters,
   findMembersOfUser,
+  findMembersWithRole,
   upsertMemberRole,
   withChapterLock,
 } from "./services/members";
@@ -336,3 +337,10 @@ export async function decideApplication(input: ApplicationDecisionInput) {
 
 export const markApprovalsSeen = async (userId: string) =>
   (await stampApprovalsSeen(userId)).count > 0;
+
+export const listPilotMembers = async (chapterIds: string[]) =>
+  chapterIds.length
+    ? (await findMembersWithRole(chapterIds, "pilot"))
+        .filter((m) => parseRoles(m.role).includes("pilot"))
+        .map((m) => ({ userId: m.userId, chapterId: m.organizationId }))
+    : [];

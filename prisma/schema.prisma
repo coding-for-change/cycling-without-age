@@ -578,6 +578,14 @@ enum RideRole {
   pilot
 }
 
+enum RideCancellationCategory {
+  weather
+  rider
+  facility
+  cwa
+  other
+}
+
 enum TrishawStatus {
   active
   maintenance
@@ -850,8 +858,9 @@ model Ride {
   returnLegOf   Ride?   @relation("roundTrip", fields: [returnLegOfId], references: [id], onDelete: SetNull)
   returnLeg     Ride?   @relation("roundTrip")
 
-  cancelledAt        DateTime?
-  cancellationReason String?   @db.Text
+  cancelledAt          DateTime?
+  cancellationReason   String?                   @db.Text
+  cancellationCategory RideCancellationCategory?
 
   trishaws    RideTrishaw[]
   assignments RideAssignment[]

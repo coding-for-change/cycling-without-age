@@ -8,6 +8,7 @@ import {
   findProvenance,
   findUserByEmail,
   findUserByPhone,
+  findUserNames,
   markClaimed as markUserClaimed,
   removeUser,
   setProvenance,
@@ -82,3 +83,10 @@ export async function claimAccount(userId: string) {
 }
 
 export const deleteUser = (userId: string) => removeUser(userId);
+
+export const displayNames = async (
+  ids: string[],
+): Promise<Record<string, string>> =>
+  ids.length
+    ? Object.fromEntries((await findUserNames(ids)).map((u) => [u.id, u.name]))
+    : {};

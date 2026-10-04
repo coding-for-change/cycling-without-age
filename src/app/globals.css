@@ -22,6 +22,12 @@
   --red-tint: #fde9ea;
   --grey-tint: #efedea;
 
+  --chart-1: #28584e;
+  --chart-2: #478a7b;
+  --chart-3: #7cbfb1;
+  --chart-previous: rgb(46 40 35 / 0.42);
+  --chart-grid: rgb(46 40 35 / 0.08);
+
   --r-card: 0.75rem;
   --r-tile: 1.5rem;
   --r-cover: 1.125rem;
@@ -138,6 +144,11 @@
   --sidebar-accent-foreground: hsl(0 0% 98%);
   --sidebar-border: hsl(27 10% 18%);
   --sidebar-ring: hsl(168 42% 70%);
+  --chart-1: #9fd8cc;
+  --chart-2: #5aa898;
+  --chart-3: #2f6e61;
+  --chart-previous: rgb(255 255 255 / 0.42);
+  --chart-grid: rgb(255 255 255 / 0.08);
 }
 
 @layer base {
@@ -178,6 +189,10 @@
   --color-red: var(--red);
   --color-red-hover: var(--red-hover);
   --color-red-tint: var(--red-tint);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-previous: var(--chart-previous);
   --color-grey-tint: var(--grey-tint);
   --font-display: var(--font-display);
 

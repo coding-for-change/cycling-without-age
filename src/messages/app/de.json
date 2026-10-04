@@ -580,6 +580,192 @@
       "passenger": "Passagier",
       "pilot": "Pilot"
     },
+    "reports": {
+      "tabs": {
+        "label": "Berichtsbereiche",
+        "activity": "Aktivität",
+        "finance": "Finanzen",
+        "soon": "Bald"
+      },
+      "filters": {
+        "label": "Berichtsfilter",
+        "timeframe": "Zeitraum",
+        "presets": {
+          "7d": "7T",
+          "30d": "30T",
+          "90d": "90T",
+          "ytd": "Lfd. J.",
+          "12m": "12M",
+          "all": "Alle"
+        },
+        "presetNames": {
+          "7d": "Letzte 7 Tage",
+          "30d": "Letzte 30 Tage",
+          "90d": "Letzte 90 Tage",
+          "ytd": "Seit Jahresbeginn",
+          "12m": "Letzte 12 Monate",
+          "all": "Gesamter Zeitraum"
+        },
+        "custom": "Eigener",
+        "customTitle": "Zeitraum wählen",
+        "apply": "Übernehmen",
+        "cancel": "Abbrechen",
+        "scope": "Bereich",
+        "open": "Filter",
+        "sheetTitle": "Filter",
+        "period": "{from} – {to}",
+        "comparing": "Verglichen mit {from} – {to}",
+        "updated": "Aktualisiert {time}"
+      },
+      "kpis": {
+        "label": "Kennzahlen",
+        "rides": "Fahrten",
+        "trips": "Ausfahrten",
+        "riders": "Fahrgäste",
+        "hours": "Stunden",
+        "cancellations": "Absagen",
+        "ridesHint": "Eine Fahrt pro Fahrgast und Ausfahrt",
+        "new": "Neu",
+        "previous": "{value} im Vorzeitraum",
+        "rate": "{rate} der Ausfahrten",
+        "select": "{metric} im Diagramm zeigen"
+      },
+      "trend": {
+        "title": "Aktivität im Zeitverlauf",
+        "previous": "Vorzeitraum",
+        "total": "Gesamt",
+        "models": {
+          "event": "Event",
+          "pleasure": "Freizeit",
+          "functional": "Alltag"
+        },
+        "weekOf": "Woche ab {date}",
+        "zoom": "Klick auf einen Balken zoomt hinein",
+        "zoomTo": "Auf {period} zoomen",
+        "label": "{metric} pro {grain, select, day {Tag} week {Woche} other {Monat}}"
+      },
+      "empty": {
+        "title": "Noch keine Fahrten",
+        "body": "Zwischen {from} und {to} gab es keine Fahrten. Ein längerer Zeitraum erzählt vielleicht mehr.",
+        "showYear": "12 Monate zeigen"
+      },
+      "overview": {
+        "title": "Letzte 30 Tage",
+        "subtitle": "Verglichen mit den 30 Tagen davor",
+        "open": "Berichte öffnen"
+      },
+      "map": {
+        "title": "Wo gefahren wurde",
+        "label": "Karte der Chapter, nach Fahrten gewichtet",
+        "hint": "Die Größe der Blase zeigt die Fahrten. Zoom mit Strg/⌘ + Scrollen oder zwei Fingern, wähl ein Chapter, um es zu öffnen.",
+        "unavailable": "Für die Karte fehlt ein Mapbox-Token. Die Rangliste zeigt trotzdem jedes Chapter."
+      },
+      "rankings": {
+        "title": "Rangliste",
+        "tabsLabel": "Was gerankt wird",
+        "metricLabel": "Ranken nach",
+        "tabs": {
+          "chapters": "Chapter",
+          "countries": "Länder",
+          "pilots": "Pilot:innen",
+          "riders": "Fahrgäste"
+        },
+        "metrics": {
+          "rides": "Fahrten",
+          "hours": "Stunden",
+          "perPilot": "Pro Pilot:in"
+        },
+        "values": {
+          "rides": "{value}",
+          "hours": "{value} Std.",
+          "perPilot": "{value} pro Pilot:in"
+        },
+        "seeAll": "Alle ansehen",
+        "open": "{name} öffnen",
+        "up": "{count, plural, one {# Platz} other {# Plätze}} nach oben",
+        "down": "{count, plural, one {# Platz} other {# Plätze}} nach unten",
+        "same": "Gleicher Platz wie im Vorzeitraum",
+        "new": "Neu",
+        "newAria": "Neu in der Rangliste in diesem Zeitraum",
+        "empty": {
+          "title": "Noch nichts zu ranken",
+          "body": "Die Rangliste füllt sich, sobald in diesem Zeitraum Fahrten zu Ende gehen."
+        },
+        "drawer": {
+          "chapters": "Alle Chapter",
+          "countries": "Alle Länder",
+          "pilots": "Alle Pilot:innen",
+          "riders": "Alle Fahrgäste",
+          "description": "{period}, verglichen mit dem Zeitraum davor. Nach jeder Spalte sortierbar."
+        },
+        "columns": {
+          "rank": "#",
+          "name": "Name",
+          "rides": "Fahrten",
+          "trips": "Ausfahrten",
+          "hours": "Stunden",
+          "activePilots": "Aktive Pilot:innen",
+          "perPilot": "Fahrten pro Pilot:in",
+          "change": "Veränderung"
+        }
+      },
+      "cancellations": {
+        "title": "Absagen",
+        "rate": "Absagequote",
+        "count": "{count, plural, one {# abgesagte Ausfahrt} other {# abgesagte Ausfahrten}}",
+        "points": "{points} Pkt.",
+        "byCategory": "Warum Ausfahrten abgesagt wurden",
+        "share": "{share} der Absagen",
+        "categories": {
+          "weather": "Wetter",
+          "rider": "Fahrgast",
+          "facility": "Pflegeeinrichtung",
+          "cwa": "Auf unserer Seite",
+          "other": "Sonstiges",
+          "uncategorised": "Ohne Angabe"
+        },
+        "empty": {
+          "title": "Keine Absagen",
+          "body": "Jede geplante Ausfahrt in diesem Zeitraum hat stattgefunden. Wind in den Haaren, jedes Mal."
+        }
+      },
+      "models": {
+        "title": "Fahrtmodelle",
+        "share": "{share} der Fahrten",
+        "hours": "{value} Std. unterwegs",
+        "names": {
+          "event": "Event",
+          "pleasure": "Freizeit",
+          "functional": "Alltag"
+        },
+        "empty": {
+          "title": "Noch keine Fahrten",
+          "body": "Sobald in diesem Zeitraum Fahrten zu Ende gehen, siehst du hier, wie sie sich auf Event-, Freizeit- und Alltagsfahrten verteilen."
+        }
+      },
+      "people": {
+        "title": "Menschen",
+        "window": "Letzte 12 Monate",
+        "windowHint": "Aktiv heißt mindestens eine Fahrt in den letzten 12 Monaten, egal welcher Zeitraum oben gewählt ist.",
+        "pilots": "Pilot:innen",
+        "riders": "Fahrgäste",
+        "active": "{count, plural, one {# aktiv} other {# aktiv}}",
+        "inactive": "{count, plural, one {# inaktiv} other {# inaktiv}}",
+        "activeShare": "{share} aktiv",
+        "newRiders": "Neue Fahrgäste",
+        "newRidersHint": "Erste Fahrt überhaupt im gewählten Zeitraum",
+        "empty": {
+          "title": "Noch keine Pilot:innen oder Fahrgäste",
+          "body": "Pilot:innen und Fahrgäste erscheinen hier, sobald sie einem Chapter in diesem Bereich beitreten."
+        }
+      },
+      "delta": {
+        "up": "{value} mehr als im Vorzeitraum",
+        "down": "{value} weniger als im Vorzeitraum",
+        "flat": "Gleich wie im Vorzeitraum",
+        "none": "Kein Vergleich möglich"
+      }
+    },
     "requests": {
       "approve": "Freigeben",
       "approveBody": "Die Person bekommt eine E-Mail mit den drei Schritten bis zur ersten Ausfahrt.",

@@ -1022,3 +1022,51 @@ inside a UTF-8 sequence. The body is deterministic for the same rides (`DTSTAMP`
 say "last picked up by a calendar 2 h ago" — the only feedback a member gets that the
 subscription actually works. Polls are rate-limited per address (60 per 10 minutes) and
 counted in `cwa_calendar_feed_polls_total{outcome}`.
+
+## Reports (COD-256)
+
+`/admin/reports` is an activity dashboard over the admin's active scope. One cached use case,
+`src/use-cases/activity-report.ts`, reads it: `activityReport({ chapterIds, includePeople,
+range | from/to })` for the page and `activityKpis(chapterIds)` (the last 30 days) for the
+Overview strip.
+
+### Units
+
+- **Ride**: one roster entry on a trip that is not cancelled and has already ended
+  (`status != cancelled AND endsAt < now`). Two riders on one trip are two rides, the RFP's
+  counting rule. `status = completed` is never written, so "ridden" is derived, not stored.
+- **Trip**: one such `Ride` row. **Riders**: unique passengers on them. **Hours**: the sum of
+  the scheduled `endsAt - startsAt` of those trips.
+- **Cancellations**: cancelled rides in the period, grouped by `Ride.cancellationCategory`
+  (`weather`, `rider`, `facility`, `cwa`, `other`; null is "uncategorised"). The rate is
+  cancellations / (cancellations + trips).
+- **New riders**: riders whose first non-cancelled ride ever falls in the period.
+- **Active / inactive** pilots (chapter `Member` with the pilot role) and riders (`Passenger`
+  rows of the chapter) are measured over the 12 months before now, independent of the
+  timeframe. Someone who has never ridden is inactive.
+
+Every ride is placed on its **chapter's own calendar day** (`@date-fns/tz`), so a 23:30 ride in
+Munich and an 18:30 ride in New York both land on the day their chapter saw. A period is a
+half-open pair of local dates; the fact query is widened by 14 hours on either side and the pure
+aggregation (`src/features/rides/report.ts`) keeps only what falls inside. The grain is a day up
+to 31 days, a week (Monday) up to 184, a month beyond. Every number carries the previous period
+of equal length (`ytd` and `12m` compare with the same span a year earlier); the chart's
+previous values are shifted onto the current buckets.
+
+### Privacy
+
+At global and country scope the report ranks **chapters and countries only**. Pilot and rider
+names are loaded only when the page passes `includePeople`, which it does only at chapter scope
+(process 138). The use case never calls `accounts.displayNames` or `passengers.passengerNames`
+otherwise, so no name reaches the RSC payload outside chapter scope.
+
+### Caching
+
+Both functions are `"use cache"` with `cacheTag("reports")` and `cacheLife("minutes")`. Their
+arguments are plain values (the chapter id list is part of the key, so scopes never share an
+entry); the page resolves the scope through `readActiveScope(searchParams, "reports")` before
+calling. Admin Server Actions that change what a report counts (chapters, countries, member
+roles, applications, deleted users, assisted passengers, invitations) call
+`updateTag("reports")` next to their `revalidatePath`. Nothing writes a ride from the UI yet;
+the scheduling, cancel and roster actions must call `updateTag("reports")` when they land.
+Everything else ages out within the `minutes` profile.
