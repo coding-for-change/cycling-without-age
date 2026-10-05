@@ -1,15 +1,8 @@
 import type { ReportTally } from "@/features/rides/report";
 
-export const RANKING_TABS = [
-  "chapters",
-  "countries",
-  "pilots",
-  "riders",
-] as const;
-export type RankingTab = (typeof RANKING_TABS)[number];
+export type RankingTab = "chapters" | "countries" | "pilots" | "riders";
 
-export const RANK_METRICS = ["rides", "hours", "perPilot"] as const;
-export type RankMetric = (typeof RANK_METRICS)[number];
+export type RankMetric = "rides" | "hours" | "perPilot";
 
 export type ScopeKind = "all" | "country" | "chapter";
 
@@ -62,10 +55,12 @@ export function metricValue(
   return { current: row.rides, previous: row.previousRides };
 }
 
+export const relativeChange = (current: number, previous: number) =>
+  previous === 0 ? null : (current - previous) / previous;
+
 export type RankedRow<T> = {
   row: T;
   rank: number;
-  previousRank: number | null;
   movement: number | null;
   value: number;
   share: number;
@@ -100,7 +95,6 @@ export function rankRows<T>(
     return {
       row: entry.row,
       rank,
-      previousRank,
       movement: previousRank === null ? null : previousRank - rank,
       value: entry.value,
       share: max > 0 ? entry.value / max : 0,
@@ -122,17 +116,4 @@ export function rescopeHref(
   if ("chapter" in scope) next.set("chapter", scope.chapter);
   else next.set("country", scope.country);
   return `${pathname}?${next.toString()}`;
-}
-
-export function withParam(
-  pathname: string,
-  search: URLSearchParams | string,
-  key: string,
-  value: string | null,
-) {
-  const params = new URLSearchParams(search);
-  if (value === null) params.delete(key);
-  else params.set(key, value);
-  const query = params.toString();
-  return query ? `${pathname}?${query}` : pathname;
 }

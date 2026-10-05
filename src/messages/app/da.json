@@ -581,12 +581,6 @@
       "pilot": "Pilot"
     },
     "reports": {
-      "tabs": {
-        "label": "Rapportafsnit",
-        "activity": "Aktivitet",
-        "finance": "Økonomi",
-        "soon": "Snart"
-      },
       "filters": {
         "label": "Rapportfiltre",
         "timeframe": "Periode",

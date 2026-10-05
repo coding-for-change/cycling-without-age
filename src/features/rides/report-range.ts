@@ -1,4 +1,3 @@
-import { TZDate } from "@date-fns/tz";
 import { z } from "zod";
 
 export const REPORT_RANGE_PRESETS = [
@@ -104,17 +103,6 @@ export const shiftForward = (date: string, shift: ReportShift) =>
   shift.unit === "day"
     ? addDays(date, shift.amount)
     : addMonths(date, 12 * shift.amount);
-
-export function localDate(instant: Date, timeZone: string) {
-  const local = new TZDate(instant.getTime(), timeZone);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${local.getFullYear()}-${pad(local.getMonth() + 1)}-${pad(local.getDate())}`;
-}
-
-export function localMidnight(date: string, timeZone: string) {
-  const [y, m, d] = date.split("-").map(Number);
-  return new Date(new TZDate(y, m - 1, d, timeZone).getTime());
-}
 
 const ZONE_SPREAD_MS = 14 * 60 * 60_000;
 

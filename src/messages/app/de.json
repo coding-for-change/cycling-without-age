@@ -581,12 +581,6 @@
       "pilot": "Pilot"
     },
     "reports": {
-      "tabs": {
-        "label": "Berichtsbereiche",
-        "activity": "Aktivität",
-        "finance": "Finanzen",
-        "soon": "Bald"
-      },
       "filters": {
         "label": "Berichtsfilter",
         "timeframe": "Zeitraum",

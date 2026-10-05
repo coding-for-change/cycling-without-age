@@ -4,18 +4,19 @@ import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
 import {
-  localDate,
-  periodBounds,
   resolveReportRange,
   rides,
   type ActivityAggregate,
   type ReportBucket,
+  type ReportMetric,
   type ReportRange,
   type ReportRangeParams,
+  type ReportScope,
   type ReportTally,
+  type ReportTotals,
 } from "@/features/rides";
-
-export const REPORTS_TAG = "reports";
+import { reportCacheTags } from "@/lib/cache-tags";
+import { dayKey } from "@/lib/calendar";
 
 export type ActivityReportParams = ReportRangeParams & {
   chapterIds: string[];
@@ -37,9 +38,6 @@ export type ReportChapter = {
 export type ReportCountry = {
   code: string;
   name: string;
-  lat: number;
-  lng: number;
-  chapterCount: number;
   activePilots: number;
 } & ReportTally;
 
@@ -50,15 +48,13 @@ export type ReportPeopleHealth = {
   inactivePilots: number;
   activeRiders: number;
   inactiveRiders: number;
-  newRiders: number;
 };
 
 export type ActivityReport = {
   range: ReportRange;
   timeZone: string;
   generatedAt: string;
-  activeSince: string;
-  totals: ActivityAggregate["totals"];
+  totals: ReportTotals & { newRiders: ReportMetric };
   series: ReportBucket[];
   cancellations: ActivityAggregate["cancellations"];
   models: ActivityAggregate["models"];
@@ -69,118 +65,85 @@ export type ActivityReport = {
   people: ReportPeopleHealth;
 };
 
-export type ActivityKpis = Pick<
-  ActivityReport,
-  "range" | "timeZone" | "generatedAt" | "totals" | "series"
->;
+export type ActivityKpis = {
+  range: ReportRange;
+  timeZone: string;
+  generatedAt: string;
+  totals: ReportTotals;
+  series: ReportBucket[];
+};
 
-const ranked = <T extends ReportTally & { name: string }>(rows: T[]) =>
-  rows.sort(
-    (a, b) =>
-      b.rides - a.rides ||
-      b.hours - a.hours ||
-      b.trips - a.trips ||
-      a.name.localeCompare(b.name),
+async function resolveScope(params: ActivityReportParams, now: Date) {
+  const wantsEarliest = params.range === "all" && !params.from && !params.to;
+  const [meta, earliest] = await Promise.all([
+    chapters.listChapterReportMeta(params.chapterIds),
+    wantsEarliest ? rides.earliestRideStart(params.chapterIds) : null,
+  ]);
+  const zones = [...new Set(meta.map((c) => c.timeZone))];
+  const timeZone = zones.length === 1 ? zones[0] : "UTC";
+  const range = resolveReportRange(params, {
+    today: dayKey(now, timeZone),
+    earliest: earliest ? dayKey(earliest, timeZone) : null,
+  });
+  return {
+    meta,
+    timeZone,
+    range,
+    scope: rides.reportScope(meta, range, now),
+  };
+}
+
+const named = (
+  table: Record<string, ReportTally>,
+  names: Record<string, string>,
+): ReportPerson[] =>
+  rides.ranked(
+    Object.entries(table).map(([id, tally]) => ({
+      id,
+      name: names[id] ?? "",
+      ...tally,
+    })),
   );
 
-const yearBefore = (now: Date) => {
-  const since = new Date(now);
-  since.setUTCFullYear(since.getUTCFullYear() - 1);
-  return since;
-};
-
-const addTally = (into: ReportTally, from: ReportTally) => {
-  into.rides += from.rides;
-  into.trips += from.trips;
-  into.hours = Math.round((into.hours + from.hours) * 10) / 10;
-  into.previousRides += from.previousRides;
-  into.previousTrips += from.previousTrips;
-  into.previousHours =
-    Math.round((into.previousHours + from.previousHours) * 10) / 10;
-};
-
-const zeroTally = (): ReportTally => ({
-  rides: 0,
-  trips: 0,
-  hours: 0,
-  previousRides: 0,
-  previousTrips: 0,
-  previousHours: 0,
-});
-
-const NO_PEOPLE = {
-  active: { pilots: [], passengers: [] },
-  pilotMembers: [],
-  riderRows: [],
-};
+async function rankedPeople(scope: ReportScope) {
+  const tallies = await rides.peopleTallies(scope);
+  const [pilotNames, riderNames] = await Promise.all([
+    accounts.displayNames(Object.keys(tallies.pilots)),
+    passengers.passengerNames(Object.keys(tallies.riders)),
+  ]);
+  return {
+    pilots: named(tallies.pilots, pilotNames),
+    riders: named(tallies.riders, riderNames),
+  };
+}
 
 async function buildReport(
   params: ActivityReportParams,
-  { withHealth }: { withHealth: boolean },
 ): Promise<ActivityReport> {
-  const meta = await chapters.listChapterReportMeta(params.chapterIds);
-  const chapterIds = meta.map((c) => c.id);
-  const zones = [...new Set(meta.map((c) => c.timeZone))];
-  const timeZone = zones.length === 1 ? zones[0] : "UTC";
   const now = params.now ? new Date(params.now) : new Date();
-  const today = localDate(now, timeZone);
+  const scoped = resolveScope(params, now);
 
-  const earliest =
-    params.range === "all" && !params.from && !params.to
-      ? await rides.earliestRideStart(chapterIds)
-      : null;
-  const range = resolveReportRange(params, {
-    today,
-    earliest: earliest ? localDate(earliest, timeZone) : null,
-  });
-
-  const current = periodBounds(range);
-  const previous = periodBounds(range.previous);
-  const activeSince = yearBefore(now);
-
-  const [currentFacts, previousFacts, { active, pilotMembers, riderRows }] =
-    await Promise.all([
-      rides.activityFacts(chapterIds, current.from, current.to),
-      rides.activityFacts(chapterIds, previous.from, previous.to),
-      withHealth
-        ? Promise.all([
-            rides.activeParticipants(chapterIds, activeSince, now),
-            membership.listPilotMembers(chapterIds),
-            passengers.listPassengerIdsOfChapters(chapterIds),
-          ]).then(([active, pilotMembers, riderRows]) => ({
-            active,
-            pilotMembers,
-            riderRows,
-          }))
-        : NO_PEOPLE,
-    ]);
-
-  const passengerIdsOf = (facts: typeof currentFacts) => [
-    ...new Set(facts.flatMap((f) => f.passengerIds)),
-  ];
-  const [ridersBeforeCurrent, ridersBeforePrevious] = await Promise.all([
-    rides.passengersWithRideBefore(passengerIdsOf(currentFacts), current.from),
-    rides.passengersWithRideBefore(
-      passengerIdsOf(previousFacts),
-      previous.from,
+  const [
+    { meta, timeZone, range },
+    facts,
+    people,
+    [active, pilotMembers, riderCount],
+  ] = await Promise.all([
+    scoped,
+    scoped.then(({ scope }) => rides.activityFacts(scope, { extras: true })),
+    scoped.then(({ meta, scope }) =>
+      params.includePeople && meta.length === 1 ? rankedPeople(scope) : null,
     ),
+    Promise.all([
+      rides.activeParticipants(params.chapterIds, rides.yearBefore(now), now),
+      membership.listPilotMembers(params.chapterIds),
+      passengers.countPassengersOfChapters(params.chapterIds),
+    ]),
   ]);
 
-  const aggregate = rides.aggregateActivity({
-    current: currentFacts,
-    previous: previousFacts,
-    tzByChapter: Object.fromEntries(meta.map((c) => [c.id, c.timeZone])),
-    range,
-    now,
-    ridersBeforeCurrent,
-    ridersBeforePrevious,
-  });
-
+  const aggregate = rides.aggregateActivity({ range, ...facts });
   const health = rides.peopleHealth(
-    {
-      pilots: pilotMembers,
-      passengers: riderRows,
-    },
+    { pilots: pilotMembers, riders: riderCount },
     active,
   );
 
@@ -193,83 +156,44 @@ async function buildReport(
     lat: c.latitude,
     lng: c.longitude,
     activePilots: health.activePilotsByChapter[c.id] ?? 0,
-    ...(aggregate.chapters[c.id] ?? zeroTally()),
+    ...(aggregate.chapters[c.id] ?? rides.emptyTally()),
   }));
-
-  const countryMap = new Map<
-    string,
-    ReportCountry & { sumLat: number; sumLng: number }
-  >();
-  for (const chapter of chapterRows) {
-    const country = countryMap.get(chapter.countryCode) ?? {
-      code: chapter.countryCode,
-      name: chapter.countryName,
-      lat: 0,
-      lng: 0,
-      sumLat: 0,
-      sumLng: 0,
-      chapterCount: 0,
-      activePilots: 0,
-      ...zeroTally(),
-    };
-    country.chapterCount += 1;
-    country.activePilots += chapter.activePilots;
-    country.sumLat += chapter.lat;
-    country.sumLng += chapter.lng;
-    addTally(country, chapter);
-    countryMap.set(chapter.countryCode, country);
-  }
-  const countries = ranked(
-    [...countryMap.values()].map(({ sumLat, sumLng, ...country }) => ({
-      ...country,
-      lat: sumLat / country.chapterCount,
-      lng: sumLng / country.chapterCount,
-    })),
-  );
-
-  let pilots: ReportPerson[] | null = null;
-  let riders: ReportPerson[] | null = null;
-  if (params.includePeople && chapterIds.length === 1) {
-    const [pilotNames, riderNames] = await Promise.all([
-      accounts.displayNames(Object.keys(aggregate.pilots)),
-      passengers.passengerNames(Object.keys(aggregate.riders)),
-    ]);
-    pilots = ranked(
-      Object.entries(aggregate.pilots).map(([id, tally]) => ({
-        id,
-        name: pilotNames[id] ?? "",
-        ...tally,
-      })),
-    );
-    riders = ranked(
-      Object.entries(aggregate.riders).map(([id, tally]) => ({
-        id,
-        name: riderNames[id] ?? "",
-        ...tally,
-      })),
-    );
-  }
 
   return {
     range,
     timeZone,
     generatedAt: now.toISOString(),
-    activeSince: activeSince.toISOString(),
-    totals: aggregate.totals,
+    totals: { ...aggregate.totals, newRiders: rides.newRiders(facts.riders) },
     series: aggregate.series,
     cancellations: aggregate.cancellations,
     models: aggregate.models,
-    chapters: ranked(chapterRows),
-    countries,
-    pilots,
-    riders,
+    chapters: rides.ranked(chapterRows),
+    countries: rides.countryRollup(chapterRows),
+    pilots: people?.pilots ?? null,
+    riders: people?.riders ?? null,
     people: {
       activePilots: health.activePilots,
       inactivePilots: health.inactivePilots,
       activeRiders: health.activeRiders,
       inactiveRiders: health.inactiveRiders,
-      newRiders: aggregate.totals.newRiders.current,
     },
+  };
+}
+
+async function buildKpis(chapterIds: string[]): Promise<ActivityKpis> {
+  const now = new Date();
+  const { timeZone, range, scope } = await resolveScope(
+    { chapterIds, includePeople: false, range: "30d" },
+    now,
+  );
+  const facts = await rides.activityFacts(scope, { extras: false });
+  const { totals, series } = rides.aggregateActivity({ range, ...facts });
+  return {
+    range,
+    timeZone,
+    generatedAt: now.toISOString(),
+    totals,
+    series,
   };
 }
 
@@ -277,26 +201,16 @@ export async function activityReport(
   params: ActivityReportParams,
 ): Promise<ActivityReport> {
   "use cache";
-  cacheTag(REPORTS_TAG);
+  cacheTag(...reportCacheTags(params.chapterIds));
   cacheLife("minutes");
-  return buildReport(params, { withHealth: true });
+  return buildReport(params);
 }
 
 export async function activityKpis(
   chapterIds: string[],
 ): Promise<ActivityKpis> {
   "use cache";
-  cacheTag(REPORTS_TAG);
+  cacheTag(...reportCacheTags(chapterIds));
   cacheLife("minutes");
-  const report = await buildReport(
-    { chapterIds, includePeople: false, range: "30d" },
-    { withHealth: false },
-  );
-  return {
-    range: report.range,
-    timeZone: report.timeZone,
-    generatedAt: report.generatedAt,
-    totals: report.totals,
-    series: report.series,
-  };
+  return buildKpis(chapterIds);
 }

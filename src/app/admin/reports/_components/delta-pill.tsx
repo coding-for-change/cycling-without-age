@@ -12,6 +12,7 @@ export function DeltaPill({
   unit,
   goodWhen = "up",
   template,
+  newLabel,
   notation,
   language,
   strings,
@@ -20,12 +21,19 @@ export function DeltaPill({
   unit: "relative" | "points";
   goodWhen?: "up" | "down";
   template?: string;
+  newLabel?: string;
   notation: Locale;
   language: Language;
   strings: DeltaStrings;
 }) {
   if (value === null)
-    return <span className="text-xs text-ink-faint">{strings.none}</span>;
+    return newLabel ? (
+      <span className="shrink-0 rounded-full bg-mint-tint px-2 py-0.5 text-xs font-medium text-ink">
+        {newLabel}
+      </span>
+    ) : (
+      <span className="text-xs text-ink-faint">{strings.none}</span>
+    );
 
   const rounded =
     unit === "relative"
@@ -71,7 +79,7 @@ export function DeltaPill({
       aria-label={label}
       title={label}
       className={cn(
-        "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums",
+        "inline-flex shrink-0 items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums",
         direction !== "flat" && direction === goodWhen
           ? "bg-mint-tint text-ink"
           : "bg-canvas-deep text-ink-soft",

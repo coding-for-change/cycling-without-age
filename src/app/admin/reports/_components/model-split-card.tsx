@@ -6,6 +6,7 @@ import { formatMessage } from "@/lib/i18n/format";
 import type { Locale as Language } from "@/lib/i18n/locales";
 import { DeltaPill, type DeltaStrings } from "./delta-pill";
 import { ReportCard } from "./report-card";
+import { ShareBar } from "./share-bar";
 import { EmptyCard } from "./empty-card";
 
 export type ModelSplitStrings = Dictionary["admin"]["reports"]["models"];
@@ -70,15 +71,10 @@ export function ModelSplitCard({
                   />
                 </span>
               </div>
-              <div
-                aria-hidden
-                className="h-2 overflow-hidden rounded-full bg-canvas-deep"
-              >
-                <div
-                  style={{ width: `${(row.rides / max) * 100}%` }}
-                  className="h-full rounded-full bg-mint transition-[width] duration-500 motion-reduce:transition-none"
-                />
-              </div>
+              <ShareBar
+                value={row.rides}
+                max={max}
+              />
               <div className="flex justify-between gap-3 text-xs text-ink-soft tabular-nums">
                 <span>{formatMessage(strings.share, { share }, language)}</span>
                 <span>

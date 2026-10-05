@@ -79,15 +79,7 @@ export function kpiTiles(
       spark:
         metric === "riders"
           ? null
-          : series.map((bucket) =>
-              metric === "hours"
-                ? bucket.hours.total
-                : metric === "trips"
-                  ? bucket.trips.total
-                  : metric === "cancellations"
-                    ? bucket.cancellations.total
-                    : bucket.rides.total,
-            ),
+          : series.map((bucket) => bucket[metric].total),
       goodWhen: metric === "cancellations" ? "down" : "up",
       fractionDigits,
     };

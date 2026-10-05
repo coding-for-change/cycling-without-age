@@ -2,11 +2,11 @@ import { ownRiderDetailsPatch, passengerInput } from "./schemas";
 import { DomainError } from "@/lib/domain-error";
 import type { OwnRiderDetailsPatchInput, PassengerInput } from "./schemas";
 import {
+  countPassengersInChapters,
   countPassengersManagedBy,
   findPassengerOfUser,
   findPassengersManagedBy,
   findPassengersOfChapters,
-  findPassengerIdsOfChapters,
   findPassengerNames,
   insertPassenger,
   updatePassengerOfUser,
@@ -69,10 +69,8 @@ export async function updateOwnRiderDetails(
   return updatePassengerOfUser(userId, data);
 }
 
-export const listPassengerIdsOfChapters = (chapterIds: string[]) =>
-  chapterIds.length
-    ? findPassengerIdsOfChapters(chapterIds)
-    : Promise.resolve([]);
+export const countPassengersOfChapters = async (chapterIds: string[]) =>
+  chapterIds.length ? countPassengersInChapters(chapterIds) : 0;
 
 export const passengerNames = async (
   ids: string[],

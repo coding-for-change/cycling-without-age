@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/auth-guards";
+import { invalidateReports } from "@/lib/cache-tags";
 import { actionFailure } from "@/lib/domain-error";
 import { withinRateLimit } from "@/lib/rate-limit";
 import { updateOwnDetails } from "@/use-cases/update-own-details";
@@ -27,6 +28,9 @@ export async function updateOwnDetailsAction(
   try {
     await updateOwnDetails(session.user.id, parsed.data);
     revalidatePath("/", "layout");
+    const chapterIds = session.access.memberships.map((m) => m.chapterId);
+    if (parsed.data.name !== undefined && chapterIds.length)
+      invalidateReports(...chapterIds);
     return { ok: true };
   } catch (error) {
     return actionFailure(error, {});

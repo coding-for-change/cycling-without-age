@@ -2,7 +2,7 @@
 
 import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { brand } from "@/lib/brand";
 import type { Locale } from "@/lib/format";
@@ -48,7 +48,48 @@ const collection = (chapters: MapChapter[]) => ({
   })),
 });
 
-const radius = (chapters: MapChapter[]): mapboxgl.ExpressionSpecification => {
+const bubbles = (
+  id: string,
+  source: string,
+  color: string,
+  chapters: MapChapter[],
+): mapboxgl.LayerSpecification => ({
+  id,
+  type: "circle",
+  source,
+  paint: {
+    "circle-color": color,
+    "circle-radius": radius(chapters),
+    "circle-stroke-color": brand.canvas,
+    "circle-stroke-width": 2,
+  },
+});
+
+const counts = (
+  id: string,
+  source: string,
+  color: string,
+  notation: Locale,
+): mapboxgl.LayerSpecification => ({
+  id,
+  type: "symbol",
+  source,
+  layout: {
+    "text-field": ["number-format", ["get", "rides"], { locale: notation }],
+    "text-font": FONT,
+    "text-size": 11,
+    "text-allow-overlap": true,
+  },
+  paint: { "text-color": color },
+});
+
+const signature = (chapters: MapChapter[]) =>
+  chapters.map((chapter) => `${chapter.id}:${chapter.rides}`).join(",");
+
+const idsOf = (chapters: MapChapter[]) =>
+  chapters.map((chapter) => chapter.id).join(",");
+
+function radius(chapters: MapChapter[]): mapboxgl.ExpressionSpecification {
   const [from, small, to, large] = radiusStops(totalRides(chapters));
   return [
     "interpolate",
@@ -59,7 +100,7 @@ const radius = (chapters: MapChapter[]): mapboxgl.ExpressionSpecification => {
     to,
     large,
   ];
-};
+}
 
 export default function ActivityMapCanvas({
   chapters,
@@ -76,30 +117,25 @@ export default function ActivityMapCanvas({
   const map = useRef<mapboxgl.Map | null>(null);
   const ready = useRef(false);
   const reduced = useRef(false);
-  const latest = useRef(chapters);
+  const framed = useRef("");
   const { highlighted, highlight } = useHighlight();
   const nav = useReportNav();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const handlers = useRef({
-    pick: (id: string) => void id,
-    highlight,
+  const pick = useEffectEvent((id: string) => {
+    const chapter = chapters.find((c) => c.id === id);
+    if (!chapter || chapter.id === activeChapterId) return;
+    nav?.go(
+      rescopeHref(pathname, searchParams.toString(), {
+        chapter: chapter.slug,
+      }),
+    );
   });
-  useEffect(() => {
-    handlers.current = {
-      highlight,
-      pick: (id) => {
-        const chapter = latest.current.find((c) => c.id === id);
-        if (!chapter || chapter.id === activeChapterId) return;
-        nav?.go(
-          rescopeHref(pathname, searchParams.toString(), {
-            chapter: chapter.slug,
-          }),
-        );
-      },
-    };
-  }, [activeChapterId, highlight, nav, pathname, searchParams]);
+  const loaded = useEffectEvent(() => chapters);
+  const hover = useEffectEvent((id: string | null) =>
+    highlight(id ? chapterKey(id) : null),
+  );
 
   useEffect(() => {
     if (!container.current || map.current) return;
@@ -135,7 +171,7 @@ export default function ActivityMapCanvas({
     });
 
     instance.on("load", () => {
-      const current = latest.current;
+      const current = loaded();
       instance.addSource(SOURCE, {
         type: "geojson",
         data: collection(current),
@@ -146,60 +182,16 @@ export default function ActivityMapCanvas({
       });
       instance.addSource(FOCUS, { type: "geojson", data: collection([]) });
 
-      instance.addLayer({
-        id: "chapter-bubbles",
-        type: "circle",
-        source: SOURCE,
-        paint: {
-          "circle-color": brand.mint,
-          "circle-radius": radius(current),
-          "circle-stroke-color": brand.canvas,
-          "circle-stroke-width": 2,
-        },
-      });
-      instance.addLayer({
-        id: "chapter-focus",
-        type: "circle",
-        source: FOCUS,
-        paint: {
-          "circle-color": brand.mintDeep,
-          "circle-radius": radius(current),
-          "circle-stroke-color": brand.canvas,
-          "circle-stroke-width": 2,
-        },
-      });
-      instance.addLayer({
-        id: "chapter-counts",
-        type: "symbol",
-        source: SOURCE,
-        layout: {
-          "text-field": [
-            "number-format",
-            ["get", "rides"],
-            { locale: notation },
-          ],
-          "text-font": FONT,
-          "text-size": 11,
-          "text-allow-overlap": true,
-        },
-        paint: { "text-color": brand.ink },
-      });
-      instance.addLayer({
-        id: "chapter-focus-count",
-        type: "symbol",
-        source: FOCUS,
-        layout: {
-          "text-field": [
-            "number-format",
-            ["get", "rides"],
-            { locale: notation },
-          ],
-          "text-font": FONT,
-          "text-size": 11,
-          "text-allow-overlap": true,
-        },
-        paint: { "text-color": brand.canvas },
-      });
+      instance.addLayer(
+        bubbles("chapter-bubbles", SOURCE, brand.mint, current),
+      );
+      instance.addLayer(
+        bubbles("chapter-focus", FOCUS, brand.mintDeep, current),
+      );
+      instance.addLayer(counts("chapter-counts", SOURCE, brand.ink, notation));
+      instance.addLayer(
+        counts("chapter-focus-count", FOCUS, brand.canvas, notation),
+      );
       instance.addLayer({
         id: "chapter-names",
         type: "symbol",
@@ -226,7 +218,7 @@ export default function ActivityMapCanvas({
         if (!properties) return;
         const clusterId = properties.cluster_id;
         if (clusterId === undefined) {
-          if (properties.id) handlers.current.pick(properties.id);
+          if (properties.id) pick(properties.id);
           return;
         }
         const center = event.lngLat;
@@ -243,15 +235,15 @@ export default function ActivityMapCanvas({
       });
       instance.on("mousemove", "chapter-bubbles", (event) => {
         instance.getCanvas().style.cursor = "pointer";
-        const id = propertiesOf(event)?.id;
-        handlers.current.highlight(id ? chapterKey(id) : null);
+        hover(propertiesOf(event)?.id ?? null);
       });
       instance.on("mouseleave", "chapter-bubbles", () => {
         instance.getCanvas().style.cursor = "";
-        handlers.current.highlight(null);
+        hover(null);
       });
 
       ready.current = true;
+      framed.current = idsOf(current);
       frame(instance, current, reduced.current);
     });
 
@@ -262,8 +254,8 @@ export default function ActivityMapCanvas({
     };
   }, [notation]);
 
-  useEffect(() => {
-    latest.current = chapters;
+  const shape = signature(chapters);
+  const sync = useEffectEvent(() => {
     const instance = map.current;
     if (!instance || !ready.current) return;
     instance
@@ -279,8 +271,15 @@ export default function ActivityMapCanvas({
       "circle-radius",
       radius(chapters),
     );
+    const ids = idsOf(chapters);
+    if (ids === framed.current) return;
+    framed.current = ids;
     frame(instance, chapters, reduced.current);
-  }, [chapters]);
+  });
+
+  useEffect(() => {
+    sync();
+  }, [shape]);
 
   useEffect(() => {
     const instance = map.current;

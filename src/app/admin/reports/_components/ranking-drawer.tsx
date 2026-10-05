@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { AppDrawer } from "@/components/app-drawer";
 import { DataTable, type DataTableStrings } from "@/components/ui/data-table";
-import { metric as metricOf } from "@/features/rides/report";
 import { formatNumber, type Locale } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale as Language } from "@/lib/i18n/locales";
@@ -14,7 +13,12 @@ import {
   type RankingEntry,
   type RankingsStrings,
 } from "./ranking-entries";
-import { metricValue, type RankMetric, type RankingTab } from "./ranking-model";
+import {
+  metricValue,
+  relativeChange,
+  type RankMetric,
+  type RankingTab,
+} from "./ranking-model";
 
 type DrawerRow = RankingEntry & {
   rank: number | null;
@@ -57,7 +61,7 @@ export function RankingDrawer({
         ...entry,
         rank: ranks.get(entry.key) ?? null,
         perPilot: metricValue(entry.tally, "perPilot").current,
-        change: metricOf(entry.tally.rides, entry.tally.previousRides).delta,
+        change: relativeChange(entry.tally.rides, entry.tally.previousRides),
       }))
       .sort((a, b) => (a.rank ?? LAST) - (b.rank ?? LAST));
   }, [entries, metric]);

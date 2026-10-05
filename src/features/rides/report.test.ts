@@ -1,53 +1,76 @@
-import { aggregateActivity, peopleHealth, type ReportFact } from "./report";
+import {
+  addTally,
+  aggregateActivity,
+  countryRollup,
+  emptyTally,
+  newRiders,
+  peopleHealth,
+  ranked,
+  tallies,
+  yearBefore,
+  type ActivityBucketRow,
+  type ActivityFacts,
+  type ActivityTallyRow,
+} from "./report";
 import { resolveReportRange } from "./report-range";
 
-const now = new Date("2026-10-04T12:00:00Z");
 const today = "2026-10-04";
 const MUC = "chapter-muenchen";
 const NYC = "chapter-newyork";
-const tzByChapter = { [MUC]: "Europe/Berlin", [NYC]: "America/New_York" };
+const HOUR = 3_600_000;
 
-let seq = 0;
-const ride = (
-  startsAt: string,
-  patch: Partial<ReportFact> = {},
-): ReportFact => {
-  const start = new Date(startsAt);
-  return {
-    id: `ride-${++seq}`,
-    chapterId: MUC,
-    model: "event",
-    status: "scheduled",
-    startsAt: start,
-    endsAt: new Date(start.getTime() + 2 * 3_600_000),
-    cancellationCategory: null,
-    pilotIds: ["pilot-a"],
-    passengerIds: ["rider-1"],
-    ...patch,
-  };
-};
+const row = (
+  bucket: string,
+  patch: Partial<ActivityBucketRow> = {},
+): ActivityBucketRow => ({
+  side: "current",
+  bucket,
+  model: "event",
+  kind: "ridden",
+  category: null,
+  trips: 1,
+  rides: 1,
+  ms: 2 * HOUR,
+  ...patch,
+});
+
+const cancelled = (
+  bucket: string,
+  patch: Partial<ActivityBucketRow> = {},
+): ActivityBucketRow =>
+  row(bucket, { kind: "cancelled", rides: 0, ms: 0, ...patch });
+
+const tally = (
+  key: string,
+  patch: Partial<ActivityTallyRow> = {},
+): ActivityTallyRow => ({
+  key,
+  side: "current",
+  trips: 1,
+  rides: 1,
+  ms: 2 * HOUR,
+  ...patch,
+});
 
 const aggregate = (
-  current: ReportFact[],
-  previous: ReportFact[] = [],
-  extra: Partial<Parameters<typeof aggregateActivity>[0]> = {},
+  buckets: ActivityBucketRow[],
+  extra: Partial<ActivityFacts> & {
+    range?: ReturnType<typeof resolveReportRange>;
+  } = {},
 ) =>
   aggregateActivity({
-    current,
-    previous,
-    tzByChapter,
     range: resolveReportRange({ range: "7d" }, { today }),
-    now,
-    ridersBeforeCurrent: [],
-    ridersBeforePrevious: [],
+    buckets,
+    chapters: [],
+    riders: [],
     ...extra,
   });
 
 describe("aggregateActivity", () => {
   it("counts two riders on one trip as two rides and one trip", () => {
-    const result = aggregate([
-      ride("2026-10-01T08:00:00Z", { passengerIds: ["rider-1", "rider-2"] }),
-    ]);
+    const result = aggregate([row("2026-10-01", { rides: 2 })], {
+      riders: [{ side: "current", riders: 2, newRiders: 0 }],
+    });
     expect(result.totals.rides.current).toBe(2);
     expect(result.totals.trips.current).toBe(1);
     expect(result.totals.riders.current).toBe(2);
@@ -56,13 +79,9 @@ describe("aggregateActivity", () => {
 
   it("leaves cancelled trips out of rides but counts them as cancellations", () => {
     const result = aggregate([
-      ride("2026-10-01T08:00:00Z"),
-      ride("2026-10-02T08:00:00Z", {
-        status: "cancelled",
-        cancellationCategory: "weather",
-        passengerIds: ["rider-1", "rider-2"],
-      }),
-      ride("2026-10-03T08:00:00Z", { status: "cancelled" }),
+      row("2026-10-01"),
+      cancelled("2026-10-02", { category: "weather" }),
+      cancelled("2026-10-03"),
     ]);
     expect(result.totals.rides.current).toBe(1);
     expect(result.totals.trips.current).toBe(1);
@@ -81,37 +100,10 @@ describe("aggregateActivity", () => {
     expect(bucket?.rides.total).toBe(0);
   });
 
-  it("does not count a trip that has not ended yet", () => {
-    const result = aggregate([ride("2026-10-04T11:00:00Z")]);
-    expect(result.totals.rides.current).toBe(0);
-    expect(result.totals.trips.current).toBe(0);
-  });
-
-  it("buckets by the chapter's own calendar day", () => {
-    const result = aggregate([
-      ride("2026-09-30T22:30:00Z"),
-      ride("2026-10-01T02:30:00Z", { chapterId: NYC }),
-    ]);
-    const day = (start: string) =>
-      result.series.find((b) => b.start === start)?.rides.total;
-    expect(day("2026-10-01")).toBe(1);
-    expect(day("2026-09-30")).toBe(1);
-  });
-
-  it("keeps a ride that is before the period in local time out of it", () => {
-    const result = aggregate([ride("2026-09-27T21:30:00Z")]);
-    expect(result.totals.rides.current).toBe(0);
-    const inside = aggregate([ride("2026-09-27T22:30:00Z")]);
-    expect(inside.totals.rides.current).toBe(1);
-  });
-
   it("splits by ride model per bucket", () => {
     const result = aggregate([
-      ride("2026-10-01T08:00:00Z", { model: "pleasure" }),
-      ride("2026-10-01T12:00:00Z", {
-        model: "functional",
-        passengerIds: ["rider-2", "rider-3"],
-      }),
+      row("2026-10-01", { model: "pleasure" }),
+      row("2026-10-01", { model: "functional", rides: 2 }),
     ]);
     const bucket = result.series.find((b) => b.start === "2026-10-01");
     expect(bucket?.rides).toEqual({
@@ -123,20 +115,18 @@ describe("aggregateActivity", () => {
     expect(bucket?.trips.total).toBe(2);
     expect(result.models.find((m) => m.model === "functional")).toMatchObject({
       rides: 2,
-      trips: 1,
       hours: 2,
     });
   });
 
   it("compares with the previous period and aligns it to the chart", () => {
-    const result = aggregate(
-      [
-        ride("2026-09-29T08:00:00Z"),
-        ride("2026-09-30T08:00:00Z"),
-        ride("2026-10-01T08:00:00Z"),
-      ],
-      [ride("2026-09-22T08:00:00Z"), ride("2026-09-23T08:00:00Z")],
-    );
+    const result = aggregate([
+      row("2026-09-29"),
+      row("2026-09-30"),
+      row("2026-10-01"),
+      row("2026-09-29", { side: "previous" }),
+      row("2026-09-30", { side: "previous" }),
+    ]);
     expect(result.totals.rides).toEqual({
       current: 3,
       previous: 2,
@@ -147,30 +137,41 @@ describe("aggregateActivity", () => {
     expect(result.series).toHaveLength(7);
   });
 
+  it("counts a previous trip outside the chart in the totals only", () => {
+    const result = aggregate([row("2026-09-01", { side: "previous" })]);
+    expect(result.totals.rides.previous).toBe(1);
+    expect(result.series.every((b) => b.previous.rides === 0)).toBe(true);
+  });
+
   it("has no delta when there was nothing before", () => {
-    const result = aggregate([ride("2026-10-01T08:00:00Z")]);
+    const result = aggregate([row("2026-10-01")]);
     expect(result.totals.rides.delta).toBeNull();
     expect(result.totals.cancellationRate.deltaPoints).toBeNull();
   });
 
-  it("counts a ride fetched twice only once", () => {
-    const shared = ride("2026-10-01T08:00:00Z");
-    const result = aggregate([shared], [shared]);
-    expect(result.totals.rides.current).toBe(1);
-    expect(result.totals.rides.previous).toBe(0);
+  it("rounds hours once, after summing", () => {
+    const result = aggregate([
+      row("2026-10-01", { ms: HOUR / 3 }),
+      row("2026-10-01", { ms: HOUR / 3, model: "pleasure" }),
+      row("2026-10-02", { ms: HOUR / 3 }),
+    ]);
+    expect(result.totals.hours.current).toBe(1);
+    expect(result.series.find((b) => b.start === "2026-10-01")?.hours).toEqual({
+      event: 0.3,
+      pleasure: 0.3,
+      functional: 0,
+      total: 0.7,
+    });
   });
 
-  it("tallies chapters, pilots and riders for both periods", () => {
-    const result = aggregate(
-      [
-        ride("2026-10-01T08:00:00Z", {
-          pilotIds: ["pilot-a", "pilot-b"],
-          passengerIds: ["rider-1", "rider-2"],
-        }),
-        ride("2026-10-02T08:00:00Z", { chapterId: NYC, pilotIds: ["pilot-b"] }),
+  it("tallies chapters for both periods", () => {
+    const result = aggregate([], {
+      chapters: [
+        tally(MUC, { rides: 2 }),
+        tally(NYC),
+        tally(MUC, { side: "previous" }),
       ],
-      [ride("2026-09-22T08:00:00Z")],
-    );
+    });
     expect(result.chapters[MUC]).toEqual({
       rides: 2,
       trips: 1,
@@ -180,56 +181,146 @@ describe("aggregateActivity", () => {
       previousHours: 2,
     });
     expect(result.chapters[NYC].rides).toBe(1);
-    expect(result.pilots["pilot-b"]).toMatchObject({
-      rides: 3,
-      trips: 2,
-      hours: 4,
-    });
-    expect(result.pilots["pilot-a"]).toMatchObject({
-      rides: 2,
-      previousRides: 1,
-    });
-    expect(result.riders["rider-1"]).toMatchObject({
-      rides: 2,
-      hours: 4,
-      previousRides: 1,
-    });
-  });
-
-  it("tells new riders from returning ones", () => {
-    const result = aggregate(
-      [
-        ride("2026-10-01T08:00:00Z", {
-          passengerIds: ["rider-new", "rider-old", "rider-last-week"],
-        }),
-      ],
-      [ride("2026-09-22T08:00:00Z", { passengerIds: ["rider-last-week"] })],
-      { ridersBeforeCurrent: ["rider-old"] },
-    );
-    expect(result.newRiderIds).toEqual(["rider-new"]);
-    expect(result.totals.newRiders.current).toBe(1);
-    expect(result.totals.newRiders.previous).toBe(1);
-  });
-
-  it("treats a ride just before the period as a prior ride", () => {
-    const result = aggregate([
-      ride("2026-09-27T08:00:00Z", { passengerIds: ["rider-x"] }),
-      ride("2026-09-29T08:00:00Z", { passengerIds: ["rider-x"] }),
-    ]);
-    expect(result.newRiderIds).toEqual([]);
   });
 
   it("buckets the previous year into the matching month", () => {
     const range = resolveReportRange({ range: "12m" }, { today });
     const result = aggregate(
-      [ride("2026-03-10T08:00:00Z")],
-      [ride("2025-03-20T08:00:00Z"), ride("2025-03-21T08:00:00Z")],
+      [
+        row("2026-03-01"),
+        row("2026-03-01", { side: "previous", rides: 2, trips: 2 }),
+      ],
       { range },
     );
     const march = result.series.find((b) => b.start === "2026-03-01");
     expect(march?.rides.total).toBe(1);
     expect(march?.previous.rides).toBe(2);
     expect(result.series).toHaveLength(12);
+  });
+});
+
+describe("tallies", () => {
+  it("adds up pilots and riders per period", () => {
+    const table = tallies([
+      tally("pilot-b", { rides: 2 }),
+      tally("pilot-b"),
+      tally("pilot-a", { rides: 2 }),
+      tally("pilot-a", { side: "previous" }),
+    ]);
+    expect(table["pilot-b"]).toMatchObject({ rides: 3, trips: 2, hours: 4 });
+    expect(table["pilot-a"]).toMatchObject({
+      rides: 2,
+      previousRides: 1,
+      previousHours: 2,
+    });
+  });
+
+  it("rounds hours to one decimal", () => {
+    expect(
+      tallies([tally("rider-1", { ms: (7 * HOUR) / 6 })])["rider-1"],
+    ).toMatchObject({ hours: 1.2 });
+  });
+});
+
+describe("newRiders", () => {
+  it("compares new riders of both periods", () => {
+    expect(
+      newRiders([
+        { side: "current", riders: 3, newRiders: 1 },
+        { side: "previous", riders: 1, newRiders: 1 },
+      ]),
+    ).toEqual({ current: 1, previous: 1, delta: 0 });
+    expect(newRiders([])).toEqual({ current: 0, previous: 0, delta: null });
+  });
+});
+
+describe("ranked", () => {
+  const person = (
+    id: string,
+    name: string,
+    patch: Partial<ReturnType<typeof emptyTally>> = {},
+  ) => ({
+    id,
+    name,
+    ...emptyTally(),
+    ...patch,
+  });
+
+  it("orders by rides, then hours, trips, name and id", () => {
+    const rows = ranked([
+      person("c", "Bea", { rides: 1 }),
+      person("b", "Ann", { rides: 1 }),
+      person("a", "Ann", { rides: 1 }),
+      person("d", "Zed", { rides: 1, hours: 2 }),
+      person("e", "Eve", { rides: 3 }),
+    ]);
+    expect(rows.map((r) => r.id)).toEqual(["e", "d", "a", "b", "c"]);
+  });
+});
+
+describe("countryRollup", () => {
+  const chapter = (
+    countryCode: string,
+    patch: Partial<ReturnType<typeof emptyTally>> & { activePilots?: number },
+  ) => ({
+    countryCode,
+    countryName: countryCode === "DE" ? "Deutschland" : "Danmark",
+    activePilots: 0,
+    ...emptyTally(),
+    ...patch,
+  });
+
+  it("sums chapters into their country and ranks the countries", () => {
+    const countries = countryRollup([
+      chapter("DE", { rides: 2, hours: 1.25, activePilots: 2 }),
+      chapter("DK", { rides: 5, hours: 3 }),
+      chapter("DE", {
+        rides: 1,
+        hours: 0.1,
+        previousRides: 4,
+        activePilots: 1,
+      }),
+    ]);
+    expect(countries).toEqual([
+      expect.objectContaining({ code: "DK", rides: 5 }),
+      expect.objectContaining({
+        code: "DE",
+        name: "Deutschland",
+        rides: 3,
+        hours: 1.4,
+        previousRides: 4,
+        activePilots: 3,
+      }),
+    ]);
+  });
+});
+
+describe("addTally", () => {
+  it("adds every field and keeps hours at one decimal", () => {
+    const into = { ...emptyTally(), rides: 1, hours: 0.1, previousHours: 0.2 };
+    addTally(into, {
+      ...emptyTally(),
+      rides: 2,
+      hours: 0.2,
+      previousHours: 0.1,
+      previousTrips: 3,
+    });
+    expect(into).toEqual({
+      rides: 3,
+      trips: 0,
+      hours: 0.3,
+      previousRides: 0,
+      previousTrips: 3,
+      previousHours: 0.3,
+    });
+  });
+});
+
+describe("yearBefore", () => {
+  it("goes back one calendar year", () => {
+    expect(yearBefore(new Date("2026-10-04T12:00:00Z")).toISOString()).toBe(
+      "2025-10-04T12:00:00.000Z",
+    );
   });
 });
 
@@ -243,18 +334,14 @@ describe("peopleHealth", () => {
           { userId: "pilot-b", chapterId: MUC },
           { userId: "pilot-c", chapterId: NYC },
         ],
-        passengers: [
-          { id: "rider-1", chapterId: MUC },
-          { id: "rider-2", chapterId: MUC },
-          { id: "rider-3", chapterId: NYC },
-        ],
+        riders: 3,
       },
       {
         pilots: [
           { userId: "pilot-a", chapterId: NYC },
           { userId: "pilot-z", chapterId: MUC },
         ],
-        passengers: [{ passengerId: "rider-1", chapterId: MUC }],
+        riders: 1,
       },
     );
     expect(health).toEqual({

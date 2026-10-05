@@ -8,9 +8,9 @@ import type { Dictionary } from "@/lib/i18n";
 import { formatNumber, type Locale } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale as Language } from "@/lib/i18n/locales";
-import { cn } from "@/lib/utils";
 import { DeltaPill, type DeltaStrings } from "./delta-pill";
 import { ReportCard } from "./report-card";
+import { ShareBar } from "./share-bar";
 import { EmptyCard } from "./empty-card";
 
 export type CancellationsStrings =
@@ -31,7 +31,6 @@ export function CancellationsCard({
   cancellations: {
     category: ReportCancellationKey;
     count: number;
-    previous: number;
   }[];
   total: ReportMetric;
   rate: ReportRateMetric;
@@ -148,20 +147,11 @@ export function CancellationsCard({
                   {formatNumber(row.count, notation)}
                 </span>
               </div>
-              <div
-                aria-hidden
-                className="h-2 overflow-hidden rounded-full bg-canvas-deep"
-              >
-                <div
-                  style={{ width: `${(row.count / max) * 100}%` }}
-                  className={cn(
-                    "h-full rounded-full transition-[width] duration-500 motion-reduce:transition-none",
-                    row.category === "uncategorised"
-                      ? "bg-ink-faint"
-                      : "bg-mint",
-                  )}
-                />
-              </div>
+              <ShareBar
+                value={row.count}
+                max={max}
+                tone={row.category === "uncategorised" ? "faint" : "mint"}
+              />
             </li>
           ))}
         </ul>

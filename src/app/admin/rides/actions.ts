@@ -1,11 +1,10 @@
 "use server";
 
-import { revalidatePath, updateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { rides } from "@/features/rides";
 import { requireChapterAdmin } from "@/lib/auth-guards";
 import { actionFailure } from "@/lib/domain-error";
-import { REPORTS_TAG } from "@/use-cases/activity-report";
 import { allocateTrishaws } from "@/use-cases/schedule-ride";
 
 export type AllocationResult =
@@ -36,7 +35,6 @@ export async function allocateTrishawsAction(
   try {
     await allocateTrishaws(parsed.data.rideId, parsed.data.trishawIds);
     revalidatePath("/admin", "layout");
-    updateTag(REPORTS_TAG);
     return { ok: true };
   } catch (error) {
     return actionFailure(error, {

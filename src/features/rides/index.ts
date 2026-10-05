@@ -8,13 +8,13 @@ export type {
 } from "./facade";
 export * from "./schemas";
 export * from "./report-range";
-export {
-  REPORT_CANCELLATION_KEYS,
-  type ActivityAggregate,
-  type ModelCounts,
-  type ReportBucket,
-  type ReportCancellationKey,
-  type ReportMetric,
-  type ReportRateMetric,
-  type ReportTally,
+export type {
+  ActivityAggregate,
+  ReportBucket,
+  ReportCancellationKey,
+  ReportMetric,
+  ReportRateMetric,
+  ReportTally,
+  ReportTotals,
 } from "./report";
+export type { ReportScope } from "./report-zones";

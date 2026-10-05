@@ -54,11 +54,8 @@ export const updatePassengerOfUser = (
   data: Prisma.PassengerUpdateManyMutationInput,
 ) => prisma.passenger.updateMany({ where: { userId }, data });
 
-export const findPassengerIdsOfChapters = (chapterIds: string[]) =>
-  prisma.passenger.findMany({
-    where: { chapterId: { in: chapterIds } },
-    select: { id: true, chapterId: true },
-  });
+export const countPassengersInChapters = (chapterIds: string[]) =>
+  prisma.passenger.count({ where: { chapterId: { in: chapterIds } } });
 
 export const findPassengerNames = (ids: string[]) =>
   prisma.passenger.findMany({

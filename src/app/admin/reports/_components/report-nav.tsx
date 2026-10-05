@@ -12,6 +12,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ScopeArg } from "@/lib/commands";
 import { cn } from "@/lib/utils";
+import { isTrendMetric, type TrendMetric } from "../../_components/kpi-data";
 import { hrefWith } from "../../_components/href-with";
 import { useSwitchScope } from "../../_components/use-switch-scope";
 
@@ -23,6 +24,7 @@ type ReportNav = {
   hrefFor: (patch: Patch) => string;
   navigate: (patch: Patch) => void;
   go: (href: string) => void;
+  view: (href: string) => void;
   switchScope: (arg: ScopeArg) => void;
 };
 
@@ -46,6 +48,8 @@ export function ReportNavProvider({ children }: { children: ReactNode }) {
 
   const navigate = (patch: Patch) => go(hrefFor(patch));
 
+  const view = (href: string) => window.history.replaceState(null, "", href);
+
   return (
     <ReportNavContext
       value={{
@@ -54,6 +58,7 @@ export function ReportNavProvider({ children }: { children: ReactNode }) {
         hrefFor,
         navigate,
         go,
+        view,
         switchScope,
       }}
     >
@@ -64,14 +69,21 @@ export function ReportNavProvider({ children }: { children: ReactNode }) {
 
 export const useReportNav = () => use(ReportNavContext);
 
+export function useReportMetric(): TrendMetric {
+  const requested = useReportNav()?.query.get("metric");
+  return isTrendMetric(requested) ? requested : "rides";
+}
+
 export function ReportLink({
   patch,
   href,
+  view = false,
   children,
   ...props
 }: Omit<ComponentProps<typeof Link>, "href"> & {
   patch?: Patch;
   href?: string;
+  view?: boolean;
 }) {
   const nav = useReportNav();
   const target = href ?? nav?.hrefFor(patch ?? {}) ?? "#";
@@ -86,7 +98,8 @@ export function ReportLink({
         if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
           return;
         event.preventDefault();
-        nav.go(target);
+        if (view) nav.view(target);
+        else nav.go(target);
       }}
     >
       {children}

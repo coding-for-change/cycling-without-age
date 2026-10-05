@@ -33,13 +33,24 @@ import {
   type TrishawRideRow,
 } from "./services/rides";
 import {
+  countActiveRiders,
+  findActivePilots,
+  findActivityBuckets,
+  findChapterTallies,
   findEarliestRideStart,
-  findPassengersWithRideBefore,
-  findRiddenPassengers,
-  findRiddenPilots,
-  findRideFacts,
+  findPilotTallies,
+  findRiderCounts,
+  findRiderTallies,
+  type TallyFactRow,
 } from "./services/report-facts";
-import type { ActiveParticipantRows, ReportFact } from "./report";
+import {
+  tallies,
+  type ActivityBucketRow,
+  type ActivityFacts,
+  type PilotMembership,
+  type ReportTally,
+} from "./report";
+import type { ReportScope } from "./report-zones";
 
 export type {
   FeedAudience,
@@ -227,62 +238,83 @@ export async function bookRider(rideId: string, passengerId: string) {
 export const cancelBooking = (rideId: string, passengerId: string) =>
   deleteRosterEntry(rideId, passengerId);
 
-export const activityFacts = async (
-  chapterIds: string[],
-  from: Date,
-  to: Date,
-): Promise<ReportFact[]> =>
-  chapterIds.length
-    ? (await findRideFacts(chapterIds, from, to)).map(
-        ({ assignments, roster, ...ride }) => ({
-          ...ride,
-          pilotIds: assignments.map((a) => a.userId),
-          passengerIds: roster.map((r) => r.passengerId),
-        }),
-      )
-    : [];
+const tallyRow = (row: TallyFactRow) => ({
+  key: row.key,
+  side: row.side,
+  trips: Number(row.trips),
+  rides: Number(row.rides),
+  ms: Number(row.ms),
+});
 
-export const passengersWithRideBefore = async (
-  passengerIds: string[],
-  before: Date,
-) =>
-  passengerIds.length
-    ? (await findPassengersWithRideBefore(passengerIds, before)).map(
-        (r) => r.passengerId,
-      )
-    : [];
+export async function activityFacts(
+  scope: ReportScope,
+  { extras }: { extras: boolean },
+): Promise<ActivityFacts> {
+  if (!scope.chapterIds.length)
+    return { buckets: [], chapters: [], riders: [] };
+  const [buckets, chapters, riders] = await Promise.all([
+    findActivityBuckets(scope),
+    extras ? findChapterTallies(scope) : [],
+    findRiderCounts(scope, extras),
+  ]);
+  return {
+    buckets: buckets.map((row) => ({
+      side: row.side,
+      bucket: row.bucket,
+      model: row.model as ActivityBucketRow["model"],
+      kind: row.kind,
+      category: row.category as ActivityBucketRow["category"],
+      trips: Number(row.trips),
+      rides: Number(row.rides),
+      ms: Number(row.ms),
+    })),
+    chapters: chapters.map(tallyRow),
+    riders: riders.map((row) => ({
+      side: row.side,
+      riders: Number(row.riders),
+      newRiders: Number(row.newRiders),
+    })),
+  };
+}
+
+export async function peopleTallies(scope: ReportScope): Promise<{
+  pilots: Record<string, ReportTally>;
+  riders: Record<string, ReportTally>;
+}> {
+  if (!scope.chapterIds.length) return { pilots: {}, riders: {} };
+  const [pilots, riders] = await Promise.all([
+    findPilotTallies(scope),
+    findRiderTallies(scope),
+  ]);
+  return {
+    pilots: tallies(pilots.map(tallyRow)),
+    riders: tallies(riders.map(tallyRow)),
+  };
+}
 
 export async function activeParticipants(
   chapterIds: string[],
   since: Date,
   until: Date,
-): Promise<ActiveParticipantRows> {
-  if (!chapterIds.length) return { pilots: [], passengers: [] };
-  const [pilots, passengers] = await Promise.all([
-    findRiddenPilots(chapterIds, since, until),
-    findRiddenPassengers(chapterIds, since, until),
+): Promise<{ pilots: PilotMembership[]; riders: number }> {
+  if (!chapterIds.length) return { pilots: [], riders: 0 };
+  const [pilots, riders] = await Promise.all([
+    findActivePilots(chapterIds, since, until),
+    countActiveRiders(chapterIds, since, until),
   ]);
-  const unique = <T>(rows: T[], key: (row: T) => string) => [
-    ...new Map(rows.map((row) => [key(row), row])).values(),
-  ];
-  return {
-    pilots: unique(
-      pilots.map((p) => ({ userId: p.userId, chapterId: p.ride.chapterId })),
-      (p) => `${p.chapterId}:${p.userId}`,
-    ),
-    passengers: unique(
-      passengers.map((p) => ({
-        passengerId: p.passengerId,
-        chapterId: p.ride.chapterId,
-      })),
-      (p) => `${p.chapterId}:${p.passengerId}`,
-    ),
-  };
+  return { pilots, riders };
 }
 
 export const earliestRideStart = async (chapterIds: string[]) =>
-  chapterIds.length
-    ? ((await findEarliestRideStart(chapterIds))?.startsAt ?? null)
-    : null;
+  chapterIds.length ? findEarliestRideStart(chapterIds) : null;
 
-export { aggregateActivity, peopleHealth } from "./report";
+export {
+  aggregateActivity,
+  countryRollup,
+  emptyTally,
+  newRiders,
+  peopleHealth,
+  ranked,
+  yearBefore,
+} from "./report";
+export { reportScope } from "./report-zones";

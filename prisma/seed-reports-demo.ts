@@ -1,5 +1,5 @@
-import { TZDate } from "@date-fns/tz";
 import { prisma } from "@/lib/prisma";
+import { instantAt, wallClock } from "@/lib/calendar";
 import { fleet } from "@/features/fleet";
 import { chapters } from "@/features/chapters";
 import { defaultLocationFor } from "@/use-cases/manage-chapter";
@@ -12,6 +12,23 @@ import type {
 
 if (process.env.NODE_ENV === "production" && !process.env.FEATURE_BRANCH) {
   throw new Error("Refusing to seed: NODE_ENV=production");
+}
+
+const LOCAL_HOSTS = ["localhost", "127.0.0.1"];
+const databaseHost = () => {
+  try {
+    return new URL(process.env.DATABASE_URL ?? "").hostname;
+  } catch {
+    return "";
+  }
+};
+if (
+  !LOCAL_HOSTS.includes(databaseHost()) &&
+  process.env.ALLOW_DEMO_SEED !== "1"
+) {
+  throw new Error(
+    "Refusing to seed: DATABASE_URL is not local (set ALLOW_DEMO_SEED=1 to override)",
+  );
 }
 
 const DEMO = "demo-";
@@ -455,8 +472,8 @@ const WEEKDAY = [0.35, 1.0, 1.1, 1.15, 1.1, 1.0, 0.6];
 type Person = { id: string; weight: number; from: number; until: number };
 
 function localToday(timeZone: string) {
-  const now = new TZDate(Date.now(), timeZone);
-  return { y: now.getFullYear(), m: now.getMonth(), d: now.getDate() };
+  const { year, month, day } = wallClock(new Date(), timeZone);
+  return { y: year, m: month - 1, d: day };
 }
 
 function localDay(timeZone: string, offset: number) {
@@ -662,16 +679,9 @@ function planChapter(spec: ChapterSpec, chapterId: string, people: People) {
           : model === "pleasure"
             ? int(2, 4) * 30
             : int(1, 3) * 30;
-      const startsAt = new Date(
-        new TZDate(
-          day.y,
-          day.m,
-          day.d,
-          hour,
-          minute,
-          0,
-          spec.timeZone,
-        ).getTime(),
+      const startsAt = instantAt(
+        { year: day.y, month: day.m + 1, day: day.d, hour, minute },
+        spec.timeZone,
       );
       const endsAt = new Date(startsAt.getTime() + minutes * 60_000);
       const riderCount =

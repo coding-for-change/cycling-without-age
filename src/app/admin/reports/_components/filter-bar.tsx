@@ -30,6 +30,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ICONS } from "@/components/icons";
 import {
   REPORT_RANGE_PRESETS,
@@ -38,8 +39,7 @@ import {
 import type { ScopeArg } from "@/lib/commands";
 import { formatMessage } from "@/lib/i18n/format";
 import {
-  formatDateMedium,
-  formatDayMonthShort,
+  formatPeriod,
   formatTime,
   toIsoDateLocal,
   type Locale,
@@ -117,26 +117,14 @@ export function FilterBar({
         : "30d";
   const preset: Preset = nav?.pending ? optimistic : range.preset;
 
-  const period = (from: string, last: string) =>
-    formatMessage(
-      strings.period,
-      {
-        from:
-          from.slice(0, 4) === last.slice(0, 4)
-            ? formatDayMonthShort(from, locale)
-            : formatDateMedium(from, locale),
-        to: formatDateMedium(last, locale),
-      },
-      locale,
-    );
-
-  const current = period(range.from, range.last);
+  const current = formatMessage(
+    strings.period,
+    formatPeriod(range.from, range.last, locale),
+    locale,
+  );
   const comparing = formatMessage(
     strings.comparing,
-    {
-      from: formatDayMonthShort(previous.from, locale),
-      to: formatDateMedium(previous.last, locale),
-    },
+    formatPeriod(previous.from, previous.last, locale),
     locale,
   );
 
@@ -277,7 +265,6 @@ export function FilterBar({
                   </h3>
                   <ul className="flex flex-col gap-1">
                     {scopes.map((option) => {
-                      const Icon = ICONS[option.icon];
                       const selected = option.arg === activeScope;
                       return (
                         <li key={option.arg}>
@@ -294,17 +281,10 @@ export function FilterBar({
                                 : "hover:bg-canvas-deep",
                             )}
                           >
-                            <Icon
-                              aria-hidden
-                              className="size-4 text-ink-soft"
+                            <ScopeOption
+                              option={option}
+                              selected={selected}
                             />
-                            <span className="truncate">{option.label}</span>
-                            {selected ? (
-                              <Check
-                                aria-hidden
-                                className="ml-auto size-4"
-                              />
-                            ) : null}
                           </button>
                         </li>
                       );
@@ -332,37 +312,34 @@ function Segmented({
   wide?: boolean;
 }) {
   return (
-    <div
-      role="radiogroup"
+    <ToggleGroup
+      type="single"
+      value={value === "custom" ? "" : value}
+      onValueChange={(next) => {
+        if (isPreset(next)) onChange(next);
+      }}
       aria-label={strings.timeframe}
+      spacing={0.5}
       className={cn(
-        "flex shrink-0 items-center gap-0.5 rounded-lg bg-canvas-deep p-0.5",
-        wide && "grid grid-cols-6",
+        "shrink-0 rounded-lg bg-canvas-deep p-0.5",
+        wide && "grid w-full grid-cols-6",
       )}
     >
-      {REPORT_RANGE_PRESETS.map((preset) => {
-        const checked = preset === value;
-        return (
-          <button
-            key={preset}
-            type="button"
-            role="radio"
-            aria-checked={checked}
-            title={strings.presetNames[preset]}
-            onClick={() => onChange(preset)}
-            className={cn(
-              "h-7 rounded-md px-2.5 text-xs font-medium tabular-nums transition-[background-color,color,box-shadow] outline-none focus-visible:ring-2 focus-visible:ring-ink",
-              wide && "h-9",
-              checked
-                ? "bg-canvas text-ink shadow-xs"
-                : "text-ink-soft hover:text-ink",
-            )}
-          >
-            {strings.presets[preset]}
-          </button>
-        );
-      })}
-    </div>
+      {REPORT_RANGE_PRESETS.map((preset) => (
+        <ToggleGroupItem
+          key={preset}
+          value={preset}
+          title={strings.presetNames[preset]}
+          aria-label={strings.presetNames[preset]}
+          className={cn(
+            "h-7 min-w-0 rounded-md px-2.5 text-xs font-medium text-ink-soft tabular-nums transition-[background-color,color,box-shadow] hover:bg-transparent hover:text-ink focus-visible:ring-2 focus-visible:ring-ink data-[state=on]:bg-canvas data-[state=on]:text-ink data-[state=on]:shadow-xs",
+            wide && "h-9",
+          )}
+        >
+          {strings.presets[preset]}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
   );
 }
 
@@ -530,7 +507,6 @@ function ScopeMenu({
           {label}
         </DropdownMenuLabel>
         {scopes.map((option) => {
-          const Icon = ICONS[option.icon];
           const selected = option.arg === active;
           return (
             <DropdownMenuItem
@@ -541,21 +517,39 @@ function ScopeMenu({
               }}
               className="gap-3 rounded-xl py-2.5"
             >
-              <Icon
-                aria-hidden
-                className="size-4 text-ink-soft"
+              <ScopeOption
+                option={option}
+                selected={selected}
               />
-              <span className="truncate">{option.label}</span>
-              {selected ? (
-                <Check
-                  aria-hidden
-                  className="ml-auto size-4 shrink-0"
-                />
-              ) : null}
             </DropdownMenuItem>
           );
         })}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function ScopeOption({
+  option,
+  selected,
+}: {
+  option: ScopeChoice;
+  selected: boolean;
+}) {
+  const Icon = ICONS[option.icon];
+  return (
+    <>
+      <Icon
+        aria-hidden
+        className="size-4 text-ink-soft"
+      />
+      <span className="truncate">{option.label}</span>
+      {selected ? (
+        <Check
+          aria-hidden
+          className="ml-auto size-4 shrink-0"
+        />
+      ) : null}
+    </>
   );
 }

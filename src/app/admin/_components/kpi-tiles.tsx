@@ -1,15 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import NumberFlow from "@number-flow/react";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
-import { Area, AreaChart, ResponsiveContainer, YAxis } from "recharts";
 import { formatMessage } from "@/lib/i18n/format";
 import { formatNumber, type Locale } from "@/lib/format";
+import type { Locale as Language } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
+import {
+  DeltaPill,
+  type DeltaStrings,
+} from "../reports/_components/delta-pill";
+import { ReportLink, useReportMetric } from "../reports/_components/report-nav";
 import { isTrendMetric, type KpiTile } from "./kpi-data";
-import { ReportLink, useReportNav } from "./report-nav";
+import { Sparkline } from "./sparkline";
 
 export type KpiTileStrings = {
   label: string;
@@ -20,22 +23,21 @@ export type KpiTileStrings = {
 export function KpiTiles({
   tiles,
   locale,
+  language,
   strings,
+  deltaStrings,
   hrefs,
 }: {
   tiles: KpiTile[];
   locale: Locale;
+  language: Language;
   strings: KpiTileStrings;
+  deltaStrings: DeltaStrings;
   hrefs?: Partial<Record<KpiTile["metric"], string>>;
 }) {
-  const nav = useReportNav();
   const reduceMotion = useReducedMotion();
-  const requested = nav?.query.get("metric");
-  const selected = hrefs
-    ? null
-    : isTrendMetric(requested)
-      ? requested
-      : "rides";
+  const metric = useReportMetric();
+  const selected = hrefs ? null : metric;
 
   return (
     <ul
@@ -62,7 +64,9 @@ export function KpiTiles({
             tile={tile}
             headline={index === 0}
             locale={locale}
+            language={language}
             strings={strings}
+            deltaStrings={deltaStrings}
             selected={tile.metric === selected}
             href={hrefs?.[tile.metric]}
           />
@@ -76,14 +80,18 @@ function Tile({
   tile,
   headline,
   locale,
+  language,
   strings,
+  deltaStrings,
   selected,
   href,
 }: {
   tile: KpiTile;
   headline: boolean;
   locale: Locale;
+  language: Language;
   strings: KpiTileStrings;
+  deltaStrings: DeltaStrings;
   selected: boolean;
   href?: string;
 }) {
@@ -91,11 +99,17 @@ function Tile({
     <>
       <span className="flex items-center justify-between gap-2">
         <span className="truncate text-2sm text-ink-soft">{tile.label}</span>
-        <DeltaPill
-          tile={tile}
-          locale={locale}
-          newLabel={strings.new}
-        />
+        {tile.delta === null && tile.value === 0 ? null : (
+          <DeltaPill
+            value={tile.delta}
+            unit="relative"
+            goodWhen={tile.goodWhen}
+            newLabel={strings.new}
+            notation={locale}
+            language={language}
+            strings={deltaStrings}
+          />
+        )}
       </span>
       <NumberFlow
         value={tile.value}
@@ -127,7 +141,7 @@ function Tile({
       : "border-line hover:border-ink/20 hover:bg-canvas-deep/40",
   );
 
-  if (tile.metric === "riders" && !href)
+  if (!href && !isTrendMetric(tile.metric))
     return (
       <div
         className={className}
@@ -137,111 +151,25 @@ function Tile({
       </div>
     );
 
-  const label = formatMessage(strings.select, { metric: tile.label }, locale);
-
-  if (href)
-    return (
-      <Link
-        href={href}
-        className={className}
-        title={tile.previousLabel}
-        aria-label={`${tile.label}: ${formatNumber(tile.value, locale, { maximumFractionDigits: tile.fractionDigits })}`}
-      >
-        {body}
-      </Link>
-    );
-
   return (
     <ReportLink
+      href={href}
       patch={{ metric: tile.metric === "rides" ? null : tile.metric }}
+      view={!href}
       className={className}
       aria-current={selected ? "true" : undefined}
-      title={`${label} · ${tile.previousLabel}`}
+      aria-label={
+        href
+          ? `${tile.label}: ${formatNumber(tile.value, locale, { maximumFractionDigits: tile.fractionDigits })}`
+          : undefined
+      }
+      title={
+        href
+          ? tile.previousLabel
+          : `${formatMessage(strings.select, { metric: tile.label }, locale)} · ${tile.previousLabel}`
+      }
     >
       {body}
     </ReportLink>
-  );
-}
-
-function DeltaPill({
-  tile,
-  locale,
-  newLabel,
-}: {
-  tile: KpiTile;
-  locale: Locale;
-  newLabel: string;
-}) {
-  if (tile.delta === null)
-    return tile.value > 0 ? (
-      <span className="rounded-full bg-mint-tint px-2 text-xs leading-5 font-medium text-ink">
-        {newLabel}
-      </span>
-    ) : null;
-
-  const flat = Math.abs(tile.delta) < 0.005;
-  const up = tile.delta > 0;
-  const good = !flat && (tile.goodWhen === "up" ? up : !up);
-  const Icon = flat ? ArrowRight : up ? ArrowUpRight : ArrowDownRight;
-
-  return (
-    <span
-      className={cn(
-        "inline-flex shrink-0 items-center gap-0.5 rounded-full px-1.5 text-xs leading-5 font-medium tabular-nums",
-        good ? "bg-mint-tint text-ink" : "bg-canvas-deep text-ink-soft",
-      )}
-    >
-      <Icon
-        aria-hidden
-        className="size-3"
-      />
-      {formatNumber(tile.delta, locale, {
-        style: "percent",
-        signDisplay: "exceptZero",
-        maximumFractionDigits: Math.abs(tile.delta) < 0.1 ? 1 : 0,
-      })}
-    </span>
-  );
-}
-
-function Sparkline({
-  values,
-  emphasis,
-}: {
-  values: number[];
-  emphasis: boolean;
-}) {
-  const data = values.map((value, index) => ({ index, value }));
-  return (
-    <span
-      aria-hidden
-      className="block h-8 w-20 shrink-0"
-    >
-      <ResponsiveContainer
-        width="100%"
-        height="100%"
-        initialDimension={{ width: 80, height: 32 }}
-      >
-        <AreaChart
-          data={data}
-          margin={{ top: 2, right: 0, bottom: 0, left: 0 }}
-        >
-          <YAxis
-            hide
-            domain={[0, "dataMax"]}
-          />
-          <Area
-            type="monotone"
-            dataKey="value"
-            stroke={emphasis ? "var(--chart-1)" : "var(--chart-2)"}
-            strokeWidth={1.5}
-            fill={emphasis ? "var(--chart-1)" : "var(--chart-2)"}
-            fillOpacity={0.12}
-            dot={false}
-            isAnimationActive={false}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </span>
   );
 }

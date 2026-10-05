@@ -22,28 +22,26 @@ import {
 import type { ReportBucket, RideModelName } from "@/features/rides";
 import { formatMessage } from "@/lib/i18n/format";
 import {
-  formatDateMedium,
   formatDayMonthShort,
   formatMonthShort,
   formatMonthYearLong,
   formatNumber,
+  formatPeriod,
   formatShortDateWithWeekday,
   type Locale,
 } from "@/lib/format";
 import { haptics } from "@/lib/native/haptics";
 import { cn } from "@/lib/utils";
 import { EmptyCard, type EmptyCardStrings } from "./empty-card";
-import { isTrendMetric, type TrendMetric } from "./kpi-data";
+import type { TrendMetric } from "../../_components/kpi-data";
 import { ReportCard } from "./report-card";
-import { useReportNav } from "./report-nav";
+import { useReportMetric, useReportNav } from "./report-nav";
 
 const MODELS: RideModelName[] = ["event", "pleasure", "functional"];
 
-const SWATCH: Record<RideModelName, string> = {
-  event: "bg-chart-1",
-  pleasure: "bg-chart-2",
-  functional: "bg-chart-3",
-};
+const COLORS = Object.fromEntries(
+  MODELS.map((model, index) => [model, `var(--chart-${index + 1})`]),
+) as Record<RideModelName, string>;
 
 export type TrendChartStrings = {
   title: string;
@@ -67,21 +65,18 @@ type Row = Record<RideModelName, number> & {
 export function TrendChart({
   series,
   range,
-  defaultMetric = "rides",
   locale,
   strings,
   empty,
 }: {
   series: ReportBucket[];
   range: { from: string; last: string; grain: ReportGrain };
-  defaultMetric?: TrendMetric;
   locale: Locale;
   strings: TrendChartStrings;
   empty: EmptyCardStrings;
 }) {
   const nav = useReportNav();
-  const requested = nav?.query.get("metric");
-  const metric = isTrendMetric(requested) ? requested : defaultMetric;
+  const metric = useReportMetric();
   const lastIndex = useRef<number | null>(null);
   const digits = metric === "hours" ? 1 : 0;
 
@@ -97,9 +92,9 @@ export function TrendChart({
   const zoomable = range.grain !== "day";
 
   const config = Object.fromEntries(
-    MODELS.map((model, index) => [
+    MODELS.map((model) => [
       model,
-      { label: strings.models[model], color: `var(--chart-${index + 1})` },
+      { label: strings.models[model], color: COLORS[model] },
     ]),
   ) satisfies ChartConfig;
 
@@ -151,14 +146,7 @@ export function TrendChart({
     <ReportCard
       title={strings.metrics[metric]}
       meta={title}
-      action={
-        hasData ? (
-          <Legend
-            strings={strings}
-            showPrevious
-          />
-        ) : null
-      }
+      action={hasData ? <Legend strings={strings} /> : null}
     >
       {hasData ? (
         <div
@@ -230,6 +218,7 @@ export function TrendChart({
                 content={({ active, payload }) => {
                   const row = payload?.[0]?.payload as Row | undefined;
                   if (!active || !row) return null;
+                  const period = zoomable ? zoomPeriod(row.start) : null;
                   return (
                     <TooltipCard
                       heading={heading(row.start)}
@@ -237,22 +226,13 @@ export function TrendChart({
                       strings={strings}
                       value={value}
                       hint={
-                        zoomable
+                        period
                           ? formatMessage(
                               strings.zoomTo,
                               {
                                 period: formatMessage(
                                   strings.period,
-                                  {
-                                    from: formatDayMonthShort(
-                                      zoomPeriod(row.start).from,
-                                      locale,
-                                    ),
-                                    to: formatDateMedium(
-                                      zoomPeriod(row.start).to,
-                                      locale,
-                                    ),
-                                  },
+                                  formatPeriod(period.from, period.to, locale),
                                   locale,
                                 ),
                               },
@@ -305,13 +285,7 @@ export function TrendChart({
   );
 }
 
-function Legend({
-  strings,
-  showPrevious,
-}: {
-  strings: TrendChartStrings;
-  showPrevious: boolean;
-}) {
+function Legend({ strings }: { strings: TrendChartStrings }) {
   return (
     <ul className="flex flex-wrap items-center gap-3 text-xs text-ink-soft">
       {MODELS.map((model) => (
@@ -321,20 +295,19 @@ function Legend({
         >
           <span
             aria-hidden
-            className={cn("size-2.5 rounded-sm", SWATCH[model])}
+            style={{ backgroundColor: COLORS[model] }}
+            className="size-2.5 rounded-sm"
           />
           {strings.models[model]}
         </li>
       ))}
-      {showPrevious ? (
-        <li className="flex items-center gap-1.5">
-          <span
-            aria-hidden
-            className="h-0 w-3 border-t-2 border-dashed border-chart-previous"
-          />
-          {strings.previous}
-        </li>
-      ) : null}
+      <li className="flex items-center gap-1.5">
+        <span
+          aria-hidden
+          className="h-0 w-3 border-t-2 border-dashed border-chart-previous"
+        />
+        {strings.previous}
+      </li>
     </ul>
   );
 }
@@ -363,7 +336,8 @@ function TooltipCard({
           >
             <span
               aria-hidden
-              className={cn("size-2 rounded-xs", SWATCH[model])}
+              style={{ backgroundColor: COLORS[model] }}
+              className="size-2 rounded-xs"
             />
             <span className="text-ink-soft">{strings.models[model]}</span>
             <span className="ml-auto font-medium text-ink tabular-nums">

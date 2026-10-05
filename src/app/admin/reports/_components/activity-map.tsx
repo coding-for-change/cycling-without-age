@@ -30,6 +30,7 @@ export function ActivityMap({
 }) {
   return (
     <ReportCard
+      className="overflow-hidden"
       title={strings.title}
       action={<span className="text-xs text-ink-soft">{strings.hint}</span>}
     >

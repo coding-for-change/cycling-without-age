@@ -46,7 +46,6 @@
     "@capacitor/keyboard": "^8.0.5",
     "@capacitor/splash-screen": "^8.0.2",
     "@capgo/capacitor-passkey": "^8.5.1",
-    "@date-fns/tz": "^1.5.0",
     "@dicebear/core": "^10.7.0",
     "@dicebear/styles": "^10.6.0",
     "@formatjs/icu-messageformat-parser": "^3.5.20",

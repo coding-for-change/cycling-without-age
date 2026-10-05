@@ -228,6 +228,20 @@ export function formatDateMedium(value: Date | string, locale: Locale): string {
   }).format(toCalendarDate(value));
 }
 
+export function formatPeriod(
+  from: string,
+  last: string,
+  locale: Locale,
+): { from: string; to: string } {
+  return {
+    from:
+      from.slice(0, 4) === last.slice(0, 4)
+        ? formatDayMonthShort(from, locale)
+        : formatDateMedium(from, locale),
+    to: formatDateMedium(last, locale),
+  };
+}
+
 /** `7` (en-US) · `7.` (da-DK) */
 export function formatDayOfMonth(value: Date | string, locale: Locale): string {
   return dateTimeFormatter(locale, {

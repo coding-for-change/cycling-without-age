@@ -4,12 +4,16 @@ import { reportRangeParams } from "@/features/rides";
 import { activityReport } from "@/use-cases/activity-report";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
+import { formatDateMedium, formatPeriod, resolveLocale } from "@/lib/format";
 import {
-  formatDateMedium,
-  formatDayMonthShort,
-  resolveLocale,
-} from "@/lib/format";
-import { readActiveScope, type AdminSearchParams } from "../active-scope";
+  first,
+  readActiveScope,
+  type AdminSearchParams,
+} from "../active-scope";
+import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
+import { PageHeaderSkeleton } from "../_components/admin-skeletons";
+import { kpiTiles } from "../_components/kpi-data";
+import { KpiTiles } from "../_components/kpi-tiles";
 import { scopeArgOf } from "../scope-cookie";
 import { scopeChoices } from "../scopes";
 import { ActivityMap } from "./_components/activity-map";
@@ -17,8 +21,6 @@ import { CancellationsCard } from "./_components/cancellations-card";
 import type { EmptyCardStrings } from "./_components/empty-card";
 import { FilterBar } from "./_components/filter-bar";
 import { HighlightProvider } from "./_components/highlight-provider";
-import { isTrendMetric, kpiTiles } from "./_components/kpi-data";
-import { KpiTiles } from "./_components/kpi-tiles";
 import { ModelSplitCard } from "./_components/model-split-card";
 import { PeopleHealthCard } from "./_components/people-health-card";
 import { Rankings } from "./_components/rankings";
@@ -33,14 +35,21 @@ export default function ReportsPage({
   searchParams: Promise<AdminSearchParams>;
 }) {
   return (
-    <Suspense fallback={<ReportsSkeleton />}>
-      <Reports searchParams={searchParams} />
-    </Suspense>
+    <AdminPageShell>
+      <Suspense fallback={<PageHeaderSkeleton />}>
+        <ReportsHeader />
+      </Suspense>
+      <Suspense fallback={<ReportsSkeleton />}>
+        <Reports searchParams={searchParams} />
+      </Suspense>
+    </AdminPageShell>
   );
 }
 
-const one = (value: string | string[] | undefined) =>
-  Array.isArray(value) ? value[0] : value;
+async function ReportsHeader() {
+  const dict = await getDictionary();
+  return <AdminPageHeader title={dict.admin.pages.reports.title} />;
+}
 
 async function Reports({
   searchParams,
@@ -58,9 +67,9 @@ async function Reports({
       chapterIds: chapterIds.toSorted(),
       includePeople: active.kind === "chapter",
       ...reportRangeParams({
-        range: one(params.range),
-        from: one(params.from),
-        to: one(params.to),
+        range: first(params.range),
+        from: first(params.from),
+        to: first(params.to),
       }),
     }),
     getDictionary(),
@@ -69,21 +78,13 @@ async function Reports({
   ]);
   const notation = resolveLocale(head.get("accept-language"));
   const strings = dict.admin.reports;
-  const requestedMetric = one(params.metric);
-  const metric = isTrendMetric(requestedMetric) ? requestedMetric : "rides";
   const scopeArg = scopeArgOf(active);
   const { range } = report;
   const scopeCountries = scope.countries.map((country) => country.code);
   const showYear = range.grain === "month" ? undefined : strings.empty.showYear;
   const periodLabel = formatMessage(
     strings.filters.period,
-    {
-      from:
-        range.from.slice(0, 4) === range.last.slice(0, 4)
-          ? formatDayMonthShort(range.from, notation)
-          : formatDateMedium(range.from, notation),
-      to: formatDateMedium(range.last, notation),
-    },
+    formatPeriod(range.from, range.last, notation),
     notation,
   );
 
@@ -130,7 +131,9 @@ async function Reports({
               <KpiTiles
                 tiles={kpiTiles(report, dict, notation)}
                 locale={notation}
+                language={language}
                 strings={strings.kpis}
+                deltaStrings={strings.delta}
               />
             }
             trend={
@@ -143,7 +146,6 @@ async function Reports({
                 <TrendChart
                   series={report.series}
                   range={range}
-                  defaultMetric={metric}
                   locale={notation}
                   strings={{
                     ...strings.trend,
@@ -174,8 +176,8 @@ async function Reports({
                 scope={active.kind}
                 chapters={report.chapters}
                 countries={report.countries}
-                pilots={active.kind === "chapter" ? report.pilots : null}
-                riders={active.kind === "chapter" ? report.riders : null}
+                pilots={report.pilots}
+                riders={report.riders}
                 scopeCountries={scopeCountries}
                 periodLabel={periodLabel}
                 notation={notation}

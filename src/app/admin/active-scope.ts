@@ -7,7 +7,7 @@ import { storedActiveScope } from "./scope-cookie";
 
 export type AdminSearchParams = Record<string, string | string[] | undefined>;
 
-const first = (value: string | string[] | undefined) =>
+export const first = (value: string | string[] | undefined) =>
   Array.isArray(value) ? value[0] : value;
 
 export const scopeQuery = (active: ActiveScope) =>

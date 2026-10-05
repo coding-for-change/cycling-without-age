@@ -7,16 +7,19 @@ import { ArrowDown, ArrowUp, ChevronRight, Minus, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { DataTableStrings } from "@/components/ui/data-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useDrawerParam } from "@/hooks/use-drawer-param";
 import type { Locale } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale as Language } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
+import { hrefWith } from "../../_components/href-with";
 import { hoverProps, useHighlight } from "./highlight-provider";
 import { ReportCard } from "./report-card";
 import { EmptyCard } from "./empty-card";
 import { RankingDrawer } from "./ranking-drawer";
 import { ReportLink } from "./report-nav";
+import { ShareBar } from "./share-bar";
 import {
   formatRankValue,
   rankEntries,
@@ -34,7 +37,6 @@ import {
   parseRankMetric,
   parseRankingTab,
   rankingTabs,
-  withParam,
   type RankMetric,
   type RankedRow,
   type RankingTab,
@@ -137,18 +139,12 @@ function RankRow({
             {formatRankValue(ranked.value, metric, notation, language, strings)}
           </span>
         </span>
-        <span
-          aria-hidden
-          className="h-1 overflow-hidden rounded-full bg-canvas-deep"
-        >
-          <span
-            style={{ width: `${Math.max(ranked.share * 100, 2)}%` }}
-            className={cn(
-              "block h-full rounded-full transition-[width,background-color] duration-500 motion-reduce:transition-none",
-              focused ? "bg-mint-deep" : "bg-mint",
-            )}
-          />
-        </span>
+        <ShareBar
+          value={ranked.share}
+          max={1}
+          tone={focused ? "deep" : "mint"}
+          thin
+        />
       </span>
       <span className="flex w-10 shrink-0 justify-end">
         <Movement
@@ -209,28 +205,27 @@ function MetricSwitch({
   strings: RankingsStrings;
 }) {
   return (
-    <div
-      role="group"
+    <ToggleGroup
+      type="single"
+      value={value}
+      onValueChange={(next) => {
+        const picked = metrics.find((metric) => metric === next);
+        if (picked) onChange(picked);
+      }}
       aria-label={strings.metricLabel}
-      className="inline-flex rounded-(--r-card) bg-canvas-deep p-0.5"
+      spacing={0.5}
+      className="rounded-(--r-card) bg-canvas-deep p-0.5"
     >
       {metrics.map((metric) => (
-        <button
+        <ToggleGroupItem
           key={metric}
-          type="button"
-          aria-pressed={metric === value}
-          onClick={() => onChange(metric)}
-          className={cn(
-            "min-h-8 rounded-md px-3 text-xs font-medium transition-colors",
-            metric === value
-              ? "bg-canvas text-ink shadow-soft"
-              : "text-ink-soft hover:text-ink",
-          )}
+          value={metric}
+          className="h-auto min-h-8 rounded-md px-3 text-xs font-medium text-ink-soft transition-colors hover:bg-transparent hover:text-ink focus-visible:ring-2 focus-visible:ring-ink data-[state=on]:bg-canvas data-[state=on]:text-ink data-[state=on]:shadow-soft"
         >
           {strings.metrics[metric]}
-        </button>
+        </ToggleGroupItem>
       ))}
-    </div>
+    </ToggleGroup>
   );
 }
 
@@ -275,12 +270,9 @@ export function Rankings({
     window.history.replaceState(
       null,
       "",
-      withParam(
-        pathname,
-        search,
-        RANK_PARAM,
-        metric === "rides" ? null : metric,
-      ),
+      hrefWith(pathname, search, {
+        [RANK_PARAM]: metric === "rides" ? null : metric,
+      }),
     );
 
   const entriesFor = (which: RankingTab) =>

@@ -6,8 +6,6 @@ export type AdminTab = {
   href: string;
   label: string;
   count?: number;
-  disabled?: boolean;
-  badge?: string;
 };
 
 export function AdminTabs({
@@ -26,41 +24,26 @@ export function AdminTabs({
       aria-label={label}
       className="-mt-3 flex gap-1 overflow-x-auto border-b border-line"
     >
-      {tabs.map((tab) =>
-        tab.disabled ? (
-          <span
-            key={tab.key}
-            aria-disabled
-            className="-mb-px flex min-h-11 cursor-default items-center gap-2 border-b-2 border-transparent px-3 text-2sm whitespace-nowrap text-ink-faint"
-          >
-            {tab.label}
-            {tab.badge ? (
-              <span className="rounded-full border border-line px-1.5 text-xs leading-5 text-ink-soft">
-                {tab.badge}
-              </span>
-            ) : null}
-          </span>
-        ) : (
-          <Link
-            key={tab.key}
-            href={`${tab.href}${scopeQuery}`}
-            aria-current={tab.key === current ? "page" : undefined}
-            className={cn(
-              "-mb-px flex min-h-11 items-center gap-2 border-b-2 px-3 text-2sm whitespace-nowrap transition-colors",
-              tab.key === current
-                ? "border-ink font-medium text-ink"
-                : "border-transparent text-ink-soft hover:text-ink",
-            )}
-          >
-            {tab.label}
-            {tab.count ? (
-              <span className="grid h-5 min-w-5 place-items-center rounded-full bg-mint-deep px-1.5 text-xs font-medium text-white tabular-nums">
-                {tab.count}
-              </span>
-            ) : null}
-          </Link>
-        ),
-      )}
+      {tabs.map((tab) => (
+        <Link
+          key={tab.key}
+          href={`${tab.href}${scopeQuery}`}
+          aria-current={tab.key === current ? "page" : undefined}
+          className={cn(
+            "-mb-px flex min-h-11 items-center gap-2 border-b-2 px-3 text-2sm whitespace-nowrap transition-colors",
+            tab.key === current
+              ? "border-ink font-medium text-ink"
+              : "border-transparent text-ink-soft hover:text-ink",
+          )}
+        >
+          {tab.label}
+          {tab.count ? (
+            <span className="grid h-5 min-w-5 place-items-center rounded-full bg-mint-deep px-1.5 text-xs font-medium text-white tabular-nums">
+              {tab.count}
+            </span>
+          ) : null}
+        </Link>
+      ))}
     </nav>
   );
 }

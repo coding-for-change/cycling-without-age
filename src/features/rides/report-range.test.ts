@@ -1,8 +1,7 @@
+import { instantAt } from "@/lib/calendar";
 import {
   bucketKeys,
   grainFor,
-  localDate,
-  localMidnight,
   periodBounds,
   reportRangeParams,
   resolveReportRange,
@@ -149,32 +148,19 @@ describe("bucketKeys", () => {
   });
 });
 
-describe("chapter-local dates", () => {
-  it("puts a late evening ride in Munich on the next local day after midnight", () => {
-    expect(localDate(new Date("2026-06-30T22:30:00Z"), "Europe/Berlin")).toBe(
-      "2026-07-01",
-    );
-    expect(localDate(new Date("2026-06-30T22:30:00Z"), "UTC")).toBe(
-      "2026-06-30",
-    );
-  });
-
-  it("finds local midnight across a DST change", () => {
-    expect(localMidnight("2026-03-29", "Europe/Berlin").toISOString()).toBe(
-      "2026-03-28T23:00:00.000Z",
-    );
-    expect(localMidnight("2026-03-30", "Europe/Berlin").toISOString()).toBe(
-      "2026-03-29T22:00:00.000Z",
-    );
-  });
+describe("periodBounds", () => {
+  const midnight = (date: string, timeZone: string) => {
+    const [year, month, day] = date.split("-").map(Number);
+    return instantAt({ year, month, day, hour: 0, minute: 0 }, timeZone);
+  };
 
   it("widens query bounds enough for every zone", () => {
     const bounds = periodBounds({ from: "2026-09-01", to: "2026-09-02" });
     expect(bounds.from.getTime()).toBeLessThanOrEqual(
-      localMidnight("2026-09-01", "Pacific/Kiritimati").getTime(),
+      midnight("2026-09-01", "Pacific/Kiritimati").getTime(),
     );
     expect(bounds.to.getTime()).toBeGreaterThanOrEqual(
-      localMidnight("2026-09-02", "Pacific/Pago_Pago").getTime(),
+      midnight("2026-09-02", "Pacific/Pago_Pago").getTime(),
     );
   });
 });
