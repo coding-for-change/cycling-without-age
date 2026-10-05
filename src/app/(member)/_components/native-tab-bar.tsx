@@ -78,7 +78,7 @@ export function NativeTabBar({
         const target = current.find((item) => item.tab && item.key === id);
         if (!target || at === target.href) return;
         if (target.key === active) {
-          router.push(target.href, { transitionTypes: ["pop"] });
+          router.replace(target.href, { transitionTypes: ["pop"] });
           return;
         }
         haptics.tap();

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useTransition } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+import { clearOfflineCaches } from "@/lib/offline-caches";
 
 export function GoogleButton({ label }: { label: string }) {
   const [pending, startTransition] = useTransition();
@@ -14,6 +15,7 @@ export function GoogleButton({ label }: { label: string }) {
       disabled={pending}
       onClick={() =>
         startTransition(async () => {
+          await clearOfflineCaches().catch(() => {});
           await authClient.signIn.social({
             provider: "google",
             callbackURL: "/onboarding",

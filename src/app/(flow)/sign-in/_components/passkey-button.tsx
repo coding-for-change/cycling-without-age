@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { haptics } from "@/lib/native/haptics";
 import { isNative } from "@/lib/native/platform";
 import { signInWithPasskey } from "@/lib/passkey-client";
+import { clearOfflineCaches } from "@/lib/offline-caches";
 
 const NEVER_CHANGES = () => () => {};
 const hasPasskeys = () =>
@@ -33,6 +34,7 @@ export function PasskeyButton({ label }: { label: string }) {
 
           if (result.error) return;
           haptics.success();
+          await clearOfflineCaches().catch(() => {});
           router.replace("/onboarding");
         })
       }
