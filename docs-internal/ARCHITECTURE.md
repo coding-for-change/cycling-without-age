@@ -844,8 +844,11 @@ and deleting is what frees its square on the calendar (`rideNotCancelled` for an
 - **A round trip is written once.** `scheduleRide` with a `returnLeg` checks both windows under
   one lock and inserts both rows in the same transaction, the way back mirrored (origin and
   destination swapped) and linked by `returnLegOfId`. Either both legs exist or neither does.
-  Moving a leg keeps the way there before the way back (`legsOverlap`), a leg of a round trip
-  stays functional (`partOfRoundTrip`), and cancelling the way there takes the way back with it
+  Moving the way there moves a scheduled way back by as much as the way there's end moved, in
+  the same transaction and with both new windows checked under the lock, so the time at the
+  destination stays the same; a cancelled way back stays put. The way back moves on its own
+  but never to before the way there arrives (`legsOverlap`). A leg of a round trip stays
+  functional (`partOfRoundTrip`), and cancelling the way there takes the way back with it
   unless the admin unticks it.
 - **Cancellation has a reason code.** `Ride.cancellationReasonCode` is one of the Report 3
   buckets (`weather`, `rider`, `facility`, `volunteers`, `equipment`, `noRiders`, `other`);

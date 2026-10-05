@@ -74,6 +74,7 @@ export type RideEditorProps = {
     location: Place;
     destination: Place;
     leg: { kind: "back" | "there"; href: string; label: string } | null;
+    movesReturnLeg: boolean;
   };
   header: {
     title: string;
@@ -153,15 +154,18 @@ function EditorLayout({
   );
   const reschedule = (next: Partial<WallSlot>) =>
     rescheduleRideAction(id, next);
+  const timeLabels = ride.movesReturnLeg
+    ? { ...labels.field, saved: detail.movedWithReturn }
+    : labels.field;
   const start = useOptimisticSave(
     slot.start,
     (next) => reschedule({ start: next }),
-    labels.field,
+    timeLabels,
   );
   const duration = useOptimisticSave(
     String(slot.durationMinutes),
     (next) => reschedule({ durationMinutes: Number(next) }),
-    labels.field,
+    timeLabels,
   );
   const pilots = useOptimisticSave(
     String(ride.requiredPilots),
@@ -270,7 +274,7 @@ function EditorLayout({
                     placeholder={detail.date}
                     display={(value) => formatDate(value, notation)}
                     onSave={(next) => reschedule(next ? { date: next } : {})}
-                    labels={labels.field}
+                    labels={timeLabels}
                     className="text-2sm tabular-nums"
                   />
                 ) : (

@@ -336,12 +336,14 @@ export async function scheduleRide(input: RideInput, actorUserId: Actor) {
 
 /**
  * Moving a ride takes its trishaws along, so the new window is checked under
- * the lock like a new booking. The two legs of a round trip keep their order.
- */
-/**
- * Moving a ride takes its trishaws along, so the new window is checked under
- * the lock like a new booking. The two legs of a round trip keep their order.
- * The window is worked out from the ride as read under the lock.
+ * the lock like a new booking. The window is worked out from the ride as read
+ * under the lock.
+ *
+ * Moving the way there of a round trip moves a scheduled way back by as much
+ * as the way there's end moved, so the time at the destination stays the same
+ * and the doctor's appointment that moved a day moves both rides a day. A
+ * cancelled way back stays where it is and is no obstacle. The way back moves
+ * on its own, but never to before the way there arrives.
  */
 function moveRide(
   id: string,
@@ -355,35 +357,67 @@ function moveRide(
       ride.startsAt.getTime() === next.startsAt.getTime() &&
       ride.endsAt.getTime() === next.endsAt.getTime()
     )
-      return { ride, changed: false };
+      return { ride, changed: false, movedReturnLeg: false };
 
-    if (ride.returnLeg && next.endsAt > ride.returnLeg.startsAt)
-      throw new DomainError("legsOverlap");
-    if (ride.returnLegOf && next.startsAt < ride.returnLegOf.endsAt)
+    if (
+      ride.returnLegOf?.status === "scheduled" &&
+      next.startsAt < ride.returnLegOf.endsAt
+    )
       throw new DomainError("legsOverlap");
 
-    await reserveOrRefuse(
-      tx,
-      ride.trishaws.map(({ trishaw }) => trishaw.id),
-      [next],
-      [id],
-    );
-    const updated = await updateRide(id, next, tx);
-    await insertRideLogEntry(
-      id,
-      actorUserId,
-      "rescheduled",
-      { from: span(ride), to: span(next) },
-      tx,
-    );
-    await emit({
-      type: "ride.rescheduled",
-      rideId: id,
-      chapterId: ride.chapterId,
-      actorUserId,
-      changes: ["time"],
-    });
-    return { ride: updated, changed: true };
+    const back =
+      ride.returnLeg?.status === "scheduled"
+        ? await findRideDetail(ride.returnLeg.id, tx)
+        : null;
+    const shift = next.endsAt.getTime() - ride.endsAt.getTime();
+    const moves = [
+      { leg: ride, to: next },
+      ...(back && shift !== 0
+        ? [
+            {
+              leg: back,
+              to: {
+                startsAt: new Date(back.startsAt.getTime() + shift),
+                endsAt: new Date(back.endsAt.getTime() + shift),
+              },
+            },
+          ]
+        : []),
+    ];
+    const movingIds = moves.map(({ leg }) => leg.id);
+
+    for (const { leg, to } of moves)
+      await reserveOrRefuse(
+        tx,
+        leg.trishaws.map(({ trishaw }) => trishaw.id),
+        [to],
+        movingIds,
+      );
+
+    let updated = null;
+    for (const { leg, to } of moves) {
+      const row = await updateRide(leg.id, to, tx);
+      updated ??= row;
+      await insertRideLogEntry(
+        leg.id,
+        actorUserId,
+        "rescheduled",
+        {
+          from: span(leg),
+          to: span(to),
+          ...(leg.id === id ? {} : { withLegOf: id }),
+        },
+        tx,
+      );
+      await emit({
+        type: "ride.rescheduled",
+        rideId: leg.id,
+        chapterId: leg.chapterId,
+        actorUserId,
+        changes: ["time"],
+      });
+    }
+    return { ride: updated!, changed: true, movedReturnLeg: moves.length > 1 };
   });
 }
 

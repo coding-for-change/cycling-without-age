@@ -271,6 +271,7 @@ export async function RideBody({
             longitude: ride.destinationLongitude,
           },
           leg,
+          movesReturnLeg: ride.returnLeg?.status === "scheduled",
         }}
         header={{
           title: formatMessage(
