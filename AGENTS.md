@@ -63,7 +63,7 @@ Constraint: If an import statement violates this map, you MUST refactor the logi
 
 ## 5. DOCUMENTATION REQUIREMENTS
 - `docs-internal/ARCHITECTURE.md`: Maintain this file as the source of truth. It must explain the Facade-Service-UseCase hierarchy.
-- `docs-internal/architecture/dependency-graph.md`: Every time a new feature is added, update a Mermaid diagram showing which Use Cases call which Facades.
+- `docs-internal/architecture/dependency-graph.md`: When a Use Case is added or changes the Facades it coordinates, update its row in the table.
 
 ## 6. AI OPERATIONAL RULES
 Actionable Chain: When asked to build a feature:

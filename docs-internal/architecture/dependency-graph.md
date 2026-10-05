@@ -32,7 +32,7 @@ calls that facade directly. Its old work is two listeners in the worker.
 | `complete-onboarding-profile` | `membership`, `passengers`, `profile` | Writes the account's own details, creates the rider profile a ride will point at, and stamps `onboardedAt`. The welcome mail is no longer sent here: `profile.completeOnboarding` emits `user.onboarded` and the pipeline does the rest, exactly once. |
 | `notifications/notify` | `notifications` (+ the kinds) | The generic listener. A kind names the recipients and the parameters; this writes one inbox row each and queues push and email per the kind's policy. Runs in the worker, from an event, with no session. |
 | `notifications/deliver-email` | `notifications`, `profile`, `chapters` (+ `activity`, `mailer`) | One email for one `Notification`, in the recipient's own locale (hence `profile`), with the attempt recorded on the `Delivery` row. A delayed `ifNoPush` job re-checks here whether the push landed or the row was already read. `chapters.getSettings` supplies the chapter's reply-to, so an answer goes back to the chapter the mail was about. |
-| `notifications/deliver-push` | `notifications`, `profile` (+ `lib/push`) | One push for one `Notification`: the recipient's opt-in and device tokens, the locale for the copy, `sendPush` through `firebase-admin`, and dead tokens pruned from the `device` table. A kind may also carry a `chapterAllowsPush` hook, which the kinds (U19) answer from `chapters`. Missing credentials are a `skipped` row, not a retry. |
+| `notifications/deliver-push` | `notifications`, `profile` (+ `lib/push`) | One push for one `Notification`: the recipient's opt-in and device tokens, the locale for the copy, `sendPush` through `firebase-admin`, and dead tokens pruned from the `device` table. A kind may also carry a `chapterAllowsPush` hook, which the notification kinds answer from `chapters`. Missing credentials are a `skipped` row, not a retry. |
 | `notifications/inbox` | `notifications` (+ the kinds) | The bell's read model: stored payloads rendered back into `{ title, body, href }` in the reader's locale, plus the unseen count. Its kind lookup is non-throwing, so a retired kind leaves a gap in the list instead of blanking the bell. |
 | `member-home` | `chapters`, `membership` | Where a member belongs: their memberships, their open applications and the chapter rows behind both. `cache()`d, because the sidebar subtitle and the home's chapter cards ask it in the same request from two different Suspense boundaries. |
 | `update-own-details` | `passengers`, `profile` | `birthDate` and `gender` are deliberately duplicated onto the rider row an account books its own rides with, so one edit in the account surface has to reach both. A name-only edit stops at `profile` — splitting one string back into `firstName`/`lastName` would be lossy. |
@@ -48,11 +48,11 @@ calls that facade directly. Its old work is two listeners in the worker.
 | `chat/oversight` | `chat`, `profile` | Maps an `AdminScope` plus the active scope to chapter ids and names the participants of a direct conversation. It authorises nothing itself — the page runs `requireAdminScope` and re-guards on the conversation's own `chapterId`. |
 | `chat-notifications/notify-chat-message` | `chat`, `profile`, `notifications` (+ `lib/realtime` presence, BullMQ) | The `chat.messageSent` listener. Drops the sender, then per recipient in chunks of 25: mute, `presence.isFocusedOn`, preference, device tokens — a `chat` push job for anyone reachable, a debounced `chat-digest` mail job for anyone not. Writes no `Notification` row: chat never appears in the bell. |
 | `chat-notifications/deliver-chat-push` | `chat`, `profile`, `notifications` (+ `lib/push`) | One banner for one message, re-deciding at wake-up: still unread, still unmuted, still opted in. Titled "Anna Berg" or "Anna Berg · Saturday crew", body stripped of markdown to 140 characters, collapsed per conversation so ten messages are one banner. |
-| `calendar-feed` | `calendar-feeds`, `membership`, `passengers`, `rides` (+ `lib/ics`) | One poll of a subscribed calendar: `calendar-feeds` turns the address into an owner (signature first, then the row, then the ban check), `membership` says where that owner may read rides as a pilot (`/pilot`'s rule: the pilot role somewhere, current membership of the ride's chapter), `passengers` names the riders they manage, and `rides` returns the union with nobody's name in it. The strings come from the owner's stored locale, because a poll carries no session. Called only from the feed route (RT3). |
+| `calendar-feed` | `calendar-feeds`, `membership`, `passengers`, `rides` (+ `lib/ics`) | One poll of a subscribed calendar: `calendar-feeds` turns the address into an owner (signature first, then the row, then the ban check), `membership` says where that owner may read rides as a pilot (`/pilot`'s rule: the pilot role somewhere, current membership of the ride's chapter), `passengers` names the riders they manage, and `rides` returns the union with nobody's name in it. The strings come from the owner's stored locale, because a poll carries no session. Called only from the feed route `/api/calendar/[file]`. |
 | `schedule-ride` | `fleet`, `rides` | Whether a chapter may use a trishaw (its location, a pool it was approved for, the status) is the fleet's rule; the reservation under a row lock is the calendar's. `allocateTrishaws` checks only the trishaws being *added*, so one grounded after allocation stays on the ride with a warning instead of blocking every other edit. `allocationChoices` reads overlapping rides across every chapter that shares a pool, because a pooled bike booked by the neighbour is still booked. |
 | `report-damage` | `fleet`, `rides` | A pilot may report only on a ride they were assigned to and a trishaw that was on it (`rides`); the damage, the grounding and the `trishaw.damageReported` event are `fleet`'s. The upcoming rides a grounding endangers come from `rides` and travel in the event. |
 | `leave-pool` | `fleet`, `rides` | Leaving is blocked while the chapter still has future rides with the pool's trishaws — that count is the calendar's. |
-| `activity-report` | `chapters`, `membership`, `passengers`, `accounts`, `rides` | The Reports dashboard and the Overview KPI strip. `chapters` gives the scope's zones, pins and countries; `rides` the ride facts, the pure aggregation and who rode in the last 12 months; `membership` the pilot members and `passengers` the riders of the scope for active/inactive; names come from `accounts` and `passengers` only when `includePeople` (chapter scope). `"use cache"` tagged through `lib/cache-tags` (`reports` plus one `reports:chapter:<id>` per chapter); the actions ACT5–ACT8 and ACT11 call `invalidateReports` from `lib/cache-tags`, not the use case. |
+| `activity-report` | `chapters`, `membership`, `passengers`, `accounts`, `rides` | The Reports dashboard and the Overview KPI strip. `chapters` gives the scope's zones, pins and countries; `rides` the ride facts, the pure aggregation and who rode in the last 12 months; `membership` the pilot members and `passengers` the riders of the scope for active/inactive; names come from `accounts` and `passengers` only when `includePeople` (chapter scope). `"use cache"` tagged through `lib/cache-tags` (`reports` plus one `reports:chapter:<id>` per chapter); the admin Server Actions call `invalidateReports` from `lib/cache-tags`, not the use case. |
 | `move-trishaw` | `fleet`, `rides` | A move is refused while a chapter that would lose the trishaw (it reaches the old location but not the new one) still has future rides with it. Who reaches a location is the fleet's rule; the count is the calendar's. |
 | `trishaw-history` | `fleet`, `rides` | One timeline from rides (with pilots), damages and the trishaw log. |
 | `finish-ride` | `chapters`, `fleet`, `rides` | The pilot's post-ride page: the chapter's post-ride instructions, and per trishaw its location's return instructions and access code — only for the ride's own pilots. |
@@ -65,27 +65,28 @@ who may start one needs `membership` and `chapters`. Drawing a row needs presenc
 react, mark read, mute, leave, freeze, continue — stays a single facade call behind
 `features/chat/actions`, with no use case in between.
 
-`lib/realtime` (RTH) and `lib/crypto/chat-cipher` (CRY) are cross-cutting infrastructure, the
+`lib/realtime` and `lib/crypto/chat-cipher` are cross-cutting infrastructure, the
 same standing as `lib/push` and `lib/mailer`: the facade publishes through the hub, the SSE
 route subscribes through it, the notification listener asks it who is focused, and the worker
-would too. `CRY` has exactly one caller — the chat facade — because services stay dumb and hand
+would too. `lib/crypto/chat-cipher` has exactly one caller — the chat facade — because services stay dumb and hand
 `Bytes` in and out, and no other layer ever sees plaintext it did not decrypt itself.
 
-`RT1` and `RT2` are Route Handlers sitting in the Boundary subgraph on purpose. A Route Handler
+`GET /api/chat/stream` and `/chat/[id]` are Route Handlers in the Boundary layer on purpose. A Route Handler
 is the boundary when the transport cannot be a Server Action: `GET /api/chat/stream` is an SSE
 connection and `/chat/[id]` is a deep link from a push banner or a digest mail. Both guard
 themselves and then call facades, exactly as an `actions.ts` does — `proxy.ts` excludes
 `/api/`, so the stream is its own gate.
 
-`RT3` is the third Route Handler in the Boundary subgraph, for the same reason as the other
+`/api/calendar/[file]` is the third Route Handler in the Boundary layer, for the same reason as the other
 two: a calendar server can only issue a `GET` with the credential in the URL. It checks the file
-name's shape, asks `calendarFeeds.feedKeyOf` (F10) for the signature's verdict *before* the
-per-address rate limit so a forged address never allocates a limiter bucket, delegates to `U30`, and owns only HTTP — the ETag,
-the 304, the private headers. Enabling, resetting and turning off the address (ACT13) touch
+name's shape, asks `calendarFeeds.feedKeyOf` for the signature's verdict *before* the
+per-address rate limit so a forged address never allocates a limiter bucket, delegates to `calendar-feed`, and owns only HTTP — the ETag,
+the 304, the private headers. Enabling, resetting and turning off the address touch
 `calendar-feeds` alone, so they are Actions behind `requireAuth` with no use case, and the
-account surface (ACCT) reads `calendarFeeds.getFeed` directly in `loadAccount`, the same way it
-reads `profile`. `FSIG` has one caller, the `calendar-feeds` facade, which is the same standing
-`CRY` has with chat; `ICS` is pure serialisation like `CAL`.
+account surface reads `calendarFeeds.getFeed` directly in `loadAccount`, the same way it
+reads `profile`. `lib/crypto/feed-signature` has one caller, the `calendar-feeds` facade, which is
+the same standing `lib/crypto/chat-cipher` has with chat; `lib/ics` is pure serialisation like
+`lib/calendar`.
 
 No use case was added for `rides` either. The calendar surfaces — `/admin/rides`,
 `/admin/bikes`, `/pilot` and `/passenger` — are Server Components that read the `rides`
@@ -97,11 +98,11 @@ pages. The slice contributes no `commands.ts`: both of its destinations already 
 rows, so the shell claims them by href, and it has no verbs of its own until ride scheduling
 (COD-155/179) lands.
 
-`lib/calendar` and `lib/time-zone` (CAL) are cross-cutting infrastructure beside
+`lib/calendar` and `lib/time-zone` are cross-cutting infrastructure beside
 `lib/format`: pure functions over instants and IANA zones, no React and no Prisma, so a
 facade, a page or a test may use them.
 
-No use case was added for the admin shell. `G --> F1` now carries two guards:
+No use case was added for the admin shell. `lib/auth-guards` calls the `chapters` facade for two guards:
 `requireChapterAdmin` (`chapters.getChapterCountryId`) and `requireAdminScope`
 (`chapters.listCountries` + `chapters.listChapters`). Resolving the admin scope needs the
 `chapters` facade and nothing else, so per AGENTS.md it collapsed into `lib/auth-guards`
@@ -109,73 +110,72 @@ rather than becoming a use case — the same call the `requireChapterAdmin` prec
 makes. If it ever needs a second facade (say, membership counts per chapter), that is when it
 graduates to `src/use-cases/`.
 
-The `CM*` nodes are the ⌘K contributions, not a new layer: `app/admin/commands` imports each
-slice's `commands.ts` and merges it into the palette. They sit in the Features subgraph
+Each slice's `commands.ts` is its ⌘K contribution, not a new layer: `app/admin/commands` imports
+it and merges it into the palette. It belongs to the feature layer
 because they are part of the slice's public surface — `eslint.config.mjs` lists
 `src/features/*/{facade,index,commands}.ts` as the `feature-facade` element — and they import
-nothing but types, so no edge leaves them.
+nothing but types.
 
 Single-facade work has no use case: `lib/auth-guards` calls `chapters.getChapterCountryId`
 and `profile.getProfile` (the admin passkey gate) directly, `app/admin/chapters/actions` calls
 the chapters facade directly, `features/membership/actions` calls the membership facade
 directly, and the passkey and pilot-next-steps actions call the profile facade directly.
-`deleteOwnAccountAction` (in ACT8) is the same: `accounts.deleteUser` is one facade call
+`deleteOwnAccountAction` (in `features/accounts/actions`) is the same: `accounts.deleteUser` is one facade call
 behind `requireAuth` plus `canDeleteOwnAccount`, and the schema cascades the rest, so it is an
-Action and not a use case — the mirror of `ACT5 --> F6` below, with the session as the only
-subject. `features/notifications/actions` (ACT9) is the same shape: mark seen, mark read, register and
-unregister a device are four writes into one facade, called from the bell (BELL) and from the
-push registrar (PR). `app/admin/settings/actions` (ACT10) likewise: one write of the chapter's
+Action and not a use case — the mirror of the admin hard delete below, with the session as the only
+subject. `features/notifications/actions` is the same shape: mark seen, mark read, register and
+unregister a device are four writes into one facade, called from the bell and from the
+push registrar. `app/admin/settings/actions` likewise: one write of the chapter's
 `ChapterSettings` row behind `requireChapterAdmin`, so it calls `chapters.updateSettings`
 directly.
 
-`W1 --> F7` is the one edge from the worker straight into a facade: the nightly
+The worker calls exactly one facade directly: the nightly
 `prune-devices` scheduler calls `notifications.pruneStaleDevices()`. Token hygiene
 coordinates one feature and carries no session, so per AGENTS.md it is not a use case —
 `worker/index` dispatches it next to `sweep` through its `MAINTENANCE` map. See
 [EVENTS.md](../EVENTS.md) → *Maintenance jobs*.
 
-`MEM` is the member shell (`src/app/(member)`) and `ACCT` the account surface
+The member shell (`src/app/(member)`) and the account surface
 (`src/components/account`). Neither is a feature slice: the shell is routing plus chrome and
 the surface is cross-route UI over `lib`, which is why they sit in Presentation and reach the
-server only through `G` (`perspectiveViewerSession`, `requirePerspective`), one use case
-(`U20`) and Server Actions. `ADM --> ACCT` is the same surface mounted from the admin
+server only through `lib/auth-guards` (`perspectiveViewerSession`, `requirePerspective`), one use case
+(`member-home`) and Server Actions. The admin sidebar's user menu mounts the same surface from the admin
 sidebar's user menu — one implementation, three call sites.
 
-The bell reads through a use case (U18) because rendering a stored payload needs the kinds,
+The bell reads through a use case (`notifications/inbox`) because rendering a stored payload needs the kinds,
 not because two features are involved.
 
-`features/accounts` (F6) has no UI of its own either — its Server Actions (ACT8) are imported
+`features/accounts` has no UI of its own either — its Server Actions are imported
 straight into the admin passengers and members screens, because "provision a user" is not a
-page. `app/admin/members/actions` also calls `accounts.deleteUser` directly (`ACT5 --> F6`):
+page. `app/admin/members/actions` also calls `accounts.deleteUser` directly:
 the hard delete touches one feature — the schema cascades everything else — so it is an
-Action behind `requireSuperAdmin`, not a use case. `S6` is the only place outside `prisma/seed.ts` that calls BetterAuth's admin API
+Action behind `requireSuperAdmin`, not a use case. The `accounts` service is the only place outside `prisma/seed.ts` that calls BetterAuth's admin API
 (`auth.api.createUser`); everything else in that slice is ordinary Prisma.
-`accounts.claimAccount` is called from the onboarding consent action (ACT3), not from the
+`accounts.claimAccount` is called from the onboarding consent action, not from the
 admin shell: the account is claimed by the person who received it, at the one step nobody may
 take on their behalf.
 
-`lib/activity` (F5) is cross-cutting infrastructure, the same standing as `lib/auth-guards`
+`lib/activity` is cross-cutting infrastructure, the same standing as `lib/auth-guards`
 and `lib/mailer`: a facade, a use case or a Server Component may write a history line, and it
 owns no domain of its own. Writes sit next to the mutation they record; the only reads are the
 person-history feed on `/admin/members/[userId]` and the chapter history on
 `/admin/chapters/[chapterId]`, both straight from the Server Component.
 
-`lib/observability` (OBS) is cross-cutting infrastructure of the same kind, one step wider:
-every node in the graph may log a line or move a counter, which is why no edges are drawn to
-it — they would reach every box and say nothing. `pino` and `prom-client` are importable
+`lib/observability` is cross-cutting infrastructure of the same kind, one step wider:
+every layer may log a line or move a counter. `pino` and `prom-client` are importable
 nowhere else (lint-enforced), so the whole system has one logger and one registry; Sentry is
 used straight from the SDK over the shared options in `observability/sentry-shared.ts`.
 
-What *is* constrained is **capture**. Only Boundary nodes (every `actions.ts` via
-`actionFailure`, the route handlers via `onRequestError`), Orchestration nodes that own a
+What *is* constrained is **capture**. Only the Boundary layer (every `actions.ts` via
+`actionFailure`, the route handlers via `onRequestError`), use cases that own a
 failure, and the Worker (its `failed` listener, on the last attempt) call `captureException`.
-Facades (F\*) and services (S\*) throw and never report — a facade that imports capture turns
+Facades and services throw and never report — a facade that imports capture turns
 one failure into one issue per layer it crossed.
 
 `lib/mapbox`, `lib/mailer` and `lib/push` are cross-cutting infrastructure, callable from any
 layer — the same standing as `lib/prisma` and `lib/sms`. `lib/mapbox` is reached only from a
 Server Action so the secret token never enters a client bundle — the location flow's actions
-(ACT2) and the admin chapter actions (ACT6: suggest, retrieve and reverse-geocode behind
+and the admin chapter actions (suggest, retrieve and reverse-geocode behind
 `requireAdminScope` and a per-user rate limit) are its two callers.
 
 `lib/mailer` now has exactly two callers: `deliver-email` and the sign-in OTP inside
@@ -186,10 +186,11 @@ counterpart `lib/native/push` is the only place `@capacitor-firebase/messaging` 
 
 ### Fleet (trishaws, models, locations, pools, damages)
 
-`features/fleet` (F11) owns `TrishawType`, `StorageLocation`, `StorageLocationChapter` (pool
+`features/fleet` owns `TrishawType`, `StorageLocation`, `StorageLocationChapter` (pool
 membership), `Trishaw`, `TrishawDamage`, `TrishawLogEntry` and `StoredFile`. `rides` keeps
 `RideTrishaw` and the reservation lock; it no longer knows who may use a trishaw. Everything
-that needs both goes through U31–U36. `manage-chapter` (U13) now also creates the chapter's
+that needs both goes through `schedule-ride`, `report-damage`, `leave-pool`, `move-trishaw`,
+`trishaw-history` and `finish-ride`. `manage-chapter` now also creates the chapter's
 default location, which is why it coordinates `fleet` as well.
 
 Authority is data: the facade answers `locationAuthority`, `locationTrishawManagers`,
@@ -197,14 +198,14 @@ Authority is data: the facade answers `locationAuthority`, `locationTrishawManag
 Action passes it to `requireAdminOf` in `lib/auth-guards`, which evaluates it with
 `allowsAdmin` from `lib/access`. The facade never sees a session.
 
-`RT4` (`/api/files/[id]`) is the only way a stored file is served: `getSession`, then
+`/api/files/[id]` is the only way a stored file is served: `getSession`, then
 `fleet.fileReadRule` describes per kind who may read it as plain data (anyone, the uploader,
 the location's members and admins, or a damage's reporter and admins), `canReadFile` in
 `lib/auth-guards` decides for the session, then a 302 to a five-minute signed GET. `lib/storage`
-(STO) is infrastructure like `lib/mailer`: presigned PUTs to the private bucket, then a commit
+is infrastructure like `lib/mailer`: presigned PUTs to the private bucket, then a commit
 step that HEADs the staged object, re-encodes images to WebP with `sharp` (PDFs must start with
 `%PDF-`) and writes the final key. Nothing a browser uploaded is served unprocessed.
-`lib/native/camera` (NC) is the only importer of `@capacitor/camera`.
+`lib/native/camera` is the only importer of `@capacitor/camera`.
 
-The notification kinds (U19) now reach `fleet` for trishaw and pool names:
+The notification kinds now reach `fleet` for trishaw and pool names:
 `trishaw.damageReported`, `pool.accessRequested` and `pool.accessDecided`, category `fleet`.

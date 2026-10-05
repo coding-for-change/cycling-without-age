@@ -209,7 +209,6 @@ headings `act` and `results`, the sigil hint. Copy goes through the `frontend` s
 | `src/app/admin/members/[userId]/_components/person-body.tsx` | registers pre-filled verbs |
 | `src/lib/i18n/{en,de,da}.ts` | new strings |
 | `src/app/admin/commands.test.ts` | extended assertions |
-| `docs-internal/architecture/dependency-graph.md` | `search-directory` → membership, passengers, chapters facades |
 
 ## Order and acceptance
 
