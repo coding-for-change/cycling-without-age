@@ -55,6 +55,7 @@ export function RideDangerZone({
   status,
   deleteName,
   consequences,
+  deleteBlocked,
   returnLeg,
   backHref,
   language,
@@ -64,6 +65,7 @@ export function RideDangerZone({
   status: RideStatusName;
   deleteName: string;
   consequences: string[];
+  deleteBlocked: string | null;
   returnLeg: string | null;
   backHref: string;
   language: Locale;
@@ -81,6 +83,8 @@ export function RideDangerZone({
       />
     );
   if (status !== "cancelled") return null;
+  if (deleteBlocked)
+    return <p className="text-2sm text-ink-soft">{deleteBlocked}</p>;
 
   return (
     <ConfirmDeleteDialog

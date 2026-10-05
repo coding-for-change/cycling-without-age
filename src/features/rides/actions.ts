@@ -31,6 +31,7 @@ import {
 const MAPPED_ERRORS = [
   "legsOverlap",
   "notPilot",
+  "otherLegScheduled",
   "partOfRoundTrip",
   "rideClosed",
   "rideNotCancelled",

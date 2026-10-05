@@ -1740,6 +1740,8 @@
       "unchanged": "Turen var allerede aflyst. Intet ændret."
     },
     "delete": {
+      "blockedWayBack": "Hjemturen {when} bliver stadig til noget. Aflys den først for at slette denne tur.",
+      "blockedWayThere": "Udturen {when} bliver stadig til noget. Aflys den først for at slette denne tur.",
       "body": "Den forsvinder fra kalenderen og fra alle rapporter. Passagerer, piloter og rickshawer bliver.",
       "cancel": "Annuller",
       "consequences": "Dette sletter også for altid:",
@@ -1751,6 +1753,8 @@
       "riders": "{count, plural, one {1 booking af en passager} other {# bookinger af passagerer}}",
       "submit": "Slet tur",
       "title": "Slet turen den {name} for altid?",
+      "wayBack": "hjemturen {when}, også aflyst",
+      "wayThere": "udturen {when}, også aflyst",
       "word": "DELETE"
     },
     "detail": {
@@ -1822,6 +1826,7 @@
       "generic": "Noget gik galt. Prøv igen.",
       "legsOverlap": "Turen ud ville løbe ind i turen hjem. Flyt den anden tur først.",
       "notPilot": "Kun en pilot fra denne afdeling kan sættes på turen.",
+      "otherLegScheduled": "Den anden halvdel af turen ud og hjem bliver stadig til noget. Aflys den først, eller behold denne tur.",
       "partOfRoundTrip": "Turen er den ene halvdel af en tur ud og hjem, så den forbliver en ærindetur.",
       "rideClosed": "Turen bliver ikke til noget, så den kan ikke længere ændres.",
       "rideNotCancelled": "Aflys turen, før du sletter den.",

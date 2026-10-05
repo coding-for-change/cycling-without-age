@@ -1740,6 +1740,8 @@
       "unchanged": "This ride was already cancelled. Nothing changed."
     },
     "delete": {
+      "blockedWayBack": "The way back on {when} is still going ahead. Cancel it first to delete this ride.",
+      "blockedWayThere": "The way there on {when} is still going ahead. Cancel it first to delete this ride.",
       "body": "It disappears from the calendar and from every report. Riders, pilots and trishaws stay.",
       "cancel": "Cancel",
       "consequences": "This also deletes, for good:",
@@ -1751,6 +1753,8 @@
       "riders": "{count, plural, one {1 rider booking} other {# rider bookings}}",
       "submit": "Delete ride",
       "title": "Delete the ride on {name} for good?",
+      "wayBack": "the way back on {when}, cancelled too",
+      "wayThere": "the way there on {when}, cancelled too",
       "word": "DELETE"
     },
     "detail": {
@@ -1822,6 +1826,7 @@
       "generic": "Something went wrong. Try again.",
       "legsOverlap": "The way there would run into the way back. Move the other leg first.",
       "notPilot": "Only a pilot of this chapter can be put on the ride.",
+      "otherLegScheduled": "The other half of this round trip is still going ahead. Cancel it first, or keep this ride.",
       "partOfRoundTrip": "This ride is one leg of a round trip, so it stays a functional ride.",
       "rideClosed": "This ride is no longer going ahead, so it can't be changed.",
       "rideNotCancelled": "Cancel the ride before you delete it.",

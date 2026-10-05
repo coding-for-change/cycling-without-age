@@ -151,6 +151,27 @@ export async function RideBody({
     .map(([key, count]) =>
       formatMessage(dict.rides.delete[key], { count }, words),
     );
+  const otherWhen = other
+    ? { when: formatDateTime(other.startsAt, notation, zone) }
+    : null;
+  if (other?.status === "cancelled" && otherWhen)
+    consequences.push(
+      formatMessage(
+        ride.returnLeg ? dict.rides.delete.wayBack : dict.rides.delete.wayThere,
+        otherWhen,
+        words,
+      ),
+    );
+  const deleteBlocked =
+    other?.status === "scheduled" && otherWhen
+      ? formatMessage(
+          ride.returnLeg
+            ? dict.rides.delete.blockedWayBack
+            : dict.rides.delete.blockedWayThere,
+          otherWhen,
+          words,
+        )
+      : null;
 
   const panels = (
     <>
@@ -225,6 +246,7 @@ export async function RideBody({
             status={ride.status}
             deleteName={deleteName}
             consequences={consequences}
+            deleteBlocked={deleteBlocked}
             returnLeg={
               ride.returnLeg?.status === "scheduled"
                 ? formatDateTime(ride.returnLeg.startsAt, notation, zone)

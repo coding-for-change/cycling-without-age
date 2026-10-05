@@ -815,6 +815,42 @@ describe("deleteRide", () => {
     );
   });
 
+  describe("one leg of a round trip", () => {
+    const leg = (status: string) =>
+      scheduled({
+        status: "cancelled",
+        returnLeg: { id: "ride-back", status },
+      });
+
+    it("takes a cancelled other leg with it", async () => {
+      db.ride.findUnique.mockResolvedValue(leg("cancelled"));
+      const { deletedIds } = await rides.deleteRide("ride-1", ADMIN);
+      expect(deletedIds).toEqual(["ride-1", "ride-back"]);
+      expect(db.ride.delete.mock.calls.map(([args]) => args.where.id)).toEqual([
+        "ride-1",
+        "ride-back",
+      ]);
+      expect(eventTypes()).toEqual(["ride.deleted", "ride.deleted"]);
+    });
+
+    // Otherwise the way back is left with swapped places and nothing to return from.
+    it("refuses while the other leg is still going ahead", async () => {
+      db.ride.findUnique.mockResolvedValue(leg("scheduled"));
+      expect(await codeOf(rides.deleteRide("ride-1", ADMIN))).toBe(
+        "otherLegScheduled",
+      );
+      expect(db.ride.delete).not.toHaveBeenCalled();
+      expect(emitted).toEqual([]);
+    });
+
+    it("leaves a completed other leg in the records", async () => {
+      db.ride.findUnique.mockResolvedValue(leg("completed"));
+      expect((await rides.deleteRide("ride-1", ADMIN)).deletedIds).toEqual([
+        "ride-1",
+      ]);
+    });
+  });
+
   // The history goes with the ride; the event is what is left of who did it.
   it("leaves an event behind", async () => {
     db.ride.findUnique.mockResolvedValue(scheduled({ status: "cancelled" }));

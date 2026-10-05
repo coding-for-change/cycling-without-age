@@ -220,7 +220,7 @@ the worker):
 | `ride.scheduled` | `returnLegId` (the way back of a round trip, or `null`) | `scheduleRide`, once for both legs |
 | `ride.rescheduled` | `changes`: `time` · `location` · `destination` | `rescheduleRide` (once per leg it moves: moving the way there moves a scheduled way back too), `updateRideDetails` (a new place only; the note and pilots needed are history, not news) |
 | `ride.cancelled` | `reasonCode` | `cancelRide`, once per leg it cancels |
-| `ride.deleted` | — | `deleteRide`; the ride's history goes with it, so this row is what records who deleted it |
+| `ride.deleted` | — | `deleteRide`, once per leg it deletes (a cancelled other leg of a round trip goes too); the ride's history goes with it, so this row is what records who deleted it |
 | `ride.pilotAssigned` | `userId`, `self` | `assignVolunteer` |
 | `ride.pilotUnassigned` | `userId`, `self` | `unassignVolunteer` |
 | `ride.riderBooked` | `passengerId` | `bookRider` |

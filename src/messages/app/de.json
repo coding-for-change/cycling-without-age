@@ -1740,6 +1740,8 @@
       "unchanged": "Diese Fahrt war schon abgesagt. Nichts geändert."
     },
     "delete": {
+      "blockedWayBack": "Die Rückfahrt am {when} findet noch statt. Sag sie zuerst ab, um diese Fahrt zu löschen.",
+      "blockedWayThere": "Die Hinfahrt am {when} findet noch statt. Sag sie zuerst ab, um diese Fahrt zu löschen.",
       "body": "Sie verschwindet aus dem Kalender und aus allen Berichten. Fahrgäste, Pilot:innen und Rikschas bleiben.",
       "cancel": "Abbrechen",
       "consequences": "Damit wird auch endgültig gelöscht:",
@@ -1751,6 +1753,8 @@
       "riders": "{count, plural, one {1 Buchung eines Fahrgasts} other {# Buchungen von Fahrgästen}}",
       "submit": "Fahrt löschen",
       "title": "Die Fahrt am {name} endgültig löschen?",
+      "wayBack": "die Rückfahrt am {when}, ebenfalls abgesagt",
+      "wayThere": "die Hinfahrt am {when}, ebenfalls abgesagt",
       "word": "DELETE"
     },
     "detail": {
@@ -1822,6 +1826,7 @@
       "generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
       "legsOverlap": "Die Hinfahrt würde in die Rückfahrt hineinlaufen. Verschiebe zuerst die andere Fahrt.",
       "notPilot": "Nur Pilot:innen dieses Chapters können eingeteilt werden.",
+      "otherLegScheduled": "Die andere Hälfte dieser Hin- und Rückfahrt findet noch statt. Sag sie zuerst ab oder behalte diese Fahrt.",
       "partOfRoundTrip": "Diese Fahrt ist Teil einer Hin- und Rückfahrt und bleibt deshalb eine Zweckfahrt.",
       "rideClosed": "Diese Fahrt findet nicht mehr statt und kann nicht mehr geändert werden.",
       "rideNotCancelled": "Sag die Fahrt ab, bevor du sie löschst.",

@@ -616,20 +616,30 @@ export async function cancelRide(
 
 /**
  * Only a cancelled ride can go, and going is what frees its calendar slot. Its
- * history goes with it, so the event is what remains of who deleted it.
+ * history goes with it, so the event is what remains of who deleted it. A
+ * round trip goes as a whole: a cancelled other leg goes too, and one still
+ * going ahead has to be cancelled first, so no leg is ever left behind with
+ * its places swapped and nothing to return from. A completed other leg stays.
  */
 export async function deleteRide(id: string, actorUserId: Actor) {
   return rideWrite(async (tx, emit) => {
     const ride = await requireRide(id, tx);
     if (ride.status !== "cancelled") throw new DomainError("rideNotCancelled");
-    await deleteRideById(id, tx);
-    await emit({
-      type: "ride.deleted",
-      rideId: id,
-      chapterId: ride.chapterId,
-      actorUserId,
-    });
-    return ride;
+    const other = ride.returnLeg ?? ride.returnLegOf;
+    if (other?.status === "scheduled")
+      throw new DomainError("otherLegScheduled");
+
+    const ids = [id, ...(other?.status === "cancelled" ? [other.id] : [])];
+    for (const rideId of ids) {
+      await deleteRideById(rideId, tx);
+      await emit({
+        type: "ride.deleted",
+        rideId,
+        chapterId: ride.chapterId,
+        actorUserId,
+      });
+    }
+    return { deletedIds: ids };
   });
 }
 

@@ -849,7 +849,9 @@ and deleting is what frees its square on the calendar (`rideNotCancelled` for an
   destination stays the same; a cancelled way back stays put. The way back moves on its own
   but never to before the way there arrives (`legsOverlap`). A leg of a round trip stays
   functional (`partOfRoundTrip`), and cancelling the way there takes the way back with it
-  unless the admin unticks it.
+  unless the admin unticks it. Deleting a cancelled leg deletes a cancelled other leg with it
+  and is refused while the other leg is still going ahead (`otherLegScheduled`), so a way back
+  is never left behind with its places swapped; a completed other leg stays in the records.
 - **Cancellation has a reason code.** `Ride.cancellationReasonCode` is one of the Report 3
   buckets (`weather`, `rider`, `facility`, `volunteers`, `equipment`, `noRiders`, `other`);
   `cancellationNote` is the free text beside it and `cancelledByUserId` who did it. Rides
