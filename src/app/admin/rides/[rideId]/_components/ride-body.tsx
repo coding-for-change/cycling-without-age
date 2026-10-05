@@ -62,19 +62,28 @@ export async function RideBody({
   await requireChapterAdmin(ride.chapterId);
 
   const editable = ride.status === "scheduled";
-  const [log, chapterPassengers, chapterMembers, dict, language, head] =
-    await Promise.all([
-      rides.listRideLog(ride.id),
-      editable
-        ? passengers.listPassengersOfChapters([ride.chapterId])
-        : Promise.resolve([]),
-      editable
-        ? membership.listMembersOfChapters([ride.chapterId])
-        : Promise.resolve([]),
-      getDictionary(),
-      getLocale(),
-      headers(),
-    ]);
+  const shown = historyShown(query);
+  const [
+    log,
+    logTotal,
+    chapterPassengers,
+    chapterMembers,
+    dict,
+    language,
+    head,
+  ] = await Promise.all([
+    rides.listRideLog(ride.id, shown),
+    rides.countRideLog(ride.id),
+    editable
+      ? passengers.listPassengersOfChapters([ride.chapterId])
+      : Promise.resolve([]),
+    editable
+      ? membership.listMembersOfChapters([ride.chapterId])
+      : Promise.resolve([]),
+    getDictionary(),
+    getLocale(),
+    headers(),
+  ]);
 
   const notation = resolveLocale(head.get("accept-language"));
   const words = wordsLocale(language);
@@ -86,7 +95,6 @@ export async function RideBody({
   const statuses = dict.calendar.statuses;
   const pathname = `/admin/rides/${ride.id}`;
   const backHref = hrefWith("/admin/rides", query, DETAIL_ONLY);
-  const shown = historyShown(query);
 
   const span = (window: { startsAt: Date; endsAt: Date }, at: Notation) =>
     `${formatTime(window.startsAt, at, zone)}–${formatTime(window.endsAt, at, zone)}`;
@@ -136,7 +144,7 @@ export async function RideBody({
     [
       ["riders", ride.roster.length],
       ["pilots", ride.assignments.length],
-      ["history", log.length],
+      ["history", logTotal],
     ] as const
   )
     .filter(([, count]) => count > 0)
@@ -402,7 +410,7 @@ export async function RideBody({
             labels={{ ...dict.rides.history.composer, errors }}
           />
           <RideHistory
-            entries={log.slice(0, shown)}
+            entries={log}
             viewerId={session.user.id}
             timeZone={zone}
             labels={dict.rides.history}
@@ -416,7 +424,7 @@ export async function RideBody({
             pathname={pathname}
             query={query}
             shown={shown}
-            total={log.length}
+            total={logTotal}
             label={dict.admin.history.showMore}
           />
         </DetailSection>

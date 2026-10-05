@@ -132,10 +132,13 @@ function CancelRideDialog({
         includeReturnLeg: returnLeg !== null && includeReturnLeg,
       });
       notify(result, {
-        done:
-          result.ok && result.cancelledIds.length > 1
-            ? strings.doneBoth
-            : strings.done,
+        done: !result.ok
+          ? strings.done
+          : result.cancelledIds.length === 0
+            ? strings.unchanged
+            : result.cancelledIds.length > 1
+              ? strings.doneBoth
+              : strings.done,
         errors: labels.errors,
       });
       if (!result.ok) return;

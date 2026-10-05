@@ -152,7 +152,7 @@ function EditorLayout({
     labels.field,
   );
   const reschedule = (next: Partial<WallSlot>) =>
-    rescheduleRideAction(id, { ...slot, ...next });
+    rescheduleRideAction(id, next);
   const start = useOptimisticSave(
     slot.start,
     (next) => reschedule({ start: next }),
@@ -269,7 +269,7 @@ function EditorLayout({
                     label={detail.date}
                     placeholder={detail.date}
                     display={(value) => formatDate(value, notation)}
-                    onSave={(next) => reschedule({ date: next ?? slot.date })}
+                    onSave={(next) => reschedule(next ? { date: next } : {})}
                     labels={labels.field}
                     className="text-2sm tabular-nums"
                   />

@@ -25,7 +25,10 @@ export const insertRideLogEntry = (
     select: { id: true },
   });
 
-export const findLogOfRide = (rideId: string, take = 200) =>
+export const countLogOfRide = (rideId: string) =>
+  prisma.rideLogEntry.count({ where: { rideId } });
+
+export const findLogOfRide = (rideId: string, take: number) =>
   prisma.rideLogEntry.findMany({
     where: { rideId },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],

@@ -43,7 +43,10 @@ export function RideRoster({
     startTransition(async () => {
       const result = await bookRiderAction({ rideId, passengerId: rider.id });
       notify(result, {
-        done: say(labels.riderAdded, rider.name),
+        done:
+          result.ok && !result.changed
+            ? labels.unchanged
+            : say(labels.riderAdded, rider.name),
         errors: labels.errors,
       });
       setPicker((count) => count + 1);
@@ -57,7 +60,10 @@ export function RideRoster({
         passengerId: rider.id,
       });
       notify(result, {
-        done: say(labels.riderRemoved, rider.name),
+        done:
+          result.ok && !result.changed
+            ? labels.unchanged
+            : say(labels.riderRemoved, rider.name),
         errors: labels.errors,
       });
     });

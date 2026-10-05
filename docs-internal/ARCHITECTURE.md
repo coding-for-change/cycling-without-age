@@ -854,7 +854,10 @@ and deleting is what frees its square on the calendar (`rideNotCancelled` for an
 - **Wall clock in, instants stored.** The scheduling drawer sends a date, a start and a length
   on the chapter's wall clock (`wallSlot`). `use-cases/schedule-ride.ts` reads the chapter's
   zone and turns it into instants with `slotWindow`; `slotOf` goes the other way for the detail
-  page. A length is real minutes, so a two-hour ride across a DST change still lasts two hours.
+  page. A length is real minutes, so a two-hour ride across a DST change still lasts two hours. Editing
+  the time on the detail page sends only the field that changed (`rescheduleRideAt` takes a
+  partial slot); the rest is filled in from the ride as read under its lock, so two quick
+  edits never undo each other.
 - **Who may do it.** Every action in `features/rides/actions.ts` loads the ride and calls
   `requireChapterAdmin(ride.chapterId)`: the chapter comes from the database, never from the
   client. Putting a pilot on a ride goes through `use-cases/staff-ride.ts`, which requires the

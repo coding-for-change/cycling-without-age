@@ -49,7 +49,10 @@ export function RidePilots({
     startTransition(async () => {
       const result = await assignPilotAction({ rideId, userId: pilot.id });
       notify(result, {
-        done: say(labels.pilotAdded, pilot.name),
+        done:
+          result.ok && !result.changed
+            ? labels.unchanged
+            : say(labels.pilotAdded, pilot.name),
         errors: labels.errors,
       });
       setPicker((count) => count + 1);
@@ -60,7 +63,10 @@ export function RidePilots({
     startTransition(async () => {
       const result = await unassignPilotAction({ rideId, userId: pilot.id });
       notify(result, {
-        done: say(labels.pilotRemoved, pilot.name),
+        done:
+          result.ok && !result.changed
+            ? labels.unchanged
+            : say(labels.pilotRemoved, pilot.name),
         errors: labels.errors,
       });
     });

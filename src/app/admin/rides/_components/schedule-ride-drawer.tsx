@@ -159,6 +159,7 @@ function ScheduleRideSheet({
   const [pilots, setPilots] = useState(1);
   const [note, setNote] = useState("");
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  const [attempt, setAttempt] = useState(0);
   const [fetched, setFetched] = useState<{
     key: string;
     options: TrishawOption[] | null;
@@ -175,9 +176,10 @@ function ScheduleRideSheet({
         stayMinutes: twoWay ? stay : 0,
       })
     : null;
+  const request = lookup ? `${attempt}:${lookup}` : null;
 
   useEffect(() => {
-    if (!open || !lookup) return;
+    if (!open || !lookup || !request) return;
     let live = true;
     const timer = setTimeout(async () => {
       const result = await availableTrishawsAction(JSON.parse(lookup)).catch(
@@ -185,7 +187,7 @@ function ScheduleRideSheet({
       );
       if (!live) return;
       const options = result?.ok ? result.options : null;
-      setFetched({ key: lookup, options });
+      setFetched({ key: request, options });
       if (options)
         setSelected((current) => {
           const free = new Set(
@@ -200,16 +202,18 @@ function ScheduleRideSheet({
       live = false;
       clearTimeout(timer);
     };
-  }, [open, lookup]);
+  }, [open, lookup, request]);
 
-  const loading = lookup !== null && fetched?.key !== lookup;
+  const loading = request !== null && fetched?.key !== request;
   const options = fetched?.options;
   const free = new Set(
     (options ?? [])
       .filter((option) => option.blocked === null)
       .map((option) => option.id),
   );
-  const picked = [...selected].filter((id) => free.has(id));
+  const picked = options
+    ? [...selected].filter((id) => free.has(id))
+    : [...selected];
 
   const toggle = (id: string, on: boolean) =>
     setSelected((current) => {
@@ -291,7 +295,7 @@ function ScheduleRideSheet({
       )}
       footer={
         <>
-          {options?.length ? (
+          {options?.length || picked.length ? (
             <p
               aria-live="polite"
               className="text-2sm text-ink-soft mr-auto"
@@ -530,6 +534,7 @@ function ScheduleRideSheet({
             selected={selected}
             free={free}
             onToggle={toggle}
+            onRetry={() => setAttempt((count) => count + 1)}
             strings={strings}
             labels={fleet}
           />
@@ -650,6 +655,7 @@ function TrishawList({
   selected,
   free,
   onToggle,
+  onRetry,
   strings,
   labels,
 }: {
@@ -659,6 +665,7 @@ function TrishawList({
   selected: ReadonlySet<string>;
   free: ReadonlySet<string>;
   onToggle: (id: string, on: boolean) => void;
+  onRetry: () => void;
   strings: Strings;
   labels: TrishawOptionLabels;
 }) {
@@ -677,9 +684,21 @@ function TrishawList({
   if (!lookup) return quiet(strings.trishawsWaiting);
   if (options === undefined) return quiet(strings.trishawsLoading, true);
   if (options === null)
-    return loading
-      ? quiet(strings.trishawsLoading, true)
-      : quiet(strings.trishawsFailed);
+    return loading ? (
+      quiet(strings.trishawsLoading, true)
+    ) : (
+      <div className="flex flex-wrap items-center gap-3">
+        {quiet(strings.trishawsFailed)}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onRetry}
+        >
+          {strings.retry}
+        </Button>
+      </div>
+    );
   if (options.length === 0)
     return loading
       ? quiet(strings.trishawsLoading, true)

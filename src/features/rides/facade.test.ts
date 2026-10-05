@@ -26,7 +26,7 @@ jest.mock("@/lib/prisma", () => {
       deleteMany: jest.fn(),
       aggregate: jest.fn(),
     },
-    rideLogEntry: { create: jest.fn(), findMany: jest.fn() },
+    rideLogEntry: { create: jest.fn(), findMany: jest.fn(), count: jest.fn() },
     user: { findMany: jest.fn() },
     passenger: { findMany: jest.fn() },
     $queryRaw: jest.fn(),
@@ -68,7 +68,7 @@ const db = prisma as unknown as {
     deleteMany: jest.Mock;
     aggregate: jest.Mock;
   };
-  rideLogEntry: { create: jest.Mock; findMany: jest.Mock };
+  rideLogEntry: { create: jest.Mock; findMany: jest.Mock; count: jest.Mock };
   user: { findMany: jest.Mock };
   passenger: { findMany: jest.Mock };
   $queryRaw: jest.Mock;
@@ -435,6 +435,52 @@ describe("rescheduleRide", () => {
   });
 });
 
+describe("rescheduleRideAt", () => {
+  // The ride runs 10:00–12:00 Berlin time (08:00–10:00 UTC).
+  it("keeps what the patch leaves out, as read under the lock", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    await rides.rescheduleRideAt("ride-1", { durationMinutes: 60 }, ADMIN);
+    expect(db.ride.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          startsAt: new Date("2026-09-08T08:00:00Z"),
+          endsAt: new Date("2026-09-08T09:00:00Z"),
+        },
+      }),
+    );
+    expect(db.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+      db.ride.findUnique.mock.invocationCallOrder.at(-1)!,
+    );
+  });
+
+  // Start first, then length: the second save must not put the old start back.
+  it("lets two quick edits of different fields both stand", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        startsAt: new Date("2026-09-08T09:00:00Z"),
+        endsAt: new Date("2026-09-08T11:00:00Z"),
+      }),
+    );
+    await rides.rescheduleRideAt("ride-1", { durationMinutes: 90 }, ADMIN);
+    expect(db.ride.update.mock.calls[0][0].data).toEqual({
+      startsAt: new Date("2026-09-08T09:00:00Z"),
+      endsAt: new Date("2026-09-08T10:30:00Z"),
+    });
+  });
+
+  it("says whether anything moved", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    expect(
+      (await rides.rescheduleRideAt("ride-1", { start: "10:00" }, ADMIN))
+        .changed,
+    ).toBe(false);
+    expect(
+      (await rides.rescheduleRideAt("ride-1", { start: "11:00" }, ADMIN))
+        .changed,
+    ).toBe(true);
+  });
+});
+
 describe("updateRideDetails", () => {
   it("writes only what changed and tells riders when the place moved", async () => {
     db.ride.findUnique.mockResolvedValue(scheduled());
@@ -658,6 +704,16 @@ describe("serialising writes", () => {
 });
 
 describe("listRideLog", () => {
+  it("reads only as many entries as the page shows, and counts them all", async () => {
+    db.rideLogEntry.findMany.mockResolvedValue([]);
+    db.rideLogEntry.count.mockResolvedValue(312);
+    await rides.listRideLog("ride-1", 40);
+    expect(db.rideLogEntry.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { rideId: "ride-1" }, take: 40 }),
+    );
+    expect(await rides.countRideLog("ride-1")).toBe(312);
+  });
+
   it("names people as it reads, and names nobody who is gone", async () => {
     db.rideLogEntry.findMany.mockResolvedValue([
       { id: "1", type: "pilotAssigned", payload: { userId: "user-1" } },

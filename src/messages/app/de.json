@@ -1736,7 +1736,8 @@
       "returnLeg": "Auch den Rückweg absagen",
       "returnLegHint": "Der Rückweg beginnt {when}.",
       "submit": "Fahrt absagen",
-      "title": "Diese Fahrt absagen?"
+      "title": "Diese Fahrt absagen?",
+      "unchanged": "Diese Fahrt war schon abgesagt. Nichts geändert."
     },
     "delete": {
       "body": "Sie verschwindet aus dem Kalender und aus allen Berichten. Fahrgäste, Pilot:innen und Rikschas bleiben.",
@@ -1808,6 +1809,7 @@
       "status": "Status",
       "title": "{model} · {date}",
       "trishaws": "Rikschas",
+      "unchanged": "Schon erledigt, nichts geändert.",
       "undo": "Rückgängig",
       "undone": "Zurückgesetzt.",
       "wayBack": "Rückweg",
@@ -1896,6 +1898,7 @@
       "placeHint": "Wähle einen Treffer, um den Ort festzulegen.",
       "placeNoResults": "Nichts gefunden. Versuch es mit Straße oder Ort.",
       "placeSearching": "Suche läuft",
+      "retry": "Erneut versuchen",
       "returnAt": "Der Rückweg beginnt um {time}.",
       "roundTrip": "Hin und zurück",
       "roundTripHint": "Der Rückweg wird eine eigene Fahrt, genauso lang wie der Hinweg.",
@@ -1908,7 +1911,7 @@
       "timeZone": "Alle Zeiten in {zone}.",
       "title": "Fahrt planen",
       "trishaws": "Rikschas",
-      "trishawsFailed": "Die Rikschas konnten nicht geprüft werden. Ändere die Zeit oder versuch es noch einmal.",
+      "trishawsFailed": "Konnte nicht prüfen, welche Rikschas frei sind. Deine Auswahl bleibt erhalten.",
       "trishawsHint": "Du kannst nur Rikschas wählen, die für die ganze Fahrt frei sind.",
       "trishawsLoading": "Prüfe, welche Rikschas frei sind …",
       "trishawsNone": "Diese Ortsgruppe hat noch keine Rikscha. Plane die Fahrt trotzdem und füge später eine hinzu.",

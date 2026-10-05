@@ -32,6 +32,11 @@ const scheduleRide = rides.scheduleRide as jest.Mock;
 
 const CHAPTER = "chapter-muenchen";
 const ADMIN = "user-admin";
+const RIDE = {
+  id: "ride-1",
+  chapterId: CHAPTER,
+  trishaws: [{ trishaw: { id: "grounded-since" } }],
+};
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -50,7 +55,7 @@ beforeEach(() => {
 
 describe("allocateTrishaws", () => {
   it("checks only newly added trishaws, so a grounded one already on the ride can stay", async () => {
-    await allocateTrishaws("ride-1", ["grounded-since", "new-one"], ADMIN);
+    await allocateTrishaws(RIDE, ["grounded-since", "new-one"], ADMIN);
     expect(assertUsable).toHaveBeenCalledWith(["new-one"], CHAPTER);
     expect(rides.setRideTrishaws).toHaveBeenCalledWith(
       "ride-1",
@@ -61,9 +66,7 @@ describe("allocateTrishaws", () => {
 
   it("stops before writing when a new trishaw is unusable", async () => {
     assertUsable.mockRejectedValue(new Error("trishawUnavailable"));
-    await expect(
-      allocateTrishaws("ride-1", ["new-one"], ADMIN),
-    ).rejects.toThrow();
+    await expect(allocateTrishaws(RIDE, ["new-one"], ADMIN)).rejects.toThrow();
     expect(rides.setRideTrishaws).not.toHaveBeenCalled();
   });
 });

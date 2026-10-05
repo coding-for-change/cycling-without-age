@@ -7,6 +7,7 @@ import {
   rideInput,
   rideLogNote,
   rideTimes,
+  slotOf,
   slotWindow,
   trishawIdList,
   wallSlot,
@@ -18,6 +19,7 @@ import {
   type WallSlot,
 } from "./schemas";
 import {
+  countLogOfRide,
   findLogOfRide,
   insertRideLogEntry,
   type RideLogRow,
@@ -147,6 +149,8 @@ export const latestRideForPilot = (userId: string, now = new Date()) =>
 
 export const getRideDetail = (id: string) => findRideDetail(id);
 
+export const countRideLog = (rideId: string) => countLogOfRide(rideId);
+
 const NAMED_IN_LOG = {
   userId: ["pilotAssigned", "pilotUnassigned"],
   passengerId: ["riderBooked", "riderRemoved"],
@@ -166,8 +170,8 @@ const idIn = (entry: RideLogRow, key: keyof typeof NAMED_IN_LOG) =>
  * from every ride they were on. Names are looked up as the history is read;
  * someone who is gone reads as `name: null`.
  */
-export async function listRideLog(rideId: string) {
-  const entries = await findLogOfRide(rideId);
+export async function listRideLog(rideId: string, take = 200) {
+  const entries = await findLogOfRide(rideId, take);
   const userIds = entries.flatMap((entry) => idIn(entry, "userId") ?? []);
   const passengerIds = entries.flatMap(
     (entry) => idIn(entry, "passengerId") ?? [],
@@ -334,19 +338,24 @@ export async function scheduleRide(input: RideInput, actorUserId: Actor) {
  * Moving a ride takes its trishaws along, so the new window is checked under
  * the lock like a new booking. The two legs of a round trip keep their order.
  */
-export async function rescheduleRide(
+/**
+ * Moving a ride takes its trishaws along, so the new window is checked under
+ * the lock like a new booking. The two legs of a round trip keep their order.
+ * The window is worked out from the ride as read under the lock.
+ */
+function moveRide(
   id: string,
-  times: RideTimes,
+  windowOf: (ride: RideDetailRow) => RideTimes,
   actorUserId: Actor,
 ) {
-  const next = rideTimes.parse(times);
   return rideWrite(async (tx, emit) => {
     const ride = await requireScheduled(id, tx);
+    const next = rideTimes.parse(windowOf(ride));
     if (
       ride.startsAt.getTime() === next.startsAt.getTime() &&
       ride.endsAt.getTime() === next.endsAt.getTime()
     )
-      return ride;
+      return { ride, changed: false };
 
     if (ride.returnLeg && next.endsAt > ride.returnLeg.startsAt)
       throw new DomainError("legsOverlap");
@@ -374,24 +383,35 @@ export async function rescheduleRide(
       actorUserId,
       changes: ["time"],
     });
-    return updated;
+    return { ride: updated, changed: true };
   });
 }
 
-/** Wall-clock rescheduling, read in the ride's own chapter zone. */
-export async function rescheduleRideAt(
+export const rescheduleRide = (
   id: string,
-  slot: WallSlot,
+  times: RideTimes,
   actorUserId: Actor,
-) {
-  const ride = await findRideById(id);
-  if (!ride) throw new DomainError("unknownRide");
-  return rescheduleRide(
+) => moveRide(id, () => times, actorUserId);
+
+/**
+ * Wall-clock rescheduling in the ride's own chapter zone. A field left out
+ * keeps the ride's value as read under the lock, so two quick edits — the
+ * start, then the length — never undo each other.
+ */
+export const rescheduleRideAt = (
+  id: string,
+  patch: Partial<WallSlot>,
+  actorUserId: Actor,
+) =>
+  moveRide(
     id,
-    slotWindow(wallSlot.parse(slot), ride.chapter.timeZone),
+    (ride) =>
+      slotWindow(
+        wallSlot.parse({ ...slotOf(ride, ride.chapter.timeZone), ...patch }),
+        ride.chapter.timeZone,
+      ),
     actorUserId,
   );
-}
 
 const LOCATION_FIELDS = [
   "locationName",

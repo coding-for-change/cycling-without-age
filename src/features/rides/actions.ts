@@ -130,7 +130,7 @@ export async function rescheduleRideAction(
   slot: unknown,
 ): Promise<RideResult> {
   const parsedId = id.safeParse(rideId);
-  const parsed = wallSlot.safeParse(slot);
+  const parsed = wallSlot.partial().safeParse(slot);
   if (!parsedId.success || !parsed.success) return INVALID;
   const admin = await adminOfRide(parsedId.data);
   if (!admin) return { ok: false, error: "unknownRide" };
@@ -199,7 +199,7 @@ export async function allocateTrishawsAction(
   if (!admin) return { ok: false, error: "unknownRide" };
   return attempt(async () => {
     await allocateTrishaws(
-      parsed.data.rideId,
+      admin.ride,
       parsed.data.trishawIds,
       admin.session.user.id,
     );
@@ -208,62 +208,70 @@ export async function allocateTrishawsAction(
 
 const pilotInput = z.object({ rideId: id, userId: id });
 
-export async function assignPilotAction(input: unknown): Promise<RideResult> {
+export async function assignPilotAction(
+  input: unknown,
+): Promise<RideResult<{ changed: boolean }>> {
   const parsed = pilotInput.safeParse(input);
   if (!parsed.success) return INVALID;
   const admin = await adminOfRide(parsed.data.rideId);
   if (!admin) return { ok: false, error: "unknownRide" };
-  return attempt(async () => {
-    await staffRide(
-      parsed.data.rideId,
+  return attempt(async () => ({
+    changed: await staffRide(
+      admin.ride,
       parsed.data.userId,
       admin.session.user.id,
-    );
-  });
+    ),
+  }));
 }
 
-export async function unassignPilotAction(input: unknown): Promise<RideResult> {
+export async function unassignPilotAction(
+  input: unknown,
+): Promise<RideResult<{ changed: boolean }>> {
   const parsed = pilotInput.safeParse(input);
   if (!parsed.success) return INVALID;
   const admin = await adminOfRide(parsed.data.rideId);
   if (!admin) return { ok: false, error: "unknownRide" };
-  return attempt(async () => {
-    await rides.unassignVolunteer(
+  return attempt(async () => ({
+    changed: await rides.unassignVolunteer(
       parsed.data.rideId,
       parsed.data.userId,
       admin.session.user.id,
-    );
-  });
+    ),
+  }));
 }
 
 const riderInput = z.object({ rideId: id, passengerId: id });
 
-export async function bookRiderAction(input: unknown): Promise<RideResult> {
+export async function bookRiderAction(
+  input: unknown,
+): Promise<RideResult<{ changed: boolean }>> {
   const parsed = riderInput.safeParse(input);
   if (!parsed.success) return INVALID;
   const admin = await adminOfRide(parsed.data.rideId);
   if (!admin) return { ok: false, error: "unknownRide" };
-  return attempt(async () => {
-    await bookRider(
-      parsed.data.rideId,
+  return attempt(async () => ({
+    changed: await bookRider(
+      admin.ride,
       parsed.data.passengerId,
       admin.session.user.id,
-    );
-  });
+    ),
+  }));
 }
 
-export async function removeRiderAction(input: unknown): Promise<RideResult> {
+export async function removeRiderAction(
+  input: unknown,
+): Promise<RideResult<{ changed: boolean }>> {
   const parsed = riderInput.safeParse(input);
   if (!parsed.success) return INVALID;
   const admin = await adminOfRide(parsed.data.rideId);
   if (!admin) return { ok: false, error: "unknownRide" };
-  return attempt(async () => {
-    await rides.cancelBooking(
+  return attempt(async () => ({
+    changed: await rides.cancelBooking(
       parsed.data.rideId,
       parsed.data.passengerId,
       admin.session.user.id,
-    );
-  });
+    ),
+  }));
 }
 
 const noteInput = z.object({ rideId: id, text: rideLogNote });

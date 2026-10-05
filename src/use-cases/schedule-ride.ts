@@ -66,18 +66,20 @@ export async function scheduleRideAt(
  * ride shows the warning — but allocating one that is grounded now is not.
  */
 export async function allocateTrishaws(
-  rideId: string,
+  ride: {
+    id: string;
+    chapterId: string;
+    trishaws: { trishaw: { id: string } }[];
+  },
   trishawIds: string[],
   actorUserId: string | null,
 ) {
-  const ride = await rides.getRide(rideId);
-  if (!ride) return rides.setRideTrishaws(rideId, trishawIds, actorUserId);
   const kept = new Set(ride.trishaws.map(({ trishaw }) => trishaw.id));
   await fleet.assertUsable(
     trishawIds.filter((id) => !kept.has(id)),
     ride.chapterId,
   );
-  return rides.setRideTrishaws(rideId, trishawIds, actorUserId);
+  return rides.setRideTrishaws(ride.id, trishawIds, actorUserId);
 }
 
 /**

@@ -1736,7 +1736,8 @@
       "returnLeg": "Also cancel the way back",
       "returnLegHint": "The way back starts {when}.",
       "submit": "Cancel ride",
-      "title": "Cancel this ride?"
+      "title": "Cancel this ride?",
+      "unchanged": "This ride was already cancelled. Nothing changed."
     },
     "delete": {
       "body": "It disappears from the calendar and from every report. Riders, pilots and trishaws stay.",
@@ -1808,6 +1809,7 @@
       "status": "Status",
       "title": "{model} · {date}",
       "trishaws": "Trishaws",
+      "unchanged": "Already done, nothing changed.",
       "undo": "Undo",
       "undone": "Put back.",
       "wayBack": "Way back",
@@ -1896,6 +1898,7 @@
       "placeHint": "Pick a result to set the place.",
       "placeNoResults": "Nothing found. Try the street or the town.",
       "placeSearching": "Searching",
+      "retry": "Try again",
       "returnAt": "The way back starts at {time}.",
       "roundTrip": "Round trip",
       "roundTripHint": "The way back becomes its own ride, as long as the way there.",
@@ -1908,7 +1911,7 @@
       "timeZone": "Times are in {zone}.",
       "title": "Schedule a ride",
       "trishaws": "Trishaws",
-      "trishawsFailed": "Couldn't check the trishaws. Change the time or try again.",
+      "trishawsFailed": "Couldn't check which trishaws are free. Your picks are kept.",
       "trishawsHint": "Only trishaws that are free for the whole ride can be picked.",
       "trishawsLoading": "Checking which trishaws are free…",
       "trishawsNone": "This chapter has no trishaws yet. Schedule the ride anyway and add one later.",
