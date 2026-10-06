@@ -117,7 +117,7 @@ export function TrishawOptionRow({
                 aria-hidden
                 className={cn(
                   "size-3.5 shrink-0",
-                  checked && option.warning ? "text-red" : "text-ink-soft",
+                  checked && option.warning ? "text-red-ink" : "text-ink-soft",
                 )}
               />
               {note}

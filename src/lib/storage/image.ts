@@ -14,5 +14,12 @@ export const toWebp = (input: Buffer) =>
     .webp({ quality: 82 })
     .toBuffer();
 
+export const toSquareWebp = (input: Buffer, edge: number) =>
+  sharp(input, { failOn: "error" })
+    .rotate()
+    .resize({ width: edge, height: edge, fit: "cover", position: "attention" })
+    .webp({ quality: 82 })
+    .toBuffer();
+
 export const isPdf = (input: Buffer) =>
   input.subarray(0, 5).toString("latin1") === "%PDF-";

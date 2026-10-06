@@ -82,7 +82,7 @@ export function StepError({ children }: { children: ReactNode }) {
   return (
     <p
       role="alert"
-      className="mb-2 text-center text-sm text-red"
+      className="mb-2 text-center text-sm text-red-ink"
     >
       {children}
     </p>

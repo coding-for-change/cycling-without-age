@@ -164,7 +164,7 @@ export function RideWeek({
                     className={cn(
                       "text-ink flex size-7 items-center justify-center rounded-full text-sm leading-none tabular-nums",
                       day.key === todayKey && "font-semibold",
-                      day.key === todayKey && !active && "text-mint-deep",
+                      day.key === todayKey && !active && "text-mint-ink",
                       active && "bg-mint-deep text-white",
                     )}
                   >

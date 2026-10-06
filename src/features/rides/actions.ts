@@ -141,9 +141,10 @@ async function onRide<
   if (!parsed.success) return rejected(parsed.error);
   const admin = await adminOfRide(parsed.data.rideId);
   if (!admin) return { ok: false, error: "unknownRide" };
-  return attempt<T>(async () =>
-    reply?.(await run(parsed.data, admin.ride, admin.actorUserId)),
-  );
+  return attempt<T>(async () => {
+    const result = await run(parsed.data, admin.ride, admin.actorUserId);
+    return reply?.(result);
+  });
 }
 
 const changed = (changed: boolean) => ({ changed });

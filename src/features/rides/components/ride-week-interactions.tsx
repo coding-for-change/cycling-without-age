@@ -531,7 +531,7 @@ export function RideWeekColumns({
                     >
                       <TriangleAlert
                         aria-hidden
-                        className="text-red size-3 shrink-0"
+                        className="text-red-ink size-3 shrink-0"
                       />
                       <span
                         aria-hidden

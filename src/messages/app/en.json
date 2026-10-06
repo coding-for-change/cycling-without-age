@@ -1,5 +1,9 @@
 {
   "account": {
+    "appearance": {
+      "body": "Dark mode is easier on the eyes at night. System follows your device.",
+      "title": "Appearance"
+    },
     "calendar": {
       "addTo": "Add it to",
       "apps": {
@@ -54,6 +58,7 @@
         },
         "label": "Type {word} to confirm",
         "open": "Delete account",
+        "riders": "{count, plural, one {1 person you look after will be removed too, with their bookings} other {# people you look after will be removed too, with their bookings}}",
         "submit": "Delete account",
         "title": "Delete your account for good?",
         "word": "DELETE"
@@ -293,12 +298,13 @@
       "newTrishawType": "Add a trishaw model",
       "open": "Open the command bar",
       "placeholder": "Search for a page or an action",
+      "ridesList": "Rides as a list",
       "signOut": "Sign out",
+      "theme": "Appearance: {name}",
       "toggleSidebar": "Toggle the sidebar",
       "viewAsAdmin": "View as admin",
       "viewAsPassenger": "View as passenger",
-      "viewAsPilot": "View as pilot",
-      "ridesList": "Rides as a list"
+      "viewAsPilot": "View as pilot"
     },
     "countries": {
       "admins": "Country admins",
@@ -347,6 +353,7 @@
       "consequences": "This also deletes, for good:",
       "damages": "{count, plural, one {1 damage report} other {# damage reports}}",
       "history": "{count, plural, one {1 history entry} other {# history entries}}",
+      "lookedAfter": "{count, plural, one {1 rider they look after} other {# riders they look after}}",
       "locations": "{count, plural, one {1 storage location} other {# storage locations}}",
       "members": "{count, plural, one {1 membership (the account stays)} other {# memberships (the accounts stay)}}",
       "models": "{count, plural, one {1 trishaw model} other {# trishaw models}}",
@@ -400,12 +407,16 @@
         "poolAccessRequested": "Pool request",
         "rejection": "Turned down",
         "roleChanged": "Role change",
-        "welcome": "Welcome"
+        "welcome": "Welcome",
+        "careRequested": "Care request",
+        "careDecided": "Care answer",
+        "careInvited": "Caretaker invite"
       },
       "you": "You"
     },
     "members": {
       "actions": "Actions for {name}",
+      "caretaker": "Caretaker · {count}",
       "columns": {
         "joined": "Joined",
         "person": "Person",
@@ -530,32 +541,69 @@
     "passengers": {
       "add": {
         "added": "{name} is on the list.",
+        "pickupMissing": "Pick the address from the list, or choose care home.",
         "another": "Add another right after",
         "anotherHint": "Keeps the form open for the next resident.",
         "body": "For someone who signs up at the door rather than on a phone. They can take the account over later with the same email or number.",
         "contact": "Email or phone number",
         "errors": {
           "exists": "That email or number already has an account.",
+          "tooMany": "Someone can look after up to 10 people.",
           "generic": "That didn't work. Try again.",
           "invalid": "Check the details — something isn't quite right."
         },
         "helper": "Someone helps this person",
         "helperContact": "Their email or phone number",
-        "helperIsAccountHolder": "This account will belong to {helper}, who manages {passenger}.",
         "helperName": "Their name",
         "helperRelationship": "Relationship",
         "open": "Add a passenger",
         "submit": "Add passenger",
-        "title": "Add a passenger"
+        "title": "Add a passenger",
+        "helperNext": {
+          "title": "What happens next",
+          "existing": "If {helper} already uses the app, they get a request to look after {passenger} and can accept or decline. {passenger} is added once they accept.",
+          "fresh": "{channel, select, phone {If not, we set up an account for {helper} with {passenger} already in it. We can't send texts, so let them know to sign in with this number.} other {If not, we set up an account for {helper} with {passenger} already in it and email them an invitation to sign in.}}",
+          "someone": "this person"
+        },
+        "sent": "{channel, select, phone {Saved. Ask {helper} to sign in with their number to look after {name}.} other {Request sent to {helper} to look after {name}.}}"
       },
       "columns": {
         "born": "Born",
+        "caretaker": "Caretaker",
         "chapter": "Chapter",
         "joined": "Joined",
-        "name": "Name"
+        "name": "Name",
+        "pickup": "Pickup",
+        "via": "via {name}"
       },
       "empty": "No passengers yet. Add the first one, or wait for someone to join from the chapter's page.",
-      "pickChapter": "Pick a single chapter to add a passenger to it."
+      "pickChapter": "Pick a single chapter to add a passenger to it.",
+      "detail": {
+        "back": "Passengers",
+        "managedBy": "Looked after by {name}",
+        "chapter": "Chapter",
+        "born": "Born",
+        "profile": "Profile",
+        "properties": "Details",
+        "gender": "Gender",
+        "pickup": "Pickup",
+        "delete": {
+          "open": "Remove from chapter",
+          "title": "Remove {name} from the chapter?",
+          "body": "Their profile and photo go with them, and they drop off every ride they were booked on. The rides themselves stay. The person who looks after them can no longer book for them here.",
+          "label": "Type {word} to confirm",
+          "word": "REMOVE",
+          "submit": "Remove from chapter",
+          "done": "{name} was removed from the chapter.",
+          "errors": {
+            "generic": "That didn't work. Try again."
+          }
+        }
+      },
+      "waiting": {
+        "title": "Waiting for an answer",
+        "row": "Asked {caretaker} · {date}"
+      }
     },
     "person": {
       "back": "Back to members",
@@ -579,7 +627,23 @@
       "noEmail": "No email address",
       "noPhone": "No phone number",
       "noRoles": "No role yet",
-      "roles": "Roles"
+      "roles": "Roles",
+      "readiness": {
+        "title": "Pilot readiness",
+        "confirm": "Confirm",
+        "confirmed": "Confirmed",
+        "ticked": "Ticked by the pilot",
+        "open": "Not yet",
+        "done": "Confirmed.",
+        "rode": "Done",
+        "revoke": "Revoke",
+        "revoked": "Confirmation revoked."
+      },
+      "profile": "Profile",
+      "caretaker": {
+        "title": "Looks after",
+        "relationship": "Relationship: {relationship}"
+      }
     },
     "perspectives": {
       "admin": "Admin",
@@ -897,6 +961,7 @@
   },
   "calendar": {
     "agendaEmpty": "Nothing booked yet. When a ride is scheduled for you, it turns up here.",
+    "agendaEmptyCaretaker": "{who, select, one {Nothing booked yet. When a ride is scheduled for {name}, it turns up here.} withOne {Nothing booked yet. When a ride is scheduled for you or {name}, it turns up here.} withMany {Nothing booked yet. When a ride is scheduled for you or someone you look after, it turns up here.} other {Nothing booked yet. When a ride is scheduled for someone you look after, it turns up here.}}",
     "bookedElsewhere": "Booked by another chapter",
     "cancelledOn": "Cancelled",
     "models": {
@@ -908,6 +973,8 @@
     "noRiders": "No riders yet",
     "noTrishaw": "No trishaw yet",
     "noTrishaws": "No trishaws on the books yet.",
+    "pickupCareHome": "Care home",
+    "pickupLabel": "Pick-up: {place}",
     "pilotNeeded": "Pilot needed",
     "previousWeek": "Previous week",
     "riders": "{count, plural, one {# rider} other {# riders}}",
@@ -1073,7 +1140,13 @@
     "next": "Next",
     "signOut": "Sign out",
     "skip": "Skip for now",
-    "stepProgress": "Step {current} of {total}"
+    "stepProgress": "Step {current} of {total}",
+    "theme": {
+      "dark": "Dark",
+      "label": "Change appearance",
+      "light": "Light",
+      "system": "System"
+    }
   },
   "consent": {
     "data": "I agree to the storage and processing of my data.",
@@ -1086,8 +1159,8 @@
     "required": "Tick all of them to continue.",
     "safety": "I understand that rides are provided by trained volunteers, and I agree to the safety guidelines of the chapter.",
     "setUpBy": "{name} set this account up for you. Check the details and agree to continue.",
-    "title": "Three quick agreements",
-    "titlePilot": "Two quick agreements"
+    "title": "{count, plural, one {1 quick agreement} other {# quick agreements}}",
+    "health": "Optional: the chapter's pilots and admins may see what helps me on a ride, such as a wheelchair or hearing. These are health details, and I can withdraw this any time."
   },
   "fleet": {
     "allocation": {
@@ -1702,7 +1775,8 @@
       "home": "My own address"
     },
     "title": "Where would you like to ride?",
-    "titlePassenger": "Where should we pick you up?"
+    "titlePassenger": "Where should we pick you up?",
+    "titleCaretaker": "Which chapter should they ride with?"
   },
   "member": {
     "action": {
@@ -1721,6 +1795,7 @@
       "greeting": "Hi {name}",
       "nextRide": {
         "passenger": {
+          "caretakerEmpty": "{who, select, one {Nothing booked for {name} yet. When you book a ride, the day, the time and the pilot who's coming to collect {name} land here.} withOne {Nothing booked yet. When you book a ride for yourself or {name}, the day, the time and the pilot who's pedalling land here.} withMany {Nothing booked yet. When you book a ride for yourself or someone you look after, the day, the time and the pilot who's pedalling land here.} other {Nothing booked yet. When you book a ride for someone you look after, the day, the time and the pilot who's coming to collect them land here.}}",
           "empty": "Nothing booked yet. When you book a ride, the day, the time and the pilot who's coming to collect you land here."
         },
         "pilot": {
@@ -1729,6 +1804,7 @@
         "title": "Next ride"
       },
       "passenger": {
+        "caretakerTagline": "{who, select, one {{name}'s next ride starts here.} withOne {Rides for you and {name} start here.} withMany {Rides for you and the people you look after start here.} other {Rides for the people you look after start here.}}",
         "chooseChapter": "Choose a chapter",
         "tagline": "Your next ride starts here."
       },
@@ -1743,13 +1819,15 @@
       "chat": "Chat",
       "home": "Home",
       "rides": "My rides",
-      "training": "Training"
+      "training": "Training",
+      "profile": "Profile"
     },
     "navLabel": "Sections",
     "pages": {
       "calendar": {
         "passenger": {
-          "body": "Nothing planned yet. Your upcoming rides appear here, with the date and the time your pilot arrives."
+          "body": "Nothing planned yet. Your upcoming rides appear here, with the date and the time your pilot arrives.",
+          "caretakerBody": "{who, select, one {Nothing planned for {name} yet. Upcoming rides appear here, with the date and the time the pilot arrives.} withOne {Nothing planned yet. Upcoming rides for you and {name} appear here, with the date and the time the pilot arrives.} withMany {Nothing planned yet. Upcoming rides for you and the people you look after appear here, with the date and the time the pilot arrives.} other {Nothing planned yet. Upcoming rides for the people you look after appear here, with the date and the time the pilot arrives.}}"
         },
         "pilot": {
           "body": "An empty week, for now. Your rides, training dates and chapter meet-ups will line up here."
@@ -1758,7 +1836,8 @@
       },
       "rides": {
         "passenger": {
-          "body": "Nothing booked yet. Once your chapter opens booking, this is where your rides wait — the day, the time, and the pilot who rings the bell."
+          "body": "Nothing booked yet. Once your chapter opens booking, this is where your rides wait — the day, the time, and the pilot who rings the bell.",
+          "caretakerBody": "{who, select, one {Nothing booked for {name} yet. Once your chapter opens booking, this is where the rides wait — the day, the time, and the pilot who rings the bell.} withOne {Nothing booked for you or {name} yet. Once your chapter opens booking, this is where the rides wait — the day, the time, and the pilot who rings the bell.} withMany {Nothing booked for you or the people you look after yet. Once your chapter opens booking, this is where the rides wait — the day, the time, and the pilot who rings the bell.} other {Nothing booked for the people you look after yet. Once your chapter opens booking, this is where the rides wait — the day, the time, and the pilot who rings the bell.}}"
         },
         "pilot": {
           "body": "Your first ride isn't on the list yet. When your chapter posts open rides, the ones that need a pilot appear here — pick one, and the trishaw is yours for the afternoon."
@@ -1848,8 +1927,6 @@
         "title": "You're in."
       },
       "title": "Ready when you are",
-      "training": "Training while you wait",
-      "trainingHint": "About 20 minutes of video, and you'll know the trishaw before you sit on it.",
       "yourChapters": "Your chapters"
     },
     "status": {
@@ -1873,15 +1950,6 @@
       "title": "Training while you wait"
     }
   },
-  "pilotNextSteps": {
-    "finish": "Next",
-    "steps": {
-      "1": "Watch the training videos — about 20 minutes, right in this app.",
-      "2": "Join a practical workshop with one of the captains.",
-      "3": "Grab your first ride — a captain rides along the first time."
-    },
-    "title": "How you become a pilot"
-  },
   "profile": {
     "birthDate": "Birthday",
     "body": "Your chapter needs this to plan a ride. Nothing else, for now.",
@@ -1891,7 +1959,6 @@
       "incomplete": "Fill in every field to continue."
     },
     "firstName": "First name",
-    "forSomeoneElse": "I'm creating this account for someone else to ride",
     "gender": "Gender",
     "genders": {
       "female": "Female",
@@ -1899,6 +1966,39 @@
       "other": "Other"
     },
     "lastName": "Last name",
+    "title": "A little about you",
+    "titlePilot": "A little about you"
+  },
+  "riders": {
+    "title": "Who will ride?",
+    "body": "Add everyone you'll book rides for. You can fill in their profiles later.",
+    "you": "About you",
+    "rider": "Person {number}",
+    "remove": "Remove",
+    "add": "Add another person",
+    "pickup": {
+      "label": "Where should we pick them up?",
+      "careHome": "Care home",
+      "home": "Their own address",
+      "change": "Change"
+    },
+    "address": {
+      "label": "Their address",
+      "placeholder": "Street and number",
+      "hint": "Start typing, then pick the address from the list.",
+      "searching": "Looking…",
+      "noResults": "No address matches that."
+    },
+    "submit": "{count, plural, one {Continue with 1 person} other {Continue with # people}}",
+    "added": "{name} was added.",
+    "errors": {
+      "birthDate": "That birthday doesn't look right. Check the year.",
+      "generic": "We couldn't save that. Try again.",
+      "incomplete": "Fill in every field to continue.",
+      "passengerChapterMismatch": "Everyone you book for rides with the same chapter.",
+      "tooManyRiders": "You can look after up to 10 people.",
+      "notChapterMember": "Join a chapter as a passenger first."
+    },
     "relationship": {
       "label": "Your relationship to them",
       "options": {
@@ -1910,8 +2010,12 @@
         "relative": "Another relative"
       }
     },
-    "title": "A little about you",
-    "titlePilot": "A little about you"
+    "drawerBody": "They ride with the same chapter as you. You can fill in their profile afterwards.",
+    "save": "Add person",
+    "edit": "Edit",
+    "done": "Done",
+    "addFirst": "Add a person who will ride",
+    "bornOn": "Born {date}"
   },
   "rides": {
     "cancel": {
@@ -2242,7 +2346,11 @@
         "body": "You do the pedalling and take passengers out for a ride.",
         "title": "I want to be a Pilot"
       },
-      "title": "How would you like to take part?"
+      "title": "How would you like to take part?",
+      "caretaker": {
+        "title": "I'm booking for someone else",
+        "body": "Someone you care about rides — you plan the rides for them."
+      }
     }
   },
   "welcome": {
@@ -2256,19 +2364,196 @@
         "headline": "Everyone has the right to wind in their hair."
       },
       "2": {
-        "body": "A volunteer cycles the trishaw at walking pace. You sit at the front, with nothing between you and the street.",
-        "headline": "Pilots do the pedalling."
-      },
-      "3": {
-        "body": "Every chapter is local volunteers giving an hour to the people who built the neighbourhood.",
-        "headline": "It runs on neighbours."
-      },
-      "4": {
         "body": "Chapters across Europe, North America, Australia and Japan — very likely one near you.",
         "headline": "Find your chapter."
       }
     },
     "subtitle": "Sign in to book a ride or start pedalling. Or look around first.",
-    "title": "Come along for the ride."
+    "title": "Come along for the ride.",
+    "unmute": "Turn sound on",
+    "mute": "Turn sound off"
+  },
+  "personProfile": {
+    "title": "Profile",
+    "yourProfile": "Your profile",
+    "viewProfile": "View profile",
+    "back": "Back",
+    "age": "{age, plural, one {# year} other {# years}}",
+    "showAge": "Show age",
+    "showAgeHint": "Only the age shows, never the birthday.",
+    "visibility": "Pilots and admins of the chapter see this profile. Other riders never do.",
+    "onBehalf": "You're filling this in for {name}. Write it the way {name} would say it.",
+    "nothingYet": "{name} hasn't shared anything yet.",
+    "bio": {
+      "label": "About",
+      "placeholder": "A few words about you: what you love, where you grew up, what makes you smile"
+    },
+    "interests": {
+      "label": "Loves",
+      "hint": "Pick up to eight.",
+      "custom": "Add your own",
+      "customPlaceholder": "e.g. Jazz",
+      "add": "Add",
+      "remove": "Remove {interest}",
+      "options": {
+        "nature": "Nature",
+        "gardening": "Gardening",
+        "birds": "Birds",
+        "animals": "Animals",
+        "music": "Music",
+        "singing": "Singing",
+        "dancing": "Dancing",
+        "reading": "Reading",
+        "history": "History",
+        "art": "Art",
+        "crafts": "Crafts",
+        "photography": "Photography",
+        "cooking": "Cooking",
+        "baking": "Baking",
+        "travel": "Travel",
+        "sports": "Sports",
+        "football": "Football",
+        "cycling": "Cycling",
+        "theatre": "Theatre",
+        "films": "Films",
+        "games": "Games & puzzles",
+        "family": "Family",
+        "faith": "Faith",
+        "technology": "Technology"
+      }
+    },
+    "prompts": {
+      "label": "Conversation starters",
+      "hint": "Something to ask about on the ride.",
+      "add": "Add a starter",
+      "remove": "Remove",
+      "answerPlaceholder": "Answer",
+      "save": "Save",
+      "cancel": "Cancel",
+      "options": {
+        "grewUp": "Where I grew up",
+        "favouritePlace": "My favourite place in town",
+        "askMeAbout": "Ask me about…",
+        "firstJob": "My first job",
+        "favouriteSong": "A song I love",
+        "dreamRide": "Where I'd love to ride to"
+      }
+    },
+    "accessibility": {
+      "label": "Good to know for the ride",
+      "hint": "Helps the pilot look after the rider.",
+      "none": "Nothing special needed",
+      "groups": {
+        "mobility": "Getting around",
+        "senses": "Seeing and hearing",
+        "comfort": "Comfort",
+        "communication": "Talking and remembering"
+      },
+      "tags": {
+        "wheelchair": "Wheelchair",
+        "walkingAid": "Walking aid",
+        "helpBoarding": "Help getting in and out",
+        "hearing": "Hard of hearing",
+        "vision": "Low vision",
+        "getsCold": "Gets cold easily",
+        "bumpSensitive": "Sensitive to bumps",
+        "shortRides": "Prefers short rides",
+        "speech": "Speaks slowly",
+        "memory": "Forgetful",
+        "companion": "Likes a companion along"
+      },
+      "consentTitle": "Health details need a yes first",
+      "consentBody": "These details say something about health. Only the pilots and admins of the chapter see them, only to help on rides. Withdrawing deletes them.",
+      "consentAgree": "I agree",
+      "attest": "{name} (or their legal representative) agrees to share these details.",
+      "withdraw": "Withdraw consent",
+      "withdrawn": "Consent withdrawn. The details are deleted."
+    },
+    "photo": {
+      "add": "Add photo",
+      "change": "Change photo",
+      "remove": "Remove photo",
+      "removed": "Photo removed.",
+      "saved": "Photo saved.",
+      "uploading": "Uploading…",
+      "riderAgrees": "{name} agrees to this photo being shown to the chapter's pilots.",
+      "confirm": "Use this photo",
+      "cancel": "Cancel",
+      "zoom": "Zoom",
+      "agreeTitle": "Before you add a photo of {name}",
+      "agreeAction": "{name} agrees, choose photo"
+    },
+    "managed": {
+      "title": "People you look after",
+      "open": "Open profile",
+      "details": "Their details",
+      "pickup": "Pickup",
+      "remove": {
+        "open": "Remove {name}",
+        "title": "Remove {name}?",
+        "body": "Their profile and upcoming bookings go with them. Rides they have already ridden stay on the record, without them.",
+        "label": "Type {word} to confirm",
+        "word": "REMOVE",
+        "submit": "Remove",
+        "done": "{name} was removed.",
+        "errors": {
+          "generic": "That didn't work. Try again."
+        }
+      },
+      "body": "Everyone you book rides for. Open someone to fill in their profile or change their details.",
+      "count": "{count, plural, one {# person} other {# people}}"
+    },
+    "errors": {
+      "generic": "That didn't work. Try again.",
+      "invalid": "That doesn't look right.",
+      "rateLimited": "Slow down a little and try again in a minute.",
+      "consentRequired": "Agree to sharing health details first.",
+      "uploadRejected": "That photo didn't work. Try a JPG, PNG or WebP under 10 MB.",
+      "pilotStepConfirmed": "Your chapter confirmed this step. Ask them if it needs changing."
+    }
+  },
+  "setupChecklist": {
+    "title": "Get set up",
+    "progress": "{done} of {total} done",
+    "dismiss": "Hide",
+    "dismissed": "Hidden. Your profile is always one tap away.",
+    "markDone": "Mark as done",
+    "markUndone": "Mark as not done",
+    "confirmed": "Confirmed by the chapter",
+    "steps": {
+      "photo": "Add a profile photo",
+      "bio": "Write a few words about yourself",
+      "interests": "Pick what you love",
+      "prompt": "Add a conversation starter",
+      "accessibility": "Note what helps on a ride",
+      "managedRiders": "{count, plural, one {Fill in {name}'s profile} other {Fill in # riders' profiles}}",
+      "passkey": "Set up a passkey",
+      "push": "Turn on notifications",
+      "trainingVideos": "Watch the training videos",
+      "workshop": "Join a practical workshop",
+      "firstRide": "Ride with a captain for the first time"
+    },
+    "aboutYou": "About you, so pilots know who's booking.",
+    "hints": {
+      "trainingVideos": "About 20 minutes, right in this app.",
+      "workshop": "With one of the captains.",
+      "firstRide": "A captain rides along the first time."
+    }
+  },
+  "care": {
+    "title": "Look after {rider}?",
+    "body": "{requester} from {chapter} would like you to book rides for {rider}. Nothing changes until you answer.",
+    "accept": "Yes, I'll look after {rider}",
+    "decline": "No, thanks",
+    "acceptedTitle": "{rider} is in your care",
+    "acceptedBody": "You can now book rides for {rider} and fill in their profile.",
+    "declinedTitle": "You said no",
+    "declinedBody": "{rider} wasn't added. The chapter knows, so they can find someone else.",
+    "open": "Open people you look after",
+    "errors": {
+      "passengerChapterMismatch": "You already look after people in another chapter, so {rider} can't be added here.",
+      "tooManyRiders": "You can look after up to 10 people.",
+      "generic": "That didn't work. Try again."
+    }
   }
 }

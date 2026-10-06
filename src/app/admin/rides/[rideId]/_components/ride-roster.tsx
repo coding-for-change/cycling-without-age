@@ -40,6 +40,7 @@ type Person = {
   name: string;
   avatar: string;
   href: string | null;
+  pickup: string | null;
 };
 
 type PickStrings = { search: string; empty: string };
@@ -221,6 +222,8 @@ export function RideRoster({
               >
                 <RiderRow
                   rider={rider}
+                  pickupLabel={labels.pickupLabel}
+                  language={language}
                   index={index}
                   handleLabel={say(labels.dragRider, rider.name)}
                   removeLabel={say(labels.remove, rider.name)}
@@ -262,6 +265,11 @@ export function RideRoster({
                 {index + 1}
               </span>
               <PersonChip {...rider} />
+              <Pickup
+                place={rider.pickup}
+                label={labels.pickupLabel}
+                language={language}
+              />
             </DetailListRow>
           ))}
         </DetailList>
@@ -270,8 +278,30 @@ export function RideRoster({
   );
 }
 
+function Pickup({
+  place,
+  label,
+  language,
+}: {
+  place: string | null;
+  label: string;
+  language: Locale;
+}) {
+  if (!place) return null;
+  return (
+    <span
+      className="max-w-1/2 min-w-0 truncate text-2sm text-ink-soft"
+      title={formatMessage(label, { place }, language)}
+    >
+      {place}
+    </span>
+  );
+}
+
 function RiderRow({
   rider,
+  pickupLabel,
+  language,
   index,
   handleLabel,
   removeLabel,
@@ -279,6 +309,8 @@ function RiderRow({
   onRemove,
 }: {
   rider: Person;
+  pickupLabel: string;
+  language: Locale;
   index: number;
   handleLabel: string;
   removeLabel: string;
@@ -302,6 +334,11 @@ function RiderRow({
         </SortableItemHandle>
       </span>
       <PersonChip {...rider} />
+      <Pickup
+        place={rider.pickup}
+        label={pickupLabel}
+        language={language}
+      />
       <RowRemoveButton
         label={removeLabel}
         disabled={disabled}

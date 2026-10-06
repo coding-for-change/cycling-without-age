@@ -14,6 +14,7 @@ import {
   useSignOut,
 } from "@/components/sign-out-button";
 import { deleteOwnAccountAction } from "@/features/accounts/actions";
+import { formatMessage } from "@/lib/i18n/format";
 import type { AccountData } from "./types";
 
 export function DangerSection({
@@ -51,6 +52,17 @@ export function DangerSection({
           <SettingsItem>
             <ConfirmDeleteDialog
               name={data.profile.name}
+              consequences={
+                data.ridersRemovedWithAccount > 0
+                  ? [
+                      formatMessage(
+                        labels.riders,
+                        { count: data.ridersRemovedWithAccount },
+                        data.language,
+                      ),
+                    ]
+                  : []
+              }
               labels={labels}
               locale={data.language}
               cancel={data.cancelLabel}

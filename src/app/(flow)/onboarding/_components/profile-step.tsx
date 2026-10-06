@@ -2,19 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, GenderChoice, type Gender } from "@/components/person-fields";
 import { useCharacter } from "@/components/character";
 import { haptics } from "@/lib/native/haptics";
-import { cn } from "@/lib/utils";
 import type { OnboardingRole } from "@/lib/onboarding";
 import type { StepDefaults } from "./step-page";
 import { Step, StepError, type StepProgress } from "../../_components/step";
-import { submitProfile } from "../actions";
-
-type Gender = "female" | "male" | "other";
+import { submitProfile, type StepResult } from "../actions";
 
 type Strings = {
   title: string;
@@ -25,12 +21,8 @@ type Strings = {
   birthDate: string;
   gender: string;
   genders: Record<Gender, string>;
-  forSomeoneElse: string;
-  relationship: { label: string; options: Record<string, string> };
   errors: Record<string, string>;
 };
-
-const GENDERS: Gender[] = ["female", "male", "other"];
 
 export function ProfileStep({
   role,
@@ -51,8 +43,6 @@ export function ProfileStep({
   const [lastName, setLastName] = useState(defaults.lastName);
   const [birthDate, setBirthDate] = useState(defaults.birthDate);
   const [gender, setGender] = useState<Gender | null>(defaults.gender);
-  const [helping, setHelping] = useState(false);
-  const [relationship, setRelationship] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -60,18 +50,21 @@ export function ProfileStep({
     firstName.trim() && lastName.trim() && birthDate && gender,
   );
 
-  const send = (details: object | null, helperRelationship?: string) =>
-    startTransition(async () => {
-      const result = await submitProfile(details, helperRelationship);
-      if (!result.ok) {
-        haptics.error();
-        oops();
-        setError(strings.errors[result.error] ?? strings.errors.generic);
-        return;
-      }
-      haptics.success();
-      router.push(result.next, { transitionTypes: ["nav-forward"] });
-    });
+  const finish = (result: StepResult) => {
+    if (!result.ok) {
+      haptics.error();
+      oops();
+      setError(strings.errors[result.error] ?? strings.errors.generic);
+      return;
+    }
+    haptics.success();
+    router.push(result.next, { transitionTypes: ["nav-forward"] });
+  };
+
+  const send = () =>
+    startTransition(async () =>
+      finish(await submitProfile({ firstName, lastName, birthDate, gender })),
+    );
 
   return (
     <Step
@@ -83,70 +76,12 @@ export function ProfileStep({
           {error && <StepError>{error}</StepError>}
           <Button
             disabled={!complete || pending}
-            onClick={() => send({ firstName, lastName, birthDate, gender })}
+            onClick={send}
             variant="brand"
             size="hero"
           >
             {continueLabel}
           </Button>
-
-          {/* Booking for someone who cannot use a phone is a first-class path,
-              not an escape hatch, so it gets the same pill as the primary — in
-              mint, the caretaking colour, which is what this path is. Red stays
-              with the one hero action. */}
-          {role === "passenger" && (
-            <>
-              {helping && (
-                <div className="mt-4">
-                  <Label
-                    htmlFor="relationship"
-                    className="mb-1.5 text-sm font-medium text-ink-soft"
-                  >
-                    {strings.relationship.label}
-                  </Label>
-                  <select
-                    id="relationship"
-                    value={relationship}
-                    onChange={(event) => setRelationship(event.target.value)}
-                    className="h-12 w-full rounded-(--r-card) border border-line bg-canvas px-3 text-base text-ink focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none"
-                  >
-                    <option value="">—</option>
-                    {Object.entries(strings.relationship.options).map(
-                      ([key, label]) => (
-                        <option
-                          key={key}
-                          value={key}
-                        >
-                          {label}
-                        </option>
-                      ),
-                    )}
-                  </select>
-                </div>
-              )}
-              <button
-                type="button"
-                disabled={pending}
-                onClick={() => {
-                  haptics.tap();
-                  if (!helping) {
-                    setHelping(true);
-                    return;
-                  }
-                  send(null, relationship || undefined);
-                }}
-                className="mt-3 flex h-14 w-full items-center justify-center gap-2 rounded-full border border-mint bg-mint-tint px-4 text-base font-medium text-ink transition-colors hover:bg-mint focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none disabled:opacity-50"
-              >
-                {helping ? continueLabel : strings.forSomeoneElse}
-                {!helping && (
-                  <ArrowRight
-                    className="size-4"
-                    aria-hidden
-                  />
-                )}
-              </button>
-            </>
-          )}
         </>
       }
     >
@@ -196,56 +131,13 @@ export function ProfileStep({
           />
         </Field>
 
-        <fieldset>
-          <legend className="mb-2 text-sm font-medium text-ink-soft">
-            {strings.gender}
-          </legend>
-          <div className="grid grid-cols-3 gap-2">
-            {GENDERS.map((option) => (
-              <button
-                key={option}
-                type="button"
-                aria-pressed={gender === option}
-                onClick={() => {
-                  haptics.selectionChanged();
-                  setGender(option);
-                }}
-                className={cn(
-                  "min-h-12 rounded-(--r-card) border px-2 text-sm transition-colors",
-                  "focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none",
-                  gender === option
-                    ? "border-transparent bg-mint-tint font-medium text-ink ring-1 ring-mint"
-                    : "border-line bg-canvas text-ink-soft hover:bg-canvas-deep",
-                )}
-              >
-                {strings.genders[option]}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+        <GenderChoice
+          legend={strings.gender}
+          labels={strings.genders}
+          value={gender}
+          onChange={setGender}
+        />
       </div>
     </Step>
-  );
-}
-
-function Field({
-  id,
-  label,
-  children,
-}: {
-  id: string;
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <Label
-        htmlFor={id}
-        className="mb-1.5 text-sm font-medium text-ink-soft"
-      >
-        {label}
-      </Label>
-      {children}
-    </div>
   );
 }

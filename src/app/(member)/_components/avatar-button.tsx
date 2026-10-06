@@ -78,7 +78,10 @@ export function AvatarButton({
           className,
         )}
       >
-        <PersonAvatar svg={data.profile.avatarAnimated} />
+        <PersonAvatar
+          svg={data.profile.avatarAnimated}
+          photoUrl={data.profile.photoUrl}
+        />
       </button>
       <AccountSurface
         data={data}

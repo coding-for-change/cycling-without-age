@@ -1,5 +1,9 @@
 {
   "account": {
+    "appearance": {
+      "body": "Der dunkle Modus schont abends die Augen. System folgt deinem Gerät.",
+      "title": "Darstellung"
+    },
     "calendar": {
       "addTo": "Hinzufügen zu",
       "apps": {
@@ -54,6 +58,7 @@
         },
         "label": "Tipp {word} zur Bestätigung",
         "open": "Konto löschen",
+        "riders": "{count, plural, one {1 betreute Person wird samt ihren Buchungen mit entfernt} other {# betreute Personen werden samt ihren Buchungen mit entfernt}}",
         "submit": "Konto löschen",
         "title": "Konto endgültig löschen?",
         "word": "DELETE"
@@ -293,12 +298,13 @@
       "newTrishawType": "Rikscha-Modell hinzufügen",
       "open": "Befehlsleiste öffnen",
       "placeholder": "Nach einer Seite oder einer Aktion suchen",
+      "ridesList": "Fahrten als Liste",
       "signOut": "Abmelden",
+      "theme": "Darstellung: {name}",
       "toggleSidebar": "Seitenleiste ein- oder ausblenden",
       "viewAsAdmin": "Als Admin ansehen",
       "viewAsPassenger": "Als Passagier ansehen",
-      "viewAsPilot": "Als Pilot ansehen",
-      "ridesList": "Fahrten als Liste"
+      "viewAsPilot": "Als Pilot ansehen"
     },
     "countries": {
       "admins": "Länder-Admins",
@@ -347,6 +353,7 @@
       "consequences": "Damit wird endgültig mitgelöscht:",
       "damages": "{count, plural, one {1 Schadensmeldung} other {# Schadensmeldungen}}",
       "history": "{count, plural, one {1 Eintrag im Verlauf} other {# Einträge im Verlauf}}",
+      "lookedAfter": "{count, plural, one {1 Person, um die sie sich kümmern} other {# Personen, um die sie sich kümmern}}",
       "locations": "{count, plural, one {1 Standort} other {# Standorte}}",
       "members": "{count, plural, one {1 Mitgliedschaft (das Konto bleibt)} other {# Mitgliedschaften (die Konten bleiben)}}",
       "models": "{count, plural, one {1 Rikscha-Modell} other {# Rikscha-Modelle}}",
@@ -400,12 +407,16 @@
         "poolAccessRequested": "Pool-Anfrage",
         "rejection": "Abgelehnt",
         "roleChanged": "Rollenänderung",
-        "welcome": "Willkommen"
+        "welcome": "Willkommen",
+        "careRequested": "Betreuungsanfrage",
+        "careDecided": "Antwort auf Betreuung",
+        "careInvited": "Einladung Begleitperson"
       },
       "you": "Du"
     },
     "members": {
       "actions": "Aktionen für {name}",
+      "caretaker": "Betreuung · {count}",
       "columns": {
         "joined": "Dabei seit",
         "person": "Person",
@@ -530,32 +541,69 @@
     "passengers": {
       "add": {
         "added": "{name} steht auf der Liste.",
+        "pickupMissing": "Wähl die Adresse aus der Liste oder nimm Pflegeheim.",
         "another": "Gleich noch jemanden hinzufügen",
         "anotherHint": "Lässt das Formular für die nächste Person offen.",
         "body": "Für alle, die sich an der Tür anmelden statt am Handy. Das Konto können sie später mit derselben E-Mail oder Nummer selbst übernehmen.",
         "contact": "E-Mail oder Telefonnummer",
         "errors": {
           "exists": "Zu dieser E-Mail oder Nummer gibt es schon ein Konto.",
+          "tooMany": "Eine Person kann sich um höchstens 10 Menschen kümmern.",
           "generic": "Das hat nicht geklappt. Versuch es noch mal.",
           "invalid": "Prüf die Angaben — da stimmt etwas nicht."
         },
         "helper": "Jemand unterstützt diese Person",
         "helperContact": "E-Mail oder Telefonnummer der helfenden Person",
-        "helperIsAccountHolder": "Dieses Konto gehört dann {helper}, die sich um {passenger} kümmert.",
         "helperName": "Name der helfenden Person",
         "helperRelationship": "Beziehung",
         "open": "Passagier hinzufügen",
         "submit": "Passagier hinzufügen",
-        "title": "Passagier hinzufügen"
+        "title": "Passagier hinzufügen",
+        "helperNext": {
+          "title": "So geht es weiter",
+          "existing": "Nutzt {helper} die App schon, bekommt die Person eine Anfrage, sich um {passenger} zu kümmern, und kann zusagen oder ablehnen. {passenger} wird hinzugefügt, sobald sie zusagt.",
+          "fresh": "{channel, select, phone {Sonst legen wir ein Konto für {helper} an, in dem {passenger} schon steht. SMS können wir nicht senden – sag Bescheid, dass sie sich mit dieser Nummer anmelden.} other {Sonst legen wir ein Konto für {helper} an, in dem {passenger} schon steht, und schicken eine Einladung per E-Mail.}}",
+          "someone": "diese Person"
+        },
+        "sent": "{channel, select, phone {Gespeichert. Sag {helper} Bescheid, sich mit der Nummer anzumelden, um sich um {name} zu kümmern.} other {Anfrage an {helper} geschickt, sich um {name} zu kümmern.}}"
       },
       "columns": {
         "born": "Geboren",
+        "caretaker": "Betreut von",
         "chapter": "Ortsgruppe",
         "joined": "Dabei seit",
-        "name": "Name"
+        "name": "Name",
+        "pickup": "Abholung",
+        "via": "über {name}"
       },
       "empty": "Noch keine Passagiere. Füg den ersten hinzu, oder warte, bis sich jemand über die Seite der Ortsgruppe meldet.",
-      "pickChapter": "Wähl eine einzelne Ortsgruppe, um ihr einen Passagier hinzuzufügen."
+      "pickChapter": "Wähl eine einzelne Ortsgruppe, um ihr einen Passagier hinzuzufügen.",
+      "detail": {
+        "back": "Fahrgäste",
+        "managedBy": "Betreut von {name}",
+        "chapter": "Ortsgruppe",
+        "born": "Geboren",
+        "profile": "Profil",
+        "properties": "Details",
+        "gender": "Geschlecht",
+        "pickup": "Abholung",
+        "delete": {
+          "open": "Aus der Ortsgruppe entfernen",
+          "title": "{name} aus der Ortsgruppe entfernen?",
+          "body": "Profil und Foto werden mit entfernt, und die Person fällt aus allen gebuchten Ausfahrten. Die Ausfahrten selbst bleiben. Wer sich um sie kümmert, kann hier nicht mehr für sie buchen.",
+          "label": "Tippe {word} zur Bestätigung",
+          "word": "ENTFERNEN",
+          "submit": "Aus der Ortsgruppe entfernen",
+          "done": "{name} wurde aus der Ortsgruppe entfernt.",
+          "errors": {
+            "generic": "Das hat nicht geklappt. Versuch es noch einmal."
+          }
+        }
+      },
+      "waiting": {
+        "title": "Warten auf Antwort",
+        "row": "{caretaker} gefragt · {date}"
+      }
     },
     "person": {
       "back": "Zurück zu den Mitgliedern",
@@ -579,7 +627,23 @@
       "noEmail": "Keine E-Mail-Adresse",
       "noPhone": "Keine Telefonnummer",
       "noRoles": "Noch keine Rolle",
-      "roles": "Rollen"
+      "roles": "Rollen",
+      "readiness": {
+        "title": "Bereit als Pilot:in",
+        "confirm": "Bestätigen",
+        "confirmed": "Bestätigt",
+        "ticked": "Von der Pilotin oder dem Piloten abgehakt",
+        "open": "Noch offen",
+        "done": "Bestätigt.",
+        "rode": "Erledigt",
+        "revoke": "Zurücknehmen",
+        "revoked": "Bestätigung zurückgenommen."
+      },
+      "profile": "Profil",
+      "caretaker": {
+        "title": "Kümmert sich um",
+        "relationship": "Beziehung: {relationship}"
+      }
     },
     "perspectives": {
       "admin": "Admin",
@@ -897,6 +961,7 @@
   },
   "calendar": {
     "agendaEmpty": "Noch nichts gebucht. Sobald eine Fahrt eingeplant ist, steht sie hier.",
+    "agendaEmptyCaretaker": "{who, select, one {Noch nichts gebucht. Sobald eine Fahrt für {name} eingeplant ist, steht sie hier.} withOne {Noch nichts gebucht. Sobald eine Fahrt für Sie oder {name} eingeplant ist, steht sie hier.} withMany {Noch nichts gebucht. Sobald eine Fahrt für Sie oder einen Menschen eingeplant ist, um den Sie sich kümmern, steht sie hier.} other {Noch nichts gebucht. Sobald eine Fahrt für einen Menschen eingeplant ist, um den Sie sich kümmern, steht sie hier.}}",
     "bookedElsewhere": "Von einer anderen Ortsgruppe gebucht",
     "cancelledOn": "Abgesagt",
     "models": {
@@ -908,6 +973,8 @@
     "noRiders": "Noch keine Fahrgäste",
     "noTrishaw": "Noch keine Rikscha",
     "noTrishaws": "Noch keine Rikschas eingetragen.",
+    "pickupCareHome": "Pflegeheim",
+    "pickupLabel": "Abholung: {place}",
     "pilotNeeded": "Pilot gesucht",
     "previousWeek": "Vorige Woche",
     "riders": "{count, plural, one {# Fahrgast} other {# Fahrgäste}}",
@@ -1073,7 +1140,13 @@
     "next": "Weiter",
     "signOut": "Abmelden",
     "skip": "Erst mal überspringen",
-    "stepProgress": "Schritt {current} von {total}"
+    "stepProgress": "Schritt {current} von {total}",
+    "theme": {
+      "dark": "Dunkel",
+      "label": "Darstellung ändern",
+      "light": "Hell",
+      "system": "System"
+    }
   },
   "consent": {
     "data": "Ich stimme der Speicherung und Verarbeitung meiner Daten zu.",
@@ -1086,8 +1159,8 @@
     "required": "Setzen Sie überall ein Häkchen, um fortzufahren.",
     "safety": "Mir ist klar, dass die Ausfahrten von geschulten Freiwilligen gefahren werden, und ich halte mich an die Sicherheitsregeln der Ortsgruppe.",
     "setUpBy": "{name} hat dieses Konto für Sie eingerichtet. Prüfen Sie die Angaben und stimmen Sie zu, um fortzufahren.",
-    "title": "Drei kurze Zusagen",
-    "titlePilot": "Zwei kurze Zusagen"
+    "title": "{count, plural, one {1 kurze Zusage} other {# kurze Zusagen}}",
+    "health": "Freiwillig: Die Pilot:innen und Admins der Ortsgruppe dürfen sehen, was mir bei einer Fahrt hilft, etwa ein Rollstuhl oder schlechtes Hören. Das sind Gesundheitsangaben, und ich kann das jederzeit widerrufen."
   },
   "fleet": {
     "allocation": {
@@ -1702,7 +1775,8 @@
       "home": "Eigene Adresse"
     },
     "title": "Wo möchten Sie fahren?",
-    "titlePassenger": "Wo sollen wir Sie abholen?"
+    "titlePassenger": "Wo sollen wir Sie abholen?",
+    "titleCaretaker": "Mit welcher Ortsgruppe soll gefahren werden?"
   },
   "member": {
     "action": {
@@ -1721,6 +1795,7 @@
       "greeting": "Hallo {name}",
       "nextRide": {
         "passenger": {
+          "caretakerEmpty": "{who, select, one {Für {name} ist noch nichts gebucht. Wenn Sie eine Ausfahrt buchen, stehen hier der Tag, die Uhrzeit und der Pilot, der {name} abholt.} withOne {Noch nichts gebucht. Wenn Sie eine Ausfahrt für sich oder {name} buchen, stehen hier der Tag, die Uhrzeit und der Pilot, der in die Pedale tritt.} withMany {Noch nichts gebucht. Wenn Sie eine Ausfahrt für sich oder einen Menschen buchen, um den Sie sich kümmern, stehen hier der Tag, die Uhrzeit und der Pilot, der in die Pedale tritt.} other {Noch nichts gebucht. Wenn Sie eine Ausfahrt für einen Menschen buchen, um den Sie sich kümmern, stehen hier der Tag, die Uhrzeit und der Pilot, der zur Abholung kommt.}}",
           "empty": "Noch nichts gebucht. Wenn Sie eine Ausfahrt buchen, stehen hier der Tag, die Uhrzeit und der Pilot, der Sie abholt."
         },
         "pilot": {
@@ -1729,6 +1804,7 @@
         "title": "Nächste Ausfahrt"
       },
       "passenger": {
+        "caretakerTagline": "{who, select, one {Die nächste Ausfahrt für {name} beginnt hier.} withOne {Ausfahrten für Sie und {name} beginnen hier.} withMany {Ausfahrten für Sie und die Menschen, um die Sie sich kümmern, beginnen hier.} other {Ausfahrten für die Menschen, um die Sie sich kümmern, beginnen hier.}}",
         "chooseChapter": "Ortsgruppe wählen",
         "tagline": "Ihre nächste Ausfahrt beginnt hier."
       },
@@ -1743,13 +1819,15 @@
       "chat": "Nachrichten",
       "home": "Start",
       "rides": "Meine Ausfahrten",
-      "training": "Training"
+      "training": "Training",
+      "profile": "Profil"
     },
     "navLabel": "Bereiche",
     "pages": {
       "calendar": {
         "passenger": {
-          "body": "Noch nichts geplant. Ihre kommenden Ausfahrten stehen hier, mit dem Datum und der Uhrzeit, zu der Ihr Pilot kommt."
+          "body": "Noch nichts geplant. Ihre kommenden Ausfahrten stehen hier, mit dem Datum und der Uhrzeit, zu der Ihr Pilot kommt.",
+          "caretakerBody": "{who, select, one {Für {name} ist noch nichts geplant. Kommende Ausfahrten stehen hier, mit dem Datum und der Uhrzeit, zu der der Pilot kommt.} withOne {Noch nichts geplant. Kommende Ausfahrten für Sie und {name} stehen hier, mit dem Datum und der Uhrzeit, zu der der Pilot kommt.} withMany {Noch nichts geplant. Kommende Ausfahrten für Sie und die Menschen, um die Sie sich kümmern, stehen hier, mit dem Datum und der Uhrzeit, zu der der Pilot kommt.} other {Noch nichts geplant. Kommende Ausfahrten für die Menschen, um die Sie sich kümmern, stehen hier, mit dem Datum und der Uhrzeit, zu der der Pilot kommt.}}"
         },
         "pilot": {
           "body": "Eine leere Woche, vorerst. Deine Ausfahrten, Trainingstermine und Treffen der Ortsgruppe reihen sich hier ein."
@@ -1758,7 +1836,8 @@
       },
       "rides": {
         "passenger": {
-          "body": "Noch nichts gebucht. Sobald Ihre Ortsgruppe die Buchung öffnet, warten Ihre Ausfahrten hier — der Tag, die Uhrzeit und der Pilot, der klingelt."
+          "body": "Noch nichts gebucht. Sobald Ihre Ortsgruppe die Buchung öffnet, warten Ihre Ausfahrten hier — der Tag, die Uhrzeit und der Pilot, der klingelt.",
+          "caretakerBody": "{who, select, one {Für {name} ist noch nichts gebucht. Sobald Ihre Ortsgruppe die Buchung öffnet, warten die Ausfahrten hier — der Tag, die Uhrzeit und der Pilot, der klingelt.} withOne {Für Sie und {name} ist noch nichts gebucht. Sobald Ihre Ortsgruppe die Buchung öffnet, warten die Ausfahrten hier — der Tag, die Uhrzeit und der Pilot, der klingelt.} withMany {Für Sie und die Menschen, um die Sie sich kümmern, ist noch nichts gebucht. Sobald Ihre Ortsgruppe die Buchung öffnet, warten die Ausfahrten hier — der Tag, die Uhrzeit und der Pilot, der klingelt.} other {Für die Menschen, um die Sie sich kümmern, ist noch nichts gebucht. Sobald Ihre Ortsgruppe die Buchung öffnet, warten die Ausfahrten hier — der Tag, die Uhrzeit und der Pilot, der klingelt.}}"
         },
         "pilot": {
           "body": "Deine erste Ausfahrt steht noch nicht auf der Liste. Sobald deine Ortsgruppe offene Ausfahrten ausschreibt, tauchen hier die auf, die einen Piloten brauchen — such dir eine aus, und die Rikscha gehört dir für den Nachmittag."
@@ -1848,8 +1927,6 @@
         "title": "Du bist dabei."
       },
       "title": "Bereit, wenn du es bist",
-      "training": "Training für die Wartezeit",
-      "trainingHint": "Rund 20 Minuten Video — danach kennst du die Rikscha, bevor du das erste Mal draufsitzt.",
       "yourChapters": "Deine Ortsgruppen"
     },
     "status": {
@@ -1873,15 +1950,6 @@
       "title": "Training für die Wartezeit"
     }
   },
-  "pilotNextSteps": {
-    "finish": "Weiter",
-    "steps": {
-      "1": "Schau die Trainingsvideos — rund 20 Minuten, direkt in dieser App.",
-      "2": "Komm zu einem praktischen Workshop mit einer der Captains.",
-      "3": "Übernimm deine erste Ausfahrt — beim ersten Mal fährt eine Captain mit."
-    },
-    "title": "So wirst du Pilot"
-  },
   "profile": {
     "birthDate": "Geburtstag",
     "body": "Ihre Ortsgruppe braucht das, um eine Ausfahrt zu planen. Mehr vorerst nicht.",
@@ -1891,7 +1959,6 @@
       "incomplete": "Füllen Sie alle Felder aus, um fortzufahren."
     },
     "firstName": "Vorname",
-    "forSomeoneElse": "Ich lege das Konto an, damit jemand anderes mitfahren kann",
     "gender": "Geschlecht",
     "genders": {
       "female": "Weiblich",
@@ -1899,6 +1966,39 @@
       "other": "Divers"
     },
     "lastName": "Nachname",
+    "title": "Ein wenig über Sie",
+    "titlePilot": "Ein wenig über dich"
+  },
+  "riders": {
+    "title": "Wer fährt mit?",
+    "body": "Fügen Sie alle hinzu, für die Sie Fahrten buchen. Die Profile können Sie später ausfüllen.",
+    "you": "Über Sie",
+    "rider": "Person {number}",
+    "remove": "Entfernen",
+    "add": "Weitere Person hinzufügen",
+    "pickup": {
+      "label": "Wo sollen wir abholen?",
+      "careHome": "Pflegeheim",
+      "home": "Eigene Adresse",
+      "change": "Ändern"
+    },
+    "address": {
+      "label": "Adresse",
+      "placeholder": "Straße und Hausnummer",
+      "hint": "Tippen Sie los und wählen Sie die Adresse aus der Liste.",
+      "searching": "Suche…",
+      "noResults": "Keine passende Adresse."
+    },
+    "submit": "{count, plural, one {Weiter mit 1 Person} other {Weiter mit # Personen}}",
+    "added": "{name} wurde hinzugefügt.",
+    "errors": {
+      "birthDate": "Das Geburtsdatum sieht nicht richtig aus. Prüfen Sie das Jahr.",
+      "generic": "Das konnten wir nicht speichern. Versuchen Sie es noch einmal.",
+      "incomplete": "Füllen Sie alle Felder aus, um fortzufahren.",
+      "passengerChapterMismatch": "Alle, für die Sie buchen, fahren mit derselben Ortsgruppe.",
+      "tooManyRiders": "Sie können bis zu 10 Personen betreuen.",
+      "notChapterMember": "Treten Sie zuerst einer Ortsgruppe als Fahrgast bei."
+    },
     "relationship": {
       "label": "Ihre Beziehung zu der Person",
       "options": {
@@ -1910,8 +2010,12 @@
         "relative": "Andere Angehörige"
       }
     },
-    "title": "Ein wenig über Sie",
-    "titlePilot": "Ein wenig über dich"
+    "drawerBody": "Die Person fährt mit derselben Ortsgruppe wie Sie. Das Profil können Sie danach ausfüllen.",
+    "save": "Person hinzufügen",
+    "edit": "Bearbeiten",
+    "done": "Fertig",
+    "addFirst": "Person hinzufügen, die mitfährt",
+    "bornOn": "Geboren am {date}"
   },
   "rides": {
     "cancel": {
@@ -2242,7 +2346,11 @@
         "body": "Du trittst in die Pedale und nimmst Passagiere mit auf eine Fahrt.",
         "title": "Ich möchte Pilot werden"
       },
-      "title": "Wie möchten Sie mitmachen?"
+      "title": "Wie möchten Sie mitmachen?",
+      "caretaker": {
+        "title": "Ich buche für jemand anderen",
+        "body": "Jemand, um den Sie sich kümmern, fährt mit — Sie planen die Fahrten."
+      }
     }
   },
   "welcome": {
@@ -2256,19 +2364,196 @@
         "headline": "Jeder hat ein Recht auf Wind in den Haaren."
       },
       "2": {
-        "body": "Ehrenamtliche fahren die Rikscha im Schritttempo. Sie sitzen vorne — nichts zwischen Ihnen und der Straße.",
-        "headline": "Die Piloten treten in die Pedale."
-      },
-      "3": {
-        "body": "Jede Ortsgruppe lebt von Ehrenamtlichen, die eine Stunde schenken — für die Menschen, die dieses Viertel aufgebaut haben.",
-        "headline": "Getragen von Nachbarn."
-      },
-      "4": {
         "body": "Ortsgruppen in Europa, Nordamerika, Australien und Japan — mit großer Wahrscheinlichkeit auch bei Ihnen.",
         "headline": "Finden Sie Ihre Ortsgruppe."
       }
     },
     "subtitle": "Melden Sie sich an, um eine Fahrt zu buchen oder selbst in die Pedale zu treten. Oder sehen Sie sich erst einmal um.",
-    "title": "Kommen Sie mit."
+    "title": "Kommen Sie mit.",
+    "unmute": "Ton einschalten",
+    "mute": "Ton ausschalten"
+  },
+  "personProfile": {
+    "title": "Profil",
+    "yourProfile": "Ihr Profil",
+    "viewProfile": "Profil ansehen",
+    "back": "Zurück",
+    "age": "{age, plural, one {# Jahr} other {# Jahre}}",
+    "showAge": "Alter zeigen",
+    "showAgeHint": "Zu sehen ist nur das Alter, nie der Geburtstag.",
+    "visibility": "Dieses Profil sehen die Pilot:innen und Admins der Ortsgruppe. Andere Fahrgäste nie.",
+    "onBehalf": "Sie füllen das für {name} aus. Schreiben Sie es so, wie {name} es sagen würde.",
+    "nothingYet": "{name} hat noch nichts geteilt.",
+    "bio": {
+      "label": "Über mich",
+      "placeholder": "Ein paar Worte über dich: was du liebst, wo du aufgewachsen bist, was dich zum Lächeln bringt"
+    },
+    "interests": {
+      "label": "Liebt",
+      "hint": "Bis zu acht auswählen.",
+      "custom": "Eigenes ergänzen",
+      "customPlaceholder": "z. B. Jazz",
+      "add": "Hinzufügen",
+      "remove": "{interest} entfernen",
+      "options": {
+        "nature": "Natur",
+        "gardening": "Garten",
+        "birds": "Vögel",
+        "animals": "Tiere",
+        "music": "Musik",
+        "singing": "Singen",
+        "dancing": "Tanzen",
+        "reading": "Lesen",
+        "history": "Geschichte",
+        "art": "Kunst",
+        "crafts": "Handarbeit",
+        "photography": "Fotografie",
+        "cooking": "Kochen",
+        "baking": "Backen",
+        "travel": "Reisen",
+        "sports": "Sport",
+        "football": "Fußball",
+        "cycling": "Radfahren",
+        "theatre": "Theater",
+        "films": "Filme",
+        "games": "Spiele & Rätsel",
+        "family": "Familie",
+        "faith": "Glaube",
+        "technology": "Technik"
+      }
+    },
+    "prompts": {
+      "label": "Gesprächsanlässe",
+      "hint": "Etwas, wonach man bei der Fahrt fragen kann.",
+      "add": "Gesprächsanlass ergänzen",
+      "remove": "Entfernen",
+      "answerPlaceholder": "Antwort",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "options": {
+        "grewUp": "Wo ich aufgewachsen bin",
+        "favouritePlace": "Mein Lieblingsort in der Stadt",
+        "askMeAbout": "Fragt mich nach …",
+        "firstJob": "Meine erste Arbeit",
+        "favouriteSong": "Ein Lied, das ich liebe",
+        "dreamRide": "Dorthin würde ich gern fahren"
+      }
+    },
+    "accessibility": {
+      "label": "Gut zu wissen für die Fahrt",
+      "hint": "Hilft der Pilotin oder dem Piloten, gut auf den Fahrgast zu achten.",
+      "none": "Nichts Besonderes nötig",
+      "groups": {
+        "mobility": "Unterwegs",
+        "senses": "Sehen und Hören",
+        "comfort": "Wohlfühlen",
+        "communication": "Sprechen und Erinnern"
+      },
+      "tags": {
+        "wheelchair": "Rollstuhl",
+        "walkingAid": "Gehhilfe",
+        "helpBoarding": "Hilfe beim Ein- und Aussteigen",
+        "hearing": "Hört schlecht",
+        "vision": "Sieht schlecht",
+        "getsCold": "Friert schnell",
+        "bumpSensitive": "Empfindlich bei Holpern",
+        "shortRides": "Lieber kurze Fahrten",
+        "speech": "Spricht langsam",
+        "memory": "Vergesslich",
+        "companion": "Gern mit Begleitung"
+      },
+      "consentTitle": "Gesundheitsangaben brauchen zuerst ein Ja",
+      "consentBody": "Diese Angaben sagen etwas über die Gesundheit. Nur die Pilot:innen und Admins der Ortsgruppe sehen sie, und nur, um bei Fahrten zu helfen. Ein Widerruf löscht sie.",
+      "consentAgree": "Ich stimme zu",
+      "attest": "{name} (oder die rechtliche Vertretung) ist einverstanden, diese Angaben zu teilen.",
+      "withdraw": "Einwilligung widerrufen",
+      "withdrawn": "Einwilligung widerrufen. Die Angaben sind gelöscht."
+    },
+    "photo": {
+      "add": "Foto hinzufügen",
+      "change": "Foto ändern",
+      "remove": "Foto entfernen",
+      "removed": "Foto entfernt.",
+      "saved": "Foto gespeichert.",
+      "uploading": "Wird hochgeladen …",
+      "riderAgrees": "{name} ist einverstanden, dass die Pilot:innen der Ortsgruppe dieses Foto sehen.",
+      "confirm": "Dieses Foto verwenden",
+      "cancel": "Abbrechen",
+      "zoom": "Zoom",
+      "agreeTitle": "Bevor Sie ein Foto von {name} hinzufügen",
+      "agreeAction": "{name} ist einverstanden, Foto wählen"
+    },
+    "managed": {
+      "title": "Personen, die Sie betreuen",
+      "open": "Profil öffnen",
+      "details": "Angaben",
+      "pickup": "Abholung",
+      "remove": {
+        "open": "{name} entfernen",
+        "title": "{name} entfernen?",
+        "body": "Profil und anstehende Buchungen gehen mit. Bereits gefahrene Ausfahrten bleiben im Protokoll, aber ohne diese Person.",
+        "label": "Geben Sie {word} zur Bestätigung ein",
+        "word": "REMOVE",
+        "submit": "Entfernen",
+        "done": "{name} wurde entfernt.",
+        "errors": {
+          "generic": "Das hat nicht geklappt. Bitte versuchen Sie es noch einmal."
+        }
+      },
+      "body": "Alle, für die Sie Fahrten buchen. Öffnen Sie eine Person, um ihr Profil auszufüllen oder ihre Angaben zu ändern.",
+      "count": "{count, plural, one {# Person} other {# Personen}}"
+    },
+    "errors": {
+      "generic": "Das hat nicht geklappt. Bitte noch einmal versuchen.",
+      "invalid": "Das sieht nicht richtig aus.",
+      "rateLimited": "Etwas langsamer – in einer Minute noch einmal versuchen.",
+      "consentRequired": "Zuerst dem Teilen der Gesundheitsangaben zustimmen.",
+      "uploadRejected": "Das Foto hat nicht geklappt. Bitte ein JPG, PNG oder WebP unter 10 MB nehmen.",
+      "pilotStepConfirmed": "Deine Ortsgruppe hat diesen Schritt bestätigt. Frag sie, wenn sich daran etwas ändern soll."
+    }
+  },
+  "setupChecklist": {
+    "title": "Startklar werden",
+    "progress": "{done} von {total} erledigt",
+    "dismiss": "Ausblenden",
+    "dismissed": "Ausgeblendet. Das Profil ist immer nur einen Tipp entfernt.",
+    "markDone": "Als erledigt markieren",
+    "markUndone": "Als offen markieren",
+    "confirmed": "Von der Ortsgruppe bestätigt",
+    "steps": {
+      "photo": "Profilfoto hinzufügen",
+      "bio": "Ein paar Worte über sich schreiben",
+      "interests": "Auswählen, was Freude macht",
+      "prompt": "Gesprächsanlass ergänzen",
+      "accessibility": "Notieren, was bei der Fahrt hilft",
+      "managedRiders": "{count, plural, one {Profil von {name} ausfüllen} other {Profile von # Fahrgästen ausfüllen}}",
+      "passkey": "Passkey einrichten",
+      "push": "Benachrichtigungen einschalten",
+      "trainingVideos": "Schulungsvideos ansehen",
+      "workshop": "An einem Praxis-Workshop teilnehmen",
+      "firstRide": "Erste Fahrt mit einem Captain"
+    },
+    "aboutYou": "Über Sie, damit Piloten wissen, wer bucht.",
+    "hints": {
+      "trainingVideos": "Etwa 20 Minuten, direkt in der App.",
+      "workshop": "Mit einem der Captains.",
+      "firstRide": "Beim ersten Mal fährt ein Captain mit."
+    }
+  },
+  "care": {
+    "title": "Sich um {rider} kümmern?",
+    "body": "{requester} von {chapter} möchte, dass Sie Fahrten für {rider} buchen. Bis Sie antworten, ändert sich nichts.",
+    "accept": "Ja, ich kümmere mich um {rider}",
+    "decline": "Nein, danke",
+    "acceptedTitle": "Sie kümmern sich um {rider}",
+    "acceptedBody": "Sie können jetzt Fahrten für {rider} buchen und das Profil ausfüllen.",
+    "declinedTitle": "Sie haben abgelehnt",
+    "declinedBody": "{rider} wurde nicht hinzugefügt. Die Ortsgruppe weiß Bescheid und kann jemand anderen fragen.",
+    "open": "Personen öffnen, die Sie betreuen",
+    "errors": {
+      "passengerChapterMismatch": "Sie betreuen schon Personen in einer anderen Ortsgruppe, deshalb kann {rider} hier nicht hinzugefügt werden.",
+      "tooManyRiders": "Sie können bis zu 10 Personen betreuen.",
+      "generic": "Das hat nicht geklappt. Versuchen Sie es noch einmal."
+    }
   }
 }

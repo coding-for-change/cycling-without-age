@@ -7,7 +7,7 @@ import { distanceMeters, type Coords } from "@/lib/geo";
 import {
   boundsOf,
   FALLBACK_VIEW,
-  MINT_DEEP,
+  mapTheme,
   prefersReducedMotion,
   whenReady,
 } from "@/lib/mapbox-canvas";
@@ -48,7 +48,7 @@ export default function ChapterMap({
 
     map.current = new mapboxgl.Map({
       container: container.current,
-      style: "mapbox://styles/mapbox/light-v11",
+      style: mapTheme().style,
       ...FALLBACK_VIEW,
       maxPitch: 60,
       logoPosition: "bottom-left",
@@ -101,7 +101,7 @@ export default function ChapterMap({
         source: ROUTE_SOURCE,
         layout: { "line-cap": "round", "line-join": "round" },
         paint: {
-          "line-color": MINT_DEEP,
+          "line-color": mapTheme().mintDeep,
           "line-width": 4,
           "line-opacity": 0.9,
         },

@@ -44,6 +44,7 @@ import {
   deleteRideById,
   deleteRosterEntry,
   findLogNames,
+  countPastRidesOfPilot,
   findLatestRideForPilot,
   findPastRidesForList,
   findReservations,
@@ -180,6 +181,9 @@ export const getFinishableRideForPilot = (
   userId: string,
   now = new Date(),
 ) => findFinishableRideForPilot(rideId, userId, now);
+
+export const hasPilotedRide = async (userId: string, now = new Date()) =>
+  (await countPastRidesOfPilot(userId, now)) > 0;
 
 export const latestRideForPilot = (userId: string, now = new Date()) =>
   findLatestRideForPilot(userId, now);

@@ -216,6 +216,7 @@ export function ConversationThread({
 
         <ChatAvatar
           svg={view.display.avatarSvg}
+          photoUrl={view.display.photoUrl}
           online={peerOnline}
         />
 
@@ -338,6 +339,7 @@ export function ConversationThread({
                       own={own}
                       senderName={sender?.name ?? strings.deletedAccount}
                       senderAvatarSvg={sender?.avatarSvg ?? null}
+                      senderPhotoUrl={sender?.photoUrl ?? null}
                       showAvatar={!groupedWithNext}
                       showName={
                         conversation.kind === "group" &&

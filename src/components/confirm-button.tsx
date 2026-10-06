@@ -82,7 +82,7 @@ export function ConfirmButton({
           aria-label={iconOnly ? label : undefined}
           title={iconOnly ? label : undefined}
           className={cn(
-            destructive && "text-red hover:bg-red-tint hover:text-red",
+            destructive && "text-red-ink hover:bg-red-tint hover:text-red-ink",
             className,
           )}
         >

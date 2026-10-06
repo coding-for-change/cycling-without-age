@@ -37,6 +37,16 @@ the two in full, with page references. Don't cite the book for a rule it doesn't
    no black pills with white type. White type belongs on red or `--mint-deep` only.
    Note `--mint-deep` is a fifth color this product added; the book has four. Keep it for
    dark surfaces and don't spawn further shades off it.
+   **Mint or red as text is `text-mint-ink` / `text-red-ink`, never `text-mint-deep` /
+   `text-red`.** A fill and a text colour can't be the same shade in both themes, so the
+   `-ink` tokens carry the readable shade.
+4a. **Dark mode** is a class on `<html>` (`.dark`), set before paint by `themeScript`
+   (`src/lib/theme`) from the `NEXT_THEME` cookie (light / dark / system). Every token
+   in `:root` has a `.dark` value, so tokens adapt by themselves. Never write `dark:`
+   variants in feature code. If something needs one, the token is wrong. White surfaces
+   are `bg-paper`, not `bg-white`. Canvas-painted colours (mapbox, cobe) read
+   `mapTheme()` or the computed `--canvas`. Emails stay light (`src/lib/brand.ts`). Every
+   text/surface pair must reach 4.5:1 in both themes.
 5. **Typography — Inter, and only Inter.** Loaded once via `next/font` in
    `src/app/layout.tsx` as `--font-inter`; both `--font-sans` and `--font-display` point
    at it. The book's *online* spec is TacaPro bold headlines over Arial body

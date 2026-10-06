@@ -29,7 +29,9 @@
   "calendarFeed": {
     "cancelled": "Cancelled: {title}",
     "description": "Your rides with Cycling Without Age. Keeps itself up to date.",
+    "descriptionCaretaker": "The rides of the people you look after, and your own, with Cycling Without Age. Keeps itself up to date.",
     "destination": "To {place}",
+    "forRiders": "{title} · {names}",
     "details": "Details in the app: {url}",
     "models": {
       "event": "Event ride",
@@ -38,6 +40,7 @@
     },
     "name": "Cycling Without Age",
     "pilot": "Pilot · {model}",
+    "riders": "{count, plural, one {Rider} other {Riders}}: {names}",
     "trishaws": "Trishaw: {names}"
   },
   "chatDigest": {
@@ -159,6 +162,22 @@
     "passenger": "a passenger",
     "pilot": "a pilot"
   },
+  "welcomeCaretaker": {
+    "cta": "Book their first ride",
+    "footer": "You received this email because an account was created for your address.",
+    "heading": "Wind in their hair, whenever they like",
+    "how": {
+      "1": "Ask for a ride in the app — pick a day and a time that suits them.",
+      "2": "A volunteer pilot picks it up and meets your rider at the door.",
+      "3": "Your rider sits at the front. Nothing between them and the street but the breeze."
+    },
+    "howHeading": "How a ride works",
+    "intro": "Your account is ready. You can now book rides for the people you look after, and {chapter} has a pilot waiting to pedal.",
+    "noteHeading": "A note from {chapter}",
+    "preview": "A seat at the front is waiting for them",
+    "subject": "Welcome to Cycling Without Age",
+    "title": "Welcome to {chapter}"
+  },
   "welcomePassenger": {
     "cta": "Request your first ride",
     "footer": "You received this email because an account was created for your address.",
@@ -190,5 +209,35 @@
     "preview": "Your pilot request is with the chapter",
     "subject": "Welcome aboard — three steps to your first ride",
     "title": "Welcome to {chapter}"
+  },
+  "careRequested": {
+    "subject": "{requester} asks you to look after {rider}",
+    "preview": "Book rides for {rider} with {chapter}",
+    "heading": "Look after {rider}?",
+    "intro": "{requester} from {chapter} would like you to book rides for {rider}. Open the request to say yes or no — nothing changes until you answer.",
+    "cta": "Open the request",
+    "footer": "You received this email because a Cycling Without Age chapter admin entered your address as someone who helps a passenger.",
+    "someone": "someone"
+  },
+  "careDecided": {
+    "subjectAccepted": "{caretaker} now looks after {rider}",
+    "subjectDeclined": "{caretaker} declined to look after {rider}",
+    "headingAccepted": "{rider} is on board",
+    "headingDeclined": "No caretaker for {rider} yet",
+    "introAccepted": "{caretaker} accepted. {rider} is now a passenger, and {caretaker} can book rides for them.",
+    "introDeclined": "{caretaker} said no, so {rider} wasn't added. Add them again with someone else who helps them.",
+    "cta": "Open passengers",
+    "footer": "You received this email because you asked someone to look after a passenger.",
+    "someone": "someone"
+  },
+  "careInvited": {
+    "subject": "Book rides for {rider} with {chapter}",
+    "preview": "An account is waiting for you",
+    "heading": "You've been invited",
+    "intro": "{inviter} from {chapter} set up an account for you, so you can book rides for {rider}.",
+    "how": "Sign in with this email address and we send you a code — no password to invent.",
+    "cta": "Sign in",
+    "footer": "You received this email because a Cycling Without Age chapter admin entered your address as someone who helps a passenger.",
+    "someone": "someone"
   }
 }

@@ -26,7 +26,7 @@ export async function MemberChatShell({
   const userId = session.user.id;
 
   const [inbox, dict, language, head, memberships] = await Promise.all([
-    getInbox(userId),
+    getInbox(session),
     getDictionary(),
     getLocale(),
     headers(),
@@ -77,7 +77,7 @@ export async function MemberChatThread({
   ]);
 
   const [view, dict, language, head] = await Promise.all([
-    getConversationView(conversationId, session.user.id),
+    getConversationView(conversationId, session),
     getDictionary(),
     getLocale(),
     headers(),

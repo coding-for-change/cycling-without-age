@@ -254,7 +254,7 @@ export function CountriesTable({
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-8 text-red hover:bg-red-tint hover:text-red"
+                className="size-8 text-red-ink hover:bg-red-tint hover:text-red-ink"
                 aria-label={labels.delete.open}
               >
                 <Trash2 aria-hidden />

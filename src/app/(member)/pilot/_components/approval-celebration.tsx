@@ -30,7 +30,7 @@ export function ApprovalCelebration({
   return (
     <section className="flex flex-wrap items-start gap-4 rounded-2xl bg-mint-tint p-5 motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95">
       <PartyPopper
-        className="mt-0.5 size-5 shrink-0 text-mint-deep"
+        className="mt-0.5 size-5 shrink-0 text-mint-ink"
         aria-hidden
       />
       <div className="min-w-0 flex-1">

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { birthDate, gender } from "@/features/profile/schemas";
+import { pickupInput } from "@/features/passengers/schemas";
 
 const email = z
   .string()
@@ -21,15 +22,18 @@ export const helperInput = z.object({
 });
 export type HelperInput = z.infer<typeof helperInput>;
 
-export const assistedPassengerInput = z.object({
-  chapterId: z.string().min(1).max(64),
-  firstName: z.string().trim().min(1).max(80),
-  lastName: z.string().trim().min(1).max(80),
-  birthDate,
-  gender,
-  contact,
-  helper: helperInput.optional(),
-});
+export const assistedPassengerInput = z
+  .object({
+    chapterId: z.string().min(1).max(64),
+    firstName: z.string().trim().min(1).max(80),
+    lastName: z.string().trim().min(1).max(80),
+    birthDate,
+    gender,
+    contact: contact.optional(),
+    helper: helperInput.optional(),
+    pickup: pickupInput.optional(),
+  })
+  .refine((input) => input.contact || input.helper, { path: ["contact"] });
 export type AssistedPassengerInput = z.infer<typeof assistedPassengerInput>;
 
 export const inviteRole = z.enum(["admin", "pilot"]);

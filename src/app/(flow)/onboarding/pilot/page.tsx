@@ -1,16 +1,5 @@
-import { OnboardingStepPage } from "../_components/step-page";
-import { PilotNextSteps } from "../_components/pilot-next-steps";
+import { redirect } from "next/navigation";
 
 export default function PilotNextStepsPage() {
-  return (
-    <OnboardingStepPage
-      step="pilotNextSteps"
-      render={({ progress, dict }) => (
-        <PilotNextSteps
-          progress={progress}
-          strings={dict.pilotNextSteps}
-        />
-      )}
-    />
-  );
+  redirect("/pilot");
 }

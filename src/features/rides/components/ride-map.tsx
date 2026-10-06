@@ -8,7 +8,7 @@ import {
   boundsOf,
   createMap,
   markerElement,
-  MINT_DEEP,
+  mapTheme,
   prefersReducedMotion,
   whenReady,
 } from "@/lib/mapbox-canvas";
@@ -44,6 +44,7 @@ export default function RideMap({
   const from = useRef<mapboxgl.Marker | null>(null);
   const to = useRef<mapboxgl.Marker | null>(null);
   const reduced = useRef(false);
+  const framed = useRef(false);
 
   useEffect(() => {
     if (!container.current || map.current) return;
@@ -64,13 +65,14 @@ export default function RideMap({
         type: "line",
         source: ROUTE,
         layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": MINT_DEEP, "line-width": 4 },
+        paint: { "line-color": mapTheme().mintDeep, "line-width": 4 },
       });
     });
 
     return () => {
       instance.remove();
       map.current = null;
+      framed.current = false;
       from.current = null;
       to.current = null;
     };
@@ -137,7 +139,8 @@ export default function RideMap({
       ...(route ?? []),
     ];
     if (!points.length) return;
-    const duration = reduced.current ? 0 : 500;
+    const duration = reduced.current || !framed.current ? 0 : 500;
+    framed.current = true;
     if (points.length === 1) {
       instance.easeTo({ center: points[0], zoom: 14, duration });
       return;

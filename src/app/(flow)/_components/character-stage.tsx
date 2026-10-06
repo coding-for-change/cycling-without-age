@@ -3,12 +3,12 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { Character } from "@/components/character";
 
-const HERO_ROUTES = new Set(["/welcome"]);
+const AWAY_ROUTES = new Set(["/welcome"]);
 const ASIDE_ROUTES = new Set(["/location"]);
 
 const STAGE_PX = 320;
 
-export type CharacterPose = "hero" | "compact" | "away";
+export type CharacterPose = "compact" | "away";
 
 const PoseContext = createContext<
   ((pose: CharacterPose | null) => void) | null
@@ -30,7 +30,7 @@ export function CharacterStage({
   children: ReactNode;
 }) {
   const [override, setOverride] = useState<CharacterPose | null>(null);
-  const pose = override ?? (HERO_ROUTES.has(pathname) ? "hero" : "compact");
+  const pose = override ?? (AWAY_ROUTES.has(pathname) ? "away" : "compact");
 
   return (
     <PoseContext.Provider value={setOverride}>

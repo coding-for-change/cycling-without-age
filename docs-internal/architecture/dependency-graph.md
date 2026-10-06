@@ -27,9 +27,10 @@ calls that facade directly. Its old work is two listeners in the worker.
 | --- | --- | --- |
 | `build-session-access` | `chapters`, `membership` | The session payload needs the user's country-admin scopes (chapters) *and* their chapter memberships (membership). Two facades → a use case. |
 | `onboarding-progress` | `chapters`, `membership`, `profile` | How far someone got is spread across three tables: which chapter they joined, what they consented to, whether a rider profile exists. Read by the `/onboarding` resolver and by every step that draws the progress dots. |
-| `settle-passenger-location` | `membership`, `profile` | "Where do you live" and "which chapter serves you" are one answer given on one screen, but two features own the two halves. |
+| `settle-passenger-location` | `membership`, `profile` | "Where do you live" and "which chapter serves you" are one answer given on one screen, but two features own the two halves. `settleCaretakerLocation` joins a caretaker the same way and marks the account `managesOthers`, so the profile step asks who will ride. |
 | `accept-onboarding-consent` | `membership`, `profile` | Records consent and, when a QR preset skipped the location step, performs the join it would have done. |
-| `complete-onboarding-profile` | `membership`, `passengers`, `profile` | Writes the account's own details, creates the rider profile a ride will point at, and stamps `onboardedAt`. The welcome mail is no longer sent here: `profile.completeOnboarding` emits `user.onboarded` and the pipeline does the rest, exactly once. |
+| `complete-onboarding-profile` | `membership`, `passengers`, `profile` | Writes the account's own details, creates the rider profile a ride will point at, and stamps `onboardedAt`. The welcome mail is no longer sent here: `profile.completeOnboarding` emits `user.onboarded` and the pipeline does the rest, exactly once. `completeCaretakerOnboarding` is the caretaker branch: it adds every rider they book for (each with its own pickup place), names the account and marks it `managesOthers`. |
+| `add-managed-rider` | `membership`, `passengers`, `profile` | A passenger starts or keeps booking for someone else after onboarding: the rider lands in the chapter of the riders already managed (or the caretaker's passenger membership), which only `membership` can confirm, and the account is marked `managesOthers`. |
 | `notifications/notify` | `notifications` (+ the kinds) | The generic listener. A kind names the recipients and the parameters; this writes one inbox row each and queues push and email per the kind's policy. Runs in the worker, from an event, with no session. |
 | `notifications/deliver-email` | `notifications`, `profile`, `chapters` (+ `activity`, `mailer`) | One email for one `Notification`, in the recipient's own locale (hence `profile`), with the attempt recorded on the `Delivery` row. A delayed `ifNoPush` job re-checks here whether the push landed or the row was already read. `chapters.getSettings` supplies the chapter's reply-to, so an answer goes back to the chapter the mail was about. |
 | `notifications/deliver-push` | `notifications`, `profile` (+ `lib/push`) | One push for one `Notification`: the recipient's opt-in and device tokens, the locale for the copy, `sendPush` through `firebase-admin`, and dead tokens pruned from the `device` table. A kind may also carry a `chapterAllowsPush` hook, which the notification kinds answer from `chapters`. Missing credentials are a `skipped` row, not a retry. |
@@ -37,7 +38,8 @@ calls that facade directly. Its old work is two listeners in the worker.
 | `member-home` | `chapters`, `membership` | Where a member belongs: their memberships, their open applications and the chapter rows behind both. `cache()`d, because the sidebar subtitle and the home's chapter cards ask it in the same request from two different Suspense boundaries. |
 | `update-own-details` | `passengers`, `profile` | `birthDate` and `gender` are deliberately duplicated onto the rider row an account books its own rides with, so one edit in the account surface has to reach both. A name-only edit stops at `profile` — splitting one string back into `firstName`/`lastName` would be lossy. |
 | `manage-country-admins` | `chapters`, `profile` | Appointing by email needs the lookup in `profile` and the row in `chapters`. Removal coordinates nothing, so it collapsed into `app/admin/countries/actions`, and the history line now comes from the `countryAdmin.*` events. |
-| `provision-assisted-passenger` | `accounts`, `membership`, `passengers`, `activity` | One "add a passenger at the door" makes the account, joins the chapter, creates the rider row and records who created it — four features, and the helper rule decides whether the rider row points at the new account or at nobody. |
+| `provision-assisted-passenger` | `accounts`, `membership`, `passengers`, `profile`, `activity` | An admin adds a passenger at the door. With a helper whose contact already has an account, `passengers` stores a care request and nothing else happens until they answer; otherwise `accounts` creates the account (the helper's, as caretaker, or the rider's own), `membership` joins it, `passengers` adds the rider and, for a new caretaker, announces the invitation. |
+| `respond-care-request` | `membership`, `passengers`, `profile` | Someone answers an admin's request to look after a rider: `passengers` turns the request into a rider (or closes it), and only on yes does `membership` join them to the chapter as a passenger and `profile` mark the account `managesOthers`. |
 | `invite-chapter-user` | `accounts`, `membership`, `profile` | Provisioning the account, seeding the invitee's language from the inviter's, and granting the chapter roles are three features. It sends nothing: `membership.inviteMember` emits `member.invited` and the pipeline mails it. |
 | `manage-chapter` | `chapters`, `activity` | Creating, editing or deleting a chapter is a `chapters` write plus the history line that makes it legible on the chapter's own page. `chapters.diffChapter` turns one autosave into one `chapterUpdated` event per field that actually changed (a moved pin and its new address fold into one `location` change), and the delete event is recorded *global* because the row it would point at is gone. |
 | `manage-country` | `chapters`, `activity` | Deleting a country takes every chapter under it (the relation restricts, so the service deletes both in one transaction) and writes the history: one `countryDeleted` line plus a `chapterDeleted` line per chapter, all recorded *global* because the rows they would point at are gone. |
@@ -59,6 +61,13 @@ calls that facade directly. Its old work is two listeners in the worker.
 | `trishaw-history` | `fleet`, `rides` | One timeline from rides (with pilots), damages and the trishaw log. |
 | `finish-ride` | `chapters`, `fleet`, `rides` | The pilot's post-ride page: the chapter's post-ride instructions, and per trishaw its location's return instructions and access code — only for the ride's own pilots. |
 | `chat-notifications/deliver-chat-digest` | `chat`, `profile`, `notifications` (+ `lib/mailer`) | One grouped mail for everything unread in one conversation, for a recipient push cannot reach. Re-checks membership, unread, mute, preference and *still no push* before decrypting a single row. |
+| `person-access` | `chapters`, `membership`, `passengers`, `person-profiles`, `profile` | Who may see or edit a person: `self`, `manager`, `admin`, `peer` or nothing. A peer is an approved pilot of one of the person's chapters, or a rider or manager looking at a pilot of their chapter; riders never see each other. Health details only with recorded consent, and only for the chapter the person rides in. |
+| `file-access` | `person-profiles`, `rides`, `fleet` (+ `person-access`) | The read rule behind `/api/files/[id]`: a profile photo is readable exactly when its person is (`person-access`), a ride photo by `rides.photoReadRule`, everything else by `fleet.fileReadRule`. |
+| `delete-account` | `accounts`, `passengers`, `person-profiles` | The schema cascades the rows, but profile photos live in the bucket: their keys are collected before `accounts.deleteUser` and the objects deleted after. A rider with their own account who was looked after by the deleted user becomes their own manager first, so only riders without an account go with it. |
+| `manage-rider` | `passengers`, `person-profiles` (+ `person-access`) | A caretaker, or an admin of the rider's chapter, edits or removes a rider without an account (`canManageRider`); a rider with their own account is never reachable this way. Removal deletes the passenger (roster entries cascade, rides stay) and then purges their profile photo from the bucket. |
+| `setup-checklist` | `person-profiles`, `profile`, `passengers`, `notifications`, `rides` | The home card that replaced the pilot next-steps screen: the profile, the passkey count, push devices, managed riders and the first finished ride, each from the feature that owns it. |
+| `passenger-audience` | `profile`, `passengers` | Who the passenger home speaks to: the rider themself, a caretaker of one named rider or several, or a caretaker who also rides. `managesOthers` is `profile`'s, the riders are `passengers`'. `cache()`d, because the greeting, the next-ride card and the setup checklist ask it in the same request. |
+| `pilot-steps` | `membership`, `chapters`, `person-profiles` | Self-ticked training steps are for pilots and applicants only; an admin confirms one through `requireAdminOf` over the pilot's chapters. |
 
 The chat use cases exist for the reason the manifesto gives: a facade may not call another
 feature, and none of these is about chat alone. Naming a conversation needs `profile`. Deciding
@@ -154,9 +163,10 @@ not because two features are involved.
 
 `features/accounts` has no UI of its own either — its Server Actions are imported
 straight into the admin passengers and members screens, because "provision a user" is not a
-page. `app/admin/members/actions` also calls `accounts.deleteUser` directly:
-the hard delete touches one feature — the schema cascades everything else — so it is an
-Action behind `requireSuperAdmin`, not a use case. The `accounts` service is the only place outside `prisma/seed.ts` that calls BetterAuth's admin API
+page. Deleting an account — the super admin's `deleteUserAction` and the member's own
+`deleteOwnAccountAction` — goes through `delete-account`: the schema cascades the
+rows, but profile photos are objects in the bucket, so the use case collects their keys from
+`person-profiles` before `accounts.deleteUser` and deletes the objects after. The `accounts` service is the only place outside `prisma/seed.ts` that calls BetterAuth's admin API
 (`auth.api.createUser`); everything else in that slice is ordinary Prisma.
 `accounts.claimAccount` is called from the onboarding consent action, not from the
 admin shell: the account is claimed by the person who received it, at the one step nobody may
@@ -206,7 +216,8 @@ Action passes it to `requireAdminOf` in `lib/auth-guards`, which evaluates it wi
 `allowsAdmin` from `lib/access`. The facade never sees a session.
 
 `/api/files/[id]` is the only way a stored file is served: `getSession`, then
-`lib/storage.fileKindOf` reads the file's kind once and hands it to the owning feature —
+`file-access` asks `person-profiles` whether the file is a profile photo — if so the
+person-access rule decides — and otherwise `lib/storage.fileKindOf` reads the file's kind once and hands it to the owning feature —
 `rides.photoReadRule` for a `ridePhoto`, `fleet.fileReadRule` for every other kind — which describes who may read it as plain data (anyone, the uploader,
 the location's members and admins, or a damage's reporter and admins), `canReadFile` in
 `lib/auth-guards` decides for the session, then a 302 to a five-minute signed GET. `lib/storage`
@@ -222,3 +233,29 @@ photo strip. Nothing a browser uploaded is served unprocessed.
 
 The notification kinds now reach `fleet` for trishaw and pool names:
 `trishaw.damageReported`, `pool.accessRequested` and `pool.accessDecided`, category `fleet`.
+
+### Person profiles
+
+`features/person-profiles` owns `PersonProfile` and `PilotStepTick`. A profile belongs to
+the person who rides: a `User` speaking for themself, or a managed `Passenger` without an
+account, filled in by the manager. Exactly one of the two owner columns is set; the facade is
+the only writer, because MySQL refuses a CHECK on columns with referential actions.
+
+Who may see or edit a person is cross-feature (memberships, passengers, chapters, the account's
+provenance), so it lives in `person-access`, not in the facade. It answers a relation —
+`self`, `manager`, `admin`, `peer` or nothing — and small predicates over it (`canEdit`,
+`canUploadPhoto`, `seesHealthDetails`, …) that the Actions, the profile pages and
+`file-access` share. A peer is an approved pilot of one of the person's chapters, or a
+rider or manager looking at a pilot of their chapter; riders never see each other. Health
+details (the accessibility tags) need recorded consent and are shown to the person, their
+manager, admins and the chapter's pilots only.
+
+`setup-checklist` assembles the home-screen card from the profile, the passkey count,
+push devices, managed riders and the first finished ride. `pilot-steps` gates the
+self-ticked training steps to pilots and applicants and lets an admin confirm them through
+`requireAdminOf` over the pilot's chapters. The onboarding consent step (`accept-onboarding-consent`) records the
+optional health consent next to the data consent.
+
+`/profile` and `/profile/[ref]` only redirects to the viewer's member perspective, or to the
+admin detail page for an admin-only account; in-app links point at the perspective path
+directly so navigation stays instant.

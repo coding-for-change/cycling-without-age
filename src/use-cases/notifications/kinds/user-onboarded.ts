@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { chapters } from "@/features/chapters";
+import { passengers } from "@/features/passengers";
+import { profile } from "@/features/profile";
 import { formatMessage } from "@/lib/i18n/format";
 import { defineKind } from "./types";
 import { ORG_NAME } from "@/lib/brand";
@@ -13,11 +15,19 @@ export const userOnboarded = defineKind({
     chapterName: z.string().nullable(),
     role: z.enum(["pilot", "passenger"]),
     welcomeNote: z.string().nullable().default(null),
+    caretaker: z.boolean().default(false),
   }),
   recipients: async (event) => [event.userId],
   params: async (event) => {
+    const caretaker =
+      event.role === "passenger" && (await caresForOthers(event.userId));
     if (!event.chapterId)
-      return { chapterName: null, role: event.role, welcomeNote: null };
+      return {
+        chapterName: null,
+        role: event.role,
+        welcomeNote: null,
+        caretaker,
+      };
     const [chapter, settings] = await Promise.all([
       chapters.getChapter(event.chapterId),
       chapters.getSettings(event.chapterId),
@@ -26,12 +36,17 @@ export const userOnboarded = defineKind({
       chapterName: chapter?.name ?? null,
       role: event.role,
       welcomeNote: settings.welcomeNote,
+      caretaker,
     };
   },
   href: (event) => PERSPECTIVE_HOME[event.role],
-  message: ({ chapterName, role, welcomeNote }, strings, locale) => {
+  message: ({ chapterName, role, welcomeNote, caretaker }, strings, locale) => {
     const copy =
-      role === "pilot" ? strings.welcomePilot : strings.welcomePassenger;
+      role === "pilot"
+        ? strings.welcomePilot
+        : caretaker
+          ? strings.welcomeCaretaker
+          : strings.welcomePassenger;
     const chapter = chapterName ?? ORG_NAME;
     return {
       subject: copy.subject,
@@ -52,3 +67,11 @@ export const userOnboarded = defineKind({
     };
   },
 });
+
+async function caresForOthers(userId: string) {
+  const [account, ownRider] = await Promise.all([
+    profile.getProfile(userId),
+    passengers.getOwnPassenger(userId),
+  ]);
+  return Boolean(account?.managesOthers) && ownRider === null;
+}

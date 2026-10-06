@@ -35,7 +35,7 @@ export function FileImage({
       decoding="async"
       className={cn(
         fit === "contain"
-          ? "border border-line bg-white object-contain p-1"
+          ? "border border-line bg-paper object-contain p-1"
           : "bg-muted object-cover",
         className,
       )}
