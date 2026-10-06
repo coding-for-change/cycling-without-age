@@ -30,7 +30,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ICONS } from "@/components/icons";
 import {
   REPORT_RANGE_PRESETS,
@@ -46,6 +45,8 @@ import {
 } from "@/lib/format";
 import { haptics } from "@/lib/native/haptics";
 import { cn } from "@/lib/utils";
+import { Segmented } from "../../_components/segmented";
+import { StickyToolbar } from "../../_components/sticky-toolbar";
 import type { ScopeChoice } from "../../scopes";
 import { useReportNav } from "./report-nav";
 
@@ -148,7 +149,7 @@ export function FilterBar({
   };
 
   const segmented = (
-    <Segmented
+    <PresetSwitch
       value={preset}
       onChange={choosePreset}
       strings={strings}
@@ -177,11 +178,7 @@ export function FilterBar({
     ) : null;
 
   return (
-    <div
-      role="toolbar"
-      aria-label={strings.label}
-      className="sticky top-[env(safe-area-inset-top,0px)] z-20 -mx-4 border-b border-line bg-canvas/90 px-4 py-2 backdrop-blur-md supports-[backdrop-filter]:bg-canvas/75 lg:-mx-6 lg:px-6"
-    >
+    <StickyToolbar label={strings.label}>
       <div className="hidden items-center gap-3 md:flex">
         {segmented}
         {custom}
@@ -239,7 +236,7 @@ export function FilterBar({
                 <h3 className="text-xs font-medium text-ink-soft">
                   {strings.timeframe}
                 </h3>
-                <Segmented
+                <PresetSwitch
                   value={preset}
                   onChange={choosePreset}
                   strings={strings}
@@ -296,11 +293,11 @@ export function FilterBar({
           </DrawerContent>
         </Drawer>
       </div>
-    </div>
+    </StickyToolbar>
   );
 }
 
-function Segmented({
+function PresetSwitch({
   value,
   onChange,
   strings,
@@ -312,34 +309,17 @@ function Segmented({
   wide?: boolean;
 }) {
   return (
-    <ToggleGroup
-      type="single"
-      value={value === "custom" ? "" : value}
-      onValueChange={(next) => {
-        if (isPreset(next)) onChange(next);
-      }}
-      aria-label={strings.timeframe}
-      spacing={0.5}
-      className={cn(
-        "shrink-0 rounded-lg bg-canvas-deep p-0.5",
-        wide && "grid w-full grid-cols-6",
-      )}
-    >
-      {REPORT_RANGE_PRESETS.map((preset) => (
-        <ToggleGroupItem
-          key={preset}
-          value={preset}
-          title={strings.presetNames[preset]}
-          aria-label={strings.presetNames[preset]}
-          className={cn(
-            "h-7 min-w-0 rounded-md px-2.5 text-xs font-medium text-ink-soft tabular-nums transition-[background-color,color,box-shadow] hover:bg-transparent hover:text-ink focus-visible:ring-2 focus-visible:ring-ink data-[state=on]:bg-canvas data-[state=on]:text-ink data-[state=on]:shadow-xs",
-            wide && "h-9",
-          )}
-        >
-          {strings.presets[preset]}
-        </ToggleGroupItem>
-      ))}
-    </ToggleGroup>
+    <Segmented
+      value={value === "custom" ? null : value}
+      options={REPORT_RANGE_PRESETS.map((preset) => ({
+        value: preset,
+        label: strings.presets[preset],
+        title: strings.presetNames[preset],
+      }))}
+      onChange={onChange}
+      label={strings.timeframe}
+      wide={wide}
+    />
   );
 }
 

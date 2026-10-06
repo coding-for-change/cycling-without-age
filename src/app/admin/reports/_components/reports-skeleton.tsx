@@ -1,6 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { KpiTilesSkeleton } from "../../_components/admin-skeletons";
+import { StickyToolbarSkeleton } from "../../_components/sticky-toolbar";
 
 function CardSkeleton({
   className,
@@ -62,7 +63,7 @@ export function TrendChartSkeleton() {
 
 export function FilterBarSkeleton() {
   return (
-    <div className="-mx-4 border-b border-line px-4 py-2 lg:-mx-6 lg:px-6">
+    <StickyToolbarSkeleton>
       <div className="hidden h-8 items-center gap-3 md:flex">
         <Skeleton className="h-8 w-64 rounded-lg" />
         <Skeleton className="h-8 w-24 rounded-lg" />
@@ -76,7 +77,7 @@ export function FilterBarSkeleton() {
         </div>
         <Skeleton className="h-8 w-24 rounded-full" />
       </div>
-    </div>
+    </StickyToolbarSkeleton>
   );
 }
 

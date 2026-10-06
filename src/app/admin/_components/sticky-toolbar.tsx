@@ -51,18 +51,26 @@ export function StickyToolbar({
   );
 }
 
-export function StickyToolbarSkeleton({ className }: { className?: string }) {
+export function StickyToolbarSkeleton({
+  className,
+  children,
+}: {
+  className?: string;
+  children?: ReactNode;
+}) {
   return (
     <div
       aria-hidden
       className={cn(TOOLBAR, "border-transparent", className)}
     >
-      <div className="flex h-8 items-center gap-3">
-        <Skeleton className="h-8 w-40 rounded-lg" />
-        <Skeleton className="hidden h-8 w-28 rounded-lg md:block" />
-        <Skeleton className="hidden h-4 w-32 md:block" />
-        <Skeleton className="ml-auto h-8 w-32 rounded-lg" />
-      </div>
+      {children ?? (
+        <div className="flex h-8 items-center gap-3">
+          <Skeleton className="h-8 w-40 rounded-lg" />
+          <Skeleton className="hidden h-8 w-28 rounded-lg md:block" />
+          <Skeleton className="hidden h-4 w-32 md:block" />
+          <Skeleton className="ml-auto h-8 w-32 rounded-lg" />
+        </div>
+      )}
     </div>
   );
 }
