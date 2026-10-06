@@ -2,12 +2,14 @@ import { ownRiderDetailsPatch, passengerInput } from "./schemas";
 import { DomainError } from "@/lib/domain-error";
 import type { OwnRiderDetailsPatchInput, PassengerInput } from "./schemas";
 import {
+  countPassengersInChapters,
   countPassengersManagedBy,
   findPassengerById,
   findPassengerOfUser,
   findPassengersByIds,
   findPassengersManagedBy,
   findPassengersOfChapters,
+  findPassengerNames,
   insertPassenger,
   updatePassengerOfUser,
   upsertOwnPassenger,
@@ -71,3 +73,18 @@ export async function updateOwnRiderDetails(
   if (Object.keys(data).length === 0) return { count: 0 };
   return updatePassengerOfUser(userId, data);
 }
+
+export const countPassengersOfChapters = async (chapterIds: string[]) =>
+  chapterIds.length ? countPassengersInChapters(chapterIds) : 0;
+
+export const passengerNames = async (
+  ids: string[],
+): Promise<Record<string, string>> =>
+  ids.length
+    ? Object.fromEntries(
+        (await findPassengerNames(ids)).map((p) => [
+          p.id,
+          `${p.firstName} ${p.lastName}`.trim(),
+        ]),
+      )
+    : {};

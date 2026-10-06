@@ -77,6 +77,25 @@ import {
   type RideFeedRow,
   type TrishawRideRow,
 } from "./services/rides";
+import {
+  countActiveRiders,
+  findActivePilots,
+  findActivityBuckets,
+  findChapterTallies,
+  findEarliestRideStart,
+  findPilotTallies,
+  findRiderCounts,
+  findRiderTallies,
+  type TallyFactRow,
+} from "./services/report-facts";
+import {
+  tallies,
+  type ActivityBucketRow,
+  type ActivityFacts,
+  type PilotMembership,
+  type ReportTally,
+} from "./report";
+import type { ReportScope } from "./report-zones";
 
 export type {
   FeedAudience,
@@ -1065,3 +1084,84 @@ export async function addRideNote(
   if (!(await findRideScope(rideId))) throw new DomainError("unknownRide");
   return insertRideLogEntry(rideId, actorUserId, "note", { text: note });
 }
+
+const tallyRow = (row: TallyFactRow) => ({
+  key: row.key,
+  side: row.side,
+  trips: Number(row.trips),
+  rides: Number(row.rides),
+  ms: Number(row.ms),
+});
+
+export async function activityFacts(
+  scope: ReportScope,
+  { extras }: { extras: boolean },
+): Promise<ActivityFacts> {
+  if (!scope.chapterIds.length)
+    return { buckets: [], chapters: [], riders: [] };
+  const [buckets, chapters, riders] = await Promise.all([
+    findActivityBuckets(scope),
+    extras ? findChapterTallies(scope) : [],
+    findRiderCounts(scope, extras),
+  ]);
+  return {
+    buckets: buckets.map((row) => ({
+      side: row.side,
+      bucket: row.bucket,
+      model: row.model as ActivityBucketRow["model"],
+      kind: row.kind,
+      category: row.category as ActivityBucketRow["category"],
+      trips: Number(row.trips),
+      rides: Number(row.rides),
+      ms: Number(row.ms),
+    })),
+    chapters: chapters.map(tallyRow),
+    riders: riders.map((row) => ({
+      side: row.side,
+      riders: Number(row.riders),
+      newRiders: Number(row.newRiders),
+    })),
+  };
+}
+
+export async function peopleTallies(scope: ReportScope): Promise<{
+  pilots: Record<string, ReportTally>;
+  riders: Record<string, ReportTally>;
+}> {
+  if (!scope.chapterIds.length) return { pilots: {}, riders: {} };
+  const [pilots, riders] = await Promise.all([
+    findPilotTallies(scope),
+    findRiderTallies(scope),
+  ]);
+  return {
+    pilots: tallies(pilots.map(tallyRow)),
+    riders: tallies(riders.map(tallyRow)),
+  };
+}
+
+export async function activeParticipants(
+  chapterIds: string[],
+  since: Date,
+  until: Date,
+): Promise<{ pilots: PilotMembership[]; riders: number }> {
+  if (!chapterIds.length) return { pilots: [], riders: 0 };
+  const [pilots, riders] = await Promise.all([
+    findActivePilots(chapterIds, since, until),
+    countActiveRiders(chapterIds, since, until),
+  ]);
+  return { pilots, riders };
+}
+
+export const earliestRideStart = async (chapterIds: string[]) =>
+  chapterIds.length ? findEarliestRideStart(chapterIds) : null;
+
+export {
+  aggregateActivity,
+  countryRollup,
+  emptyTally,
+  newRiders,
+  peopleHealth,
+  ranked,
+  yearBefore,
+} from "./report";
+export { reportScope } from "./report-zones";

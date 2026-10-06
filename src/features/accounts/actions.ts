@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { invalidateReports } from "@/lib/cache-tags";
 import { actionFailure } from "@/lib/domain-error";
 import { z } from "zod";
 import { requireAuth, requireChapterAdmin } from "@/lib/auth-guards";
@@ -37,6 +38,7 @@ export async function addAssistedPassenger(
       input: parsed.data,
     });
     revalidatePath("/admin", "layout");
+    invalidateReports(parsed.data.chapterId);
     return { ok: true };
   } catch (error) {
     return actionFailure(error, { alreadyHasAccount: "exists" } as const);
@@ -58,6 +60,7 @@ export async function inviteChapterUser(
       input: parsed.data,
     });
     revalidatePath("/admin", "layout");
+    invalidateReports(parsed.data.chapterId);
     return { ok: true };
   } catch (error) {
     return actionFailure(error, {});
@@ -95,6 +98,7 @@ export async function deleteOwnAccountAction(): Promise<DeleteOwnAccountResult> 
   try {
     await accounts.deleteUser(session.user.id);
     revalidatePath("/admin", "layout");
+    invalidateReports();
     return { ok: true };
   } catch (error) {
     return actionFailure(error, {});

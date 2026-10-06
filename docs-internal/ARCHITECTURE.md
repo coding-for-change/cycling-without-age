@@ -1121,3 +1121,90 @@ inside a UTF-8 sequence. The body is deterministic for the same rides (`DTSTAMP`
 say "last picked up by a calendar 2 h ago" — the only feedback a member gets that the
 subscription actually works. Polls are rate-limited per address (60 per 10 minutes) and
 counted in `cwa_calendar_feed_polls_total{outcome}`.
+
+## Reports (COD-256)
+
+`/admin/reports` is an activity dashboard over the admin's active scope. One cached use case,
+`src/use-cases/activity-report.ts`, reads it: `activityReport({ chapterIds, includePeople,
+range | from/to })` for the page and `activityKpis(chapterIds)` (the last 30 days) for the
+Overview strip.
+
+### Units
+
+- **Ride**: one roster entry on a trip that is not cancelled and has already ended
+  (`status != cancelled AND endsAt < now`). Two riders on one trip are two rides, the RFP's
+  counting rule. `status = completed` is never written, so "ridden" is derived, not stored.
+- **Trip**: one such `Ride` row. **Riders**: unique passengers on them. **Hours**: the sum of
+  the scheduled `endsAt - startsAt` of those trips.
+- **Cancellations**: cancelled rides in the period, grouped by `Ride.cancellationReasonCode`
+  (`weather`, `rider`, `facility`, `volunteers`, `equipment`, `noRiders`, `other`; null is "uncategorised"). The rate is
+  cancellations / (cancellations + trips).
+- **New riders**: riders whose first non-cancelled ride ever falls in the period.
+- **Active / inactive** pilots (chapter `Member` with the pilot role) and riders (`Passenger`
+  rows of the chapter) are measured over the 12 months before now, independent of the
+  timeframe. Someone who has never ridden is inactive.
+
+Every ride is placed on its **chapter's own calendar day**, so a 23:30 ride in Munich and an
+18:30 ride in New York both land on the day their chapter saw. A period is a half-open pair of
+local dates. The grain is a day up to 31 days, a week (Monday) up to 184, a month beyond. Every
+number carries the previous period of equal length (`ytd` and `12m` compare with the same span a
+year earlier); the chart's previous values are shifted onto the current buckets.
+
+### SQL aggregation
+
+CWA runs ~5,000 rides a day, so a global 12-month report must never load rides into Node.
+`src/features/rides/services/report-facts.ts` aggregates in MySQL and returns grouped rows only:
+
+- **Local day without MySQL time-zone tables.** `CONVERT_TZ` with named zones depends on the
+  server's tz tables, so the zone math stays in Node: `reportScope`
+  (`src/features/rides/report-zones.ts`) computes, per distinct chapter zone, the UTC-offset
+  spans covering both padded periods (`zoneShifts`, built from `lib/calendar`'s
+  `offsetMinutes`; one span per DST switch, half-hour zones included) and each chapter's first
+  instant of both periods (`firstInstantOf`). The SQL maps chapter → zone through a `JSON_TABLE`
+  parameter, turns the offset spans into a `CASE` on `startsAt`, and derives
+  `DATE(startsAt + offset)` per ride. The fact query is still widened by 14 hours (`periodBounds`)
+  so the `(chapterId, startsAt)` index bounds the scan; the local day decides the period.
+- **One shared CTE, several grouped reads.** `report_ride` classifies every ride in the windows
+  (`kind`: ridden / cancelled, `side`: current / previous, local day). On top of it:
+  `findActivityBuckets` (side × bucket × model × kind × category — the bucket, shifted for the
+  previous period, is computed in SQL), `findChapterTallies` (per chapter and side),
+  `findRiderCounts` (`COUNT(DISTINCT passengerId)` per side, plus new riders through a
+  `NOT EXISTS` on an earlier non-cancelled ride), and — only at chapter scope with
+  `includePeople` — `findPilotTallies` / `findRiderTallies` grouped by person.
+  Hours are summed as milliseconds and rounded once in Node.
+- **Health** reads `SELECT DISTINCT` pilot × chapter pairs and `COUNT(DISTINCT)` riders of the
+  last 12 months (`rides.activeParticipants`), and `passengers.countPassengersOfChapters`.
+- **Pure folding** lives in `src/features/rides/report.ts`: `aggregateActivity` turns the grouped
+  rows into totals, series, cancellations and models; `tallies`, `ranked`, `countryRollup`,
+  `newRiders`, `peopleHealth` and `yearBefore` are the rest of the domain math, all unit-tested.
+
+The use case starts the scope (chapter meta + earliest ride), the health reads and — once the
+scope resolves — the facts and the people tallies (whose name lookups chain directly on them) in
+one `Promise.all`. `activityKpis` runs only the core: buckets and distinct riders, no chapter
+tallies, new riders, geography or people.
+
+### Privacy
+
+At global and country scope the report ranks **chapters and countries only**. Pilot and rider
+names are loaded only when the page passes `includePeople`, which it does only at chapter scope
+(process 138). The use case never calls `accounts.displayNames` or `passengers.passengerNames`
+otherwise, so no name reaches the RSC payload outside chapter scope.
+
+### Caching
+
+Both functions are `"use cache"` with `cacheLife("minutes")` and tags from `src/lib/cache-tags.ts`:
+`reportCacheTags(chapterIds)` gives `reports` plus one `reports:chapter:<id>` per chapter in the
+scope. `cacheTag` accepts at most 128 tags per call, so a scope of more than 127 chapters is
+tagged `reports` + `reports:wide` instead. Their arguments are plain values (the chapter id list
+is part of the key, so scopes never share an entry); the page resolves the scope through
+`readActiveScope(searchParams, "reports")` before calling.
+
+Server Actions that change what a report counts call `invalidateReports(...)` next to their
+`revalidatePath`: with the chapter when they know it (chapter create/update/delete, application
+decisions, role changes, assisted passengers, invitations, a member renaming themselves — their
+memberships' chapters), which expires that chapter's tag and `reports:wide`; without arguments
+when they do not (country update/delete, user deletion), which expires `reports`. Trishaw
+allocation is the only ride write from the UI today and is not part of the report, so it does
+not invalidate. The scheduling, cancel and roster actions must call
+`invalidateReports(chapterId)` when they land.
+Everything else ages out within the `minutes` profile.

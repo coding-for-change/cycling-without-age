@@ -54,3 +54,9 @@ export const markClaimed = (userId: string) =>
 
 export const removeUser = (userId: string) =>
   prisma.user.delete({ where: { id: userId } });
+
+export const findUserNames = (ids: string[]) =>
+  prisma.user.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, name: true },
+  });

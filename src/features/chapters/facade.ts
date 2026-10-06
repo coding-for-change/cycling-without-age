@@ -50,6 +50,7 @@ import {
   findChapterTimeZones,
   findChapterCountryId,
   findChapterFootprint,
+  findChapterReportMeta,
   findChapters,
   findChapterScopes,
   insertChapter,
@@ -358,3 +359,6 @@ export async function nearestChapter(
  */
 export const getChapterTimeZones = (ids: string[]) =>
   ids.length ? findChapterTimeZones(ids) : Promise.resolve([]);
+
+export const listChapterReportMeta = (ids: string[]) =>
+  ids.length ? findChapterReportMeta(ids) : Promise.resolve([]);

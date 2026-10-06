@@ -3,6 +3,7 @@ import {
   formatDistance,
   formatDuration,
   formatHour,
+  formatPeriod,
   formatRelativeTime,
   formatWeekdayNarrow,
   wordsLocale,
@@ -98,6 +99,19 @@ describe("formatDayOfMonth", () => {
     expect(formatDayOfMonth("2026-09-07", "en-US")).toBe("7");
     expect(formatDayOfMonth("2026-09-07", "de-DE")).toBe("7");
     expect(formatDayOfMonth("2026-09-07", "da-DK")).toBe("7.");
+  });
+});
+
+describe("formatPeriod", () => {
+  it("drops the year from the start only when both ends share it", () => {
+    expect(formatPeriod("2026-03-07", "2026-04-05", "en-US")).toEqual({
+      from: "Mar 7",
+      to: "Apr 5, 2026",
+    });
+    expect(formatPeriod("2025-12-29", "2026-01-04", "en-US")).toEqual({
+      from: "Dec 29, 2025",
+      to: "Jan 4, 2026",
+    });
   });
 });
 

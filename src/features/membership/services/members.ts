@@ -120,3 +120,9 @@ export const withChapterLock = <T>(
   // hands it in, and the lock is taken inside it rather than beside it.
   return db ? locked(db) : prisma.$transaction(locked);
 };
+
+export const findMembersWithRole = (chapterIds: string[], role: string) =>
+  prisma.member.findMany({
+    where: { organizationId: { in: chapterIds }, role: { contains: role } },
+    select: { userId: true, organizationId: true, role: true },
+  });

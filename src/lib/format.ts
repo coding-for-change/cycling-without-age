@@ -211,6 +211,49 @@ export function formatWeekdayNarrow(
   }).format(toCalendarDate(value));
 }
 
+/** `Mar 7` (en-US) · `7. März` (de-DE) */
+export function formatDayMonthShort(
+  value: Date | string,
+  locale: Locale,
+): string {
+  return dateTimeFormatter(locale, {
+    ...CALENDAR_UTC,
+    day: "numeric",
+    month: "short",
+  }).format(toCalendarDate(value));
+}
+
+/** `Mar 26` (en-US) · `März 26` (de-DE) */
+export function formatMonthShort(value: Date | string, locale: Locale): string {
+  return dateTimeFormatter(locale, {
+    ...CALENDAR_UTC,
+    month: "short",
+    year: "2-digit",
+  }).format(toCalendarDate(value));
+}
+
+/** `Mar 7, 2026` (en-US) · `7. März 2026` (de-DE) */
+export function formatDateMedium(value: Date | string, locale: Locale): string {
+  return dateTimeFormatter(locale, {
+    ...CALENDAR_UTC,
+    dateStyle: "medium",
+  }).format(toCalendarDate(value));
+}
+
+export function formatPeriod(
+  from: string,
+  last: string,
+  locale: Locale,
+): { from: string; to: string } {
+  return {
+    from:
+      from.slice(0, 4) === last.slice(0, 4)
+        ? formatDayMonthShort(from, locale)
+        : formatDateMedium(from, locale),
+    to: formatDateMedium(last, locale),
+  };
+}
+
 /** `7` (en-US) · `7.` (da-DK) */
 export function formatDayOfMonth(value: Date | string, locale: Locale): string {
   return dateTimeFormatter(locale, {

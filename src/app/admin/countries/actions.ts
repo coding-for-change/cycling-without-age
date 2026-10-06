@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { invalidateReports } from "@/lib/cache-tags";
 import { actionFailure, isUniqueViolation } from "@/lib/domain-error";
 import { z } from "zod";
 import {
@@ -52,6 +53,7 @@ export async function updateCountryAction(
   try {
     await chapters.updateCountry(parsedId.data, parsed.data);
     revalidatePath("/admin", "layout");
+    invalidateReports();
     return { ok: true };
   } catch (error) {
     return failed(error);
@@ -71,6 +73,7 @@ export async function deleteCountryAction(
       actorUserId: session.user.id,
     });
     revalidatePath("/admin", "layout");
+    invalidateReports();
     return { ok: true };
   } catch (error) {
     return failed(error);

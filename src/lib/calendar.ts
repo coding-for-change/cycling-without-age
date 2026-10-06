@@ -57,7 +57,7 @@ export function wallClock(instant: Date, timeZone: string): WallClock {
 }
 
 /** Minutes this zone is ahead of UTC at a given instant. */
-function offsetMinutes(instant: Date, timeZone: string): number {
+export function offsetMinutes(instant: Date, timeZone: string): number {
   const wall = wallClock(instant, timeZone);
   const asUtc = Date.UTC(
     wall.year,

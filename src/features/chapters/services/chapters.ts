@@ -60,3 +60,18 @@ export const findChapterFootprint = (id: string) =>
       },
     },
   });
+
+export const findChapterReportMeta = (ids: string[]) =>
+  prisma.organization.findMany({
+    where: { id: { in: ids } },
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      timeZone: true,
+      latitude: true,
+      longitude: true,
+      country: { select: { id: true, code: true, name: true } },
+    },
+  });

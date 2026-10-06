@@ -586,6 +586,188 @@
       "passenger": "Passager",
       "pilot": "Pilot"
     },
+    "reports": {
+      "filters": {
+        "label": "Rapportfiltre",
+        "timeframe": "Periode",
+        "presets": {
+          "7d": "7D",
+          "30d": "30D",
+          "90d": "90D",
+          "ytd": "ÅTD",
+          "12m": "12M",
+          "all": "Alle"
+        },
+        "presetNames": {
+          "7d": "Seneste 7 dage",
+          "30d": "Seneste 30 dage",
+          "90d": "Seneste 90 dage",
+          "ytd": "År til dato",
+          "12m": "Seneste 12 måneder",
+          "all": "Hele perioden"
+        },
+        "custom": "Tilpasset",
+        "customTitle": "Vælg en periode",
+        "apply": "Anvend",
+        "cancel": "Annuller",
+        "scope": "Område",
+        "open": "Filtre",
+        "sheetTitle": "Filtre",
+        "period": "{from} – {to}",
+        "comparing": "Sammenlignet med {from} – {to}",
+        "updated": "Opdateret {time}"
+      },
+      "kpis": {
+        "label": "Nøgletal",
+        "rides": "Ture",
+        "trips": "Udflugter",
+        "riders": "Passagerer",
+        "hours": "Timer",
+        "cancellations": "Aflysninger",
+        "ridesHint": "Én tur pr. passager på en udflugt",
+        "new": "Ny",
+        "previous": "{value} i forrige periode",
+        "rate": "{rate} af udflugterne",
+        "select": "Vis {metric} i diagrammet"
+      },
+      "trend": {
+        "title": "Aktivitet over tid",
+        "previous": "Forrige periode",
+        "total": "I alt",
+        "models": {
+          "event": "Event",
+          "pleasure": "Fornøjelse",
+          "functional": "Praktisk"
+        },
+        "weekOf": "Uge fra {date}",
+        "zoom": "Klik på en søjle for at zoome ind",
+        "zoomTo": "Zoom ind på {period}",
+        "label": "{metric} pr. {grain, select, day {dag} week {uge} other {måned}}"
+      },
+      "empty": {
+        "title": "Ingen ture endnu",
+        "body": "Der var ingen ture mellem {from} og {to}. En længere periode fortæller måske mere.",
+        "showYear": "Vis 12 måneder"
+      },
+      "overview": {
+        "title": "Seneste 30 dage",
+        "subtitle": "Sammenlignet med de 30 dage før",
+        "open": "Åbn rapporter"
+      },
+      "map": {
+        "title": "Hvor turene blev kørt",
+        "label": "Kort over chapters, vægtet efter ture",
+        "hint": "Boblens størrelse viser ture. Zoom med Ctrl/⌘ + scroll eller to fingre, vælg et chapter for at åbne det.",
+        "unavailable": "Kortet mangler et Mapbox-token. Ranglisten viser stadig alle chapters."
+      },
+      "rankings": {
+        "title": "Rangliste",
+        "tabsLabel": "Hvad der rangeres",
+        "metricLabel": "Rangér efter",
+        "tabs": {
+          "chapters": "Chapters",
+          "countries": "Lande",
+          "pilots": "Piloter",
+          "riders": "Passagerer"
+        },
+        "metrics": {
+          "rides": "Ture",
+          "hours": "Timer",
+          "perPilot": "Pr. pilot"
+        },
+        "values": {
+          "rides": "{value}",
+          "hours": "{value} t",
+          "perPilot": "{value} pr. pilot"
+        },
+        "seeAll": "Se alle",
+        "open": "Åbn {name}",
+        "up": "{count, plural, one {# plads} other {# pladser}} op",
+        "down": "{count, plural, one {# plads} other {# pladser}} ned",
+        "same": "Samme plads som sidste periode",
+        "new": "Ny",
+        "newAria": "Ny på ranglisten i denne periode",
+        "empty": {
+          "title": "Intet at rangere endnu",
+          "body": "Ranglisten fyldes ud, så snart ture i denne periode er kørt."
+        },
+        "drawer": {
+          "chapters": "Alle chapters",
+          "countries": "Alle lande",
+          "pilots": "Alle piloter",
+          "riders": "Alle passagerer",
+          "description": "{period}, sammenlignet med perioden før. Sortér efter enhver kolonne."
+        },
+        "columns": {
+          "rank": "#",
+          "name": "Navn",
+          "rides": "Ture",
+          "trips": "Udflugter",
+          "hours": "Timer",
+          "activePilots": "Aktive piloter",
+          "perPilot": "Ture pr. pilot",
+          "change": "Ændring"
+        }
+      },
+      "cancellations": {
+        "title": "Aflysninger",
+        "rate": "Aflysningsrate",
+        "count": "{count, plural, one {# aflyst udflugt} other {# aflyste udflugter}}",
+        "points": "{points} pt.",
+        "byCategory": "Hvorfor udflugter blev aflyst",
+        "share": "{share} af aflysningerne",
+        "categories": {
+          "weather": "Vejret",
+          "rider": "Passageren",
+          "facility": "Plejehjemmet",
+          "volunteers": "Ingen pilot til rådighed",
+          "equipment": "Problem med rickshawen",
+          "noRiders": "Ingen passagerer",
+          "other": "Andet",
+          "uncategorised": "Ingen grund angivet"
+        },
+        "empty": {
+          "title": "Ingen aflysninger",
+          "body": "Alle planlagte udflugter i perioden blev til noget. Vind i håret, hver gang."
+        }
+      },
+      "models": {
+        "title": "Turtyper",
+        "share": "{share} af turene",
+        "hours": "{value} t på vejen",
+        "names": {
+          "event": "Event",
+          "pleasure": "Fornøjelse",
+          "functional": "Praktisk"
+        },
+        "empty": {
+          "title": "Ingen ture endnu",
+          "body": "Når ture i perioden er kørt, kan du se, hvordan de fordeler sig på event-, fornøjelses- og praktiske ture."
+        }
+      },
+      "people": {
+        "title": "Mennesker",
+        "window": "Seneste 12 måneder",
+        "windowHint": "Aktiv betyder mindst én tur i de seneste 12 måneder, uanset hvilken periode der er valgt ovenfor.",
+        "pilots": "Piloter",
+        "riders": "Passagerer",
+        "active": "{count, plural, one {# aktiv} other {# aktive}}",
+        "inactive": "{count, plural, one {# inaktiv} other {# inaktive}}",
+        "activeShare": "{share} aktive",
+        "newRiders": "Nye passagerer",
+        "newRidersHint": "Første tur nogensinde i den valgte periode",
+        "empty": {
+          "title": "Ingen piloter eller passagerer endnu",
+          "body": "Piloter og passagerer dukker op her, så snart de melder sig ind i et chapter i dette område."
+        }
+      },
+      "delta": {
+        "up": "{value} mere end forrige periode",
+        "down": "{value} mindre end forrige periode",
+        "flat": "Som forrige periode",
+        "none": "Intet at sammenligne med"
+      }
+    },
     "requests": {
       "approve": "Godkend",
       "approveBody": "Personen får en e-mail med de tre skridt til sin første tur.",
