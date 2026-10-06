@@ -93,7 +93,10 @@ export function RideRoster({
         position,
       });
       notify(result, {
-        done: say(labels.riderAdded, rider.name),
+        done:
+          result.ok && !result.changed
+            ? labels.unchanged
+            : say(labels.riderAdded, rider.name),
         errors: labels.errors,
       });
     });
@@ -105,7 +108,10 @@ export function RideRoster({
         passengerId: rider.id,
       });
       notify(result, {
-        done: say(labels.removed, rider.name),
+        done:
+          result.ok && !result.changed
+            ? labels.unchanged
+            : say(labels.removed, rider.name),
         errors: labels.errors,
       });
     });

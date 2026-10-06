@@ -387,7 +387,13 @@ export const wallSlot = z.object({
 });
 export type WallSlot = z.infer<typeof wallSlot>;
 
-export const rescheduleInput = z.union([wallSlot, rideTimes]);
+export const rescheduleInput = z.union([
+  wallSlot
+    .partial()
+    .strict()
+    .refine((patch) => Object.keys(patch).length > 0),
+  rideTimes,
+]);
 export type RescheduleInput = z.input<typeof rescheduleInput>;
 
 const slotQuery = {

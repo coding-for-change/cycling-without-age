@@ -92,9 +92,11 @@ export async function RideBody({
   await requireChapterAdmin(ride.chapterId);
 
   const editable = ride.status === "scheduled";
-  const [log, chapterPassengers, chapterMembers, allocation] =
+  const shown = historyShown(query);
+  const [log, logTotal, chapterPassengers, chapterMembers, allocation] =
     await Promise.all([
-      rides.listRideLog(ride.id),
+      rides.listRideLog(ride.id, shown),
+      rides.countRideLog(ride.id),
       editable
         ? passengers.listPassengersOfChapters([ride.chapterId])
         : Promise.resolve([]),
@@ -114,7 +116,6 @@ export async function RideBody({
   const statuses = dict.calendar.statuses;
   const pathname = `/admin/rides/${ride.id}`;
   const backHref = hrefWith("/admin/rides", query, DETAIL_ONLY);
-  const shown = historyShown(query);
 
   const span = (window: { startsAt: Date; endsAt: Date }, at: Notation) =>
     formatTimeRange(window.startsAt, window.endsAt, at, zone);
@@ -180,11 +181,32 @@ export async function RideBody({
     {
       riders: ride.roster.length,
       pilots: ride.assignments.length,
-      history: log.length,
+      history: logTotal,
     },
     dict.admin.deletion,
     language,
   );
+  const otherWhen = other
+    ? { when: formatDateTime(other.startsAt, notation, zone) }
+    : null;
+  if (other?.status === "cancelled" && otherWhen)
+    consequences.push(
+      formatMessage(
+        ride.returnLeg ? dict.rides.delete.wayBack : dict.rides.delete.wayThere,
+        otherWhen,
+        words,
+      ),
+    );
+  const deleteBlocked =
+    other?.status === "scheduled" && otherWhen
+      ? formatMessage(
+          ride.returnLeg
+            ? dict.rides.delete.blockedWayBack
+            : dict.rides.delete.blockedWayThere,
+          otherWhen,
+          words,
+        )
+      : null;
 
   const field = fieldLabels(detail, errors);
 
@@ -270,6 +292,7 @@ export async function RideBody({
                   longitude: ride.chapter.longitude,
                 },
           leg,
+          movesReturnLeg: ride.returnLeg?.status === "scheduled",
         }}
         header={{
           title: formatMessage(
@@ -318,6 +341,7 @@ export async function RideBody({
               status={ride.status}
               deleteName={deleteName}
               consequences={consequences}
+              deleteBlocked={deleteBlocked}
               returnLeg={
                 ride.returnLeg?.status === "scheduled"
                   ? formatDateTime(ride.returnLeg.startsAt, notation, zone)
@@ -447,11 +471,11 @@ export async function RideBody({
           pathname={pathname}
           query={query}
           shown={shown}
-          total={log.length}
+          total={logTotal}
           showMoreLabel={dict.admin.history.showMore}
         >
           <RideHistory
-            entries={log.slice(0, shown)}
+            entries={log}
             viewerId={session.user.id}
             timeZone={zone}
             labels={rideHistoryStrings(dict)}

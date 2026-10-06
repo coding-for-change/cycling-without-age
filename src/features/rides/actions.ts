@@ -53,6 +53,7 @@ const MAPPED_ERRORS = [
   "invalidFile",
   "legsOverlap",
   "notPilot",
+  "otherLegScheduled",
   "partOfRoundTrip",
   "photosEventOnly",
   "pilotsFull",
@@ -126,23 +127,26 @@ async function adminOfRide(rideId: string) {
   return { ride, actorUserId: user.id };
 }
 
-async function onRide<S extends z.ZodType<{ rideId: string }>>(
+async function onRide<
+  S extends z.ZodType<{ rideId: string }>,
+  R,
+  T extends object = object,
+>(
   schema: S,
   input: unknown,
-  run: (
-    data: z.output<S>,
-    ride: RideScope,
-    actorUserId: string,
-  ) => Promise<unknown>,
-): Promise<RideResult> {
+  run: (data: z.output<S>, ride: RideScope, actorUserId: string) => Promise<R>,
+  reply?: (result: R) => T,
+): Promise<RideResult<T>> {
   const parsed = schema.safeParse(input);
   if (!parsed.success) return rejected(parsed.error);
   const admin = await adminOfRide(parsed.data.rideId);
   if (!admin) return { ok: false, error: "unknownRide" };
-  return attempt(async () => {
-    await run(parsed.data, admin.ride, admin.actorUserId);
-  });
+  return attempt<T>(async () =>
+    reply?.(await run(parsed.data, admin.ride, admin.actorUserId)),
+  );
 }
+
+const changed = (changed: boolean) => ({ changed });
 
 export async function scheduleRideAction(
   input: unknown,
@@ -229,21 +233,37 @@ export async function setRideTrishawsAction(
   );
 }
 
-export async function assignPilotAction(input: unknown): Promise<RideResult> {
-  return onRide(pilotInput, input, (data, ride, actor) =>
-    staffRide(ride, data.userId, actor),
+export async function assignPilotAction(
+  input: unknown,
+): Promise<RideResult<{ changed: boolean }>> {
+  return onRide(
+    pilotInput,
+    input,
+    (data, ride, actor) => staffRide(ride, data.userId, actor),
+    changed,
   );
 }
 
-export async function unassignPilotAction(input: unknown): Promise<RideResult> {
-  return onRide(pilotInput, input, (data, ride, actor) =>
-    rides.unassignVolunteer(ride.id, data.userId, actor),
+export async function unassignPilotAction(
+  input: unknown,
+): Promise<RideResult<{ changed: boolean }>> {
+  return onRide(
+    pilotInput,
+    input,
+    (data, ride, actor) => rides.unassignVolunteer(ride.id, data.userId, actor),
+    changed,
   );
 }
 
-export async function bookRiderAction(input: unknown): Promise<RideResult> {
-  return onRide(bookRiderInput, input, (data, ride, actor) =>
-    bookRider(ride, data.passengerId, actor, data.position),
+export async function bookRiderAction(
+  input: unknown,
+): Promise<RideResult<{ changed: boolean }>> {
+  return onRide(
+    bookRiderInput,
+    input,
+    (data, ride, actor) =>
+      bookRider(ride, data.passengerId, actor, data.position),
+    changed,
   );
 }
 
@@ -259,9 +279,15 @@ export async function setRidePhotosAction(input: unknown): Promise<RideResult> {
   );
 }
 
-export async function removeRiderAction(input: unknown): Promise<RideResult> {
-  return onRide(riderInput, input, (data, ride, actor) =>
-    rides.cancelBooking(ride.id, data.passengerId, actor),
+export async function removeRiderAction(
+  input: unknown,
+): Promise<RideResult<{ changed: boolean }>> {
+  return onRide(
+    riderInput,
+    input,
+    (data, ride, actor) =>
+      rides.cancelBooking(ride.id, data.passengerId, actor),
+    changed,
   );
 }
 

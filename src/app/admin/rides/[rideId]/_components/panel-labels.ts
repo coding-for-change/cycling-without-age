@@ -12,6 +12,7 @@ export const PILOT_LABELS = [
   "added",
   "removed",
   "remove",
+  "unchanged",
 ] as const satisfies readonly (keyof Detail)[];
 
 export const ROSTER_LABELS = [
@@ -30,6 +31,7 @@ export const ROSTER_LABELS = [
   "saved",
   "undo",
   "undone",
+  "unchanged",
 ] as const satisfies readonly (keyof Detail)[];
 
 export const TRISHAW_LABELS = [

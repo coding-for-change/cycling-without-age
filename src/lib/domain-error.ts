@@ -38,6 +38,7 @@ export type DomainErrorCode =
   | "notOwner"
   | "notPilot"
   | "notReachable"
+  | "otherLegScheduled"
   | "notSender"
   | "partOfRoundTrip"
   | "passengerChapterMismatch"

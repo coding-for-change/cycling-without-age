@@ -15,6 +15,7 @@ import {
   rideLogNote,
   rideModelIssues,
   shapedForModel,
+  slotOf,
   slotWindow,
   trishawIdList,
   type CancelRideInput,
@@ -29,6 +30,7 @@ import {
   type RideRole,
 } from "./schemas";
 import {
+  countLogOfRide,
   findLogOfRide,
   insertRideLogEntries,
   insertRideLogEntry,
@@ -165,6 +167,8 @@ export const latestRideForPilot = (userId: string, now = new Date()) =>
 
 export const getRideDetail = (id: string) => findRideDetail(id);
 
+export const countRideLog = (rideId: string) => countLogOfRide(rideId);
+
 const NAMED_IN_LOG = {
   userId: ["pilotAssigned", "pilotUnassigned"],
   passengerId: ["riderBooked", "riderRemoved"],
@@ -184,8 +188,8 @@ const idIn = (entry: RideLogRow, key: keyof typeof NAMED_IN_LOG) =>
  * from every ride they were on. Names are looked up as the history is read;
  * someone who is gone reads as `name: null`.
  */
-export async function listRideLog(rideId: string) {
-  const entries = await findLogOfRide(rideId);
+export async function listRideLog(rideId: string, take = 200) {
+  const entries = await findLogOfRide(rideId, take);
   const userIds = entries.flatMap((entry) => idIn(entry, "userId") ?? []);
   const passengerIds = entries.flatMap(
     (entry) => idIn(entry, "passengerId") ?? [],
@@ -498,8 +502,16 @@ const attachPhotos = (rideId: string, fileIds: string[], tx: Tx) =>
 
 /**
  * Moving a ride takes its trishaws along, so the new window is checked under
- * the lock like a new booking. The two legs of a round trip keep their order.
- * A wall-clock slot is read in the ride's own chapter zone.
+ * the lock like a new booking. A wall-clock slot is read in the ride's own
+ * chapter zone, and a slot field left out keeps the ride's value as read under
+ * the lock, so two quick edits — the start, then the length — never undo each
+ * other.
+ *
+ * Moving the way there of a round trip moves a scheduled way back by as much
+ * as the way there's end moved, so the time at the destination stays the same
+ * and the doctor's appointment that moved a day moves both rides a day. A
+ * cancelled way back stays where it is and is no obstacle. The way back moves
+ * on its own, but never to before the way there arrives.
  */
 export async function rescheduleRide(
   id: string,
@@ -509,38 +521,74 @@ export async function rescheduleRide(
   const parsed = rescheduleInput.parse(input);
   return rideWrite(async (tx, emit) => {
     const ride = await requireScheduled(id, tx);
+    const zone = ride.chapter.timeZone;
     const next =
-      "date" in parsed ? slotWindow(parsed, ride.chapter.timeZone) : parsed;
+      "startsAt" in parsed
+        ? parsed
+        : slotWindow({ ...slotOf(ride, zone), ...parsed }, zone);
     if (
       ride.startsAt.getTime() === next.startsAt.getTime() &&
       ride.endsAt.getTime() === next.endsAt.getTime()
     )
-      return ride;
+      return { ride, changed: false, movedReturnLeg: false };
 
-    if (ride.returnLeg && next.endsAt > ride.returnLeg.startsAt)
-      throw new DomainError("legsOverlap");
-    if (ride.returnLegOf && next.startsAt < ride.returnLegOf.endsAt)
+    if (
+      ride.returnLegOf?.status === "scheduled" &&
+      next.startsAt < ride.returnLegOf.endsAt
+    )
       throw new DomainError("legsOverlap");
 
-    await reserveOrRefuse(
-      tx,
-      ride.trishaws.map(({ trishaw }) => trishaw.id),
-      [next],
-      [id],
-    );
-    const updated = await updateRide(id, next, tx);
-    await record(
-      tx,
-      emit,
-      ride,
-      actorUserId,
-      "rescheduled",
-      { from: span(ride), to: span(next) },
-      { type: "ride.rescheduled", changes: ["time"] },
-    );
-    return updated;
+    const back =
+      ride.returnLeg?.status === "scheduled"
+        ? await findRideDetail(ride.returnLeg.id, tx)
+        : null;
+    const shift = next.endsAt.getTime() - ride.endsAt.getTime();
+    const moves = [
+      { leg: ride, to: next },
+      ...(back && shift !== 0
+        ? [
+            {
+              leg: back,
+              to: {
+                startsAt: new Date(back.startsAt.getTime() + shift),
+                endsAt: new Date(back.endsAt.getTime() + shift),
+              },
+            },
+          ]
+        : []),
+    ];
+    const movingIds = moves.map(({ leg }) => leg.id);
+
+    for (const { leg, to } of moves)
+      await reserveOrRefuse(
+        tx,
+        leg.trishaws.map(({ trishaw }) => trishaw.id),
+        [to],
+        movingIds,
+      );
+
+    let updated = null;
+    for (const { leg, to } of moves) {
+      const row = await updateRide(leg.id, to, tx);
+      updated ??= row;
+      await record(
+        tx,
+        emit,
+        leg,
+        actorUserId,
+        "rescheduled",
+        {
+          from: span(leg),
+          to: span(to),
+          ...(leg.id === id ? {} : { withLegOf: id }),
+        },
+        { type: "ride.rescheduled", changes: ["time"] },
+      );
+    }
+    return { ride: updated!, changed: true, movedReturnLeg: moves.length > 1 };
   });
 }
+
 const LOCATION_FIELDS = [
   "locationName",
   "locationAddress",
@@ -715,20 +763,30 @@ export async function cancelRide(
 
 /**
  * Only a cancelled ride can go, and going is what frees its calendar slot. Its
- * history goes with it, so the event is what remains of who deleted it.
+ * history goes with it, so the event is what remains of who deleted it. A
+ * round trip goes as a whole: a cancelled other leg goes too, and one still
+ * going ahead has to be cancelled first, so no leg is ever left behind with
+ * its places swapped and nothing to return from. A completed other leg stays.
  */
 export async function deleteRide(id: string, actorUserId: Actor) {
   return rideWrite(async (tx, emit) => {
     const ride = await requireRide(id, tx);
     if (ride.status !== "cancelled") throw new DomainError("rideNotCancelled");
-    await deleteRideById(id, tx);
-    await emit({
-      type: "ride.deleted",
-      rideId: id,
-      chapterId: ride.chapterId,
-      actorUserId,
-    });
-    return ride;
+    const other = ride.returnLeg ?? ride.returnLegOf;
+    if (other?.status === "scheduled")
+      throw new DomainError("otherLegScheduled");
+
+    const ids = [id, ...(other?.status === "cancelled" ? [other.id] : [])];
+    for (const rideId of ids) {
+      await deleteRideById(rideId, tx);
+      await emit({
+        type: "ride.deleted",
+        rideId,
+        chapterId: ride.chapterId,
+        actorUserId,
+      });
+    }
+    return { deletedIds: ids };
   });
 }
 

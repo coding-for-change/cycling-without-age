@@ -3,7 +3,6 @@ import { rides, type RideScope } from "@/features/rides";
 import { DomainError } from "@/lib/domain-error";
 
 /**
- * TEMPORARY: Pilots assigning themself comes in PR5.
  * An admin puts a pilot on a ride. Only someone who holds the pilot role in the
  * ride's own chapter can be put there — an admin of the chapter is not a pilot
  * by virtue of being its admin.

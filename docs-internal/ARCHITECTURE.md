@@ -844,9 +844,14 @@ and deleting is what frees its square on the calendar (`rideNotCancelled` for an
 - **A round trip is written once.** `scheduleRide` with a `returnLeg` checks both windows under
   one lock and inserts both rows in the same transaction, the way back mirrored (origin and
   destination swapped) and linked by `returnLegOfId`. Either both legs exist or neither does.
-  Moving a leg keeps the way there before the way back (`legsOverlap`), a leg of a round trip
-  stays functional (`partOfRoundTrip`), and cancelling the way there takes the way back with it
-  unless the admin unticks it.
+  Moving the way there moves a scheduled way back by as much as the way there's end moved, in
+  the same transaction and with both new windows checked under the lock, so the time at the
+  destination stays the same; a cancelled way back stays put. The way back moves on its own
+  but never to before the way there arrives (`legsOverlap`). A leg of a round trip stays
+  functional (`partOfRoundTrip`), and cancelling the way there takes the way back with it
+  unless the admin unticks it. Deleting a cancelled leg deletes a cancelled other leg with it
+  and is refused while the other leg is still going ahead (`otherLegScheduled`), so a way back
+  is never left behind with its places swapped; a completed other leg stays in the records.
 - **Cancellation has a reason code.** `Ride.cancellationReasonCode` is one of the Report 3
   buckets (`weather`, `rider`, `facility`, `volunteers`, `equipment`, `noRiders`, `other`);
   `cancellationNote` is the free text beside it and `cancelledByUserId` who did it. Rides
@@ -854,13 +859,18 @@ and deleting is what frees its square on the calendar (`rideNotCancelled` for an
 - **Wall clock in, instants stored.** The scheduling drawer sends a date, a start and a length
   on the chapter's wall clock (`wallSlot`). `use-cases/schedule-ride.ts` reads the chapter's
   zone and turns it into instants with `slotWindow`; `slotOf` goes the other way for the detail
-  page. `rescheduleRide` takes either a wall-clock slot or two instants and reads a slot in the
-  zone of the ride it has just locked. A length is real minutes, so a two-hour ride across a DST change still lasts two hours.
+  page. `rescheduleRide` takes either two instants (a drag on the week) or a wall-clock slot, and
+  reads a slot in the zone of the ride it has just locked. Editing the time on the detail page
+  sends only the slot field that changed; the rest is filled in from the ride as read under its
+  lock, so two quick edits never undo each other. A length is real minutes, so a two-hour ride
+  across a DST change still lasts two hours.
 - **Who may do it.** Every action on an existing ride in `features/rides/actions.ts` goes
   through `onRide`, which reads the lean `rides.getRideScope` (id, chapter, trishaw ids) and
   calls `requireChapterAdmin(ride.chapterId)`: the chapter comes from the database, never from
   the client. The use cases take that scope instead of reading the ride again; the facade still
-  locks and re-reads the ride for its own checks. Putting a pilot on a ride goes through `use-cases/staff-ride.ts`, which requires the
+  locks and re-reads the ride for its own checks. Assigning or removing a pilot or a rider
+  answers `changed: false` when there was nothing to do, so the panel says "nothing changed"
+  instead of claiming a change. Putting a pilot on a ride goes through `use-cases/staff-ride.ts`, which requires the
   `pilot` role in the ride's own chapter (being its admin is not enough). Booking a rider goes
   through `use-cases/book-rider.ts`, which requires the rider to belong to the ride's chapter.
 - **What each model requires.** An event ride needs a `title` and a `capacity` (riders it

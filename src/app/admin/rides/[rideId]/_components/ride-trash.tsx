@@ -44,6 +44,7 @@ export function RideTrash({
   status,
   deleteName,
   consequences,
+  deleteBlocked,
   returnLeg,
   backHref,
   language,
@@ -53,6 +54,7 @@ export function RideTrash({
   status: RideStatusName;
   deleteName: string;
   consequences: string[];
+  deleteBlocked: string | null;
   returnLeg: string | null;
   backHref: string;
   language: Locale;
@@ -68,6 +70,29 @@ export function RideTrash({
       />
     );
   if (status !== "cancelled") return null;
+  if (deleteBlocked)
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={labels.delete.submit}
+            title={deleteBlocked}
+            className={TRASH_BUTTON}
+          >
+            <Trash2 aria-hidden />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="end"
+          className="w-72 rounded-xl border-line p-4 text-2sm text-ink-soft"
+        >
+          {deleteBlocked}
+        </PopoverContent>
+      </Popover>
+    );
 
   return (
     <ConfirmDeleteDialog
@@ -125,10 +150,13 @@ function CancelRidePopover({
         includeReturnLeg: returnLeg !== null && includeReturnLeg,
       });
       notify(result, {
-        done:
-          result.ok && result.cancelledIds.length > 1
-            ? strings.doneBoth
-            : strings.done,
+        done: !result.ok
+          ? strings.done
+          : result.cancelledIds.length === 0
+            ? strings.unchanged
+            : result.cancelledIds.length > 1
+              ? strings.doneBoth
+              : strings.done,
         errors: labels.errors,
       });
       if (!result.ok) return;

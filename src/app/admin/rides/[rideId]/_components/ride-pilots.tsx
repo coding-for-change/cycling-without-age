@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { notify, type ActionResult } from "@/components/action-feedback";
+import { notify } from "@/components/action-feedback";
 import { PersonPicker, type PersonOption } from "@/components/people-picker";
 import { PersonAvatar } from "@/components/person-avatar";
 import {
@@ -51,13 +51,21 @@ export function RidePilots({
     action: (input: {
       rideId: string;
       userId: string;
-    }) => Promise<ActionResult>,
+    }) => Promise<
+      { ok: true; changed: boolean } | { ok: false; error: string }
+    >,
     pilot: { id: string; name: string },
     done: string,
   ) =>
     startTransition(async () => {
       const result = await action({ rideId, userId: pilot.id });
-      notify(result, { done: say(done, pilot.name), errors: labels.errors });
+      notify(result, {
+        done:
+          result.ok && !result.changed
+            ? labels.unchanged
+            : say(done, pilot.name),
+        errors: labels.errors,
+      });
     });
 
   return (

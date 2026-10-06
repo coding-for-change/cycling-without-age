@@ -231,6 +231,17 @@ describe("rescheduleInput", () => {
       }).success,
     ).toBe(false);
   });
+
+  it("takes the one slot field that changed, and nothing empty or mixed", () => {
+    expect(rescheduleInput.safeParse({ start: "11:00" }).success).toBe(true);
+    expect(rescheduleInput.safeParse({}).success).toBe(false);
+    expect(
+      rescheduleInput.safeParse({
+        start: "11:00",
+        endsAt: "2026-10-27T10:05:00Z",
+      }).success,
+    ).toBe(false);
+  });
 });
 
 it("edits title, description and capacity within bounds", () => {

@@ -278,6 +278,8 @@ function ScheduleRideSheet({
   const [note, setNote] = useState("");
   const [titleInvalid, setTitleInvalid] = useState(false);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  const [attempt, setAttempt] = useState(0);
+  const [known, setKnown] = useState<TrishawOption[]>([]);
   const [fetched, setFetched] = useState<{
     key: string;
     options: TrishawOption[] | null;
@@ -300,6 +302,7 @@ function ScheduleRideSheet({
     roundTrip: twoWay,
     stayMinutes: twoWay ? stay : 0,
   });
+  const request = `${attempt}:${lookup}`;
 
   useEffect(() => {
     if (!open) return;
@@ -310,7 +313,8 @@ function ScheduleRideSheet({
       );
       if (!live) return;
       const options = result?.ok ? result.options : null;
-      setFetched({ key: lookup, options });
+      setFetched({ key: request, options });
+      if (options) setKnown(options);
       if (options)
         setSelected((current) => {
           const free = new Set(
@@ -325,7 +329,7 @@ function ScheduleRideSheet({
       live = false;
       clearTimeout(timer);
     };
-  }, [open, lookup]);
+  }, [open, lookup, request]);
 
   const routeKey =
     functional && origin && destination
@@ -356,14 +360,16 @@ function ScheduleRideSheet({
   const route =
     routeKey !== null && routed?.key === routeKey ? routed.route : null;
 
-  const loading = fetched?.key !== lookup;
+  const loading = fetched?.key !== request;
   const options = fetched?.options;
   const free = new Set(
     (options ?? [])
       .filter((option) => option.blocked === null)
       .map((option) => option.id),
   );
-  const picked = [...selected].filter((id) => free.has(id));
+  const picked = options
+    ? [...selected].filter((id) => free.has(id))
+    : [...selected];
 
   const toggleTrishaw = (id: string, on: boolean) =>
     setSelected((current) => {
@@ -757,11 +763,13 @@ function ScheduleRideSheet({
             <TrishawPicker
               loading={loading}
               options={options}
+              known={known}
               selected={selected}
               free={free}
               picked={picked}
               max={limits.trishaws}
               onToggle={toggleTrishaw}
+              onRetry={() => setAttempt((count) => count + 1)}
               single={pleasure}
               hint={pleasure ? strings.trishawsPleasure : strings.trishawsHint}
               count={people.count}
@@ -1052,6 +1060,7 @@ function PlaceRow({
 function TrishawPicker({
   loading,
   options,
+  known,
   selected,
   free,
   picked,
@@ -1061,11 +1070,13 @@ function TrishawPicker({
   hint,
   count,
   language,
+  onRetry,
   strings,
   labels,
 }: {
   loading: boolean;
   options: TrishawOption[] | null | undefined;
+  known: TrishawOption[];
   selected: ReadonlySet<string>;
   free: ReadonlySet<string>;
   picked: string[];
@@ -1075,11 +1086,12 @@ function TrishawPicker({
   hint: string;
   count: string;
   language: Locale;
+  onRetry: () => void;
   strings: Strings;
   labels: TrishawOptionLabels;
 }) {
   const group = useId();
-  const names = (options ?? [])
+  const names = (options ?? known)
     .filter((option) => picked.includes(option.id))
     .map((option) => option.name);
   const summary = names.length ? names.join(", ") : strings.addTrishaws;
@@ -1103,9 +1115,21 @@ function TrishawPicker({
   const body = () => {
     if (options === undefined) return quiet(strings.trishawsLoading, true);
     if (options === null)
-      return loading
-        ? quiet(strings.trishawsLoading, true)
-        : quiet(strings.trishawsFailed);
+      return loading ? (
+        quiet(strings.trishawsLoading, true)
+      ) : (
+        <div className="flex flex-wrap items-center gap-3 pr-2">
+          {quiet(strings.trishawsFailed)}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onRetry}
+          >
+            {strings.retry}
+          </Button>
+        </div>
+      );
     if (options.length === 0)
       return loading
         ? quiet(strings.trishawsLoading, true)

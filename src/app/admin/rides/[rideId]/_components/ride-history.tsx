@@ -153,7 +153,12 @@ export function RideHistory({
             details = [span(payload)].filter(Boolean);
             break;
           case "rescheduled":
-            sentence = say(labels.rescheduled, actor);
+            sentence = say(
+              payload.withLegOf
+                ? labels.rescheduledWithLeg
+                : labels.rescheduled,
+              actor,
+            );
             details = [
               say(labels.change, {
                 from: span(payload.from),

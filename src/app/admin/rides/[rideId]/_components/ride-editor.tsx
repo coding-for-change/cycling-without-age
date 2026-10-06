@@ -103,6 +103,7 @@ export type RideEditorProps = {
     destination: Place;
     home: Place | null;
     leg: { kind: "back" | "there"; href: string; label: string } | null;
+    movesReturnLeg: boolean;
   };
   header: {
     title: string;
@@ -222,7 +223,10 @@ function EditorLayout({
     return result;
   };
   const reschedule = (next: Partial<WallSlot>) =>
-    rescheduleRideAction(id, { ...slot, ...next });
+    rescheduleRideAction(id, next);
+  const timeLabels = ride.movesReturnLeg
+    ? { ...labels.field, saved: detail.movedWithReturn }
+    : labels.field;
   const showsDestination = model.shown === "functional";
   const pleasure = model.shown === "pleasure";
   const event = ride.model === "event";
@@ -369,7 +373,7 @@ function EditorLayout({
                     placeholder={detail.date}
                     display={(value) => formatDate(value, notation)}
                     onSave={(next) => reschedule({ date: next ?? slot.date })}
-                    labels={labels.field}
+                    labels={timeLabels}
                     className="text-2sm tabular-nums"
                   />
                 ) : (
@@ -393,7 +397,7 @@ function EditorLayout({
                       label: wallTime(value, notation),
                     }))}
                     onSave={(next) => reschedule({ start: next })}
-                    labels={labels.field}
+                    labels={timeLabels}
                   />
                 ) : (
                   <PropertyValue className="tabular-nums">
@@ -420,7 +424,7 @@ function EditorLayout({
                     onSave={(next) =>
                       reschedule({ durationMinutes: Number(next) })
                     }
-                    labels={labels.field}
+                    labels={timeLabels}
                   />
                 ) : (
                   <PropertyValue>

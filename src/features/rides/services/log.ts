@@ -35,7 +35,10 @@ export const insertRideLogEntries = (
   db: Prisma.TransactionClient = prisma,
 ) => db.rideLogEntry.createMany({ data: entries });
 
-export const findLogOfRide = (rideId: string, take = 200) =>
+export const countLogOfRide = (rideId: string) =>
+  prisma.rideLogEntry.count({ where: { rideId } });
+
+export const findLogOfRide = (rideId: string, take: number) =>
   prisma.rideLogEntry.findMany({
     where: { rideId },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
