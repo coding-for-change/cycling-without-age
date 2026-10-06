@@ -5,6 +5,16 @@ import { worker as workerMetrics } from "@/lib/observability/metrics";
 const TIMEZONE = "UTC";
 const MINUTE_MS = 60_000;
 
+const daily = (cron: string) =>
+  ({
+    schedule: { type: "crontab", value: cron },
+    checkinMargin: 10,
+    maxRuntime: 30,
+    failureIssueThreshold: 1,
+    recoveryThreshold: 1,
+    timezone: TIMEZONE,
+  }) as const;
+
 export const MONITORS = {
   sweep: {
     schedule: { type: "interval", value: 1, unit: "minute" },
@@ -14,22 +24,8 @@ export const MONITORS = {
     recoveryThreshold: 1,
     timezone: TIMEZONE,
   },
-  "prune-devices": {
-    schedule: { type: "crontab", value: "0 4 * * *" },
-    checkinMargin: 10,
-    maxRuntime: 30,
-    failureIssueThreshold: 1,
-    recoveryThreshold: 1,
-    timezone: TIMEZONE,
-  },
-  "prune-chat": {
-    schedule: { type: "crontab", value: "0 3 * * *" },
-    checkinMargin: 10,
-    maxRuntime: 30,
-    failureIssueThreshold: 1,
-    recoveryThreshold: 1,
-    timezone: TIMEZONE,
-  },
+  "prune-devices": daily("0 4 * * *"),
+  "prune-chat": daily("0 3 * * *"),
 } satisfies Record<string, MonitorConfig>;
 
 export type MaintenanceName = keyof typeof MONITORS;

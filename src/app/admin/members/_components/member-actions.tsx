@@ -16,6 +16,10 @@ import { Button } from "@/components/ui/button";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
 import { changeMemberRoleAction } from "../actions";
+import {
+  PROPERTY_BUTTON,
+  PROPERTY_BUTTON_DANGER,
+} from "../../_components/properties";
 import { notify, type NotifyLabels } from "@/components/action-feedback";
 
 type Change = "promote" | "demote" | "remove";
@@ -97,7 +101,7 @@ export function MemberActions({
             variant="outline"
             size="sm"
             onClick={() => setChange(target.isAdmin ? "demote" : "promote")}
-            className="w-full justify-start border-line bg-canvas text-2sm text-ink-soft hover:border-ink-faint hover:bg-canvas hover:text-ink hover:shadow-soft"
+            className={PROPERTY_BUTTON}
           >
             {target.isAdmin ? (
               <ShieldMinus aria-hidden />
@@ -112,7 +116,7 @@ export function MemberActions({
             variant="outline"
             size="sm"
             onClick={() => setChange("remove")}
-            className="w-full justify-start border-line bg-canvas text-2sm text-ink-soft hover:border-ink-faint hover:bg-canvas hover:text-ink hover:shadow-soft"
+            className={PROPERTY_BUTTON_DANGER}
           >
             <UserMinus aria-hidden />
             {labels.remove}

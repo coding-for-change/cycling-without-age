@@ -4,8 +4,7 @@ import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
 import { fleet } from "@/features/fleet";
-import { rides } from "@/features/rides";
-import { scheduleRide } from "@/use-cases/schedule-ride";
+import { rideInput, rides } from "@/features/rides";
 import { defaultLocationFor } from "@/use-cases/manage-chapter";
 import type { ChapterRole } from "@/lib/access";
 
@@ -378,6 +377,7 @@ async function seedRides(
       from: 10,
       to: 12,
       model: "event" as const,
+      title: "Sommerfest im Sonnenhof",
       // A Multiple Ride Event running two trishaws at once — the case a single
       // FK could not express.
       location: "Seniorenheim Sonnenhof",
@@ -391,6 +391,7 @@ async function seedRides(
       from: 14,
       to: 16,
       model: "event" as const,
+      title: "Ausfahrt in den Englischen Garten",
       location: "Englischer Garten",
       staff: [pilot],
       riders: [],
@@ -425,6 +426,7 @@ async function seedRides(
       from: 11,
       to: 13,
       model: "event" as const,
+      title: "Rund um die Alster",
       location: "Alstergarten",
       staff: [pilot, multi],
       riders: [],
@@ -436,6 +438,7 @@ async function seedRides(
       from: 10,
       to: 12,
       model: "event" as const,
+      title: "Hafenrundfahrt",
       location: "Alstergarten",
       staff: [multi],
       riders: [],
@@ -444,8 +447,8 @@ async function seedRides(
   ];
 
   for (const item of plan) {
-    const ride = await scheduleRide(
-      {
+    const ride = await rides.scheduleRide(
+      rideInput.parse({
         chapterId: chapterId(item.chapter),
         trishawIds: item.trishaws.map((key) => trishawIds.get(key)!),
         model: item.model,
@@ -453,7 +456,9 @@ async function seedRides(
         endsAt: at(today, item.day, item.to),
         locationName: item.location,
         destinationName: item.destination ?? null,
-      },
+        title: item.title ?? null,
+        capacity: item.model === "event" ? 8 : null,
+      }),
       null,
     );
     for (const userId of item.staff) {

@@ -1,43 +1,67 @@
 "use client";
 
 import Link from "next/link";
-import { useId, useMemo, useSyncExternalStore, type ReactNode } from "react";
-import { Globe, Lock, PartyPopper, Route, Wind } from "lucide-react";
-import type { ActionResult } from "@/components/action-feedback";
+import {
+  useId,
+  useState,
+  useSyncExternalStore,
+  ViewTransition,
+  type ReactNode,
+} from "react";
+import { Globe, Lock } from "lucide-react";
+import { reportSave } from "@/components/action-feedback";
 import { InlineField, type InlineFieldLabels } from "@/components/inline-field";
-import { SaveStatus, SaveStatusProvider } from "@/components/save-status";
-import { Badge } from "@/components/ui/badge";
+import { SaveStatusProvider, useSaveStatus } from "@/components/save-status";
 import { useOptimisticSave } from "@/components/use-optimistic-save";
 import {
   rescheduleRideAction,
   updateRideAction,
 } from "@/features/rides/actions";
+import { MODEL_ICON } from "@/features/rides/components/ride-presentation";
 import {
+  parseCapacity,
+  PLEASURE_LIMITS,
   RIDE_MAX_PILOTS,
   RIDE_MODELS,
   RIDE_NOTE_MAX,
+  RIDE_TITLE_MAX,
   type RideModelName,
   type RideStatusName,
   type WallSlot,
 } from "@/features/rides/schemas";
 import {
+  CLOCK_STEPS,
+  clockLabel,
+  clockToMinutes,
+  minutesToClock,
+} from "@/lib/clock";
+import {
   formatDate,
   formatDuration,
-  formatTime,
   wordsLocale,
   type Locale as Notation,
 } from "@/lib/format";
-import type { Dictionary } from "@/lib/i18n";
+import type { RideDetailStrings } from "@/features/rides/components/strings";
 import type { Locale } from "@/lib/i18n/locales";
-import type { ResolvedPlace } from "@/lib/mapbox";
+import type { Route as RideRoute } from "@/lib/mapbox";
+import { fileUrl } from "@/lib/storage/file-url";
 import { cn } from "@/lib/utils";
 import {
   DETAIL_MEDIA,
   DETAIL_TITLE,
   DetailHeader,
+  DetailHeaderActions,
   DetailLayout,
+  DetailMediaIcon,
+  DetailMeta,
+  MetaBadge,
 } from "../../../_components/detail-page";
-import { PlaceSearch } from "../../../_components/place-search";
+import { DetailTitle } from "../../../_components/detail-title";
+import {
+  EditableText,
+  type EditableTextProps,
+} from "../../../_components/editable-text";
+import { OptimisticPropertySelect } from "../../../_components/optimistic-properties";
 import {
   PropertyList,
   PropertyRow,
@@ -45,15 +69,14 @@ import {
   PropertyValue,
 } from "../../../_components/properties";
 import { SidePanel } from "../../../_components/side-panel";
+import { MakeEventPopover, type MakeEventLabels } from "./make-event-popover";
+import {
+  MakeFunctionalPopover,
+  type MakeFunctionalLabels,
+} from "./make-functional-popover";
+import { RideWhere, type Place } from "./ride-where";
 
-type Place = {
-  name: string | null;
-  address: string | null;
-  latitude: number | null;
-  longitude: number | null;
-};
-
-type Strings = Dictionary["rides"]["detail"];
+type Strings = RideDetailStrings;
 
 export type RideEditorLabels = {
   detail: Strings;
@@ -62,6 +85,8 @@ export type RideEditorLabels = {
   errors: InlineFieldLabels["errors"];
   field: InlineFieldLabels;
   status: { saving: string; saved: string };
+  makeEvent: MakeEventLabels;
+  makeFunctional: MakeFunctionalLabels;
 };
 
 export type RideEditorProps = {
@@ -71,8 +96,12 @@ export type RideEditorProps = {
     status: RideStatusName;
     slot: WallSlot;
     requiredPilots: number;
+    title: string | null;
+    capacity: number | null;
+    riders: number;
     location: Place;
     destination: Place;
+    home: Place | null;
     leg: { kind: "back" | "there"; href: string; label: string } | null;
   };
   header: {
@@ -81,20 +110,17 @@ export type RideEditorProps = {
     chapter: string;
     zone: string;
     zoneHint: string;
+    cover: string | null;
   };
   editable: boolean;
   language: Locale;
   notation: Notation;
   labels: RideEditorLabels;
+  route: Promise<RideRoute | null> | null;
+  trash: ReactNode;
   panels: ReactNode;
   children: ReactNode;
 };
-
-const MODEL_ICON = {
-  event: PartyPopper,
-  pleasure: Wind,
-  functional: Route,
-} as const;
 
 const STATUS_TONE: Record<RideStatusName, string> = {
   scheduled: "bg-mint-tint text-ink",
@@ -103,13 +129,21 @@ const STATUS_TONE: Record<RideStatusName, string> = {
 };
 
 const DURATIONS = [15, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300, 360, 480];
-const QUARTERS = Array.from({ length: 96 }, (_, index) => {
-  const minutes = index * 15;
-  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
-});
+const QUARTERS = CLOCK_STEPS.map(minutesToClock);
 
 const wallTime = (time: string, notation: Notation) =>
-  formatTime(new Date(`1970-01-01T${time}:00Z`), notation, "UTC");
+  clockLabel(clockToMinutes(time), notation);
+
+const destinationPatch = (place: Place) => ({
+  destinationName: place.name,
+  destinationAddress: place.address,
+  destinationLatitude: place.latitude,
+  destinationLongitude: place.longitude,
+});
+
+const hasPlace = (place: Place) =>
+  Boolean(place.name || place.address) ||
+  (place.latitude !== null && place.longitude !== null);
 
 const withCurrent = <T,>(
   values: T[],
@@ -132,6 +166,8 @@ function EditorLayout({
   language,
   notation,
   labels,
+  route,
+  trash,
   panels,
   children,
 }: RideEditorProps) {
@@ -141,85 +177,127 @@ function EditorLayout({
     start: useId(),
     duration: useId(),
     pilots: useId(),
+    capacity: useId(),
   };
   const { id, slot } = ride;
   const words = wordsLocale(language);
   const roundTrip = ride.leg !== null;
 
+  const report = useSaveStatus();
+  const [making, setMaking] = useState<"event" | "functional" | null>(null);
   const model = useOptimisticSave(
     ride.model,
-    (next) => updateRideAction(id, { model: next }),
+    (next) =>
+      updateRideAction(
+        id,
+        next === "event"
+          ? {
+              model: next,
+              ...(ride.title ? { title: ride.title } : {}),
+              ...(ride.capacity === null ? {} : { capacity: ride.capacity }),
+            }
+          : next === "functional" && hasPlace(ride.destination)
+            ? { model: next, ...destinationPatch(ride.destination) }
+            : { model: next },
+      ),
     labels.field,
   );
+  const switchModel = async (
+    next: "event" | "functional",
+    details: Record<string, unknown>,
+  ) => {
+    const previous = model.shown;
+    report("saving");
+    const result = await updateRideAction(id, { model: next, ...details });
+    if (!result.ok) {
+      report("failed");
+      return result;
+    }
+    setMaking(null);
+    reportSave(result, {
+      report,
+      labels: labels.field,
+      undo: () => void model.persist(previous, next, false, true),
+    });
+    return result;
+  };
   const reschedule = (next: Partial<WallSlot>) =>
     rescheduleRideAction(id, { ...slot, ...next });
-  const start = useOptimisticSave(
-    slot.start,
-    (next) => reschedule({ start: next }),
-    labels.field,
-  );
-  const duration = useOptimisticSave(
-    String(slot.durationMinutes),
-    (next) => reschedule({ durationMinutes: Number(next) }),
-    labels.field,
-  );
-  const pilots = useOptimisticSave(
-    String(ride.requiredPilots),
-    (next) => updateRideAction(id, { requiredPilots: Number(next) }),
-    labels.field,
-  );
-
-  const Icon = MODEL_ICON[ride.model];
   const showsDestination = model.shown === "functional";
+  const pleasure = model.shown === "pleasure";
+  const event = ride.model === "event";
 
   return (
     <DetailLayout
       header={
         <DetailHeader
           media={
-            <span
-              aria-hidden
-              className={cn(
-                DETAIL_MEDIA,
-                "grid place-items-center",
-                ride.status === "cancelled"
-                  ? "bg-canvas-deep text-ink-faint"
-                  : ride.model === "functional"
-                    ? "bg-canvas-deeper text-ink"
-                    : "bg-mint-tint text-ink",
-              )}
-            >
-              <Icon className="size-5" />
-            </span>
+            header.cover && event ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={fileUrl(header.cover)}
+                alt=""
+                className={cn(
+                  DETAIL_MEDIA,
+                  "border border-line object-cover",
+                  ride.status === "cancelled" && "opacity-60 grayscale",
+                )}
+              />
+            ) : (
+              <DetailMediaIcon
+                icon={MODEL_ICON[ride.model]}
+                tone={
+                  ride.status === "cancelled"
+                    ? "muted"
+                    : ride.model === "functional"
+                      ? "deep"
+                      : "mint"
+                }
+              />
+            )
           }
           title={
-            <span
-              className={cn(
-                DETAIL_TITLE,
-                ride.status === "cancelled" &&
-                  "text-ink-soft line-through decoration-1",
+            <ViewTransition name={`ride-title-${id}`}>
+              {event && editable ? (
+                <DetailTitle
+                  value={ride.title ?? header.title}
+                  label={detail.eventTitle}
+                  maxLength={RIDE_TITLE_MAX}
+                  onSave={(next) => updateRideAction(id, { title: next })}
+                  labels={labels.field}
+                />
+              ) : (
+                <span
+                  className={cn(
+                    DETAIL_TITLE,
+                    ride.status === "cancelled" &&
+                      "text-ink-soft line-through decoration-1",
+                  )}
+                >
+                  {(event && ride.title) || header.title}
+                </span>
               )}
-            >
-              {header.title}
-            </span>
+            </ViewTransition>
           }
           aside={
-            editable ? (
-              <SaveStatus
-                labels={labels.status}
-                words={language}
-              />
-            ) : undefined
+            <DetailHeaderActions
+              saveStatus={
+                editable
+                  ? { labels: labels.status, words: language }
+                  : undefined
+              }
+            >
+              {trash}
+            </DetailHeaderActions>
           }
         >
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-2sm text-ink-soft">
-            <Badge className={cn("font-normal", STATUS_TONE[ride.status])}>
+          <DetailMeta>
+            <MetaBadge className={STATUS_TONE[ride.status]}>
               {labels.statuses[ride.status]}
-            </Badge>
+            </MetaBadge>
             <span className="tabular-nums text-ink">{header.when}</span>
-            <span aria-hidden>·</span>
             <span>{header.chapter}</span>
-          </div>
+          </DetailMeta>
           <ZoneHint
             zone={header.zone}
             label={header.zoneHint}
@@ -235,26 +313,47 @@ function EditorLayout({
                 htmlFor={editable && !roundTrip ? ids.model : undefined}
               >
                 {editable && !roundTrip ? (
-                  <PropertySelect
-                    id={ids.model}
-                    value={model.shown}
-                    options={RIDE_MODELS.map((value) => ({
-                      value,
-                      label: labels.models[value],
-                    }))}
-                    onChange={(next) => {
-                      if (next !== model.shown)
-                        void model.persist(next, model.shown);
-                    }}
-                  />
-                ) : (
-                  <PropertyValue className="inline-flex items-center gap-1.25">
-                    {roundTrip && editable ? (
-                      <Lock
-                        aria-hidden
-                        className="size-3.5 shrink-0 text-ink-soft"
+                  <MakeFunctionalPopover
+                    open={making === "functional"}
+                    onCancel={() => setMaking(null)}
+                    language={language}
+                    onConfirm={(destination) =>
+                      switchModel("functional", destinationPatch(destination))
+                    }
+                    labels={labels.makeFunctional}
+                  >
+                    <MakeEventPopover
+                      open={making === "event"}
+                      onCancel={() => setMaking(null)}
+                      defaultTitle={ride.title ?? header.title}
+                      riders={ride.riders}
+                      onConfirm={(details) => switchModel("event", details)}
+                      labels={labels.makeEvent}
+                    >
+                      <PropertySelect
+                        id={ids.model}
+                        value={model.shown}
+                        options={RIDE_MODELS.map((value) => ({
+                          value,
+                          label: labels.models[value],
+                        }))}
+                        onChange={(next) => {
+                          if (next === model.shown) return;
+                          if (next === "event") setMaking("event");
+                          else if (
+                            next === "functional" &&
+                            !hasPlace(ride.destination)
+                          )
+                            setMaking("functional");
+                          else void model.persist(next, model.shown);
+                        }}
                       />
-                    ) : null}
+                    </MakeEventPopover>
+                  </MakeFunctionalPopover>
+                ) : (
+                  <PropertyValue
+                    icon={roundTrip && editable ? Lock : undefined}
+                  >
                     {labels.models[ride.model]}
                   </PropertyValue>
                 )}
@@ -284,19 +383,17 @@ function EditorLayout({
                 htmlFor={editable ? ids.start : undefined}
               >
                 {editable ? (
-                  <PropertySelect
+                  <OptimisticPropertySelect
                     id={ids.start}
-                    value={start.shown}
-                    options={withCurrent(QUARTERS, start.shown, (a, b) =>
+                    value={slot.start}
+                    options={withCurrent(QUARTERS, slot.start, (a, b) =>
                       a.localeCompare(b),
                     ).map((value) => ({
                       value,
                       label: wallTime(value, notation),
                     }))}
-                    onChange={(next) => {
-                      if (next !== start.shown)
-                        void start.persist(next, start.shown);
-                    }}
+                    onSave={(next) => reschedule({ start: next })}
+                    labels={labels.field}
                   />
                 ) : (
                   <PropertyValue className="tabular-nums">
@@ -309,21 +406,21 @@ function EditorLayout({
                 htmlFor={editable ? ids.duration : undefined}
               >
                 {editable ? (
-                  <PropertySelect
+                  <OptimisticPropertySelect
                     id={ids.duration}
-                    value={duration.shown}
+                    value={String(slot.durationMinutes)}
                     options={withCurrent(
                       DURATIONS.map(String),
-                      duration.shown,
+                      String(slot.durationMinutes),
                       (a, b) => Number(a) - Number(b),
                     ).map((value) => ({
                       value,
                       label: formatDuration(Number(value) * 60, words),
                     }))}
-                    onChange={(next) => {
-                      if (next !== duration.shown)
-                        void duration.persist(next, duration.shown);
-                    }}
+                    onSave={(next) =>
+                      reschedule({ durationMinutes: Number(next) })
+                    }
+                    labels={labels.field}
                   />
                 ) : (
                   <PropertyValue>
@@ -331,21 +428,55 @@ function EditorLayout({
                   </PropertyValue>
                 )}
               </PropertyRow>
+              {event ? (
+                <PropertyRow
+                  label={detail.capacity}
+                  htmlFor={editable ? ids.capacity : undefined}
+                >
+                  {editable ? (
+                    <InlineField
+                      compact
+                      required
+                      value={
+                        ride.capacity === null ? null : String(ride.capacity)
+                      }
+                      label={detail.capacity}
+                      placeholder={detail.capacityPlaceholder}
+                      validate={(next) => parseCapacity(next) !== null}
+                      onSave={(next) =>
+                        updateRideAction(id, {
+                          capacity: next === null ? null : Number(next),
+                        })
+                      }
+                      labels={labels.field}
+                      className="text-2sm tabular-nums"
+                    />
+                  ) : (
+                    <PropertyValue muted={ride.capacity === null}>
+                      {ride.capacity ?? detail.capacityPlaceholder}
+                    </PropertyValue>
+                  )}
+                </PropertyRow>
+              ) : null}
               <PropertyRow
                 label={detail.pilotsNeeded}
-                htmlFor={editable ? ids.pilots : undefined}
+                htmlFor={editable && !pleasure ? ids.pilots : undefined}
               >
-                {editable ? (
-                  <PropertySelect
+                {pleasure ? (
+                  <PropertyValue icon={editable ? Lock : undefined}>
+                    {PLEASURE_LIMITS.pilots}
+                  </PropertyValue>
+                ) : editable ? (
+                  <OptimisticPropertySelect
                     id={ids.pilots}
-                    value={pilots.shown}
+                    value={String(ride.requiredPilots)}
                     options={Array.from({ length: RIDE_MAX_PILOTS }, (_, i) =>
                       String(i + 1),
                     ).map((value) => ({ value, label: value }))}
-                    onChange={(next) => {
-                      if (next !== pilots.shown)
-                        void pilots.persist(next, pilots.shown);
-                    }}
+                    onSave={(next) =>
+                      updateRideAction(id, { requiredPilots: Number(next) })
+                    }
+                    labels={labels.field}
                   />
                 ) : (
                   <PropertyValue>{ride.requiredPilots}</PropertyValue>
@@ -369,30 +500,23 @@ function EditorLayout({
             {roundTrip && editable ? (
               <p className="text-xs text-ink-soft">{detail.modelLocked}</p>
             ) : null}
-          </SidePanel>
-
-          <SidePanel title={detail.where}>
-            <PlaceField
-              rideId={id}
-              kind="location"
-              label={detail.pickup}
-              value={ride.location}
-              editable={editable}
-              language={language}
-              labels={labels}
-            />
-            {showsDestination ? (
-              <PlaceField
-                rideId={id}
-                kind="destination"
-                label={detail.destination}
-                value={ride.destination}
-                editable={editable}
-                language={language}
-                labels={labels}
-              />
+            {pleasure && editable ? (
+              <p className="text-xs text-ink-soft">{detail.onePilot}</p>
             ) : null}
           </SidePanel>
+
+          <RideWhere
+            rideId={id}
+            location={ride.location}
+            destination={ride.destination}
+            home={ride.home}
+            functional={showsDestination}
+            route={route}
+            editable={editable}
+            language={language}
+            notation={notation}
+            labels={labels}
+          />
 
           {panels}
         </>
@@ -422,128 +546,18 @@ function ZoneHint({ zone, label }: { zone: string; label: string }) {
   );
 }
 
-const placeName = (found: ResolvedPlace) =>
-  found.poiName ?? found.address.split(",")[0]?.trim() ?? found.address;
-
-function PlaceField({
-  rideId,
-  kind,
-  label,
-  value,
-  editable,
-  language,
-  labels,
-}: {
-  rideId: string;
-  kind: "location" | "destination";
-  label: string;
-  value: Place;
-  editable: boolean;
-  language: Locale;
-  labels: RideEditorLabels;
-}) {
-  const { name, address, latitude, longitude } = value;
-  const server = useMemo<Place>(
-    () => ({ name, address, latitude, longitude }),
-    [name, address, latitude, longitude],
-  );
-  const { shown, persist } = useOptimisticSave(
-    server,
-    (next) =>
-      updateRideAction(
-        rideId,
-        kind === "location"
-          ? {
-              locationName: next.name,
-              locationAddress: next.address,
-              latitude: next.latitude,
-              longitude: next.longitude,
-            }
-          : {
-              destinationName: next.name,
-              destinationAddress: next.address,
-              destinationLatitude: next.latitude,
-              destinationLongitude: next.longitude,
-            },
-      ),
-    labels.field,
-  );
-  const named = shown.name && shown.name !== shown.address ? shown.name : null;
-
-  return (
-    <div className="grid gap-1.25">
-      <span className="text-xs font-medium text-ink-soft">{label}</span>
-      {named ? <span className="truncate text-2sm">{named}</span> : null}
-      {editable ? (
-        <PlaceSearch
-          address={shown.address}
-          language={language}
-          strings={labels.detail.place}
-          failed={labels.errors.generic}
-          onPlace={(found) =>
-            persist(
-              {
-                name: placeName(found),
-                address: found.address,
-                latitude: found.coords.lat,
-                longitude: found.coords.lng,
-              },
-              shown,
-            )
-          }
-        />
-      ) : (
-        <span
-          className={cn(
-            "text-2sm text-pretty",
-            shown.address ? "text-ink-soft" : "text-ink-faint",
-          )}
-        >
-          {shown.address ?? (named ? null : labels.detail.noPlace)}
-        </span>
-      )}
-    </div>
-  );
-}
-
 export function PilotNote({
   rideId,
-  note,
-  editable,
-  label,
-  placeholder,
-  labels,
-}: {
+  ...props
+}: Omit<EditableTextProps, "onSave" | "multiline" | "maxLength"> & {
   rideId: string;
-  note: string | null;
-  editable: boolean;
-  label: string;
-  placeholder: string;
-  labels: InlineFieldLabels;
 }) {
-  if (!editable)
-    return (
-      <p
-        className={cn(
-          "text-2sm whitespace-pre-wrap break-words",
-          !note && "text-ink-faint",
-        )}
-      >
-        {note ?? placeholder}
-      </p>
-    );
   return (
-    <InlineField
+    <EditableText
+      {...props}
       multiline
       maxLength={RIDE_NOTE_MAX}
-      value={note}
-      label={label}
-      placeholder={placeholder}
-      onSave={(next): Promise<ActionResult> =>
-        updateRideAction(rideId, { note: next })
-      }
-      labels={labels}
-      className="text-2sm"
+      onSave={(next) => updateRideAction(rideId, { note: next })}
     />
   );
 }

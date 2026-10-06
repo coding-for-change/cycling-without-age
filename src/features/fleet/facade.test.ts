@@ -10,10 +10,6 @@ import * as trishaws from "./services/trishaws";
 import * as types from "./services/types";
 
 jest.mock("@/lib/prisma", () => ({ prisma: {} }));
-jest.mock("@/lib/storage", () => ({
-  prepareUpload: jest.fn(),
-  commitUpload: jest.fn(),
-}));
 
 const emitted: unknown[] = [];
 jest.mock("@/lib/events", () => ({

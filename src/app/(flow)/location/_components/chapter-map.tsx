@@ -4,17 +4,19 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 import { useEffect, useRef } from "react";
 import { distanceMeters, type Coords } from "@/lib/geo";
+import {
+  boundsOf,
+  FALLBACK_VIEW,
+  MINT_DEEP,
+  prefersReducedMotion,
+  whenReady,
+} from "@/lib/mapbox-canvas";
 import type { ChapterPin } from "./location-screen";
 
 const NEARBY_M = 25_000;
 const CLOSE_UP = { zoom: 15.5, pitch: 55 } as const;
 
 const ROUTE_SOURCE = "cwa-route";
-
-function whenReady(instance: mapboxgl.Map, run: () => void) {
-  if (instance.isStyleLoaded()) run();
-  else instance.once("idle", run);
-}
 
 export default function ChapterMap({
   chapters,
@@ -42,15 +44,12 @@ export default function ChapterMap({
   useEffect(() => {
     if (!container.current || map.current) return;
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
-    reduced.current = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    reduced.current = prefersReducedMotion();
 
     map.current = new mapboxgl.Map({
       container: container.current,
       style: "mapbox://styles/mapbox/light-v11",
-      center: [10.4, 51.2],
-      zoom: 3.5,
+      ...FALLBACK_VIEW,
       maxPitch: 60,
       logoPosition: "bottom-left",
     });
@@ -101,10 +100,8 @@ export default function ChapterMap({
         type: "line",
         source: ROUTE_SOURCE,
         layout: { "line-cap": "round", "line-join": "round" },
-        // --mint-deep. The one place a brand colour is written as a literal:
-        // mapbox-gl paints into a canvas, where a CSS variable cannot reach.
         paint: {
-          "line-color": "#28584e",
+          "line-color": MINT_DEEP,
           "line-width": 4,
           "line-opacity": 0.9,
         },
@@ -173,13 +170,13 @@ export default function ChapterMap({
           return;
         }
 
-        instance.fitBounds(
-          points.reduce(
-            (box, point) => box.extend(point),
-            new mapboxgl.LngLatBounds(),
-          ),
-          { padding: 72, maxZoom: 16, pitch: 0, bearing: 0, duration: 900 },
-        );
+        instance.fitBounds(boundsOf(points), {
+          padding: 72,
+          maxZoom: 16,
+          pitch: 0,
+          bearing: 0,
+          duration: 900,
+        });
         return;
       }
 
@@ -187,10 +184,8 @@ export default function ChapterMap({
         // Nothing chosen: frame everything there is, flat.
         const pinned = chapters.filter((chapter) => chapter.coords);
         if (pinned.length === 0) return;
-        const bounds = pinned.reduce(
-          (box, chapter) =>
-            box.extend([chapter.coords!.lng, chapter.coords!.lat]),
-          new mapboxgl.LngLatBounds(),
+        const bounds = boundsOf(
+          pinned.map((chapter) => [chapter.coords!.lng, chapter.coords!.lat]),
         );
         if (here) bounds.extend([here.lng, here.lat]);
         lastCentre.current = null;

@@ -1,4 +1,5 @@
 import { trishawSummary } from "@/components/trishaw-summary";
+import { damageStateOf } from "@/features/fleet/components/trishaw-badges";
 import type { Locale } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
 
@@ -37,8 +38,8 @@ export function trishawOptions(
   return choices.trishaws.map((trishaw) => {
     const allocated = allocatedIds.has(trishaw.id);
     const busy = choices.busy[trishaw.id] === true;
-    const grounded = trishaw.damages.some((damage) => damage.grounding);
-    const ready = trishaw.status === "active" && !grounded;
+    const damage = damageStateOf(trishaw.damages);
+    const ready = trishaw.status === "active" && damage !== "grounded";
     const notReady =
       trishaw.status === "active"
         ? common.grounded
@@ -54,7 +55,7 @@ export function trishawOptions(
             ? allocation.booked
             : null
         : null,
-      damaged: !grounded && trishaw.damages.length > 0,
+      damaged: damage === "damaged",
     };
   });
 }

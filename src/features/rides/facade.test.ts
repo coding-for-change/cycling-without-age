@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { rides } from "@/features/rides";
+import { rideInput, rides, type RideInput } from "@/features/rides";
 import { domainCode } from "@/lib/domain-error";
 import { transaction } from "@/lib/events";
+import { Prisma } from "@/generated/prisma";
 
 const emitted: { type: string }[] = [];
 
@@ -16,17 +17,29 @@ jest.mock("@/lib/prisma", () => {
     },
     rideTrishaw: { findMany: jest.fn() },
     rideAssignment: {
-      findUnique: jest.fn(),
       create: jest.fn(),
+      createMany: jest.fn(),
       deleteMany: jest.fn(),
     },
     rideRosterEntry: {
+      findMany: jest.fn(),
+      create: jest.fn(),
+      createMany: jest.fn(),
+      updateMany: jest.fn(),
+      deleteMany: jest.fn(),
+    },
+    storedFile: {
+      findMany: jest.fn(),
       findUnique: jest.fn(),
       create: jest.fn(),
+      updateMany: jest.fn(),
       deleteMany: jest.fn(),
-      aggregate: jest.fn(),
     },
-    rideLogEntry: { create: jest.fn(), findMany: jest.fn() },
+    rideLogEntry: {
+      create: jest.fn(),
+      createMany: jest.fn(),
+      findMany: jest.fn(),
+    },
     user: { findMany: jest.fn() },
     passenger: { findMany: jest.fn() },
     $queryRaw: jest.fn(),
@@ -58,17 +71,29 @@ const db = prisma as unknown as {
   };
   rideTrishaw: { findMany: jest.Mock };
   rideAssignment: {
-    findUnique: jest.Mock;
     create: jest.Mock;
+    createMany: jest.Mock;
     deleteMany: jest.Mock;
   };
   rideRosterEntry: {
+    findMany: jest.Mock;
+    create: jest.Mock;
+    createMany: jest.Mock;
+    updateMany: jest.Mock;
+    deleteMany: jest.Mock;
+  };
+  storedFile: {
+    findMany: jest.Mock;
     findUnique: jest.Mock;
     create: jest.Mock;
+    updateMany: jest.Mock;
     deleteMany: jest.Mock;
-    aggregate: jest.Mock;
   };
-  rideLogEntry: { create: jest.Mock; findMany: jest.Mock };
+  rideLogEntry: {
+    create: jest.Mock;
+    createMany: jest.Mock;
+    findMany: jest.Mock;
+  };
   user: { findMany: jest.Mock };
   passenger: { findMany: jest.Mock };
   $queryRaw: jest.Mock;
@@ -81,6 +106,8 @@ const ADMIN = "user-admin";
 
 const base = {
   chapterId: CHAPTER,
+  title: "Sommerfest",
+  capacity: 10,
   startsAt: new Date("2026-09-08T08:00:00Z"),
   endsAt: new Date("2026-09-08T10:00:00Z"),
 };
@@ -101,8 +128,12 @@ const scheduled = (overrides: Record<string, unknown> = {}) => ({
   destinationLatitude: null,
   destinationLongitude: null,
   requiredPilots: 1,
+  capacity: null,
   note: null,
   trishaws: [],
+  assignments: [],
+  roster: [],
+  photos: [],
   returnLeg: null,
   returnLegOf: null,
   chapter: { id: CHAPTER, name: "München", timeZone: "Europe/Berlin" },
@@ -119,7 +150,15 @@ const codeOf = async (run: Promise<unknown>) => {
 };
 
 const logTypes = () =>
-  db.rideLogEntry.create.mock.calls.map(([args]) => args.data.type);
+  [
+    ...db.rideLogEntry.create.mock.calls.map(([args]) => [args.data]),
+    ...db.rideLogEntry.createMany.mock.calls.map(([args]) => args.data),
+  ]
+    .flat()
+    .map((data: { type: string }) => data.type);
+
+const schedule = async (input: RideInput, actorUserId: string | null) =>
+  rides.scheduleRide(rideInput.parse(input), actorUserId);
 const eventTypes = () => emitted.map((event) => event.type);
 const lockedSql = () =>
   db.$queryRaw.mock.calls.map(([sql]) => String(sql.strings.join("?")));
@@ -141,43 +180,33 @@ beforeEach(() => {
   db.ride.findMany.mockResolvedValue([]);
   db.rideTrishaw.findMany.mockResolvedValue([]);
   db.rideLogEntry.create.mockResolvedValue({ id: "log-1" });
-  db.rideRosterEntry.aggregate.mockResolvedValue({ _max: { position: null } });
   db.$queryRaw.mockResolvedValue([]);
 });
 
 describe("scheduleRide", () => {
   it("rejects a ride that ends before it starts", async () => {
     await expect(
-      rides.scheduleRide(
-        { ...base, endsAt: new Date("2026-09-08T07:00:00Z") },
-        ADMIN,
-      ),
+      schedule({ ...base, endsAt: new Date("2026-09-08T07:00:00Z") }, ADMIN),
     ).rejects.toThrow();
     expect(db.ride.create).not.toHaveBeenCalled();
   });
 
   it("rejects a ride shorter than the minimum", async () => {
     await expect(
-      rides.scheduleRide(
-        { ...base, endsAt: new Date("2026-09-08T08:05:00Z") },
-        ADMIN,
-      ),
+      schedule({ ...base, endsAt: new Date("2026-09-08T08:05:00Z") }, ADMIN),
     ).rejects.toThrow();
     expect(db.ride.create).not.toHaveBeenCalled();
   });
 
   it("rejects a ride longer than a day's work", async () => {
     await expect(
-      rides.scheduleRide(
-        { ...base, endsAt: new Date("2026-09-08T23:00:00Z") },
-        ADMIN,
-      ),
+      schedule({ ...base, endsAt: new Date("2026-09-08T23:00:00Z") }, ADMIN),
     ).rejects.toThrow();
     expect(db.ride.create).not.toHaveBeenCalled();
   });
 
   it("schedules with no trishaw at all, asking the database nothing", async () => {
-    await rides.scheduleRide(base, ADMIN);
+    await schedule(base, ADMIN);
     expect(db.rideTrishaw.findMany).not.toHaveBeenCalled();
     expect(db.$queryRaw).not.toHaveBeenCalled();
     expect(db.ride.create).toHaveBeenCalledWith(
@@ -192,19 +221,14 @@ describe("scheduleRide", () => {
       { trishawId: TRISHAW, rideId: "ride-existing" },
     ]);
     expect(
-      await codeOf(
-        rides.scheduleRide({ ...base, trishawIds: [TRISHAW] }, ADMIN),
-      ),
+      await codeOf(schedule({ ...base, trishawIds: [TRISHAW] }, ADMIN)),
     ).toBe("trishawReserved");
     expect(db.ride.create).not.toHaveBeenCalled();
     expect(emitted).toEqual([]);
   });
 
   it("reserves several trishaws for one ride", async () => {
-    await rides.scheduleRide(
-      { ...base, trishawIds: [TRISHAW, "trishaw-2"] },
-      ADMIN,
-    );
+    await schedule({ ...base, trishawIds: [TRISHAW, "trishaw-2"] }, ADMIN);
     expect(db.ride.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -218,13 +242,13 @@ describe("scheduleRide", () => {
 
   it("refuses the same trishaw booked onto one ride twice", async () => {
     await expect(
-      rides.scheduleRide({ ...base, trishawIds: [TRISHAW, TRISHAW] }, ADMIN),
+      schedule({ ...base, trishawIds: [TRISHAW, TRISHAW] }, ADMIN),
     ).rejects.toThrow();
     expect(db.ride.create).not.toHaveBeenCalled();
   });
 
   it("locks the trishaws and writes inside one transaction", async () => {
-    await rides.scheduleRide({ ...base, trishawIds: [TRISHAW] }, ADMIN);
+    await schedule({ ...base, trishawIds: [TRISHAW] }, ADMIN);
     // The conflict check alone cannot stop a concurrent booking — the row lock
     // inside the same transaction as the write is what serialises them.
     expect(db.$transaction).toHaveBeenCalledTimes(1);
@@ -237,8 +261,16 @@ describe("scheduleRide", () => {
     );
   });
 
+  it("gives a ride that is not functional no destination", async () => {
+    await schedule(
+      { ...base, model: "event", destinationName: "Dr. Weber" },
+      ADMIN,
+    );
+    expect(db.ride.create.mock.calls[0][0].data.destinationName).toBeNull();
+  });
+
   it("asks only about overlapping, non-cancelled rides", async () => {
-    await rides.scheduleRide({ ...base, trishawIds: [TRISHAW] }, ADMIN);
+    await schedule({ ...base, trishawIds: [TRISHAW] }, ADMIN);
     expect(db.rideTrishaw.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
@@ -254,7 +286,7 @@ describe("scheduleRide", () => {
   });
 
   it("writes one log row and emits one event", async () => {
-    await rides.scheduleRide(base, ADMIN);
+    await schedule(base, ADMIN);
     expect(logTypes()).toEqual(["scheduled"]);
     expect(emitted).toEqual([
       {
@@ -282,7 +314,7 @@ describe("scheduleRide", () => {
     };
 
     it("is two rides, the way back mirrored and linked to the way there", async () => {
-      const ride = await rides.scheduleRide(trip, ADMIN);
+      const ride = await schedule(trip, ADMIN);
       expect(db.ride.create).toHaveBeenCalledTimes(2);
       expect(db.ride.create.mock.calls[1][0].data).toEqual(
         expect.objectContaining({
@@ -300,7 +332,7 @@ describe("scheduleRide", () => {
     });
 
     it("checks both windows under one lock, before either row is written", async () => {
-      await rides.scheduleRide(trip, ADMIN);
+      await schedule(trip, ADMIN);
       expect(db.$transaction).toHaveBeenCalledTimes(1);
       expect(db.rideTrishaw.findMany.mock.calls[0][0].where.ride.OR).toEqual([
         { startsAt: { lt: base.endsAt }, endsAt: { gt: base.startsAt } },
@@ -312,22 +344,20 @@ describe("scheduleRide", () => {
       db.rideTrishaw.findMany.mockResolvedValue([
         { trishawId: TRISHAW, rideId: "ride-existing" },
       ]);
-      expect(await codeOf(rides.scheduleRide(trip, ADMIN))).toBe(
-        "trishawReserved",
-      );
+      expect(await codeOf(schedule(trip, ADMIN))).toBe("trishawReserved");
       expect(db.ride.create).not.toHaveBeenCalled();
     });
 
     it("is for functional rides only", async () => {
       await expect(
-        rides.scheduleRide({ ...trip, model: "event" }, ADMIN),
+        schedule({ ...trip, model: "event" }, ADMIN),
       ).rejects.toThrow();
       expect(db.ride.create).not.toHaveBeenCalled();
     });
 
     it("cannot start back before it arrived", async () => {
       await expect(
-        rides.scheduleRide(
+        schedule(
           {
             ...trip,
             returnLeg: {
@@ -352,6 +382,18 @@ describe("rescheduleRide", () => {
     db.ride.findUnique.mockResolvedValue(null);
     expect(await codeOf(rides.rescheduleRide("ride-1", later, ADMIN))).toBe(
       "unknownRide",
+    );
+  });
+
+  it("reads a wall-clock slot in the ride's own chapter zone", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    await rides.rescheduleRide(
+      "ride-1",
+      { date: "2026-09-09", start: "10:00", durationMinutes: 120 },
+      ADMIN,
+    );
+    expect(db.ride.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: later }),
     );
   });
 
@@ -476,11 +518,62 @@ describe("updateRideDetails", () => {
     db.ride.findUnique.mockResolvedValue(
       scheduled({ model: "functional", destinationName: "Dr. Weber" }),
     );
-    await rides.updateRideDetails("ride-1", { model: "event" }, ADMIN);
+    await rides.updateRideDetails(
+      "ride-1",
+      { model: "event", title: "Sommerfest", capacity: 6 },
+      ADMIN,
+    );
     expect(db.ride.update.mock.calls[0][0].data).toEqual({
       model: "event",
+      title: "Sommerfest",
+      capacity: 6,
       destinationName: null,
     });
+  });
+
+  it.each([
+    [{ model: "event", capacity: 6 }, "titleRequired"],
+    [{ model: "event", title: "  ", capacity: 6 }, "titleRequired"],
+    [{ model: "event", title: "Sommerfest" }, "capacityRequired"],
+    [
+      { model: "event", title: "Sommerfest", capacity: null },
+      "capacityRequired",
+    ],
+  ] as const)(
+    "refuses to turn a ride into an event without a title and capacity: %o",
+    async (patch, code) => {
+      db.ride.findUnique.mockResolvedValue(scheduled({ model: "pleasure" }));
+      expect(
+        await codeOf(rides.updateRideDetails("ride-1", patch, ADMIN)),
+      ).toBe(code);
+      expect(db.ride.update).not.toHaveBeenCalled();
+    },
+  );
+
+  it("turns a ride into an event with the title and capacity it already has", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ model: "pleasure", title: "Sommerfest", capacity: 4 }),
+    );
+    await rides.updateRideDetails("ride-1", { model: "event" }, ADMIN);
+    expect(db.ride.update.mock.calls[0][0].data).toEqual({ model: "event" });
+  });
+
+  it("refuses an event capacity below the riders already booked", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        model: "pleasure",
+        roster: [{ passengerId: "p-1" }, { passengerId: "p-2" }],
+      }),
+    );
+    expect(
+      await codeOf(
+        rides.updateRideDetails(
+          "ride-1",
+          { model: "event", title: "Sommerfest", capacity: 1 },
+          ADMIN,
+        ),
+      ),
+    ).toBe("capacityBelowRoster");
   });
 
   it("keeps both legs of a round trip functional", async () => {
@@ -629,7 +722,7 @@ describe("deleteRide", () => {
 describe("serialising writes", () => {
   it("runs every write at READ COMMITTED", async () => {
     db.ride.findUnique.mockResolvedValue(scheduled());
-    await rides.scheduleRide(base, ADMIN);
+    await schedule(base, ADMIN);
     await rides.rescheduleRide(
       "ride-1",
       {
@@ -652,7 +745,7 @@ describe("serialising writes", () => {
     expect(String(first[0].strings.join("?"))).toContain("FOR UPDATE");
     expect(first[0].values).toEqual(["ride-a", "ride-b"]);
     expect(db.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
-      db.rideRosterEntry.findUnique.mock.invocationCallOrder[0],
+      db.ride.findUnique.mock.invocationCallOrder[1],
     );
   });
 });
@@ -726,11 +819,13 @@ describe("setRideTrishaws", () => {
 });
 
 describe("roster and staffing", () => {
+  const pilotOn = [{ role: "pilot", user: { id: "user-1" } }];
   beforeEach(() => db.ride.findUnique.mockResolvedValue(scheduled()));
 
   it("appends a rider to the end of the roster", async () => {
-    db.rideRosterEntry.findUnique.mockResolvedValue(null);
-    db.rideRosterEntry.aggregate.mockResolvedValue({ _max: { position: 1 } });
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ roster: [{ position: 1, passenger: { id: "p-0" } }] }),
+    );
     db.rideRosterEntry.create.mockResolvedValue({
       id: "entry-1",
       passenger: { firstName: "Erna", lastName: "Huber" },
@@ -759,17 +854,21 @@ describe("roster and staffing", () => {
   });
 
   it("does not book the same rider twice, and says nothing", async () => {
-    db.rideRosterEntry.findUnique.mockResolvedValue({ id: "entry-1" });
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ roster: riders("passenger-1") }),
+    );
     expect(await rides.bookRider("ride-1", "passenger-1", ADMIN)).toBe(false);
     expect(db.rideRosterEntry.create).not.toHaveBeenCalled();
     expect(emitted).toEqual([]);
   });
 
   it("removes a rider once, with one event", async () => {
-    db.rideRosterEntry.findUnique.mockResolvedValue({
-      id: "entry-1",
-      passenger: { firstName: "Erna", lastName: "Huber" },
-    });
+    expect(await rides.cancelBooking("ride-1", "passenger-1", ADMIN)).toBe(
+      false,
+    );
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ roster: riders("passenger-1") }),
+    );
     await rides.cancelBooking("ride-1", "passenger-1", ADMIN);
     expect(db.rideRosterEntry.deleteMany).toHaveBeenCalledWith({
       where: { rideId: "ride-1", passengerId: "passenger-1" },
@@ -778,7 +877,6 @@ describe("roster and staffing", () => {
   });
 
   it("records who assigned a pilot, and that it was not self sign-up", async () => {
-    db.rideAssignment.findUnique.mockResolvedValue(null);
     db.rideAssignment.create.mockResolvedValue({
       id: "assignment-1",
       user: { name: "Pernille" },
@@ -804,7 +902,6 @@ describe("roster and staffing", () => {
   });
 
   it("marks a pilot who signed up themself", async () => {
-    db.rideAssignment.findUnique.mockResolvedValue(null);
     db.rideAssignment.create.mockResolvedValue({
       id: "assignment-1",
       user: { name: "Pernille" },
@@ -817,7 +914,7 @@ describe("roster and staffing", () => {
   });
 
   it("is silent when the pilot is already on the ride", async () => {
-    db.rideAssignment.findUnique.mockResolvedValue({ id: "assignment-1" });
+    db.ride.findUnique.mockResolvedValue(scheduled({ assignments: pilotOn }));
     expect(await rides.assignVolunteer("ride-1", "user-1", ADMIN)).toBe(false);
     expect(emitted).toEqual([]);
   });
@@ -838,34 +935,38 @@ describe("roster and staffing", () => {
   });
 
   it("unassigns with one event, and only when assigned", async () => {
-    db.rideAssignment.findUnique.mockResolvedValueOnce(null);
     expect(await rides.unassignVolunteer("ride-1", "user-1", ADMIN)).toBe(
       false,
     );
-    db.rideAssignment.findUnique.mockResolvedValueOnce({
-      id: "assignment-1",
-      user: { name: "Pernille" },
-    });
+    db.ride.findUnique.mockResolvedValue(scheduled({ assignments: pilotOn }));
     await rides.unassignVolunteer("ride-1", "user-1", ADMIN);
     expect(eventTypes()).toEqual(["ride.pilotUnassigned"]);
   });
 });
 
-describe("who a ride concerns", () => {
-  it("is its pilots and every account managing or being one of its riders", async () => {
-    db.ride.findUnique.mockResolvedValue({
-      chapterId: CHAPTER,
-      assignments: [{ userId: "pilot-1" }, { userId: "pilot-1" }],
-      roster: [
-        { passenger: { managedByUserId: "carer-1", userId: null } },
-        { passenger: { managedByUserId: "carer-1", userId: "rider-2" } },
-      ],
+describe("bookedTrishawIds", () => {
+  it("is the trishaws another live ride holds in any window, without a lock", async () => {
+    db.rideTrishaw.findMany.mockResolvedValue([
+      { trishawId: TRISHAW, rideId: "ride-2" },
+    ]);
+    const windows = [base, { startsAt: base.endsAt, endsAt: base.endsAt }];
+    expect(
+      await rides.bookedTrishawIds([TRISHAW, "trishaw-2"], windows, ["ride-1"]),
+    ).toEqual(new Set([TRISHAW]));
+    expect(db.rideTrishaw.findMany.mock.calls[0][0].where.ride).toEqual({
+      status: { not: "cancelled" },
+      OR: windows.map((window) => ({
+        startsAt: { lt: window.endsAt },
+        endsAt: { gt: window.startsAt },
+      })),
+      id: { notIn: ["ride-1"] },
     });
-    expect(await rides.listRideParticipants("ride-1")).toEqual({
-      chapterId: CHAPTER,
-      pilotUserIds: ["pilot-1"],
-      riderAccountUserIds: ["carer-1", "rider-2"],
-    });
+    expect(db.$queryRaw).not.toHaveBeenCalled();
+  });
+
+  it("asks the database nothing without trishaws", async () => {
+    expect(await rides.bookedTrishawIds([], [base])).toEqual(new Set());
+    expect(db.rideTrishaw.findMany).not.toHaveBeenCalled();
   });
 });
 
@@ -1038,5 +1139,596 @@ describe("what a calendar feed may read", () => {
     );
     expect(list).toHaveLength(rides.FEED_MAX_RIDES);
     expect(db.ride.findMany).toHaveBeenCalledTimes(1);
+  });
+});
+
+const riders = (...ids: string[]) =>
+  ids.map((passengerId, index) => ({
+    id: `entry-${passengerId}`,
+    position: index * 2,
+    passenger: { id: passengerId },
+  }));
+
+describe("model limits", () => {
+  it("refuses a rider once an event is at capacity", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ capacity: 2, roster: riders("p-1", "p-2") }),
+    );
+    expect(await codeOf(rides.bookRider("ride-1", "p-3", ADMIN))).toBe(
+      "rideFull",
+    );
+    expect(db.rideRosterEntry.create).not.toHaveBeenCalled();
+  });
+
+  it("refuses a third passenger on a pleasure ride", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ model: "pleasure", roster: riders("p-1", "p-2") }),
+    );
+    expect(await codeOf(rides.bookRider("ride-1", "p-3", ADMIN))).toBe(
+      "pleasureLimit",
+    );
+  });
+
+  it("books on an event without a capacity, as rides from before capacities", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ roster: riders("p-1", "p-2", "p-3") }),
+    );
+    expect(await rides.bookRider("ride-1", "p-4", ADMIN)).toBe(true);
+  });
+
+  it("refuses a second pilot on a pleasure ride", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        model: "pleasure",
+        assignments: [{ role: "pilot", user: { id: "pilot-1" } }],
+      }),
+    );
+    expect(
+      await codeOf(rides.assignVolunteer("ride-1", "pilot-2", ADMIN)),
+    ).toBe("pleasureLimit");
+    expect(db.rideAssignment.create).not.toHaveBeenCalled();
+  });
+
+  it("refuses a second trishaw on a pleasure ride but lets one go", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        model: "pleasure",
+        trishaws: [{ trishaw: { id: "old", name: "Isarwind" } }],
+      }),
+    );
+    expect(
+      await codeOf(rides.setRideTrishaws("ride-1", ["old", TRISHAW], ADMIN)),
+    ).toBe("pleasureLimit");
+    expect(await codeOf(rides.setRideTrishaws("ride-1", [], ADMIN))).toBe(null);
+  });
+
+  it("refuses to make a ride with three riders a pleasure ride", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ roster: riders("p-1", "p-2", "p-3") }),
+    );
+    expect(
+      await codeOf(
+        rides.updateRideDetails("ride-1", { model: "pleasure" }, ADMIN),
+      ),
+    ).toBe("pleasureLimit");
+    expect(db.ride.update).not.toHaveBeenCalled();
+  });
+
+  it("sets one pilot when a ride becomes a pleasure ride", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ requiredPilots: 3 }));
+    await rides.updateRideDetails("ride-1", { model: "pleasure" }, ADMIN);
+    expect(db.ride.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { model: "pleasure", requiredPilots: 1 },
+      }),
+    );
+  });
+
+  it("refuses more pilots needed on a pleasure ride", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ model: "pleasure" }));
+    expect(
+      await codeOf(
+        rides.updateRideDetails("ride-1", { requiredPilots: 2 }, ADMIN),
+      ),
+    ).toBe("pleasureLimit");
+  });
+
+  it("refuses a capacity below the riders already booked", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ capacity: 5, roster: riders("p-1", "p-2", "p-3") }),
+    );
+    expect(
+      await codeOf(rides.updateRideDetails("ride-1", { capacity: 2 }, ADMIN)),
+    ).toBe("capacityBelowRoster");
+  });
+
+  it("refuses to make a ride functional with more riders than it seats", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ capacity: 5, roster: riders("p-1", "p-2", "p-3") }),
+    );
+    expect(
+      await codeOf(
+        rides.updateRideDetails(
+          "ride-1",
+          { model: "functional", destinationName: "Dr. Weber" },
+          ADMIN,
+        ),
+      ),
+    ).toBe("capacityBelowRoster");
+    expect(db.ride.update).not.toHaveBeenCalled();
+  });
+
+  it("refuses to make a ride functional without a destination", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ model: "pleasure" }));
+    expect(
+      await codeOf(
+        rides.updateRideDetails("ride-1", { model: "functional" }, ADMIN),
+      ),
+    ).toBe("destinationRequired");
+    await rides.updateRideDetails(
+      "ride-1",
+      { model: "functional", destinationName: "Dr. Weber" },
+      ADMIN,
+    );
+    expect(db.ride.update).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses fewer pilots needed than are already on the ride", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        requiredPilots: 3,
+        assignments: [
+          { role: "pilot", user: { id: "pilot-1" } },
+          { role: "pilot", user: { id: "pilot-2" } },
+        ],
+      }),
+    );
+    expect(
+      await codeOf(
+        rides.updateRideDetails("ride-1", { requiredPilots: 1 }, ADMIN),
+      ),
+    ).toBe("tooManyPilots");
+    expect(db.ride.update).not.toHaveBeenCalled();
+  });
+
+  it("refuses a pilot once the pilots needed are on the ride", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        requiredPilots: 2,
+        assignments: [
+          { role: "pilot", user: { id: "pilot-1" } },
+          { role: "pilot", user: { id: "pilot-2" } },
+        ],
+      }),
+    );
+    expect(
+      await codeOf(rides.assignVolunteer("ride-1", "pilot-3", ADMIN)),
+    ).toBe("pilotsFull");
+    expect(db.rideAssignment.create).not.toHaveBeenCalled();
+  });
+
+  it("refuses to take an event with photos to another model", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ title: "Fest", capacity: 5, photos: [{ fileId: "f-1" }] }),
+    );
+    expect(
+      await codeOf(
+        rides.updateRideDetails("ride-1", { model: "pleasure" }, ADMIN),
+      ),
+    ).toBe("photosEventOnly");
+  });
+
+  it("lets an event missing title and capacity be fixed one field at a time", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    expect(
+      await codeOf(rides.updateRideDetails("ride-1", { capacity: 4 }, ADMIN)),
+    ).toBe(null);
+    expect(
+      await codeOf(rides.updateRideDetails("ride-1", { note: "Hi" }, ADMIN)),
+    ).toBe(null);
+  });
+
+  it("refuses to clear an event ride's title or capacity", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ model: "event", title: "Alt", capacity: 5 }),
+    );
+    expect(
+      await codeOf(rides.updateRideDetails("ride-1", { title: " " }, ADMIN)),
+    ).toBe("titleRequired");
+    expect(
+      await codeOf(
+        rides.updateRideDetails("ride-1", { capacity: null }, ADMIN),
+      ),
+    ).toBe("capacityRequired");
+    expect(db.ride.update).not.toHaveBeenCalled();
+  });
+
+  it("logs a new title and keeps the description out of the log", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ title: "Alt" }));
+    await rides.updateRideDetails(
+      "ride-1",
+      { title: "Sommerfest", description: "Kuchen im Park" },
+      ADMIN,
+    );
+    const payload = db.rideLogEntry.create.mock.calls[0][0].data.payload;
+    expect(payload.fields).toEqual(["title", "description"]);
+    expect(payload.to).toEqual({ title: "Sommerfest" });
+    expect(JSON.stringify(payload)).not.toContain("Kuchen");
+  });
+});
+
+describe("roster positions", () => {
+  it("inserts a rider before whoever is at that place, moving the rest down", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ roster: riders("p-1", "p-2", "p-3") }),
+    );
+    await rides.bookRider("ride-1", "p-new", ADMIN, 1);
+    expect(db.rideRosterEntry.updateMany).toHaveBeenCalledWith({
+      where: { rideId: "ride-1", position: { gte: 2 } },
+      data: { position: { increment: 1 } },
+    });
+    expect(db.rideRosterEntry.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ passengerId: "p-new", position: 2 }),
+      }),
+    );
+  });
+
+  it("appends when the place is past the end", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ roster: riders("p-1") }));
+    await rides.bookRider("ride-1", "p-new", ADMIN, 5);
+    expect(db.rideRosterEntry.updateMany).not.toHaveBeenCalled();
+    expect(db.rideRosterEntry.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ position: 1 }),
+      }),
+    );
+  });
+
+  it("refuses a negative place", async () => {
+    await expect(
+      rides.bookRider("ride-1", "p-new", ADMIN, -1),
+    ).rejects.toThrow();
+  });
+
+  it("writes the new order as positions and logs both orders", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ roster: riders("p-1", "p-2", "p-3") }),
+    );
+    expect(
+      await rides.reorderRoster(
+        { rideId: "ride-1", passengerIds: ["p-3", "p-1", "p-2"] },
+        ADMIN,
+      ),
+    ).toBe(true);
+    expect(
+      db.rideRosterEntry.updateMany.mock.calls.map(([args]) => [
+        args.where.passengerId,
+        args.data.position,
+      ]),
+    ).toEqual([
+      ["p-3", 0],
+      ["p-1", 1],
+      ["p-2", 2],
+    ]);
+    expect(logTypes()).toEqual(["rosterReordered"]);
+    expect(db.rideLogEntry.create.mock.calls[0][0].data.payload).toEqual({
+      from: ["p-1", "p-2", "p-3"],
+      to: ["p-3", "p-1", "p-2"],
+    });
+  });
+
+  it("refuses an order that names other riders than the roster", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ roster: riders("p-1", "p-2") }),
+    );
+    expect(
+      await codeOf(
+        rides.reorderRoster(
+          { rideId: "ride-1", passengerIds: ["p-2", "p-9"] },
+          ADMIN,
+        ),
+      ),
+    ).toBe("rosterChanged");
+    expect(db.rideRosterEntry.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("stays silent when the order is unchanged", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ roster: riders("p-1", "p-2") }),
+    );
+    expect(
+      await rides.reorderRoster(
+        { rideId: "ride-1", passengerIds: ["p-1", "p-2"] },
+        ADMIN,
+      ),
+    ).toBe(false);
+    expect(logTypes()).toEqual([]);
+  });
+});
+
+describe("people and photos at scheduling", () => {
+  it("books the riders in order and staffs the pilots, one log row and event each", async () => {
+    await schedule(
+      { ...base, passengerIds: ["p-1", "p-2"], pilotIds: ["pilot-1"] },
+      ADMIN,
+    );
+    expect(db.rideRosterEntry.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          rideId: "ride-new-1",
+          passengerId: "p-1",
+          position: 0,
+          bookedByUserId: ADMIN,
+        },
+        {
+          rideId: "ride-new-1",
+          passengerId: "p-2",
+          position: 1,
+          bookedByUserId: ADMIN,
+        },
+      ],
+    });
+    expect(db.rideAssignment.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          rideId: "ride-new-1",
+          userId: "pilot-1",
+          role: "pilot",
+          assignedByUserId: ADMIN,
+        },
+      ],
+    });
+    expect(logTypes()).toEqual([
+      "scheduled",
+      "riderBooked",
+      "riderBooked",
+      "pilotAssigned",
+    ]);
+    expect(eventTypes()).toEqual([
+      "ride.scheduled",
+      "ride.riderBooked",
+      "ride.riderBooked",
+      "ride.pilotAssigned",
+    ]);
+  });
+
+  it("refuses more riders than the event holds", async () => {
+    await expect(
+      schedule({ ...base, capacity: 1, passengerIds: ["p-1", "p-2"] }, ADMIN),
+    ).rejects.toThrow();
+    expect(db.ride.create).not.toHaveBeenCalled();
+  });
+
+  it("attaches the actor's own ride photos in order", async () => {
+    db.storedFile.findMany.mockResolvedValue([
+      {
+        id: "f-1",
+        kind: "ridePhoto",
+        uploadedByUserId: ADMIN,
+        ridePhotos: [],
+      },
+      {
+        id: "f-2",
+        kind: "ridePhoto",
+        uploadedByUserId: ADMIN,
+        ridePhotos: [],
+      },
+    ]);
+    await schedule({ ...base, photoFileIds: ["f-2", "f-1"] }, ADMIN);
+    expect(db.ride.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          photos: {
+            deleteMany: {},
+            create: [
+              { fileId: "f-2", position: 0 },
+              { fileId: "f-1", position: 1 },
+            ],
+          },
+        },
+      }),
+    );
+  });
+
+  it.each([
+    [
+      "another kind",
+      { kind: "trishawPhoto", uploadedByUserId: ADMIN, ridePhotos: [] },
+    ],
+    [
+      "someone else's upload",
+      { kind: "ridePhoto", uploadedByUserId: "user-x", ridePhotos: [] },
+    ],
+    [
+      "another ride's photo",
+      {
+        kind: "ridePhoto",
+        uploadedByUserId: ADMIN,
+        ridePhotos: [{ rideId: "ride-9" }],
+      },
+    ],
+  ])("refuses %s as a photo", async (_label, file) => {
+    db.storedFile.findMany.mockResolvedValue([{ id: "f-1", ...file }]);
+    expect(
+      await codeOf(schedule({ ...base, photoFileIds: ["f-1"] }, ADMIN)),
+    ).toBe("invalidFile");
+    expect(db.ride.create).not.toHaveBeenCalled();
+  });
+});
+
+describe("setRidePhotos", () => {
+  it("keeps the ride's own photos, whoever uploaded them, and adds the actor's", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ photos: [{ fileId: "f-1", position: 0 }] }),
+    );
+    db.storedFile.findMany.mockResolvedValue([
+      {
+        id: "f-1",
+        kind: "ridePhoto",
+        uploadedByUserId: "user-x",
+        ridePhotos: [{ rideId: "ride-1" }],
+      },
+      {
+        id: "f-2",
+        kind: "ridePhoto",
+        uploadedByUserId: ADMIN,
+        ridePhotos: [],
+      },
+    ]);
+    expect(
+      await rides.setRidePhotos(
+        { rideId: "ride-1", fileIds: ["f-2", "f-1"] },
+        ADMIN,
+      ),
+    ).toBe(true);
+    expect(logTypes()).toEqual(["edited"]);
+  });
+
+  it("refuses photos on a ride that is not an event", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ model: "pleasure" }));
+    expect(
+      await codeOf(
+        rides.setRidePhotos({ rideId: "ride-1", fileIds: ["f-1"] }, ADMIN),
+      ),
+    ).toBe("photosEventOnly");
+  });
+});
+
+describe("photo attachment", () => {
+  const own = (id: string) => ({
+    id,
+    kind: "ridePhoto",
+    uploadedByUserId: ADMIN,
+    ridePhotos: [],
+  });
+
+  it("lets a removed photo rejoin its ride, so Undo works", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    db.storedFile.findMany.mockResolvedValue([own("f-1")]);
+    expect(
+      await rides.setRidePhotos({ rideId: "ride-1", fileIds: ["f-1"] }, ADMIN),
+    ).toBe(true);
+  });
+
+  it("refuses a photo another ride claimed first", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    db.storedFile.findMany.mockResolvedValue([own("f-1")]);
+    db.ride.update.mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError("unique", {
+        code: "P2002",
+        clientVersion: "test",
+      }),
+    );
+    expect(
+      await codeOf(
+        rides.setRidePhotos({ rideId: "ride-1", fileIds: ["f-1"] }, ADMIN),
+      ),
+    ).toBe("invalidFile");
+  });
+});
+
+describe("photoReadRule", () => {
+  it("lets the admins of the ride's chapter read a photo on a ride", async () => {
+    db.storedFile.findUnique.mockResolvedValue({
+      id: "f-1",
+      kind: "ridePhoto",
+      uploadedByUserId: ADMIN,
+      ridePhotos: [
+        { ride: { chapterId: CHAPTER, chapter: { countryId: "de" } } },
+      ],
+    });
+    expect((await rides.photoReadRule("f-1"))?.rule).toEqual({
+      kind: "members",
+      chapterIds: [CHAPTER],
+      roles: ["admin"],
+      admins: {
+        chapters: [{ chapterId: CHAPTER, countryId: "de" }],
+        countryIds: [],
+      },
+    });
+  });
+
+  it("lets only the uploader read a photo not on a ride yet", async () => {
+    db.storedFile.findUnique.mockResolvedValue({
+      id: "f-1",
+      kind: "ridePhoto",
+      uploadedByUserId: ADMIN,
+      ridePhotos: [],
+    });
+    expect((await rides.photoReadRule("f-1"))?.rule).toEqual({
+      kind: "uploader",
+      userId: ADMIN,
+    });
+  });
+
+  it("leaves every other kind of file to the fleet", async () => {
+    db.storedFile.findUnique.mockResolvedValue({
+      id: "f-1",
+      kind: "trishawPhoto",
+      ridePhotos: [],
+    });
+    expect(await rides.photoReadRule("f-1")).toBeNull();
+  });
+});
+
+describe("listRidesForList", () => {
+  const NOW = new Date("2026-10-06T12:00:00Z");
+  const row = (id: string, startsAt: string) => ({
+    id,
+    startsAt: new Date(startsAt),
+  });
+
+  it("opens with the last three rides, oldest first, then a page of what is coming", async () => {
+    db.ride.findMany
+      .mockResolvedValueOnce([
+        row("past-3", "2026-10-05T10:00:00Z"),
+        row("past-2", "2026-10-04T10:00:00Z"),
+      ])
+      .mockResolvedValueOnce([
+        row("next-1", "2026-10-07T10:00:00Z"),
+        row("next-2", "2026-10-08T10:00:00Z"),
+        row("next-3", "2026-10-09T10:00:00Z"),
+      ]);
+    const page = await rides.listRidesForList(
+      { chapterIds: [CHAPTER], limit: 2 },
+      NOW,
+    );
+    expect(page.past.map((ride) => ride.id)).toEqual(["past-2", "past-3"]);
+    expect(page.rides.map((ride) => ride.id)).toEqual(["next-1", "next-2"]);
+    expect(page.nextCursor).toBe(
+      `${new Date("2026-10-08T10:00:00Z").getTime()}.next-2`,
+    );
+    expect(db.ride.findMany.mock.calls[0][0]).toEqual(
+      expect.objectContaining({
+        where: { chapterId: { in: [CHAPTER] }, endsAt: { lte: NOW } },
+        take: 3,
+      }),
+    );
+  });
+
+  it("continues after the cursor without the past", async () => {
+    db.ride.findMany.mockResolvedValueOnce([]);
+    const startsAt = new Date("2026-10-08T10:00:00Z");
+    const page = await rides.listRidesForList(
+      {
+        chapterIds: [CHAPTER],
+        cursor: `${startsAt.getTime()}.next-2`,
+        limit: 2,
+      },
+      NOW,
+    );
+    expect(db.ride.findMany).toHaveBeenCalledTimes(1);
+    expect(db.ride.findMany.mock.calls[0][0].where).toEqual({
+      chapterId: { in: [CHAPTER] },
+      endsAt: { gt: NOW },
+      OR: [{ startsAt: { gt: startsAt } }, { startsAt, id: { gt: "next-2" } }],
+    });
+    expect(page).toEqual({ past: [], rides: [], nextCursor: null });
+  });
+
+  it("asks the database nothing without chapters", async () => {
+    await rides.listRidesForList({ chapterIds: [] }, NOW);
+    expect(db.ride.findMany).not.toHaveBeenCalled();
   });
 });

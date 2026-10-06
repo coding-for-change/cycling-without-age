@@ -9,7 +9,11 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { haptics } from "@/lib/native/haptics";
 import type { FleetResult } from "../actions";
-import { PhotoGallery, type PhotoGalleryLabels } from "./photo-gallery";
+import {
+  PhotoGallery,
+  type PhotoGalleryLabels,
+} from "@/components/photo-gallery/photo-gallery";
+import { fleetUpload } from "./fleet-upload";
 import type { Locale } from "@/lib/i18n/locales";
 
 export type DamageFormLabels = {
@@ -87,6 +91,7 @@ export function DamageForm({
         <FieldLabel>{labels.photo}</FieldLabel>
         <PhotoGallery
           kind="damagePhoto"
+          upload={fleetUpload("damagePhoto")}
           max={1}
           value={photoFileId ? [photoFileId] : []}
           alt={trishawName}

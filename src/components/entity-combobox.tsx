@@ -23,7 +23,6 @@ export function EntityCombobox<T extends { id: string }>({
   placeholder,
   empty,
   clearable = false,
-  container,
   className,
 }: {
   id: string;
@@ -36,7 +35,6 @@ export function EntityCombobox<T extends { id: string }>({
   placeholder: string;
   empty: string;
   clearable?: boolean;
-  container?: HTMLElement | null;
   className?: string;
 }) {
   const byId = new Map(items.map((item) => [item.id, item]));
@@ -69,7 +67,7 @@ export function EntityCombobox<T extends { id: string }>({
         showClear={clearable && value !== null}
         className={cn("h-11 border-line text-base", className)}
       />
-      <ComboboxContent container={container ?? undefined}>
+      <ComboboxContent>
         <ComboboxEmpty>{empty}</ComboboxEmpty>
         <ComboboxList>
           <ComboboxCollection>

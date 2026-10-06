@@ -3,6 +3,7 @@ import {
   Bike,
   CalendarClock,
   CalendarPlus,
+  ListOrdered,
   Pencil,
   StickyNote,
   UserMinus,
@@ -19,12 +20,20 @@ import {
   wordsLocale,
   type Locale,
 } from "@/lib/format";
+import type { RideHistoryStrings } from "@/features/rides/components/strings";
 import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
-import { RelativeTime, TimelineEntry } from "../../../_components/timeline";
+import {
+  asRecord as record,
+  asText as text,
+  TimelineBubble,
+  TimelineEntry,
+  TimelineHeadline,
+  TimelineList,
+} from "../../../_components/timeline";
 
 type Entry = Awaited<ReturnType<typeof rides.listRideLog>>[number];
-type Labels = Dictionary["rides"]["history"];
+type Labels = RideHistoryStrings;
 type Field = keyof Labels["fields"];
 type Json = Record<string, unknown>;
 
@@ -38,12 +47,17 @@ const ICON: Record<Entry["type"], LucideIcon> = {
   pilotUnassigned: UserMinus,
   riderBooked: UserRoundPlus,
   riderRemoved: UserRoundMinus,
+  rosterReordered: ListOrdered,
   note: StickyNote,
 };
 
 /** The facade logs every column it touched; people think in four things. */
 const FIELD_OF: Record<string, Field> = {
   model: "model",
+  title: "title",
+  description: "description",
+  capacity: "capacity",
+  photos: "photos",
   locationName: "location",
   locationAddress: "location",
   latitude: "location",
@@ -56,11 +70,6 @@ const FIELD_OF: Record<string, Field> = {
   note: "note",
 };
 
-const record = (value: unknown): Json =>
-  value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Json)
-    : {};
-const text = (value: unknown) => (typeof value === "string" ? value : "");
 const names = (value: unknown) =>
   Array.isArray(value)
     ? value.map((item) => text(record(item).name)).filter(Boolean)
@@ -87,9 +96,6 @@ export function RideHistory({
   notation: Locale;
   words: string;
 }) {
-  if (entries.length === 0)
-    return <p className="text-2sm text-ink-soft">{empty}</p>;
-
   const now = new Date();
   const list = wordsLocale(words);
   const say = (template: string, values: Record<string, string> = {}) =>
@@ -111,14 +117,20 @@ export function RideHistory({
           ? text(from.destinationName) || text(from.destinationAddress)
           : field === "model"
             ? (models[text(from.model) as keyof typeof models] ?? "")
-            : typeof from.requiredPilots === "number"
-              ? String(from.requiredPilots)
-              : "";
+            : field === "title"
+              ? text(from.title)
+              : field === "capacity"
+                ? typeof from.capacity === "number"
+                  ? String(from.capacity)
+                  : ""
+                : typeof from.requiredPilots === "number"
+                  ? String(from.requiredPilots)
+                  : "";
     return value || labels.nothing;
   };
 
   return (
-    <ol>
+    <TimelineList empty={empty}>
       {entries.map((entry) => {
         const payload = record(entry.payload);
         const actor = {
@@ -170,7 +182,12 @@ export function RideHistory({
             const from = record(payload.from);
             const to = record(payload.to);
             details = fields
-              .filter((field) => field !== "note")
+              .filter(
+                (field) =>
+                  field !== "note" &&
+                  field !== "description" &&
+                  field !== "photos",
+              )
               .map((field) =>
                 say(labels.change, {
                   from: shownValue(field, from),
@@ -223,6 +240,9 @@ export function RideHistory({
           case "riderRemoved":
             sentence = say(labels.riderRemoved, { ...actor, name });
             break;
+          case "rosterReordered":
+            sentence = say(labels.rosterReordered, actor);
+            break;
           case "note":
             sentence = say(labels.note, actor);
             bubble = text(payload.text) || null;
@@ -234,16 +254,13 @@ export function RideHistory({
             key={entry.id}
             icon={ICON[entry.type]}
           >
-            <p className="text-2sm text-ink-soft">
-              <span className="text-ink">{sentence}</span>
-              {" · "}
-              <RelativeTime
-                at={entry.createdAt}
-                notation={notation}
-                words={words}
-                now={now}
-              />
-            </p>
+            <TimelineHeadline
+              sentence={sentence}
+              at={entry.createdAt}
+              notation={notation}
+              words={words}
+              now={now}
+            />
             {details.map((line, index) => (
               <p
                 key={`${index}:${line}`}
@@ -252,14 +269,10 @@ export function RideHistory({
                 {line}
               </p>
             ))}
-            {bubble ? (
-              <p className="rounded-xl bg-mint-tint px-3 py-2 text-2sm whitespace-pre-wrap break-words text-ink">
-                {bubble}
-              </p>
-            ) : null}
+            {bubble ? <TimelineBubble>{bubble}</TimelineBubble> : null}
           </TimelineEntry>
         );
       })}
-    </ol>
+    </TimelineList>
   );
 }

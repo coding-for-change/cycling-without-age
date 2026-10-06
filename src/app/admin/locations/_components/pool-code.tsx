@@ -13,6 +13,7 @@ import {
   updateLocationAction,
 } from "@/features/fleet/actions";
 import type { Dictionary } from "@/lib/i18n";
+import type { FleetErrors } from "@/features/fleet/components/strings";
 import { haptics } from "@/lib/native/haptics";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
@@ -29,7 +30,7 @@ export function PoolCode({
   poolId: string;
   code: string | null;
   strings: Strings;
-  errors: Dictionary["fleet"]["common"]["errors"];
+  errors: FleetErrors;
   locale: Locale;
 }) {
   const [pending, startTransition] = useTransition();

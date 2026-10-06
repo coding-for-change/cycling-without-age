@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   AddressSearch,
   type AddressSearchStrings,
+  type AddressShortcut,
 } from "@/components/address-search";
 import type { ResolvedPlace } from "@/lib/mapbox";
 import { haptics } from "@/lib/native/haptics";
@@ -17,12 +18,18 @@ export function PlaceSearch({
   strings,
   failed,
   onPlace,
+  variant = "inline",
+  autoFocus,
+  shortcuts,
 }: {
   address: string | null;
   language: string;
   strings: AddressSearchStrings;
   failed: string;
   onPlace: (place: ResolvedPlace) => void | Promise<void>;
+  variant?: "inline" | "popover";
+  autoFocus?: boolean;
+  shortcuts?: AddressShortcut[];
 }) {
   const sessionToken = useMemo(() => crypto.randomUUID(), []);
   const [resolving, setResolving] = useState(false);
@@ -52,7 +59,12 @@ export function PlaceSearch({
         }
         strings={strings}
         onPick={(suggestion) => void pick(suggestion.id)}
-        inputClassName="h-11 rounded-(--r-card)"
+        variant={variant}
+        autoFocus={autoFocus}
+        shortcuts={shortcuts}
+        inputClassName={
+          variant === "inline" ? "h-11 rounded-(--r-card)" : undefined
+        }
       />
     </div>
   );

@@ -1,32 +1,20 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useId, useState, useTransition, type FormEvent } from "react";
-import { Ban } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { notify } from "@/components/action-feedback";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldLabel,
-} from "@/components/ui/field";
-import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { cancelRideAction, deleteRideAction } from "@/features/rides/actions";
 import {
@@ -38,19 +26,20 @@ import {
 import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
-import { cn } from "@/lib/utils";
-import { PROPERTY_BUTTON } from "../../../_components/properties";
+import { submitOnCmdEnter } from "@/components/app-drawer";
 
 type Strings = Dictionary["rides"];
 
-export type DangerZoneLabels = {
+export type RideTrashLabels = {
   cancel: Strings["cancel"];
-  delete: Strings["delete"];
+  delete: Strings["delete"] & { consequences: string };
   reasons: Strings["reasons"];
   errors: { generic: string } & Record<string, string>;
 };
 
-export function RideDangerZone({
+const TRASH_BUTTON = "size-8 text-ink-soft hover:bg-red-tint hover:text-red";
+
+export function RideTrash({
   rideId,
   status,
   deleteName,
@@ -67,13 +56,11 @@ export function RideDangerZone({
   returnLeg: string | null;
   backHref: string;
   language: Locale;
-  labels: DangerZoneLabels;
+  labels: RideTrashLabels;
 }) {
-  const router = useRouter();
-
   if (status === "scheduled")
     return (
-      <CancelRideDialog
+      <CancelRidePopover
         rideId={rideId}
         returnLeg={returnLeg}
         language={language}
@@ -87,15 +74,21 @@ export function RideDangerZone({
       name={deleteName}
       consequences={consequences}
       locale={language}
-      labels={{ ...labels.delete, errors: labels.errors }}
+      labels={{
+        ...labels.delete,
+        open: labels.delete.submit,
+        errors: labels.errors,
+      }}
       cancel={labels.delete.cancel}
-      action={() => deleteRideAction(rideId)}
-      onDone={() => router.push(backHref)}
+      action={deleteRideAction}
+      input={rideId}
+      redirectTo={backHref}
+      variant="icon"
     />
   );
 }
 
-function CancelRideDialog({
+function CancelRidePopover({
   rideId,
   returnLeg,
   language,
@@ -104,7 +97,7 @@ function CancelRideDialog({
   rideId: string;
   returnLeg: string | null;
   language: Locale;
-  labels: DangerZoneLabels;
+  labels: RideTrashLabels;
 }) {
   const ids = { reason: useId(), note: useId(), back: useId() };
   const strings = labels.cancel;
@@ -145,7 +138,7 @@ function CancelRideDialog({
   };
 
   return (
-    <Dialog
+    <Popover
       open={open}
       onOpenChange={(next) => {
         if (pending) return;
@@ -153,39 +146,46 @@ function CancelRideDialog({
         if (!next) reset();
       }}
     >
-      <DialogTrigger asChild>
+      <PopoverTrigger asChild>
         <Button
-          variant="outline"
-          className={cn(
-            PROPERTY_BUTTON,
-            "text-red hover:bg-red-tint hover:text-red",
-          )}
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={strings.submit}
+          title={strings.submit}
+          className={TRASH_BUTTON}
         >
-          <Ban aria-hidden />
-          {strings.open}
+          <Trash2 aria-hidden />
         </Button>
-      </DialogTrigger>
-      <DialogContent>
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        className="w-80 rounded-xl border-line p-0"
+      >
         <form
           onSubmit={submit}
+          onKeyDown={submitOnCmdEnter}
           aria-busy={pending}
-          className="grid gap-4"
+          className="grid gap-3 p-4"
         >
-          <DialogHeader>
-            <DialogTitle>{strings.title}</DialogTitle>
-            <DialogDescription className="text-ink-soft">
-              {strings.body}
-            </DialogDescription>
-          </DialogHeader>
-          <Field>
-            <FieldLabel htmlFor={ids.reason}>{strings.reason}</FieldLabel>
+          <div className="grid gap-1">
+            <p className="text-2sm font-medium text-balance">{strings.title}</p>
+            <p className="text-xs text-ink-soft">{strings.body}</p>
+          </div>
+          <div className="grid gap-1.25">
+            <label
+              htmlFor={ids.reason}
+              className="text-xs font-medium text-ink-soft"
+            >
+              {strings.reason}
+            </label>
             <NativeSelect
               id={ids.reason}
               value={reason}
               onChange={(event) =>
                 setReason(event.target.value as RideCancellationReasonName)
               }
-              className="h-11 border-line text-base"
+              className="h-9 w-full border-line text-2sm"
             >
               {RIDE_CANCELLATION_REASONS.map((code) => (
                 <NativeSelectOption
@@ -196,61 +196,71 @@ function CancelRideDialog({
                 </NativeSelectOption>
               ))}
             </NativeSelect>
-          </Field>
-          <Field>
-            <FieldLabel htmlFor={ids.note}>{strings.note}</FieldLabel>
+          </div>
+          <div className="grid gap-1.25">
+            <label
+              htmlFor={ids.note}
+              className="text-xs font-medium text-ink-soft"
+            >
+              {strings.note}
+            </label>
             <Textarea
               id={ids.note}
               value={note}
               onChange={(event) => setNote(event.target.value)}
               placeholder={strings.notePlaceholder}
               maxLength={RIDE_NOTE_MAX}
-              rows={3}
-              className="border-line text-base"
+              rows={2}
+              className="min-h-16 border-line text-2sm md:text-2sm"
             />
-          </Field>
+          </div>
           {returnLeg ? (
-            <Field orientation="horizontal">
+            <div className="flex items-start gap-2">
               <Checkbox
                 id={ids.back}
                 checked={includeReturnLeg}
                 onCheckedChange={(next) => setIncludeReturnLeg(next === true)}
-                className="size-5 border-line data-[state=checked]:border-mint-deep data-[state=checked]:bg-mint-deep"
+                className="mt-0.5 border-line data-[state=checked]:border-mint-deep data-[state=checked]:bg-mint-deep"
               />
-              <FieldContent>
-                <FieldLabel htmlFor={ids.back}>{strings.returnLeg}</FieldLabel>
-                <FieldDescription>
+              <label
+                htmlFor={ids.back}
+                className="grid gap-0.5 text-2sm"
+              >
+                {strings.returnLeg}
+                <span className="text-xs text-ink-soft">
                   {formatMessage(
                     strings.returnLegHint,
                     { when: returnLeg },
                     language,
                   )}
-                </FieldDescription>
-              </FieldContent>
-            </Field>
+                </span>
+              </label>
+            </div>
           ) : null}
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={pending}
-                className="min-h-11 border-line"
-              >
-                {strings.keep}
-              </Button>
-            </DialogClose>
+          <div className="flex justify-end gap-2 pt-1">
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={pending}
+              onClick={() => {
+                setOpen(false);
+                reset();
+              }}
+              className="h-8 text-2sm"
+            >
+              {strings.keep}
+            </Button>
             <Button
               type="submit"
-              disabled={pending}
               variant="brand"
-              className="min-h-11"
+              disabled={pending}
+              className="h-8 text-2sm"
             >
               {strings.submit}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </PopoverContent>
+    </Popover>
   );
 }

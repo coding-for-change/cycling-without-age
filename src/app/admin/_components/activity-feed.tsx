@@ -22,9 +22,11 @@ import type { Locale } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
 import {
   payloadStrings,
-  RelativeTime,
+  TimelineBubble,
   TimelineEntry,
-} from "../../../_components/timeline";
+  TimelineHeadline,
+  TimelineList,
+} from "./timeline";
 
 export type FeedEvent = {
   id: string;
@@ -78,13 +80,10 @@ export function ActivityFeed({
   notation: Locale;
   words: string;
 }) {
-  if (events.length === 0)
-    return <p className="text-2sm text-ink-soft">{empty}</p>;
-
   const now = new Date();
 
   return (
-    <ol>
+    <TimelineList empty={empty}>
       {events.map((event) => {
         const payload = payloadStrings(event.payload);
         const actor =
@@ -113,29 +112,22 @@ export function ActivityFeed({
               ) : undefined
             }
           >
-            <p className="text-2sm text-ink-soft">
-              <span className="text-ink">
-                {formatMessage(
-                  labels[event.type],
-                  { name: "", ...payload, actor, template, field },
-                  words,
-                )}
-              </span>
-              {" · "}
-              <RelativeTime
-                at={event.createdAt}
-                notation={notation}
-                words={words}
-                now={now}
-              />
-            </p>
+            <TimelineHeadline
+              sentence={formatMessage(
+                labels[event.type],
+                { name: "", ...payload, actor, template, field },
+                words,
+              )}
+              at={event.createdAt}
+              notation={notation}
+              words={words}
+              now={now}
+            />
             {payload.note ? (
-              <p className="rounded-xl bg-mint-tint px-3 py-2 text-2sm whitespace-pre-wrap text-ink">
-                {payload.note}
-              </p>
+              <TimelineBubble>{payload.note}</TimelineBubble>
             ) : null}
             {changed ? (
-              <p className="rounded-xl bg-canvas-deep px-3 py-2 text-2sm break-words text-ink-soft">
+              <TimelineBubble tone="muted">
                 {formatMessage(
                   labels.change,
                   {
@@ -144,11 +136,11 @@ export function ActivityFeed({
                   },
                   words,
                 )}
-              </p>
+              </TimelineBubble>
             ) : null}
           </TimelineEntry>
         );
       })}
-    </ol>
+    </TimelineList>
   );
 }

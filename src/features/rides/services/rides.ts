@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { fullName } from "@/lib/utils";
 import { Prisma, type $Enums } from "@/generated/prisma";
 
 /**
@@ -12,12 +13,29 @@ const calendarSelect = {
   status: true,
   startsAt: true,
   endsAt: true,
+  title: true,
+  capacity: true,
+  requiredPilots: true,
   locationName: true,
   locationAddress: true,
   destinationName: true,
   destinationAddress: true,
   cancelledAt: true,
-  chapter: { select: { id: true, name: true, timeZone: true } },
+  chapter: {
+    select: {
+      id: true,
+      name: true,
+      timeZone: true,
+      countryId: true,
+      address: true,
+      latitude: true,
+      longitude: true,
+    },
+  },
+  photos: {
+    orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+    select: { fileId: true, position: true },
+  },
   trishaws: {
     orderBy: { trishaw: { name: "asc" } },
     select: {
@@ -34,7 +52,7 @@ const calendarSelect = {
   assignments: {
     select: {
       role: true,
-      user: { select: { id: true, name: true, email: true } },
+      user: { select: { id: true, name: true, email: true, image: true } },
     },
   },
   _count: { select: { roster: true } },
@@ -209,6 +227,16 @@ export const findRideById = (
   db: Prisma.TransactionClient = prisma,
 ) => db.ride.findUnique({ where: { id }, select: calendarSelect });
 
+export const findRideScope = (id: string) =>
+  prisma.ride.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      chapterId: true,
+      trishaws: { select: { trishawId: true } },
+    },
+  });
+
 /**
  * Committing equipment is check-then-write, and two schedulers can both pass
  * the check before either writes. MySQL has no exclusion constraint that could
@@ -232,24 +260,34 @@ export async function conflictsUnderLock(
     )}) FOR UPDATE`,
   );
 
-  return tx.rideTrishaw.findMany({
-    where: {
-      trishawId: { in: trishawIds },
-      ride: {
-        status: { not: "cancelled" },
-        ...(windows.length === 1
-          ? overlapping(windows[0].startsAt, windows[0].endsAt)
-          : {
-              OR: windows.map((window) =>
-                overlapping(window.startsAt, window.endsAt),
-              ),
-            }),
-        ...(exceptRideIds.length ? { id: { notIn: exceptRideIds } } : {}),
-      },
-    },
-    select: { trishawId: true, rideId: true },
-  });
+  return findReservations(trishawIds, windows, exceptRideIds, tx);
 }
+
+export const findReservations = async (
+  trishawIds: string[],
+  windows: { startsAt: Date; endsAt: Date }[],
+  exceptRideIds: string[],
+  db: Prisma.TransactionClient = prisma,
+) =>
+  !trishawIds.length || !windows.length
+    ? []
+    : db.rideTrishaw.findMany({
+        where: {
+          trishawId: { in: trishawIds },
+          ride: {
+            status: { not: "cancelled" },
+            ...(windows.length === 1
+              ? overlapping(windows[0].startsAt, windows[0].endsAt)
+              : {
+                  OR: windows.map((window) =>
+                    overlapping(window.startsAt, window.endsAt),
+                  ),
+                }),
+            ...(exceptRideIds.length ? { id: { notIn: exceptRideIds } } : {}),
+          },
+        },
+        select: { trishawId: true, rideId: true },
+      });
 
 /**
  * Serialises every write on these rides. Locked in id order, so two writes on
@@ -301,10 +339,7 @@ export const findLogNames = async (
   ]);
   return new Map<string, string>([
     ...users.map((user) => [user.id, user.name] as const),
-    ...riders.map(
-      (rider) =>
-        [rider.id, `${rider.firstName} ${rider.lastName}`.trim()] as const,
-    ),
+    ...riders.map((rider) => [rider.id, fullName(rider)] as const),
   ]);
 };
 
@@ -345,17 +380,6 @@ export const deleteRideById = (
   db: Prisma.TransactionClient = prisma,
 ) => db.ride.delete({ where: { id }, select: { id: true } });
 
-export const findAssignment = (
-  rideId: string,
-  userId: string,
-  role: $Enums.RideRole,
-  db: Prisma.TransactionClient = prisma,
-) =>
-  db.rideAssignment.findUnique({
-    where: { rideId_userId_role: { rideId, userId, role } },
-    select: { id: true },
-  });
-
 export const insertAssignment = (
   data: {
     rideId: string;
@@ -373,16 +397,6 @@ export const deleteAssignment = (
   db: Prisma.TransactionClient = prisma,
 ) => db.rideAssignment.deleteMany({ where: { rideId, userId, role } });
 
-export const findRosterEntry = (
-  rideId: string,
-  passengerId: string,
-  db: Prisma.TransactionClient = prisma,
-) =>
-  db.rideRosterEntry.findUnique({
-    where: { rideId_passengerId: { rideId, passengerId } },
-    select: { id: true },
-  });
-
 /** Appended to the end of the roster — coordinators order riders as they ride. */
 export const insertRosterEntry = (
   data: {
@@ -394,16 +408,79 @@ export const insertRosterEntry = (
   db: Prisma.TransactionClient = prisma,
 ) => db.rideRosterEntry.create({ data, select: { id: true } });
 
-export const nextRosterPosition = async (
+export async function insertRosterEntryAt(
+  data: {
+    rideId: string;
+    passengerId: string;
+    position: number;
+    bookedByUserId: string | null;
+  },
+  db: Prisma.TransactionClient = prisma,
+) {
+  await db.rideRosterEntry.updateMany({
+    where: { rideId: data.rideId, position: { gte: data.position } },
+    data: { position: { increment: 1 } },
+  });
+  return db.rideRosterEntry.create({ data, select: { id: true } });
+}
+
+export async function updateRosterPositions(
   rideId: string,
+  passengerIds: string[],
+  db: Prisma.TransactionClient = prisma,
+) {
+  for (const [position, passengerId] of passengerIds.entries())
+    await db.rideRosterEntry.updateMany({
+      where: { rideId, passengerId },
+      data: { position },
+    });
+}
+
+export const insertRosterEntries = (
+  rideId: string,
+  passengerIds: string[],
+  bookedByUserId: string | null,
   db: Prisma.TransactionClient = prisma,
 ) =>
-  ((
-    await db.rideRosterEntry.aggregate({
-      where: { rideId },
-      _max: { position: true },
-    })
-  )._max.position ?? -1) + 1;
+  db.rideRosterEntry.createMany({
+    data: passengerIds.map((passengerId, position) => ({
+      rideId,
+      passengerId,
+      position,
+      bookedByUserId,
+    })),
+  });
+
+export const insertAssignments = (
+  rideId: string,
+  userIds: string[],
+  assignedByUserId: string | null,
+  db: Prisma.TransactionClient = prisma,
+) =>
+  db.rideAssignment.createMany({
+    data: userIds.map((userId) => ({
+      rideId,
+      userId,
+      role: "pilot" as const,
+      assignedByUserId,
+    })),
+  });
+
+export const replaceRidePhotos = (
+  rideId: string,
+  fileIds: string[],
+  db: Prisma.TransactionClient = prisma,
+) =>
+  db.ride.update({
+    where: { id: rideId },
+    data: {
+      photos: {
+        deleteMany: {},
+        create: fileIds.map((fileId, position) => ({ fileId, position })),
+      },
+    },
+    select: { id: true },
+  });
 
 export const deleteRosterEntry = (
   rideId: string,
@@ -417,11 +494,11 @@ export const deleteRosterEntry = (
  */
 const detailSelect = {
   ...calendarSelect,
+  description: true,
   latitude: true,
   longitude: true,
   destinationLatitude: true,
   destinationLongitude: true,
-  requiredPilots: true,
   note: true,
   seriesId: true,
   cancellationReasonCode: true,
@@ -457,6 +534,7 @@ const detailSelect = {
           chapterId: true,
           managedByUserId: true,
           userId: true,
+          user: { select: { email: true } },
         },
       },
     },
@@ -467,25 +545,49 @@ export type RideDetailRow = Prisma.RideGetPayload<{
   select: typeof detailSelect;
 }>;
 
+const listCursorWhere = (cursor: { startsAt: Date; id: string } | null) =>
+  cursor
+    ? {
+        OR: [
+          { startsAt: { gt: cursor.startsAt } },
+          { startsAt: cursor.startsAt, id: { gt: cursor.id } },
+        ],
+      }
+    : {};
+
+export const findPastRidesForList = (
+  chapterIds: string[],
+  now: Date,
+  take: number,
+) =>
+  prisma.ride.findMany({
+    where: { chapterId: { in: chapterIds }, endsAt: { lte: now } },
+    orderBy: [{ startsAt: "desc" }, { id: "desc" }],
+    select: calendarSelect,
+    take,
+  });
+
+export const findUpcomingRidesForList = (
+  chapterIds: string[],
+  now: Date,
+  cursor: { startsAt: Date; id: string } | null,
+  take: number,
+) =>
+  prisma.ride.findMany({
+    where: {
+      chapterId: { in: chapterIds },
+      endsAt: { gt: now },
+      ...listCursorWhere(cursor),
+    },
+    orderBy: [{ startsAt: "asc" }, { id: "asc" }],
+    select: calendarSelect,
+    take,
+  });
+
 export const findRideDetail = (
   id: string,
   db: Prisma.TransactionClient = prisma,
 ) => db.ride.findUnique({ where: { id }, select: detailSelect });
-
-/** Who a change to this ride concerns: its pilots and whoever manages its riders. */
-export const findRideParticipants = (rideId: string) =>
-  prisma.ride.findUnique({
-    where: { id: rideId },
-    select: {
-      chapterId: true,
-      assignments: { select: { userId: true } },
-      roster: {
-        select: {
-          passenger: { select: { managedByUserId: true, userId: true } },
-        },
-      },
-    },
-  });
 
 const trishawRideSelect = {
   id: true,

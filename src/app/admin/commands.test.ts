@@ -54,10 +54,16 @@ const run = (scope: AdminScope, context = ctx()) =>
 const inGroup = (commands: ResolvedCommand[], group: string) =>
   commands.filter((c) => c.group === group);
 
-const hrefs = (commands: ResolvedCommand[]) =>
+const navigateHrefs = (commands: ResolvedCommand[]) =>
   inGroup(commands, "navigate").flatMap((c) =>
     c.run.kind === "navigate" ? [c.run.href] : [],
   );
+
+const hrefs = (commands: ResolvedCommand[]) =>
+  navigateHrefs(commands).filter((href) => !href.includes("?"));
+
+const views = (commands: ResolvedCommand[]) =>
+  navigateHrefs(commands).filter((href) => href.includes("?"));
 
 const labels = (commands: ResolvedCommand[], group: string) =>
   inGroup(commands, group).map((c) => c.label);
@@ -95,6 +101,19 @@ describe("navigate parity with NAV", () => {
 
   it("labels a destination with its own name, not a sentence", () => {
     expect(labels(run(superadmin), "navigate")).toContain(en.admin.nav.members);
+  });
+});
+
+describe("views of a destination", () => {
+  it("only open a page the sidebar already lists", () => {
+    const pages = new Set(navFor(berlinAdmin).map((item) => item.href));
+    expect(views(run(berlinAdmin)).length).toBeGreaterThan(0);
+    for (const href of views(run(berlinAdmin)))
+      expect(pages.has(href.split("?")[0])).toBe(true);
+  });
+
+  it("offers the rides list view", () => {
+    expect(views(run(berlinAdmin))).toContain("/admin/rides?view=list");
   });
 });
 

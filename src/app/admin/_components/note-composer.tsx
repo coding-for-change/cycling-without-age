@@ -1,13 +1,16 @@
 "use client";
 
 import { useId, useState, useTransition, type FormEvent } from "react";
-import { notify, type NotifyLabels } from "@/components/action-feedback";
+import {
+  notify,
+  type ActionResult,
+  type NotifyLabels,
+} from "@/components/action-feedback";
 import { submitOnCmdEnter } from "@/components/app-drawer";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { addTrishawNoteAction } from "../actions";
 
-export type TrishawNoteComposerLabels = {
+export type NoteComposerLabels = {
   label: string;
   placeholder: string;
   submit: string;
@@ -15,12 +18,16 @@ export type TrishawNoteComposerLabels = {
   errors: NotifyLabels["errors"];
 };
 
-export function TrishawNoteComposer({
-  trishawId,
+export function NoteComposer<T extends object>({
+  action,
+  input,
+  maxLength,
   labels,
 }: {
-  trishawId: string;
-  labels: TrishawNoteComposerLabels;
+  action: (input: T & { text: string }) => Promise<ActionResult>;
+  input: T;
+  maxLength: number;
+  labels: NoteComposerLabels;
 }) {
   const id = useId();
   const [text, setText] = useState("");
@@ -31,7 +38,7 @@ export function TrishawNoteComposer({
     event.preventDefault();
     if (!ready || pending) return;
     startTransition(async () => {
-      const result = await addTrishawNoteAction({ trishawId, text });
+      const result = await action({ ...input, text });
       notify(result, { done: labels.added, errors: labels.errors });
       if (result.ok) setText("");
     });
@@ -55,7 +62,7 @@ export function TrishawNoteComposer({
         value={text}
         onChange={(event) => setText(event.target.value)}
         placeholder={labels.placeholder}
-        maxLength={2000}
+        maxLength={maxLength}
         rows={2}
         className="min-h-12 resize-none border-none p-0 text-2sm shadow-none focus-visible:ring-0"
       />

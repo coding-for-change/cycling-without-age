@@ -10,7 +10,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { FileImage, fileUrl } from "@/features/fleet/components/file-image";
+import { FileImage } from "@/features/fleet/components/file-image";
+import { fileUrl } from "@/lib/storage/file-url";
 import {
   DamageClearDialog,
   type DamageClearLabels,
@@ -23,7 +24,10 @@ import type { TrishawHistoryItem } from "@/use-cases/trishaw-history";
 import {
   payloadStrings,
   RelativeTime,
+  TimelineBubble,
   TimelineEntry,
+  TimelineHeadline,
+  TimelineList,
 } from "../../../_components/timeline";
 
 type Labels = Dictionary["fleet"]["trishaws"]["history"];
@@ -64,9 +68,6 @@ export function TrishawHistory({
   notation: Locale;
   words: string;
 }) {
-  if (items.length === 0)
-    return <p className="text-2sm text-ink-soft">{empty}</p>;
-
   const now = new Date();
   const actorName = (actor: { id: string; name: string } | null) =>
     actor ? (actor.id === viewerId ? labels.you : actor.name) : labels.someone;
@@ -84,8 +85,18 @@ export function TrishawHistory({
     />
   );
 
+  const headline = (sentence: string, at: Date) => (
+    <TimelineHeadline
+      sentence={sentence}
+      at={at}
+      notation={notation}
+      words={words}
+      now={now}
+    />
+  );
+
   return (
-    <ol>
+    <TimelineList empty={empty}>
       {items.map((item) => {
         const key = `${item.kind}:${
           item.kind === "ride"
@@ -171,17 +182,14 @@ export function TrishawHistory({
               icon={damage.grounding ? OctagonAlert : TriangleAlert}
               iconClassName={open ? "text-ink" : undefined}
             >
-              <p className="text-2sm text-ink-soft">
-                <span className="text-ink">
-                  {formatMessage(
-                    labels.damage,
-                    { actor: actorName(damage.reportedBy) },
-                    words,
-                  )}
-                </span>
-                {" · "}
-                {when(damage.reportedAt)}
-              </p>
+              {headline(
+                formatMessage(
+                  labels.damage,
+                  { actor: actorName(damage.reportedBy) },
+                  words,
+                ),
+                damage.reportedAt,
+              )}
               <div
                 className={cn(
                   "grid gap-3 rounded-xl border p-3",
@@ -240,7 +248,7 @@ export function TrishawHistory({
                   ) : null}
                 </div>
                 {!open ? (
-                  <p className="rounded-lg bg-canvas-deep px-3 py-2 text-2sm text-ink-soft">
+                  <TimelineBubble tone="muted">
                     {formatMessage(
                       common.damage.clearedBy,
                       {
@@ -257,7 +265,7 @@ export function TrishawHistory({
                         {when(damage.clearedAt)}
                       </>
                     ) : null}
-                  </p>
+                  </TimelineBubble>
                 ) : null}
               </div>
             </TimelineEntry>
@@ -293,19 +301,13 @@ export function TrishawHistory({
             key={key}
             icon={LOG_ICON[entry.type]}
           >
-            <p className="text-2sm text-ink-soft">
-              <span className="text-ink">{sentence}</span>
-              {" · "}
-              {when(entry.createdAt)}
-            </p>
+            {headline(sentence, entry.createdAt)}
             {entry.type === "note" && payload.text ? (
-              <p className="rounded-xl bg-mint-tint px-3 py-2 text-2sm whitespace-pre-wrap text-ink">
-                {payload.text}
-              </p>
+              <TimelineBubble>{payload.text}</TimelineBubble>
             ) : null}
           </TimelineEntry>
         );
       })}
-    </ol>
+    </TimelineList>
   );
 }

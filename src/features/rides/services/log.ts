@@ -25,6 +25,16 @@ export const insertRideLogEntry = (
     select: { id: true },
   });
 
+export const insertRideLogEntries = (
+  entries: {
+    rideId: string;
+    actorUserId: string | null;
+    type: $Enums.RideLogType;
+    payload: Prisma.InputJsonObject;
+  }[],
+  db: Prisma.TransactionClient = prisma,
+) => db.rideLogEntry.createMany({ data: entries });
+
 export const findLogOfRide = (rideId: string, take = 200) =>
   prisma.rideLogEntry.findMany({
     where: { rideId },

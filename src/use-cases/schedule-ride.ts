@@ -1,13 +1,14 @@
 import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
+import { membership } from "@/features/membership";
+import { passengers } from "@/features/passengers";
 import {
   returnWindow,
   rides,
-  scheduleRideForm,
   slotWindow,
   trishawWindowQuery,
-  type RideInput,
-  type ScheduleRideForm,
+  type RideScope,
+  type ScheduleRideData,
   type TrishawWindowQuery,
 } from "@/features/rides";
 import { DomainError } from "@/lib/domain-error";
@@ -20,12 +21,18 @@ async function chapterTimeZone(chapterId: string) {
   return chapter.timeZone;
 }
 
-export async function scheduleRide(
-  input: RideInput,
-  actorUserId: string | null,
-) {
-  await fleet.assertUsable(input.trishawIds ?? [], input.chapterId);
-  return rides.scheduleRide(input, actorUserId);
+async function assertRiders(passengerIds: string[], chapterId: string) {
+  const found = await passengers.getPassengers(passengerIds);
+  if (found.length !== passengerIds.length)
+    throw new DomainError("unknownPassenger");
+  if (found.some((passenger) => passenger.chapterId !== chapterId))
+    throw new DomainError("riderNotInChapter");
+}
+
+async function assertPilots(userIds: string[], chapterId: string) {
+  const roles = await membership.getMembersRoles(userIds, chapterId);
+  if (userIds.some((userId) => !roles.get(userId)?.includes("pilot")))
+    throw new DomainError("notPilot");
 }
 
 /**
@@ -34,24 +41,21 @@ export async function scheduleRide(
  * the way back starting once the stay at the destination is over.
  */
 export async function scheduleRideAt(
-  form: ScheduleRideForm,
-  actorUserId: string,
+  form: ScheduleRideData,
+  actorUserId: string | null,
 ) {
-  const { slot, roundTrip, stayMinutes, ...ride } =
-    scheduleRideForm.parse(form);
-  const outbound = slotWindow(slot, await chapterTimeZone(ride.chapterId));
-  return scheduleRide(
+  const { slot, roundTrip, stayMinutes, ...ride } = form;
+  const timeZone = await chapterTimeZone(ride.chapterId);
+  await Promise.all([
+    fleet.assertUsable(ride.trishawIds, ride.chapterId),
+    assertRiders(ride.passengerIds, ride.chapterId),
+    assertPilots(ride.pilotIds, ride.chapterId),
+  ]);
+  const outbound = slotWindow(slot, timeZone);
+  return rides.scheduleRide(
     {
       ...ride,
       ...outbound,
-      ...(ride.model === "functional"
-        ? {}
-        : {
-            destinationName: null,
-            destinationAddress: null,
-            destinationLatitude: null,
-            destinationLongitude: null,
-          }),
       returnLeg:
         roundTrip && ride.model === "functional"
           ? returnWindow(outbound, stayMinutes)
@@ -66,24 +70,21 @@ export async function scheduleRideAt(
  * ride shows the warning — but allocating one that is grounded now is not.
  */
 export async function allocateTrishaws(
-  rideId: string,
+  ride: RideScope,
   trishawIds: string[],
   actorUserId: string | null,
 ) {
-  const ride = await rides.getRide(rideId);
-  if (!ride) return rides.setRideTrishaws(rideId, trishawIds, actorUserId);
-  const kept = new Set(ride.trishaws.map(({ trishaw }) => trishaw.id));
+  const kept = new Set(ride.trishawIds);
   await fleet.assertUsable(
     trishawIds.filter((id) => !kept.has(id)),
     ride.chapterId,
   );
-  return rides.setRideTrishaws(rideId, trishawIds, actorUserId);
+  return rides.setRideTrishaws(ride.id, trishawIds, actorUserId);
 }
 
 /**
  * Every trishaw the chapter can reach, and whether another ride already holds
- * it for any of these windows. Pool trishaws are shared, so the rides of every
- * chapter reaching them count.
+ * it for any of these windows.
  */
 async function trishawChoices(
   chapterId: string,
@@ -91,21 +92,10 @@ async function trishawChoices(
   exceptRideIds: string[] = [],
 ) {
   const trishaws = await fleet.listTrishaws([chapterId]);
-  const sharing = [...new Set(trishaws.flatMap(fleet.chapterIdsReaching))];
-  const from = new Date(Math.min(...windows.map((w) => w.startsAt.getTime())));
-  const to = new Date(Math.max(...windows.map((w) => w.endsAt.getTime())));
-  const except = new Set(exceptRideIds);
-  const overlapping = (await rides.listRidesInRange(sharing, from, to)).filter(
-    (other) =>
-      !except.has(other.id) &&
-      other.status !== "cancelled" &&
-      windows.some(
-        (window) =>
-          other.startsAt < window.endsAt && other.endsAt > window.startsAt,
-      ),
-  );
-  const booked = new Set(
-    overlapping.flatMap((other) => other.trishaws.map((t) => t.trishaw.id)),
+  const booked = await rides.bookedTrishawIds(
+    trishaws.map((trishaw) => trishaw.id),
+    windows,
+    exceptRideIds,
   );
   return {
     trishaws,
@@ -113,11 +103,9 @@ async function trishawChoices(
   };
 }
 
-export async function allocationChoices(rideId: string) {
-  const ride = await rides.getRide(rideId);
-  if (!ride) return null;
-  return { ride, ...(await trishawChoices(ride.chapterId, [ride], [ride.id])) };
-}
+export const trishawChoicesForRide = (
+  ride: Window & { id: string; chapterId: string },
+) => trishawChoices(ride.chapterId, [ride], [ride.id]);
 
 /** What the scheduling drawer offers while the admin is still picking a time. */
 export async function freeTrishawsInWindow(query: TrishawWindowQuery) {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useId, useState, useTransition, type FormEvent } from "react";
 import type { ReactNode } from "react";
 import { Trash2 } from "lucide-react";
@@ -37,14 +38,18 @@ export type ConfirmDeleteLabels = {
   errors: NotifyLabels["errors"];
 };
 
-export function ConfirmDeleteDialog({
+export function ConfirmDeleteDialog<I>({
   name,
   consequences = [],
   labels,
   locale,
   cancel,
   action,
+  input,
   onDone,
+  redirectTo,
+  variant = "button",
+  blocked,
   trigger,
 }: {
   name: string;
@@ -52,10 +57,15 @@ export function ConfirmDeleteDialog({
   labels: ConfirmDeleteLabels;
   locale: Locale;
   cancel: string;
-  action: () => Promise<ActionResult>;
+  action: (input: I) => Promise<ActionResult>;
+  input?: I;
   onDone?: () => void;
+  redirectTo?: string;
+  variant?: "button" | "icon";
+  blocked?: string;
   trigger?: ReactNode;
 }) {
+  const router = useRouter();
   const inputId = useId();
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState("");
@@ -68,7 +78,7 @@ export function ConfirmDeleteDialog({
     event.preventDefault();
     if (!armed) return;
     startTransition(async () => {
-      const result = await action();
+      const result = await action(input as I);
       notify(result, {
         done: formatMessage(labels.done, { name }, locale),
         errors: labels.errors,
@@ -77,6 +87,7 @@ export function ConfirmDeleteDialog({
       setOpen(false);
       setTyped("");
       onDone?.();
+      if (redirectTo) router.push(redirectTo);
     });
   };
 
@@ -90,15 +101,30 @@ export function ConfirmDeleteDialog({
       }}
     >
       <DialogTrigger asChild>
-        {trigger ?? (
-          <Button
-            variant="outline"
-            className="h-9 justify-start border-line text-2sm text-red hover:bg-red-tint hover:text-red"
-          >
-            <Trash2 aria-hidden />
-            {labels.open}
-          </Button>
-        )}
+        {trigger ??
+          (variant === "icon" ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              disabled={Boolean(blocked)}
+              aria-label={labels.open}
+              title={blocked ?? labels.open}
+              className="size-8 text-ink-soft hover:bg-red-tint hover:text-red disabled:pointer-events-auto disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-ink-soft"
+            >
+              <Trash2 aria-hidden />
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              disabled={Boolean(blocked)}
+              title={blocked}
+              className="h-9 justify-start border-line text-2sm text-red hover:bg-red-tint hover:text-red"
+            >
+              <Trash2 aria-hidden />
+              {labels.open}
+            </Button>
+          ))}
       </DialogTrigger>
       <DialogContent>
         <form

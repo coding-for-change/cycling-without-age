@@ -1,5 +1,5 @@
 import { membership } from "@/features/membership";
-import { rides } from "@/features/rides";
+import { rides, type RideScope } from "@/features/rides";
 import { DomainError } from "@/lib/domain-error";
 
 /**
@@ -9,13 +9,11 @@ import { DomainError } from "@/lib/domain-error";
  * by virtue of being its admin.
  */
 export async function staffRide(
-  rideId: string,
+  ride: RideScope,
   userId: string,
   actorUserId: string,
 ) {
-  const ride = await rides.getRide(rideId);
-  if (!ride) throw new DomainError("unknownRide");
   const roles = await membership.getMemberRoles(userId, ride.chapterId);
   if (!roles.includes("pilot")) throw new DomainError("notPilot");
-  return rides.assignVolunteer(rideId, userId, actorUserId);
+  return rides.assignVolunteer(ride.id, userId, actorUserId);
 }

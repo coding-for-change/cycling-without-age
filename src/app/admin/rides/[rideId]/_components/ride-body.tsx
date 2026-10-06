@@ -1,48 +1,76 @@
+import { cacheLife } from "next/cache";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import { Ban, Bike, Info } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Ban } from "lucide-react";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
-import { rides, slotOf } from "@/features/rides";
-import { parseRoles } from "@/lib/access";
+import { modelLimits, rides, slotOf } from "@/features/rides";
+import { addRideNoteAction } from "@/features/rides/actions";
+import {
+  isPilot,
+  toPassengerChoice,
+  toPersonChoice,
+  toPilotChoice,
+} from "@/features/rides/components/crew-choices";
+import { ridePilots } from "@/features/rides/components/ride-presentation";
+import {
+  rideDetailStrings,
+  rideErrors,
+  rideHistoryStrings,
+} from "@/features/rides/components/strings";
+import { trishawOptions } from "@/features/rides/components/trishaw-options";
+import { RIDE_NOTE_MAX } from "@/features/rides/schemas";
 import { requireChapterAdmin } from "@/lib/auth-guards";
-import { avatarSeed, avatarSvg } from "@/lib/avatar";
+import { trishawChoicesForRide } from "@/use-cases/schedule-ride";
 import {
   formatDate,
   formatDateTime,
   formatShortDateWithWeekday,
-  formatTime,
+  formatTimeRange,
   resolveLocale,
   wordsLocale,
   type Locale as Notation,
 } from "@/lib/format";
+import type { Coords } from "@/lib/geo";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
-import { BackLink, DetailSection } from "../../../_components/detail-page";
-import { hrefWith } from "../../../_components/href-with";
-import { HistoryMore, historyShown } from "../../../_components/history-more";
-import { PROPERTY_BUTTON } from "../../../_components/properties";
-import { SidePanel } from "../../../_components/side-panel";
+import { cyclingRoute } from "@/lib/mapbox";
+import { pick } from "@/lib/utils";
+import { markdownToolLabels } from "@/components/markdown-editor";
+import {
+  BackLink,
+  DetailNotice,
+  DetailSection,
+} from "../../../_components/detail-page";
+import { deletionConsequences } from "../../../_components/deletion-consequences";
+import { fieldLabels } from "../../../_components/field-labels";
+import { hrefWith } from "@/lib/search-params";
+import { historyShown } from "../../../_components/history-more";
+import { HistorySection } from "../../../_components/history-section";
+import { NoteComposer } from "../../../_components/note-composer";
 import { RelativeTime } from "../../../_components/timeline";
 import { readActiveScope, type AdminSearchParams } from "../../../active-scope";
-import {
-  ALLOCATION_OPEN,
-  ALLOCATION_PARAM,
-} from "../../_components/allocation-param";
-import { RideDangerZone } from "./ride-danger-zone";
+import { PILOT_LABELS, ROSTER_LABELS, TRISHAW_LABELS } from "./panel-labels";
 import { PilotNote, RideEditor } from "./ride-editor";
+import { RideEventContent } from "./ride-event-content";
 import { RideHistory } from "./ride-history";
-import { RideNoteComposer } from "./ride-note-composer";
 import { RidePilots } from "./ride-pilots";
 import { RideRoster } from "./ride-roster";
+import { RideTrash } from "./ride-trash";
+import { RideTrishaws } from "./ride-trishaws";
 
-const DETAIL_ONLY = { [ALLOCATION_PARAM]: null, history: null };
+const DETAIL_ONLY = { history: null };
 
-const fullName = (person: { firstName: string; lastName: string }) =>
-  `${person.firstName} ${person.lastName}`.trim();
+async function cachedRoute(from: Coords, to: Coords) {
+  "use cache";
+  cacheLife("days");
+  const route = await cyclingRoute(from, to);
+  if (!route) throw new Error("route unavailable");
+  return route;
+}
+
+const routeBetween = (from: Coords, to: Coords) =>
+  cachedRoute(from, to).catch(() => null);
 
 export async function RideBody({
   params,
@@ -51,18 +79,20 @@ export async function RideBody({
   params: Promise<{ rideId: string }>;
   searchParams: Promise<AdminSearchParams>;
 }) {
-  const [{ session, scopeQuery }, { rideId }, query] = await Promise.all([
-    readActiveScope(searchParams, "rides"),
-    params,
-    searchParams,
-  ]);
-
-  const ride = await rides.getRideDetail(rideId);
+  const [{ session, scopeQuery }, ride, query, dict, language, head] =
+    await Promise.all([
+      readActiveScope(searchParams, "rides"),
+      params.then(({ rideId }) => rides.getRideDetail(rideId)),
+      searchParams,
+      getDictionary(),
+      getLocale(),
+      headers(),
+    ]);
   if (!ride) notFound();
   await requireChapterAdmin(ride.chapterId);
 
   const editable = ride.status === "scheduled";
-  const [log, chapterPassengers, chapterMembers, dict, language, head] =
+  const [log, chapterPassengers, chapterMembers, allocation] =
     await Promise.all([
       rides.listRideLog(ride.id),
       editable
@@ -71,17 +101,15 @@ export async function RideBody({
       editable
         ? membership.listMembersOfChapters([ride.chapterId])
         : Promise.resolve([]),
-      getDictionary(),
-      getLocale(),
-      headers(),
+      editable ? trishawChoicesForRide(ride) : Promise.resolve(null),
     ]);
 
   const notation = resolveLocale(head.get("accept-language"));
   const words = wordsLocale(language);
   const zone = ride.chapter.timeZone;
   const slot = slotOf(ride, zone);
-  const detail = dict.rides.detail;
-  const errors = dict.rides.errors;
+  const detail = rideDetailStrings(dict);
+  const errors = rideErrors(dict);
   const models = dict.calendar.models;
   const statuses = dict.calendar.statuses;
   const pathname = `/admin/rides/${ride.id}`;
@@ -89,7 +117,7 @@ export async function RideBody({
   const shown = historyShown(query);
 
   const span = (window: { startsAt: Date; endsAt: Date }, at: Notation) =>
-    `${formatTime(window.startsAt, at, zone)}–${formatTime(window.endsAt, at, zone)}`;
+    formatTimeRange(window.startsAt, window.endsAt, at, zone);
 
   const other = ride.returnLeg ?? ride.returnLegOf;
   const leg = other
@@ -107,132 +135,99 @@ export async function RideBody({
     : null;
 
   const booked = new Set(ride.roster.map((entry) => entry.passenger.id));
-  const pilots = ride.assignments.filter(
-    (assignment) => assignment.role === "pilot",
-  );
+  const pilots = ridePilots(ride);
   const onRide = new Set(pilots.map((assignment) => assignment.user.id));
 
   const riderChoices = chapterPassengers
     .filter((passenger) => !booked.has(passenger.id))
-    .map((passenger) => ({ id: passenger.id, name: fullName(passenger) }));
+    .map(toPassengerChoice);
+  const limits = modelLimits(ride.model, ride.capacity, ride.requiredPilots);
   const pilotChoices = chapterMembers
-    .filter(
-      (member) =>
-        member.organizationId === ride.chapterId &&
-        parseRoles(member.role).includes("pilot") &&
-        !onRide.has(member.userId),
-    )
-    .map((member) => ({
-      id: member.userId,
-      name: member.user.name || member.user.email,
-    }));
+    .filter((member) => isPilot(member) && !onRide.has(member.userId))
+    .map(toPilotChoice);
+  const people = {
+    search: dict.rides.people.search,
+    empty: dict.rides.people.empty,
+  };
+  const pleasure = ride.model === "pleasure";
+  const trishawChoices = allocation
+    ? trishawOptions(
+        allocation,
+        new Set(ride.trishaws.map(({ trishaw }) => trishaw.id)),
+        dict,
+        words,
+      )
+    : [];
+
+  const route =
+    ride.model === "functional" &&
+    ride.latitude !== null &&
+    ride.longitude !== null &&
+    ride.destinationLatitude !== null &&
+    ride.destinationLongitude !== null
+      ? routeBetween(
+          { lat: ride.latitude, lng: ride.longitude },
+          { lat: ride.destinationLatitude, lng: ride.destinationLongitude },
+        )
+      : null;
 
   const cancelledLabel = ride.cancellationReasonCode
     ? dict.rides.reasons[ride.cancellationReasonCode]
     : null;
 
   const deleteName = formatDate(slot.date, notation);
-  const consequences = (
-    [
-      ["riders", ride.roster.length],
-      ["pilots", ride.assignments.length],
-      ["history", log.length],
-    ] as const
-  )
-    .filter(([, count]) => count > 0)
-    .map(([key, count]) =>
-      formatMessage(dict.rides.delete[key], { count }, words),
-    );
+  const consequences = deletionConsequences(
+    {
+      riders: ride.roster.length,
+      pilots: ride.assignments.length,
+      history: log.length,
+    },
+    dict.admin.deletion,
+    language,
+  );
+
+  const field = fieldLabels(detail, errors);
 
   const panels = (
     <>
-      <SidePanel title={detail.trishaws}>
-        {ride.trishaws.length > 0 ? (
-          <ul className="grid gap-1">
-            {ride.trishaws.map(({ trishaw }) => (
-              <li key={trishaw.id}>
-                <Link
-                  href={`/admin/trishaws/${trishaw.id}${scopeQuery}`}
-                  className="-mx-2 flex min-h-8 items-center gap-2 rounded-md px-2 text-2sm transition-colors hover:bg-canvas-deeper"
-                >
-                  <Bike
-                    aria-hidden
-                    className="size-3.5 shrink-0 text-ink-soft"
-                  />
-                  <span className="min-w-0 flex-1 truncate">
-                    {trishaw.name}
-                  </span>
-                  {trishaw.status === "active" ? null : (
-                    <Badge className="bg-paper font-normal text-ink">
-                      {detail.notReady}
-                    </Badge>
-                  )}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-2sm text-ink-soft">{detail.noTrishaws}</p>
-        )}
-        {editable ? (
-          <Button
-            asChild
-            variant="outline"
-            className={PROPERTY_BUTTON}
-          >
-            <Link
-              href={hrefWith(pathname, query, {
-                [ALLOCATION_PARAM]: ALLOCATION_OPEN,
-              })}
-              scroll={false}
-            >
-              <Bike aria-hidden />
-              {detail.changeTrishaws}
-            </Link>
-          </Button>
-        ) : null}
-      </SidePanel>
+      <RideTrishaws
+        rideId={ride.id}
+        editable={editable}
+        allocated={ride.trishaws.map(({ trishaw }) => ({
+          id: trishaw.id,
+          name: trishaw.name,
+          href: `/admin/trishaws/${trishaw.id}${scopeQuery}`,
+          notReady: trishaw.status !== "active",
+        }))}
+        options={trishawChoices}
+        limit={limits.trishaws}
+        language={language}
+        labels={{
+          ...pick(detail, TRISHAW_LABELS),
+          search: dict.fleet.allocation.search,
+          noMatch: dict.fleet.allocation.noMatch,
+          errors: { ...dict.fleet.common.errors, ...errors },
+        }}
+      />
 
-      <SidePanel title={detail.pilots}>
-        <RidePilots
-          rideId={ride.id}
-          editable={editable}
-          required={ride.requiredPilots}
-          assigned={pilots.map(({ user }) => ({
-            id: user.id,
-            name: user.name || user.email,
-            href: `/admin/members/${user.id}${scopeQuery}`,
-            avatar: avatarSvg(avatarSeed(user.email)),
-          }))}
-          choices={pilotChoices}
-          language={language}
-          labels={{ ...detail, errors }}
-        />
-      </SidePanel>
-
-      {ride.status === "completed" ? null : (
-        <SidePanel title={detail.danger}>
-          <RideDangerZone
-            rideId={ride.id}
-            status={ride.status}
-            deleteName={deleteName}
-            consequences={consequences}
-            returnLeg={
-              ride.returnLeg?.status === "scheduled"
-                ? formatDateTime(ride.returnLeg.startsAt, notation, zone)
-                : null
-            }
-            backHref={backHref}
-            language={language}
-            labels={{
-              cancel: dict.rides.cancel,
-              delete: dict.rides.delete,
-              reasons: dict.rides.reasons,
-              errors,
-            }}
-          />
-        </SidePanel>
-      )}
+      <RidePilots
+        rideId={ride.id}
+        editable={editable}
+        assigned={pilots.map(({ user }) => ({
+          ...toPersonChoice(user),
+          href: `/admin/members/${user.id}${scopeQuery}`,
+        }))}
+        required={ride.requiredPilots}
+        limit={limits.pilots}
+        choices={pilotChoices}
+        language={language}
+        labels={{
+          ...pick(detail, PILOT_LABELS),
+          full: pleasure ? detail.onePilot : errors.pilotsFull,
+          errors,
+        }}
+        pick={people}
+      />
     </>
   );
 
@@ -250,6 +245,9 @@ export async function RideBody({
           status: ride.status,
           slot,
           requiredPilots: ride.requiredPilots,
+          title: ride.title,
+          capacity: ride.capacity,
+          riders: ride.roster.length,
           location: {
             name: ride.locationName,
             address: ride.locationAddress,
@@ -262,6 +260,15 @@ export async function RideBody({
             latitude: ride.destinationLatitude,
             longitude: ride.destinationLongitude,
           },
+          home:
+            ride.chapter.latitude === null || ride.chapter.longitude === null
+              ? null
+              : {
+                  name: ride.chapter.name,
+                  address: ride.chapter.address,
+                  latitude: ride.chapter.latitude,
+                  longitude: ride.chapter.longitude,
+                },
           leg,
         }}
         header={{
@@ -283,6 +290,7 @@ export async function RideBody({
             { zone: zone.replace(/_/g, " ") },
             words,
           ),
+          cover: ride.photos[0]?.fileId ?? null,
         }}
         editable={editable}
         language={language}
@@ -292,88 +300,125 @@ export async function RideBody({
           models,
           statuses,
           errors,
-          field: {
-            edit: detail.edit,
-            saved: detail.saved,
-            undo: detail.undo,
-            undone: detail.undone,
-            invalid: detail.invalid,
+          field,
+          status: { saving: detail.saving, saved: detail.savedAt },
+          makeEvent: { ...detail.makeEvent, errors },
+          makeFunctional: {
+            ...detail.makeFunctional,
+            place: detail.place,
             errors,
           },
-          status: { saving: detail.saving, saved: detail.savedAt },
         }}
+        route={route}
+        trash={
+          ride.status === "scheduled" || ride.status === "cancelled" ? (
+            <RideTrash
+              key="trash"
+              rideId={ride.id}
+              status={ride.status}
+              deleteName={deleteName}
+              consequences={consequences}
+              returnLeg={
+                ride.returnLeg?.status === "scheduled"
+                  ? formatDateTime(ride.returnLeg.startsAt, notation, zone)
+                  : null
+              }
+              backHref={backHref}
+              language={language}
+              labels={{
+                cancel: dict.rides.cancel,
+                delete: {
+                  ...dict.rides.delete,
+                  consequences: dict.admin.deletion.consequences,
+                },
+                reasons: dict.rides.reasons,
+                errors,
+              }}
+            />
+          ) : null
+        }
         panels={panels}
       >
         {ride.status === "cancelled" ? (
-          <section className="flex gap-3 rounded-xl bg-canvas-deep px-4 py-3 text-2sm">
-            <Ban
-              aria-hidden
-              className="mt-0.5 size-4 shrink-0 text-ink-soft"
-            />
-            <div className="grid min-w-0 flex-1 gap-1">
-              <p className="font-medium">
-                {cancelledLabel
-                  ? `${statuses.cancelled} · ${cancelledLabel}`
-                  : statuses.cancelled}
-              </p>
-              <p className="text-ink-soft">
-                {formatMessage(
-                  detail.cancelledBy,
-                  {
-                    name: ride.cancelledBy?.name ?? dict.rides.history.someone,
-                  },
-                  words,
-                )}
-                {ride.cancelledAt ? (
-                  <>
-                    {" · "}
-                    <RelativeTime
-                      at={ride.cancelledAt}
-                      notation={notation}
-                      words={language}
-                      now={new Date()}
-                    />
-                  </>
-                ) : null}
-              </p>
-              {ride.cancellationNote ? (
-                <p className="whitespace-pre-wrap break-words">
-                  {ride.cancellationNote}
-                </p>
+          <DetailNotice
+            icon={Ban}
+            tone="muted"
+          >
+            <p className="font-medium">
+              {cancelledLabel
+                ? `${statuses.cancelled} · ${cancelledLabel}`
+                : statuses.cancelled}
+            </p>
+            <p className="text-ink-soft">
+              {formatMessage(
+                detail.cancelledBy,
+                {
+                  name: ride.cancelledBy?.name ?? dict.admin.history.someone,
+                },
+                words,
+              )}
+              {ride.cancelledAt ? (
+                <>
+                  {" · "}
+                  <RelativeTime
+                    at={ride.cancelledAt}
+                    notation={notation}
+                    words={language}
+                    now={new Date()}
+                  />
+                </>
               ) : null}
-              <p className="text-ink-soft">{detail.readOnlyCancelled}</p>
-            </div>
-          </section>
+            </p>
+            {ride.cancellationNote ? (
+              <p className="whitespace-pre-wrap break-words">
+                {ride.cancellationNote}
+              </p>
+            ) : null}
+            <p className="text-ink-soft">{detail.readOnlyCancelled}</p>
+          </DetailNotice>
         ) : ride.status === "completed" ? (
-          <p className="flex gap-2 rounded-xl bg-mint-tint px-4 py-3 text-2sm">
-            <Info
-              aria-hidden
-              className="mt-0.5 size-4 shrink-0"
-            />
-            {detail.readOnlyCompleted}
-          </p>
+          <DetailNotice>{detail.readOnlyCompleted}</DetailNotice>
         ) : null}
 
-        <DetailSection
-          title={detail.riders}
-          description={formatMessage(
-            detail.ridersCount,
-            { count: ride.roster.length },
-            words,
-          )}
-        >
-          <RideRoster
+        {ride.model === "event" ? (
+          <RideEventContent
             rideId={ride.id}
+            description={ride.description}
+            photos={ride.photos.map((photo) => photo.fileId)}
             editable={editable}
-            riders={ride.roster.map((entry) => ({
-              id: entry.passenger.id,
-              name: fullName(entry.passenger),
-            }))}
-            choices={riderChoices}
             language={language}
-            labels={{ ...detail, errors }}
+            labels={{
+              description: detail.description,
+              placeholder: detail.descriptionPlaceholder,
+              photos: detail.photos,
+              field,
+              markdown: markdownToolLabels(dict),
+              gallery: { ...dict.common.gallery, errors },
+            }}
           />
-        </DetailSection>
+        ) : null}
+
+        <RideRoster
+          rideId={ride.id}
+          editable={editable}
+          riders={ride.roster.map(({ passenger }) => ({
+            ...toPassengerChoice(passenger),
+            href: passenger.userId
+              ? `/admin/members/${passenger.userId}${scopeQuery}`
+              : null,
+          }))}
+          choices={riderChoices}
+          limit={limits.passengers}
+          language={language}
+          labels={{
+            ...pick(detail, ROSTER_LABELS),
+            errors,
+          }}
+          pick={{
+            search: people.search,
+            empty: riderChoices.length ? people.empty : detail.addRiderEmpty,
+          }}
+        />
 
         <DetailSection
           title={detail.noteForPilots}
@@ -381,45 +426,42 @@ export async function RideBody({
         >
           <PilotNote
             rideId={ride.id}
-            note={ride.note}
+            value={ride.note}
             editable={editable}
             label={detail.noteForPilots}
             placeholder={detail.notePlaceholder}
-            labels={{
-              edit: detail.edit,
-              saved: detail.saved,
-              undo: detail.undo,
-              undone: detail.undone,
-              invalid: detail.invalid,
-              errors,
-            }}
+            labels={field}
           />
         </DetailSection>
 
-        <DetailSection title={detail.history}>
-          <RideNoteComposer
-            rideId={ride.id}
-            labels={{ ...dict.rides.history.composer, errors }}
-          />
+        <HistorySection
+          title={detail.history}
+          composer={
+            <NoteComposer
+              action={addRideNoteAction}
+              input={{ rideId: ride.id }}
+              maxLength={RIDE_NOTE_MAX}
+              labels={{ ...dict.rides.history.composer, errors }}
+            />
+          }
+          pathname={pathname}
+          query={query}
+          shown={shown}
+          total={log.length}
+          showMoreLabel={dict.admin.history.showMore}
+        >
           <RideHistory
             entries={log.slice(0, shown)}
             viewerId={session.user.id}
             timeZone={zone}
-            labels={dict.rides.history}
+            labels={rideHistoryStrings(dict)}
             models={models}
             reasons={dict.rides.reasons}
             empty={detail.historyEmpty}
             notation={notation}
             words={language}
           />
-          <HistoryMore
-            pathname={pathname}
-            query={query}
-            shown={shown}
-            total={log.length}
-            label={dict.admin.history.showMore}
-          />
-        </DetailSection>
+        </HistorySection>
       </RideEditor>
     </>
   );

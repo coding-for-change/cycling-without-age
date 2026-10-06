@@ -830,7 +830,7 @@ rides — so the `RideTrishaw` rows stay as history.
 Every write on a ride (`scheduleRide`, `rescheduleRide`, `updateRideDetails`, `cancelRide`,
 `setRideTrishaws`, `assignVolunteer`, `unassignVolunteer`, `bookRider`, `cancelBooking`) runs in
 one transaction that writes the change, **one `RideLogEntry` per ride row** and **one domain
-event**, and does nothing at all when nothing changed (assigning a pilot twice is silent). Only
+event** (the facade's `record` writes both), and does nothing at all when nothing changed (assigning a pilot twice is silent). Only
 a `scheduled` ride can be changed (`rideClosed` otherwise). A cancelled one can only be deleted,
 and deleting is what frees its square on the calendar (`rideNotCancelled` for anything else).
 
@@ -854,19 +854,49 @@ and deleting is what frees its square on the calendar (`rideNotCancelled` for an
 - **Wall clock in, instants stored.** The scheduling drawer sends a date, a start and a length
   on the chapter's wall clock (`wallSlot`). `use-cases/schedule-ride.ts` reads the chapter's
   zone and turns it into instants with `slotWindow`; `slotOf` goes the other way for the detail
-  page. A length is real minutes, so a two-hour ride across a DST change still lasts two hours.
-- **Who may do it.** Every action in `features/rides/actions.ts` loads the ride and calls
-  `requireChapterAdmin(ride.chapterId)`: the chapter comes from the database, never from the
-  client. Putting a pilot on a ride goes through `use-cases/staff-ride.ts`, which requires the
+  page. `rescheduleRide` takes either a wall-clock slot or two instants and reads a slot in the
+  zone of the ride it has just locked. A length is real minutes, so a two-hour ride across a DST change still lasts two hours.
+- **Who may do it.** Every action on an existing ride in `features/rides/actions.ts` goes
+  through `onRide`, which reads the lean `rides.getRideScope` (id, chapter, trishaw ids) and
+  calls `requireChapterAdmin(ride.chapterId)`: the chapter comes from the database, never from
+  the client. The use cases take that scope instead of reading the ride again; the facade still
+  locks and re-reads the ride for its own checks. Putting a pilot on a ride goes through `use-cases/staff-ride.ts`, which requires the
   `pilot` role in the ride's own chapter (being its admin is not enough). Booking a rider goes
   through `use-cases/book-rider.ts`, which requires the rider to belong to the ride's chapter.
+- **What each model requires.** An event ride needs a `title` and a `capacity` (riders it
+  takes) and may carry a `description` and photos; a functional ride needs a destination; a
+  pleasure ride takes at most 2 riders, 1 trishaw and 1 pilot. `checkModel` in
+  `features/rides/schemas.ts` enforces this on both create and edit, and the facade refuses a
+  capacity below the riders already booked (`capacityBelowRoster`). The roster keeps an order
+  (`reorderRosterAction`, history event `rosterReordered`).
+- **Ride photos.** `RidePhoto` joins a ride to a `StoredFile` of kind `ridePhoto`, in order.
+  The drawer uploads before the ride exists, so any admin may stage one
+  (`requestRidePhotoUploadAction`, rate-limited); attaching it checks that the file is a ride
+  photo its uploader made or one the ride already shows. Presign, commit and the `StoredFile`
+  insert are the shared upload module in `lib/storage` (`requestUpload`, `commitUpload`, one
+  `UPLOAD_LIMIT`), used by the fleet's upload Actions as well; each feature's Action keeps its
+  own rule for who may upload which kind. `/api/files/[id]` reads the file's kind once
+  (`fileKindOf`) and asks `rides.photoReadRule` for a ride photo, `fleet.fileReadRule` for any
+  other kind: a photo on a ride is readable by that chapter's admins, a staged one only by its
+  uploader.
+- **Ride photo retention.** Ride photos are kept indefinitely; a file sits on at most one ride.
+- **Route estimate.** `estimateRouteAction` returns a cycling route between two points for the
+  drawer. It is admin-only and rate-limited per user, and logs no coordinates. The drawer sets a
+  functional ride's end to start + route time + 10 minutes until the admin edits the duration.
+  The detail page draws the same route in a Server Component under `"use cache"` for a day; a
+  failed lookup is not cached.
+- **Admin surfaces.** `/admin/rides` is a week calendar (drag to create, move and resize at 15
+  minutes; one day at a time below `md`) or, with `?view=list`, an infinite list grouped by
+  day. Dragging opens the schedule drawer with `?new=1&date=&start=&end=`; a move calls
+  `rescheduleRideAction` with Undo. Create happens in the drawer, everything after that inline
+  on the detail page, where a scheduled ride is cancelled and a cancelled one deleted from the
+  header trashcan.
 - **`seriesId`** is on every ride and unused. Recurrence will fill it; adding it now means no
   backfill then.
 
 The admin surfaces are the week grid at `/admin/rides` (`?new=1` opens the scheduling drawer,
-and ⌘K "Schedule a ride" lands there) and the detail page `/admin/rides/[rideId]`, where the
-trishaw allocation drawer lives at `?trishaws=1`. Old `/admin/rides?trishaws=<id>` links
-redirect to it.
+and ⌘K "Schedule a ride" lands there) and the detail page `/admin/rides/[rideId]`, whose
+trishaws panel allocates trishaws in place.
 
 ### Storage locations: a bike lives at a place, not at a chapter
 

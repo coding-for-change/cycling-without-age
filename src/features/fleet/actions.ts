@@ -13,8 +13,13 @@ import {
   requireCountryAdmin,
   requireSuperAdmin,
 } from "@/lib/auth-guards";
-import { actionFailure, type DomainErrorCode } from "@/lib/domain-error";
+import {
+  createAttempt,
+  type ActionResult,
+  type DomainErrorCode,
+} from "@/lib/domain-error";
 import { withinRateLimit } from "@/lib/rate-limit";
+import { commitUpload, requestUpload, withinUploadLimit } from "@/lib/storage";
 import { leavePool } from "@/use-cases/leave-pool";
 import { moveTrishaw } from "@/use-cases/move-trishaw";
 import {
@@ -66,31 +71,16 @@ const MAPPED_ERRORS = [
 export type FleetError =
   (typeof MAPPED_ERRORS)[number] | "rateLimited" | "generic";
 
-export type FleetResult<T extends object = object> =
-  ({ ok: true } & T) | { ok: false; error: FleetError };
+export type FleetResult<T extends object = object> = ActionResult<
+  FleetError,
+  T
+>;
 
 const INVALID = { ok: false, error: "generic" } as const;
 
-const ERROR_MAP: Partial<Record<DomainErrorCode, FleetError>> =
-  Object.fromEntries(MAPPED_ERRORS.map((code) => [code, code]));
-
-const failed = (error: unknown): { ok: false; error: FleetError } =>
-  actionFailure<FleetError>(error, ERROR_MAP);
-
-const refresh = () => revalidatePath("/admin", "layout");
-
-async function attempt<T extends object = object>(
-  run: () => Promise<T | void>,
-  { revalidate = true }: { revalidate?: boolean } = {},
-): Promise<FleetResult<T>> {
-  try {
-    const extra = await run();
-    if (revalidate) refresh();
-    return { ok: true, ...extra } as FleetResult<T>;
-  } catch (error) {
-    return failed(error);
-  }
-}
+const { attempt } = createAttempt(MAPPED_ERRORS, () =>
+  revalidatePath("/admin", "layout"),
+);
 
 export async function requestUploadAction(
   input: unknown,
@@ -104,17 +94,13 @@ export async function requestUploadAction(
   );
   if (parsed.data.kind === "damagePhoto" ? !isAdmin && !isPilot : !isAdmin)
     return INVALID;
-  if (
-    !withinRateLimit(`upload:${session.user.id}`, {
-      max: 30,
-      windowMs: 10 * 60_000,
-    })
-  )
+  if (!withinUploadLimit(session.user.id))
     return { ok: false, error: "rateLimited" };
 
-  return attempt(() => fleet.requestUpload(session.user.id, parsed.data), {
-    revalidate: false,
-  });
+  return attempt(
+    () => requestUpload(session.user.id, parsed.data.kind, parsed.data),
+    { revalidate: false },
+  );
 }
 
 export async function commitUploadAction(
@@ -125,7 +111,11 @@ export async function commitUploadAction(
   const session = await requireAuth();
   return attempt(
     async () => {
-      const file = await fleet.commitUpload(session.user.id, parsed.data);
+      const file = await commitUpload(
+        session.user.id,
+        parsed.data.kind,
+        parsed.data.key,
+      );
       return { fileId: file.id };
     },
     { revalidate: false },

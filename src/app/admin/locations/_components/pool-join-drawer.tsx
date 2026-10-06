@@ -14,6 +14,7 @@ import {
 import { requestPoolAccessAction } from "@/features/fleet/actions";
 import { useDrawerParam } from "@/hooks/use-drawer-param";
 import type { Dictionary } from "@/lib/i18n";
+import type { FleetCommon } from "@/features/fleet/components/strings";
 import { haptics } from "@/lib/native/haptics";
 
 export function PoolJoinDrawer({
@@ -23,7 +24,7 @@ export function PoolJoinDrawer({
 }: {
   chapters: { id: string; name: string }[];
   strings: Dictionary["fleet"]["locations"];
-  common: Dictionary["fleet"]["common"];
+  common: FleetCommon;
 }) {
   const searchParams = useSearchParams();
   const { go } = useDrawerParam();

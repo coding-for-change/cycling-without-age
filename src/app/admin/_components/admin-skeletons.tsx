@@ -1,11 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-export function PageHeaderSkeleton({
-  actions,
-}: {
-  actions: [string, ...string[]];
-}) {
+export function PageHeaderSkeleton({ actions = [] }: { actions?: string[] }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <Skeleton className="h-9 w-44" />

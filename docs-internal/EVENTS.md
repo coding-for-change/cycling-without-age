@@ -230,7 +230,7 @@ the worker):
 Nothing listens to these yet: `handlers.ts` maps each of them to `{}`, so the dispatcher marks
 them processed and enqueues nothing. PR 2 adds the `ride` notification kinds, and with them the
 listeners. The note for pilots and anyone's name never enter a payload; a kind that needs a name looks it
-up through `rides.listRideParticipants` and the facades, the way the existing kinds do.
+up through the facades, the way the existing kinds do.
 
 ## Watching the queues
 

@@ -1,17 +1,15 @@
 "use client";
 
 import { useId, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { Accessibility, FileText } from "lucide-react";
 import { InlineField, type InlineFieldLabels } from "@/components/inline-field";
-import { SaveStatus, SaveStatusProvider } from "@/components/save-status";
+import { SaveStatusProvider } from "@/components/save-status";
 import { useOptimisticSave } from "@/components/use-optimistic-save";
 import {
   ConfirmDeleteDialog,
   type ConfirmDeleteLabels,
 } from "@/components/confirm-delete-dialog";
-import { Accessibility, FileText } from "lucide-react";
 import { RichText } from "@/components/markdown";
-import { SidePanel } from "../../../_components/side-panel";
 import {
   TRISHAW_STATUSES,
   type TrishawStatusName,
@@ -23,7 +21,8 @@ import {
   setTrishawStatusAction,
   updateTrishawAction,
 } from "@/features/fleet/actions";
-import { FileThumb, fileUrl } from "@/features/fleet/components/file-image";
+import { FileThumb } from "@/features/fleet/components/file-image";
+import { fileUrl } from "@/lib/storage/file-url";
 import {
   LocationPicker,
   type LocationOption,
@@ -32,20 +31,8 @@ import {
 import {
   PhotoGallery,
   type PhotoGalleryLabels,
-} from "@/features/fleet/components/photo-gallery";
-import {
-  DetailHeader,
-  DetailLayout,
-  DetailSection,
-} from "../../../_components/detail-page";
-import { DetailTitle } from "../../../_components/detail-title";
-import {
-  PropertyList,
-  PropertyRow,
-  PropertySelect,
-  PropertyValue,
-  QUIET_COMBOBOX,
-} from "../../../_components/properties";
+} from "@/components/photo-gallery/photo-gallery";
+import { fleetUpload } from "@/features/fleet/components/fleet-upload";
 import {
   TrishawDamageBadge,
   TrishawStatusBadge,
@@ -61,6 +48,24 @@ import {
   type TypePickerLabels,
 } from "@/features/fleet/components/type-picker";
 import type { Locale } from "@/lib/i18n/locales";
+import {
+  DETAIL_MEDIA,
+  DetailHeader,
+  DetailHeaderActions,
+  DetailLayout,
+  DetailMeta,
+  DetailSection,
+} from "../../../_components/detail-page";
+import { DetailTitle } from "../../../_components/detail-title";
+import { EditableText } from "../../../_components/editable-text";
+import { OptimisticPropertySelect } from "../../../_components/optimistic-properties";
+import {
+  PropertyList,
+  PropertyRow,
+  PropertyValue,
+  QUIET_COMBOBOX,
+} from "../../../_components/properties";
+import { SidePanel } from "../../../_components/side-panel";
 
 export type TrishawEditorLabels = {
   field: InlineFieldLabels;
@@ -125,6 +130,7 @@ export type TrishawEditorProps = {
     description: string | null;
   } | null;
   canManage: boolean;
+  consequences: string[];
   types: TypeOption[];
   locations: LocationOption[];
   backHref: string;
@@ -147,6 +153,7 @@ function EditorLayout({
   damage,
   model,
   canManage,
+  consequences,
   types,
   locations,
   backHref,
@@ -155,16 +162,11 @@ function EditorLayout({
   panels,
   children,
 }: TrishawEditorProps) {
-  const router = useRouter();
   const ids = { status: useId(), model: useId(), location: useId() };
   const { id } = trishaw;
+  const addsFrame = canManage && trishaw.frameNumber === null;
 
   const [clearing, setClearing] = useState(false);
-  const status = useOptimisticSave(
-    trishaw.status,
-    (next) => setTrishawStatusAction(id, next),
-    labels.field,
-  );
   const type = useOptimisticSave(
     trishaw.typeId,
     (next) => updateTrishawAction(id, { typeId: next }),
@@ -175,7 +177,6 @@ function EditorLayout({
     (next) => moveTrishawAction(id, next),
     labels.field,
   );
-  const headerPhoto = trishaw.photoFileId ?? trishaw.typePhotoFileId;
 
   return (
     <DetailLayout
@@ -183,9 +184,9 @@ function EditorLayout({
         <DetailHeader
           media={
             <FileThumb
-              fileId={headerPhoto}
+              fileId={trishaw.photoFileId ?? trishaw.typePhotoFileId}
               alt={trishaw.name}
-              size="lg"
+              className={DETAIL_MEDIA}
             />
           }
           title={
@@ -202,13 +203,30 @@ function EditorLayout({
             />
           }
           aside={
-            <SaveStatus
-              labels={labels.status}
-              words={language}
-            />
+            <DetailHeaderActions
+              saveStatus={
+                canManage
+                  ? { labels: labels.status, words: language }
+                  : undefined
+              }
+            >
+              {canManage ? (
+                <ConfirmDeleteDialog
+                  variant="icon"
+                  name={trishaw.name}
+                  consequences={consequences}
+                  locale={language}
+                  labels={labels.delete}
+                  cancel={labels.cancel}
+                  action={deleteTrishawAction}
+                  input={id}
+                  redirectTo={backHref}
+                />
+              ) : null}
+            </DetailHeaderActions>
           }
         >
-          <div className="flex flex-wrap items-center gap-1.25">
+          {damage.state === "none" ? null : (
             <TrishawDamageBadge
               state={damage.state}
               label={
@@ -216,13 +234,12 @@ function EditorLayout({
               }
               count={damage.count}
             />
-          </div>
-          <p className="text-2sm text-ink-soft">
-            {[trishaw.typeName ?? labels.noModel, trishaw.locationName].join(
-              " · ",
-            )}
-          </p>
-          <p className="text-2sm text-ink-faint">{labels.since}</p>
+          )}
+          <DetailMeta>
+            {trishaw.typeName ?? labels.noModel}
+            {trishaw.locationName}
+            <span className="text-ink-faint">{labels.since}</span>
+          </DetailMeta>
         </DetailHeader>
       }
       sidebar={
@@ -235,18 +252,19 @@ function EditorLayout({
               >
                 {canManage ? (
                   <>
-                    <PropertySelect
+                    <OptimisticPropertySelect
                       id={ids.status}
-                      value={status.shown}
+                      value={trishaw.status}
                       options={TRISHAW_STATUSES.map((value) => ({
                         value,
                         label: labels.statuses[value],
                       }))}
-                      onChange={(next) => {
-                        if (next === status.shown) return;
-                        if (next === "active" && damage.grounding.length > 0)
-                          return setClearing(true);
-                        void status.persist(next, status.shown);
+                      onSave={(next) => setTrishawStatusAction(id, next)}
+                      intercept={(next) => {
+                        if (next !== "active" || damage.grounding.length === 0)
+                          return false;
+                        setClearing(true);
+                        return true;
                       }}
                       display={(value) => (
                         <TrishawStatusBadge
@@ -254,6 +272,7 @@ function EditorLayout({
                           label={labels.statuses[value]}
                         />
                       )}
+                      labels={labels.field}
                     />
                     <DamageClearDialog
                       damages={damage.grounding}
@@ -265,13 +284,13 @@ function EditorLayout({
                   </>
                 ) : (
                   <TrishawStatusBadge
-                    status={status.shown}
-                    label={labels.statuses[status.shown]}
+                    status={trishaw.status}
+                    label={labels.statuses[trishaw.status]}
                   />
                 )}
               </PropertyRow>
               <PropertyRow label={labels.frameNumber}>
-                {canManage && trishaw.frameNumber === null ? (
+                {addsFrame ? (
                   <InlineField
                     compact
                     maxLength={64}
@@ -345,13 +364,9 @@ function EditorLayout({
                     <PropertyValue>{model.seats}</PropertyValue>
                   </PropertyRow>
                   <PropertyRow label={labels.wheelchair}>
-                    <PropertyValue className="inline-flex items-center gap-1.25">
-                      {model.wheelchair ? (
-                        <Accessibility
-                          aria-hidden
-                          className="size-3.5"
-                        />
-                      ) : null}
+                    <PropertyValue
+                      icon={model.wheelchair ? Accessibility : undefined}
+                    >
                       {model.wheelchair ? labels.yes : labels.no}
                     </PropertyValue>
                   </PropertyRow>
@@ -373,31 +388,6 @@ function EditorLayout({
                   ) : null}
                 </>
               ) : null}
-              <PropertyRow
-                label={labels.note}
-                align="start"
-              >
-                {canManage ? (
-                  <InlineField
-                    compact
-                    multiline
-                    maxLength={2000}
-                    value={trishaw.note}
-                    label={labels.note}
-                    placeholder={labels.notePlaceholder}
-                    onSave={(next) => updateTrishawAction(id, { note: next })}
-                    labels={labels.field}
-                    className="text-2sm"
-                  />
-                ) : (
-                  <PropertyValue
-                    muted={!trishaw.note}
-                    className="whitespace-pre-wrap"
-                  >
-                    {trishaw.note ?? "–"}
-                  </PropertyValue>
-                )}
-              </PropertyRow>
             </PropertyList>
             {model?.description ? (
               <div className="grid gap-1 border-t border-line pt-3">
@@ -413,17 +403,6 @@ function EditorLayout({
           </SidePanel>
 
           {panels}
-
-          {canManage ? (
-            <ConfirmDeleteDialog
-              name={trishaw.name}
-              locale={language}
-              labels={labels.delete}
-              cancel={labels.cancel}
-              action={() => deleteTrishawAction(id)}
-              onDone={() => router.push(backHref)}
-            />
-          ) : null}
         </>
       }
     >
@@ -434,6 +413,7 @@ function EditorLayout({
         >
           <PhotoGallery
             kind="trishawPhoto"
+            upload={fleetUpload("trishawPhoto")}
             locale={language}
             value={trishaw.photoFileIds}
             readOnly={!canManage}
@@ -443,6 +423,18 @@ function EditorLayout({
           />
         </DetailSection>
       ) : null}
+      <DetailSection title={labels.note}>
+        <EditableText
+          editable={canManage}
+          multiline
+          maxLength={2000}
+          value={trishaw.note}
+          label={labels.note}
+          placeholder={labels.notePlaceholder}
+          onSave={(next) => updateTrishawAction(id, { note: next })}
+          labels={labels.field}
+        />
+      </DetailSection>
       {children}
     </DetailLayout>
   );

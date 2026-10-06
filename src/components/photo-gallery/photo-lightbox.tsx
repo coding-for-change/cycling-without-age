@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { formatMessage } from "@/lib/i18n/format";
-import { fileUrl } from "./file-image";
+import { fileUrl } from "@/lib/storage/file-url";
 import type { Locale } from "@/lib/i18n/locales";
 
 export type LightboxLabels = {

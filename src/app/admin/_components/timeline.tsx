@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Children, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   formatDate,
@@ -8,14 +8,80 @@ import {
 } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export const payloadStrings = (payload: unknown): Record<string, string> =>
-  payload && typeof payload === "object" && !Array.isArray(payload)
-    ? Object.fromEntries(
-        Object.entries(payload).filter(
-          ([, value]) => typeof value === "string",
-        ),
-      )
+export const asRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
     : {};
+
+export const asText = (value: unknown) =>
+  typeof value === "string" ? value : "";
+
+export const payloadStrings = (payload: unknown): Record<string, string> =>
+  Object.fromEntries(
+    Object.entries(asRecord(payload)).filter(
+      ([, value]) => typeof value === "string",
+    ),
+  ) as Record<string, string>;
+
+export function TimelineList({
+  empty,
+  children,
+}: {
+  empty: string;
+  children: ReactNode;
+}) {
+  if (Children.count(children) === 0)
+    return <p className="text-2sm text-ink-soft">{empty}</p>;
+  return <ol>{children}</ol>;
+}
+
+export function TimelineHeadline({
+  sentence,
+  at,
+  notation,
+  words,
+  now,
+}: {
+  sentence: ReactNode;
+  at: Date;
+  notation: Locale;
+  words: string;
+  now: Date;
+}) {
+  return (
+    <p className="text-2sm text-ink-soft">
+      <span className="text-ink">{sentence}</span>
+      {" · "}
+      <RelativeTime
+        at={at}
+        notation={notation}
+        words={words}
+        now={now}
+      />
+    </p>
+  );
+}
+
+export function TimelineBubble({
+  tone = "note",
+  children,
+}: {
+  tone?: "note" | "muted";
+  children: ReactNode;
+}) {
+  return (
+    <p
+      className={cn(
+        "rounded-xl px-3 py-2 text-2sm break-words",
+        tone === "note"
+          ? "bg-mint-tint whitespace-pre-wrap text-ink"
+          : "bg-canvas-deep text-ink-soft",
+      )}
+    >
+      {children}
+    </p>
+  );
+}
 
 export function TimelineEntry({
   icon: Icon,

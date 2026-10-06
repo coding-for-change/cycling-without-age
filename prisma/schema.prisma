@@ -603,6 +603,7 @@ enum RideLogType {
   pilotUnassigned
   riderBooked
   riderRemoved
+  rosterReordered
   note
 }
 
@@ -618,6 +619,7 @@ enum StoredFileKind {
   trishawPhoto
   entrancePhoto
   damagePhoto
+  ridePhoto
 }
 
 /// An object in the private bucket. Served only through `/api/files/[id]`,
@@ -639,6 +641,7 @@ model StoredFile {
   damagePhotos   TrishawDamage[]    @relation("damagePhoto")
   typeGallery    TrishawTypePhoto[]
   trishawGallery TrishawPhoto[]
+  ridePhotos     RidePhoto[]
 
   @@map("stored_file")
 }
@@ -861,6 +864,10 @@ model Ride {
   model     RideModel    @default(event)
   status    RideStatus   @default(scheduled)
 
+  title       String? @db.VarChar(120)
+  description String? @db.Text
+  capacity    Int?
+
   startsAt DateTime
   endsAt   DateTime
 
@@ -896,6 +903,7 @@ model Ride {
   roster      RideRosterEntry[]
   damages     TrishawDamage[]
   log         RideLogEntry[]
+  photos      RidePhoto[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -905,6 +913,20 @@ model Ride {
   @@index([seriesId])
   @@index([cancelledByUserId])
   @@map("ride")
+}
+
+model RidePhoto {
+  id        String     @id @default(cuid())
+  rideId    String
+  ride      Ride       @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  fileId    String
+  file      StoredFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  position  Int
+  createdAt DateTime   @default(now())
+
+  @@unique([fileId])
+  @@index([rideId, position])
+  @@map("ride_photo")
 }
 
 /// A ride's own history, the way `TrishawLogEntry` is a trishaw's. The payload

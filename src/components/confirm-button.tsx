@@ -36,6 +36,7 @@ export function ConfirmButton({
   className,
   size = "sm",
   variant = "outline",
+  iconOnly = false,
 }: {
   icon?: ReactNode;
   label: string;
@@ -51,6 +52,7 @@ export function ConfirmButton({
   className?: string;
   size?: "sm" | "default";
   variant?: "outline" | "ghost";
+  iconOnly?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -76,14 +78,16 @@ export function ConfirmButton({
       <AlertDialogTrigger asChild>
         <Button
           variant={variant}
-          size={size}
+          size={iconOnly ? "icon" : size}
+          aria-label={iconOnly ? label : undefined}
+          title={iconOnly ? label : undefined}
           className={cn(
             destructive && "text-red hover:bg-red-tint hover:text-red",
             className,
           )}
         >
           {icon}
-          {label}
+          {iconOnly ? null : label}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent aria-busy={pending}>

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { chapterRole } from "@/lib/access";
+import { RIDE_CANCELLATION_REASONS } from "@/lib/ride-cancellation";
 
 const rideScope = {
   rideId: z.string().min(1),
@@ -8,15 +9,7 @@ const rideScope = {
   actorUserId: z.string().min(1).nullable(),
 };
 
-const rideReasons = z.enum([
-  "weather",
-  "rider",
-  "facility",
-  "volunteers",
-  "equipment",
-  "noRiders",
-  "other",
-]);
+const rideReasons = z.enum(RIDE_CANCELLATION_REASONS);
 
 export const eventSchema = z.discriminatedUnion("type", [
   z.object({

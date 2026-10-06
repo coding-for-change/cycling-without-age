@@ -25,6 +25,12 @@ export const findPassengerById = (id: string) =>
     select: { id: true, chapterId: true, firstName: true, lastName: true },
   });
 
+export const findPassengersByIds = (ids: string[]) =>
+  prisma.passenger.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, chapterId: true, firstName: true, lastName: true },
+  });
+
 export const findPassengerOfUser = (userId: string) =>
   prisma.passenger.findUnique({ where: { userId } });
 

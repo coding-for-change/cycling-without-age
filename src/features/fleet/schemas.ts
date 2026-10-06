@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { FILE_KINDS } from "@/lib/storage/limits";
+import { uploadCommit, uploadRequest } from "@/lib/storage/limits";
 
 export const TRISHAW_STATUSES = ["active", "maintenance", "retired"] as const;
 export const CATALOGUE_SCOPES = ["global", "country", "chapter"] as const;
@@ -16,18 +16,17 @@ const optionalText = (max: number) =>
     .transform((value) => value || null)
     .nullable();
 
-export const fileKind = z.enum(FILE_KINDS);
+export const fileKind = z.enum([
+  "typePhoto",
+  "typeManual",
+  "trishawPhoto",
+  "entrancePhoto",
+  "damagePhoto",
+]);
 
-export const uploadRequestInput = z.object({
-  kind: fileKind,
-  mime: z.string().min(1).max(100),
-  size: z.number().int().positive(),
-});
+export const uploadRequestInput = uploadRequest.extend({ kind: fileKind });
 
-export const uploadCommitInput = z.object({
-  kind: fileKind,
-  key: z.string().min(1).max(255),
-});
+export const uploadCommitInput = uploadCommit.extend({ kind: fileKind });
 
 export const typeOwner = z.discriminatedUnion("scope", [
   z.object({ scope: z.literal("global") }),

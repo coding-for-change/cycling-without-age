@@ -1,145 +1,132 @@
 "use client";
 
-import Link from "next/link";
-import { useId, useState, useTransition } from "react";
-import { X } from "lucide-react";
-import { notify } from "@/components/action-feedback";
-import { EntityCombobox } from "@/components/entity-combobox";
+import { useTransition } from "react";
+import { notify, type ActionResult } from "@/components/action-feedback";
+import { PersonPicker, type PersonOption } from "@/components/people-picker";
 import { PersonAvatar } from "@/components/person-avatar";
-import { Button } from "@/components/ui/button";
 import {
   assignPilotAction,
   unassignPilotAction,
 } from "@/features/rides/actions";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
-import { cn } from "@/lib/utils";
-import type { RosterLabels } from "./ride-roster";
+import { DetailEmpty } from "../../../_components/detail-page";
+import {
+  CountMeta,
+  PanelAddButton,
+  PanelItem,
+  SidePanel,
+} from "../../../_components/side-panel";
+import type { PilotLabels } from "./panel-labels";
 
 type Pilot = { id: string; name: string; href: string; avatar: string };
-type Choice = { id: string; name: string };
 
 export function RidePilots({
   rideId,
   editable,
-  required,
   assigned,
+  required,
+  limit,
   choices,
   language,
   labels,
+  pick,
 }: {
   rideId: string;
   editable: boolean;
-  required: number;
   assigned: Pilot[];
-  choices: Choice[];
+  required: number;
+  limit: number | null;
+  choices: PersonOption[];
   language: Locale;
-  labels: RosterLabels;
+  labels: PilotLabels;
+  pick: { search: string; empty: string };
 }) {
-  const pickerId = useId();
-  const [picker, setPicker] = useState(0);
   const [pending, startTransition] = useTransition();
   const say = (template: string, name: string) =>
     formatMessage(template, { name }, language);
-  const short = assigned.length < required;
+  const full = limit !== null && assigned.length >= limit;
 
-  const assign = (userId: string | null) => {
-    const pilot = choices.find((choice) => choice.id === userId);
-    if (!pilot) return;
+  const run = (
+    action: (input: {
+      rideId: string;
+      userId: string;
+    }) => Promise<ActionResult>,
+    pilot: { id: string; name: string },
+    done: string,
+  ) =>
     startTransition(async () => {
-      const result = await assignPilotAction({ rideId, userId: pilot.id });
-      notify(result, {
-        done: say(labels.pilotAdded, pilot.name),
-        errors: labels.errors,
-      });
-      setPicker((count) => count + 1);
-    });
-  };
-
-  const remove = (pilot: Pilot) =>
-    startTransition(async () => {
-      const result = await unassignPilotAction({ rideId, userId: pilot.id });
-      notify(result, {
-        done: say(labels.pilotRemoved, pilot.name),
-        errors: labels.errors,
-      });
+      const result = await action({ rideId, userId: pilot.id });
+      notify(result, { done: say(done, pilot.name), errors: labels.errors });
     });
 
   return (
-    <div
-      aria-busy={pending}
-      className="grid gap-3"
+    <SidePanel
+      title={labels.pilots}
+      meta={
+        <CountMeta
+          count={assigned.length}
+          max={required}
+          highlight={assigned.length < required}
+          srLabel={formatMessage(
+            labels.pilotsCount,
+            { assigned: assigned.length, required },
+            language,
+          )}
+        />
+      }
+      action={
+        editable ? (
+          <PersonPicker
+            options={choices}
+            onPick={(pilot) => run(assignPilotAction, pilot, labels.added)}
+            strings={pick}
+          >
+            <PanelAddButton
+              disabled={pending || full || choices.length === 0}
+              label={full ? labels.full : labels.addPilot}
+              title={
+                full
+                  ? labels.full
+                  : choices.length === 0
+                    ? labels.addPilotEmpty
+                    : labels.addPilot
+              }
+            />
+          </PersonPicker>
+        ) : undefined
+      }
     >
-      <p
-        className={cn(
-          "text-2sm tabular-nums",
-          short ? "text-ink" : "text-ink-soft",
-        )}
-      >
-        {formatMessage(
-          labels.pilotsCount,
-          { assigned: assigned.length, required },
-          language,
-        )}
-      </p>
       {assigned.length > 0 ? (
-        <ul className="grid gap-1">
+        <ul
+          aria-busy={pending}
+          className="grid gap-1"
+        >
           {assigned.map((pilot) => (
-            <li
+            <PanelItem
               key={pilot.id}
-              className="flex min-h-8 items-center gap-2"
-            >
-              <Link
-                href={pilot.href}
-                className="flex min-w-0 flex-1 items-center gap-2 rounded-md text-2sm underline-offset-2 hover:underline"
-              >
+              href={pilot.href}
+              leading={
                 <PersonAvatar
                   svg={pilot.avatar}
                   size="sm"
+                  className="size-5"
                 />
-                <span className="truncate">{pilot.name}</span>
-              </Link>
-              {editable ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  disabled={pending}
-                  onClick={() => remove(pilot)}
-                  aria-label={say(labels.removePilot, pilot.name)}
-                  className="size-8 text-ink-soft hover:text-ink"
-                >
-                  <X aria-hidden />
-                </Button>
-              ) : null}
-            </li>
+              }
+              label={pilot.name}
+              onRemove={
+                editable
+                  ? () => run(unassignPilotAction, pilot, labels.removed)
+                  : undefined
+              }
+              removeLabel={say(labels.remove, pilot.name)}
+              disabled={pending}
+            />
           ))}
         </ul>
       ) : (
-        <p className="text-2sm text-ink-soft">{labels.noPilots}</p>
+        <DetailEmpty variant="panel">{labels.emptyPilots}</DetailEmpty>
       )}
-      {editable ? (
-        <div>
-          <label
-            htmlFor={pickerId}
-            className="sr-only"
-          >
-            {labels.addPilot}
-          </label>
-          <EntityCombobox
-            key={picker}
-            id={pickerId}
-            items={choices}
-            value={null}
-            onChange={assign}
-            getLabel={(person) => person.name}
-            renderItem={(person) => person.name}
-            placeholder={labels.addPilot}
-            empty={labels.addPilotEmpty}
-            className="h-9 bg-canvas text-2sm"
-          />
-        </div>
-      ) : null}
-    </div>
+    </SidePanel>
   );
 }

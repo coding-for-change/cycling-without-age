@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import type { AdminSearchParams } from "../active-scope";
-import { hrefWith } from "./href-with";
+import { hrefWith } from "@/lib/search-params";
 
 export const HISTORY_PAGE = 10;
 

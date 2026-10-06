@@ -393,6 +393,7 @@ graph TD
   ACT15 --> U38
   RT4 --> G
   RT4 --> F11
+  RT4 --> F9
   RT4 --> STO
   ADM --> U31
   ADM --> U34
@@ -401,6 +402,8 @@ graph TD
   U31 --> F11
   U31 --> F9
   U31 --> F1
+  U31 --> F2
+  U31 --> F4
   U37 --> F2
   U37 --> F9
   U38 --> F4
@@ -466,7 +469,7 @@ graph TD
 | `chat-notifications/notify-chat-message` | `chat`, `profile`, `notifications` (+ `lib/realtime` presence, BullMQ) | The `chat.messageSent` listener. Drops the sender, then per recipient in chunks of 25: mute, `presence.isFocusedOn`, preference, device tokens — a `chat` push job for anyone reachable, a debounced `chat-digest` mail job for anyone not. Writes no `Notification` row: chat never appears in the bell. |
 | `chat-notifications/deliver-chat-push` | `chat`, `profile`, `notifications` (+ `lib/push`) | One banner for one message, re-deciding at wake-up: still unread, still unmuted, still opted in. Titled "Anna Berg" or "Anna Berg · Saturday crew", body stripped of markdown to 140 characters, collapsed per conversation so ten messages are one banner. |
 | `calendar-feed` | `calendar-feeds`, `membership`, `passengers`, `rides` (+ `lib/ics`) | One poll of a subscribed calendar: `calendar-feeds` turns the address into an owner (signature first, then the row, then the ban check), `membership` says where that owner may read rides as a pilot (`/pilot`'s rule: the pilot role somewhere, current membership of the ride's chapter), `passengers` names the riders they manage, and `rides` returns the union with nobody's name in it. The strings come from the owner's stored locale, because a poll carries no session. Called only from the feed route (RT3). |
-| `schedule-ride` | `chapters`, `fleet`, `rides` | Whether a chapter may use a trishaw (its location, a pool it was approved for, the status) is the fleet's rule; the reservation under a row lock is the calendar's. `scheduleRideAt` reads the chapter's time zone from `chapters` to turn the drawer's wall-clock slot into instants, and a functional round trip into two windows. `allocateTrishaws` checks only the trishaws being *added*, so one grounded after allocation stays on the ride with a warning instead of blocking every other edit. `allocationChoices` and `freeTrishawsInWindow` read overlapping rides across every chapter that shares a pool, because a pooled bike booked by the neighbour is still booked. |
+| `schedule-ride` | `chapters`, `fleet`, `membership`, `passengers`, `rides` | Whether a chapter may use a trishaw (its location, a pool it was approved for, the status) is the fleet's rule; the reservation under a row lock is the calendar's. `scheduleRideAt` reads the chapter's time zone from `chapters` to turn the drawer's wall-clock slot into instants, and a functional round trip into two windows. Riders and pilots named at scheduling are checked in one batch each (`passengers.getPassengers`, `membership.getMembersRoles`). `allocateTrishaws` takes the ride scope the Action already read and checks only the trishaws being *added*, so one grounded after allocation stays on the ride with a warning instead of blocking every other edit. `trishawChoicesForRide` and `freeTrishawsInWindow` ask `rides.bookedTrishawIds` which of the chapter's trishaws any live ride holds in the window, whichever chapter booked it, because a pooled bike booked by the neighbour is still booked. |
 | `staff-ride` | `membership`, `rides` | An admin may put only someone holding the `pilot` role in the ride's own chapter on it; that role is membership's, the assignment the calendar's. Taking a pilot off is single-feature, so that Action calls `rides.unassignVolunteer` directly. |
 | `book-rider` | `passengers`, `rides` | A rider joins a ride of their own chapter only; which chapter a rider belongs to is the passengers' rule. Removing a rider calls `rides.cancelBooking` directly. |
 | `report-damage` | `fleet`, `rides` | A pilot may report only on a ride they were assigned to and a trishaw that was on it (`rides`); the damage, the grounding and the `trishaw.damageReported` event are `fleet`'s. The upcoming rides a grounding endangers come from `rides` and travel in the event. |
@@ -621,12 +624,18 @@ Action passes it to `requireAdminOf` in `lib/auth-guards`, which evaluates it wi
 `allowsAdmin` from `lib/access`. The facade never sees a session.
 
 `RT4` (`/api/files/[id]`) is the only way a stored file is served: `getSession`, then
-`fleet.fileReadRule` describes per kind who may read it as plain data (anyone, the uploader,
+`lib/storage.fileKindOf` reads the file's kind once and hands it to the owning feature —
+`rides.photoReadRule` for a `ridePhoto`, `fleet.fileReadRule` for every other kind — which describes who may read it as plain data (anyone, the uploader,
 the location's members and admins, or a damage's reporter and admins), `canReadFile` in
 `lib/auth-guards` decides for the session, then a 302 to a five-minute signed GET. `lib/storage`
-(STO) is infrastructure like `lib/mailer`: presigned PUTs to the private bucket, then a commit
-step that HEADs the staged object, re-encodes images to WebP with `sharp` (PDFs must start with
-`%PDF-`) and writes the final key. Nothing a browser uploaded is served unprocessed.
+(STO) is infrastructure like `lib/mailer`: `requestUpload` presigns a PUT to the private bucket,
+`commitUpload` HEADs the staged object, re-encodes images to WebP with `sharp` (PDFs must start
+with `%PDF-`), writes the final key and inserts the `StoredFile` row. One `UPLOAD_LIMIT`
+(`withinUploadLimit`) is shared by every upload Action; who may upload which kind stays each
+feature's Action rule. On the client, `hooks/use-presigned-upload` runs presign → PUT → commit
+against a feature's two Actions, and `hooks/use-photo-list` holds the optimistic photo list
+(pending uploads, remove with Undo, reorder) behind both the fleet `PhotoGallery` and the ride
+photo strip. Nothing a browser uploaded is served unprocessed.
 `lib/native/camera` (NC) is the only importer of `@capacitor/camera`.
 
 The notification kinds (U19) now reach `fleet` for trishaw and pool names:

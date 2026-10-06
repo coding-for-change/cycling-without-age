@@ -1,10 +1,5 @@
-import type { Locale } from "@/lib/format";
+import type { ReactNode } from "react";
 import type { AdminSearchParams } from "../active-scope";
-import {
-  ActivityFeed,
-  type FeedEvent,
-  type HistoryLabels,
-} from "../members/[userId]/_components/activity-feed";
 import { DetailSection } from "./detail-page";
 import { HistoryMore } from "./history-more";
 
@@ -12,43 +7,33 @@ export const historyTake = (shown: number) => shown + 1;
 
 export function HistorySection({
   title,
+  composer,
+  children,
   pathname,
   query,
   shown,
-  events,
-  viewerId,
-  labels,
-  empty,
-  notation,
-  words,
+  total,
+  showMoreLabel,
 }: {
   title: string;
+  composer?: ReactNode;
+  children: ReactNode;
   pathname: string;
   query: AdminSearchParams;
   shown: number;
-  events: FeedEvent[];
-  viewerId: string;
-  labels: HistoryLabels & { showMore: string };
-  empty: string;
-  notation: Locale;
-  words: string;
+  total: number;
+  showMoreLabel: string;
 }) {
   return (
     <DetailSection title={title}>
-      <ActivityFeed
-        events={events.slice(0, shown)}
-        viewerId={viewerId}
-        labels={labels}
-        empty={empty}
-        notation={notation}
-        words={words}
-      />
+      {composer}
+      {children}
       <HistoryMore
         pathname={pathname}
         query={query}
         shown={shown}
-        total={events.length}
-        label={labels.showMore}
+        total={total}
+        label={showMoreLabel}
       />
     </DetailSection>
   );

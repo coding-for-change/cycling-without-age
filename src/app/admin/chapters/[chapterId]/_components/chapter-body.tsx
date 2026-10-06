@@ -4,11 +4,15 @@ import { notFound } from "next/navigation";
 import { Armchair, Inbox, Users } from "lucide-react";
 import { QrCode } from "@/components/qr-code";
 import { BackLink } from "../../../_components/detail-page";
+import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import {
+  PROPERTY_BUTTON,
   PropertyList,
   PropertyRow,
   PropertyValue,
 } from "../../../_components/properties";
+import { ActivityFeed } from "../../../_components/activity-feed";
+import { fieldLabels } from "../../../_components/field-labels";
 import { historyShown } from "../../../_components/history-more";
 import {
   HistorySection,
@@ -26,7 +30,7 @@ import { getDictionary, getLocale } from "@/lib/i18n";
 import { supportedTimeZones } from "@/lib/time-zone";
 import { readActiveScope } from "../../../active-scope";
 import { ChapterEditor } from "./chapter-editor";
-import { DeleteChapterDialog } from "./delete-chapter-dialog";
+import { deleteChapterAction } from "../../actions";
 import type { AdminSearchParams } from "../../../active-scope";
 
 export async function ChapterBody({
@@ -108,9 +112,7 @@ export async function ChapterBody({
     },
   ];
 
-  const compact = "h-8 min-h-8 justify-start text-2sm";
-
-  const properties = (
+  const panels = (
     <>
       <SidePanel title={detail.properties}>
         <PropertyList>
@@ -161,51 +163,10 @@ export async function ChapterBody({
           slug={chapter.slug}
           labels={dict.admin.settings.joinLink}
           className="grid gap-1"
-          buttonClassName={compact}
+          buttonClassName={PROPERTY_BUTTON}
         />
       </SidePanel>
-
-      <div className="grid gap-1">
-        <DeleteChapterDialog
-          chapterId={chapter.id}
-          name={chapter.name}
-          consequences={deletionConsequences(
-            {
-              members: footprint.members,
-              passengers: footprint.passengers,
-              pending: footprint.pendingApplications,
-              rides: footprint.rides,
-              ...fleetFootprint,
-            },
-            dict.admin.deletion,
-            language,
-          )}
-          backHref={backHref}
-          labels={{
-            ...detail.delete,
-            consequences: dict.admin.deletion.consequences,
-            errors: strings.errors,
-          }}
-          cancel={strings.cancel}
-          locale={language}
-        />
-      </div>
     </>
-  );
-
-  const history = (
-    <HistorySection
-      title={detail.history}
-      pathname={`/admin/chapters/${chapterId}`}
-      query={query}
-      shown={shown}
-      events={events}
-      viewerId={session.user.id}
-      labels={dict.admin.history}
-      empty={detail.historyEmpty}
-      notation={notation}
-      words={language}
-    />
   );
 
   return (
@@ -233,14 +194,10 @@ export async function ChapterBody({
         language={language}
         notation={notation}
         labels={{
-          field: {
-            edit: detail.edit,
-            saved: strings.saved,
-            undo: detail.undo,
-            undone: detail.undone,
-            invalid: detail.invalidUrl,
-            errors: strings.errors,
-          },
+          field: fieldLabels(
+            { ...detail, saved: strings.saved, invalid: detail.invalidUrl },
+            strings.errors,
+          ),
           status: { saving: detail.saving, saved: detail.saved },
           fields: {
             name: strings.fields.name,
@@ -259,9 +216,54 @@ export async function ChapterBody({
           timeZone: detail.timeZone,
           timeZoneHint: detail.timeZoneHint,
         }}
-        history={history}
-        properties={properties}
-      />
+        trash={
+          <ConfirmDeleteDialog
+            key="trash"
+            variant="icon"
+            name={chapter.name}
+            consequences={deletionConsequences(
+              {
+                members: footprint.members,
+                passengers: footprint.passengers,
+                pending: footprint.pendingApplications,
+                rides: footprint.rides,
+                ...fleetFootprint,
+              },
+              dict.admin.deletion,
+              language,
+            )}
+            labels={{
+              ...detail.delete,
+              consequences: dict.admin.deletion.consequences,
+              errors: strings.errors,
+            }}
+            cancel={strings.cancel}
+            locale={language}
+            action={deleteChapterAction}
+            input={chapter.id}
+            redirectTo={backHref}
+          />
+        }
+        panels={panels}
+      >
+        <HistorySection
+          title={detail.history}
+          pathname={`/admin/chapters/${chapterId}`}
+          query={query}
+          shown={shown}
+          total={events.length}
+          showMoreLabel={dict.admin.history.showMore}
+        >
+          <ActivityFeed
+            events={events.slice(0, shown)}
+            viewerId={session.user.id}
+            labels={dict.admin.history}
+            empty={detail.historyEmpty}
+            notation={notation}
+            words={language}
+          />
+        </HistorySection>
+      </ChapterEditor>
     </>
   );
 }
