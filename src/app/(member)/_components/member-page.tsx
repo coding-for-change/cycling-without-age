@@ -9,11 +9,25 @@ import type { MemberPerspective } from "../nav";
 import { MEMBER_LIFE } from "./instant";
 import { EmptyState } from "@/components/empty-state";
 
+const MEMBER_ENTER = {
+  push: "push-in",
+  pop: "pop-in",
+  tab: "tab-in",
+  default: "tab-in",
+} as const;
+
+const MEMBER_EXIT = {
+  push: "push-out",
+  pop: "pop-out",
+  tab: "tab-out",
+  default: "tab-out",
+} as const;
+
 export function MemberPageShell({ children }: { children: ReactNode }) {
   return (
     <ViewTransition
-      enter="tab-in"
-      exit="tab-out"
+      enter={MEMBER_ENTER}
+      exit={MEMBER_EXIT}
       default="none"
     >
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 pt-2 pb-8 lg:px-6">

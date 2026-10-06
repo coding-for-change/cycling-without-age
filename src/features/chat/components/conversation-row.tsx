@@ -69,6 +69,7 @@ export function ConversationRow({
   return (
     <Link
       href={`${home}/chat/${item.id}`}
+      transitionTypes={["push"]}
       aria-current={active ? "page" : undefined}
       className={cn(
         "flex items-start gap-3 rounded-lg px-3 py-3 transition-colors",

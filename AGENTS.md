@@ -133,3 +133,20 @@ client-only: call them from client components; the wrappers are SSR-safe
   tied to the site by the `webcredentials:` entitlement, the Android `asset_statements`
   meta-data and `/.well-known/apple-app-site-association` + `/.well-known/assetlinks.json`
   (`src/app/.well-known/*`, identifiers in `src/lib/native-app.ts`).
+- The iOS tab bar goes through `@/lib/native/navigation` (`configureNativeNavigation`,
+  `setNativeTabs`, `hideNativeTabs`, `onTabSelect`); it is a no-op off iOS. `<NativeTabBar />` is
+  its only caller. Tab rows and SF Symbols come from `MEMBER_NAV` in `src/app/(member)/nav.ts`.
+- Member navigation passes a view-transition type: `push` into a detail, `pop` back out, `tab`
+  between tabs. Swipe-back is WKWebView's own gesture, off by default
+  (`ios/App/App/AppViewController.swift`); `<NativeSwipeBack />` turns it on through
+  `@/lib/native/swipe-back` (the in-app `SwipeBackPlugin`) only on a drill-down below a tab root
+  (`isDrillDown` in `src/app/(member)/nav.ts`), never between tabs. Never animate a popstate on
+  top of it. Capacitor forces `scrollView.bounces = false`; `AppViewController` turns the rubber
+  band back on and CSS limits it to `data-shell="ios"`. On iOS phones the member top bar
+  (`data-slot="member-top-bar"`) is `position: fixed` and `[data-member-inset]` pads for it, so
+  only content stretches; the WebView ground is `#ffffff` (`backgroundColor` in
+  `capacitor.config.ts`), never the system's dark background.
+- iOS runs the keyboard with `resize: "none"`: the WebView keeps its size, `@/lib/native/keyboard`
+  writes the keyboard height to `--keyboard-inset`, and a full-screen surface with a bottom
+  composer pads itself with it and calls `lockWebViewScroll()` while mounted, so the header stays
+  put (chat thread). The form accessory bar is hidden.

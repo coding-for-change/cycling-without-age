@@ -90,6 +90,32 @@ is the mirror image: `firebase-admin` may only be imported by `src/lib/push.ts`,
 credentials have exactly one import site and cannot reach a browser bundle. See AGENTS.md §7 for
 the operational rules.
 
+### Native chrome, offline shell and motion (COD-251)
+
+- **Tab bar.** On iOS the member tabs are a native `UITabBar` (Liquid Glass on iOS 26) drawn by
+  `@capgo/capacitor-native-navigation` through `src/lib/native/navigation.ts`. `MemberTabBar`
+  picks the branch on the server from the user agent (`isNativeIosUserAgent`), so the web pill
+  never flashes; Android and browsers keep `MobileTabBar`. `NativeTabBar` renders nothing and
+  only syncs tabs, selection, the chat badge and `hidden` (thread, keyboard, wide viewport).
+  The plugin writes `--cap-native-navigation-bottom`; `pb-tabbar` and the Toaster fall back to
+  the web expression when it is unset. A pre-paint script sets `<html data-shell="ios">`.
+- **Offline shell.** Serwist (`src/app/sw.ts`, served by `src/app/serwist/[path]/route.ts`,
+  prerendered) precaches `/_next/static` and `/~offline` and keeps member and flow documents
+  and RSC payloads NetworkFirst. Non-GET, prefetches, `/api`, `/admin`, `/serwist`,
+  `/.well-known` and `/monitoring` never reach the worker. Runtime caches are wiped on every
+  sign-out (`finishSignOut`) and whenever `/sign-in` mounts, so a second person on the device
+  never sees the first one's pages. iOS needs `WKAppBoundDomains` +
+  `limitsNavigationsToAppBoundDomains` for a service worker; both apply only to a shell synced
+  against production (the Xcode phase "Strip environment plist keys" drops the plist key
+  otherwise, because it blocks the bridge on unlisted hosts).
+- **Motion.** View-transition types `push`, `pop` and `tab` drive `MemberPageShell` and the chat
+  thread pane. Under `data-shell="ios"` push/pop slide like `UINavigationController`;
+  elsewhere they fade. `AppViewController` keeps WKWebView's edge swipe-back off and re-enables the rubber band that
+  Capacitor disables; `NativeSwipeBack` switches the gesture on only below a tab root (chat
+  thread, ride finish, training) via the in-app `SwipeBackPlugin`, and
+  `NativeBootstrap` suppresses the React transition after a popstate that WebKit already
+  animated (`hasUAVisualTransition`) until the next pointer interaction.
+
 ## Observability
 
 `src/lib/observability/` is cross-cutting infrastructure, the same standing as

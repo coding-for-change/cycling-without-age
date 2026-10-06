@@ -1816,6 +1816,12 @@
     "title": "Benachrichtigungen",
     "unread": "Ungelesen"
   },
+  "offline": {
+    "description": "Diese Seite ist noch nicht auf dem Gerät gespeichert. Sobald die Verbindung zurück ist, geht es genau hier weiter.",
+    "goBack": "Zurück",
+    "retry": "Erneut versuchen",
+    "title": "Gerade keine Verbindung"
+  },
   "passenger": {
     "browsing": "Sie sehen {chapter}",
     "noChapter": "Sie haben noch keine Ortsgruppe gewählt"

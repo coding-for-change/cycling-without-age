@@ -31,5 +31,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "ios", "android"]
+  "exclude": ["node_modules", "ios", "android", "src/app/sw.ts"]
 }

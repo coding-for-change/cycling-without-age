@@ -1,5 +1,8 @@
 import { Capacitor } from "@capacitor/core";
 import type { PluginListenerHandle } from "@capacitor/core";
+import { NATIVE_USER_AGENT } from "./user-agent";
+
+export { NATIVE_USER_AGENT };
 
 export type Unsubscribe = () => void;
 
@@ -8,8 +11,6 @@ export const NOOP: Unsubscribe = () => {};
 export const isNative = () => Capacitor.isNativePlatform();
 
 export type NativePlatform = "ios" | "android" | "web";
-
-export const NATIVE_USER_AGENT = "CWA-Native";
 
 export const nativePlatform = (): NativePlatform => {
   try {

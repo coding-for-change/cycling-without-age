@@ -16,6 +16,7 @@ import { Step } from "../../_components/step";
 import { useFlow } from "../../_components/flow-state";
 import { GoogleButton } from "./google-button";
 import { PasskeyButton } from "./passkey-button";
+import { clearOfflineCaches } from "@/lib/offline-caches";
 
 type Strings = {
   title: string;
@@ -64,6 +65,7 @@ export function IdentifierStep({
         if (cancelled || result?.error) return;
 
         haptics.success();
+        await clearOfflineCaches().catch(() => {});
         router.replace("/onboarding");
       } catch {}
     })();

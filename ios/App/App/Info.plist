@@ -88,6 +88,11 @@
 	     host from a physical device; without it the request is denied silently. -->
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Cycling Without Age connects to a development server on your local network.</string>
+	<key>WKAppBoundDomains</key>
+	<array>
+		<string>cwa.codingforchange.com</string>
+		<string>localhost</string>
+	</array>
 	<key>SentryDSN</key>
 	<string>$(SENTRY_DSN_IOS)</string>
 	<key>SentryEnvironment</key>

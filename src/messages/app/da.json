@@ -1816,6 +1816,12 @@
     "title": "Beskeder",
     "unread": "Ulæst"
   },
+  "offline": {
+    "description": "Denne side er ikke gemt på denne enhed endnu. Så snart du er online igen, fortsætter vi, hvor du slap.",
+    "goBack": "Tilbage",
+    "retry": "Prøv igen",
+    "title": "Ingen forbindelse lige nu"
+  },
   "passenger": {
     "browsing": "Du kigger på {chapter}",
     "noChapter": "Du har ikke valgt en lokalafdeling endnu"

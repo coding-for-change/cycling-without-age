@@ -5,7 +5,9 @@ import { Toaster } from "@/components/ui/sonner";
 import { defaultLocale, locales, LOCALE_COOKIE } from "@/lib/i18n";
 import { NativeBootstrap } from "@/lib/native/native-bootstrap";
 import { NativeBackHandler } from "@/lib/native/native-back-handler";
+import { NATIVE_USER_AGENT } from "@/lib/native/user-agent";
 import { PushRegistrar } from "@/components/push-registrar";
+import { ServiceWorkerRegistrar } from "@/components/service-worker-registrar";
 import { TranslatorTools } from "@/components/translator-tools";
 import { translatorModeBuilt } from "@/lib/i18n/translator-mode";
 import "./globals.css";
@@ -30,6 +32,8 @@ export const viewport: Viewport = {
 
 const setLangScript = `(function(){try{var s=${JSON.stringify(locales)},m=document.cookie.match(/(?:^|; )${LOCALE_COOKIE}=([^;]*)/),l=m&&decodeURIComponent(m[1]);if(s.indexOf(l)<0){l=${JSON.stringify(defaultLocale)};var p=navigator.languages||[navigator.language];for(var i=0;i<p.length;i++){var c=(p[i]||"").slice(0,2).toLowerCase();if(s.indexOf(c)>=0){l=c;break}}}document.documentElement.lang=l}catch(e){}})()`;
 
+const setShellScript = `(function(){try{var u=navigator.userAgent;if(u.indexOf(${JSON.stringify(NATIVE_USER_AGENT)})<0)return;var s=/\\b(?:iPhone|iPad)\\b/.test(u)?"ios":/\\bAndroid\\b/.test(u)?"android":"";if(s)document.documentElement.dataset.shell=s}catch(e){}})()`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -43,6 +47,7 @@ export default function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: setLangScript }} />
+        <script dangerouslySetInnerHTML={{ __html: setShellScript }} />
       </head>
       <body className="min-h-full flex flex-col font-sans">
         <NativeBootstrap />
@@ -50,12 +55,13 @@ export default function RootLayout({
           <NativeBackHandler />
         </Suspense>
         <PushRegistrar />
+        <ServiceWorkerRegistrar />
         {translatorModeBuilt && <TranslatorTools />}
         {children}
         <Toaster
           mobileOffset={{
             bottom:
-              "calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 1.25rem)",
+              "calc(max(var(--cap-native-navigation-bottom, var(--tabbar-h) + env(safe-area-inset-bottom)), env(safe-area-inset-bottom)) + 1.25rem)",
           }}
         />
       </body>

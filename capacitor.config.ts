@@ -1,7 +1,8 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 import type { KeyboardResize } from "@capacitor/keyboard";
 
-const url = process.env.CAP_SERVER_URL ?? "https://cwa.codingforchange.com";
+const PRODUCTION_URL = "https://cwa.codingforchange.com";
+const url = process.env.CAP_SERVER_URL ?? PRODUCTION_URL;
 
 const config: CapacitorConfig = {
   appId: "com.codingforchange.cwa",
@@ -16,6 +17,11 @@ const config: CapacitorConfig = {
   // only exists client-side. Baked in now because config changes later cost a
   // native rebuild + store release.
   appendUserAgent: "CWA-Native",
+  backgroundColor: "#ffffff",
+  ios: {
+    limitsNavigationsToAppBoundDomains: url === PRODUCTION_URL,
+    allowsLinkPreview: false,
+  },
   plugins: {
     SplashScreen: {
       launchAutoHide: false,
@@ -25,7 +31,7 @@ const config: CapacitorConfig = {
       presentationOptions: ["badge", "sound", "alert"],
     },
     Keyboard: {
-      resize: "native" as KeyboardResize,
+      resize: "none" as KeyboardResize,
       resizeOnFullScreen: true,
     },
     // The associated-domains entitlement and the Android asset statement are

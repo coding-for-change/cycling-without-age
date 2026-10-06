@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/input-otp";
 import { Step } from "../../_components/step";
 import { useFlow } from "../../_components/flow-state";
+import { clearOfflineCaches } from "@/lib/offline-caches";
 
 const RESEND_AFTER_MS = 30_000;
 
@@ -91,6 +92,7 @@ export function CodeStep({
       haptics.success();
       say("heureux", 4000);
       update({ role: null });
+      await clearOfflineCaches().catch(() => {});
       router.replace("/onboarding");
     });
   };

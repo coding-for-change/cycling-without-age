@@ -52,7 +52,10 @@ export async function MemberChrome({
 
 export function MemberChromeFallback() {
   return (
-    <div className="relative flex min-h-16 shrink-0 items-center gap-2 px-4 pt-safe lg:px-6">
+    <div
+      data-slot="member-top-bar"
+      className="relative flex min-h-16 shrink-0 items-center gap-2 bg-canvas px-4 pt-safe lg:px-6"
+    >
       <Skeleton className="size-11 rounded-full md:hidden" />
       <Skeleton className="hidden size-7 rounded-md md:block" />
       <Skeleton className="hidden h-4 w-24 md:block" />

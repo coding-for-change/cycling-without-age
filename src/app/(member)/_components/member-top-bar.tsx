@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useSyncExternalStore, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import {
   Breadcrumb,
@@ -23,6 +23,18 @@ import {
 import { AvatarButton } from "./avatar-button";
 import { SignInLink } from "./sign-in-link";
 
+const subscribeScroll = (onChange: () => void) => {
+  window.addEventListener("scroll", onChange, { passive: true });
+  return () => window.removeEventListener("scroll", onChange);
+};
+
+const useScrolled = () =>
+  useSyncExternalStore(
+    subscribeScroll,
+    () => window.scrollY > 0,
+    () => false,
+  );
+
 export function MemberTopBar({
   items,
   account,
@@ -44,11 +56,14 @@ export function MemberTopBar({
 }) {
   const pathname = usePathname();
   const title = activeItem(pathname, items)?.label;
+  const scrolled = useScrolled();
 
   return (
     <header
+      data-slot="member-top-bar"
+      data-scrolled={scrolled || undefined}
       className={cn(
-        "relative flex min-h-16 shrink-0 items-center gap-2 px-4 pt-safe lg:px-6",
+        "sticky top-0 z-30 flex min-h-16 shrink-0 items-center gap-2 border-b border-transparent bg-canvas/70 px-4 pt-safe backdrop-blur-md transition-colors duration-200 data-scrolled:border-line motion-reduce:transition-none md:relative md:border-b-0 md:bg-transparent md:backdrop-blur-none lg:px-6",
         isConversationPath(pathname) && "hidden md:flex",
       )}
     >
