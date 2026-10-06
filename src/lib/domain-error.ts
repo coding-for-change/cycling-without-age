@@ -15,9 +15,12 @@ export type DomainErrorCode =
   | "alreadyPilot"
   | "announcementOnly"
   | "cannotLeaveDirect"
+  | "capacityBelowRoster"
+  | "capacityRequired"
   | "codeTaken"
   | "consentRequired"
   | "defaultLocation"
+  | "destinationRequired"
   | "editWindowClosed"
   | "frameNumberLocked"
   | "frameNumberTaken"
@@ -25,6 +28,7 @@ export type DomainErrorCode =
   | "invalidFile"
   | "invalidPromotion"
   | "lastAdmin"
+  | "legsOverlap"
   | "locationNotEmpty"
   | "notAssigned"
   | "notChapterMember"
@@ -32,17 +36,30 @@ export type DomainErrorCode =
   | "notMember"
   | "notOwnAccount"
   | "notOwner"
+  | "notPilot"
   | "notReachable"
+  | "otherLegScheduled"
   | "notSender"
+  | "partOfRoundTrip"
   | "passengerChapterMismatch"
+  | "photosEventOnly"
+  | "pilotsFull"
+  | "pleasureLimit"
   | "poolInUse"
+  | "rideClosed"
   | "rideEndsBeforeStart"
+  | "rideFull"
+  | "rideNotCancelled"
   | "rideTooLong"
   | "rideTooShort"
+  | "riderNotInChapter"
+  | "rosterChanged"
   | "self"
   | "selfChange"
   | "slugTaken"
+  | "titleRequired"
   | "tooLong"
+  | "tooManyPilots"
   | "trishawBooked"
   | "trishawGrounded"
   | "trishawNotInChapter"
@@ -57,6 +74,7 @@ export type DomainErrorCode =
   | "unknownCountry"
   | "unknownDamage"
   | "unknownLocation"
+  | "unknownPassenger"
   | "unknownPool"
   | "unknownRide"
   | "unknownTrishaw"
@@ -90,6 +108,32 @@ export const actionFailure = <E extends string = never>(
 
   return { ok: false, error: (code && map[code]) || "generic" };
 };
+
+export type ActionResult<E extends string, T extends object = object> =
+  ({ ok: true } & T) | { ok: false; error: E };
+
+export function createAttempt<C extends DomainErrorCode>(
+  codes: readonly C[],
+  refresh: () => void,
+) {
+  const map: Partial<Record<DomainErrorCode, C>> = Object.fromEntries(
+    codes.map((code) => [code, code]),
+  );
+  const failed = (error: unknown) => actionFailure<C>(error, map);
+  async function attempt<T extends object = object>(
+    run: () => Promise<T | void>,
+    { revalidate = true }: { revalidate?: boolean } = {},
+  ): Promise<ActionResult<C | "generic", T>> {
+    try {
+      const extra = await run();
+      if (revalidate) refresh();
+      return { ok: true, ...extra } as ActionResult<C | "generic", T>;
+    } catch (error) {
+      return failed(error);
+    }
+  }
+  return { attempt, failed };
+}
 
 const prismaCode = (error: unknown) =>
   error instanceof Prisma.PrismaClientKnownRequestError ? error.code : null;

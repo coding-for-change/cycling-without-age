@@ -4,7 +4,9 @@ import type { OwnRiderDetailsPatchInput, PassengerInput } from "./schemas";
 import {
   countPassengersInChapters,
   countPassengersManagedBy,
+  findPassengerById,
   findPassengerOfUser,
+  findPassengersByIds,
   findPassengersManagedBy,
   findPassengersOfChapters,
   findPassengerNames,
@@ -14,6 +16,9 @@ import {
 } from "./services/passengers";
 
 export const getOwnPassenger = (userId: string) => findPassengerOfUser(userId);
+export const getPassenger = (id: string) => findPassengerById(id);
+export const getPassengers = async (ids: string[]) =>
+  ids.length ? findPassengersByIds(ids) : [];
 export const listPassengersManagedBy = (userId: string) =>
   findPassengersManagedBy(userId);
 export const listPassengersOfChapters = (chapterIds: string[]) =>

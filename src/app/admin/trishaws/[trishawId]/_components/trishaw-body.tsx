@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { Info } from "lucide-react";
 import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
 import {
@@ -10,20 +9,29 @@ import {
 } from "@/features/rides/components/trishaw-timeline";
 import { DamageReportDrawer } from "@/features/fleet/components/damage-report-drawer";
 import { damageStateOf } from "@/features/fleet/components/trishaw-badges";
-import { TrishawNoteComposer } from "@/features/fleet/components/trishaw-note-composer";
+import { addTrishawNoteAction } from "@/features/fleet/actions";
 import { allowsAdmin } from "@/lib/access";
 import { requireAdminOf } from "@/lib/auth-guards";
 import { formatDate, wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { trishawHistory } from "@/use-cases/trishaw-history";
-import { BackLink, DetailSection } from "../../../_components/detail-page";
+import {
+  BackLink,
+  DetailEmpty,
+  DetailNotice,
+  DetailSection,
+} from "../../../_components/detail-page";
+import { deletionConsequences } from "../../../_components/deletion-consequences";
+import { fieldLabels } from "../../../_components/field-labels";
+import { HistorySection } from "../../../_components/history-section";
+import { NoteComposer } from "../../../_components/note-composer";
 import { SidePanel } from "../../../_components/side-panel";
 import { readActiveScope, type AdminSearchParams } from "../../../active-scope";
 import { scopeCountries } from "../../../scope-countries";
 import { readCalendarWeek } from "../../../calendar-week";
 import { WeekSwitcher } from "../../../_components/week-switcher";
-import { HistoryMore, historyShown } from "../../../_components/history-more";
+import { historyShown } from "../../../_components/history-more";
 import {
   locationOption,
   manageableLocations,
@@ -31,6 +39,7 @@ import {
 } from "../../_components/options";
 import { TrishawEditor } from "./trishaw-editor";
 import { TrishawHistory } from "./trishaw-history";
+import { fleetCommon } from "@/features/fleet/components/strings";
 
 export async function TrishawBody({
   params,
@@ -116,7 +125,7 @@ export async function TrishawBody({
   const shown = historyShown(query);
 
   const words = wordsLocale(language);
-  const common = dict.fleet.common;
+  const common = fleetCommon(dict);
   const strings = dict.fleet.trishaws;
   const detail = strings.detail;
   const backHref = `/admin/trishaws${scopeQuery}`;
@@ -159,7 +168,7 @@ export async function TrishawBody({
             ))}
           </ul>
         ) : (
-          <p className="text-2sm text-ink-soft">{detail.noDamage}</p>
+          <DetailEmpty variant="panel">{detail.noDamage}</DetailEmpty>
         )}
         <DamageReportDrawer
           trishawId={trishaw.id}
@@ -180,15 +189,7 @@ export async function TrishawBody({
         />
       </SidePanel>
 
-      {canManage ? null : (
-        <p className="flex gap-2 rounded-xl bg-mint-tint px-4 py-3 text-2sm">
-          <Info
-            aria-hidden
-            className="mt-0.5 size-4 shrink-0"
-          />
-          {detail.readOnly}
-        </p>
-      )}
+      {canManage ? null : <DetailNotice>{detail.readOnly}</DetailNotice>}
     </>
   );
 
@@ -237,21 +238,25 @@ export async function TrishawBody({
             : null
         }
         canManage={canManage}
+        consequences={deletionConsequences(
+          {
+            damages: damages.length,
+            history: items.filter((item) => item.kind === "log").length,
+          },
+          dict.admin.deletion,
+          language,
+        )}
         types={typeChoices}
         locations={locationChoices}
         backHref={backHref}
         language={language}
         labels={{
           ...detail,
-          field: {
-            edit: detail.edit,
-            saved: detail.saved,
-            undo: detail.undo,
-            undone: detail.undone,
-            invalid: detail.invalid,
-            errors,
+          field: fieldLabels(dict.common.field, errors),
+          status: {
+            saving: dict.common.field.saving,
+            saved: dict.common.field.savedAt,
           },
-          status: { saving: detail.saving, saved: detail.savedAt },
           statusLabel: detail.status,
           manualOpen: common.manual.open,
           noModel: strings.noModel,
@@ -275,7 +280,11 @@ export async function TrishawBody({
             pool: common.pool,
           },
           gallery: { ...common.gallery, errors },
-          delete: { ...strings.delete, errors },
+          delete: {
+            ...strings.delete,
+            consequences: dict.admin.deletion.consequences,
+            errors,
+          },
           clear: { ...common.damage, cancel: strings.clear.cancel, errors },
           cancel: strings.delete.cancel,
         }}
@@ -315,11 +324,22 @@ export async function TrishawBody({
           </div>
         </DetailSection>
 
-        <DetailSection title={detail.history}>
-          <TrishawNoteComposer
-            trishawId={trishaw.id}
-            labels={{ ...strings.composer, errors }}
-          />
+        <HistorySection
+          title={detail.history}
+          composer={
+            <NoteComposer
+              action={addTrishawNoteAction}
+              input={{ trishawId: trishaw.id }}
+              maxLength={2000}
+              labels={{ ...strings.composer, errors }}
+            />
+          }
+          pathname={`/admin/trishaws/${trishaw.id}`}
+          query={query}
+          shown={shown}
+          total={items.length}
+          showMoreLabel={dict.admin.history.showMore}
+        >
           <TrishawHistory
             items={items.slice(0, shown)}
             viewerId={session.user.id}
@@ -333,14 +353,7 @@ export async function TrishawBody({
             notation={locale}
             words={language}
           />
-          <HistoryMore
-            pathname={`/admin/trishaws/${trishaw.id}`}
-            query={query}
-            shown={shown}
-            total={items.length}
-            label={dict.admin.history.showMore}
-          />
-        </DetailSection>
+        </HistorySection>
       </TrishawEditor>
     </>
   );

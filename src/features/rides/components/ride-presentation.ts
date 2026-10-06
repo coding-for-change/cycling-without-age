@@ -1,9 +1,18 @@
+import { PartyPopper, Route, Wind } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/format";
+import { fullName } from "@/lib/utils";
 import type { RideCalendarRow } from "../facade";
+import type { RideModelName } from "../schemas";
 
 export type CalendarStrings = Dictionary["calendar"];
+
+export const MODEL_ICON = {
+  event: PartyPopper,
+  pleasure: Wind,
+  functional: Route,
+} as const;
 
 /**
  * Event rides are the caretaking default, so they carry mint. Functional rides
@@ -28,13 +37,30 @@ export function rideTone(ride: Pick<RideCalendarRow, "model" | "status">) {
 /** "Seniorenheim Sonnenhof" · "Sonnenhof to Dr. Weber" for an A→B errand. */
 export function rideWhere(
   ride: Pick<RideCalendarRow, "locationName" | "destinationName">,
-  strings: CalendarStrings,
+  strings: Pick<CalendarStrings, "via">,
 ): string | null {
   const from = ride.locationName?.trim() || null;
   const to = ride.destinationName?.trim() || null;
   if (from && to) return `${from} ${strings.via} ${to}`;
   return from ?? to;
 }
+
+export const rideHeadline = (
+  ride: Pick<
+    RideCalendarRow,
+    "model" | "title" | "locationName" | "destinationName"
+  >,
+  strings: { via: string; models: Record<RideModelName, string> },
+) =>
+  (ride.model === "event" ? ride.title?.trim() : null) ||
+  rideWhere(ride, strings) ||
+  strings.models[ride.model];
+
+export const trishawMeta = (option: {
+  model: string | null;
+  seats: string | null;
+  location: string;
+}) => [option.model, option.seats, option.location].filter(Boolean).join(" · ");
 
 export const ridePilots = (ride: Pick<RideCalendarRow, "assignments">) =>
   ride.assignments.filter((a) => a.role === "pilot");
@@ -55,18 +81,14 @@ export function rideTrishawNames(
 /** "Anna Bauer, Karl Weber" — who an assigned pilot is taking out. */
 export const rideRiderNames = (
   roster: { passenger: { firstName: string; lastName: string } }[],
-) =>
-  roster
-    .map(({ passenger }) =>
-      `${passenger.firstName} ${passenger.lastName}`.trim(),
-    )
-    .join(", ");
+) => roster.map(({ passenger }) => fullName(passenger)).join(", ");
 
 export type RideFleetStrings = { grounded: string; groundedOnRide: string };
 
-export type RideAllocationLink = {
+export type RideLink = {
   href: (rideId: string) => string;
-  label: string;
+  open: string;
+  cancelled: string;
 };
 
 export function rideGroundedNote(

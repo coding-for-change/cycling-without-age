@@ -12,7 +12,8 @@ import { MAP_ENABLED } from "@/lib/mapbox-map";
 import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
 import { AdminTabs } from "../_components/admin-tabs";
 import { DetailSection } from "../_components/detail-page";
-import { hrefWith } from "../_components/href-with";
+import { hrefWith } from "@/lib/search-params";
+import { TimelineBubble } from "../_components/timeline";
 import { readActiveScope, type AdminSearchParams } from "../active-scope";
 import { scopeCountries } from "../scope-countries";
 import { LocationCreateDrawer } from "./_components/location-create-drawer";
@@ -25,6 +26,7 @@ import { LocationsSkeleton } from "./_components/locations-skeleton";
 import { PoolJoinDrawer } from "./_components/pool-join-drawer";
 import { PoolLeaveButton } from "./_components/pool-leave-button";
 import { locationTabs, waitingRequests } from "./pool-countries";
+import { fleetCommon } from "@/features/fleet/components/strings";
 
 export default function LocationsPage({
   searchParams,
@@ -58,7 +60,7 @@ async function Locations({
   ]);
 
   const strings = dict.fleet.locations;
-  const common = dict.fleet.common;
+  const common = fleetCommon(dict);
   const words = wordsLocale(language);
   const multiChapter = chapters.length > 1;
   const detailHref = (id: string) => `/admin/locations/${id}${scopeQuery}`;
@@ -242,9 +244,7 @@ async function Locations({
                     </span>
                   ) : null}
                   {request.decisionNote ? (
-                    <p className="rounded-xl bg-mint-tint px-3 py-2 text-2sm whitespace-pre-wrap text-ink">
-                      {request.decisionNote}
-                    </p>
+                    <TimelineBubble>{request.decisionNote}</TimelineBubble>
                   ) : null}
                 </li>
               ))}

@@ -78,7 +78,7 @@ const reportRides = (scope: ReportScope) => {
           WHEN r.status = 'cancelled' THEN 'cancelled'
           WHEN r.endsAt < ${scope.now} THEN 'ridden'
         END AS kind,
-        IF(r.status = 'cancelled', r.cancellationCategory, NULL) AS category,
+        IF(r.status = 'cancelled', r.cancellationReasonCode, NULL) AS category,
         TIMESTAMPDIFF(MICROSECOND, r.startsAt, r.endsAt) DIV 1000 AS ms,
         DATE(r.startsAt + INTERVAL ${localOffset(scope)} MINUTE) AS localDay
       FROM ride r

@@ -25,6 +25,7 @@ import {
   type TrishawListRow,
 } from "./_components/trishaws-table";
 import { TrishawsSkeleton } from "./_components/trishaws-skeleton";
+import { fleetCommon } from "@/features/fleet/components/strings";
 
 export default function TrishawsPage({
   searchParams,
@@ -61,7 +62,7 @@ async function Trishaws({
   ]);
   const manageable = await manageableLocations(session.access, locations);
 
-  const common = dict.fleet.common;
+  const common = fleetCommon(dict);
   const strings = dict.fleet.trishaws;
   const words = wordsLocale(language);
   const byName = collator(language);

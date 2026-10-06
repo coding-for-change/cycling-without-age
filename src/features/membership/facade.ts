@@ -18,6 +18,7 @@ import {
   deleteMember,
   findAdminMembersOfChapter,
   findMember,
+  findMembersAmong,
   findMembersMatchingName,
   findMembersOfChapters,
   findMembersOfUser,
@@ -74,6 +75,13 @@ export const listChapterAdmins = async (chapterId: string) =>
 
 export const getMemberRoles = async (userId: string, chapterId: string) =>
   parseRoles((await findMember(userId, chapterId))?.role);
+
+export const getMembersRoles = async (userIds: string[], chapterId: string) =>
+  new Map(
+    (userIds.length ? await findMembersAmong(userIds, chapterId) : []).map(
+      (member) => [member.userId, parseRoles(member.role)],
+    ),
+  );
 
 async function withRoles(
   userId: string,

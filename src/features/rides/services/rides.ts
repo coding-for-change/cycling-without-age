@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { fullName } from "@/lib/utils";
 import { Prisma, type $Enums } from "@/generated/prisma";
 
 /**
@@ -12,12 +13,29 @@ const calendarSelect = {
   status: true,
   startsAt: true,
   endsAt: true,
+  title: true,
+  capacity: true,
+  requiredPilots: true,
   locationName: true,
   locationAddress: true,
   destinationName: true,
   destinationAddress: true,
   cancelledAt: true,
-  chapter: { select: { id: true, name: true, timeZone: true } },
+  chapter: {
+    select: {
+      id: true,
+      name: true,
+      timeZone: true,
+      countryId: true,
+      address: true,
+      latitude: true,
+      longitude: true,
+    },
+  },
+  photos: {
+    orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+    select: { fileId: true, position: true },
+  },
   trishaws: {
     orderBy: { trishaw: { name: "asc" } },
     select: {
@@ -34,7 +52,7 @@ const calendarSelect = {
   assignments: {
     select: {
       role: true,
-      user: { select: { id: true, name: true, email: true } },
+      user: { select: { id: true, name: true, email: true, image: true } },
     },
   },
   _count: { select: { roster: true } },
@@ -204,8 +222,20 @@ export const findRidesForCalendarFeed = (
     select: feedSelect(userId),
   });
 
-export const findRideById = (id: string) =>
-  prisma.ride.findUnique({ where: { id }, select: calendarSelect });
+export const findRideById = (
+  id: string,
+  db: Prisma.TransactionClient = prisma,
+) => db.ride.findUnique({ where: { id }, select: calendarSelect });
+
+export const findRideScope = (id: string) =>
+  prisma.ride.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      chapterId: true,
+      trishaws: { select: { trishawId: true } },
+    },
+  });
 
 /**
  * Committing equipment is check-then-write, and two schedulers can both pass
@@ -214,17 +244,15 @@ export const findRideById = (id: string) =>
  * trishawId)` only stops the same bike being listed twice on one ride — so the
  * trishaw rows are locked `FOR UPDATE` inside the transaction. A second booking
  * for the same bike waits there, and then sees the first one's reservation.
+ * The caller owns the transaction; this must run inside it, before the write.
  */
-type Writer<T> = (tx: Prisma.TransactionClient) => Promise<T>;
-
-async function conflictsUnderLock(
+export async function conflictsUnderLock(
   tx: Prisma.TransactionClient,
   trishawIds: string[],
-  from: Date,
-  to: Date,
-  exceptRideId?: string,
+  windows: { startsAt: Date; endsAt: Date }[],
+  exceptRideIds: string[] = [],
 ) {
-  if (!trishawIds.length) return [];
+  if (!trishawIds.length || !windows.length) return [];
 
   await tx.$queryRaw(
     Prisma.sql`SELECT \`id\` FROM \`trishaw\` WHERE \`id\` IN (${Prisma.join(
@@ -232,124 +260,334 @@ async function conflictsUnderLock(
     )}) FOR UPDATE`,
   );
 
-  return tx.rideTrishaw.findMany({
-    where: {
-      trishawId: { in: trishawIds },
-      ride: {
-        status: { not: "cancelled" },
-        ...overlapping(from, to),
-        ...(exceptRideId ? { id: { not: exceptRideId } } : {}),
-      },
-    },
-    select: { trishawId: true, rideId: true },
-  });
+  return findReservations(trishawIds, windows, exceptRideIds, tx);
 }
 
-/** `null` when the window is already taken — the caller names the refusal. */
-async function reserving<T>(
+export const findReservations = async (
   trishawIds: string[],
-  from: Date,
-  to: Date,
-  write: Writer<T>,
-  exceptRideId?: string,
-): Promise<T | null> {
-  return prisma.$transaction(async (tx) => {
-    const conflicts = await conflictsUnderLock(
-      tx,
-      trishawIds,
-      from,
-      to,
-      exceptRideId,
-    );
-    return conflicts.length ? null : write(tx);
+  windows: { startsAt: Date; endsAt: Date }[],
+  exceptRideIds: string[],
+  db: Prisma.TransactionClient = prisma,
+) =>
+  !trishawIds.length || !windows.length
+    ? []
+    : db.rideTrishaw.findMany({
+        where: {
+          trishawId: { in: trishawIds },
+          ride: {
+            status: { not: "cancelled" },
+            ...(windows.length === 1
+              ? overlapping(windows[0].startsAt, windows[0].endsAt)
+              : {
+                  OR: windows.map((window) =>
+                    overlapping(window.startsAt, window.endsAt),
+                  ),
+                }),
+            ...(exceptRideIds.length ? { id: { notIn: exceptRideIds } } : {}),
+          },
+        },
+        select: { trishawId: true, rideId: true },
+      });
+
+/**
+ * Serialises every write on these rides. Locked in id order, so two writes on
+ * both legs of a round trip queue up instead of deadlocking.
+ */
+export const lockRides = async (
+  tx: Prisma.TransactionClient,
+  ids: string[],
+) => {
+  if (!ids.length) return;
+  await tx.$queryRaw(
+    Prisma.sql`SELECT \`id\` FROM \`ride\` WHERE \`id\` IN (${Prisma.join(
+      [...new Set(ids)].sort(),
+    )}) ORDER BY \`id\` FOR UPDATE`,
+  );
+};
+
+export const findRideLegIds = (
+  id: string,
+  db: Prisma.TransactionClient = prisma,
+) =>
+  db.ride.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      returnLegOfId: true,
+      returnLeg: { select: { id: true } },
+    },
   });
-}
+
+/** Names for the ids a ride's history refers to, read when the history is shown. */
+export const findLogNames = async (
+  userIds: string[],
+  passengerIds: string[],
+) => {
+  const [users, riders] = await Promise.all([
+    userIds.length
+      ? prisma.user.findMany({
+          where: { id: { in: userIds } },
+          select: { id: true, name: true },
+        })
+      : [],
+    passengerIds.length
+      ? prisma.passenger.findMany({
+          where: { id: { in: passengerIds } },
+          select: { id: true, firstName: true, lastName: true },
+        })
+      : [],
+  ]);
+  return new Map<string, string>([
+    ...users.map((user) => [user.id, user.name] as const),
+    ...riders.map((rider) => [rider.id, fullName(rider)] as const),
+  ]);
+};
 
 const reservationCreate = (trishawIds: string[]) => ({
   create: trishawIds.map((trishawId) => ({ trishawId })),
 });
 
-export const insertRideReserving = (
+export const insertRide = (
   data: Prisma.RideUncheckedCreateInput,
   trishawIds: string[],
-  from: Date,
-  to: Date,
+  db: Prisma.TransactionClient = prisma,
 ) =>
-  reserving(trishawIds, from, to, (tx) =>
-    tx.ride.create({
-      data: { ...data, trishaws: reservationCreate(trishawIds) },
-      select: calendarSelect,
-    }),
-  );
+  db.ride.create({
+    data: { ...data, trishaws: reservationCreate(trishawIds) },
+    select: calendarSelect,
+  });
+
+export const updateRide = (
+  id: string,
+  data: Prisma.RideUncheckedUpdateInput,
+  db: Prisma.TransactionClient = prisma,
+) => db.ride.update({ where: { id }, data, select: calendarSelect });
 
 /** Rescheduling replaces the reservation set outright, never merges into it. */
-export const updateRideReserving = (
+export const replaceRideTrishaws = (
   id: string,
-  data: Prisma.RideUncheckedUpdateInput,
   trishawIds: string[],
-  from: Date,
-  to: Date,
+  db: Prisma.TransactionClient = prisma,
 ) =>
-  reserving(
-    trishawIds,
-    from,
-    to,
-    (tx) =>
-      tx.ride.update({
-        where: { id },
-        data: {
-          ...data,
-          trishaws: { deleteMany: {}, ...reservationCreate(trishawIds) },
-        },
-        select: calendarSelect,
-      }),
-    id,
-  );
-
-export const updateRideById = (
-  id: string,
-  data: Prisma.RideUncheckedUpdateInput,
-) => prisma.ride.update({ where: { id }, data, select: calendarSelect });
-
-export const upsertAssignment = (
-  rideId: string,
-  userId: string,
-  role: $Enums.RideRole,
-) =>
-  prisma.rideAssignment.upsert({
-    where: { rideId_userId_role: { rideId, userId, role } },
-    create: { rideId, userId, role },
-    update: {},
+  db.ride.update({
+    where: { id },
+    data: { trishaws: { deleteMany: {}, ...reservationCreate(trishawIds) } },
+    select: calendarSelect,
   });
+
+export const deleteRideById = (
+  id: string,
+  db: Prisma.TransactionClient = prisma,
+) => db.ride.delete({ where: { id }, select: { id: true } });
+
+export const insertAssignment = (
+  data: {
+    rideId: string;
+    userId: string;
+    role: $Enums.RideRole;
+    assignedByUserId: string | null;
+  },
+  db: Prisma.TransactionClient = prisma,
+) => db.rideAssignment.create({ data, select: { id: true } });
 
 export const deleteAssignment = (
   rideId: string,
   userId: string,
   role: $Enums.RideRole,
-) =>
-  prisma.rideAssignment.delete({
-    where: { rideId_userId_role: { rideId, userId, role } },
-  });
+  db: Prisma.TransactionClient = prisma,
+) => db.rideAssignment.deleteMany({ where: { rideId, userId, role } });
 
 /** Appended to the end of the roster — coordinators order riders as they ride. */
-export const upsertRosterEntry = (
+export const insertRosterEntry = (
+  data: {
+    rideId: string;
+    passengerId: string;
+    position: number;
+    bookedByUserId: string | null;
+  },
+  db: Prisma.TransactionClient = prisma,
+) => db.rideRosterEntry.create({ data, select: { id: true } });
+
+export async function insertRosterEntryAt(
+  data: {
+    rideId: string;
+    passengerId: string;
+    position: number;
+    bookedByUserId: string | null;
+  },
+  db: Prisma.TransactionClient = prisma,
+) {
+  await db.rideRosterEntry.updateMany({
+    where: { rideId: data.rideId, position: { gte: data.position } },
+    data: { position: { increment: 1 } },
+  });
+  return db.rideRosterEntry.create({ data, select: { id: true } });
+}
+
+export async function updateRosterPositions(
+  rideId: string,
+  passengerIds: string[],
+  db: Prisma.TransactionClient = prisma,
+) {
+  for (const [position, passengerId] of passengerIds.entries())
+    await db.rideRosterEntry.updateMany({
+      where: { rideId, passengerId },
+      data: { position },
+    });
+}
+
+export const insertRosterEntries = (
+  rideId: string,
+  passengerIds: string[],
+  bookedByUserId: string | null,
+  db: Prisma.TransactionClient = prisma,
+) =>
+  db.rideRosterEntry.createMany({
+    data: passengerIds.map((passengerId, position) => ({
+      rideId,
+      passengerId,
+      position,
+      bookedByUserId,
+    })),
+  });
+
+export const insertAssignments = (
+  rideId: string,
+  userIds: string[],
+  assignedByUserId: string | null,
+  db: Prisma.TransactionClient = prisma,
+) =>
+  db.rideAssignment.createMany({
+    data: userIds.map((userId) => ({
+      rideId,
+      userId,
+      role: "pilot" as const,
+      assignedByUserId,
+    })),
+  });
+
+export const replaceRidePhotos = (
+  rideId: string,
+  fileIds: string[],
+  db: Prisma.TransactionClient = prisma,
+) =>
+  db.ride.update({
+    where: { id: rideId },
+    data: {
+      photos: {
+        deleteMany: {},
+        create: fileIds.map((fileId, position) => ({ fileId, position })),
+      },
+    },
+    select: { id: true },
+  });
+
+export const deleteRosterEntry = (
   rideId: string,
   passengerId: string,
-  position: number,
+  db: Prisma.TransactionClient = prisma,
+) => db.rideRosterEntry.deleteMany({ where: { rideId, passengerId } });
+
+/**
+ * Everything the admin detail page shows. Rider names are here because only a
+ * chapter admin reads this shape; the member surfaces have their own selects.
+ */
+const detailSelect = {
+  ...calendarSelect,
+  description: true,
+  latitude: true,
+  longitude: true,
+  destinationLatitude: true,
+  destinationLongitude: true,
+  note: true,
+  seriesId: true,
+  cancellationReasonCode: true,
+  cancellationNote: true,
+  cancelledBy: { select: { id: true, name: true } },
+  createdAt: true,
+  returnLegOf: {
+    select: { id: true, startsAt: true, endsAt: true, status: true },
+  },
+  returnLeg: {
+    select: { id: true, startsAt: true, endsAt: true, status: true },
+  },
+  assignments: {
+    orderBy: { createdAt: "asc" },
+    select: {
+      role: true,
+      createdAt: true,
+      assignedByUserId: true,
+      user: { select: { id: true, name: true, email: true, image: true } },
+    },
+  },
+  roster: {
+    orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+    select: {
+      id: true,
+      position: true,
+      createdAt: true,
+      passenger: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          chapterId: true,
+          managedByUserId: true,
+          userId: true,
+          user: { select: { email: true } },
+        },
+      },
+    },
+  },
+} satisfies Prisma.RideSelect;
+
+export type RideDetailRow = Prisma.RideGetPayload<{
+  select: typeof detailSelect;
+}>;
+
+const listCursorWhere = (cursor: { startsAt: Date; id: string } | null) =>
+  cursor
+    ? {
+        OR: [
+          { startsAt: { gt: cursor.startsAt } },
+          { startsAt: cursor.startsAt, id: { gt: cursor.id } },
+        ],
+      }
+    : {};
+
+export const findPastRidesForList = (
+  chapterIds: string[],
+  now: Date,
+  take: number,
 ) =>
-  prisma.rideRosterEntry.upsert({
-    where: { rideId_passengerId: { rideId, passengerId } },
-    create: { rideId, passengerId, position },
-    update: {},
+  prisma.ride.findMany({
+    where: { chapterId: { in: chapterIds }, endsAt: { lte: now } },
+    orderBy: [{ startsAt: "desc" }, { id: "desc" }],
+    select: calendarSelect,
+    take,
   });
 
-export const countRosterEntries = (rideId: string) =>
-  prisma.rideRosterEntry.count({ where: { rideId } });
-
-export const deleteRosterEntry = (rideId: string, passengerId: string) =>
-  prisma.rideRosterEntry.delete({
-    where: { rideId_passengerId: { rideId, passengerId } },
+export const findUpcomingRidesForList = (
+  chapterIds: string[],
+  now: Date,
+  cursor: { startsAt: Date; id: string } | null,
+  take: number,
+) =>
+  prisma.ride.findMany({
+    where: {
+      chapterId: { in: chapterIds },
+      endsAt: { gt: now },
+      ...listCursorWhere(cursor),
+    },
+    orderBy: [{ startsAt: "asc" }, { id: "asc" }],
+    select: calendarSelect,
+    take,
   });
+
+export const findRideDetail = (
+  id: string,
+  db: Prisma.TransactionClient = prisma,
+) => db.ride.findUnique({ where: { id }, select: detailSelect });
 
 const trishawRideSelect = {
   id: true,

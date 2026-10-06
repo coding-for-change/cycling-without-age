@@ -10,6 +10,12 @@ export const findMember = (
     where: { organizationId_userId: { organizationId: chapterId, userId } },
   });
 
+export const findMembersAmong = (userIds: string[], chapterId: string) =>
+  prisma.member.findMany({
+    where: { organizationId: chapterId, userId: { in: userIds } },
+    select: { userId: true, role: true },
+  });
+
 export const findMembersOfUser = (
   userId: string,
   db: Prisma.TransactionClient = prisma,

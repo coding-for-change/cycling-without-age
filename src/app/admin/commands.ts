@@ -4,6 +4,7 @@ import { commands as fleetCommands } from "@/features/fleet/commands";
 import { commands as membershipCommands } from "@/features/membership/commands";
 import { commands as passengerCommands } from "@/features/passengers/commands";
 import { commands as profileCommands } from "@/features/profile/commands";
+import { commands as rideCommands } from "@/features/rides/commands";
 import type { AdminScope, Perspective } from "@/lib/access";
 import { collectCommands } from "@/lib/commands";
 import type {
@@ -29,6 +30,7 @@ const CONTRIBUTORS: readonly CommandContributor[] = [
   passengerCommands,
   chapterCommands,
   chatCommands,
+  rideCommands,
   fleetCommands,
   profileCommands,
 ];
@@ -36,7 +38,6 @@ const CONTRIBUTORS: readonly CommandContributor[] = [
 /** Search-assist only, never displayed — English regardless of the dictionary. */
 const SHELL_KEYWORDS: Partial<Record<NavKey, readonly string[]>> = {
   overview: ["dashboard", "home", "today"],
-  rides: ["trips", "bookings", "schedule"],
   bikes: ["bikes", "rickshaw", "trishaw", "service"],
   chat: ["chat", "conversations", "inbox"],
   reports: ["statistics", "numbers", "hours", "export"],
@@ -80,18 +81,7 @@ function staticEntries(dict: Dictionary): CommandEntry[] {
   );
   const rest = contributed.filter((entry) => !navigate.includes(entry));
 
-  return [
-    {
-      id: "new-ride",
-      group: "create",
-      label: dict.admin.commands.newRide,
-      icon: "rides",
-      run: { kind: "navigate", href: "/admin/rides" },
-      keywords: ["book", "trip"],
-    },
-    ...navigate,
-    ...rest,
-  ];
+  return [...navigate, ...rest];
 }
 
 const perspectiveCommands = (

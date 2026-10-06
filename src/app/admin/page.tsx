@@ -13,7 +13,7 @@ import {
   KpiTilesSkeleton,
   PageHeaderSkeleton,
 } from "./_components/admin-skeletons";
-import { hrefWith } from "./_components/href-with";
+import { hrefWith } from "@/lib/search-params";
 import {
   isTrendMetric,
   kpiTiles,

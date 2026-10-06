@@ -26,7 +26,6 @@ export function LocationPicker({
   value: string | null;
   onChange: (locationId: string) => void;
   labels: LocationPickerLabels;
-  container?: HTMLElement | null;
   className?: string;
 }) {
   return (

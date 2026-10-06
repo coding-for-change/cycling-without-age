@@ -1,9 +1,12 @@
+import { z } from "zod";
+
 export const FILE_KINDS = [
   "typePhoto",
   "typeManual",
   "trishawPhoto",
   "entrancePhoto",
   "damagePhoto",
+  "ridePhoto",
 ] as const;
 export type FileKind = (typeof FILE_KINDS)[number];
 
@@ -20,6 +23,7 @@ export const FILE_LIMITS: Record<FileKind, Limit> = {
   trishawPhoto: IMAGE,
   entrancePhoto: IMAGE,
   damagePhoto: IMAGE,
+  ridePhoto: IMAGE,
   typeManual: { mimes: ["application/pdf"], maxBytes: 20 * MB, image: false },
 };
 
@@ -33,3 +37,11 @@ export const acceptsUpload = (kind: FileKind, mime: string, size: number) => {
 
 export const acceptAttribute = (kind: FileKind) =>
   FILE_LIMITS[kind].mimes.join(",");
+
+export const uploadRequest = z.object({
+  mime: z.string().min(1).max(100),
+  size: z.number().int().positive(),
+});
+export type UploadRequest = z.infer<typeof uploadRequest>;
+
+export const uploadCommit = z.object({ key: z.string().min(1).max(255) });

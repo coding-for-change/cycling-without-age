@@ -1,6 +1,6 @@
 "use client";
 
-import type { KeyboardEvent, ReactNode } from "react";
+import { useState, type KeyboardEvent, type ReactNode } from "react";
 import {
   Drawer,
   DrawerContent,
@@ -8,6 +8,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { PortalContainer } from "@/components/portal-container";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +35,7 @@ export function AppDrawer({
 }) {
   const mobile = useIsMobile();
   const direction = mobile ? "bottom" : "right";
+  const [container, setContainer] = useState<HTMLElement | null>(null);
 
   return (
     <Drawer
@@ -45,8 +47,9 @@ export function AppDrawer({
       repositionInputs={false}
     >
       <DrawerContent
+        ref={setContainer}
         className={cn(
-          "bg-canvas",
+          "bg-canvas outline-none",
           "data-[vaul-drawer-direction=bottom]:max-h-[94svh] data-[vaul-drawer-direction=bottom]:rounded-t-(--r-tile)",
           "data-[vaul-drawer-direction=right]:w-full data-[vaul-drawer-direction=right]:rounded-l-(--r-tile) data-[vaul-drawer-direction=right]:shadow-lift",
           size === "md"
@@ -54,29 +57,31 @@ export function AppDrawer({
             : "data-[vaul-drawer-direction=right]:sm:max-w-4xl",
         )}
       >
-        <DrawerHeader className="shrink-0 gap-1 border-b border-line px-5 py-4 text-left md:gap-1 md:px-6">
-          <DrawerTitle className="font-display text-lg font-bold tracking-tight text-ink">
-            {title}
-          </DrawerTitle>
-          {description ? (
-            <DrawerDescription className="text-sm text-ink-soft">
-              {description}
-            </DrawerDescription>
-          ) : null}
-        </DrawerHeader>
-        <div
-          className={cn(
-            "min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-6",
-            bodyClassName,
-          )}
-        >
-          {children}
-        </div>
-        {footer ? (
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-line px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-6">
-            {footer}
+        <PortalContainer value={container}>
+          <DrawerHeader className="shrink-0 gap-1 border-b border-line px-5 py-4 text-left md:gap-1 md:px-6">
+            <DrawerTitle className="font-display text-lg font-bold tracking-tight text-ink">
+              {title}
+            </DrawerTitle>
+            {description ? (
+              <DrawerDescription className="text-sm text-ink-soft">
+                {description}
+              </DrawerDescription>
+            ) : null}
+          </DrawerHeader>
+          <div
+            className={cn(
+              "min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-6",
+              bodyClassName,
+            )}
+          >
+            {children}
           </div>
-        ) : null}
+          {footer ? (
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-line px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-6">
+              {footer}
+            </div>
+          ) : null}
+        </PortalContainer>
       </DrawerContent>
     </Drawer>
   );

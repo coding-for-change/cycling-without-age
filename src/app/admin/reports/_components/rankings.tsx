@@ -13,7 +13,7 @@ import type { Locale } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale as Language } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
-import { hrefWith } from "../../_components/href-with";
+import { hrefWith } from "@/lib/search-params";
 import { hoverProps, useHighlight } from "./highlight-provider";
 import { ReportCard } from "./report-card";
 import { EmptyCard } from "./empty-card";

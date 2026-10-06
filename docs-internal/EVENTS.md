@@ -208,6 +208,30 @@ Neither writes a `Delivery` row — chat has no inbox row to hang one off. Inste
 …), which Bull Board shows as the job's return value, so a quiet mailbox can be explained
 from the `email` queue's *completed* tab.
 
+## Rides: events with no listeners yet (COD-258)
+
+Every write in `features/rides/facade.ts` emits exactly one event per ride it changes, inside
+the same transaction as the write and its `RideLogEntry`. The payload is ids and facts only,
+and every one carries `rideId`, `chapterId` and `actorUserId` (`null` for the seed and, later,
+the worker):
+
+| Event | Extra payload | Emitted by |
+| --- | --- | --- |
+| `ride.scheduled` | `returnLegId` (the way back of a round trip, or `null`) | `scheduleRide`, once for both legs |
+| `ride.rescheduled` | `changes`: `time` · `location` · `destination` | `rescheduleRide` (once per leg it moves: moving the way there moves a scheduled way back too), `updateRideDetails` (a new place only; the note and pilots needed are history, not news) |
+| `ride.cancelled` | `reasonCode` | `cancelRide`, once per leg it cancels |
+| `ride.deleted` | — | `deleteRide`, once per leg it deletes (a cancelled other leg of a round trip goes too); the ride's history goes with it, so this row is what records who deleted it |
+| `ride.pilotAssigned` | `userId`, `self` | `assignVolunteer` |
+| `ride.pilotUnassigned` | `userId`, `self` | `unassignVolunteer` |
+| `ride.riderBooked` | `passengerId` | `bookRider` |
+| `ride.riderRemoved` | `passengerId` | `cancelBooking` |
+
+`self` is true when the pilot acted for themself (self sign-up and withdrawal arrive in PR 5).
+Nothing listens to these yet: `handlers.ts` maps each of them to `{}`, so the dispatcher marks
+them processed and enqueues nothing. PR 2 adds the `ride` notification kinds, and with them the
+listeners. The note for pilots and anyone's name never enter a payload; a kind that needs a name looks it
+up through the facades, the way the existing kinds do.
+
 ## Watching the queues
 
 The worker serves [Bull Board](https://github.com/felixmosh/bull-board) at

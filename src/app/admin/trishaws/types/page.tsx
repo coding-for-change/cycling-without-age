@@ -19,6 +19,7 @@ import {
   ownerOptions,
   seatOptions,
 } from "./_components/catalogue";
+import { fleetCommon } from "@/features/fleet/components/strings";
 
 export default function TypesPage({
   searchParams,
@@ -54,7 +55,7 @@ async function Types({
     getLocale(),
   ]);
 
-  const common = dict.fleet.common;
+  const common = fleetCommon(dict);
   const strings = dict.fleet.types;
   const words = wordsLocale(language);
   const owners = ownerOptions(scope, active, chapters, dict, words);

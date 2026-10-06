@@ -18,7 +18,11 @@ import {
   type LocationOption,
   type LocationPickerLabels,
 } from "./location-picker";
-import { PhotoGallery, type PhotoGalleryLabels } from "./photo-gallery";
+import {
+  PhotoGallery,
+  type PhotoGalleryLabels,
+} from "@/components/photo-gallery/photo-gallery";
+import { fleetUpload } from "./fleet-upload";
 import {
   TypePicker,
   type TypeOption,
@@ -74,7 +78,6 @@ export function TrishawCreateDrawer({
     note: useId(),
     frame: useId(),
   };
-  const [portal, setPortal] = useState<HTMLElement | null>(null);
   const [name, setName] = useState("");
   const [typeId, setTypeId] = useState<string | null>(null);
   const [locationId, setLocationId] = useState<string | null>(
@@ -156,9 +159,6 @@ export function TrishawCreateDrawer({
       >
         <form
           id={ids.form}
-          ref={(node) =>
-            setPortal(node?.closest<HTMLElement>("[data-vaul-drawer]") ?? null)
-          }
           onSubmit={submit}
           onKeyDown={submitOnCmdEnter}
           aria-busy={pending}
@@ -199,7 +199,6 @@ export function TrishawCreateDrawer({
               value={typeId}
               onChange={setTypeId}
               labels={labels.typePicker}
-              container={portal}
             />
           </Field>
           <Field>
@@ -210,7 +209,6 @@ export function TrishawCreateDrawer({
               value={locationId}
               onChange={setLocationId}
               labels={labels.locationPicker}
-              container={portal}
             />
           </Field>
           <Field>
@@ -218,6 +216,7 @@ export function TrishawCreateDrawer({
             <FieldDescription>{labels.photoHint}</FieldDescription>
             <PhotoGallery
               kind="trishawPhoto"
+              upload={fleetUpload("trishawPhoto")}
               value={photoFileIds}
               alt={name || labels.photo}
               labels={labels.gallery}

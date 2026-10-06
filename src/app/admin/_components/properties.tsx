@@ -1,9 +1,12 @@
 import type { ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const PROPERTY_BUTTON =
   "h-9 w-full justify-start border-line bg-canvas text-2sm text-ink-soft hover:border-ink-faint hover:bg-canvas hover:text-ink";
+
+export const PROPERTY_BUTTON_DANGER =
+  "h-9 w-full justify-start border-line bg-canvas text-2sm text-red hover:border-ink-faint hover:bg-red-tint hover:text-red";
 
 export const QUIET_CONTROL =
   "-mx-2 h-8 w-[calc(100%+1rem)] min-w-0 rounded-md border border-transparent bg-transparent px-2 text-2sm text-ink shadow-none outline-none transition-colors hover:bg-canvas-deeper focus-visible:border-line focus-visible:bg-canvas focus-visible:ring-[3px] focus-visible:ring-ring/30";
@@ -51,10 +54,12 @@ export function PropertyRow({
 
 export function PropertyValue({
   children,
+  icon: Icon,
   muted = false,
   className,
 }: {
   children: ReactNode;
+  icon?: LucideIcon;
   muted?: boolean;
   className?: string;
 }) {
@@ -62,10 +67,17 @@ export function PropertyValue({
     <span
       className={cn(
         "block truncate py-1.5",
+        Icon && "flex items-center gap-1.25",
         muted && "text-ink-faint",
         className,
       )}
     >
+      {Icon ? (
+        <Icon
+          aria-hidden
+          className="size-3.5 shrink-0 text-ink-soft"
+        />
+      ) : null}
       {children}
     </span>
   );

@@ -1,9 +1,9 @@
 import { bucketKeys, type ReportRange } from "./report-range";
 import type { ReportSide } from "./report-zones";
 import {
-  RIDE_CANCELLATION_CATEGORIES,
+  RIDE_CANCELLATION_REASONS,
   RIDE_MODELS,
-  type RideCancellationCategoryName,
+  type RideCancellationReasonName,
   type RideModelName,
 } from "./schemas";
 
@@ -22,10 +22,10 @@ export type ReportRateMetric = {
 type ModelCounts = Record<RideModelName, number> & { total: number };
 
 export type ReportCancellationKey =
-  RideCancellationCategoryName | "uncategorised";
+  RideCancellationReasonName | "uncategorised";
 
 const REPORT_CANCELLATION_KEYS: ReportCancellationKey[] = [
-  ...RIDE_CANCELLATION_CATEGORIES,
+  ...RIDE_CANCELLATION_REASONS,
   "uncategorised",
 ];
 
@@ -82,7 +82,7 @@ export type ActivityBucketRow = {
   bucket: string;
   model: RideModelName;
   kind: "ridden" | "cancelled";
-  category: RideCancellationCategoryName | null;
+  category: RideCancellationReasonName | null;
   trips: number;
   rides: number;
   ms: number;

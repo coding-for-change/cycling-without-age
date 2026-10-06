@@ -2,13 +2,11 @@ import { forbidden } from "next/navigation";
 import { resolveActiveScope, scopeChapters } from "@/lib/access";
 import type { ActiveScope } from "@/lib/access";
 import { requireAdminScope } from "@/lib/auth-guards";
+import { first, type SearchParams } from "@/lib/search-params";
 import { canReach, type NavKey } from "./nav";
 import { storedActiveScope } from "./scope-cookie";
 
-export type AdminSearchParams = Record<string, string | string[] | undefined>;
-
-export const first = (value: string | string[] | undefined) =>
-  Array.isArray(value) ? value[0] : value;
+export type AdminSearchParams = SearchParams;
 
 export const scopeQuery = (active: ActiveScope) =>
   active.kind === "chapter"

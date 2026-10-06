@@ -13,7 +13,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ScopeArg } from "@/lib/commands";
 import { cn } from "@/lib/utils";
 import { isTrendMetric, type TrendMetric } from "../../_components/kpi-data";
-import { hrefWith } from "../../_components/href-with";
+import { hrefWith } from "@/lib/search-params";
 import { useSwitchScope } from "../../_components/use-switch-scope";
 
 type Patch = Record<string, string | null>;

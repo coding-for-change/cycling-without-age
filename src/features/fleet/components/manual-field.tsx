@@ -5,9 +5,14 @@ import { FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { haptics } from "@/lib/native/haptics";
 import { cn } from "@/lib/utils";
-import { fileUrl } from "./file-image";
-import { TileRemoveButton, UploadDropzone, useFileDrop } from "./upload-parts";
-import { useUpload } from "./use-upload";
+import { fileUrl } from "@/lib/storage/file-url";
+import { useFileDrop } from "@/hooks/use-file-drop";
+import { usePresignedUpload } from "@/hooks/use-presigned-upload";
+import { commitUploadAction, requestUploadAction } from "../actions";
+import {
+  TileRemoveButton,
+  UploadDropzone,
+} from "@/components/photo-gallery/upload-parts";
 
 export type ManualFieldLabels = {
   add: string;
@@ -29,7 +34,10 @@ export function ManualField({
   labels: ManualFieldLabels;
 }) {
   const input = useRef<HTMLInputElement>(null);
-  const { upload } = useUpload("typeManual");
+  const { upload } = usePresignedUpload(
+    (file) => requestUploadAction({ kind: "typeManual", ...file }),
+    ({ key }) => commitUploadAction({ kind: "typeManual", key }),
+  );
   const [busy, setBusy] = useState(false);
 
   async function send(files: File[]) {

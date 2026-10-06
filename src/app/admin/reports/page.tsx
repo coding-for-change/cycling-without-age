@@ -5,11 +5,8 @@ import { activityReport } from "@/use-cases/activity-report";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { formatDateMedium, formatPeriod, resolveLocale } from "@/lib/format";
-import {
-  first,
-  readActiveScope,
-  type AdminSearchParams,
-} from "../active-scope";
+import { first } from "@/lib/search-params";
+import { readActiveScope, type AdminSearchParams } from "../active-scope";
 import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
 import { PageHeaderSkeleton } from "../_components/admin-skeletons";
 import { kpiTiles } from "../_components/kpi-data";

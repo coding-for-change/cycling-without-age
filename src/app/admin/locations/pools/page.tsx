@@ -12,7 +12,7 @@ import { formatMessage } from "@/lib/i18n/format";
 import { MAP_ENABLED } from "@/lib/mapbox-map";
 import { AdminPageHeader, AdminPageShell } from "../../_components/admin-page";
 import { AdminTabs } from "../../_components/admin-tabs";
-import { hrefWith } from "../../_components/href-with";
+import { hrefWith } from "@/lib/search-params";
 import { readActiveScope, type AdminSearchParams } from "../../active-scope";
 import { scopeCountries } from "../../scope-countries";
 import { LocationCreateDrawer } from "../_components/location-create-drawer";
@@ -23,6 +23,7 @@ import {
 } from "../pool-countries";
 import { PoolsSkeleton } from "./_components/pools-skeleton";
 import { PoolsTable } from "./_components/pools-table";
+import { fleetCommon } from "@/features/fleet/components/strings";
 
 export default function PoolsPage({
   searchParams,
@@ -57,7 +58,7 @@ async function Pools({
   ]);
 
   const strings = dict.fleet.locations;
-  const common = dict.fleet.common;
+  const common = fleetCommon(dict);
   const words = wordsLocale(language);
 
   return (

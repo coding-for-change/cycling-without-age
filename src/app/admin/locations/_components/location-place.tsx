@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { AddressSearchStrings } from "@/components/address-search";
 import type { Dictionary } from "@/lib/i18n";
 import { PlaceSearch } from "../../_components/place-search";
 
@@ -35,7 +36,10 @@ export function LocationPlace({
   onChange: (next: Place) => void;
   mapEnabled: boolean;
   language: string;
-  strings: Pick<Dictionary["fleet"]["locations"], "address" | "map">;
+  strings: {
+    address: AddressSearchStrings;
+    map: Dictionary["fleet"]["locations"]["map"];
+  };
   failed: string;
   readOnly?: boolean;
 }) {

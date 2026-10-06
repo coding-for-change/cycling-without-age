@@ -27,9 +27,11 @@ import {
   createLocationAction,
   createPoolAction,
 } from "@/features/fleet/actions";
-import { PhotoGallery } from "@/features/fleet/components/photo-gallery";
+import { PhotoGallery } from "@/components/photo-gallery/photo-gallery";
+import { fleetUpload } from "@/features/fleet/components/fleet-upload";
 import { useDrawerParam } from "@/hooks/use-drawer-param";
 import type { Dictionary } from "@/lib/i18n";
+import type { FleetCommon } from "@/features/fleet/components/strings";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
 import { haptics } from "@/lib/native/haptics";
@@ -40,7 +42,7 @@ type Option = { id: string; name: string };
 const EMPTY_PLACE: Place = { address: null, latitude: null, longitude: null };
 
 type Strings = Dictionary["fleet"]["locations"];
-type Common = Dictionary["fleet"]["common"];
+type Common = FleetCommon;
 type Kind = "pool" | "location";
 
 export function LocationCreateDrawer({
@@ -252,7 +254,10 @@ function LocationCreateForm({
         onChange={setPlace}
         mapEnabled={mapEnabled}
         language={language}
-        strings={strings}
+        strings={{
+          map: strings.map,
+          address: { ...common.address, ...strings.address },
+        }}
         failed={common.errors.generic}
       />
 
@@ -273,6 +278,7 @@ function LocationCreateForm({
         <span className="text-sm font-medium">{create.entrancePhoto}</span>
         <PhotoGallery
           kind="entrancePhoto"
+          upload={fleetUpload("entrancePhoto")}
           max={1}
           camera
           locale={language}

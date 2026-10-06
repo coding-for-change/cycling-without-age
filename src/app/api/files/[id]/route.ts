@@ -1,7 +1,8 @@
 import { connection } from "next/server";
 import { fleet } from "@/features/fleet";
+import { rides } from "@/features/rides";
 import { canReadFile, getSession } from "@/lib/auth-guards";
-import { extensionOf, presignGet } from "@/lib/storage";
+import { extensionOf, fileKindOf, presignGet } from "@/lib/storage";
 
 const PRIVATE = {
   "Cache-Control": "private, no-store",
@@ -24,7 +25,12 @@ export async function GET(
   if (!session)
     return new Response("Unauthorized", { status: 401, headers: PRIVATE });
 
-  const found = await fleet.fileReadRule(id);
+  const kind = await fileKindOf(id);
+  if (!kind) return notFound();
+  const found =
+    kind === "ridePhoto"
+      ? await rides.photoReadRule(id)
+      : await fleet.fileReadRule(id);
   if (!found || !canReadFile(session, found.rule)) return notFound();
   const { file } = found;
 

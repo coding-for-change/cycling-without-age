@@ -6,7 +6,7 @@ import { defaultLocationFor } from "@/use-cases/manage-chapter";
 import type {
   Gender,
   Prisma,
-  RideCancellationCategory,
+  RideCancellationReason,
   RideModel,
 } from "@/generated/prisma";
 
@@ -416,7 +416,7 @@ const PLACES: Record<string, { start: string[]; destinations: string[] }> = {
 };
 
 const CANCELLATIONS: readonly (readonly [
-  RideCancellationCategory | null,
+  RideCancellationReason | null,
   number,
   string[],
 ])[] = [
@@ -448,11 +448,9 @@ const CANCELLATIONS: readonly (readonly [
       "Staff shortage at the home",
     ],
   ],
-  [
-    "cwa",
-    10,
-    ["No pilot available", "Trishaw battery fault", "Trishaw in repair"],
-  ],
+  ["volunteers", 6, ["No pilot available", "Pilot fell ill"]],
+  ["equipment", 4, ["Trishaw battery fault", "Trishaw in repair"]],
+  ["noRiders", 3, ["Nobody signed up"]],
   [
     "other",
     8,
@@ -719,8 +717,8 @@ function planChapter(spec: ChapterSpec, chapterId: string, people: People) {
               ] as const,
           ),
         );
-        ride.cancellationCategory = category;
-        ride.cancellationReason = pick(reasons);
+        ride.cancellationReasonCode = category;
+        ride.cancellationNote = pick(reasons);
         ride.cancelledAt = new Date(
           startsAt.getTime() - int(2, 72) * 3_600_000,
         );

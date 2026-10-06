@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState, useTransition } from "react";
+import { useId, useRef, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -59,7 +59,6 @@ export function CountryDrawer({
   onDone: () => void;
 }) {
   const formId = useId();
-  const [portal, setPortal] = useState<HTMLElement | null>(null);
   const [pending, startTransition] = useTransition();
   const form = useForm<CountryInput>({
     resolver: zodResolver(countryInput),
@@ -132,9 +131,6 @@ export function CountryDrawer({
       <Form {...form}>
         <form
           id={formId}
-          ref={(node) =>
-            setPortal(node?.closest<HTMLElement>("[data-vaul-drawer]") ?? null)
-          }
           onSubmit={submit}
           onKeyDown={submitOnCmdEnter}
           aria-busy={pending}
@@ -163,7 +159,7 @@ export function CountryDrawer({
                       className="h-11 border-line text-base"
                     />
                   </FormControl>
-                  <ComboboxContent container={portal}>
+                  <ComboboxContent>
                     <ComboboxEmpty>{labels.pick.empty}</ComboboxEmpty>
                     <ComboboxList>
                       <ComboboxCollection>
