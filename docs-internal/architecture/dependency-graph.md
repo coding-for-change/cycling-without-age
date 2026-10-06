@@ -53,7 +53,7 @@ graph TD
     RT3["app/api/calendar/[file] feed route"]
     ACT13[features/calendar-feeds/actions]
     ACT14[features/fleet/actions]
-    ACT15[app/admin/rides/actions]
+    ACT15[features/rides/actions]
     RT4["app/api/files/[id] route"]
     ACT0[app/actions setLocale]
   end
@@ -90,6 +90,8 @@ graph TD
     U34[use-cases/trishaw-history]
     U35[use-cases/finish-ride]
     U36[use-cases/move-trishaw]
+    U37[use-cases/staff-ride]
+    U38[use-cases/book-rider]
   end
   subgraph Worker
     W1["worker/index (dispatcher, sweeper, prune-devices, prune-chat, email + push workers)"]
@@ -109,6 +111,7 @@ graph TD
     F10[features/calendar-feeds facade]
     F11[features/fleet facade]
     CM6[features/fleet/commands]
+    CM7[features/rides/commands]
     CM1[features/chapters/commands]
     CM2[features/membership/commands]
     CM3[features/profile/commands]
@@ -369,6 +372,7 @@ graph TD
   F10 --> FSIG
   S10 --> DB
   CMD --> CM6
+  CMD --> CM7
   ADM --> F11
   MEM --> F11
   ADM --> ACT14
@@ -385,8 +389,11 @@ graph TD
   ACT15 --> G
   ACT15 --> F9
   ACT15 --> U31
+  ACT15 --> U37
+  ACT15 --> U38
   RT4 --> G
   RT4 --> F11
+  RT4 --> F9
   RT4 --> STO
   ADM --> U31
   ADM --> U34
@@ -394,6 +401,13 @@ graph TD
   U13 --> F11
   U31 --> F11
   U31 --> F9
+  U31 --> F1
+  U31 --> F2
+  U31 --> F4
+  U37 --> F2
+  U37 --> F9
+  U38 --> F4
+  U38 --> F9
   U32 --> F11
   U32 --> F9
   U33 --> F11
@@ -408,6 +422,7 @@ graph TD
   U19 --> F11
   F11 --> S11
   F11 --> EV
+  F9 --> EV
   F11 --> STO
   S11 --> DB
   F2 --> S2
@@ -454,7 +469,9 @@ graph TD
 | `chat-notifications/notify-chat-message` | `chat`, `profile`, `notifications` (+ `lib/realtime` presence, BullMQ) | The `chat.messageSent` listener. Drops the sender, then per recipient in chunks of 25: mute, `presence.isFocusedOn`, preference, device tokens — a `chat` push job for anyone reachable, a debounced `chat-digest` mail job for anyone not. Writes no `Notification` row: chat never appears in the bell. |
 | `chat-notifications/deliver-chat-push` | `chat`, `profile`, `notifications` (+ `lib/push`) | One banner for one message, re-deciding at wake-up: still unread, still unmuted, still opted in. Titled "Anna Berg" or "Anna Berg · Saturday crew", body stripped of markdown to 140 characters, collapsed per conversation so ten messages are one banner. |
 | `calendar-feed` | `calendar-feeds`, `membership`, `passengers`, `rides` (+ `lib/ics`) | One poll of a subscribed calendar: `calendar-feeds` turns the address into an owner (signature first, then the row, then the ban check), `membership` says where that owner may read rides as a pilot (`/pilot`'s rule: the pilot role somewhere, current membership of the ride's chapter), `passengers` names the riders they manage, and `rides` returns the union with nobody's name in it. The strings come from the owner's stored locale, because a poll carries no session. Called only from the feed route (RT3). |
-| `schedule-ride` | `fleet`, `rides` | Whether a chapter may use a trishaw (its location, a pool it was approved for, the status) is the fleet's rule; the reservation under a row lock is the calendar's. `allocateTrishaws` checks only the trishaws being *added*, so one grounded after allocation stays on the ride with a warning instead of blocking every other edit. `allocationChoices` reads overlapping rides across every chapter that shares a pool, because a pooled bike booked by the neighbour is still booked. |
+| `schedule-ride` | `chapters`, `fleet`, `membership`, `passengers`, `rides` | Whether a chapter may use a trishaw (its location, a pool it was approved for, the status) is the fleet's rule; the reservation under a row lock is the calendar's. `scheduleRideAt` reads the chapter's time zone from `chapters` to turn the drawer's wall-clock slot into instants, and a functional round trip into two windows. Riders and pilots named at scheduling are checked in one batch each (`passengers.getPassengers`, `membership.getMembersRoles`). `allocateTrishaws` takes the ride scope the Action already read and checks only the trishaws being *added*, so one grounded after allocation stays on the ride with a warning instead of blocking every other edit. `trishawChoicesForRide` and `freeTrishawsInWindow` ask `rides.bookedTrishawIds` which of the chapter's trishaws any live ride holds in the window, whichever chapter booked it, because a pooled bike booked by the neighbour is still booked. |
+| `staff-ride` | `membership`, `rides` | An admin may put only someone holding the `pilot` role in the ride's own chapter on it; that role is membership's, the assignment the calendar's. Taking a pilot off is single-feature, so that Action calls `rides.unassignVolunteer` directly. |
+| `book-rider` | `passengers`, `rides` | A rider joins a ride of their own chapter only; which chapter a rider belongs to is the passengers' rule. Removing a rider calls `rides.cancelBooking` directly. |
 | `report-damage` | `fleet`, `rides` | A pilot may report only on a ride they were assigned to and a trishaw that was on it (`rides`); the damage, the grounding and the `trishaw.damageReported` event are `fleet`'s. The upcoming rides a grounding endangers come from `rides` and travel in the event. |
 | `leave-pool` | `fleet`, `rides` | Leaving is blocked while the chapter still has future rides with the pool's trishaws — that count is the calendar's. |
 | `move-trishaw` | `fleet`, `rides` | A move is refused while a chapter that would lose the trishaw (it reaches the old location but not the new one) still has future rides with it. Who reaches a location is the fleet's rule; the count is the calendar's. |
@@ -491,15 +508,20 @@ account surface (ACCT) reads `calendarFeeds.getFeed` directly in `loadAccount`, 
 reads `profile`. `FSIG` has one caller, the `calendar-feeds` facade, which is the same standing
 `CRY` has with chat; `ICS` is pure serialisation like `CAL`.
 
-No use case was added for `rides` either. The calendar surfaces — `/admin/rides`,
-`/admin/bikes`, `/pilot` and `/passenger` — are Server Components that read the `rides`
-facade directly. `/admin/rides` and `/admin/bikes` additionally read
-`chapters.getChapterTimeZones`, because a calendar has to know which clock to draw in; a
-Server Component reading two facades is the existing pattern (`/admin/passengers` already
-reads `passengers` and `chapters`), and the Use Case rule in AGENTS.md governs Actions, not
-pages. The slice contributes no `commands.ts`: both of its destinations already have `NAV`
-rows, so the shell claims them by href, and it has no verbs of its own until ride scheduling
-(COD-155/179) lands.
+The calendar surfaces — `/admin/rides`, `/admin/bikes`, `/pilot` and `/passenger` — and the
+ride detail page `/admin/rides/[rideId]` are Server Components that read the `rides` facade
+directly. `/admin/rides` and `/admin/bikes` additionally read `chapters.getChapterTimeZones`,
+because a calendar has to know which clock to draw in; a Server Component reading two facades
+is the existing pattern (`/admin/passengers` already reads `passengers` and `chapters`), and the
+Use Case rule in AGENTS.md governs Actions, not pages.
+
+Writes go through `features/rides/actions` (ACT15). Each Action loads the ride, guards with
+`requireChapterAdmin(ride.chapterId)`, and then calls the facade when only rides are involved
+(reschedule, edit, cancel, delete, unassign a pilot, remove a rider, add a history note) or a
+use case when another feature has a say (U31 scheduling and trishaws, U37 staffing, U38
+booking). Every facade write emits through `lib/events` (EV), which is the edge `F9 --> EV`. The
+slice's `commands.ts` (CM7) claims the `/admin/rides` row and adds "Schedule a ride"
+(`/admin/rides?new=1`).
 
 `lib/calendar` and `lib/time-zone` (CAL) are cross-cutting infrastructure beside
 `lib/format`: pure functions over instants and IANA zones, no React and no Prisma, so a
@@ -602,12 +624,18 @@ Action passes it to `requireAdminOf` in `lib/auth-guards`, which evaluates it wi
 `allowsAdmin` from `lib/access`. The facade never sees a session.
 
 `RT4` (`/api/files/[id]`) is the only way a stored file is served: `getSession`, then
-`fleet.fileReadRule` describes per kind who may read it as plain data (anyone, the uploader,
+`lib/storage.fileKindOf` reads the file's kind once and hands it to the owning feature —
+`rides.photoReadRule` for a `ridePhoto`, `fleet.fileReadRule` for every other kind — which describes who may read it as plain data (anyone, the uploader,
 the location's members and admins, or a damage's reporter and admins), `canReadFile` in
 `lib/auth-guards` decides for the session, then a 302 to a five-minute signed GET. `lib/storage`
-(STO) is infrastructure like `lib/mailer`: presigned PUTs to the private bucket, then a commit
-step that HEADs the staged object, re-encodes images to WebP with `sharp` (PDFs must start with
-`%PDF-`) and writes the final key. Nothing a browser uploaded is served unprocessed.
+(STO) is infrastructure like `lib/mailer`: `requestUpload` presigns a PUT to the private bucket,
+`commitUpload` HEADs the staged object, re-encodes images to WebP with `sharp` (PDFs must start
+with `%PDF-`), writes the final key and inserts the `StoredFile` row. One `UPLOAD_LIMIT`
+(`withinUploadLimit`) is shared by every upload Action; who may upload which kind stays each
+feature's Action rule. On the client, `hooks/use-presigned-upload` runs presign → PUT → commit
+against a feature's two Actions, and `hooks/use-photo-list` holds the optimistic photo list
+(pending uploads, remove with Undo, reorder) behind both the fleet `PhotoGallery` and the ride
+photo strip. Nothing a browser uploaded is served unprocessed.
 `lib/native/camera` (NC) is the only importer of `@capacitor/camera`.
 
 The notification kinds (U19) now reach `fleet` for trishaw and pool names:

@@ -1,5 +1,7 @@
 import { wallClock } from "@/lib/calendar";
 import {
+  dayNeighbours,
+  readDayParam,
   readWeekAnchor,
   weekHref,
   weekNeighbours,
@@ -111,5 +113,35 @@ describe("dates that pass the pattern but do not exist", () => {
   it("still accepts a real leap day", () => {
     const anchor = readWeekAnchor("2028-02-29", BERLIN, MONDAY, NOW);
     expect(wallClock(anchor, BERLIN)).toMatchObject({ month: 2, day: 28 });
+  });
+});
+
+describe("readDayParam", () => {
+  const days = ["2026-09-07", "2026-09-08", "2026-09-09"];
+
+  it("keeps a day inside the week", () => {
+    expect(readDayParam("2026-09-08", days, "2026-09-13")).toBe("2026-09-08");
+  });
+
+  it("falls back to today when it is in the week", () => {
+    expect(readDayParam("2026-01-01", days, "2026-09-09")).toBe("2026-09-09");
+  });
+
+  it("falls back to the first day otherwise", () => {
+    expect(readDayParam(undefined, days, "2026-09-13")).toBe("2026-09-07");
+  });
+});
+
+describe("dayNeighbours", () => {
+  it("steps across a week boundary and carries the new week", () => {
+    const { previous, next } = dayNeighbours("2026-09-07", BERLIN, MONDAY);
+    expect(previous).toEqual({ day: "2026-09-06", week: "2026-08-31" });
+    expect(next).toEqual({ day: "2026-09-08", week: "2026-09-07" });
+  });
+
+  it("crosses a month", () => {
+    expect(dayNeighbours("2026-09-30", BERLIN, MONDAY).next.day).toBe(
+      "2026-10-01",
+    );
   });
 });

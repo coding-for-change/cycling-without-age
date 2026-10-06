@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import type { DamageFormLabels } from "@/features/fleet/components/damage-form";
 import { DamageReportDrawer } from "@/features/fleet/components/damage-report-drawer";
 import { FileImage, FileThumb } from "@/features/fleet/components/file-image";
+import { fleetCommon } from "@/features/fleet/components/strings";
 import { requirePerspective } from "@/lib/auth-guards";
 import { calendarDate } from "@/lib/calendar";
 import { googleMapsUrl } from "@/lib/geo";
@@ -58,7 +59,8 @@ export async function FinishRide({
 
   const locale = resolveLocale(head.get("accept-language"));
   const words = wordsLocale(language);
-  const { finish, common } = dict.fleet;
+  const { finish } = dict.fleet;
+  const common = fleetCommon(dict);
   const { ride } = view;
   const zone = ride.chapter.timeZone;
 

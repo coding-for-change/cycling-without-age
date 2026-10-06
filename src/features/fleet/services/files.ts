@@ -10,9 +10,6 @@ const fileSelect = {
   uploadedByUserId: true,
 } satisfies Prisma.StoredFileSelect;
 
-export const insertStoredFile = (data: Prisma.StoredFileUncheckedCreateInput) =>
-  prisma.storedFile.create({ data, select: fileSelect });
-
 export const findStoredFileById = (id: string) =>
   prisma.storedFile.findUnique({ where: { id }, select: fileSelect });
 

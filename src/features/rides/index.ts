@@ -4,6 +4,7 @@ export type {
   PilotRideRow,
   RideCalendarRow,
   RideFeedRow,
+  RideScope,
   TrishawRideRow,
 } from "./facade";
 export * from "./schemas";

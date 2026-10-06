@@ -188,6 +188,18 @@ export function formatShortDateWithWeekday(
   }).format(toCalendarDate(value));
 }
 
+export function formatLongDateWithWeekday(
+  value: Date | string,
+  locale: Locale,
+): string {
+  return dateTimeFormatter(locale, {
+    ...CALENDAR_UTC,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(toCalendarDate(value));
+}
+
 /** `M` — one letter for a day column too narrow for a word; the same in every supported locale */
 export function formatWeekdayNarrow(
   value: Date | string,
@@ -230,6 +242,14 @@ export function formatTime(
     timeStyle: "short",
   }).format(new Date(value));
 }
+
+export const formatTimeRange = (
+  start: Date | string,
+  end: Date | string,
+  locale: Locale,
+  timeZone: string,
+) =>
+  `${formatTime(start, locale, timeZone)} – ${formatTime(end, locale, timeZone)}`;
 
 /** `10 AM` (en-US) · `10 Uhr` (de-DE) · `10` (en-GB, da-DK) — an hour rail with no room for minutes */
 export function formatHour(

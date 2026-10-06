@@ -66,7 +66,7 @@ export async function AdminSidebar() {
                   tooltip={dict.admin.newRide}
                   className="bg-red font-medium text-white hover:bg-red-hover hover:text-white focus-visible:ring-ink active:bg-red-hover active:text-white"
                 >
-                  <Link href="/admin/rides">
+                  <Link href="/admin/rides?new=1">
                     <Plus aria-hidden />
                     <span>{dict.admin.newRide}</span>
                   </Link>

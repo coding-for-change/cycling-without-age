@@ -1,7 +1,6 @@
 import { Bike } from "lucide-react";
+import { fileUrl } from "@/lib/storage/file-url";
 import { cn } from "@/lib/utils";
-
-export const fileUrl = (fileId: string) => `/api/files/${fileId}`;
 
 export function FileImage({
   fileId,

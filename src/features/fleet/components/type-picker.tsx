@@ -27,7 +27,6 @@ export function TypePicker({
   value: string | null;
   onChange: (typeId: string | null) => void;
   labels: TypePickerLabels;
-  container?: HTMLElement | null;
   className?: string;
 }) {
   return (

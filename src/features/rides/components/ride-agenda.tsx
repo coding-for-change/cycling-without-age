@@ -2,7 +2,7 @@ import { Bike, MapPin, UserRound } from "lucide-react";
 import { calendarDate, dayKey } from "@/lib/calendar";
 import {
   formatShortDateWithWeekday,
-  formatTime,
+  formatTimeRange,
   type Locale,
 } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
@@ -120,8 +120,7 @@ function AgendaRow({
           dateTime={ride.startsAt.toISOString()}
           className={cn("text-sm font-display", cancelled && "line-through")}
         >
-          {formatTime(ride.startsAt, locale, zone)} –{" "}
-          {formatTime(ride.endsAt, locale, zone)}
+          {formatTimeRange(ride.startsAt, ride.endsAt, locale, zone)}
         </time>
         <span className="text-2sm text-ink-soft">
           {strings.models[ride.model]}

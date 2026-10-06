@@ -2,13 +2,22 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Building2, Mail, Phone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { PersonAvatar } from "@/components/person-avatar";
 import {
   BackLink,
+  DETAIL_MEDIA,
   DETAIL_TITLE,
+  DetailEmpty,
   DetailHeader,
+  DetailHeaderActions,
   DetailLayout,
+  DetailMeta,
+  MetaBadge,
 } from "../../../_components/detail-page";
+import { ActivityFeed } from "../../../_components/activity-feed";
+import { deletionConsequences } from "../../../_components/deletion-consequences";
+import { TimelineBubble } from "../../../_components/timeline";
 import { activity } from "@/lib/activity";
 import { membership } from "@/features/membership";
 import { profile } from "@/features/profile";
@@ -17,6 +26,7 @@ import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { formatDate, resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
+import { cn } from "@/lib/utils";
 import { historyShown } from "../../../_components/history-more";
 import {
   HistorySection,
@@ -24,8 +34,8 @@ import {
 } from "../../../_components/history-section";
 import { SidePanel } from "../../../_components/side-panel";
 import { readActiveScope } from "../../../active-scope";
-import { DeleteUserDialog } from "../../_components/delete-user-dialog";
 import { MemberActions } from "../../_components/member-actions";
+import { deleteUserAction } from "../../actions";
 import type { AdminSearchParams } from "../../../active-scope";
 
 export async function PersonBody({
@@ -89,12 +99,41 @@ export async function PersonBody({
             media={
               <PersonAvatar
                 svg={avatarSvg(avatarSeed(person.email), true)}
-                className="size-14"
+                className={cn(DETAIL_MEDIA, "rounded-full")}
               />
             }
             title={<span className={DETAIL_TITLE}>{name}</span>}
+            aside={
+              scope.canDeleteAccounts && !isSelf ? (
+                <DetailHeaderActions>
+                  <ConfirmDeleteDialog
+                    variant="icon"
+                    name={name}
+                    consequences={deletionConsequences(
+                      {
+                        roles: memberships.length,
+                        pending: applications.filter(
+                          (a) => a.status !== "approved",
+                        ).length,
+                      },
+                      dict.admin.deletion,
+                      words,
+                    )}
+                    labels={{
+                      ...dict.admin.person.delete,
+                      consequences: dict.admin.deletion.consequences,
+                    }}
+                    locale={words}
+                    cancel={dict.admin.chapters.cancel}
+                    action={deleteUserAction}
+                    input={{ userId }}
+                    redirectTo={backHref}
+                  />
+                </DetailHeaderActions>
+              ) : undefined
+            }
           >
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-2sm text-ink-soft">
+            <DetailMeta className="gap-x-4">
               <span className="inline-flex items-center gap-2">
                 <Mail
                   aria-hidden
@@ -109,69 +148,51 @@ export async function PersonBody({
                 />
                 {person.phoneNumber || dict.admin.person.noPhone}
               </span>
-            </div>
+            </DetailMeta>
           </DetailHeader>
         }
         sidebar={
-          <>
-            <SidePanel title={dict.admin.person.roles}>
-              {inScope.length > 0 ? (
-                <ul className="grid gap-4">
-                  {inScope.map((entry) => (
-                    <li
-                      key={entry.chapterId}
-                      className="grid gap-2"
-                    >
-                      <span className="inline-flex items-center gap-2 text-2sm font-medium">
-                        <Building2
-                          aria-hidden
-                          className="size-4 shrink-0 text-ink-soft"
-                        />
-                        {chapterNames.get(entry.chapterId)}
-                      </span>
-                      <div className="flex flex-wrap gap-1">
-                        {entry.roles.map((role) => (
-                          <Badge
-                            key={role}
-                            className="bg-mint-tint font-normal text-ink"
-                          >
-                            {roleLabel(role)}
-                          </Badge>
-                        ))}
-                      </div>
-                      <MemberActions
-                        target={{
-                          userId,
-                          chapterId: entry.chapterId,
-                          name,
-                          isAdmin: entry.roles.includes("admin"),
-                          isSelf,
-                        }}
-                        labels={dict.admin.members}
-                        cancel={dict.admin.chapters.cancel}
-                        locale={words}
+          <SidePanel title={dict.admin.person.roles}>
+            {inScope.length > 0 ? (
+              <ul className="grid gap-4">
+                {inScope.map((entry) => (
+                  <li
+                    key={entry.chapterId}
+                    className="grid gap-2"
+                  >
+                    <span className="inline-flex items-center gap-2 text-2sm font-medium">
+                      <Building2
+                        aria-hidden
+                        className="size-4 shrink-0 text-ink-soft"
                       />
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-2sm text-ink-soft">
-                  {dict.admin.person.noRoles}
-                </p>
-              )}
-            </SidePanel>
-
-            {scope.canDeleteAccounts && !isSelf ? (
-              <DeleteUserDialog
-                userId={userId}
-                name={name}
-                backHref={backHref}
-                labels={dict.admin.person.delete}
-                cancel={dict.admin.chapters.cancel}
-                locale={words}
-              />
-            ) : null}
-          </>
+                      {chapterNames.get(entry.chapterId)}
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {entry.roles.map((role) => (
+                        <MetaBadge key={role}>{roleLabel(role)}</MetaBadge>
+                      ))}
+                    </div>
+                    <MemberActions
+                      target={{
+                        userId,
+                        chapterId: entry.chapterId,
+                        name,
+                        isAdmin: entry.roles.includes("admin"),
+                        isSelf,
+                      }}
+                      labels={dict.admin.members}
+                      cancel={dict.admin.chapters.cancel}
+                      locale={words}
+                    />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <DetailEmpty variant="panel">
+                {dict.admin.person.noRoles}
+              </DetailEmpty>
+            )}
+          </SidePanel>
         }
       >
         {open.length > 0 ? (
@@ -207,9 +228,7 @@ export async function PersonBody({
                   )}
                 </span>
                 {application.decisionNote ? (
-                  <p className="rounded-xl bg-mint-tint px-3 py-2 whitespace-pre-wrap text-ink">
-                    {application.decisionNote}
-                  </p>
+                  <TimelineBubble>{application.decisionNote}</TimelineBubble>
                 ) : null}
               </li>
             ))}
@@ -221,13 +240,18 @@ export async function PersonBody({
           pathname={`/admin/members/${userId}`}
           query={query}
           shown={shown}
-          events={events}
-          viewerId={session.user.id}
-          labels={dict.admin.history}
-          empty={dict.admin.person.historyEmpty}
-          notation={notation}
-          words={words}
-        />
+          total={events.length}
+          showMoreLabel={dict.admin.history.showMore}
+        >
+          <ActivityFeed
+            events={events.slice(0, shown)}
+            viewerId={session.user.id}
+            labels={dict.admin.history}
+            empty={dict.admin.person.historyEmpty}
+            notation={notation}
+            words={words}
+          />
+        </HistorySection>
       </DetailLayout>
     </>
   );

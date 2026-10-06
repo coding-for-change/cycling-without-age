@@ -3,6 +3,7 @@
 import { LogOut } from "lucide-react";
 import { leavePoolAction } from "@/features/fleet/actions";
 import type { Dictionary } from "@/lib/i18n";
+import type { FleetErrors } from "@/features/fleet/components/strings";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
 import { ConfirmButton } from "@/components/confirm-button";
@@ -21,7 +22,7 @@ export function PoolLeaveButton({
   chapterId: string;
   chapterName: string;
   strings: Dictionary["fleet"]["locations"];
-  errors: Dictionary["fleet"]["common"]["errors"];
+  errors: FleetErrors;
   locale: Locale;
 }) {
   const names = { name: poolName, chapter: chapterName };

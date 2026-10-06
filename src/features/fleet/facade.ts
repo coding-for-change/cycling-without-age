@@ -2,11 +2,7 @@ import { randomInt } from "node:crypto";
 import { DomainError, isUniqueViolation, mapping } from "@/lib/domain-error";
 import { transaction } from "@/lib/events";
 import type { AdminAuthority, FileReadRule } from "@/lib/access";
-import {
-  commitUpload as commitStoredObject,
-  prepareUpload,
-  type FileKind,
-} from "@/lib/storage";
+import type { FileKind } from "@/lib/storage";
 import {
   POOL_CODE_ALPHABET,
   chapterLocationInput,
@@ -25,8 +21,6 @@ import {
   typeCreateInput,
   typeSearchInput,
   typeUpdateInput,
-  uploadCommitInput,
-  uploadRequestInput,
   type ChapterLocationInput,
   type DamageClearInput,
   type DamageReportInput,
@@ -52,11 +46,7 @@ import {
   type DamageRow,
 } from "./services/damages";
 import { countChapterFleet, countCountryFleet } from "./services/footprint";
-import {
-  findFileOwners,
-  findStoredFileById,
-  insertStoredFile,
-} from "./services/files";
+import { findFileOwners, findStoredFileById } from "./services/files";
 import {
   deleteLocationById,
   findDefaultLocation,
@@ -142,25 +132,6 @@ async function ownFile(
   const file = await findStoredFileById(fileId);
   if (!file || file.kind !== kind || file.uploadedByUserId !== userId)
     throw new DomainError("invalidFile");
-}
-
-export async function requestUpload(userId: string, input: unknown) {
-  const { kind, mime, size } = uploadRequestInput.parse(input);
-  const prepared = await prepareUpload(userId, kind, mime, size);
-  if (!prepared) throw new DomainError("uploadRejected");
-  return prepared;
-}
-
-export async function commitUpload(userId: string, input: unknown) {
-  const { kind, key } = uploadCommitInput.parse(input);
-  const stored = await commitStoredObject(userId, kind, key);
-  if (!stored) throw new DomainError("uploadRejected");
-  const file = await insertStoredFile({
-    ...stored,
-    kind,
-    uploadedByUserId: userId,
-  });
-  return { id: file.id, mime: file.mime };
 }
 
 const reachingChapterIds = (location: {

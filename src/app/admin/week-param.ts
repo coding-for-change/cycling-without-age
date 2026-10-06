@@ -1,4 +1,5 @@
 import { addDays, dayKey, instantAt, startOfWeek } from "@/lib/calendar";
+import { first } from "@/lib/search-params";
 
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
@@ -15,7 +16,7 @@ export function readWeekAnchor(
   weekStartsOn: number,
   now: Date = new Date(),
 ): Date {
-  const raw = Array.isArray(param) ? param[0] : param;
+  const raw = first(param);
   const match = raw ? ISO_DATE.exec(raw) : null;
   if (!match) return startOfWeek(now, timeZone, weekStartsOn);
 
@@ -58,4 +59,34 @@ export function weekHref(
   const params = new URLSearchParams(scopeQuery.replace(/^\?/, ""));
   params.set("week", week);
   return `${pathname}?${params.toString()}`;
+}
+
+export function readDayParam(
+  param: string | string[] | undefined,
+  days: readonly string[],
+  today: string,
+): string {
+  const raw = first(param);
+  if (raw && days.includes(raw)) return raw;
+  return days.includes(today) ? today : days[0];
+}
+
+export function dayNeighbours(
+  day: string,
+  timeZone: string,
+  weekStartsOn: number,
+) {
+  const at = (offset: number) => {
+    const [year, month, date] = day.split("-").map(Number);
+    const instant = instantAt(
+      { year, month, day: date + offset, hour: 12, minute: 0 },
+      timeZone,
+    );
+    const key = dayKey(instant, timeZone);
+    return {
+      day: key,
+      week: weekParam(startOfWeek(instant, timeZone, weekStartsOn), timeZone),
+    };
+  };
+  return { previous: at(-1), next: at(1) };
 }

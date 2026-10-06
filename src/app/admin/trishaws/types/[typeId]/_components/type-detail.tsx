@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useId, useTransition } from "react";
 import {
   Accessibility,
   Archive,
@@ -9,20 +8,15 @@ import {
   ArrowUpRight,
   FileText,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { notify, type ActionResult } from "@/components/action-feedback";
 import { ConfirmButton } from "@/components/confirm-button";
 import {
   ConfirmDeleteDialog,
   type ConfirmDeleteLabels,
 } from "@/components/confirm-delete-dialog";
-import { InlineField, type InlineFieldLabels } from "@/components/inline-field";
-import { RichText } from "@/components/markdown";
+import type { InlineFieldLabels } from "@/components/inline-field";
 import type { MarkdownToolLabels } from "@/components/markdown-editor";
-import { SaveStatus, SaveStatusProvider } from "@/components/save-status";
-import { useOptimisticSave } from "@/components/use-optimistic-save";
 import {
   deleteTypeAction,
   promoteTypeAction,
@@ -30,7 +24,8 @@ import {
   setTypePhotosAction,
   updateTypeAction,
 } from "@/features/fleet/actions";
-import { FileThumb, fileUrl } from "@/features/fleet/components/file-image";
+import { FileThumb } from "@/features/fleet/components/file-image";
+import { fileUrl } from "@/lib/storage/file-url";
 import {
   ManualField,
   type ManualFieldLabels,
@@ -38,21 +33,32 @@ import {
 import {
   PhotoGallery,
   type PhotoGalleryLabels,
-} from "@/features/fleet/components/photo-gallery";
+} from "@/components/photo-gallery/photo-gallery";
+import { fleetUpload } from "@/features/fleet/components/fleet-upload";
 import type { TypeUpdateInput } from "@/features/fleet/schemas";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
 import {
+  DETAIL_MEDIA,
+  DetailEditorShell,
+  DetailEmpty,
   DetailHeader,
-  DetailLayout,
+  DetailHeaderActions,
+  DetailMeta,
+  DetailNotice,
   DetailSection,
+  MetaBadge,
 } from "../../../../_components/detail-page";
 import { DetailTitle } from "../../../../_components/detail-title";
+import { EditableText } from "../../../../_components/editable-text";
+import {
+  OptimisticPropertySelect,
+  PropertySwitch,
+} from "../../../../_components/optimistic-properties";
 import {
   PROPERTY_BUTTON,
   PropertyList,
   PropertyRow,
-  PropertySelect,
   PropertyValue,
 } from "../../../../_components/properties";
 import { SidePanel } from "../../../../_components/side-panel";
@@ -87,7 +93,6 @@ export type TypeDetailLabels = {
   wheelchair: string;
   catalogue: string;
   readOnly: string;
-  manage: string;
   promoteHint: string;
   promoteDone: string;
   archive: string;
@@ -125,18 +130,23 @@ export function TypeDetail({
   language: Locale;
   labels: TypeDetailLabels;
 }) {
-  const router = useRouter();
+  const ids = { seats: useId(), wheelchair: useId() };
   const save = (input: TypeUpdateInput): Promise<ActionResult> =>
     updateTypeAction(type.id, input);
   const errors = labels.field.errors;
+  const photoAlt = formatMessage(
+    labels.photoAlt,
+    { name: type.name },
+    language,
+  );
 
   const header = (
     <DetailHeader
       media={
         <FileThumb
           fileId={type.photoFileId}
-          alt={formatMessage(labels.photoAlt, { name: type.name }, language)}
-          size="lg"
+          alt={photoAlt}
+          className={DETAIL_MEDIA}
         />
       }
       title={
@@ -150,43 +160,55 @@ export function TypeDetail({
       }
       aside={
         canManage ? (
-          <SaveStatus
-            labels={labels.status}
-            words={language}
-          />
+          <DetailHeaderActions
+            saveStatus={{ labels: labels.status, words: language }}
+          >
+            <ConfirmDeleteDialog
+              variant="icon"
+              name={type.name}
+              locale={language}
+              labels={{ ...labels.delete, errors }}
+              cancel={labels.cancel}
+              action={deleteTypeAction}
+              input={type.id}
+              redirectTo={backHref}
+              blocked={type.inUse ? labels.deleteBlocked : undefined}
+            />
+          </DetailHeaderActions>
         ) : undefined
       }
     >
-      <div className="flex flex-wrap items-center gap-2 text-2sm text-ink-soft">
-        <Badge className="bg-mint-tint font-normal text-ink">
-          {type.scopeLabel}
-        </Badge>
-        {type.ownerName ? <span>{type.ownerName}</span> : null}
+      <DetailMeta>
+        <MetaBadge>{type.scopeLabel}</MetaBadge>
         {type.archived ? (
-          <Badge
-            variant="outline"
-            className="border-line font-normal text-ink-soft"
-          >
+          <MetaBadge className="border-line bg-transparent text-ink-soft">
             {labels.archivedBadge}
-          </Badge>
+          </MetaBadge>
         ) : null}
-        <span>·</span>
-        <span>{type.usage}</span>
-      </div>
+        {type.ownerName}
+        {type.usage}
+      </DetailMeta>
     </DetailHeader>
   );
 
-  const properties = (
+  const panels = (
     <>
       <SidePanel title={labels.properties}>
         <PropertyList>
-          <PropertyRow label={labels.seats}>
+          <PropertyRow
+            label={labels.seats}
+            htmlFor={canManage ? ids.seats : undefined}
+          >
             {canManage ? (
-              <SeatsSelect
-                value={type.seats}
-                options={labels.seatOptions}
+              <OptimisticPropertySelect
+                id={ids.seats}
+                value={String(type.seats)}
+                options={labels.seatOptions.map((option) => ({
+                  value: String(option.value),
+                  label: option.label,
+                }))}
+                onSave={(next) => save({ seats: Number(next) })}
                 labels={labels.field}
-                onSave={(seats) => save({ seats })}
               />
             ) : (
               <PropertyValue>
@@ -195,15 +217,20 @@ export function TypeDetail({
               </PropertyValue>
             )}
           </PropertyRow>
-          <PropertyRow label={labels.wheelchair}>
+          <PropertyRow
+            label={labels.wheelchair}
+            htmlFor={canManage ? ids.wheelchair : undefined}
+          >
             {canManage ? (
-              <WheelchairToggle
+              <PropertySwitch
+                id={ids.wheelchair}
                 value={type.wheelchair}
                 label={labels.wheelchair}
-                labels={labels.field}
+                icon={Accessibility}
                 onSave={(wheelchairAccessible) =>
                   save({ wheelchairAccessible })
                 }
+                labels={labels.field}
               />
             ) : (
               <PropertyValue>
@@ -219,39 +246,7 @@ export function TypeDetail({
             </PropertyValue>
           </PropertyRow>
         </PropertyList>
-      </SidePanel>
-
-      {promoteLabel || !canManage ? (
-        <SidePanel title={labels.catalogue}>
-          {promoteLabel ? (
-            <div className="grid gap-2">
-              <ConfirmButton
-                icon={<ArrowUpRight aria-hidden />}
-                label={promoteLabel}
-                title={promoteLabel}
-                body={labels.promoteHint}
-                confirm={promoteLabel}
-                cancel={labels.cancel}
-                done={formatMessage(
-                  labels.promoteDone,
-                  { name: type.name },
-                  language,
-                )}
-                errors={errors}
-                action={() => promoteTypeAction(type.id)}
-                className={PROPERTY_BUTTON}
-              />
-              <p className="text-2sm text-ink-soft">{labels.promoteHint}</p>
-            </div>
-          ) : null}
-          {!canManage ? (
-            <p className="text-2sm text-ink-soft">{labels.readOnly}</p>
-          ) : null}
-        </SidePanel>
-      ) : null}
-
-      {canManage ? (
-        <SidePanel title={labels.manage}>
+        {canManage ? (
           <div className="grid gap-2">
             <ArchiveButton
               typeId={type.id}
@@ -260,168 +255,117 @@ export function TypeDetail({
               labels={labels}
               language={language}
             />
-            <p className="text-2sm text-ink-soft">{labels.archiveHint}</p>
+            <p className="text-xs text-ink-soft">{labels.archiveHint}</p>
           </div>
-          {type.inUse ? (
-            <p className="text-2sm text-ink-soft">{labels.deleteBlocked}</p>
-          ) : (
-            <ConfirmDeleteDialog
-              name={type.name}
-              locale={language}
-              labels={{ ...labels.delete, errors }}
+        ) : null}
+      </SidePanel>
+
+      {promoteLabel ? (
+        <SidePanel title={labels.catalogue}>
+          <div className="grid gap-2">
+            <ConfirmButton
+              icon={<ArrowUpRight aria-hidden />}
+              label={promoteLabel}
+              title={promoteLabel}
+              body={labels.promoteHint}
+              confirm={promoteLabel}
               cancel={labels.cancel}
-              action={() => deleteTypeAction(type.id)}
-              onDone={() => router.push(backHref)}
+              done={formatMessage(
+                labels.promoteDone,
+                { name: type.name },
+                language,
+              )}
+              errors={errors}
+              action={() => promoteTypeAction(type.id)}
+              className={PROPERTY_BUTTON}
             />
-          )}
+            <p className="text-xs text-ink-soft">{labels.promoteHint}</p>
+          </div>
         </SidePanel>
       ) : null}
+
+      {canManage ? null : <DetailNotice>{labels.readOnly}</DetailNotice>}
     </>
   );
 
   return (
-    <SaveStatusProvider>
-      <DetailLayout
-        header={header}
-        sidebar={properties}
+    <DetailEditorShell
+      header={header}
+      panels={panels}
+    >
+      <DetailSection title={labels.description}>
+        {canManage || type.description ? (
+          <EditableText
+            editable={canManage}
+            markdown={labels.markdown}
+            maxLength={10_000}
+            value={type.description}
+            label={labels.description}
+            placeholder={labels.descriptionPlaceholder}
+            onSave={(next) => save({ description: next })}
+            labels={labels.field}
+          />
+        ) : (
+          <DetailEmpty>{labels.descriptionPlaceholder}</DetailEmpty>
+        )}
+      </DetailSection>
+
+      <DetailSection
+        title={labels.photos}
+        description={canManage ? labels.photoHint : undefined}
       >
-        <DetailSection title={labels.description}>
-          {canManage ? (
-            <InlineField
-              multiline
-              maxLength={10_000}
-              value={type.description}
-              label={labels.description}
-              placeholder={labels.descriptionPlaceholder}
-              markdown={labels.markdown}
-              display={(value) => <RichText text={value} />}
-              onSave={(next) => save({ description: next })}
-              labels={labels.field}
-            />
-          ) : type.description ? (
-            <RichText text={type.description} />
-          ) : (
-            <p className="text-2sm text-ink-faint">
-              {labels.descriptionPlaceholder}
-            </p>
-          )}
-        </DetailSection>
+        {canManage || type.photoFileIds.length ? (
+          <PhotoGallery
+            kind="typePhoto"
+            upload={fleetUpload("typePhoto")}
+            locale={language}
+            value={type.photoFileIds}
+            readOnly={!canManage}
+            alt={photoAlt}
+            labels={labels.gallery}
+            onChange={(fileIds) => setTypePhotosAction(type.id, fileIds)}
+          />
+        ) : (
+          <DetailEmpty>{labels.gallery.hint}</DetailEmpty>
+        )}
+      </DetailSection>
 
-        <DetailSection
-          title={labels.photos}
-          description={canManage ? labels.photoHint : undefined}
-        >
-          {canManage || type.photoFileIds.length ? (
-            <PhotoGallery
-              kind="typePhoto"
-              locale={language}
-              value={type.photoFileIds}
-              readOnly={!canManage}
-              alt={formatMessage(
-                labels.photoAlt,
-                { name: type.name },
-                language,
-              )}
-              labels={labels.gallery}
-              onChange={(fileIds) => setTypePhotosAction(type.id, fileIds)}
-            />
-          ) : (
-            <p className="text-2sm text-ink-soft">{labels.gallery.hint}</p>
-          )}
-        </DetailSection>
-
-        <DetailSection
-          title={labels.manual}
-          description={canManage ? labels.manualHint : undefined}
-        >
-          {canManage ? (
-            <ManualField
-              value={type.manualFileId}
-              labels={labels.manualLabels}
-              onChange={async (manualFileId) => {
-                notify(await save({ manualFileId }), {
-                  done: labels.field.saved,
-                  errors,
-                });
-              }}
-            />
-          ) : type.manualFileId ? (
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
-              className="w-fit"
+      <DetailSection
+        title={labels.manual}
+        description={canManage ? labels.manualHint : undefined}
+      >
+        {canManage ? (
+          <ManualField
+            value={type.manualFileId}
+            labels={labels.manualLabels}
+            onChange={async (manualFileId) => {
+              notify(await save({ manualFileId }), {
+                done: labels.field.saved,
+                errors,
+              });
+            }}
+          />
+        ) : type.manualFileId ? (
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="w-fit"
+          >
+            <a
+              href={fileUrl(type.manualFileId)}
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              <a
-                href={fileUrl(type.manualFileId)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FileText aria-hidden />
-                {labels.manualLabels.open}
-              </a>
-            </Button>
-          ) : (
-            <p className="text-2sm text-ink-soft">{labels.noManual}</p>
-          )}
-        </DetailSection>
-      </DetailLayout>
-    </SaveStatusProvider>
-  );
-}
-
-function SeatsSelect({
-  value,
-  options,
-  labels,
-  onSave,
-}: {
-  value: number;
-  options: { value: number; label: string }[];
-  labels: InlineFieldLabels;
-  onSave: (next: number) => Promise<ActionResult>;
-}) {
-  const { shown, persist } = useOptimisticSave(value, onSave, labels);
-  return (
-    <PropertySelect
-      value={String(shown)}
-      options={options.map((option) => ({
-        value: String(option.value),
-        label: option.label,
-      }))}
-      onChange={(next) => {
-        const seats = Number(next);
-        if (seats !== shown) void persist(seats, shown);
-      }}
-    />
-  );
-}
-
-function WheelchairToggle({
-  value,
-  label,
-  labels,
-  onSave,
-}: {
-  value: boolean;
-  label: string;
-  labels: InlineFieldLabels;
-  onSave: (next: boolean) => Promise<ActionResult>;
-}) {
-  const { shown, persist } = useOptimisticSave(value, onSave, labels);
-  return (
-    <div className="flex h-8 items-center gap-2">
-      <Accessibility
-        aria-hidden
-        className="size-3.5 text-ink-soft"
-      />
-      <Switch
-        size="sm"
-        aria-label={label}
-        checked={shown}
-        onCheckedChange={(next) => void persist(next, !next)}
-      />
-    </div>
+              <FileText aria-hidden />
+              {labels.manualLabels.open}
+            </a>
+          </Button>
+        ) : (
+          <DetailEmpty>{labels.noManual}</DetailEmpty>
+        )}
+      </DetailSection>
+    </DetailEditorShell>
   );
 }
 

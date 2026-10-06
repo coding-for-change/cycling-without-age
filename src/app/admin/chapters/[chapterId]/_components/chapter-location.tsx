@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CircleAlert } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
@@ -12,8 +12,7 @@ import { DetailSection } from "../../../_components/detail-page";
 import { PlaceSearch } from "../../../_components/place-search";
 import { CHAPTER_RADIUS_KM } from "@/features/chapters/schemas";
 import { formatMessage } from "@/lib/i18n/format";
-import { reportSave } from "@/components/action-feedback";
-import { useSaveStatus } from "@/components/save-status";
+import { useOptimisticSave } from "@/components/use-optimistic-save";
 import type { MapPin } from "../../_components/chapter-map";
 import { updateChapterAction } from "../../actions";
 import type { ChapterLabels } from "./chapter-editor";
@@ -30,9 +29,6 @@ type Place = {
   city: string;
   radiusKm: number;
 };
-
-const keyOf = (place: Place) =>
-  `${place.coords.lat}|${place.coords.lng}|${place.address}|${place.city}|${place.radiusKm}`;
 
 export function ChapterLocation({
   id,
@@ -55,52 +51,37 @@ export function ChapterLocation({
   notation: Locale;
   labels: ChapterLabels;
 }) {
-  const report = useSaveStatus();
-  // ponytail: the optimistic value holds only until the server moves off the
-  // value it replaced — same trick as InlineField, including its one wart,
-  // that an Undo shows the server value for the length of one refresh.
-  const [override, setOverride] = useState<{ from: string; to: Place } | null>(
-    null,
+  const { lat, lng } = server.coords;
+  const { address, city, radiusKm: serverRadius } = server;
+  const saved = useMemo<Place>(
+    () => ({ coords: { lat, lng }, address, city, radiusKm: serverRadius }),
+    [lat, lng, address, city, serverRadius],
+  );
+  const { shown: place, persist } = useOptimisticSave(
+    saved,
+    (next) =>
+      updateChapterAction(id, {
+        latitude: next.coords.lat,
+        longitude: next.coords.lng,
+        address: next.address,
+        city: next.city,
+        serviceRadiusKm: next.radiusKm,
+      }),
+    labels.field,
   );
   const [dragging, setDragging] = useState<number | null>(null);
-
-  const key = keyOf(server);
-  const place = override && override.from === key ? override.to : server;
   const radiusKm = dragging ?? place.radiusKm;
 
-  const persist = async (next: Place, previous: Place, undoable: boolean) => {
-    setOverride({ from: key, to: next });
-    report("saving");
-    const result = await updateChapterAction(id, {
-      latitude: next.coords.lat,
-      longitude: next.coords.lng,
-      address: next.address,
-      city: next.city,
-      serviceRadiusKm: next.radiusKm,
-    });
-
-    const ok = reportSave(result, {
-      report,
-      labels: labels.field,
-      undo: undoable ? () => void persist(previous, next, false) : undefined,
-      undoing: !undoable,
-    });
-    if (!ok) setOverride(null);
-  };
-
-  const pick = async (found: ResolvedPlace) => {
-    const previous = place;
-    await persist(
+  const pick = (found: ResolvedPlace) =>
+    persist(
       {
         coords: found.coords,
         address: found.address,
-        city: found.city ?? previous.city,
-        radiusKm: previous.radiusKm,
+        city: found.city ?? place.city,
+        radiusKm: place.radiusKm,
       },
-      previous,
-      true,
+      place,
     );
-  };
 
   const overlap = nearestOverlap(place.coords, radiusKm, others);
 
@@ -151,7 +132,7 @@ export function ChapterLocation({
           onValueCommit={([next]) => {
             setDragging(null);
             if (next === place.radiusKm) return;
-            void persist({ ...place, radiusKm: next }, place, true);
+            void persist({ ...place, radiusKm: next }, place);
           }}
         />
         {overlap ? (

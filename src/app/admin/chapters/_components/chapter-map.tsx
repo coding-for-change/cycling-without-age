@@ -4,6 +4,15 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 import { useEffect, useRef } from "react";
 import { circleRing, type Coords } from "@/lib/geo";
+import {
+  boundsOf,
+  createMap,
+  markerElement,
+  MINT,
+  MINT_DEEP,
+  prefersReducedMotion,
+  whenReady,
+} from "@/lib/mapbox-canvas";
 
 export type MapPin = {
   id: string;
@@ -15,12 +24,6 @@ export type MapPin = {
 
 const OWN = "cwa-own-area";
 const OTHERS = "cwa-other-areas";
-const EUROPE = { center: [10.4, 51.2] as [number, number], zoom: 3.5 };
-
-// --mint and --mint-deep. The one place brand colours are written as literals:
-// mapbox-gl paints into a canvas, where a CSS variable cannot reach.
-const MINT = "#92d2c6";
-const MINT_DEEP = "#28584e";
 
 const polygon = (center: Coords, radiusKm: number, props = {}) => ({
   type: "Feature" as const,
@@ -35,25 +38,6 @@ const collection = (features: ReturnType<typeof polygon>[]) => ({
   type: "FeatureCollection" as const,
   features,
 });
-
-const boundsOf = (ring: [number, number][]) =>
-  ring.reduce(
-    (box, point) => box.extend(point),
-    new mapboxgl.LngLatBounds(ring[0], ring[0]),
-  );
-
-function whenReady(instance: mapboxgl.Map, run: () => void) {
-  if (instance.isStyleLoaded()) run();
-  else instance.once("idle", run);
-}
-
-const dot = (className: string, title?: string) => {
-  const element = document.createElement("div");
-  element.className = className;
-  if (title) element.title = title;
-  else element.setAttribute("aria-hidden", "true");
-  return element;
-};
 
 /**
  * One map for placing a chapter and for looking at all of them. `center` is
@@ -95,23 +79,8 @@ export default function ChapterMap({
 
   useEffect(() => {
     if (!container.current || map.current) return;
-    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
-    reduced.current = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
-    const instance = new mapboxgl.Map({
-      container: container.current,
-      style: "mapbox://styles/mapbox/light-v11",
-      ...EUROPE,
-      logoPosition: "bottom-left",
-      attributionControl: false,
-    });
-    instance.addControl(new mapboxgl.AttributionControl({ compact: true }));
-    instance.addControl(
-      new mapboxgl.NavigationControl({ showCompass: false }),
-      "top-right",
-    );
+    reduced.current = prefersReducedMotion();
+    const instance = createMap(container.current);
     map.current = instance;
 
     instance.once("load", () => {
@@ -170,7 +139,7 @@ export default function ChapterMap({
       seen.add(pin.id);
       let marker = pins.current.get(pin.id);
       if (!marker) {
-        const element = dot(
+        const element = markerElement(
           "size-5 cursor-pointer rounded-full border-2 border-white bg-mint shadow-soft transition-colors hover:bg-mint-deep",
           pin.name,
         );
@@ -206,10 +175,7 @@ export default function ChapterMap({
 
     if (hasCenter || others.length === 0) return;
     instance.fitBounds(
-      others.reduce(
-        (box, pin) => box.extend([pin.coords.lng, pin.coords.lat]),
-        new mapboxgl.LngLatBounds(),
-      ),
+      boundsOf(others.map((pin) => [pin.coords.lng, pin.coords.lat])),
       { padding: 48, maxZoom: 11, duration: reduced.current ? 0 : 800 },
     );
   }, [others, hasCenter]);
@@ -241,7 +207,7 @@ export default function ChapterMap({
     const draggable = Boolean(moveHandler.current);
     if (!own.current) {
       own.current = new mapboxgl.Marker({
-        element: dot(
+        element: markerElement(
           `size-7 rounded-full border-[3px] border-white bg-mint-deep shadow-lift ${
             draggable ? "cursor-grab active:cursor-grabbing" : ""
           }`,

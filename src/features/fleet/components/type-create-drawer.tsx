@@ -26,7 +26,11 @@ import {
   MarkdownEditor,
   type MarkdownToolLabels,
 } from "@/components/markdown-editor";
-import { PhotoGallery, type PhotoGalleryLabels } from "./photo-gallery";
+import {
+  PhotoGallery,
+  type PhotoGalleryLabels,
+} from "@/components/photo-gallery/photo-gallery";
+import { fleetUpload } from "./fleet-upload";
 import type { Locale } from "@/lib/i18n/locales";
 
 export type TypeOwnerOption = { value: string; label: string };
@@ -273,6 +277,7 @@ export function TypeCreateDrawer({
             </div>
             <PhotoGallery
               kind="typePhoto"
+              upload={fleetUpload("typePhoto")}
               value={photos}
               alt={name}
               labels={labels.gallery}

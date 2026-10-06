@@ -13,9 +13,15 @@ import {
   leavePoolAction,
 } from "@/features/fleet/actions";
 import type { Dictionary } from "@/lib/i18n";
+import type { FleetErrors } from "@/features/fleet/components/strings";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
 import { ConfirmButton } from "@/components/confirm-button";
+import {
+  DetailEmpty,
+  DetailList,
+  DetailListRow,
+} from "../../_components/detail-page";
 
 export type PoolMember = {
   membershipId: string;
@@ -25,7 +31,7 @@ export type PoolMember = {
 };
 
 type Strings = Dictionary["fleet"]["locations"];
-type Errors = Dictionary["fleet"]["common"]["errors"];
+type Errors = FleetErrors;
 type Decision = { membershipId: string; name: string; approve: boolean };
 
 export function PoolRequests({
@@ -141,19 +147,14 @@ export function PoolMembers({
   const approved = members.filter((member) => member.status === "approved");
 
   return approved.length > 0 ? (
-    <ul className="grid divide-y divide-line rounded-2xl border border-line">
+    <DetailList>
       {approved.map((member) => (
-        <li
-          key={member.membershipId}
-          className="flex items-center gap-3 px-4 py-2"
-        >
+        <DetailListRow key={member.membershipId}>
           <Building2
             aria-hidden
             className="size-4 shrink-0 text-ink-soft"
           />
-          <span className="min-w-0 flex-1 truncate text-2sm">
-            {member.name}
-          </span>
+          <span className="min-w-0 flex-1 truncate">{member.name}</span>
           <ConfirmButton
             icon={<UserMinus aria-hidden />}
             label={strings.remove.open}
@@ -177,11 +178,11 @@ export function PoolMembers({
             }
             className="border-line"
           />
-        </li>
+        </DetailListRow>
       ))}
-    </ul>
+    </DetailList>
   ) : (
-    <p className="text-2sm text-ink-soft">{strings.noMembers}</p>
+    <DetailEmpty>{strings.noMembers}</DetailEmpty>
   );
 }
 

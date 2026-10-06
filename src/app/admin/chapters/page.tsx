@@ -10,7 +10,7 @@ import { resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
-import { hrefWith } from "../_components/href-with";
+import { hrefWith } from "@/lib/search-params";
 import { readActiveScope, type AdminSearchParams } from "../active-scope";
 import type { ChapterPin } from "./_components/chapters-map-view";
 import { ChaptersTable, type ChapterRow } from "./_components/chapters-table";
