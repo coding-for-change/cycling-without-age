@@ -148,3 +148,32 @@ describe("renderIcs", () => {
     expect(again).toBe(ics);
   });
 });
+
+describe("event colour and categories", () => {
+  const render = (over: Partial<IcsEvent>) =>
+    unfold(
+      renderIcs({
+        prodId: "-//Test//EN",
+        name: "Rides",
+        events: [event(over)],
+      }),
+    ).split("\r\n");
+
+  it("writes a CSS colour name and each category escaped on its own", () => {
+    const lines = render({ color: "teal", categories: ["Erna", "Jo,hn"] });
+    expect(lines).toContain("COLOR:teal");
+    expect(lines).toContain("CATEGORIES:Erna,Jo\\,hn");
+  });
+
+  it("refuses anything that is not a plain colour name", () => {
+    const lines = render({ color: "teal\r\nATTACH:https://evil.example" });
+    expect(lines.some((line) => line.startsWith("COLOR"))).toBe(false);
+    expect(lines.some((line) => line.startsWith("ATTACH"))).toBe(false);
+  });
+
+  it("leaves both out when there is nothing to say", () => {
+    const lines = render({ categories: [""] });
+    expect(lines.some((line) => line.startsWith("CATEGORIES"))).toBe(false);
+    expect(lines.some((line) => line.startsWith("COLOR"))).toBe(false);
+  });
+});

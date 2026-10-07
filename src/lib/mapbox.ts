@@ -1,5 +1,7 @@
+import { z } from "zod";
 import type { Coords } from "@/lib/geo";
 import { logger } from "@/lib/observability/logger";
+import { withinRateLimit } from "@/lib/rate-limit";
 
 if (typeof window !== "undefined") {
   throw new Error("@/lib/mapbox is server-only — call it from a Server Action");
@@ -149,6 +151,22 @@ export async function retrievePlace(
     `${SEARCH}/retrieve/${encodeURIComponent(mapboxId)}?${params}`,
   );
   return toPlace(data?.features?.[0]);
+}
+
+const RESOLVE_LIMIT = { max: 30, windowMs: 60_000 };
+const resolveInput = z.object({
+  mapboxId: z.string().min(1).max(200),
+  sessionToken: z.string().uuid(),
+});
+
+export async function resolvePlaceFor(
+  userId: string,
+  input: unknown,
+): Promise<ResolvedPlace | null> {
+  if (!withinRateLimit(`resolve:${userId}`, RESOLVE_LIMIT)) return null;
+  const parsed = resolveInput.safeParse(input);
+  if (!parsed.success) return null;
+  return retrievePlace(parsed.data.mapboxId, parsed.data.sessionToken);
 }
 
 /** The address under a dragged pin. Not session-billed, so no token to pass. */

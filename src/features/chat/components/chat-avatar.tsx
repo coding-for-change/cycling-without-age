@@ -11,11 +11,13 @@ const FALLBACK_SIZE = {
 
 export function ChatAvatar({
   svg,
+  photoUrl,
   online = false,
   size = "default",
   className,
 }: {
   svg: string | null;
+  photoUrl?: string | null;
   online?: boolean;
   size?: "sm" | "default" | "lg";
   className?: string;
@@ -25,6 +27,7 @@ export function ChatAvatar({
       {svg ? (
         <PersonAvatar
           svg={svg}
+          photoUrl={photoUrl}
           size={size}
         />
       ) : (

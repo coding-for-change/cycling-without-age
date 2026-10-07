@@ -18,7 +18,7 @@ export async function AdminChatShell({ children }: { children: ReactNode }) {
   const userId = session.user.id;
 
   const [inbox, dict, language, head] = await Promise.all([
-    getInbox(userId),
+    getInbox(session),
     getDictionary(),
     getLocale(),
     headers(),
@@ -58,7 +58,7 @@ export async function AdminChatThread({
   ]);
 
   const [view, dict, language, head] = await Promise.all([
-    getConversationView(conversationId, session.user.id),
+    getConversationView(conversationId, session),
     getDictionary(),
     getLocale(),
     headers(),

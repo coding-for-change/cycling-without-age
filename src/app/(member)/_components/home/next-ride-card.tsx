@@ -8,7 +8,10 @@ import { RideAgenda } from "@/features/rides/components/ride-agenda";
 import { perspectiveViewerSession } from "@/lib/auth-guards";
 import { resolveLocale, wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
+import { PERSPECTIVE_HOME } from "@/lib/redirects";
 import type { MemberPerspective } from "../../nav";
+import { getPassengerAudience } from "@/use-cases/passenger-audience";
+import { audienceCopy } from "../audience-copy";
 import { MEMBER_LIFE } from "../instant";
 
 // A member plans in weeks, not months — far enough to see what is coming,
@@ -29,10 +32,24 @@ export async function NextRideCard({
     getLocale(),
     headers(),
   ]);
-  const upcoming = session
-    ? await listUpcomingRides(perspective, session.user.id)
-    : [];
+  const [upcoming, audience] = session
+    ? await Promise.all([
+        listUpcomingRides(perspective, session.user.id),
+        perspective === "passenger"
+          ? getPassengerAudience(session.user.id)
+          : null,
+      ])
+    : [[], null];
   const { nextRide } = dict.member.home;
+  const strings = {
+    ...dict.calendar,
+    agendaEmpty: audienceCopy(
+      audience,
+      dict.calendar.agendaEmpty,
+      dict.calendar.agendaEmptyCaretaker,
+      language,
+    ),
+  };
 
   return (
     <section className="flex flex-col gap-3">
@@ -42,16 +59,22 @@ export async function NextRideCard({
       {upcoming.length > 0 ? (
         <RideAgenda
           rides={upcoming}
-          strings={dict.calendar}
+          strings={strings}
           locale={resolveLocale(head.get("accept-language"))}
           words={wordsLocale(language)}
+          profileBase={`${PERSPECTIVE_HOME[perspective]}/profile`}
         />
       ) : (
         <EmptyState
           icon={CalendarClock}
           className="flex-none"
         >
-          {nextRide[perspective].empty}
+          {audienceCopy(
+            audience,
+            nextRide[perspective].empty,
+            nextRide.passenger.caretakerEmpty,
+            language,
+          )}
         </EmptyState>
       )}
     </section>

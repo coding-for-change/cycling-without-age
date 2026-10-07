@@ -75,3 +75,9 @@ export const findChapterReportMeta = (ids: string[]) =>
       country: { select: { id: true, code: true, name: true } },
     },
   });
+
+export const findChapterCountryIds = (ids: string[]) =>
+  prisma.organization.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, countryId: true },
+  });

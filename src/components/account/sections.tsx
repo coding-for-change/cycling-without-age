@@ -7,9 +7,11 @@ import {
   KeyRound,
   Languages,
   LifeBuoy,
+  SunMoon,
   TriangleAlert,
   type LucideIcon,
 } from "lucide-react";
+import { AppearanceSection } from "./appearance-section";
 import { CalendarSection } from "./calendar-section";
 import { DangerSection } from "./danger-section";
 import { LanguageSection } from "./language-section";
@@ -22,6 +24,7 @@ import type { AccountData, AccountStrings } from "./types";
 export type AccountSectionKey =
   | "profile"
   | "language"
+  | "appearance"
   | "notifications"
   | "calendar"
   | "passkeys"
@@ -37,6 +40,7 @@ type AccountSection = {
 const ACCOUNT_SECTIONS: AccountSection[] = [
   { key: "profile", icon: CircleUserRound },
   { key: "language", icon: Languages },
+  { key: "appearance", icon: SunMoon },
   { key: "notifications", icon: Bell },
   {
     key: "calendar",
@@ -74,6 +78,13 @@ export function AccountSectionBody({
     case "language":
       return (
         <LanguageSection
+          data={data}
+          label={label}
+        />
+      );
+    case "appearance":
+      return (
+        <AppearanceSection
           data={data}
           label={label}
         />

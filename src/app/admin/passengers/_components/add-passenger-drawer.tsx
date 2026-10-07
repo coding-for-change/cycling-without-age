@@ -18,24 +18,31 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 import { Switch } from "@/components/ui/switch";
 import { addAssistedPassenger } from "@/features/accounts/actions";
-import { assistedPassengerInput } from "@/features/accounts/schemas";
-import { parseIdentity, type CountryCode } from "@/lib/identity";
+import { gender as genderSchema } from "@/features/profile/schemas";
+import {
+  looksLikePhone,
+  parseIdentity,
+  type CountryCode,
+} from "@/lib/identity";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
 import { notify } from "@/components/action-feedback";
 import { useDrawerParam } from "../../_components/use-drawer-param";
 import { TextField } from "../../_components/text-field";
+import {
+  PickupField,
+  pickupPayload,
+  type PickupStrings,
+  type PickupValue,
+} from "./pickup-field";
 
-const GENDERS = assistedPassengerInput.shape.gender.options;
+const GENDERS = genderSchema.options;
 
 const schemaOf = (country: CountryCode, invalid: string) => {
   const text = z.string().trim().min(1, invalid);
@@ -44,18 +51,19 @@ const schemaOf = (country: CountryCode, invalid: string) => {
       firstName: text,
       lastName: text,
       birthDate: text,
-      gender: assistedPassengerInput.shape.gender,
-      contact: text.refine(
-        (value) => parseIdentity(value, country).ok,
-        invalid,
-      ),
+      gender: genderSchema,
+      contact: z.string().trim(),
       withHelper: z.boolean(),
       helperName: z.string().trim(),
       helperRelationship: z.string().trim(),
       helperContact: z.string().trim(),
     })
     .superRefine((values, ctx) => {
-      if (!values.withHelper) return;
+      if (!values.withHelper) {
+        if (!parseIdentity(values.contact, country).ok)
+          ctx.addIssue({ code: "custom", message: invalid, path: ["contact"] });
+        return;
+      }
       if (!values.helperName)
         ctx.addIssue({
           code: "custom",
@@ -77,6 +85,8 @@ const schemaOf = (country: CountryCode, invalid: string) => {
     });
 };
 
+const CARE_HOME: PickupValue = { residence: "careHome" };
+
 type FormValues = z.infer<ReturnType<typeof schemaOf>>;
 
 const normalise = (value: string, country: CountryCode) => {
@@ -93,24 +103,39 @@ export type AddPassengerLabels = {
   helperName: string;
   helperRelationship: string;
   helperContact: string;
-  helperIsAccountHolder: string;
+  helperNext: {
+    title: string;
+    existing: string;
+    fresh: string;
+    someone: string;
+  };
   submit: string;
   another: string;
   anotherHint: string;
   added: string;
-  errors: { exists: string; invalid: string; generic: string };
+  sent: string;
+  errors: {
+    exists: string;
+    tooMany: string;
+    invalid: string;
+    generic: string;
+  };
 };
 
 export function AddPassengerDrawer({
   chapterId,
   country,
   labels,
+  pickup: pickupStrings,
+  relationships,
   person,
   locale,
 }: {
   chapterId: string;
   country: CountryCode;
   labels: AddPassengerLabels;
+  pickup: PickupStrings;
+  relationships: Record<string, string>;
   locale: Locale;
   person: {
     firstName: string;
@@ -124,6 +149,8 @@ export function AddPassengerDrawer({
   const formId = useId();
   const anotherId = useId();
   const [another, setAnother] = useState(false);
+  const [pickup, setPickup] = useState<PickupValue>(CARE_HOME);
+  const [pickupMissing, setPickupMissing] = useState(false);
   const [pending, startTransition] = useTransition();
   const schema = useMemo(
     () => schemaOf(country, labels.errors.invalid),
@@ -144,32 +171,43 @@ export function AddPassengerDrawer({
     },
   });
 
+  const resetPickup = () => {
+    setPickup(CARE_HOME);
+    setPickupMissing(false);
+  };
+
   const close = () => {
     form.reset();
+    resetPickup();
     clearParam();
   };
 
-  const [withHelper, contact, helperContact, helperName, firstName, lastName] =
-    useWatch({
+  const [withHelper, helperName, helperContact, firstName, lastName] = useWatch(
+    {
       control: form.control,
       name: [
         "withHelper",
-        "contact",
-        "helperContact",
         "helperName",
+        "helperContact",
         "firstName",
         "lastName",
       ],
-    });
-  const helperOwns =
-    withHelper &&
-    helperName.trim() !== "" &&
-    normalise(contact, country) !== null &&
-    normalise(contact, country) === normalise(helperContact, country);
+    },
+  );
+  const next = {
+    helper: helperName.trim() || labels.helperNext.someone,
+    passenger: `${firstName} ${lastName}`.trim() || labels.helperNext.someone,
+    channel: looksLikePhone(helperContact) ? "phone" : "email",
+  };
 
   const submit = form.handleSubmit((data) => {
-    const identity = normalise(data.contact, country);
-    if (!identity) return;
+    const identity = data.withHelper ? null : normalise(data.contact, country);
+    if (!data.withHelper && !identity) return;
+    const place = pickupPayload(pickup);
+    if (!place) {
+      setPickupMissing(true);
+      return;
+    }
     startTransition(async () => {
       const result = await addAssistedPassenger({
         chapterId,
@@ -177,7 +215,7 @@ export function AddPassengerDrawer({
         lastName: data.lastName,
         birthDate: data.birthDate,
         gender: data.gender,
-        contact: identity,
+        ...(identity ? { contact: identity } : {}),
         helper: data.withHelper
           ? {
               name: data.helperName,
@@ -186,11 +224,18 @@ export function AddPassengerDrawer({
                 normalise(data.helperContact, country) ?? data.helperContact,
             }
           : undefined,
+        pickup: place,
       });
       notify(result, {
         done: formatMessage(
-          labels.added,
-          { name: `${data.firstName} ${data.lastName}`.trim() },
+          !result.ok || result.outcome === "created"
+            ? labels.added
+            : labels.sent,
+          {
+            name: `${data.firstName} ${data.lastName}`.trim(),
+            helper: data.helperName.trim(),
+            channel: looksLikePhone(data.helperContact) ? "phone" : "email",
+          },
           locale,
         ),
         errors: labels.errors,
@@ -201,6 +246,7 @@ export function AddPassengerDrawer({
         return;
       }
       form.reset();
+      resetPickup();
       form.setFocus("firstName");
     });
   });
@@ -292,38 +338,57 @@ export function AddPassengerDrawer({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{person.gender}</FormLabel>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="h-11 w-full border-line text-base">
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
+                    <FormControl>
+                      <NativeSelect
+                        value={field.value ?? ""}
+                        onChange={(event) => field.onChange(event.target.value)}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        wrapperClassName="w-full"
+                        className="h-11 border-line text-base"
+                      >
+                        <NativeSelectOption
+                          value=""
+                          disabled
+                        >
+                          —
+                        </NativeSelectOption>
                         {GENDERS.map((option) => (
-                          <SelectItem
+                          <NativeSelectOption
                             key={option}
                             value={option}
                           >
                             {person.genders[option]}
-                          </SelectItem>
+                          </NativeSelectOption>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </NativeSelect>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <div className="sm:col-span-2">
-                <TextField
-                  control={form.control}
-                  name="contact"
-                  label={labels.contact}
-                  autoComplete="off"
+                <PickupField
+                  value={pickup}
+                  onChange={(next) => {
+                    setPickupMissing(false);
+                    setPickup(next);
+                  }}
+                  strings={pickupStrings}
+                  invalid={pickupMissing}
+                  language={locale}
                 />
               </div>
+              {withHelper ? null : (
+                <div className="sm:col-span-2">
+                  <TextField
+                    control={form.control}
+                    name="contact"
+                    label={labels.contact}
+                    autoComplete="off"
+                  />
+                </div>
+              )}
             </div>
 
             <FormField
@@ -371,11 +436,33 @@ export function AddPassengerDrawer({
                     <FormItem>
                       <FormLabel>{labels.helperRelationship}</FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
-                          autoComplete="off"
+                        <NativeSelect
+                          value={field.value}
+                          onChange={(event) =>
+                            field.onChange(event.target.value)
+                          }
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          wrapperClassName="w-full"
                           className="h-11 border-line bg-canvas text-base"
-                        />
+                        >
+                          <NativeSelectOption
+                            value=""
+                            disabled
+                          >
+                            —
+                          </NativeSelectOption>
+                          {Object.entries(relationships).map(
+                            ([value, label]) => (
+                              <NativeSelectOption
+                                key={value}
+                                value={value}
+                              >
+                                {label}
+                              </NativeSelectOption>
+                            ),
+                          )}
+                        </NativeSelect>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -400,21 +487,20 @@ export function AddPassengerDrawer({
                     )}
                   />
                 </div>
-                {helperOwns ? (
-                  <p
-                    role="status"
-                    className="rounded-xl bg-mint-tint px-3 py-2 text-sm text-ink sm:col-span-2"
-                  >
-                    {formatMessage(
-                      labels.helperIsAccountHolder,
-                      {
-                        helper: helperName.trim(),
-                        passenger: `${firstName} ${lastName}`.trim(),
-                      },
-                      locale,
-                    )}
-                  </p>
-                ) : null}
+                <div
+                  role="status"
+                  className="grid gap-1.25 rounded-xl bg-mint-tint px-3 py-2.75 text-sm text-ink sm:col-span-2"
+                >
+                  <p className="font-medium">{labels.helperNext.title}</p>
+                  <ul className="grid list-disc gap-1.25 pl-5">
+                    <li>
+                      {formatMessage(labels.helperNext.existing, next, locale)}
+                    </li>
+                    <li>
+                      {formatMessage(labels.helperNext.fresh, next, locale)}
+                    </li>
+                  </ul>
+                </div>
               </div>
             ) : null}
           </form>

@@ -36,7 +36,7 @@ import {
   sectionTitle,
   type AccountSectionKey,
 } from "./sections";
-import type { AccountData } from "./types";
+import { profileHref, type AccountData } from "./types";
 
 export function AccountDialog({
   data,
@@ -65,24 +65,29 @@ export function AccountDialog({
         <DialogDescription className="sr-only">
           {strings.description}
         </DialogDescription>
-        <SidebarProvider className="min-h-0 items-start">
+        <SidebarProvider className="h-[520px] min-h-0">
           <Sidebar
             collapsible="none"
             className="hidden md:flex"
           >
-            <SidebarHeader className="gap-4 px-4 pt-6 pb-2">
-              <ProfileHeader
-                name={data.profile.name}
-                email={data.profile.email}
-                avatar={data.profile.avatarAnimated}
-              />
-              <PerspectiveRow
-                data={data}
-                activePerspective={activePerspective}
-                onOpenChange={onOpenChange}
-              />
-            </SidebarHeader>
             <SidebarContent>
+              <SidebarHeader className="shrink-0 gap-4 px-4 pt-6 pb-2">
+                <ProfileHeader
+                  name={data.profile.name}
+                  email={data.profile.email}
+                  avatar={data.profile.avatarAnimated}
+                  photoUrl={data.profile.photoUrl}
+                  href={profileHref(data.profile.href, activePerspective)}
+                  linkLabel={data.profile.linkLabel}
+                  people={data.profile.people}
+                  onNavigate={() => onOpenChange(false)}
+                />
+                <PerspectiveRow
+                  data={data}
+                  activePerspective={activePerspective}
+                  onOpenChange={onOpenChange}
+                />
+              </SidebarHeader>
               <SidebarGroup>
                 <SidebarGroupContent>
                   <SidebarMenu>
@@ -103,7 +108,7 @@ export function AccountDialog({
               </SidebarGroup>
             </SidebarContent>
           </Sidebar>
-          <div className="flex h-[520px] min-w-0 flex-1 flex-col overflow-hidden bg-canvas-deep">
+          <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden bg-canvas-deep">
             <header className="flex h-16 shrink-0 items-center justify-between gap-3 px-4">
               <Breadcrumb>
                 <BreadcrumbList>

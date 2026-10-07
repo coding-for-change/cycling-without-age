@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Bike, Wind } from "lucide-react";
+import { Bike, HeartHandshake, Wind } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptics } from "@/lib/native/haptics";
 import { Step, type StepProgress } from "../../_components/step";
@@ -11,7 +11,10 @@ type Strings = {
   title: string;
   pilot: { title: string; body: string };
   passenger: { title: string; body: string };
+  caretaker: { title: string; body: string };
 };
+
+type Choice = FlowRole | "caretaker";
 
 export function RoleStep({
   strings,
@@ -23,11 +26,11 @@ export function RoleStep({
   const router = useRouter();
   const { update } = useFlow();
 
-  const choose = (role: FlowRole) => {
+  const choose = (choice: Choice) => {
     haptics.tap();
-    update({ role });
+    update({ role: choice === "caretaker" ? "passenger" : choice });
 
-    router.push(`/location?as=${role}`, { transitionTypes: ["nav-forward"] });
+    router.push(`/location?as=${choice}`, { transitionTypes: ["nav-forward"] });
   };
 
   const options = [
@@ -36,6 +39,12 @@ export function RoleStep({
       icon: Wind,
       hero: true,
       ...strings.passenger,
+    },
+    {
+      role: "caretaker" as const,
+      icon: HeartHandshake,
+      hero: false,
+      ...strings.caretaker,
     },
     { role: "pilot" as const, icon: Bike, hero: false, ...strings.pilot },
   ];

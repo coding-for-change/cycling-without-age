@@ -110,7 +110,7 @@ export function ConfirmDeleteDialog<I>({
               disabled={Boolean(blocked)}
               aria-label={labels.open}
               title={blocked ?? labels.open}
-              className="size-8 text-ink-soft hover:bg-red-tint hover:text-red disabled:pointer-events-auto disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-ink-soft"
+              className="size-8 text-ink-soft hover:bg-red-tint hover:text-red-ink disabled:pointer-events-auto disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-ink-soft"
             >
               <Trash2 aria-hidden />
             </Button>
@@ -119,7 +119,7 @@ export function ConfirmDeleteDialog<I>({
               variant="outline"
               disabled={Boolean(blocked)}
               title={blocked}
-              className="h-9 justify-start border-line text-2sm text-red hover:bg-red-tint hover:text-red"
+              className="h-9 justify-start border-line text-2sm text-red-ink hover:bg-red-tint hover:text-red-ink"
             >
               <Trash2 aria-hidden />
               {labels.open}
@@ -143,7 +143,7 @@ export function ConfirmDeleteDialog<I>({
           {consequences.length > 0 ? (
             <div className="grid gap-2 rounded-md bg-red-tint p-3">
               {labels.consequences ? (
-                <p className="text-2sm font-medium text-red">
+                <p className="text-2sm font-medium text-red-ink">
                   {labels.consequences}
                 </p>
               ) : null}

@@ -16,3 +16,14 @@ export async function settlePassengerLocation({
   await profile.setResidence(userId, residence, home);
   await membership.joinAsPassenger(userId, chapterId);
 }
+
+export async function settleCaretakerLocation({
+  userId,
+  chapterId,
+}: {
+  userId: string;
+  chapterId: string;
+}) {
+  await profile.markManagesOthers(userId);
+  await membership.joinAsPassenger(userId, chapterId);
+}

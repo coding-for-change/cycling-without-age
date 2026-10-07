@@ -8,6 +8,7 @@ export default function ConsentPage() {
       step="consent"
       render={({
         role,
+        caretaker,
         progress,
         presetChapterName,
         claimBanner,
@@ -17,6 +18,7 @@ export default function ConsentPage() {
       }) => (
         <ConsentStep
           role={role}
+          caretaker={caretaker}
           progress={progress}
           chapterName={presetChapterName}
           setUpBy={

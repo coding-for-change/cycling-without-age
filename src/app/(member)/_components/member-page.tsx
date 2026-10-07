@@ -4,7 +4,9 @@ import { cacheLife } from "next/cache";
 import { ICONS } from "@/components/icons";
 import { PageFallback } from "@/components/page-fallback";
 import { requirePerspective } from "@/lib/auth-guards";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionary, getLocale } from "@/lib/i18n";
+import { getPassengerAudience } from "@/use-cases/passenger-audience";
+import { audienceCopy } from "./audience-copy";
 import type { MemberPerspective } from "../nav";
 import { MEMBER_LIFE } from "./instant";
 import { EmptyState } from "@/components/empty-state";
@@ -49,8 +51,13 @@ export async function MemberPageBody({
   "use cache: private";
   cacheLife(MEMBER_LIFE);
 
-  await requirePerspective(perspective);
-  const strings = (await getDictionary()).member.pages[page];
+  const session = await requirePerspective(perspective);
+  const [dict, locale, audience] = await Promise.all([
+    getDictionary(),
+    getLocale(),
+    perspective === "passenger" ? getPassengerAudience(session.user.id) : null,
+  ]);
+  const strings = dict.member.pages[page];
   const Icon = ICONS[page];
 
   return (
@@ -60,7 +67,12 @@ export async function MemberPageBody({
         icon={Icon}
         className="flex-1 justify-start rounded-none border-none pt-16"
       >
-        {strings[perspective].body}
+        {audienceCopy(
+          audience,
+          strings[perspective].body,
+          strings.passenger.caretakerBody,
+          locale,
+        )}
       </EmptyState>
     </>
   );

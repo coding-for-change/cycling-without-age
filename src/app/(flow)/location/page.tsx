@@ -58,8 +58,8 @@ async function Location({
 
   const mode = !session
     ? "guest"
-    : params.as === "pilot"
-      ? "pilot"
+    : params.as === "pilot" || params.as === "caretaker"
+      ? params.as
       : "passenger";
 
   const at =
@@ -67,7 +67,7 @@ async function Location({
       ? null
       : stepProgress(
           {
-            role: mode,
+            role: mode === "pilot" ? "pilot" : "passenger",
             presetRole: Boolean(preset.role),
             presetChapter: false,
           },

@@ -614,7 +614,7 @@ function ScheduleRideSheet({
                   setTitle(change.target.value);
                   if (change.target.value.trim()) setTitleInvalid(false);
                 }}
-                className="w-full bg-transparent text-lg font-semibold text-ink outline-none placeholder:text-ink-faint aria-invalid:placeholder:text-red"
+                className="w-full bg-transparent text-lg font-semibold text-ink outline-none placeholder:text-ink-faint aria-invalid:placeholder:text-red-ink"
               />
               <MarkdownEditor
                 value={description}

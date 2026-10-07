@@ -17,13 +17,13 @@ import { submitConsent } from "../actions";
 
 type Strings = {
   title: string;
-  titlePilot: string;
   safety: string;
   notifications: string;
   data: string;
   imprint: string;
   privacy: string;
   dataSuffix: string;
+  health: string;
   required: string;
   error: string;
   joining: string;
@@ -33,6 +33,7 @@ type Box = "safety" | "notifications" | "data";
 
 export function ConsentStep({
   role,
+  caretaker,
   progress,
   chapterName,
   setUpBy,
@@ -42,6 +43,7 @@ export function ConsentStep({
   locale,
 }: {
   role: OnboardingRole;
+  caretaker: boolean;
   progress: StepProgress | null;
   chapterName: string | null;
   setUpBy: string | null;
@@ -59,6 +61,7 @@ export function ConsentStep({
     notifications: defaults.notifications,
     data: defaults.consented,
   });
+  const [health, setHealth] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -66,6 +69,9 @@ export function ConsentStep({
     role === "pilot"
       ? ["notifications", "data"]
       : ["safety", "notifications", "data"];
+
+  const asksHealth = role === "passenger" && !caretaker;
+  const agreements = boxes.length + (asksHealth ? 1 : 0);
 
   const complete = boxes.every((box) => ticked[box]);
 
@@ -84,6 +90,7 @@ export function ConsentStep({
         safety: ticked.safety,
         notifications: ticked.notifications,
         data: ticked.data,
+        health: asksHealth && health,
       });
       if (!result.ok) {
         haptics.error();
@@ -111,7 +118,7 @@ export function ConsentStep({
 
   return (
     <Step
-      title={role === "pilot" ? strings.titlePilot : strings.title}
+      title={formatMessage(strings.title, { count: agreements }, locale)}
       description={
         setUpBy ??
         (chapterName
@@ -166,6 +173,32 @@ export function ConsentStep({
             </span>
           </label>
         ))}
+        {asksHealth ? (
+          <label
+            className={cn(
+              "mt-5 flex cursor-pointer items-start gap-3 rounded-(--r-card) border border-dashed p-4 transition-colors",
+              health
+                ? "border-transparent bg-mint-tint"
+                : "border-line bg-canvas hover:bg-canvas-deep",
+            )}
+          >
+            <Checkbox
+              checked={health}
+              onCheckedChange={(next) => {
+                haptics.selectionChanged();
+                setHealth(next === true);
+              }}
+              aria-labelledby={`${boxId}-health`}
+              className="mt-0.5 size-5 rounded-[6px]"
+            />
+            <span
+              id={`${boxId}-health`}
+              className="text-sm leading-relaxed text-ink-soft"
+            >
+              {strings.health}
+            </span>
+          </label>
+        ) : null}
       </div>
     </Step>
   );

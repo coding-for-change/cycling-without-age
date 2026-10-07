@@ -4,7 +4,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 import { useEffect, useEffectEvent, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { brand } from "@/lib/brand";
+import { mapTheme } from "@/lib/mapbox-canvas";
 import type { Locale } from "@/lib/format";
 import {
   chapterKey,
@@ -60,7 +60,7 @@ const bubbles = (
   paint: {
     "circle-color": color,
     "circle-radius": radius(chapters),
-    "circle-stroke-color": brand.canvas,
+    "circle-stroke-color": mapTheme().canvas,
     "circle-stroke-width": 2,
   },
 });
@@ -146,7 +146,7 @@ export default function ActivityMapCanvas({
 
     const instance = new mapboxgl.Map({
       container: container.current,
-      style: "mapbox://styles/mapbox/light-v11",
+      style: mapTheme().style,
       projection: "globe",
       ...WORLD,
       logoPosition: "bottom-left",
@@ -160,11 +160,13 @@ export default function ActivityMapCanvas({
     );
     map.current = instance;
 
+    const colors = mapTheme();
+
     instance.on("style.load", () => {
       instance.setFog({
-        color: brand.canvas,
-        "high-color": brand.mint,
-        "space-color": brand.canvas,
+        color: colors.canvas,
+        "high-color": colors.mint,
+        "space-color": colors.canvas,
         "horizon-blend": 0.03,
         "star-intensity": 0,
       });
@@ -183,14 +185,14 @@ export default function ActivityMapCanvas({
       instance.addSource(FOCUS, { type: "geojson", data: collection([]) });
 
       instance.addLayer(
-        bubbles("chapter-bubbles", SOURCE, brand.mint, current),
+        bubbles("chapter-bubbles", SOURCE, colors.mint, current),
       );
       instance.addLayer(
-        bubbles("chapter-focus", FOCUS, brand.mintDeep, current),
+        bubbles("chapter-focus", FOCUS, colors.mintDeep, current),
       );
-      instance.addLayer(counts("chapter-counts", SOURCE, brand.ink, notation));
+      instance.addLayer(counts("chapter-counts", SOURCE, colors.ink, notation));
       instance.addLayer(
-        counts("chapter-focus-count", FOCUS, brand.canvas, notation),
+        counts("chapter-focus-count", FOCUS, colors.canvas, notation),
       );
       instance.addLayer({
         id: "chapter-names",
@@ -207,8 +209,8 @@ export default function ActivityMapCanvas({
           "text-optional": true,
         },
         paint: {
-          "text-color": brand.inkSoft,
-          "text-halo-color": brand.canvas,
+          "text-color": colors.inkSoft,
+          "text-halo-color": colors.canvas,
           "text-halo-width": 1.5,
         },
       });

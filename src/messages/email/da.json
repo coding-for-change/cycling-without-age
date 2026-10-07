@@ -29,7 +29,9 @@
   "calendarFeed": {
     "cancelled": "Aflyst: {title}",
     "description": "Dine ture med Cykling uden alder. Holder sig selv opdateret.",
+    "descriptionCaretaker": "Turene for de mennesker, du tager dig af, og dine egne, med Cykling uden alder. Holder sig selv opdateret.",
     "destination": "Til {place}",
+    "forRiders": "{title} · {names}",
     "details": "Detaljer i appen: {url}",
     "models": {
       "event": "Fællestur",
@@ -38,6 +40,7 @@
     },
     "name": "Cykling uden alder",
     "pilot": "Pilot · {model}",
+    "riders": "{count, plural, one {Passager} other {Passagerer}}: {names}",
     "trishaws": "Rickshaw: {names}"
   },
   "chatDigest": {
@@ -159,6 +162,22 @@
     "passenger": "passager",
     "pilot": "pilot"
   },
+  "welcomeCaretaker": {
+    "cta": "Book den første tur",
+    "footer": "Du modtager denne e-mail, fordi der blev oprettet en konto til din adresse.",
+    "heading": "Vind i håret for dem, du holder af",
+    "how": {
+      "1": "Bed om en tur i appen — vælg en dag og et tidspunkt, der passer.",
+      "2": "En frivillig pilot tager turen og møder din passager ved døren.",
+      "3": "Din passager sidder forrest. Kun brisen mellem passageren og gaden."
+    },
+    "howHeading": "Sådan foregår en tur",
+    "intro": "Din konto er klar. Du kan nu booke ture for dem, du passer på, og hos {chapter} står en pilot klar til at træde i pedalerne.",
+    "noteHeading": "En hilsen fra {chapter}",
+    "preview": "En plads forrest venter",
+    "subject": "Velkommen til Cycling Without Age",
+    "title": "Velkommen til {chapter}"
+  },
   "welcomePassenger": {
     "cta": "Bestil din første tur",
     "footer": "Du modtager denne e-mail, fordi der blev oprettet en konto til din adresse.",
@@ -190,5 +209,35 @@
     "preview": "Din pilotansøgning er hos afdelingen",
     "subject": "Velkommen om bord — tre skridt til din første tur",
     "title": "Velkommen til {chapter}"
+  },
+  "careRequested": {
+    "subject": "{requester} spørger, om du vil passe på {rider}",
+    "preview": "Book ture for {rider} hos {chapter}",
+    "heading": "Passe på {rider}?",
+    "intro": "{requester} fra {chapter} vil gerne have, at du booker ture for {rider}. Åbn anmodningen for at sige ja eller nej – intet ændrer sig, før du svarer.",
+    "cta": "Åbn anmodningen",
+    "footer": "Du får denne e-mail, fordi en administrator i en Cycling Without Age-afdeling har skrevet din adresse som hjælper for en passager.",
+    "someone": "nogen"
+  },
+  "careDecided": {
+    "subjectAccepted": "{caretaker} passer nu på {rider}",
+    "subjectDeclined": "{caretaker} har sagt nej til at passe på {rider}",
+    "headingAccepted": "{rider} er med",
+    "headingDeclined": "Ingen passer på {rider} endnu",
+    "introAccepted": "{caretaker} har sagt ja. {rider} er nu passager, og {caretaker} kan booke ture for dem.",
+    "introDeclined": "{caretaker} har sagt nej, så {rider} blev ikke tilføjet. Tilføj dem igen med en anden hjælper.",
+    "cta": "Åbn passagerer",
+    "footer": "Du får denne e-mail, fordi du har bedt nogen om at passe på en passager.",
+    "someone": "nogen"
+  },
+  "careInvited": {
+    "subject": "Book ture for {rider} hos {chapter}",
+    "preview": "En konto venter på dig",
+    "heading": "Du er inviteret",
+    "intro": "{inviter} fra {chapter} har oprettet en konto til dig, så du kan booke ture for {rider}.",
+    "how": "Log ind med denne e-mailadresse, så sender vi dig en kode – ingen adgangskode at finde på.",
+    "cta": "Log ind",
+    "footer": "Du får denne e-mail, fordi en administrator i en Cycling Without Age-afdeling har skrevet din adresse som hjælper for en passager.",
+    "someone": "nogen"
   }
 }

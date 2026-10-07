@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { DomainError } from "@/lib/domain-error";
 import { prisma } from "@/lib/prisma";
 import { withinRateLimit } from "@/lib/rate-limit";
-import { isPdf, toWebp } from "./image";
+import { isPdf, toSquareWebp, toWebp } from "./image";
 import {
   FILE_LIMITS,
   acceptsUpload,
@@ -59,7 +59,9 @@ async function convertStaged(
 
   try {
     if (limit.image) {
-      const webp = await toWebp(source).catch(() => null);
+      const webp = await (
+        limit.square ? toSquareWebp(source, limit.square) : toWebp(source)
+      ).catch(() => null);
       return webp ? await store(webp, "image/webp") : null;
     }
     return isPdf(source) ? await store(source, "application/pdf") : null;

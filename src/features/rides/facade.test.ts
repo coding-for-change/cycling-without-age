@@ -1279,7 +1279,7 @@ describe("who may read a rider's name", () => {
   });
 
   // A feed leaves the app for someone else's calendar servers.
-  it("gives a calendar feed nobody's name, not even a count", async () => {
+  it("gives a calendar feed only the reader's own riders, and no count", async () => {
     await rides.listRidesForCalendarFeed(
       "user-1",
       { pilotChapterIds: [], passengerIds: ["passenger-1"] },
@@ -1288,7 +1288,12 @@ describe("who may read a rider's name", () => {
       FROM,
     );
     const select = selectOf();
-    expect(select.roster).toBeUndefined();
+    expect(select.roster.where).toEqual({
+      passengerId: { in: ["passenger-1"] },
+    });
+    expect(Object.keys(select.roster.select.passenger.select)).not.toContain(
+      "lastName",
+    );
     expect(select._count).toBeUndefined();
     expect(select.chapter).toEqual({ select: { name: true } });
     expect(select.assignments).toEqual({

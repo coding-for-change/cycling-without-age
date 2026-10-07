@@ -1,6 +1,7 @@
 import { getEmailStrings } from "@/emails/strings";
 import type { Locale } from "@/lib/i18n/locales";
 import type { AnyKind } from "./types";
+import { careDecided, careInvited, careRequested } from "./care";
 import { chapterMemberJoined } from "./chapter-member-joined";
 import { countryAdminAppointed, countryAdminRemoved } from "./country-admin";
 import { memberInvited } from "./member-invited";
@@ -12,6 +13,9 @@ import { trishawDamageReported } from "./trishaw-damage-reported";
 import { userOnboarded } from "./user-onboarded";
 
 export const kinds: AnyKind[] = [
+  careDecided,
+  careInvited,
+  careRequested,
   chapterMemberJoined,
   countryAdminAppointed,
   countryAdminRemoved,

@@ -1,4 +1,7 @@
-import { Bike, MapPin, UserRound } from "lucide-react";
+import { Fragment } from "react";
+import Link from "next/link";
+import { Bike, House, MapPin, UserRound } from "lucide-react";
+import { subjectSlug, type SubjectRef } from "@/features/person-profiles";
 import { calendarDate, dayKey } from "@/lib/calendar";
 import {
   formatShortDateWithWeekday,
@@ -10,7 +13,7 @@ import { cn } from "@/lib/utils";
 import type { PilotRideRow, RideCalendarRow } from "../facade";
 import {
   ridePilots,
-  rideRiderNames,
+  rideRiderRefs,
   rideTone,
   rideTrishawNames,
   rideWhere,
@@ -33,6 +36,7 @@ type Props = {
   /** Words locale — plural forms are read, not computed. */
   words: Locale;
   title?: string;
+  profileBase?: string;
 };
 
 /**
@@ -43,7 +47,14 @@ type Props = {
  * Every time is rendered in the ride's own chapter zone, so a pilot reading
  * this abroad still sees when the ride actually starts.
  */
-export function RideAgenda({ rides, strings, locale, words, title }: Props) {
+export function RideAgenda({
+  rides,
+  strings,
+  locale,
+  words,
+  title,
+  profileBase,
+}: Props) {
   if (!rides.length) {
     return (
       <section className="flex flex-col gap-3">
@@ -83,6 +94,7 @@ export function RideAgenda({ rides, strings, locale, words, title }: Props) {
                 strings={strings}
                 locale={locale}
                 words={words}
+                profileBase={profileBase}
               />
             ))}
           </ul>
@@ -97,11 +109,13 @@ function AgendaRow({
   strings,
   locale,
   words,
+  profileBase,
 }: {
   ride: AgendaRide;
   strings: CalendarStrings;
   locale: Locale;
   words: Locale;
+  profileBase?: string;
 }) {
   const zone = ride.chapter.timeZone;
   const where = rideWhere(ride, strings);
@@ -153,22 +167,81 @@ function AgendaRow({
             aria-hidden
             className="size-3.5 shrink-0"
           />
-          {pilots.length
-            ? pilots.map((p) => p.user.name).join(", ")
-            : strings.pilotNeeded}
+          {pilots.length ? (
+            <People
+              people={pilots.map((p) => ({
+                ref: { kind: "user", id: p.user.id },
+                name: p.user.name,
+              }))}
+              profileBase={profileBase}
+            />
+          ) : (
+            strings.pilotNeeded
+          )}
         </span>
         <span>
-          {ride.roster?.length
-            ? rideRiderNames(ride.roster)
-            : ride._count.roster
-              ? formatMessage(
-                  strings.riders,
-                  { count: ride._count.roster },
-                  words,
-                )
-              : strings.noRiders}
+          {ride._count.roster
+            ? formatMessage(
+                strings.riders,
+                { count: ride._count.roster },
+                words,
+              )
+            : strings.noRiders}
         </span>
       </div>
+
+      {ride.roster?.length ? (
+        <ul className="text-2sm flex flex-col gap-1">
+          {rideRiderRefs(ride.roster, strings.pickupCareHome).map((rider) => (
+            <li
+              key={subjectSlug(rider.ref)}
+              className="flex min-w-0 items-center gap-1.25"
+            >
+              <House
+                aria-hidden
+                className="size-3.5 shrink-0 text-ink-soft"
+              />
+              <People
+                people={[rider]}
+                profileBase={profileBase}
+              />
+              {rider.pickup ? (
+                <span
+                  className="truncate text-ink-soft"
+                  title={formatMessage(
+                    strings.pickupLabel,
+                    { place: rider.pickup },
+                    words,
+                  )}
+                >
+                  · {rider.pickup}
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </li>
   );
+}
+
+function People({
+  people,
+  profileBase,
+}: {
+  people: { ref: SubjectRef; name: string }[];
+  profileBase?: string;
+}) {
+  if (!profileBase) return people.map((person) => person.name).join(", ");
+  return people.map((person, index) => (
+    <Fragment key={subjectSlug(person.ref)}>
+      {index > 0 ? ", " : null}
+      <Link
+        href={`${profileBase}/${subjectSlug(person.ref)}`}
+        className="rounded-sm underline-offset-2 outline-none hover:text-ink hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+      >
+        {person.name}
+      </Link>
+    </Fragment>
+  ));
 }

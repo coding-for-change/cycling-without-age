@@ -11,11 +11,15 @@ import { getLocale } from "@/lib/i18n";
 import { withinRateLimit } from "@/lib/rate-limit";
 import { inviteChapterUser as invite } from "@/use-cases/invite-chapter-user";
 import { provisionAssistedPassenger } from "@/use-cases/provision-assisted-passenger";
-import { accounts } from "./index";
 import { assistedPassengerInput, inviteInput } from "./schemas";
+import { deleteAccount } from "@/use-cases/delete-account";
 
 export type AccountActionResult =
-  { ok: true } | { ok: false; error: "exists" | "invalid" | "generic" };
+  | { ok: true; outcome: "created" | "sent" }
+  | {
+      ok: false;
+      error: "exists" | "tooMany" | "invalid" | "generic";
+    };
 
 export type InviteActionResult =
   { ok: true } | { ok: false; error: "invalid" | "generic" };
@@ -24,6 +28,8 @@ export type DeleteOwnAccountResult =
   | { ok: true }
   | { ok: false; error: "handOverAdmin" | "rateLimited" | "generic" };
 
+const ADD_LIMIT = { max: 60, windowMs: 60 * 60_000 };
+
 export async function addAssistedPassenger(
   input: unknown,
 ): Promise<AccountActionResult> {
@@ -31,17 +37,23 @@ export async function addAssistedPassenger(
   if (!parsed.success) return { ok: false, error: "invalid" };
 
   const session = await requireChapterAdmin(parsed.data.chapterId);
+  if (!withinRateLimit(`add-passenger:${session.user.id}`, ADD_LIMIT))
+    return { ok: false, error: "generic" };
 
   try {
-    await provisionAssistedPassenger({
+    const { outcome } = await provisionAssistedPassenger({
       adminUserId: session.user.id,
       input: parsed.data,
     });
     revalidatePath("/admin", "layout");
     invalidateReports(parsed.data.chapterId);
-    return { ok: true };
+    return { ok: true, outcome };
   } catch (error) {
-    return actionFailure(error, { alreadyHasAccount: "exists" } as const);
+    return actionFailure(error, {
+      alreadyHasAccount: "exists",
+      passengerChapterMismatch: "exists",
+      tooManyRiders: "tooMany",
+    } as const);
   }
 }
 
@@ -96,7 +108,7 @@ export async function deleteOwnAccountAction(): Promise<DeleteOwnAccountResult> 
   if (!allowed) return { ok: false, error: "rateLimited" };
 
   try {
-    await accounts.deleteUser(session.user.id);
+    await deleteAccount(session.user.id);
     revalidatePath("/admin", "layout");
     invalidateReports();
     return { ok: true };

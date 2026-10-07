@@ -112,7 +112,7 @@ function MakeFunctionalForm({
         <p
           id={errorId}
           role="alert"
-          className="text-xs text-red"
+          className="text-xs text-red-ink"
         >
           {error}
         </p>

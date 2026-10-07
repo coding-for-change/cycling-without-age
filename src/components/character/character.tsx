@@ -202,7 +202,7 @@ export function Character({
       className={cn(
         "transition-colors duration-300",
         className,
-        alarmed && "text-red",
+        alarmed && "text-red-ink",
       )}
       // The body is a full-viewBox rect clipped by a mask, and a mask does not
       // affect hit-testing — so without this the character's transparent square

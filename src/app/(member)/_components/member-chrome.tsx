@@ -36,6 +36,7 @@ export async function MemberChrome({
       signIn={{ href: signInHref(next), label: dict.member.guest.signIn }}
       locale={locale}
       languageLabel={dict.common.language}
+      themeStrings={dict.common.theme}
       bell={
         session ? (
           <Suspense

@@ -13,7 +13,6 @@ const fresh: OnboardingProgress = {
   consented: false,
   profiled: false,
   passkeyHandled: false,
-  nextStepsSeen: false,
 };
 
 const done: OnboardingProgress = {
@@ -22,11 +21,10 @@ const done: OnboardingProgress = {
   consented: true,
   profiled: true,
   passkeyHandled: true,
-  nextStepsSeen: true,
 };
 
 describe("onboardingSteps", () => {
-  it("walks a fresh passenger through every screen but the pilot closer", () => {
+  it("walks a fresh passenger through every screen", () => {
     expect(onboardingSteps({ ...fresh, role: "passenger" })).toEqual([
       "location",
       "consent",
@@ -35,12 +33,9 @@ describe("onboardingSteps", () => {
     ]);
   });
 
-  it("adds the closing screen for a pilot only", () => {
-    expect(onboardingSteps({ ...fresh, role: "pilot" })).toContain(
-      "pilotNextSteps",
-    );
-    expect(onboardingSteps({ ...fresh, role: "passenger" })).not.toContain(
-      "pilotNextSteps",
+  it("gives a pilot the same screens as a passenger", () => {
+    expect(onboardingSteps({ ...fresh, role: "pilot" })).toEqual(
+      onboardingSteps({ ...fresh, role: "passenger" }),
     );
   });
 
@@ -64,11 +59,6 @@ describe("nextOnboardingStep", () => {
   it("resumes mid-flow rather than restarting", () => {
     const resumed = { ...done, profiled: false, passkeyHandled: false };
     expect(STEP_PATH[nextOnboardingStep(resumed)!]).toBe("/onboarding/profile");
-  });
-
-  it("leaves a pilot on the closing screen until they have read it", () => {
-    const pilot = { ...done, role: "pilot" as const, nextStepsSeen: false };
-    expect(nextOnboardingStep(pilot)).toBe("pilotNextSteps");
   });
 });
 
@@ -108,13 +98,7 @@ describe("stepProgress", () => {
         { role: "pilot", presetRole: true, presetChapter: false },
         "location",
       ),
-    ).toEqual({ index: 0, total: 5 });
-  });
-
-  it("has no dots for a step that is not in this person's run", () => {
-    expect(
-      stepProgress({ ...noPreset, role: "passenger" }, "pilotNextSteps"),
-    ).toBeNull();
+    ).toEqual({ index: 0, total: 4 });
   });
 });
 
@@ -125,7 +109,6 @@ describe("canViewStep", () => {
     consented: true,
     profiled: false,
     passkeyHandled: false,
-    nextStepsSeen: false,
   };
 
   it("lets someone back into a step they already answered", () => {
@@ -139,13 +122,6 @@ describe("canViewStep", () => {
 
   it("refuses a step they have not earned yet", () => {
     expect(canViewStep(midway, "passkey")).toBe(false);
-  });
-
-  it("never shows a passenger the pilot closer", () => {
-    expect(canViewStep(midway, "pilotNextSteps")).toBe(false);
-    expect(canViewStep({ ...midway, role: "pilot" }, "pilotNextSteps")).toBe(
-      false,
-    );
   });
 
   it("opens every earlier screen once onboarding is finished", () => {

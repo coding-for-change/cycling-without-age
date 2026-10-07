@@ -345,7 +345,7 @@ function RideRow({
         {ride.grounded ? (
           <TriangleAlert
             aria-label={strings.grounded}
-            className="text-red size-3.5 shrink-0"
+            className="text-red-ink size-3.5 shrink-0"
           />
         ) : null}
         {ride.status !== "scheduled" ? (
