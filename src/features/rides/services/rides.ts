@@ -194,8 +194,12 @@ export const findRidesInRange = (chapterIds: string[], from: Date, to: Date) =>
  * rewrites the list and leaves the assignment rows, so the role is checked
  * here, not only the membership.
  */
+const PILOT_ROLE = {
+  role: { contains: "pilot" },
+} satisfies Prisma.MemberWhereInput;
+
 const stillPiloting = (userId: string) =>
-  ({ userId, role: { contains: "pilot" } }) satisfies Prisma.MemberWhereInput;
+  ({ userId, ...PILOT_ROLE }) satisfies Prisma.MemberWhereInput;
 
 /**
  * Current membership is required as well as the assignment: removing someone
@@ -272,6 +276,43 @@ export const findPassengerRidesOn = (
     take,
   });
 
+/**
+ * Of these people, who still holds the pilot role in which chapter — as
+ * `chapterId:userId` keys. Assignments outlive the role, so a crew list asks.
+ */
+export const findStillPiloting = async (
+  chapterIds: string[],
+  userIds: string[],
+) =>
+  new Set(
+    (
+      await prisma.member.findMany({
+        where: {
+          organizationId: { in: chapterIds },
+          userId: { in: userIds },
+          ...PILOT_ROLE,
+        },
+        select: { organizationId: true, userId: true },
+      })
+    ).map((member) => `${member.organizationId}:${member.userId}`),
+  );
+
+/** Whether a pilot may open this ride, without reading it. */
+export const findRideIdForPilot = (rideId: string, userId: string) =>
+  prisma.ride.findFirst({
+    where: { id: rideId, ...pilotRideWhere(userId) },
+    select: { id: true },
+  });
+
+export const findRideIdForPassengers = (
+  rideId: string,
+  passengerIds: string[],
+) =>
+  prisma.ride.findFirst({
+    where: { id: rideId, ...passengerRideWhere(passengerIds) },
+    select: { id: true },
+  });
+
 export const findRideForPilot = (rideId: string, userId: string) =>
   prisma.ride.findFirst({
     where: { id: rideId, ...pilotRideWhere(userId) },
@@ -284,16 +325,44 @@ export const findRideForPassengers = (rideId: string, passengerIds: string[]) =>
     select: passengerDetailSelect(passengerIds),
   });
 
+/** What a message says about a ride: its name, when and where, nothing else. */
+export const findRideFacts = (rideId: string) =>
+  prisma.ride.findUnique({
+    where: { id: rideId },
+    select: {
+      title: true,
+      model: true,
+      startsAt: true,
+      endsAt: true,
+      locationName: true,
+      destinationName: true,
+      chapter: { select: { name: true, timeZone: true } },
+    },
+  });
+
 /**
  * Who a change to this ride concerns: its pilots and whoever manages its
  * riders. An assignment outlives the pilot role and the membership it came
  * with, so only pilots who still hold the role in the ride's chapter count.
  */
-export async function findRideParticipants(rideId: string) {
-  const ride = await prisma.ride.findUnique({
+export const findRideParticipants = (rideId: string) =>
+  prisma.ride.findUnique({
     where: { id: rideId },
     select: {
       chapterId: true,
+      assignments: {
+        where: {
+          user: {
+            members: {
+              some: {
+                ...PILOT_ROLE,
+                organization: { rides: { some: { id: rideId } } },
+              },
+            },
+          },
+        },
+        select: { userId: true },
+      },
       roster: {
         select: {
           passenger: { select: { managedByUserId: true, userId: true } },
@@ -301,23 +370,6 @@ export async function findRideParticipants(rideId: string) {
       },
     },
   });
-  if (!ride) return null;
-  const assignments = await prisma.rideAssignment.findMany({
-    where: {
-      rideId,
-      user: {
-        members: {
-          some: {
-            organizationId: ride.chapterId,
-            role: { contains: "pilot" },
-          },
-        },
-      },
-    },
-    select: { userId: true },
-  });
-  return { ...ride, assignments };
-}
 
 /**
  * What a subscribed calendar is told: when, where, which bike — and nobody's
@@ -815,7 +867,7 @@ export const countFutureRidesWithTrishaws = (
     },
   });
 
-const FINISH_WINDOW_MS = 24 * 60 * 60 * 1000;
+export const FINISH_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 /**
  * The finish page shows the storage access code, so it stays readable only

@@ -224,7 +224,7 @@ the worker):
 | `ride.pilotAssigned` | `userId`, `self` | `assignVolunteer` |
 | `ride.pilotUnassigned` | `userId`, `self` | `unassignVolunteer` |
 | `ride.riderBooked` | `passengerId` | `bookRider` |
-| `ride.riderRemoved` | `passengerId` | `cancelBooking` |
+| `ride.riderRemoved` | `passengerId`, `self` (the rider's own account gave the seat up) | `cancelBooking` |
 
 `self` is true when the pilot acted for themself (self sign-up and withdrawal arrive in PR 5).
 The note for pilots and anyone's name never enter a payload; a kind that needs a name looks it
@@ -239,10 +239,28 @@ category `ride`:
 | `rideCancelled` | `ride.cancelled` | pilots, riders' accounts and chapter admins, minus the actor (Report 14) | push, mail always | `/rides/{id}` |
 | `rideRescheduled` | `ride.rescheduled` | pilots and riders' accounts, minus the actor | push, mail if no push | `/rides/{id}` |
 | `rideBookingConfirmed` | `ride.riderBooked` | the account managing the rider, and the rider's own account | push, mail always | `/passenger/rides/{id}` |
-| `rideBookingCancelled` | `ride.riderRemoved` when the actor is not a chapter admin | chapter admins, collapsed per ride | push, mail if no push, opt-out-able | `/admin/rides/{id}` |
+| `rideBookingCancelled` | `ride.riderRemoved` with `self` | chapter admins, collapsed per ride | push, mail if no push, opt-out-able | `/admin/rides/{id}` |
 
 `ride.scheduled`, `ride.deleted` and `ride.pilotUnassigned` still have no listener and are
 marked processed without a job.
+
+**A round trip is announced once.** When one change reaches both legs — cancelling the way
+there with the way back, moving the way there (which moves the way back), or scheduling a
+round trip with riders and pilots — each leg still emits its own event, but `ride.cancelled`,
+`ride.rescheduled`, `ride.riderBooked` and `ride.pilotAssigned` carry a `pair`: the way there's
+event is `{ role: "lead", otherRideId }` and the way back's `{ role: "follow", otherRideId }`.
+A kind sends nothing for a follower, and the lead's message says "and the way back" and goes
+to everyone on either leg. `pair` defaults to `null`, so events stored before it parse as
+single rides.
+
+**A seat given up is the rider's side's news.** `ride.riderRemoved` carries `self`: true when
+the actor is the rider's own account or the account managing them. Only then do the chapter
+admins hear about it — an admin of the chapter, of its country or a superadmin removing a
+rider is already in the know, and no role lookup in the worker has to guess which.
+
+**A change is told as what it is.** `rideRescheduled` picks one change in the order time,
+start, destination, and says that: a destination edit names the new destination instead of
+reading as a moved meeting point.
 
 A ride message is about one ride but reaches people who read it in different places, so the
 two kinds whose audience is mixed link to `/rides/{id}`. That route (`app/rides/[rideId]`,

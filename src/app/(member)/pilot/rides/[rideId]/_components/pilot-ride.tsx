@@ -40,9 +40,8 @@ export async function PilotRide({
     requirePerspective("pilot"),
   ]);
   const userId = session.user.id;
-  const [ride, finishable, dict, language, head] = await Promise.all([
+  const [ride, dict, language, head] = await Promise.all([
     rides.getRideForPilot(rideId, userId),
-    rides.getFinishableRideForPilot(rideId, userId),
     getDictionary(),
     getLocale(),
     headers(),
@@ -51,7 +50,7 @@ export async function PilotRide({
 
   const otherLeg = ride.returnLeg ?? ride.returnLegOf;
   const otherLegOpen = otherLeg
-    ? (await rides.getRideForPilot(otherLeg.id, userId)) !== null
+    ? await rides.pilotCanOpen(otherLeg.id, userId)
     : false;
 
   const now = new Date();
@@ -60,7 +59,7 @@ export async function PilotRide({
   const strings = dict.pilot.rides.detail;
   const zone = ride.chapter.timeZone;
   const cancelled = ride.status === "cancelled";
-  const canFinish = finishable !== null && !cancelled && ride.startsAt <= now;
+  const canFinish = rides.isFinishable(ride, now);
   const crew = ride.assignments.filter(
     (assignment) => assignment.user.id !== userId,
   );

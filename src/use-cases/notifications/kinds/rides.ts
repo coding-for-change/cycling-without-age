@@ -1,10 +1,15 @@
 import { z } from "zod";
-import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
 import { RIDE_CANCELLATION_REASONS } from "@/features/rides";
 import { formatMessage } from "@/lib/i18n/format";
 import { chapterAdminIds, excluding, nameOfPerson } from "./lookups";
-import { factsOfRide, rideAudience, rideFacts, rideWords } from "./ride-facts";
+import {
+  factsOfRide,
+  followsItsPair,
+  rideAudience,
+  rideFacts,
+  rideWords,
+} from "./ride-facts";
 import { defineKind } from "./types";
 
 /**
@@ -15,7 +20,13 @@ import { defineKind } from "./types";
  */
 const rideLink = (rideId: string) => `/rides/${rideId}`;
 
-const riderOf = async (passengerId: string) => {
+/**
+ * `notify` asks a kind for recipients and params of the same event side by
+ * side; both need the rider, so the lookup is shared per event.
+ */
+const riders = new WeakMap<object, ReturnType<typeof lookUpRider>>();
+
+async function lookUpRider(passengerId: string) {
   const rider = await passengers.getPassenger(passengerId);
   return rider
     ? {
@@ -25,6 +36,14 @@ const riderOf = async (passengerId: string) => {
         ),
       }
     : { name: null, accounts: [] };
+}
+
+const riderOf = (event: { passengerId: string }) => {
+  const known = riders.get(event);
+  if (known) return known;
+  const rider = lookUpRider(event.passengerId);
+  riders.set(event, rider);
+  return rider;
 };
 
 /** Lifecycle 3C: the pilot an admin put on the ride is told it is theirs. */
@@ -34,9 +53,11 @@ export const ridePilotAssigned = defineKind({
   policy: { push: true, email: "ifNoPush", optional: false },
   payload: z.object({ ...rideFacts, actorName: z.string().nullable() }),
   recipients: async (event) =>
-    event.self ? [] : excluding([event.userId], event.actorUserId),
+    event.self || followsItsPair(event.pair)
+      ? []
+      : excluding([event.userId], event.actorUserId),
   params: async (event) => ({
-    ...(await factsOfRide(event.rideId)),
+    ...(await factsOfRide(event.rideId, event.pair)),
     actorName: event.actorUserId ? await nameOfPerson(event.actorUserId) : null,
   }),
   href: (event) => `/pilot/rides/${event.rideId}`,
@@ -50,7 +71,11 @@ export const ridePilotAssigned = defineKind({
       subject: formatMessage(copy.subject, values, locale),
       preview: formatMessage(copy.preview, values, locale),
       heading: formatMessage(copy.heading, values, locale),
-      body: formatMessage(copy.intro, values, locale),
+      body: formatMessage(
+        params.bothWays ? copy.introBoth : copy.intro,
+        values,
+        locale,
+      ),
       cta: copy.cta,
       footer: copy.footer,
       template: "rideAssigned",
@@ -72,13 +97,15 @@ export const rideCancelled = defineKind({
     ...rideFacts,
     reasonCode: z.enum(RIDE_CANCELLATION_REASONS),
   }),
-  recipients: (event) =>
-    rideAudience(event.rideId, {
-      admins: true,
-      actorUserId: event.actorUserId,
-    }),
+  recipients: async (event) =>
+    followsItsPair(event.pair)
+      ? []
+      : rideAudience(event.rideId, event.pair, {
+          admins: true,
+          actorUserId: event.actorUserId,
+        }),
   params: async (event) => ({
-    ...(await factsOfRide(event.rideId)),
+    ...(await factsOfRide(event.rideId, event.pair)),
     reasonCode: event.reasonCode,
   }),
   href: (event) => rideLink(event.rideId),
@@ -92,7 +119,11 @@ export const rideCancelled = defineKind({
       subject: formatMessage(copy.subject, values, locale),
       preview: formatMessage(copy.preview, values, locale),
       heading: formatMessage(copy.heading, values, locale),
-      body: formatMessage(copy.intro, values, locale),
+      body: formatMessage(
+        params.bothWays ? copy.introBoth : copy.intro,
+        values,
+        locale,
+      ),
       cta: copy.cta,
       footer: copy.footer,
       template: "rideCancelled",
@@ -100,37 +131,48 @@ export const rideCancelled = defineKind({
   },
 });
 
-/** A new time or a new place is news for everyone on the ride. */
+/**
+ * A new time, a new start or a new destination is news for everyone on the
+ * ride — and each is told as what it is, so a moved destination never reads
+ * as a moved meeting point.
+ */
 export const rideRescheduled = defineKind({
   event: "ride.rescheduled",
   category: "ride",
   policy: { push: true, email: "ifNoPush", optional: false },
   payload: z.object({
     ...rideFacts,
-    timeChanged: z.boolean(),
+    change: z.enum(["time", "location", "destination"]),
   }),
-  recipients: (event) =>
-    rideAudience(event.rideId, {
-      admins: false,
-      actorUserId: event.actorUserId,
-    }),
+  recipients: async (event) =>
+    followsItsPair(event.pair)
+      ? []
+      : rideAudience(event.rideId, event.pair, {
+          admins: false,
+          actorUserId: event.actorUserId,
+        }),
   params: async (event) => ({
-    ...(await factsOfRide(event.rideId)),
-    timeChanged: event.changes.includes("time"),
+    ...(await factsOfRide(event.rideId, event.pair)),
+    change: event.changes.includes("time")
+      ? ("time" as const)
+      : event.changes.includes("location")
+        ? ("location" as const)
+        : ("destination" as const),
   }),
   href: (event) => rideLink(event.rideId),
   message: (params, strings, locale) => {
     const copy = strings.rideRescheduled;
     const values = rideWords(params, strings, locale);
+    const intro = {
+      time: params.bothWays ? copy.introTimeBoth : copy.introTime,
+      location: copy.introPlace,
+      destination: copy.introDestination,
+    }[params.change];
     return {
       subject: formatMessage(copy.subject, values, locale),
       preview: formatMessage(copy.preview, values, locale),
       heading: formatMessage(copy.heading, values, locale),
-      body: formatMessage(
-        params.timeChanged ? copy.introTime : copy.introPlace,
-        values,
-        locale,
-      ),
+      body: formatMessage(intro, values, locale),
       cta: copy.cta,
       footer: copy.footer,
       template: "rideChanged",
@@ -148,10 +190,12 @@ export const rideBookingConfirmed = defineKind({
   policy: { push: true, email: "always", optional: false },
   payload: z.object({ ...rideFacts, riderName: z.string().nullable() }),
   recipients: async (event) =>
-    excluding((await riderOf(event.passengerId)).accounts, event.actorUserId),
+    followsItsPair(event.pair)
+      ? []
+      : excluding((await riderOf(event)).accounts, event.actorUserId),
   params: async (event) => ({
-    ...(await factsOfRide(event.rideId)),
-    riderName: (await riderOf(event.passengerId)).name,
+    ...(await factsOfRide(event.rideId, event.pair)),
+    riderName: (await riderOf(event)).name,
   }),
   href: (event) => `/passenger/rides/${event.rideId}`,
   message: (params, strings, locale) => {
@@ -164,7 +208,11 @@ export const rideBookingConfirmed = defineKind({
       subject: formatMessage(copy.subject, values, locale),
       preview: formatMessage(copy.preview, values, locale),
       heading: formatMessage(copy.heading, values, locale),
-      body: formatMessage(copy.intro, values, locale),
+      body: formatMessage(
+        params.bothWays ? copy.introBoth : copy.intro,
+        values,
+        locale,
+      ),
       cta: copy.cta,
       footer: copy.footer,
       template: "rideBooked",
@@ -173,27 +221,22 @@ export const rideBookingConfirmed = defineKind({
 });
 
 /**
- * A rider leaving a ride on their own is news for the chapter: it may now be
- * empty, or have room for someone else. When an admin took them off, the
- * admins already know.
+ * A rider's own account giving the seat up is news for the chapter: the ride
+ * may now be empty, or have room for someone else. When an admin — of the
+ * chapter, of its country, or anywhere — took them off, the admins know.
  */
 export const rideBookingCancelled = defineKind({
   event: "ride.riderRemoved",
   category: "ride",
   policy: { push: true, email: "ifNoPush", optional: true },
   payload: z.object({ ...rideFacts, riderName: z.string().nullable() }),
-  recipients: async (event) => {
-    if (!event.actorUserId) return [];
-    const roles = await membership.getMemberRoles(
-      event.actorUserId,
-      event.chapterId,
-    );
-    if (roles.includes("admin")) return [];
-    return excluding(await chapterAdminIds(event.chapterId), event.actorUserId);
-  },
+  recipients: async (event) =>
+    event.self
+      ? excluding(await chapterAdminIds(event.chapterId), event.actorUserId)
+      : [],
   params: async (event) => ({
     ...(await factsOfRide(event.rideId)),
-    riderName: (await riderOf(event.passengerId)).name,
+    riderName: (await riderOf(event)).name,
   }),
   href: (event) => `/admin/rides/${event.rideId}`,
   collapseKey: (event) => `ride:${event.rideId}`,

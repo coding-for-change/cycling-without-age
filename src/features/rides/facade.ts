@@ -72,8 +72,13 @@ import {
   updateRosterPositions,
   findPassengerRidesOn,
   findPilotRidesOn,
+  FINISH_WINDOW_MS,
+  findStillPiloting,
+  findRideFacts,
   findRideForPassengers,
   findRideForPilot,
+  findRideIdForPassengers,
+  findRideIdForPilot,
   findRideParticipants,
   type FeedAudience,
   type PassengerRideDetailRow,
@@ -123,17 +128,17 @@ export const listRidesInRange = (chapterIds: string[], from: Date, to: Date) =>
     ? findRidesInRange(chapterIds, from, to)
     : Promise.resolve([]);
 
-export const listRidesForPilot = (userId: string, from: Date, to: Date) =>
-  findRidesForPilot(userId, from, to);
+export const listRidesForPilot = async (userId: string, from: Date, to: Date) =>
+  withActiveCrew(await findRidesForPilot(userId, from, to));
 
-export const listRidesForPassengers = (
+export const listRidesForPassengers = async (
   passengerIds: string[],
   from: Date,
   to: Date,
 ) =>
   passengerIds.length
-    ? findRidesForPassengers(passengerIds, from, to)
-    : Promise.resolve([]);
+    ? withActiveCrew(await findRidesForPassengers(passengerIds, from, to))
+    : [];
 
 /**
  * A feed is polled over and over, so it is capped. A care home with fifty
@@ -172,11 +177,43 @@ export const getRide = (id: string) => findRideById(id);
 const UPCOMING_ON_PAGE = 50;
 const PAST_ON_PAGE = 20;
 
+type Crewed = {
+  chapterId: string;
+  assignments: { user: { id: string } }[];
+};
+
+/**
+ * Members see only the crew still piloting in the ride's chapter: a co-pilot
+ * who was demoted or left keeps their assignment row, but is no longer
+ * riding along as far as anyone on the ride is told.
+ */
+async function withActiveCrew<T extends Crewed>(rows: T[]): Promise<T[]> {
+  const userIds = [
+    ...new Set(rows.flatMap((row) => row.assignments.map((a) => a.user.id))),
+  ];
+  if (!userIds.length) return rows;
+  const active = await findStillPiloting(
+    [...new Set(rows.map((row) => row.chapterId))],
+    userIds,
+  );
+  return rows.map((row) => ({
+    ...row,
+    assignments: row.assignments.filter((a) =>
+      active.has(`${row.chapterId}:${a.user.id}`),
+    ),
+  }));
+}
+
+const withActiveCrewOf = async <T extends Crewed>(row: T | null) =>
+  row ? (await withActiveCrew([row]))[0] : null;
+
 /** A member's rides page: what is coming, then the most recent past. */
 export async function listPilotRides(userId: string, now = new Date()) {
   const [upcoming, past] = await Promise.all([
-    findPilotRidesOn(userId, now, "upcoming", UPCOMING_ON_PAGE),
-    findPilotRidesOn(userId, now, "past", PAST_ON_PAGE),
+    findPilotRidesOn(userId, now, "upcoming", UPCOMING_ON_PAGE).then(
+      withActiveCrew,
+    ),
+    findPilotRidesOn(userId, now, "past", PAST_ON_PAGE).then(withActiveCrew),
   ]);
   return { upcoming, past };
 }
@@ -187,21 +224,55 @@ export async function listPassengerRides(
 ) {
   if (!passengerIds.length) return { upcoming: [], past: [] };
   const [upcoming, past] = await Promise.all([
-    findPassengerRidesOn(passengerIds, now, "upcoming", UPCOMING_ON_PAGE),
-    findPassengerRidesOn(passengerIds, now, "past", PAST_ON_PAGE),
+    findPassengerRidesOn(passengerIds, now, "upcoming", UPCOMING_ON_PAGE).then(
+      withActiveCrew,
+    ),
+    findPassengerRidesOn(passengerIds, now, "past", PAST_ON_PAGE).then(
+      withActiveCrew,
+    ),
   ]);
   return { upcoming, past };
 }
 
-/** Only a pilot assigned to the ride, and still a member of its chapter. */
-export const getRideForPilot = (rideId: string, userId: string) =>
-  findRideForPilot(rideId, userId);
+export const getRideFacts = (rideId: string) => findRideFacts(rideId);
+
+/** Whether this pilot may open the ride: the same rule as reading it. */
+export const pilotCanOpen = async (rideId: string, userId: string) =>
+  (await findRideIdForPilot(rideId, userId)) !== null;
+
+/** Whether one of these riders is on the ride, so their account may open it. */
+export const passengersCanOpen = async (
+  rideId: string,
+  passengerIds: string[],
+) =>
+  passengerIds.length > 0 &&
+  (await findRideIdForPassengers(rideId, passengerIds)) !== null;
+
+/**
+ * The finish page shows a storage access code, so a ride can be finished
+ * from its start until a day after it ended — the same window
+ * `getFinishableRideForPilot` reads under.
+ */
+export const isFinishable = (
+  ride: { status: string; startsAt: Date; endsAt: Date },
+  now = new Date(),
+) =>
+  ride.status !== "cancelled" &&
+  ride.startsAt <= now &&
+  ride.endsAt.getTime() >= now.getTime() - FINISH_WINDOW_MS;
+
+/** Only a pilot assigned to the ride, and still a pilot in its chapter. */
+export const getRideForPilot = async (rideId: string, userId: string) =>
+  withActiveCrewOf(await findRideForPilot(rideId, userId));
 
 /** Only a ride one of these riders is on, showing only these riders. */
-export const getRideForPassengers = (rideId: string, passengerIds: string[]) =>
+export const getRideForPassengers = async (
+  rideId: string,
+  passengerIds: string[],
+) =>
   passengerIds.length
-    ? findRideForPassengers(rideId, passengerIds)
-    : Promise.resolve(null);
+    ? withActiveCrewOf(await findRideForPassengers(rideId, passengerIds))
+    : null;
 
 /** Everyone a change to this ride concerns: its pilots and its riders' accounts. */
 export async function listRideParticipants(rideId: string) {
@@ -319,6 +390,7 @@ export const bookedTrishawIds = async (
   );
 
 type Actor = string | null;
+type RidePair = Extract<DomainEvent, { type: "ride.cancelled" }>["pair"];
 type Tx = Prisma.TransactionClient;
 type Emit = Parameters<Parameters<typeof transaction>[0]>[1];
 type RideEvent = Extract<DomainEvent, { rideId: string }>;
@@ -505,8 +577,20 @@ export async function scheduleRide(input: RideData, actorUserId: Actor) {
       actorUserId,
       returnLegId: back?.id ?? null,
     });
-    for (const leg of back ? [ride, back] : [ride])
-      await staffAndBook(leg, passengerIds, pilotIds, actorUserId, tx, emit);
+    await staffAndBook(
+      ride,
+      passengerIds,
+      pilotIds,
+      actorUserId,
+      tx,
+      emit,
+      back ? { role: "lead", otherRideId: back.id } : null,
+    );
+    if (back)
+      await staffAndBook(back, passengerIds, pilotIds, actorUserId, tx, emit, {
+        role: "follow",
+        otherRideId: ride.id,
+      });
     return { ...ride, returnLegId: back?.id ?? null };
   });
 }
@@ -518,6 +602,7 @@ async function staffAndBook(
   actorUserId: Actor,
   tx: Tx,
   emit: Emit,
+  pair: RidePair,
 ) {
   if (passengerIds.length)
     await insertRosterEntries(ride.id, passengerIds, actorUserId, tx);
@@ -540,13 +625,14 @@ async function staffAndBook(
   );
   const scope = { rideId: ride.id, chapterId: ride.chapterId, actorUserId };
   for (const passengerId of passengerIds)
-    await emit({ type: "ride.riderBooked", ...scope, passengerId });
+    await emit({ type: "ride.riderBooked", ...scope, passengerId, pair });
   for (const userId of pilotIds)
     await emit({
       type: "ride.pilotAssigned",
       ...scope,
       userId,
       self: actorUserId === userId,
+      pair,
     });
 }
 
@@ -651,6 +737,12 @@ export async function rescheduleRide(
       );
 
     let updated = null;
+    const pairOf = (legId: string): RidePair =>
+      moves.length < 2
+        ? null
+        : legId === id
+          ? { role: "lead", otherRideId: moves[1].leg.id }
+          : { role: "follow", otherRideId: id };
     for (const { leg, to } of moves) {
       const row = await updateRide(leg.id, to, tx);
       updated ??= row;
@@ -665,7 +757,7 @@ export async function rescheduleRide(
           to: span(to),
           ...(leg.id === id ? {} : { withLegOf: id }),
         },
-        { type: "ride.rescheduled", changes: ["time"] },
+        { type: "ride.rescheduled", changes: ["time"], pair: pairOf(leg.id) },
       );
     }
     return { ride: updated!, changed: true, movedReturnLeg: moves.length > 1 };
@@ -787,7 +879,9 @@ export async function updateRideDetails(
           shown.map((field) => [field, blankToNull(wanted[field])]),
         ),
       } as Prisma.InputJsonObject,
-      changes.length ? { type: "ride.rescheduled", changes } : undefined,
+      changes.length
+        ? { type: "ride.rescheduled", changes, pair: null }
+        : undefined,
     );
     return updated;
   });
@@ -837,7 +931,16 @@ export async function cancelRide(
         actorUserId,
         "cancelled",
         { reasonCode, note: note?.trim() || null },
-        { type: "ride.cancelled", reasonCode },
+        {
+          type: "ride.cancelled",
+          reasonCode,
+          pair:
+            ids.length < 2
+              ? null
+              : rideId === ride.id
+                ? { role: "lead", otherRideId: ids[1] }
+                : { role: "follow", otherRideId: ride.id },
+        },
       );
     }
     return { cancelledIds: ids };
@@ -937,7 +1040,7 @@ export async function assignVolunteer(
       actorUserId,
       "pilotAssigned",
       { userId, role },
-      { type: "ride.pilotAssigned", userId, self },
+      { type: "ride.pilotAssigned", userId, self, pair: null },
     );
     return true;
   });
@@ -1005,7 +1108,7 @@ export async function bookRider(
       actorUserId,
       "riderBooked",
       { passengerId },
-      { type: "ride.riderBooked", passengerId },
+      { type: "ride.riderBooked", passengerId, pair: null },
     );
     return true;
   });
@@ -1123,7 +1226,10 @@ export async function cancelBooking(
 ) {
   return rideWrite(async (tx, emit) => {
     const ride = await requireScheduled(rideId, tx);
-    if (!isBooked(ride, passengerId)) return false;
+    const entry = ride.roster.find(
+      ({ passenger }) => passenger.id === passengerId,
+    );
+    if (!entry) return false;
     await deleteRosterEntry(rideId, passengerId, tx);
     await record(
       tx,
@@ -1132,7 +1238,14 @@ export async function cancelBooking(
       actorUserId,
       "riderRemoved",
       { passengerId },
-      { type: "ride.riderRemoved", passengerId },
+      {
+        type: "ride.riderRemoved",
+        passengerId,
+        self:
+          actorUserId !== null &&
+          (entry.passenger.managedByUserId === actorUserId ||
+            entry.passenger.userId === actorUserId),
+      },
     );
     return true;
   });

@@ -152,6 +152,7 @@
     "footer": "You received this email because you look after a rider with a Cycling Without Age chapter.",
     "heading": "A seat is booked",
     "intro": "{rider} is booked on a ride on {date}, {time}, starting at {place}. The app shows who pilots it as soon as a pilot is assigned.",
+    "introBoth": "{rider} is booked there and back on {date}: the ride leaves at {time} from {place}. The app shows who pilots it as soon as a pilot is assigned.",
     "preview": "{ride} · {time}",
     "someone": "Your rider",
     "subject": "{rider} is booked for {date}"
@@ -161,6 +162,7 @@
     "footer": "You received this email because you are part of this ride with a Cycling Without Age chapter.",
     "heading": "This ride is cancelled",
     "intro": "The ride on {date}, {time}, starting at {place}, will not take place. The reason: {reason}.",
+    "introBoth": "The ride on {date}, {time}, starting at {place}, and its way back will not take place. The reason: {reason}.",
     "preview": "{time} · {place}",
     "subject": "Cancelled: ride on {date}"
   },
@@ -183,6 +185,7 @@
     },
     "soon": "a date to follow",
     "theChapter": "your chapter",
+    "theDestination": "the destination",
     "timeToFollow": "time to follow"
   },
   "ridePilotAssigned": {
@@ -190,6 +193,7 @@
     "footer": "You received this email because you pilot with a Cycling Without Age chapter.",
     "heading": "You're on a ride",
     "intro": "{actor} put you on a ride on {date}, {time}, starting at {place} ({ride}). The riders, the trishaw and the note for pilots are in the app.",
+    "introBoth": "{actor} put you on a round trip on {date}: there at {time}, starting at {place} ({ride}), and the way back. The riders, the trishaw and the note for pilots are in the app.",
     "preview": "{ride} · {time}",
     "subject": "You're piloting on {date}"
   },
@@ -197,8 +201,10 @@
     "cta": "Open the ride",
     "footer": "You received this email because you are part of this ride with a Cycling Without Age chapter.",
     "heading": "This ride has changed",
+    "introDestination": "The ride on {date}, {time}, now goes to {destination}.",
     "introPlace": "The ride on {date}, {time}, now starts at {place}.",
     "introTime": "The ride now takes place on {date}, {time}, starting at {place}.",
+    "introTimeBoth": "The ride and its way back have moved. It now leaves on {date}, {time}, from {place}.",
     "preview": "Now {time} · {place}",
     "subject": "Changed: ride on {date}"
   },

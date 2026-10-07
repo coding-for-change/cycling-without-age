@@ -1042,7 +1042,9 @@ never read an email address: both member selects narrow `assignments.user` to id
 image, and the email stays in `calendarSelect` for the admin surfaces. The note for pilots is
 in `pilotDetailSelect` only, and the admins' cancellation note in neither — a rider is told
 the reason in words from its code. `facade.test.ts` pins every surface, so widening one by
-accident fails a test.
+accident fails a test. The crew a member sees is filtered the same way the reads are:
+`withActiveCrew` drops assignments of people who no longer hold the pilot role in the ride's
+chapter, so a demoted co-pilot stops "riding along" on everyone else's page too.
 
 The member pages are `/pilot/rides` and `/passenger/rides` (upcoming and the latest past,
 `listPilotRides` / `listPassengerRides`) and their details `/pilot/rides/[rideId]`

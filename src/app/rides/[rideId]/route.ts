@@ -7,7 +7,7 @@ import { rideLinkFor } from "@/use-cases/ride-link";
 
 type Params = { params: Promise<{ rideId: string }> };
 
-const RIDE_ID = /^[a-z0-9]{20,32}$/;
+const RIDE_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
 export async function GET(_request: Request, { params }: Params) {
   const { rideId } = await params;

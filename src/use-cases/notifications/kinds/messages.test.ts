@@ -30,7 +30,7 @@ jest.mock("@/features/membership", () => ({
 }));
 jest.mock("@/features/rides", () => ({
   ...jest.requireActual("@/features/rides/schemas"),
-  rides: { getRide: jest.fn(), listRideParticipants: jest.fn() },
+  rides: { getRideFacts: jest.fn(), listRideParticipants: jest.fn() },
 }));
 jest.mock("@/features/passengers", () => ({
   passengers: { getPassenger: jest.fn() },
@@ -45,7 +45,7 @@ const getProfile = profile.getProfile as jest.Mock;
 const getTrishaw = fleet.getTrishaw as jest.Mock;
 const getLocation = fleet.getLocation as jest.Mock;
 const listCountryAdmins = chapters.listCountryAdmins as jest.Mock;
-const getRide = rides.getRide as jest.Mock;
+const getRideFacts = rides.getRideFacts as jest.Mock;
 const listRideParticipants = rides.listRideParticipants as jest.Mock;
 const getPassenger = passengers.getPassenger as jest.Mock;
 const getMemberRoles = membership.getMemberRoles as jest.Mock;
@@ -162,6 +162,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     chapterId: CHAPTER,
     actorUserId: ACTOR,
     changes: ["time", "location"],
+    pair: null,
   },
   "ride.cancelled": {
     type: "ride.cancelled",
@@ -169,6 +170,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     chapterId: CHAPTER,
     actorUserId: ACTOR,
     reasonCode: "weather",
+    pair: null,
   },
   "ride.deleted": {
     type: "ride.deleted",
@@ -183,6 +185,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     actorUserId: ACTOR,
     userId: SUBJECT,
     self: false,
+    pair: null,
   },
   "ride.pilotUnassigned": {
     type: "ride.pilotUnassigned",
@@ -198,6 +201,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     chapterId: CHAPTER,
     actorUserId: ACTOR,
     passengerId: "passenger-1",
+    pair: null,
   },
   "ride.riderRemoved": {
     type: "ride.riderRemoved",
@@ -205,6 +209,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     chapterId: CHAPTER,
     actorUserId: ACTOR,
     passengerId: "passenger-1",
+    self: true,
   },
 };
 
@@ -231,14 +236,13 @@ const known = () => {
   getProfile.mockResolvedValue({ name: "Anke Weiss" });
   getTrishaw.mockResolvedValue({ name: "Sonnenstrahl" });
   getLocation.mockResolvedValue({ name: "Depot Sonnenhof" });
-  getRide.mockResolvedValue({
-    id: "ride-1",
-    chapterId: CHAPTER,
+  getRideFacts.mockResolvedValue({
     title: null,
     model: "functional",
     startsAt: new Date("2026-10-27T09:00:00Z"),
     endsAt: new Date("2026-10-27T10:30:00Z"),
     locationName: "Seniorenheim Sonnenhof",
+    destinationName: "Hausarzt Dr. Weber",
     chapter: { name: "München", timeZone: "Europe/Berlin" },
   });
   getPassenger.mockResolvedValue({
@@ -257,7 +261,7 @@ const unknown = () => {
   getProfile.mockResolvedValue(null);
   getTrishaw.mockResolvedValue(null);
   getLocation.mockResolvedValue(null);
-  getRide.mockResolvedValue(null);
+  getRideFacts.mockResolvedValue(null);
   getPassenger.mockResolvedValue(null);
 };
 
@@ -312,6 +316,35 @@ describe.each(kinds.map((kind) => [kind.event, kind] as const))(
     );
   },
 );
+
+describe("a message for both legs of a round trip", () => {
+  const lead = { role: "lead" as const, otherRideId: "ride-2" };
+  const paired = [
+    { ...EVENTS["ride.cancelled"], pair: lead },
+    { ...EVENTS["ride.rescheduled"], changes: ["time"], pair: lead },
+    { ...EVENTS["ride.pilotAssigned"], pair: lead },
+    { ...EVENTS["ride.riderBooked"], pair: lead },
+  ] as DomainEvent[];
+
+  it.each(locales)("reads as finished prose in %s", async (locale) => {
+    for (const event of paired) {
+      const kind = kinds.find((candidate) => candidate.event === event.type)!;
+      const params = kind.payload.parse(await kind.params(event));
+      const message = kind.message(params, getEmailStrings(locale), locale);
+      for (const line of lines(message)) {
+        expect(line).not.toMatch(/\{\w+\}/);
+        expect(line).not.toMatch(/\b(null|undefined)\b/);
+      }
+      expect(message.body).not.toBe(
+        kind.message(
+          { ...params, bothWays: false },
+          getEmailStrings(locale),
+          locale,
+        ).body,
+      );
+    }
+  });
+});
 
 describe("the templates the history feed has to label", () => {
   const collect = async () => {

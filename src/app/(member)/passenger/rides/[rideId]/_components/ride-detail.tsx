@@ -52,11 +52,14 @@ async function PassengerRide({ rideId }: { rideId: string }) {
   const ride = await rides.getRideForPassengers(rideId, riderIds);
   if (!ride) notFound();
 
-  const [settings, wayThere] = await Promise.all([
+  const [settings, wayThereOpen, wayBackOpen] = await Promise.all([
     chapters.getSettings(ride.chapter.id),
     ride.returnLegOf
-      ? rides.getRideForPassengers(ride.returnLegOf.id, riderIds)
-      : null,
+      ? rides.passengersCanOpen(ride.returnLegOf.id, riderIds)
+      : false,
+    ride.returnLeg
+      ? rides.passengersCanOpen(ride.returnLeg.id, riderIds)
+      : false,
   ]);
   const locale = resolveLocale(head.get("accept-language"));
   const words = wordsLocale(language);
@@ -78,7 +81,8 @@ async function PassengerRide({ rideId }: { rideId: string }) {
 
       <RideHero
         ride={ride}
-        wayThereOpen={wayThere !== null}
+        wayThereOpen={wayThereOpen}
+        wayBackOpen={wayBackOpen}
         dict={dict}
         locale={locale}
         words={words}

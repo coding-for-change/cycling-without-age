@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 export function RideHero({
   ride,
   wayThereOpen,
+  wayBackOpen,
   dict,
   locale,
   words,
@@ -36,6 +37,8 @@ export function RideHero({
   ride: PassengerRideDetailRow;
   /** A rider booked only on the way back cannot open the way there. */
   wayThereOpen: boolean;
+  /** Only a rider booked on the way back has a way back to be told about. */
+  wayBackOpen: boolean;
   dict: Dictionary;
   locale: Locale;
   words: Locale;
@@ -65,7 +68,7 @@ export function RideHero({
       ? ride.destinationName?.trim() || ride.destinationAddress?.trim()
       : null;
   const back =
-    ride.returnLeg && ride.returnLeg.status !== "cancelled"
+    wayBackOpen && ride.returnLeg && ride.returnLeg.status !== "cancelled"
       ? ride.returnLeg
       : null;
 
@@ -148,13 +151,17 @@ export function RideHero({
 
         {back ? (
           <HeroLine icon={Undo2}>
-            <span>
+            <Link
+              href={`/passenger/rides/${back.id}`}
+              transitionTypes={["push"]}
+              className="self-start underline underline-offset-4 hover:text-ink-soft"
+            >
               {formatMessage(
                 strings.detail.andBack,
                 { time: formatTime(back.startsAt, locale, zone) },
                 words,
               )}
-            </span>
+            </Link>
           </HeroLine>
         ) : null}
 

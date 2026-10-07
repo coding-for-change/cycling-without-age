@@ -45,6 +45,7 @@ jest.mock("@/lib/prisma", () => {
     },
     user: { findMany: jest.fn() },
     passenger: { findMany: jest.fn() },
+    member: { findMany: jest.fn() },
     $queryRaw: jest.fn(),
   };
   client.$transaction = jest.fn((run: (tx: unknown) => unknown) => run(client));
@@ -102,6 +103,7 @@ const db = prisma as unknown as {
   };
   user: { findMany: jest.Mock };
   passenger: { findMany: jest.Mock };
+  member: { findMany: jest.Mock };
   $queryRaw: jest.Mock;
   $transaction: jest.Mock;
 };
@@ -529,6 +531,12 @@ describe("moving a round trip", () => {
       ],
     ]);
     expect(eventTypes()).toEqual(["ride.rescheduled", "ride.rescheduled"]);
+    expect(
+      emitted.map((event) => (event as unknown as { pair: unknown }).pair),
+    ).toEqual([
+      { role: "lead", otherRideId: "ride-back" },
+      { role: "follow", otherRideId: "ride-there" },
+    ]);
     expect(db.rideLogEntry.create.mock.calls[1][0].data.payload.withLegOf).toBe(
       "ride-there",
     );
@@ -868,6 +876,13 @@ describe("cancelRide", () => {
     );
     expect(cancelledIds).toEqual(["ride-1", "ride-back"]);
     expect(eventTypes()).toEqual(["ride.cancelled", "ride.cancelled"]);
+    // The way there speaks for both, so the trip is announced once.
+    expect(
+      emitted.map((event) => (event as unknown as { pair: unknown }).pair),
+    ).toEqual([
+      { role: "lead", otherRideId: "ride-back" },
+      { role: "follow", otherRideId: "ride-1" },
+    ]);
   });
 
   it("leaves the way back when asked to", async () => {
@@ -1133,6 +1148,28 @@ describe("roster and staffing", () => {
       where: { rideId: "ride-1", passengerId: "passenger-1" },
     });
     expect(eventTypes()).toEqual(["ride.riderRemoved"]);
+    expect(emitted[0]).toEqual(expect.objectContaining({ self: false }));
+  });
+
+  // The admins hear about a seat given up only when the rider's side gave it up.
+  it("marks a seat given up by the rider's own account", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        roster: [
+          {
+            id: "entry-1",
+            position: 0,
+            passenger: {
+              id: "passenger-1",
+              managedByUserId: "carer-1",
+              userId: null,
+            },
+          },
+        ],
+      }),
+    );
+    await rides.cancelBooking("ride-1", "passenger-1", "carer-1");
+    expect(emitted[0]).toEqual(expect.objectContaining({ self: true }));
   });
 
   it("records who assigned a pilot, and that it was not self sign-up", async () => {
@@ -1341,15 +1378,12 @@ describe("what a member may read", () => {
   it("names everyone a change concerns, once", async () => {
     db.ride.findUnique.mockResolvedValue({
       chapterId: "chapter-muenchen",
+      assignments: [{ userId: "pilot-1" }, { userId: "pilot-1" }],
       roster: [
         { passenger: { managedByUserId: "carer-1", userId: null } },
         { passenger: { managedByUserId: "carer-1", userId: "rider-2" } },
       ],
     });
-    db.rideAssignment.findMany.mockResolvedValue([
-      { userId: "pilot-1" },
-      { userId: "pilot-1" },
-    ]);
     expect(await rides.listRideParticipants("ride-1")).toEqual({
       chapterId: "chapter-muenchen",
       pilotUserIds: ["pilot-1"],
@@ -1358,24 +1392,75 @@ describe("what a member may read", () => {
   });
 
   // A pilot who left the chapter, or lost the role, is told nothing more.
-  it("counts only pilots who still pilot in the ride's chapter", async () => {
+  it("counts only pilots who still pilot in the ride's chapter, in one query", async () => {
     db.ride.findUnique.mockResolvedValue({
       chapterId: "chapter-muenchen",
+      assignments: [],
       roster: [],
     });
-    db.rideAssignment.findMany.mockResolvedValue([]);
     await rides.listRideParticipants("ride-1");
-    expect(db.rideAssignment.findMany.mock.calls[0][0].where).toEqual({
-      rideId: "ride-1",
+    expect(db.ride.findUnique).toHaveBeenCalledTimes(1);
+    expect(
+      db.ride.findUnique.mock.calls[0][0].select.assignments.where,
+    ).toEqual({
       user: {
         members: {
           some: {
-            organizationId: "chapter-muenchen",
             role: { contains: "pilot" },
+            organization: { rides: { some: { id: "ride-1" } } },
           },
         },
       },
     });
+  });
+
+  // A demoted co-pilot keeps the assignment row but no longer rides along.
+  it("shows a member only the crew still piloting in the ride's chapter", async () => {
+    db.ride.findFirst.mockResolvedValue({
+      id: "ride-1",
+      chapterId: "chapter-muenchen",
+      assignments: [
+        { role: "pilot", user: { id: "pilot-1" } },
+        { role: "pilot", user: { id: "demoted" } },
+      ],
+    });
+    db.member.findMany.mockResolvedValue([
+      { organizationId: "chapter-muenchen", userId: "pilot-1" },
+    ]);
+    const ride = await rides.getRideForPilot("ride-1", "pilot-1");
+    expect(ride!.assignments.map((a) => a.user.id)).toEqual(["pilot-1"]);
+    expect(db.member.findMany.mock.calls[0][0].where).toEqual({
+      organizationId: { in: ["chapter-muenchen"] },
+      userId: { in: ["pilot-1", "demoted"] },
+      role: { contains: "pilot" },
+    });
+  });
+});
+
+describe("isFinishable", () => {
+  const NOW = new Date("2026-10-07T12:00:00Z");
+  const ride = (overrides: Record<string, unknown>) => ({
+    status: "scheduled",
+    startsAt: new Date("2026-10-07T09:00:00Z"),
+    endsAt: new Date("2026-10-07T11:00:00Z"),
+    ...overrides,
+  });
+
+  it("opens once the ride started and closes a day after it ended", () => {
+    expect(rides.isFinishable(ride({}), NOW)).toBe(true);
+    expect(
+      rides.isFinishable(
+        ride({ startsAt: new Date("2026-10-07T13:00:00Z") }),
+        NOW,
+      ),
+    ).toBe(false);
+    expect(
+      rides.isFinishable(
+        ride({ endsAt: new Date("2026-10-06T11:59:00Z") }),
+        NOW,
+      ),
+    ).toBe(false);
+    expect(rides.isFinishable(ride({ status: "cancelled" }), NOW)).toBe(false);
   });
 });
 
