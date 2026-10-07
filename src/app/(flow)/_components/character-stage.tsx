@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  Suspense,
+  createContext,
+  useContext,
+  useState,
+  type ReactNode,
+} from "react";
+import { usePathname } from "next/navigation";
 import { Character } from "@/components/character";
 
 const AWAY_ROUTES = new Set(["/welcome"]);
@@ -22,30 +29,48 @@ export function useSetCharacterPose() {
   return setPose;
 }
 
-export function CharacterStage({
-  pathname,
-  children,
-}: {
-  pathname: string;
-  children: ReactNode;
-}) {
+export function CharacterStage({ children }: { children: ReactNode }) {
   const [override, setOverride] = useState<CharacterPose | null>(null);
-  const pose = override ?? (AWAY_ROUTES.has(pathname) ? "away" : "compact");
 
   return (
     <PoseContext.Provider value={setOverride}>
-      <div
-        aria-hidden
-        data-pose={pose}
-        data-aside={ASIDE_ROUTES.has(pathname)}
-        className="character-stage"
+      <Suspense
+        fallback={
+          <Stage
+            pose={override ?? "compact"}
+            aside={false}
+          />
+        }
       >
-        <Character
-          size={STAGE_PX}
-          className="text-mint"
-        />
-      </div>
+        <RoutedStage override={override} />
+      </Suspense>
       {children}
     </PoseContext.Provider>
+  );
+}
+
+function RoutedStage({ override }: { override: CharacterPose | null }) {
+  const pathname = usePathname();
+  return (
+    <Stage
+      pose={override ?? (AWAY_ROUTES.has(pathname) ? "away" : "compact")}
+      aside={ASIDE_ROUTES.has(pathname)}
+    />
+  );
+}
+
+function Stage({ pose, aside }: { pose: CharacterPose; aside: boolean }) {
+  return (
+    <div
+      aria-hidden
+      data-pose={pose}
+      data-aside={aside}
+      className="character-stage"
+    >
+      <Character
+        size={STAGE_PX}
+        className="text-mint"
+      />
+    </div>
   );
 }
