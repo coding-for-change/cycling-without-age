@@ -208,7 +208,7 @@ Neither writes a `Delivery` row — chat has no inbox row to hang one off. Inste
 …), which Bull Board shows as the job's return value, so a quiet mailbox can be explained
 from the `email` queue's *completed* tab.
 
-## Rides: events with no listeners yet (COD-258)
+## Rides: events and who hears them (COD-258, COD-259)
 
 Every write in `features/rides/facade.ts` emits exactly one event per ride it changes, inside
 the same transaction as the write and its `RideLogEntry`. The payload is ids and facts only,
@@ -227,10 +227,34 @@ the worker):
 | `ride.riderRemoved` | `passengerId` | `cancelBooking` |
 
 `self` is true when the pilot acted for themself (self sign-up and withdrawal arrive in PR 5).
-Nothing listens to these yet: `handlers.ts` maps each of them to `{}`, so the dispatcher marks
-them processed and enqueues nothing. PR 2 adds the `ride` notification kinds, and with them the
-listeners. The note for pilots and anyone's name never enter a payload; a kind that needs a name looks it
+The note for pilots and anyone's name never enter a payload; a kind that needs a name looks it
 up through the facades, the way the existing kinds do.
+
+Five of them have a `notify` listener, all in `src/use-cases/notifications/kinds/rides.ts`,
+category `ride`:
+
+| Kind | Event | Who hears it | Policy | Link |
+| --- | --- | --- | --- | --- |
+| `ridePilotAssigned` | `ride.pilotAssigned`, not `self` | the pilot | push, mail if no push | `/pilot/rides/{id}` |
+| `rideCancelled` | `ride.cancelled` | pilots, riders' accounts and chapter admins, minus the actor (Report 14) | push, mail always | `/rides/{id}` |
+| `rideRescheduled` | `ride.rescheduled` | pilots and riders' accounts, minus the actor | push, mail if no push | `/rides/{id}` |
+| `rideBookingConfirmed` | `ride.riderBooked` | the account managing the rider, and the rider's own account | push, mail always | `/passenger/rides/{id}` |
+| `rideBookingCancelled` | `ride.riderRemoved` when the actor is not a chapter admin | chapter admins, collapsed per ride | push, mail if no push, opt-out-able | `/admin/rides/{id}` |
+
+`ride.scheduled`, `ride.deleted` and `ride.pilotUnassigned` still have no listener and are
+marked processed without a job.
+
+A ride message is about one ride but reaches people who read it in different places, so the
+two kinds whose audience is mixed link to `/rides/{id}`. That route (`app/rides/[rideId]`,
+like `app/chat/[conversationId]`) asks `use-cases/ride-link` where *this* reader sees the ride
+— the assigned pilot's page first, then the rider's account's page — falls back to the admin
+page for an admin of the ride's chapter, and otherwise to the reader's home. The page it lands
+on guards itself again.
+
+The params carry the ride's start and end as ISO strings plus the chapter's zone, and
+`rideWords` writes them per recipient, in their language, on the chapter's wall clock: a carer
+abroad still reads the time the ride starts in Munich. German copy is du-form for pilots,
+Sie-form for riders' accounts and admins, and impersonal where one mail reaches all of them.
 
 ## Watching the queues
 

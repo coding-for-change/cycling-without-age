@@ -399,6 +399,11 @@
         "poolAccessDecided": "Pool-Antwort",
         "poolAccessRequested": "Pool-Anfrage",
         "rejection": "Abgelehnt",
+        "rideAssigned": "Pilot eingeteilt",
+        "rideBooked": "Platz gebucht",
+        "rideBookingCancelled": "Platz freigegeben",
+        "rideCancelled": "Fahrt abgesagt",
+        "rideChanged": "Fahrt geändert",
         "roleChanged": "Rollenänderung",
         "welcome": "Willkommen"
       },
@@ -1807,6 +1812,7 @@
       "fleet": "Rikschas",
       "invitation": "Einladung",
       "membership": "Mitgliedschaft",
+      "ride": "Fahrt",
       "welcome": "Willkommen"
     },
     "empty": {
@@ -1824,7 +1830,45 @@
   },
   "passenger": {
     "browsing": "Sie sehen {chapter}",
-    "noChapter": "Sie haben noch keine Ortsgruppe gewählt"
+    "noChapter": "Sie haben noch keine Ortsgruppe gewählt",
+    "rides": {
+      "detail": {
+        "about": "Über diese Ausfahrt",
+        "andBack": "und um {time} zurück",
+        "cancelled": "Diese Ausfahrt ist abgesagt",
+        "cancelledHint": "Es tut uns leid, dass es diesmal nicht klappt. Ihre Ortsgruppe plant gern die nächste mit Ihnen.",
+        "completed": "Diese Ausfahrt hat stattgefunden. Wir hoffen, Sie hatten den Wind in den Haaren.",
+        "contact": "Fragen zu dieser Ausfahrt? {chapter} hilft Ihnen gern weiter.",
+        "openInMaps": "In Karten öffnen",
+        "pilot": "{count, plural, one {Wer Sie fährt} other {Wer Sie fährt}}",
+        "pilotPending": "Noch nicht eingeteilt",
+        "pilotPendingHint": "Ihre Ortsgruppe sucht den passenden Piloten für diese Ausfahrt.",
+        "placeTbd": "Ihre Ortsgruppe sagt Ihnen noch, wo die Ausfahrt beginnt.",
+        "riders": "Wer mitfährt",
+        "startsAt": "Start: {place}",
+        "subject": "Unsere Ausfahrt am {date}",
+        "to": "nach {destination}",
+        "wayBack": "Der Heimweg Ihrer Ausfahrt von {time}"
+      },
+      "empty": {
+        "ask": "Fragen Sie {chapter} nach einer Ausfahrt",
+        "askBody": "Schreiben Sie dem Team ein paar Zeilen: wann Sie gern hinaus möchten und wohin. Man findet dort einen Tag, eine Uhrzeit und einen Piloten für Sie.",
+        "subject": "Eine Ausfahrt mit Cycling Without Age",
+        "title": "Gerade ist keine Ausfahrt geplant"
+      },
+      "past": "Vergangene Ausfahrten",
+      "pastCount": "{count, plural, one {# Ausfahrt} other {# Ausfahrten}}",
+      "reasons": {
+        "equipment": "Die Rikscha braucht erst etwas Pflege, bevor sie wieder losfahren kann.",
+        "facility": "Das Pflegeheim konnte diesen Tag leider nicht einrichten.",
+        "noRiders": "Es haben sich zu wenige Fahrgäste angemeldet, deshalb fällt die Ausfahrt aus.",
+        "other": "Es ist etwas dazwischengekommen, deshalb findet die Ausfahrt nicht statt.",
+        "rider": "Die Ausfahrt wurde auf Wunsch des Fahrgasts abgesagt.",
+        "volunteers": "Für diese Ausfahrt hat sich leider kein Pilot gefunden. Das tut uns leid.",
+        "weather": "Das Wetter spielt diesmal nicht mit, und wir möchten, dass Sie warm und trocken bleiben."
+      },
+      "write": "E-Mail schreiben"
+    }
   },
   "passkey": {
     "admin": {
@@ -1851,6 +1895,30 @@
       "training": "Training für die Wartezeit",
       "trainingHint": "Rund 20 Minuten Video — danach kennst du die Rikscha, bevor du das erste Mal draufsitzt.",
       "yourChapters": "Deine Ortsgruppen"
+    },
+    "rides": {
+      "detail": {
+        "about": "Über diese Ausfahrt",
+        "back": "Meine Ausfahrten",
+        "cancelled": "Diese Ausfahrt fällt aus.",
+        "cancelledBody": "Sie bleibt auf deiner Liste, damit du Bescheid weißt.",
+        "crew": "Mit dir unterwegs",
+        "destination": "Ziel",
+        "map": "Karte der Ausfahrt",
+        "mapUnavailable": "Die Karte ist gerade nicht verfügbar.",
+        "noPlace": "Noch kein Ort festgelegt.",
+        "noRiders": "Noch niemand gebucht.",
+        "note": "Hinweis für Pilot:innen",
+        "noTrishaws": "Noch keine Rikscha eingeplant.",
+        "riders": "Fahrgäste",
+        "roundTrip": "Hin und zurück",
+        "solo": "Diesmal fährst du allein.",
+        "start": "Start",
+        "trishaws": "Rikschas",
+        "where": "Wo"
+      },
+      "past": "Vergangene Ausfahrten",
+      "upcomingEmpty": "Gerade steht nichts an. Sobald deine Ortsgruppe dich für eine Ausfahrt einteilt, taucht sie hier auf."
     },
     "status": {
       "appliedOn": "Gefragt am {date}",

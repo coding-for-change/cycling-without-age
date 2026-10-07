@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Bike, MapPin, UserRound } from "lucide-react";
 import { calendarDate, dayKey } from "@/lib/calendar";
 import {
@@ -7,7 +8,7 @@ import {
 } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
-import type { PilotRideRow, RideCalendarRow } from "../facade";
+import type { PassengerRideRow, PilotRideRow } from "../facade";
 import {
   ridePilots,
   rideRiderNames,
@@ -23,7 +24,7 @@ import {
  * because the only difference is whether the rider names are known — and only
  * the assigned pilot is given them.
  */
-type AgendaRide = RideCalendarRow & Partial<Pick<PilotRideRow, "roster">>;
+type AgendaRide = PassengerRideRow & Partial<Pick<PilotRideRow, "roster">>;
 
 type Props = {
   rides: AgendaRide[];
@@ -33,6 +34,8 @@ type Props = {
   /** Words locale — plural forms are read, not computed. */
   words: Locale;
   title?: string;
+  /** Where a row leads; without it the rows are not links. */
+  href?: (rideId: string) => string;
 };
 
 /**
@@ -43,7 +46,14 @@ type Props = {
  * Every time is rendered in the ride's own chapter zone, so a pilot reading
  * this abroad still sees when the ride actually starts.
  */
-export function RideAgenda({ rides, strings, locale, words, title }: Props) {
+export function RideAgenda({
+  rides,
+  strings,
+  locale,
+  words,
+  title,
+  href,
+}: Props) {
   if (!rides.length) {
     return (
       <section className="flex flex-col gap-3">
@@ -83,6 +93,7 @@ export function RideAgenda({ rides, strings, locale, words, title }: Props) {
                 strings={strings}
                 locale={locale}
                 words={words}
+                href={href?.(ride.id)}
               />
             ))}
           </ul>
@@ -97,24 +108,21 @@ function AgendaRow({
   strings,
   locale,
   words,
+  href,
 }: {
   ride: AgendaRide;
   strings: CalendarStrings;
   locale: Locale;
   words: Locale;
+  href?: string;
 }) {
   const zone = ride.chapter.timeZone;
   const where = rideWhere(ride, strings);
   const pilots = ridePilots(ride);
   const cancelled = ride.status === "cancelled";
 
-  return (
-    <li
-      className={cn(
-        "flex flex-col gap-1.25 rounded-lg border border-l-4 p-3.5",
-        rideTone(ride),
-      )}
-    >
+  const body = (
+    <>
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <time
           dateTime={ride.startsAt.toISOString()}
@@ -169,6 +177,28 @@ function AgendaRow({
               : strings.noRiders}
         </span>
       </div>
+    </>
+  );
+
+  const card = cn(
+    "flex flex-col gap-1.25 rounded-lg border border-l-4 p-3.5",
+    rideTone(ride),
+  );
+
+  return href ? (
+    <li>
+      <Link
+        href={href}
+        transitionTypes={["push"]}
+        className={cn(
+          card,
+          "hover:bg-canvas-deep focus-visible:ring-ink transition-colors focus-visible:ring-2 focus-visible:outline-none motion-reduce:transition-none",
+        )}
+      >
+        {body}
+      </Link>
     </li>
+  ) : (
+    <li className={card}>{body}</li>
   );
 }

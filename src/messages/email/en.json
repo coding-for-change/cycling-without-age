@@ -138,6 +138,70 @@
     "subject": "{chapter} wants to use {pool}",
     "unnamed": "the pool"
   },
+  "rideBookingCancelled": {
+    "cta": "Open the ride",
+    "footer": "You received this email because you help run a Cycling Without Age chapter.",
+    "heading": "A seat came free",
+    "intro": "{rider} is no longer on the ride on {date}, {time}, at {place}. It may now have room for someone else, or have nobody left to ride.",
+    "preview": "{ride} · {time}",
+    "someone": "A rider",
+    "subject": "{rider} left the ride on {date}"
+  },
+  "rideBookingConfirmed": {
+    "cta": "See the ride",
+    "footer": "You received this email because you look after a rider with a Cycling Without Age chapter.",
+    "heading": "A seat is booked",
+    "intro": "{rider} is booked on a ride on {date}, {time}, starting at {place}. The app shows who pilots it as soon as a pilot is assigned.",
+    "preview": "{ride} · {time}",
+    "someone": "Your rider",
+    "subject": "{rider} is booked for {date}"
+  },
+  "rideCancelled": {
+    "cta": "Open the ride",
+    "footer": "You received this email because you are part of this ride with a Cycling Without Age chapter.",
+    "heading": "This ride is cancelled",
+    "intro": "The ride on {date}, {time}, starting at {place}, will not take place. The reason: {reason}.",
+    "preview": "{time} · {place}",
+    "subject": "Cancelled: ride on {date}"
+  },
+  "rideCommon": {
+    "aRide": "A ride",
+    "meetingPoint": "the usual meeting point",
+    "models": {
+      "event": "Event ride",
+      "functional": "Functional ride",
+      "pleasure": "Pleasure ride"
+    },
+    "reasons": {
+      "equipment": "a problem with the trishaw",
+      "facility": "a change at the care home or facility",
+      "noRiders": "nobody was booked to ride",
+      "other": "something came up",
+      "rider": "the rider cancelled",
+      "volunteers": "no pilot was available",
+      "weather": "the weather"
+    },
+    "soon": "a date to follow",
+    "theChapter": "your chapter",
+    "timeToFollow": "time to follow"
+  },
+  "ridePilotAssigned": {
+    "cta": "Open the ride",
+    "footer": "You received this email because you pilot with a Cycling Without Age chapter.",
+    "heading": "You're on a ride",
+    "intro": "{actor} put you on a ride on {date}, {time}, starting at {place} ({ride}). The riders, the trishaw and the note for pilots are in the app.",
+    "preview": "{ride} · {time}",
+    "subject": "You're piloting on {date}"
+  },
+  "rideRescheduled": {
+    "cta": "Open the ride",
+    "footer": "You received this email because you are part of this ride with a Cycling Without Age chapter.",
+    "heading": "This ride has changed",
+    "introPlace": "The ride on {date}, {time}, now starts at {place}.",
+    "introTime": "The ride now takes place on {date}, {time}, starting at {place}.",
+    "preview": "Now {time} · {place}",
+    "subject": "Changed: ride on {date}"
+  },
   "roleDemoted": {
     "cta": "Open Cycling Without Age",
     "footer": "You received this email because your role in a Cycling Without Age chapter changed.",

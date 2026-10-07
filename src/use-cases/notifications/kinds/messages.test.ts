@@ -3,7 +3,9 @@ import { chapters } from "@/features/chapters";
 import { DEFAULT_CHAPTER_SETTINGS } from "@/features/chapters/schemas";
 import { membership } from "@/features/membership";
 import { fleet } from "@/features/fleet";
+import { passengers } from "@/features/passengers";
 import { profile } from "@/features/profile";
+import { rides } from "@/features/rides";
 import da from "@/messages/app/da.json";
 import de from "@/messages/app/de.json";
 import en from "@/messages/app/en.json";
@@ -24,7 +26,14 @@ jest.mock("@/features/fleet", () => ({
   fleet: { getTrishaw: jest.fn(), getLocation: jest.fn() },
 }));
 jest.mock("@/features/membership", () => ({
-  membership: { listChapterAdmins: jest.fn() },
+  membership: { listChapterAdmins: jest.fn(), getMemberRoles: jest.fn() },
+}));
+jest.mock("@/features/rides", () => ({
+  ...jest.requireActual("@/features/rides/schemas"),
+  rides: { getRide: jest.fn(), listRideParticipants: jest.fn() },
+}));
+jest.mock("@/features/passengers", () => ({
+  passengers: { getPassenger: jest.fn() },
 }));
 jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
 
@@ -36,6 +45,10 @@ const getProfile = profile.getProfile as jest.Mock;
 const getTrishaw = fleet.getTrishaw as jest.Mock;
 const getLocation = fleet.getLocation as jest.Mock;
 const listCountryAdmins = chapters.listCountryAdmins as jest.Mock;
+const getRide = rides.getRide as jest.Mock;
+const listRideParticipants = rides.listRideParticipants as jest.Mock;
+const getPassenger = passengers.getPassenger as jest.Mock;
+const getMemberRoles = membership.getMemberRoles as jest.Mock;
 
 const DICTIONARIES = { en, da, de } as Record<Locale, typeof en>;
 
@@ -218,6 +231,24 @@ const known = () => {
   getProfile.mockResolvedValue({ name: "Anke Weiss" });
   getTrishaw.mockResolvedValue({ name: "Sonnenstrahl" });
   getLocation.mockResolvedValue({ name: "Depot Sonnenhof" });
+  getRide.mockResolvedValue({
+    id: "ride-1",
+    chapterId: CHAPTER,
+    title: null,
+    model: "functional",
+    startsAt: new Date("2026-10-27T09:00:00Z"),
+    endsAt: new Date("2026-10-27T10:30:00Z"),
+    locationName: "Seniorenheim Sonnenhof",
+    chapter: { name: "München", timeZone: "Europe/Berlin" },
+  });
+  getPassenger.mockResolvedValue({
+    id: "passenger-1",
+    chapterId: CHAPTER,
+    firstName: "Erna",
+    lastName: "Huber",
+    managedByUserId: "user-carer",
+    userId: null,
+  });
 };
 
 const unknown = () => {
@@ -226,6 +257,8 @@ const unknown = () => {
   getProfile.mockResolvedValue(null);
   getTrishaw.mockResolvedValue(null);
   getLocation.mockResolvedValue(null);
+  getRide.mockResolvedValue(null);
+  getPassenger.mockResolvedValue(null);
 };
 
 beforeEach(() => {
@@ -233,6 +266,12 @@ beforeEach(() => {
   listChapterAdmins.mockResolvedValue([{ userId: ACTOR }]);
   listCountryAdmins.mockResolvedValue([{ userId: ACTOR }]);
   getSettings.mockResolvedValue(DEFAULT_CHAPTER_SETTINGS);
+  listRideParticipants.mockResolvedValue({
+    chapterId: CHAPTER,
+    pilotUserIds: [SUBJECT],
+    riderAccountUserIds: ["user-carer"],
+  });
+  getMemberRoles.mockResolvedValue(["passenger"]);
   known();
 });
 
@@ -307,6 +346,11 @@ describe("the templates the history feed has to label", () => {
       "poolAccessDecided",
       "poolAccessRequested",
       "rejection",
+      "rideAssigned",
+      "rideBooked",
+      "rideBookingCancelled",
+      "rideCancelled",
+      "rideChanged",
       "roleChanged",
       "welcome",
     ]);

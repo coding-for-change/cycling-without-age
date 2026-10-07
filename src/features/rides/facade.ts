@@ -70,7 +70,15 @@ import {
   replaceRideTrishaws,
   updateRide,
   updateRosterPositions,
+  findPassengerRidesOn,
+  findPilotRidesOn,
+  findRideForPassengers,
+  findRideForPilot,
+  findRideParticipants,
   type FeedAudience,
+  type PassengerRideDetailRow,
+  type PassengerRideRow,
+  type PilotRideDetailRow,
   type PilotRideRow,
   type RideCalendarRow,
   type RideDetailRow,
@@ -99,6 +107,9 @@ import type { ReportScope } from "./report-zones";
 
 export type {
   FeedAudience,
+  PassengerRideDetailRow,
+  PassengerRideRow,
+  PilotRideDetailRow,
   PilotRideRow,
   RideCalendarRow,
   RideDetailRow,
@@ -157,6 +168,59 @@ export async function listRidesForCalendarFeed(
 }
 
 export const getRide = (id: string) => findRideById(id);
+
+const UPCOMING_ON_PAGE = 50;
+const PAST_ON_PAGE = 20;
+
+/** A member's rides page: what is coming, then the most recent past. */
+export async function listPilotRides(userId: string, now = new Date()) {
+  const [upcoming, past] = await Promise.all([
+    findPilotRidesOn(userId, now, "upcoming", UPCOMING_ON_PAGE),
+    findPilotRidesOn(userId, now, "past", PAST_ON_PAGE),
+  ]);
+  return { upcoming, past };
+}
+
+export async function listPassengerRides(
+  passengerIds: string[],
+  now = new Date(),
+) {
+  if (!passengerIds.length) return { upcoming: [], past: [] };
+  const [upcoming, past] = await Promise.all([
+    findPassengerRidesOn(passengerIds, now, "upcoming", UPCOMING_ON_PAGE),
+    findPassengerRidesOn(passengerIds, now, "past", PAST_ON_PAGE),
+  ]);
+  return { upcoming, past };
+}
+
+/** Only a pilot assigned to the ride, and still a member of its chapter. */
+export const getRideForPilot = (rideId: string, userId: string) =>
+  findRideForPilot(rideId, userId);
+
+/** Only a ride one of these riders is on, showing only these riders. */
+export const getRideForPassengers = (rideId: string, passengerIds: string[]) =>
+  passengerIds.length
+    ? findRideForPassengers(rideId, passengerIds)
+    : Promise.resolve(null);
+
+/** Everyone a change to this ride concerns: its pilots and its riders' accounts. */
+export async function listRideParticipants(rideId: string) {
+  const ride = await findRideParticipants(rideId);
+  if (!ride) return null;
+  return {
+    chapterId: ride.chapterId,
+    pilotUserIds: [...new Set(ride.assignments.map((a) => a.userId))],
+    riderAccountUserIds: [
+      ...new Set(
+        ride.roster.flatMap(({ passenger }) =>
+          [passenger.managedByUserId, passenger.userId].filter(
+            (id): id is string => Boolean(id),
+          ),
+        ),
+      ),
+    ],
+  };
+}
 
 export const listRidesOfTrishaw = (trishawId: string, take = 50) =>
   findRidesOfTrishaw(trishawId, take);

@@ -1017,13 +1017,15 @@ and ships no calendar to the browser.
 | Surface | Guard | Rows it can reach |
 | --- | --- | --- |
 | `/admin/rides`, `/admin/bikes` | `readActiveScope(params, nav)` → `requireAdminScope` + the `NAV` row's own `visible` predicate; an out-of-scope `?chapter=`/`?country=` is a 403, never a silent widening | only `scopeChapters(scope, active)` |
-| `/pilot` | `requirePerspective("pilot")` | rides they are **assigned to** *and* whose chapter they are **still a member of** |
+| `/pilot` | `requirePerspective("pilot")` | rides they are **assigned to** *and* in whose chapter they **still hold the pilot role** |
 | `/passenger` | `getSession` | rides rostering a `Passenger` row they manage |
 | `/api/calendar/<token>.ics` | the token itself — see *Calendar feed* below | the union of the two rows above, for the token's owner, with no names |
 
 That second clause on `/pilot` is load-bearing: removing someone from a chapter deletes their
-`member` row and nothing else, so `RideAssignment` rows outlive the membership.
-`findRidesForPilot` therefore joins on current membership as well as the assignment.
+`member` row and nothing else, and demoting a pilot only rewrites the row's role list, so
+`RideAssignment` rows outlive both. Every pilot read (`pilotRideWhere`) therefore requires a
+member row in the ride's chapter whose role still contains `pilot`, as well as the assignment,
+and `listRideParticipants` applies the same rule, so a former pilot is not notified either.
 
 The **contact-detail exchange on match** runs both ways, as `references/04-ride-models.md` §7
 describes it: a rider sees the **pilot's name** once one is assigned, and the assigned pilot
@@ -1031,11 +1033,22 @@ sees the **rider names** on that ride. A pilot choosing whether a ride suits the
 who they will spend an hour with, so a bare roster count was the wrong answer.
 
 The exchange is between a rider and *their* pilot, and the selects enforce exactly that.
-`pilotSelect` in `rides/services` is `calendarSelect` plus the roster, and it is used by
-`findRidesForPilot` alone — deliberately not folded into the shared shape, because
-`/passenger` reads that too and two riders on one trishaw are managed by two different people.
-The admin week and the passenger agenda still get `_count.roster` and nothing more.
-`facade.test.ts` pins all three surfaces, so widening one by accident fails a test.
+`pilotSelect` in `rides/services` is `calendarSelect` plus the roster, used only where the
+reader is an assigned pilot — deliberately not folded into the shared shape, because two
+riders on one trishaw are managed by two different people. Riders' accounts read
+`passengerSelect`, which has a roster count and no names; on a ride's detail page
+(`passengerDetailSelect`) the roster is filtered to the riders that account manages. Members
+never read an email address: both member selects narrow `assignments.user` to id, name and
+image, and the email stays in `calendarSelect` for the admin surfaces. The note for pilots is
+in `pilotDetailSelect` only, and the admins' cancellation note in neither — a rider is told
+the reason in words from its code. `facade.test.ts` pins every surface, so widening one by
+accident fails a test.
+
+The member pages are `/pilot/rides` and `/passenger/rides` (upcoming and the latest past,
+`listPilotRides` / `listPassengerRides`) and their details `/pilot/rides/[rideId]`
+(`getRideForPilot`: assigned *and* still a pilot there) and `/passenger/rides/[rideId]`
+(`getRideForPassengers` over the riders the account manages). Both details call `notFound()`
+for anything else, so a guessed id reads the same as a missing one.
 
 Phone numbers are the part of §7 still missing: `Passenger` carries a name, birth date and
 gender, but no number, so "the client's and/or the institution's phone" has nothing to read
@@ -1104,7 +1117,7 @@ own gate, like `/api/chat/stream`. What makes the address safe to keep showing:
 
 **What a feed may contain** is the union of `/pilot` and `/passenger`, under the same rules.
 Piloted rides follow `/pilot` exactly: the reader must hold the pilot role in some chapter
-(`requirePerspective("pilot")`), and the ride must be in a chapter they are still a member of
+(`requirePerspective("pilot")`), and the ride must be in a chapter where they still hold the pilot role
 (`findRidesForPilot`). The use case reads both from `membership.listMembershipsOfUser` and hands
 the rides query a list of chapter ids, so a demoted or departed pilot drops out on the next poll
 even though their `RideAssignment` rows remain. Ridden rides are those rostering a `Passenger`

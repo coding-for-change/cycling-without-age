@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { birthDate, gender } from "@/features/profile";
+import { birthDate, gender } from "@/features/profile/schemas";
 
 export const passengerInput = z.object({
   chapterId: z.string().min(1).max(64),

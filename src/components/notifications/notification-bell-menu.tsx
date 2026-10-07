@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   Bell,
   Bike,
+  CalendarClock,
   ClipboardCheck,
   Inbox,
   Mail,
@@ -45,6 +46,7 @@ const ICON: Record<NotificationCategory, LucideIcon> = {
   welcome: Sparkles,
   membership: Users,
   fleet: Bike,
+  ride: CalendarClock,
 };
 
 export function NotificationBellMenu({
