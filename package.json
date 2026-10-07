@@ -82,7 +82,7 @@
     "intl-messageformat": "^12.1.2",
     "ioredis": "^6.0.0",
     "libphonenumber-js": "^1.13.13",
-    "lucide-react": "^1.8.0",
+    "lucide-react": "^1.52.0",
     "mapbox-gl": "^3.31.0",
     "motion": "^14.0.0",
     "negotiator": "^1.1.0",
