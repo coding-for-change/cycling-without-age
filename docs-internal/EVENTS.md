@@ -208,7 +208,7 @@ Neither writes a `Delivery` row — chat has no inbox row to hang one off. Inste
 …), which Bull Board shows as the job's return value, so a quiet mailbox can be explained
 from the `email` queue's *completed* tab.
 
-## Rides: events with no listeners yet (COD-258)
+## Rides: events and who hears them (COD-258, COD-259)
 
 Every write in `features/rides/facade.ts` emits exactly one event per ride it changes, inside
 the same transaction as the write and its `RideLogEntry`. The payload is ids and facts only,
@@ -224,13 +224,55 @@ the worker):
 | `ride.pilotAssigned` | `userId`, `self` | `assignVolunteer` |
 | `ride.pilotUnassigned` | `userId`, `self` | `unassignVolunteer` |
 | `ride.riderBooked` | `passengerId` | `bookRider` |
-| `ride.riderRemoved` | `passengerId` | `cancelBooking` |
+| `ride.riderRemoved` | `passengerId`, `self` (the rider's own account gave the seat up) | `cancelBooking` |
 
 `self` is true when the pilot acted for themself (self sign-up and withdrawal arrive in PR 5).
-Nothing listens to these yet: `handlers.ts` maps each of them to `{}`, so the dispatcher marks
-them processed and enqueues nothing. PR 2 adds the `ride` notification kinds, and with them the
-listeners. The note for pilots and anyone's name never enter a payload; a kind that needs a name looks it
+The note for pilots and anyone's name never enter a payload; a kind that needs a name looks it
 up through the facades, the way the existing kinds do.
+
+Five of them have a `notify` listener, all in `src/use-cases/notifications/kinds/rides.ts`,
+category `ride`:
+
+| Kind | Event | Who hears it | Policy | Link |
+| --- | --- | --- | --- | --- |
+| `ridePilotAssigned` | `ride.pilotAssigned`, not `self` | the pilot | push, mail if no push | `/pilot/rides/{id}` |
+| `rideCancelled` | `ride.cancelled` | pilots, riders' accounts and chapter admins, minus the actor (Report 14) | push, mail always | `/rides/{id}` |
+| `rideRescheduled` | `ride.rescheduled` | pilots and riders' accounts, minus the actor | push, mail if no push | `/rides/{id}` |
+| `rideBookingConfirmed` | `ride.riderBooked` | the account managing the rider, and the rider's own account | push, mail always | `/passenger/rides/{id}` |
+| `rideBookingCancelled` | `ride.riderRemoved` with `self` | chapter admins, collapsed per ride | push, mail if no push, opt-out-able | `/admin/rides/{id}` |
+
+`ride.scheduled`, `ride.deleted` and `ride.pilotUnassigned` still have no listener and are
+marked processed without a job.
+
+**A round trip is announced once.** When one change reaches both legs — cancelling the way
+there with the way back, moving the way there (which moves the way back), or scheduling a
+round trip with riders and pilots — each leg still emits its own event, but `ride.cancelled`,
+`ride.rescheduled`, `ride.riderBooked` and `ride.pilotAssigned` carry a `pair`: the way there's
+event is `{ role: "lead", otherRideId }` and the way back's `{ role: "follow", otherRideId }`.
+A kind sends nothing for a follower, and the lead's message says "and the way back" and goes
+to everyone on either leg. `pair` defaults to `null`, so events stored before it parse as
+single rides.
+
+**A seat given up is the rider's side's news.** `ride.riderRemoved` carries `self`: true when
+the actor is the rider's own account or the account managing them. Only then do the chapter
+admins hear about it — an admin of the chapter, of its country or a superadmin removing a
+rider is already in the know, and no role lookup in the worker has to guess which.
+
+**A change is told as what it is.** `rideRescheduled` picks one change in the order time,
+start, destination, and says that: a destination edit names the new destination instead of
+reading as a moved meeting point.
+
+A ride message is about one ride but reaches people who read it in different places, so the
+two kinds whose audience is mixed link to `/rides/{id}`. That route (`app/rides/[rideId]`,
+like `app/chat/[conversationId]`) asks `use-cases/ride-link` where *this* reader sees the ride
+— the assigned pilot's page first, then the rider's account's page — falls back to the admin
+page for an admin of the ride's chapter, and otherwise to the reader's home. The page it lands
+on guards itself again.
+
+The params carry the ride's start and end as ISO strings plus the chapter's zone, and
+`rideWords` writes them per recipient, in their language, on the chapter's wall clock: a carer
+abroad still reads the time the ride starts in Munich. German copy is du-form for pilots,
+Sie-form for riders' accounts and admins, and impersonal where one mail reaches all of them.
 
 ## Watching the queues
 

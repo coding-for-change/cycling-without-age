@@ -1,6 +1,9 @@
 export * as rides from "./facade";
 export type {
   FeedAudience,
+  PassengerRideDetailRow,
+  PassengerRideRow,
+  PilotRideDetailRow,
   PilotRideRow,
   RideCalendarRow,
   RideFeedRow,

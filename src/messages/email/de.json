@@ -138,6 +138,76 @@
     "subject": "{chapter} möchte {pool} nutzen",
     "unnamed": "den Pool"
   },
+  "rideBookingCancelled": {
+    "cta": "Fahrt öffnen",
+    "footer": "Sie erhalten diese E-Mail, weil Sie eine Ortsgruppe von Cycling Without Age mitgestalten.",
+    "heading": "Ein Platz ist frei geworden",
+    "intro": "{rider} fährt am {date}, {time}, nicht mehr mit (Start bei {place}). Vielleicht ist jetzt Platz für jemand anderen – oder niemand mehr angemeldet.",
+    "preview": "{ride} · {time}",
+    "someone": "Ein Fahrgast",
+    "subject": "{rider} fährt am {date} nicht mehr mit"
+  },
+  "rideBookingConfirmed": {
+    "cta": "Fahrt ansehen",
+    "footer": "Sie erhalten diese E-Mail, weil Sie einen Fahrgast bei einer Ortsgruppe von Cycling Without Age begleiten.",
+    "heading": "Ein Platz ist gebucht",
+    "intro": "{rider} ist für eine Fahrt am {date}, {time}, gebucht, mit Start bei {place}. Sobald ein Pilot eingeteilt ist, sehen Sie in der App, wer fährt.",
+    "introBoth": "{rider} ist am {date} für Hin- und Rückfahrt gebucht: Start {time} bei {place}. Sobald ein Pilot eingeteilt ist, sehen Sie in der App, wer fährt.",
+    "preview": "{ride} · {time}",
+    "someone": "Ihr Fahrgast",
+    "subject": "{rider} ist für den {date} gebucht"
+  },
+  "rideCancelled": {
+    "cta": "Fahrt öffnen",
+    "footer": "Diese E-Mail kommt, weil diese Fahrt einer Ortsgruppe von Cycling Without Age dich oder einen Fahrgast betrifft.",
+    "heading": "Diese Fahrt ist abgesagt",
+    "intro": "Die Fahrt am {date}, {time}, mit Start bei {place} findet nicht statt. Grund: {reason}.",
+    "introBoth": "Die Fahrt am {date}, {time}, mit Start bei {place}, und die Rückfahrt finden nicht statt. Grund: {reason}.",
+    "preview": "{time} · {place}",
+    "subject": "Abgesagt: Fahrt am {date}"
+  },
+  "rideCommon": {
+    "aRide": "Fahrt",
+    "meetingPoint": "dem üblichen Treffpunkt",
+    "models": {
+      "event": "Gruppenfahrt",
+      "functional": "Zweckfahrt",
+      "pleasure": "Ausfahrt"
+    },
+    "reasons": {
+      "equipment": "ein Problem mit der Rikscha",
+      "facility": "eine Änderung im Pflegeheim oder in der Einrichtung",
+      "noRiders": "niemand war zum Mitfahren angemeldet",
+      "other": "es ist etwas dazwischengekommen",
+      "rider": "der Fahrgast hat abgesagt",
+      "volunteers": "es war kein Pilot verfügbar",
+      "weather": "das Wetter"
+    },
+    "soon": "einem Termin, der noch folgt",
+    "theChapter": "Deine Ortsgruppe",
+    "theDestination": "dem Ziel",
+    "timeToFollow": "Uhrzeit folgt"
+  },
+  "ridePilotAssigned": {
+    "cta": "Fahrt öffnen",
+    "footer": "Du erhältst diese E-Mail, weil du bei einer Ortsgruppe von Cycling Without Age fährst.",
+    "heading": "Du bist eingeteilt",
+    "intro": "Du fährst am {date}, {time} – eingeteilt von {actor}. Start ist bei {place} ({ride}). Fahrgäste, Rikscha und die Hinweise für Piloten findest du in der App.",
+    "introBoth": "Du fährst am {date} hin und zurück – eingeteilt von {actor}. Hinfahrt {time}, Start bei {place} ({ride}). Fahrgäste, Rikscha und die Hinweise für Piloten findest du in der App.",
+    "preview": "{ride} · {time}",
+    "subject": "Du fährst am {date}"
+  },
+  "rideRescheduled": {
+    "cta": "Fahrt öffnen",
+    "footer": "Diese E-Mail kommt, weil diese Fahrt einer Ortsgruppe von Cycling Without Age dich oder einen Fahrgast betrifft.",
+    "heading": "Diese Fahrt hat sich geändert",
+    "introDestination": "Die Fahrt am {date}, {time}, geht jetzt zu {destination}.",
+    "introPlace": "Die Fahrt am {date}, {time}, startet jetzt bei {place}.",
+    "introTime": "Die Fahrt findet jetzt am {date}, {time}, statt, mit Start bei {place}.",
+    "introTimeBoth": "Hin- und Rückfahrt sind verschoben. Die Fahrt startet jetzt am {date}, {time}, bei {place}.",
+    "preview": "Jetzt {time} · {place}",
+    "subject": "Geändert: Fahrt am {date}"
+  },
   "roleDemoted": {
     "cta": "Cycling Without Age öffnen",
     "footer": "Du erhältst diese E-Mail, weil sich deine Rolle in einer Cycling-Without-Age-Ortsgruppe geändert hat.",

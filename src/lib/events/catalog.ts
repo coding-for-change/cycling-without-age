@@ -11,6 +11,19 @@ const rideScope = {
 
 const rideReasons = z.enum(RIDE_CANCELLATION_REASONS);
 
+/**
+ * Set when one change reaches both legs of a round trip. The way there leads
+ * and its notification speaks for both; the way back follows and says nothing,
+ * so nobody hears about one trip twice. Older events carry no pair.
+ */
+const ridePair = z
+  .object({
+    role: z.enum(["lead", "follow"]),
+    otherRideId: z.string().min(1),
+  })
+  .nullable()
+  .default(null);
+
 export const eventSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("pilotApplication.decided"),
@@ -112,11 +125,13 @@ export const eventSchema = z.discriminatedUnion("type", [
     type: z.literal("ride.rescheduled"),
     ...rideScope,
     changes: z.array(z.enum(["time", "location", "destination"])).min(1),
+    pair: ridePair,
   }),
   z.object({
     type: z.literal("ride.cancelled"),
     ...rideScope,
     reasonCode: rideReasons,
+    pair: ridePair,
   }),
   z.object({
     type: z.literal("ride.deleted"),
@@ -127,6 +142,7 @@ export const eventSchema = z.discriminatedUnion("type", [
     ...rideScope,
     userId: z.string().min(1),
     self: z.boolean(),
+    pair: ridePair,
   }),
   z.object({
     type: z.literal("ride.pilotUnassigned"),
@@ -138,11 +154,14 @@ export const eventSchema = z.discriminatedUnion("type", [
     type: z.literal("ride.riderBooked"),
     ...rideScope,
     passengerId: z.string().min(1),
+    pair: ridePair,
   }),
   z.object({
     type: z.literal("ride.riderRemoved"),
     ...rideScope,
     passengerId: z.string().min(1),
+    /** The rider's own account gave the seat up, rather than the chapter. */
+    self: z.boolean().default(false),
   }),
 ]);
 

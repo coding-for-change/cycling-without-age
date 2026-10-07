@@ -45,6 +45,7 @@ export async function NextRideCard({
           strings={dict.calendar}
           locale={resolveLocale(head.get("accept-language"))}
           words={wordsLocale(language)}
+          href={(rideId) => `/${perspective}/rides/${rideId}`}
         />
       ) : (
         <EmptyState

@@ -399,6 +399,11 @@
         "poolAccessDecided": "Puljesvar",
         "poolAccessRequested": "Puljeanmodning",
         "rejection": "Afvist",
+        "rideAssigned": "Pilot sat på",
+        "rideBooked": "Plads booket",
+        "rideBookingCancelled": "Plads opgivet",
+        "rideCancelled": "Tur aflyst",
+        "rideChanged": "Tur ændret",
         "roleChanged": "Rolleændring",
         "welcome": "Velkommen"
       },
@@ -1807,6 +1812,7 @@
       "fleet": "Rickshawer",
       "invitation": "Invitation",
       "membership": "Medlemskab",
+      "ride": "Tur",
       "welcome": "Velkommen"
     },
     "empty": {
@@ -1824,7 +1830,45 @@
   },
   "passenger": {
     "browsing": "Du kigger på {chapter}",
-    "noChapter": "Du har ikke valgt en lokalafdeling endnu"
+    "noChapter": "Du har ikke valgt en lokalafdeling endnu",
+    "rides": {
+      "detail": {
+        "about": "Om turen",
+        "andBack": "og tilbage kl. {time}",
+        "cancelled": "Turen er aflyst",
+        "cancelledHint": "Vi er kede af, at det ikke bliver til noget denne gang. Din afdeling hjælper gerne med at planlægge den næste.",
+        "completed": "Turen er kørt. Vi håber, du nød vinden i håret.",
+        "contact": "Spørgsmål til turen? {chapter} hjælper gerne.",
+        "openInMaps": "Åbn i kort",
+        "pilot": "{count, plural, one {Din pilot} other {Dine piloter}}",
+        "pilotPending": "Ikke fundet endnu",
+        "pilotPendingHint": "Din afdeling er ved at finde den rigtige pilot til turen.",
+        "placeTbd": "Din afdeling giver dig besked om, hvor turen starter.",
+        "riders": "Hvem kører med",
+        "startsAt": "Starter ved {place}",
+        "subject": "Vores tur den {date}",
+        "to": "til {destination}",
+        "wayBack": "Hjemturen fra din tur kl. {time}"
+      },
+      "empty": {
+        "ask": "Spørg {chapter} om en tur",
+        "askBody": "Skriv et par linjer til holdet: hvornår du gerne vil ud, og hvorhen. Så finder de en dag, et tidspunkt og en pilot til dig.",
+        "subject": "En tur med Cycling Without Age",
+        "title": "Der er ingen ture planlagt lige nu"
+      },
+      "past": "Tidligere ture",
+      "pastCount": "{count, plural, one {# tur} other {# ture}}",
+      "reasons": {
+        "equipment": "Rickshawen skal lige have lidt omsorg, før den kan køre igen.",
+        "facility": "Plejehjemmet kunne desværre ikke få dagen til at passe.",
+        "noRiders": "Der var for få passagerer tilmeldt, så turen blev aflyst.",
+        "other": "Der kom noget i vejen, så turen kan ikke blive til noget.",
+        "rider": "Turen blev aflyst fra passagerens side.",
+        "volunteers": "Vi kunne desværre ikke finde en pilot til turen. Det er vi kede af.",
+        "weather": "Vejret er ikke med os denne gang, og vi vil hellere holde dig varm og tør."
+      },
+      "write": "Skriv en mail"
+    }
   },
   "passkey": {
     "admin": {
@@ -1851,6 +1895,30 @@
       "training": "Træning mens du venter",
       "trainingHint": "Cirka 20 minutters video — så kender du rickshawen, før du sætter dig på den.",
       "yourChapters": "Dine afdelinger"
+    },
+    "rides": {
+      "detail": {
+        "about": "Om turen",
+        "back": "Mine ture",
+        "cancelled": "Turen er aflyst.",
+        "cancelledBody": "Den bliver på din liste, så du ved besked.",
+        "crew": "Kører med dig",
+        "destination": "Destination",
+        "map": "Kort over turen",
+        "mapUnavailable": "Kortet er ikke tilgængeligt lige nu.",
+        "noPlace": "Intet sted endnu.",
+        "noRiders": "Ingen er booket endnu.",
+        "note": "Besked til piloterne",
+        "noTrishaws": "Ingen rickshaw sat af endnu.",
+        "riders": "Passagerer",
+        "roundTrip": "Tur-retur",
+        "solo": "Det er bare dig denne gang.",
+        "start": "Start",
+        "trishaws": "Rickshawer",
+        "where": "Hvor"
+      },
+      "past": "Tidligere ture",
+      "upcomingEmpty": "Der er ikke noget på vej lige nu. Når din afdeling sætter dig på en tur, dukker den op her."
     },
     "status": {
       "appliedOn": "Spurgte den {date}",

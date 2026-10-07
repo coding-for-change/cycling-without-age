@@ -63,6 +63,21 @@ export type RideCalendarRow = Prisma.RideGetPayload<{
 }>;
 
 /**
+ * Pilots as members see them: who, never how to reach them. An email address
+ * is the admin's to see; the contact exchange on match (PR 5) adds a phone
+ * number deliberately, not an address by accident.
+ */
+function memberAssignments() {
+  return {
+    orderBy: { createdAt: "asc" },
+    select: {
+      role: true,
+      user: { select: { id: true, name: true, image: true } },
+    },
+  } satisfies Prisma.Ride$assignmentsArgs;
+}
+
+/**
  * What an assigned pilot sees on top of the shared shape. The RFP's
  * contact-detail exchange on match runs both ways — the client gets the pilot's
  * name, the pilot gets the client's (`04-ride-models.md` §7) — and a pilot
@@ -75,6 +90,7 @@ export type RideCalendarRow = Prisma.RideGetPayload<{
  */
 const pilotSelect = {
   ...calendarSelect,
+  assignments: memberAssignments(),
   roster: {
     orderBy: { position: "asc" },
     select: {
@@ -86,6 +102,68 @@ const pilotSelect = {
 
 export type PilotRideRow = Prisma.RideGetPayload<{
   select: typeof pilotSelect;
+}>;
+
+/**
+ * What a rider's account sees in a list: the shared shape with the pilots'
+ * names but not their email addresses, and a rider count but no other riders.
+ */
+const passengerSelect = {
+  ...calendarSelect,
+  assignments: memberAssignments(),
+} satisfies Prisma.RideSelect;
+
+export type PassengerRideRow = Prisma.RideGetPayload<{
+  select: typeof passengerSelect;
+}>;
+
+const otherLeg = {
+  select: { id: true, startsAt: true, endsAt: true, status: true },
+} satisfies Prisma.Ride$returnLegArgs;
+
+/**
+ * What a member's detail page adds to the list shape. The note is for pilots
+ * and the cancellation note is the admins' own words, so neither is here; a
+ * cancelled ride is explained by its reason code.
+ */
+const memberDetail = {
+  description: true,
+  latitude: true,
+  longitude: true,
+  destinationLatitude: true,
+  destinationLongitude: true,
+  cancellationReasonCode: true,
+  returnLeg: otherLeg,
+  returnLegOf: otherLeg,
+} satisfies Prisma.RideSelect;
+
+const pilotDetailSelect = {
+  ...pilotSelect,
+  ...memberDetail,
+  note: true,
+} satisfies Prisma.RideSelect;
+
+export type PilotRideDetailRow = Prisma.RideGetPayload<{
+  select: typeof pilotDetailSelect;
+}>;
+
+/** Only the riders this account manages, never the others on the same ride. */
+const passengerDetailSelect = (passengerIds: string[]) =>
+  ({
+    ...passengerSelect,
+    ...memberDetail,
+    roster: {
+      where: { passengerId: { in: passengerIds } },
+      orderBy: { position: "asc" },
+      select: {
+        id: true,
+        passenger: { select: { id: true, firstName: true, lastName: true } },
+      },
+    },
+  }) satisfies Prisma.RideSelect;
+
+export type PassengerRideDetailRow = Prisma.RideGetPayload<{
+  select: ReturnType<typeof passengerDetailSelect>;
 }>;
 
 /**
@@ -111,6 +189,19 @@ export const findRidesInRange = (chapterIds: string[], from: Date, to: Date) =>
   });
 
 /**
+ * A `Member.role` is a comma-separated list of `admin`, `pilot` and
+ * `passenger`, and only one of those contains "pilot". Revoking the role
+ * rewrites the list and leaves the assignment rows, so the role is checked
+ * here, not only the membership.
+ */
+const PILOT_ROLE = {
+  role: { contains: "pilot" },
+} satisfies Prisma.MemberWhereInput;
+
+const stillPiloting = (userId: string) =>
+  ({ userId, ...PILOT_ROLE }) satisfies Prisma.MemberWhereInput;
+
+/**
  * Current membership is required as well as the assignment: removing someone
  * from a chapter deletes only their `member` row, so their `RideAssignment`
  * rows outlive it. Without this clause a removed pilot would keep reading that
@@ -119,7 +210,7 @@ export const findRidesInRange = (chapterIds: string[], from: Date, to: Date) =>
 const pilotRideWhere = (userId: string) =>
   ({
     assignments: { some: { userId } },
-    chapter: { members: { some: { userId } } },
+    chapter: { members: { some: stillPiloting(userId) } },
   }) satisfies Prisma.RideWhereInput;
 
 export const findRidesForPilot = (userId: string, from: Date, to: Date) =>
@@ -129,18 +220,155 @@ export const findRidesForPilot = (userId: string, from: Date, to: Date) =>
     select: pilotSelect,
   });
 
+const passengerRideWhere = (passengerIds: string[]) =>
+  ({
+    roster: { some: { passengerId: { in: passengerIds } } },
+  }) satisfies Prisma.RideWhereInput;
+
 export const findRidesForPassengers = (
   passengerIds: string[],
   from: Date,
   to: Date,
 ) =>
   prisma.ride.findMany({
-    where: {
-      roster: { some: { passengerId: { in: passengerIds } } },
-      ...overlapping(from, to),
-    },
+    where: { ...passengerRideWhere(passengerIds), ...overlapping(from, to) },
     orderBy: [{ startsAt: "asc" }, { id: "asc" }],
-    select: calendarSelect,
+    select: passengerSelect,
+  });
+
+export type Side = "upcoming" | "past";
+
+/** A ride still running is upcoming; the past runs newest first. */
+const side = (now: Date, which: Side) =>
+  which === "upcoming"
+    ? {
+        where: { endsAt: { gt: now } },
+        orderBy: [{ startsAt: "asc" as const }, { id: "asc" as const }],
+      }
+    : {
+        where: { endsAt: { lte: now } },
+        orderBy: [{ startsAt: "desc" as const }, { id: "desc" as const }],
+      };
+
+export const findPilotRidesOn = (
+  userId: string,
+  now: Date,
+  which: Side,
+  take: number,
+) =>
+  prisma.ride.findMany({
+    where: { ...pilotRideWhere(userId), ...side(now, which).where },
+    orderBy: side(now, which).orderBy,
+    select: pilotSelect,
+    take,
+  });
+
+export const findPassengerRidesOn = (
+  passengerIds: string[],
+  now: Date,
+  which: Side,
+  take: number,
+) =>
+  prisma.ride.findMany({
+    where: { ...passengerRideWhere(passengerIds), ...side(now, which).where },
+    orderBy: side(now, which).orderBy,
+    select: passengerSelect,
+    take,
+  });
+
+/**
+ * Of these people, who still holds the pilot role in which chapter — as
+ * `chapterId:userId` keys. Assignments outlive the role, so a crew list asks.
+ */
+export const findStillPiloting = async (
+  chapterIds: string[],
+  userIds: string[],
+) =>
+  new Set(
+    (
+      await prisma.member.findMany({
+        where: {
+          organizationId: { in: chapterIds },
+          userId: { in: userIds },
+          ...PILOT_ROLE,
+        },
+        select: { organizationId: true, userId: true },
+      })
+    ).map((member) => `${member.organizationId}:${member.userId}`),
+  );
+
+/** Whether a pilot may open this ride, without reading it. */
+export const findRideIdForPilot = (rideId: string, userId: string) =>
+  prisma.ride.findFirst({
+    where: { id: rideId, ...pilotRideWhere(userId) },
+    select: { id: true },
+  });
+
+export const findRideIdForPassengers = (
+  rideId: string,
+  passengerIds: string[],
+) =>
+  prisma.ride.findFirst({
+    where: { id: rideId, ...passengerRideWhere(passengerIds) },
+    select: { id: true },
+  });
+
+export const findRideForPilot = (rideId: string, userId: string) =>
+  prisma.ride.findFirst({
+    where: { id: rideId, ...pilotRideWhere(userId) },
+    select: pilotDetailSelect,
+  });
+
+export const findRideForPassengers = (rideId: string, passengerIds: string[]) =>
+  prisma.ride.findFirst({
+    where: { id: rideId, ...passengerRideWhere(passengerIds) },
+    select: passengerDetailSelect(passengerIds),
+  });
+
+/** What a message says about a ride: its name, when and where, nothing else. */
+export const findRideFacts = (rideId: string) =>
+  prisma.ride.findUnique({
+    where: { id: rideId },
+    select: {
+      title: true,
+      model: true,
+      startsAt: true,
+      endsAt: true,
+      locationName: true,
+      destinationName: true,
+      chapter: { select: { name: true, timeZone: true } },
+    },
+  });
+
+/**
+ * Who a change to this ride concerns: its pilots and whoever manages its
+ * riders. An assignment outlives the pilot role and the membership it came
+ * with, so only pilots who still hold the role in the ride's chapter count.
+ */
+export const findRideParticipants = (rideId: string) =>
+  prisma.ride.findUnique({
+    where: { id: rideId },
+    select: {
+      chapterId: true,
+      assignments: {
+        where: {
+          user: {
+            members: {
+              some: {
+                ...PILOT_ROLE,
+                organization: { rides: { some: { id: rideId } } },
+              },
+            },
+          },
+        },
+        select: { userId: true },
+      },
+      roster: {
+        select: {
+          passenger: { select: { managedByUserId: true, userId: true } },
+        },
+      },
+    },
   });
 
 /**
@@ -639,7 +867,7 @@ export const countFutureRidesWithTrishaws = (
     },
   });
 
-const FINISH_WINDOW_MS = 24 * 60 * 60 * 1000;
+export const FINISH_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 /**
  * The finish page shows the storage access code, so it stays readable only

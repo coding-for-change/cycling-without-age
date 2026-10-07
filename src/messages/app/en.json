@@ -399,6 +399,11 @@
         "poolAccessDecided": "Pool answer",
         "poolAccessRequested": "Pool request",
         "rejection": "Turned down",
+        "rideAssigned": "Pilot assigned",
+        "rideBooked": "Seat booked",
+        "rideBookingCancelled": "Seat given up",
+        "rideCancelled": "Ride cancelled",
+        "rideChanged": "Ride changed",
         "roleChanged": "Role change",
         "welcome": "Welcome"
       },
@@ -1807,6 +1812,7 @@
       "fleet": "Trishaws",
       "invitation": "Invitation",
       "membership": "Membership",
+      "ride": "Ride",
       "welcome": "Welcome"
     },
     "empty": {
@@ -1824,7 +1830,45 @@
   },
   "passenger": {
     "browsing": "Browsing {chapter}",
-    "noChapter": "No chapter chosen yet"
+    "noChapter": "No chapter chosen yet",
+    "rides": {
+      "detail": {
+        "about": "About this ride",
+        "andBack": "and back at {time}",
+        "cancelled": "This ride is cancelled",
+        "cancelledHint": "We're sorry it won't happen this time. Your chapter is happy to help you plan the next one.",
+        "completed": "This ride has taken place. We hope you enjoyed the wind in your hair.",
+        "contact": "Questions about this ride? {chapter} is happy to help.",
+        "openInMaps": "Open in maps",
+        "pilot": "{count, plural, one {Your pilot} other {Your pilots}}",
+        "pilotPending": "Not assigned yet",
+        "pilotPendingHint": "Your chapter is finding the right pilot for this ride.",
+        "placeTbd": "Your chapter will let you know where the ride starts.",
+        "riders": "Who's riding",
+        "startsAt": "Starts at {place}",
+        "subject": "Our ride on {date}",
+        "to": "to {destination}",
+        "wayBack": "The way home from your ride at {time}"
+      },
+      "empty": {
+        "ask": "Ask {chapter} for a ride",
+        "askBody": "Write a few lines to the team: when you would like to go out, and where to. They'll find a day, a time and a pilot for you.",
+        "subject": "A ride with Cycling Without Age",
+        "title": "No rides planned right now"
+      },
+      "past": "Past rides",
+      "pastCount": "{count, plural, one {# ride} other {# rides}}",
+      "reasons": {
+        "equipment": "The trishaw needs some care before it can go out again.",
+        "facility": "The care home couldn't make this day work.",
+        "noRiders": "Too few riders were booked, so the ride was called off.",
+        "other": "Something came up, so the ride can't take place.",
+        "rider": "The ride was called off on the rider's side.",
+        "volunteers": "We couldn't find a pilot for this ride, and we're sorry about that.",
+        "weather": "The weather isn't on our side this time, and we'd rather keep you warm and dry."
+      },
+      "write": "Write an email"
+    }
   },
   "passkey": {
     "admin": {
@@ -1851,6 +1895,30 @@
       "training": "Training while you wait",
       "trainingHint": "About 20 minutes of video, and you'll know the trishaw before you sit on it.",
       "yourChapters": "Your chapters"
+    },
+    "rides": {
+      "detail": {
+        "about": "About this ride",
+        "back": "My rides",
+        "cancelled": "This ride is off.",
+        "cancelledBody": "It stays on your list so you know it isn't happening.",
+        "crew": "Riding with you",
+        "destination": "Destination",
+        "map": "Map of the ride",
+        "mapUnavailable": "The map isn't available right now.",
+        "noPlace": "No place set yet.",
+        "noRiders": "Nobody is booked yet.",
+        "note": "Note for pilots",
+        "noTrishaws": "No trishaw set aside yet.",
+        "riders": "Riders",
+        "roundTrip": "Round trip",
+        "solo": "Just you on this one.",
+        "start": "Start",
+        "trishaws": "Trishaws",
+        "where": "Where"
+      },
+      "past": "Past rides",
+      "upcomingEmpty": "Nothing coming up right now. When your chapter puts you on a ride, it lands here."
     },
     "status": {
       "appliedOn": "Asked on {date}",

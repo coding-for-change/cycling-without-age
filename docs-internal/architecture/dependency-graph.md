@@ -58,6 +58,7 @@ calls that facade directly. Its old work is two listeners in the worker.
 | `move-trishaw` | `fleet`, `rides` | A move is refused while a chapter that would lose the trishaw (it reaches the old location but not the new one) still has future rides with it. Who reaches a location is the fleet's rule; the count is the calendar's. |
 | `trishaw-history` | `fleet`, `rides` | One timeline from rides (with pilots), damages and the trishaw log. |
 | `finish-ride` | `chapters`, `fleet`, `rides` | The pilot's post-ride page: the chapter's post-ride instructions, and per trishaw its location's return instructions and access code — only for the ride's own pilots. |
+| `ride-link` | `passengers`, `rides` | Where one reader sees one ride. A ride notification reaches the pilot, the riders' accounts and the admins with the same `/rides/{id}` link; the assigned pilot's page wins, then the page of an account managing a rider on it. Called only from the deep-link route `/rides/[rideId]`, which adds the admin fallback from the session's access and re-guards nothing itself — the page it lands on does. |
 | `chat-notifications/deliver-chat-digest` | `chat`, `profile`, `notifications` (+ `lib/mailer`) | One grouped mail for everything unread in one conversation, for a recipient push cannot reach. Re-checks membership, unread, mute, preference and *still no push* before decrypting a single row. |
 
 The chat use cases exist for the reason the manifesto gives: a facade may not call another
@@ -222,3 +223,8 @@ photo strip. Nothing a browser uploaded is served unprocessed.
 
 The notification kinds now reach `fleet` for trishaw and pool names:
 `trishaw.damageReported`, `pool.accessRequested` and `pool.accessDecided`, category `fleet`.
+
+The ride kinds (`kinds/rides.ts`, category `ride`) reach `rides` for the ride's time, place and
+participants and `passengers` for a rider's name and the accounts behind them; whether a rider
+who left was an admin's doing comes from `membership.getMemberRoles`. `/rides/[rideId]` is a
+Route Handler in the Boundary layer for the same reason as `/chat/[id]`: it is a deep link.
