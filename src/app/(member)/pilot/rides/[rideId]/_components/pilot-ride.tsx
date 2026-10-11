@@ -268,7 +268,7 @@ export async function PilotRide({
         )}
       </Section>
 
-      {otherLeg ? (
+      {otherLeg && otherLegOpen ? (
         <Section title={strings.roundTrip}>
           <OtherLeg
             leg={otherLeg}
@@ -277,7 +277,6 @@ export async function PilotRide({
                 ? dict.rides.detail.wayBack
                 : dict.rides.detail.wayThere
             }
-            open={otherLegOpen}
             sameDayAs={ride.startsAt}
             timeZone={zone}
             locale={locale}
@@ -342,10 +341,10 @@ function StatusBadge({
   );
 }
 
+/** Only a leg the pilot is on too: its time is not theirs to know otherwise. */
 function OtherLeg({
   leg,
   label,
-  open,
   sameDayAs,
   timeZone,
   locale,
@@ -353,7 +352,6 @@ function OtherLeg({
 }: {
   leg: Leg;
   label: string;
-  open: boolean;
   sameDayAs: Date;
   timeZone: string;
   locale: Locale;
@@ -377,30 +375,20 @@ function OtherLeg({
           {cancelled ? ` · ${cancelledLabel}` : null}
         </span>
       </span>
-      {open ? (
-        <ArrowRight
-          aria-hidden
-          className="text-ink-soft ml-auto size-4 shrink-0"
-        />
-      ) : null}
+      <ArrowRight
+        aria-hidden
+        className="text-ink-soft ml-auto size-4 shrink-0"
+      />
     </>
   );
 
-  const box =
-    "border-line flex min-h-12 items-center gap-3 rounded-2xl border p-4";
-
-  return open ? (
+  return (
     <Link
       href={`/pilot/rides/${leg.id}`}
       transitionTypes={["push"]}
-      className={cn(
-        box,
-        "hover:bg-canvas-deep transition-colors motion-reduce:transition-none",
-      )}
+      className="border-line hover:bg-canvas-deep flex min-h-12 items-center gap-3 rounded-2xl border p-4 transition-colors motion-reduce:transition-none"
     >
       {body}
     </Link>
-  ) : (
-    <div className={box}>{body}</div>
   );
 }

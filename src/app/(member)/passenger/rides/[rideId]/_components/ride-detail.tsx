@@ -43,7 +43,7 @@ async function PassengerRide({ rideId }: { rideId: string }) {
 
   const session = await requirePerspective("passenger");
   const [mine, dict, language, head] = await Promise.all([
-    passengers.listPassengersManagedBy(session.user.id),
+    passengers.listRidersOfAccount(session.user.id),
     getDictionary(),
     getLocale(),
     headers(),

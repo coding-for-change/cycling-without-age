@@ -67,7 +67,7 @@ async function listUpcomingRides(
   const to = new Date(from.getTime() + HORIZON_MS);
   if (perspective === "pilot") return rides.listRidesForPilot(userId, from, to);
 
-  const mine = await passengers.listPassengersManagedBy(userId);
+  const mine = await passengers.listRidersOfAccount(userId);
   return rides.listRidesForPassengers(
     mine.map((passenger) => passenger.id),
     from,

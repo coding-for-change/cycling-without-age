@@ -35,7 +35,7 @@ export function RideHero({
   words,
 }: {
   ride: PassengerRideDetailRow;
-  /** A rider booked only on the way back cannot open the way there. */
+  /** A rider booked only on the way back is not told about the way there. */
   wayThereOpen: boolean;
   /** Only a rider booked on the way back has a way back to be told about. */
   wayBackOpen: boolean;
@@ -165,29 +165,19 @@ export function RideHero({
           </HeroLine>
         ) : null}
 
-        {ride.returnLegOf ? (
+        {ride.returnLegOf && wayThereOpen ? (
           <HeroLine icon={Navigation}>
-            {wayThereOpen ? (
-              <Link
-                href={`/passenger/rides/${ride.returnLegOf.id}`}
-                transitionTypes={["push"]}
-                className="self-start underline underline-offset-4 hover:text-ink-soft"
-              >
-                {formatMessage(
-                  strings.detail.wayBack,
-                  { time: formatTime(ride.returnLegOf.startsAt, locale, zone) },
-                  words,
-                )}
-              </Link>
-            ) : (
-              <span>
-                {formatMessage(
-                  strings.detail.wayBack,
-                  { time: formatTime(ride.returnLegOf.startsAt, locale, zone) },
-                  words,
-                )}
-              </span>
-            )}
+            <Link
+              href={`/passenger/rides/${ride.returnLegOf.id}`}
+              transitionTypes={["push"]}
+              className="self-start underline underline-offset-4 hover:text-ink-soft"
+            >
+              {formatMessage(
+                strings.detail.wayBack,
+                { time: formatTime(ride.returnLegOf.startsAt, locale, zone) },
+                words,
+              )}
+            </Link>
           </HeroLine>
         ) : null}
       </ul>

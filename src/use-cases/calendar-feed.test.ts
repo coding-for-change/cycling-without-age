@@ -11,7 +11,7 @@ jest.mock("@/features/membership", () => ({
   membership: { listMembershipsOfUser: jest.fn() },
 }));
 jest.mock("@/features/passengers", () => ({
-  passengers: { listPassengersManagedBy: jest.fn() },
+  passengers: { listRidersOfAccount: jest.fn() },
 }));
 jest.mock("@/features/rides", () => ({
   rides: { listRidesForCalendarFeed: jest.fn() },
@@ -23,7 +23,7 @@ jest.mock("@/lib/observability/logger", () => ({
 
 const openFeed = calendarFeeds.openFeed as jest.Mock;
 const recordFetch = calendarFeeds.recordFetch as jest.Mock;
-const managedBy = passengers.listPassengersManagedBy as jest.Mock;
+const managedBy = passengers.listRidersOfAccount as jest.Mock;
 const memberships = membership.listMembershipsOfUser as jest.Mock;
 const feedRides = rides.listRidesForCalendarFeed as jest.Mock;
 

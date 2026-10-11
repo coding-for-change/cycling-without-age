@@ -47,8 +47,15 @@ export function kindOf(eventType: string): AnyKind {
   return kind;
 }
 
-export const renderMessage = (
+export async function renderMessage(
   kind: AnyKind,
   payload: unknown,
   locale: Locale,
-) => kind.message(kind.payload.parse(payload), getEmailStrings(locale), locale);
+) {
+  const params = kind.payload.parse(payload);
+  return kind.message(
+    (await kind.hydrate?.(params)) ?? params,
+    getEmailStrings(locale),
+    locale,
+  );
+}

@@ -46,20 +46,48 @@ const riderOf = (event: { passengerId: string }) => {
   return rider;
 };
 
+/**
+ * People are stored as ids and named only when a message is written, so a
+ * notification sitting in someone's bell forgets a rider who was deleted.
+ */
+const person = {
+  actorUserId: z.string().nullable(),
+  actorName: z.string().nullable().optional(),
+};
+const rider = {
+  riderId: z.string().nullable(),
+  riderName: z.string().nullable().optional(),
+};
+
+const withActorName = async <T extends { actorUserId: string | null }>(
+  params: T,
+) => ({
+  ...params,
+  actorName: params.actorUserId ? await nameOfPerson(params.actorUserId) : null,
+});
+
+const withRiderName = async <T extends { riderId: string | null }>(
+  params: T,
+) => ({
+  ...params,
+  riderName: params.riderId ? (await lookUpRider(params.riderId)).name : null,
+});
+
 /** Lifecycle 3C: the pilot an admin put on the ride is told it is theirs. */
 export const ridePilotAssigned = defineKind({
   event: "ride.pilotAssigned",
   category: "ride",
   policy: { push: true, email: "ifNoPush", optional: false },
-  payload: z.object({ ...rideFacts, actorName: z.string().nullable() }),
+  payload: z.object({ ...rideFacts, ...person }),
   recipients: async (event) =>
     event.self || followsItsPair(event.pair)
       ? []
       : excluding([event.userId], event.actorUserId),
   params: async (event) => ({
     ...(await factsOfRide(event.rideId, event.pair)),
-    actorName: event.actorUserId ? await nameOfPerson(event.actorUserId) : null,
+    actorUserId: event.actorUserId,
   }),
+  hydrate: withActorName,
   href: (event) => `/pilot/rides/${event.rideId}`,
   message: (params, strings, locale) => {
     const copy = strings.ridePilotAssigned;
@@ -188,15 +216,16 @@ export const rideBookingConfirmed = defineKind({
   event: "ride.riderBooked",
   category: "ride",
   policy: { push: true, email: "always", optional: false },
-  payload: z.object({ ...rideFacts, riderName: z.string().nullable() }),
+  payload: z.object({ ...rideFacts, ...rider }),
   recipients: async (event) =>
     followsItsPair(event.pair)
       ? []
       : excluding((await riderOf(event)).accounts, event.actorUserId),
   params: async (event) => ({
     ...(await factsOfRide(event.rideId, event.pair)),
-    riderName: (await riderOf(event)).name,
+    riderId: event.passengerId,
   }),
+  hydrate: withRiderName,
   href: (event) => `/passenger/rides/${event.rideId}`,
   message: (params, strings, locale) => {
     const copy = strings.rideBookingConfirmed;
@@ -229,15 +258,16 @@ export const rideBookingCancelled = defineKind({
   event: "ride.riderRemoved",
   category: "ride",
   policy: { push: true, email: "ifNoPush", optional: true },
-  payload: z.object({ ...rideFacts, riderName: z.string().nullable() }),
+  payload: z.object({ ...rideFacts, ...rider }),
   recipients: async (event) =>
     event.self
       ? excluding(await chapterAdminIds(event.chapterId), event.actorUserId)
       : [],
   params: async (event) => ({
     ...(await factsOfRide(event.rideId)),
-    riderName: (await riderOf(event)).name,
+    riderId: event.passengerId,
   }),
+  hydrate: withRiderName,
   href: (event) => `/admin/rides/${event.rideId}`,
   collapseKey: (event) => `ride:${event.rideId}`,
   message: (params, strings, locale) => {

@@ -10,7 +10,7 @@ import { rides } from "@/features/rides";
 export async function rideLinkFor(rideId: string, userId: string) {
   if (await rides.getRideForPilot(rideId, userId))
     return `/pilot/rides/${rideId}`;
-  const managed = await passengers.listPassengersManagedBy(userId);
+  const managed = await passengers.listRidersOfAccount(userId);
   if (
     await rides.getRideForPassengers(
       rideId,

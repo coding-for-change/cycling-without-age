@@ -258,6 +258,12 @@ the actor is the rider's own account or the account managing them. Only then do 
 admins hear about it — an admin of the chapter, of its country or a superadmin removing a
 rider is already in the know, and no role lookup in the worker has to guess which.
 
+**People are named when the message is written.** The ride kinds store a rider as `riderId`
+and an admin as `actorUserId`, never their names; a kind's optional `hydrate` looks the names
+up right before `message` runs — in the bell (`inbox`), in `deliver-email` and in
+`deliver-push`. A notification can sit in a bell for months, and deleting a rider then leaves
+"a rider" behind instead of their name. Older kinds still store names in their payloads.
+
 **A change is told as what it is.** `rideRescheduled` picks one change in the order time,
 start, destination, and says that: a destination edit names the new destination instead of
 reading as a moved meeting point.

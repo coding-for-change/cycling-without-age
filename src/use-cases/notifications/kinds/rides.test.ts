@@ -231,3 +231,66 @@ describe("what a ride message says", () => {
     ).toBe("/rides/ride-1");
   });
 });
+
+/**
+ * A notification can sit in a bell for months. It keeps the rider's id, not
+ * their name, so deleting the rider leaves no name behind in anyone's inbox.
+ */
+describe("names in stored notifications", () => {
+  const booked: EventOf<"ride.riderBooked"> = {
+    type: "ride.riderBooked",
+    ...scope,
+    actorUserId: "admin-1",
+    passengerId: "passenger-1",
+    pair: null,
+  };
+
+  it("stores the rider's id and no name", async () => {
+    const stored = rideBookingConfirmed.payload.parse(
+      await rideBookingConfirmed.params(booked),
+    );
+    expect(stored.riderId).toBe("passenger-1");
+    expect(JSON.stringify(stored)).not.toContain("Erna");
+  });
+
+  it("names the rider when the message is written", async () => {
+    const stored = rideBookingConfirmed.payload.parse(
+      await rideBookingConfirmed.params(booked),
+    );
+    const message = rideBookingConfirmed.message(
+      await rideBookingConfirmed.hydrate!(stored),
+      getEmailStrings("en"),
+      "en",
+    );
+    expect(message.subject).toContain("Erna Huber");
+  });
+
+  it("forgets a rider who was deleted", async () => {
+    const stored = rideBookingConfirmed.payload.parse(
+      await rideBookingConfirmed.params(booked),
+    );
+    (passengers.getPassenger as jest.Mock).mockResolvedValue(null);
+    const message = rideBookingConfirmed.message(
+      await rideBookingConfirmed.hydrate!(stored),
+      getEmailStrings("en"),
+      "en",
+    );
+    expect(message.subject).not.toContain("Erna");
+  });
+
+  it("stores the admin who assigned a pilot as an id too", async () => {
+    const stored = ridePilotAssigned.payload.parse(
+      await ridePilotAssigned.params({
+        type: "ride.pilotAssigned",
+        ...scope,
+        actorUserId: "admin-1",
+        userId: "pilot-1",
+        self: false,
+        pair: null,
+      }),
+    );
+    expect(stored.actorUserId).toBe("admin-1");
+    expect(stored.actorName).toBeUndefined();
+    expect((await ridePilotAssigned.hydrate!(stored)).actorName).toBe("Anke");
+  });
+});

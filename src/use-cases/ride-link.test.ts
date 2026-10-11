@@ -3,7 +3,7 @@ import { rides } from "@/features/rides";
 import { rideLinkFor } from "@/use-cases/ride-link";
 
 jest.mock("@/features/passengers", () => ({
-  passengers: { listPassengersManagedBy: jest.fn() },
+  passengers: { listRidersOfAccount: jest.fn() },
 }));
 jest.mock("@/features/rides", () => ({
   rides: { getRideForPilot: jest.fn(), getRideForPassengers: jest.fn() },
@@ -14,7 +14,7 @@ const forPassengers = rides.getRideForPassengers as jest.Mock;
 
 beforeEach(() => {
   jest.clearAllMocks();
-  (passengers.listPassengersManagedBy as jest.Mock).mockResolvedValue([
+  (passengers.listRidersOfAccount as jest.Mock).mockResolvedValue([
     { id: "erna" },
   ]);
   forPilot.mockResolvedValue(null);

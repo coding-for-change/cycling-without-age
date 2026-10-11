@@ -8,6 +8,7 @@ import {
   findPassengerOfUser,
   findPassengersByIds,
   findPassengersManagedBy,
+  findPassengersOfAccount,
   findPassengersOfChapters,
   findPassengerNames,
   insertPassenger,
@@ -19,6 +20,14 @@ export const getOwnPassenger = (userId: string) => findPassengerOfUser(userId);
 export const getPassenger = (id: string) => findPassengerById(id);
 export const getPassengers = async (ids: string[]) =>
   ids.length ? findPassengersByIds(ids) : [];
+/**
+ * Every rider whose rides this account may read: the ones it manages, and
+ * its own rider row when someone else manages it — a resident whose carer
+ * books for them still sees their own rides.
+ */
+export const listRidersOfAccount = (userId: string) =>
+  findPassengersOfAccount(userId);
+
 export const listPassengersManagedBy = (userId: string) =>
   findPassengersManagedBy(userId);
 export const listPassengersOfChapters = (chapterIds: string[]) =>

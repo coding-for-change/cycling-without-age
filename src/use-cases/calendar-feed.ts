@@ -41,7 +41,7 @@ const place = (name: string | null, address: string | null) =>
 async function audienceOf(userId: string): Promise<rides.FeedAudience> {
   const [memberships, managed] = await Promise.all([
     membership.listMembershipsOfUser(userId),
-    passengers.listPassengersManagedBy(userId),
+    passengers.listRidersOfAccount(userId),
   ]);
   const pilots = memberships.some(({ roles }) => roles.includes("pilot"));
   return {

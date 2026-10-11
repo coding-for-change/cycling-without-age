@@ -1049,8 +1049,10 @@ chapter, so a demoted co-pilot stops "riding along" on everyone else's page too.
 The member pages are `/pilot/rides` and `/passenger/rides` (upcoming and the latest past,
 `listPilotRides` / `listPassengerRides`) and their details `/pilot/rides/[rideId]`
 (`getRideForPilot`: assigned *and* still a pilot there) and `/passenger/rides/[rideId]`
-(`getRideForPassengers` over the riders the account manages). Both details call `notFound()`
-for anything else, so a guessed id reads the same as a missing one.
+(`getRideForPassengers` over `passengers.listRidersOfAccount`: the riders the account
+manages, plus its own rider row when someone else manages it). Both details call
+`notFound()` for anything else, so a guessed id reads the same as a missing one. The other
+leg of a round trip appears only to someone who is on it too.
 
 Phone numbers are the part of §7 still missing: `Passenger` carries a name, birth date and
 gender, but no number, so "the client's and/or the institution's phone" has nothing to read
