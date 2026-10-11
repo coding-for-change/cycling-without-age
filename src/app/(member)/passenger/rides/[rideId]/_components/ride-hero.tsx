@@ -150,38 +150,66 @@ export function RideHero({
         ) : null}
 
         {back ? (
-          <HeroLine icon={Undo2}>
-            <Link
-              href={`/passenger/rides/${back.id}`}
-              transitionTypes={["push"]}
-              className="self-start underline underline-offset-4 hover:text-ink-soft"
-            >
-              {formatMessage(
-                strings.detail.andBack,
-                { time: formatTime(back.startsAt, locale, zone) },
-                words,
-              )}
-            </Link>
-          </HeroLine>
+          <OtherLegLink
+            icon={Undo2}
+            leg={back}
+            text={strings.detail.andBack}
+            timeZone={zone}
+            locale={locale}
+            words={words}
+          />
         ) : null}
 
         {ride.returnLegOf && wayThereOpen ? (
-          <HeroLine icon={Navigation}>
-            <Link
-              href={`/passenger/rides/${ride.returnLegOf.id}`}
-              transitionTypes={["push"]}
-              className="self-start underline underline-offset-4 hover:text-ink-soft"
-            >
-              {formatMessage(
-                strings.detail.wayBack,
-                { time: formatTime(ride.returnLegOf.startsAt, locale, zone) },
-                words,
-              )}
-            </Link>
-          </HeroLine>
+          <OtherLegLink
+            icon={Navigation}
+            leg={ride.returnLegOf}
+            text={strings.detail.returnOfRideAt}
+            timeZone={zone}
+            locale={locale}
+            words={words}
+          />
         ) : null}
       </ul>
     </section>
+  );
+}
+
+/**
+ * The line pointing at the other leg of a round trip. `text` describes the
+ * page it sits on — "and back at" on the way there, "the way back from your
+ * ride at" on the way back — while the link and `{time}` belong to the leg
+ * it points at.
+ */
+function OtherLegLink({
+  icon,
+  leg,
+  text,
+  timeZone,
+  locale,
+  words,
+}: {
+  icon: LucideIcon;
+  leg: { id: string; startsAt: Date };
+  text: string;
+  timeZone: string;
+  locale: Locale;
+  words: Locale;
+}) {
+  return (
+    <HeroLine icon={icon}>
+      <Link
+        href={`/passenger/rides/${leg.id}`}
+        transitionTypes={["push"]}
+        className="self-start underline underline-offset-4 hover:text-ink-soft"
+      >
+        {formatMessage(
+          text,
+          { time: formatTime(leg.startsAt, locale, timeZone) },
+          words,
+        )}
+      </Link>
+    </HeroLine>
   );
 }
 

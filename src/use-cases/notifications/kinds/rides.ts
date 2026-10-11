@@ -74,7 +74,6 @@ const withRiderName = async <T extends { riderId: string | null }>(
   riderName: params.riderId ? (await lookUpRider(params.riderId)).name : null,
 });
 
-/** Lifecycle 3C: the pilot an admin put on the ride is told it is theirs. */
 export const ridePilotAssigned = defineKind({
   event: "ride.pilotAssigned",
   category: "ride",
@@ -211,10 +210,6 @@ export const rideRescheduled = defineKind({
   },
 });
 
-/**
- * Lifecycle 4B: whoever looks after the rider — the rider themself, or the
- * relative or carer who manages them — is told the seat is theirs.
- */
 export const rideBookingConfirmed = defineKind({
   event: "ride.riderBooked",
   category: "ride",

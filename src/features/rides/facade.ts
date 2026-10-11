@@ -207,7 +207,6 @@ async function withActiveCrew<T extends Crewed>(rows: T[]): Promise<T[]> {
 const withActiveCrewOf = async <T extends Crewed>(row: T | null) =>
   row ? (await withActiveCrew([row]))[0] : null;
 
-/** A member's rides page: what is coming, then the most recent past. */
 export async function listPilotRides(userId: string, now = new Date()) {
   const [upcoming, past] = await Promise.all([
     findPilotRidesOn(userId, now, "upcoming", UPCOMING_ON_PAGE).then(
@@ -236,11 +235,9 @@ export async function listPassengerRides(
 
 export const getRideFacts = (rideId: string) => findRideFacts(rideId);
 
-/** Whether this pilot may open the ride: the same rule as reading it. */
 export const pilotCanOpen = async (rideId: string, userId: string) =>
   (await findRideIdForPilot(rideId, userId)) !== null;
 
-/** Whether one of these riders is on the ride, so their account may open it. */
 export const passengersCanOpen = async (
   rideId: string,
   passengerIds: string[],
@@ -274,7 +271,6 @@ export const getRideForPassengers = async (
     ? withActiveCrewOf(await findRideForPassengers(rideId, passengerIds))
     : null;
 
-/** Everyone a change to this ride concerns: its pilots and its riders' accounts. */
 export async function listRideParticipants(rideId: string) {
   const ride = await findRideParticipants(rideId);
   if (!ride) return null;

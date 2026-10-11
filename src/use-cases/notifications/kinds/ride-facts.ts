@@ -27,7 +27,6 @@ export const rideFacts = {
   place: z.string().nullable(),
   destination: z.string().nullable(),
   chapterName: z.string().nullable(),
-  /** One message for both legs of a round trip. */
   bothWays: z.boolean(),
 };
 
@@ -37,10 +36,6 @@ export type RideFacts = {
 
 type Pair = Extract<DomainEvent, { type: "ride.cancelled" }>["pair"];
 
-/**
- * The way there speaks for a round trip, so the way back's event is silent:
- * a family cancelling a trip to the doctor hears about it once.
- */
 export const followsItsPair = (pair: Pair) => pair?.role === "follow";
 
 export async function factsOfRide(
@@ -69,7 +64,6 @@ export async function factsOfRide(
 export const rideStillExists = async (rideId: string) =>
   (await rides.getRideFacts(rideId)) !== null;
 
-/** The words a message fills in about the ride, in the reader's language. */
 export function rideWords(
   facts: RideFacts,
   strings: EmailStrings,

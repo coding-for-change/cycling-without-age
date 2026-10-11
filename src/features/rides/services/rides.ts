@@ -297,7 +297,6 @@ export const findStillPiloting = async (
     ).map((member) => `${member.organizationId}:${member.userId}`),
   );
 
-/** Whether a pilot may open this ride, without reading it. */
 export const findRideIdForPilot = (rideId: string, userId: string) =>
   prisma.ride.findFirst({
     where: { id: rideId, ...pilotRideWhere(userId) },
@@ -325,7 +324,6 @@ export const findRideForPassengers = (rideId: string, passengerIds: string[]) =>
     select: passengerDetailSelect(passengerIds),
   });
 
-/** What a message says about a ride: its name, when and where, nothing else. */
 export const findRideFacts = (rideId: string) =>
   prisma.ride.findUnique({
     where: { id: rideId },

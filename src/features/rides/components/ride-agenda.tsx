@@ -34,7 +34,6 @@ type Props = {
   /** Words locale — plural forms are read, not computed. */
   words: Locale;
   title?: string;
-  /** Where a row leads; without it the rows are not links. */
   href?: (rideId: string) => string;
 };
 

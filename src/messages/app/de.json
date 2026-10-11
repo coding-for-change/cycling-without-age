@@ -1844,11 +1844,11 @@
         "pilotPending": "Noch nicht eingeteilt",
         "pilotPendingHint": "Ihre Ortsgruppe sucht den passenden Piloten für diese Ausfahrt.",
         "placeTbd": "Ihre Ortsgruppe sagt Ihnen noch, wo die Ausfahrt beginnt.",
+        "returnOfRideAt": "Rückfahrt zu Ihrer Fahrt um {time}",
         "riders": "Wer mitfährt",
         "startsAt": "Start: {place}",
         "subject": "Unsere Ausfahrt am {date}",
-        "to": "nach {destination}",
-        "wayBack": "Der Heimweg Ihrer Ausfahrt von {time}"
+        "to": "nach {destination}"
       },
       "empty": {
         "ask": "Fragen Sie {chapter} nach einer Ausfahrt",

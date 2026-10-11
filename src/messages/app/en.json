@@ -1844,11 +1844,11 @@
         "pilotPending": "Not assigned yet",
         "pilotPendingHint": "Your chapter is finding the right pilot for this ride.",
         "placeTbd": "Your chapter will let you know where the ride starts.",
+        "returnOfRideAt": "The way back from your ride at {time}",
         "riders": "Who's riding",
         "startsAt": "Starts at {place}",
         "subject": "Our ride on {date}",
-        "to": "to {destination}",
-        "wayBack": "The way home from your ride at {time}"
+        "to": "to {destination}"
       },
       "empty": {
         "ask": "Ask {chapter} for a ride",

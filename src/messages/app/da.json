@@ -1844,11 +1844,11 @@
         "pilotPending": "Ikke fundet endnu",
         "pilotPendingHint": "Din afdeling er ved at finde den rigtige pilot til turen.",
         "placeTbd": "Din afdeling giver dig besked om, hvor turen starter.",
+        "returnOfRideAt": "Turen tilbage fra din tur kl. {time}",
         "riders": "Hvem kører med",
         "startsAt": "Starter ved {place}",
         "subject": "Vores tur den {date}",
-        "to": "til {destination}",
-        "wayBack": "Hjemturen fra din tur kl. {time}"
+        "to": "til {destination}"
       },
       "empty": {
         "ask": "Spørg {chapter} om en tur",

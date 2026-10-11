@@ -32,11 +32,6 @@ export async function RideDetail({
   return <PassengerRide rideId={rideId} />;
 }
 
-/**
- * Only a ride one of this account's riders is on, and only those riders: a
- * relative sees their mother on the ride, not the neighbours sharing the bench.
- * There is nothing to press here yet — members act on rides in a later step.
- */
 async function PassengerRide({ rideId }: { rideId: string }) {
   "use cache: private";
   cacheLife(MEMBER_LIFE);
@@ -163,7 +158,6 @@ async function PassengerRide({ rideId }: { rideId: string }) {
 
 type RideStrings = Dictionary["passenger"]["rides"];
 
-/** A cancelled ride is explained in words, never by its reason code. */
 function RideState({
   ride,
   strings,
