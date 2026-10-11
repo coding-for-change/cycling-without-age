@@ -159,7 +159,7 @@
   },
   "rideCancelled": {
     "cta": "Fahrt öffnen",
-    "footer": "Diese E-Mail kommt, weil diese Fahrt einer Ortsgruppe von Cycling Without Age dich oder einen Fahrgast betrifft.",
+    "footer": "Diese E-Mail betrifft eine Fahrt einer Ortsgruppe von Cycling Without Age.",
     "heading": "Diese Fahrt ist abgesagt",
     "intro": "Die Fahrt am {date}, {time}, mit Start bei {place} findet nicht statt. Grund: {reason}.",
     "introBoth": "Die Fahrt am {date}, {time}, mit Start bei {place}, und die Rückfahrt finden nicht statt. Grund: {reason}.",
@@ -168,6 +168,7 @@
   },
   "rideCommon": {
     "aRide": "Fahrt",
+    "byTheChapter": "deiner Ortsgruppe",
     "meetingPoint": "dem üblichen Treffpunkt",
     "models": {
       "event": "Gruppenfahrt",
@@ -183,8 +184,8 @@
       "volunteers": "es war kein Pilot verfügbar",
       "weather": "das Wetter"
     },
-    "soon": "einem Termin, der noch folgt",
-    "theChapter": "Deine Ortsgruppe",
+    "soon": "noch offenen Termin",
+    "theChapter": "die Ortsgruppe",
     "theDestination": "dem Ziel",
     "timeToFollow": "Uhrzeit folgt"
   },
@@ -199,7 +200,7 @@
   },
   "rideRescheduled": {
     "cta": "Fahrt öffnen",
-    "footer": "Diese E-Mail kommt, weil diese Fahrt einer Ortsgruppe von Cycling Without Age dich oder einen Fahrgast betrifft.",
+    "footer": "Diese E-Mail betrifft eine Fahrt einer Ortsgruppe von Cycling Without Age.",
     "heading": "Diese Fahrt hat sich geändert",
     "introDestination": "Die Fahrt am {date}, {time}, geht jetzt zu {destination}.",
     "introPlace": "Die Fahrt am {date}, {time}, startet jetzt bei {place}.",

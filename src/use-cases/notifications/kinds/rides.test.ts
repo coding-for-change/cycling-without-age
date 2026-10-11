@@ -294,3 +294,66 @@ describe("names in stored notifications", () => {
     expect((await ridePilotAssigned.hydrate!(stored)).actorName).toBe("Anke");
   });
 });
+
+// Deleted before the worker got to it: no notification about a ride that is gone.
+it("tells nobody about a ride that no longer exists", async () => {
+  (rides.getRideFacts as jest.Mock).mockResolvedValue(null);
+  expect(
+    await ridePilotAssigned.recipients({
+      type: "ride.pilotAssigned",
+      ...scope,
+      actorUserId: "admin-1",
+      userId: "pilot-1",
+      self: false,
+      pair: null,
+    }),
+  ).toEqual([]);
+  expect(
+    await rideBookingConfirmed.recipients({
+      type: "ride.riderBooked",
+      ...scope,
+      actorUserId: "admin-1",
+      passengerId: "passenger-1",
+      pair: null,
+    }),
+  ).toEqual([]);
+});
+
+it("writes English times the way the chapter reads them, not as 2:00 PM", async () => {
+  const event: EventOf<"ride.cancelled"> = {
+    type: "ride.cancelled",
+    ...scope,
+    actorUserId: "admin-1",
+    reasonCode: "weather",
+    pair: null,
+  };
+  const params = rideCancelled.payload.parse(await rideCancelled.params(event));
+  const { body } = rideCancelled.message(params, getEmailStrings("en"), "en");
+  expect(body).toContain("10:00");
+  expect(body).not.toMatch(/AM|PM/);
+});
+
+// The way back's lookup failing must not stop the way there's people hearing.
+it("still tells the way there's people when the way back cannot be looked up", async () => {
+  (rides.listRideParticipants as jest.Mock).mockImplementation(
+    async (rideId: string) => {
+      if (rideId === "ride-2") throw new Error("connection reset");
+      return {
+        chapterId: CHAPTER,
+        pilotUserIds: ["pilot-1"],
+        riderAccountUserIds: ["carer-1"],
+      };
+    },
+  );
+  expect(
+    (
+      await rideCancelled.recipients({
+        type: "ride.cancelled",
+        ...scope,
+        actorUserId: "admin-1",
+        reasonCode: "weather",
+        pair: { role: "lead", otherRideId: "ride-2" },
+      })
+    ).sort(),
+  ).toEqual(["carer-1", "pilot-1"]);
+});

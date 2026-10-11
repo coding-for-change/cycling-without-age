@@ -4,6 +4,7 @@ import { RIDE_MODELS, rides } from "@/features/rides";
 import { calendarDate } from "@/lib/calendar";
 import type { DomainEvent } from "@/lib/events/catalog";
 import {
+  FALLBACK_LOCALE,
   formatLongDateWithWeekday,
   formatTimeRange,
   wordsLocale,
@@ -60,6 +61,14 @@ export async function factsOfRide(
   };
 }
 
+/**
+ * A ride can be gone by the time the worker gets to its event — deleted
+ * straight after it was cancelled, say. Nobody is told about a ride that no
+ * longer exists.
+ */
+export const rideStillExists = async (rideId: string) =>
+  (await rides.getRideFacts(rideId)) !== null;
+
 /** The words a message fills in about the ride, in the reader's language. */
 export function rideWords(
   facts: RideFacts,
@@ -67,7 +76,9 @@ export function rideWords(
   locale: Locale,
 ) {
   const copy = strings.rideCommon;
-  const notation = wordsLocale(locale);
+  // A message has no browser to ask, and bare "en" would pick US notation —
+  // 2:00 PM for a ride in Munich. English mail uses the European fallback.
+  const notation = locale === "en" ? FALLBACK_LOCALE : wordsLocale(locale);
   const known = facts.startsAt && facts.endsAt && facts.timeZone;
   return {
     ride:
@@ -101,12 +112,15 @@ export async function rideAudience(
   pair: Pair,
   { admins, actorUserId }: { admins: boolean; actorUserId: string | null },
 ) {
-  const legs = await Promise.all(
-    [rideId, ...(pair?.role === "lead" ? [pair.otherRideId] : [])].map((id) =>
-      rides.listRideParticipants(id),
-    ),
-  );
-  const [ride] = legs;
+  // The way back's people are a bonus on the way there's message: if looking
+  // them up fails, the way there's people are still told, rather than nobody.
+  const [ride, back] = await Promise.all([
+    rides.listRideParticipants(rideId),
+    pair?.role === "lead"
+      ? rides.listRideParticipants(pair.otherRideId).catch(() => null)
+      : null,
+  ]);
+  const legs = [ride, back];
   if (!ride) return [];
   const chapterAdmins = admins ? await chapterAdminIds(ride.chapterId) : [];
   return excluding(

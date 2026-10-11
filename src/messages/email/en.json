@@ -168,6 +168,7 @@
   },
   "rideCommon": {
     "aRide": "A ride",
+    "byTheChapter": "your chapter",
     "meetingPoint": "the usual meeting point",
     "models": {
       "event": "Event ride",

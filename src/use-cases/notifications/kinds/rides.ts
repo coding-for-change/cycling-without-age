@@ -7,6 +7,7 @@ import {
   factsOfRide,
   followsItsPair,
   rideAudience,
+  rideStillExists,
   rideFacts,
   rideWords,
 } from "./ride-facts";
@@ -80,7 +81,9 @@ export const ridePilotAssigned = defineKind({
   policy: { push: true, email: "ifNoPush", optional: false },
   payload: z.object({ ...rideFacts, ...person }),
   recipients: async (event) =>
-    event.self || followsItsPair(event.pair)
+    event.self ||
+    followsItsPair(event.pair) ||
+    !(await rideStillExists(event.rideId))
       ? []
       : excluding([event.userId], event.actorUserId),
   params: async (event) => ({
@@ -93,7 +96,7 @@ export const ridePilotAssigned = defineKind({
     const copy = strings.ridePilotAssigned;
     const values = {
       ...rideWords(params, strings, locale),
-      actor: params.actorName ?? strings.rideCommon.theChapter,
+      actor: params.actorName ?? strings.rideCommon.byTheChapter,
     };
     return {
       subject: formatMessage(copy.subject, values, locale),
@@ -218,7 +221,7 @@ export const rideBookingConfirmed = defineKind({
   policy: { push: true, email: "always", optional: false },
   payload: z.object({ ...rideFacts, ...rider }),
   recipients: async (event) =>
-    followsItsPair(event.pair)
+    followsItsPair(event.pair) || !(await rideStillExists(event.rideId))
       ? []
       : excluding((await riderOf(event)).accounts, event.actorUserId),
   params: async (event) => ({
@@ -260,7 +263,7 @@ export const rideBookingCancelled = defineKind({
   policy: { push: true, email: "ifNoPush", optional: true },
   payload: z.object({ ...rideFacts, ...rider }),
   recipients: async (event) =>
-    event.self
+    event.self && (await rideStillExists(event.rideId))
       ? excluding(await chapterAdminIds(event.chapterId), event.actorUserId)
       : [],
   params: async (event) => ({
