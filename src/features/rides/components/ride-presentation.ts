@@ -62,8 +62,9 @@ export const trishawMeta = (option: {
   location: string;
 }) => [option.model, option.seats, option.location].filter(Boolean).join(" · ");
 
-export const ridePilots = (ride: Pick<RideCalendarRow, "assignments">) =>
-  ride.assignments.filter((a) => a.role === "pilot");
+export const ridePilots = <A extends { role: string }>(ride: {
+  assignments: A[];
+}) => ride.assignments.filter((a) => a.role === "pilot");
 
 /** The trishaws committed to a ride, in name order. */
 export const rideTrishaws = (ride: Pick<RideCalendarRow, "trishaws">) =>

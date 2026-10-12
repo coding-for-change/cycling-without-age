@@ -9,7 +9,9 @@ import { RideAgenda } from "@/features/rides/components/ride-agenda";
 import { requirePerspective } from "@/lib/auth-guards";
 import { resolveLocale, wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
+import { listOpenRides } from "@/use-cases/open-rides";
 import { MEMBER_LIFE } from "../../../_components/instant";
+import { OpenRides, pilotChapterIds } from "./open-rides";
 
 const rideHref = (rideId: string) => `/pilot/rides/${rideId}`;
 
@@ -18,11 +20,12 @@ export async function PilotRides() {
   cacheLife(MEMBER_LIFE);
 
   const session = await requirePerspective("pilot");
-  const [dict, language, head, { upcoming, past }] = await Promise.all([
+  const [dict, language, head, { upcoming, past }, open] = await Promise.all([
     getDictionary(),
     getLocale(),
     headers(),
     rides.listPilotRides(session.user.id),
+    listOpenRides(session.user.id, pilotChapterIds(session.access)),
   ]);
 
   const page = dict.member.pages.rides;
@@ -30,7 +33,7 @@ export async function PilotRides() {
   const locale = resolveLocale(head.get("accept-language"));
   const words = wordsLocale(language);
 
-  if (upcoming.length === 0 && past.length === 0) {
+  if (upcoming.length === 0 && past.length === 0 && open.length === 0) {
     return (
       <>
         <h1 className="text-2xl tracking-tight md:text-3xl">{page.title}</h1>
@@ -47,6 +50,13 @@ export async function PilotRides() {
   return (
     <>
       <h1 className="text-2xl tracking-tight md:text-3xl">{page.title}</h1>
+
+      <OpenRides
+        rides={open}
+        dict={dict}
+        locale={locale}
+        words={words}
+      />
 
       <section className="flex flex-col gap-3">
         <SectionHeading>{dict.calendar.upcoming}</SectionHeading>

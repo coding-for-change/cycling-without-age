@@ -399,11 +399,17 @@
         "poolAccessDecided": "Pool answer",
         "poolAccessRequested": "Pool request",
         "rejection": "Turned down",
+        "rideAnnounced": "Event announced",
         "rideAssigned": "Pilot assigned",
         "rideBooked": "Seat booked",
         "rideBookingCancelled": "Seat given up",
         "rideCancelled": "Ride cancelled",
         "rideChanged": "Ride changed",
+        "rideOpened": "Open ride",
+        "ridePilotFound": "Pilot found",
+        "ridePilotWithdrew": "Pilot stepped back",
+        "rideSignedUp": "Signed up",
+        "rideUnderstaffed": "Unstaffed ride",
         "roleChanged": "Role change",
         "welcome": "Welcome"
       },
@@ -866,6 +872,25 @@
         "placeholder": "Plug in the charger, wipe the seat, and drop the key back in the safe.",
         "title": "After the ride"
       },
+      "staffing": {
+        "body": "How pilots find rides, and when you hear about a ride still short of pilots.",
+        "lead": {
+          "days": "{count, plural, one {# day before} other {# days before}}",
+          "hint": "Admins are told this long before a ride that still needs pilots. From then on pilots can't step back in the app and call you instead.",
+          "hours": "{count, plural, one {# hour before} other {# hours before}}",
+          "label": "Warn about unstaffed rides"
+        },
+        "requiredPilots": {
+          "hint": "What a new ride asks for. You can change it for each ride.",
+          "label": "Pilots per ride",
+          "option": "{count, plural, one {# pilot} other {# pilots}}"
+        },
+        "selfAssign": {
+          "hint": "Pilots see the rides still missing a pilot and take a seat without asking.",
+          "label": "Pilots sign up themselves"
+        },
+        "title": "Staffing"
+      },
       "support": {
         "body": "Something in the admin acting up? One sentence is enough — it lands with the people who look after this.",
         "drawer": {
@@ -919,6 +944,7 @@
     "roles": {
       "pilot": "Pilot"
     },
+    "staffing": "{assigned}/{required, plural, one {# pilot} other {# pilots}}",
     "statuses": {
       "cancelled": "Cancelled",
       "completed": "Completed",
@@ -1835,10 +1861,12 @@
       "detail": {
         "about": "About this ride",
         "andBack": "and back at {time}",
+        "call": "Call {name}",
         "cancelled": "This ride is cancelled",
         "cancelledHint": "We're sorry it won't happen this time. Your chapter is happy to help you plan the next one.",
         "completed": "This ride has taken place. We hope you enjoyed the wind in your hair.",
         "contact": "Questions about this ride? {chapter} is happy to help.",
+        "message": "Message everyone on this ride",
         "openInMaps": "Open in maps",
         "pilot": "{count, plural, one {Your pilot} other {Your pilots}}",
         "pilotPending": "Not assigned yet",
@@ -1855,6 +1883,28 @@
         "askBody": "Write a few lines to the team: when you would like to go out, and where to. They'll find a day, a time and a pilot for you.",
         "subject": "A ride with Cycling Without Age",
         "title": "No rides planned right now"
+      },
+      "events": {
+        "badge": "Event",
+        "book": {
+          "done": "{count, plural, one {Seat booked} other {# seats booked}}. We look forward to riding with you!",
+          "hint": "Pick who you'd like to bring along. The chapter takes care of the rest.",
+          "more": "Bring someone else along",
+          "pick": "Pick who's coming",
+          "submit": "{count, plural, one {Book # seat} other {Book # seats}}",
+          "title": "Book a seat"
+        },
+        "errors": {
+          "rateLimited": "That was a lot at once. Please wait a moment and try again.",
+          "rideClosed": "This event isn't taking bookings anymore.",
+          "rideFull": "This event filled up in the meantime. We're sorry.",
+          "riderNotInChapter": "This rider rides with another chapter.",
+          "unknownPassenger": "That rider isn't one you book for.",
+          "unknownRide": "This event isn't available anymore."
+        },
+        "open": "Seats available",
+        "seatsLeft": "{count, plural, =0 {Full} one {# seat left} other {# seats left}}",
+        "title": "Upcoming events"
       },
       "past": "Past rides",
       "pastCount": "{count, plural, one {# ride} other {# rides}}",
@@ -1900,8 +1950,11 @@
       "detail": {
         "about": "About this ride",
         "back": "My rides",
+        "call": "Call {name}",
         "cancelled": "This ride is off.",
         "cancelledBody": "It stays on your list so you know it isn't happening.",
+        "chat": "Ride chat",
+        "chatHint": "Everyone on this ride, and your chapter.",
         "crew": "Riding with you",
         "destination": "Destination",
         "map": "Map of the ride",
@@ -1910,14 +1963,51 @@
         "noRiders": "Nobody is booked yet.",
         "note": "Note for pilots",
         "noTrishaws": "No trishaw set aside yet.",
+        "pickup": {
+          "hint": "Where the trishaw waits and how to get in.",
+          "title": "Picking up the trishaw"
+        },
         "riders": "Riders",
         "roundTrip": "Round trip",
         "solo": "Just you on this one.",
         "start": "Start",
         "trishaws": "Trishaws",
-        "where": "Where"
+        "via": "via {name}",
+        "where": "Where",
+        "withdraw": {
+          "body": "Your chapter will be told and can look for someone else.",
+          "cancel": "Keep my seat",
+          "confirm": "Step back",
+          "done": "You've stepped back. Your chapter knows.",
+          "label": "Step back from this ride",
+          "title": "Step back from this ride?"
+        },
+        "withdrawClosed": "With less than {hours, plural, one {# hour} other {# hours}} to go, stepping back is a phone call: please ring {chapter}."
+      },
+      "errors": {
+        "notAssigned": "You're not on this ride anymore.",
+        "notPilot": "Only pilots of this chapter can sign up.",
+        "rateLimited": "That was a lot at once. Wait a moment and try again.",
+        "rideClosed": "This ride isn't open anymore.",
+        "rideFullyStaffed": "Someone was quicker: this ride has all its pilots now.",
+        "selfSignUpOff": "Your chapter assigns its pilots itself. Get in touch with them.",
+        "tooLateToWithdraw": "It's too close to the ride to step back here. Please call your chapter.",
+        "unknownRide": "This ride doesn't exist anymore."
+      },
+      "open": {
+        "hint": "These rides still need a pilot. Take the ones that suit you.",
+        "needsMore": "{count, plural, one {Needs # more pilot} other {Needs # more pilots}}",
+        "riders": "{count, plural, =0 {No riders booked yet} one {# rider} other {# riders}}",
+        "title": "Open rides in {chapter}",
+        "titleAny": "Open rides"
       },
       "past": "Past rides",
+      "signUp": {
+        "cta": "Sign up for this ride",
+        "done": "You're on the ride. Thank you!",
+        "intro": "{chapter} is looking for a pilot. Once you sign up you'll see who you're riding with, how to reach them and a chat with everyone on the ride.",
+        "to": "to {destination}"
+      },
       "upcomingEmpty": "Nothing coming up right now. When your chapter puts you on a ride, it lands here."
     },
     "status": {
@@ -2014,6 +2104,11 @@
       "addPilotEmpty": "No other pilot in this chapter.",
       "addRider": "Book a rider",
       "addRiderEmpty": "No passenger of this chapter left to book.",
+      "announce": {
+        "hint": "Riders of the chapter see it on their start screen and book a seat themselves until it's full.",
+        "label": "Show to the chapter's riders",
+        "title": "Riders can book"
+      },
       "back": "All rides",
       "cancelledBy": "Cancelled by {name}",
       "destination": "Destination",
@@ -2048,6 +2143,7 @@
       "title": "{model} · {date}",
       "trishaws": "Trishaws",
       "unchanged": "Already done, nothing changed.",
+      "unstaffed": "Unstaffed",
       "wayBack": "Way back",
       "wayThere": "Way there",
       "where": "Where",
@@ -2092,6 +2188,7 @@
       "capacityBelowRoster": "More riders are already booked than that. Take some off first.",
       "capacityRequired": "Set how many passengers can come along.",
       "destinationRequired": "Pick where the ride goes.",
+      "eventsOnly": "Only an event ride can be shown to riders.",
       "invalidFile": "That photo can't be used here. Upload it again.",
       "legsOverlap": "The way there would run into the way back. Move the other leg first.",
       "notPilot": "Only a pilot of this chapter can be put on the ride.",
@@ -2124,6 +2221,7 @@
       },
       "edited": "{who, select, you {You} other {{actor}}} changed {fields}",
       "fields": {
+        "announced": "whether riders can book",
         "capacity": "the capacity",
         "destination": "the destination",
         "location": "the pick-up",
@@ -2162,6 +2260,8 @@
     "schedule": {
       "addNote": "Note for pilots",
       "addTrishaws": "Add trishaws",
+      "announce": "Riders can book",
+      "announceHint": "Show it to the chapter's riders to book a seat themselves.",
       "capacity": "Capacity",
       "capacityPlaceholder": "Number of seats",
       "chapter": "Chapter",

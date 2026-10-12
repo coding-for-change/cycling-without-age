@@ -22,6 +22,7 @@ jest.mock("@/lib/prisma", () => {
       findMany: jest.fn(),
       update: jest.fn(),
       deleteMany: jest.fn(),
+      createMany: jest.fn(),
     },
     chatMessage: {
       findUnique: jest.fn(),
@@ -73,6 +74,7 @@ const db = prisma as unknown as {
     findMany: jest.Mock;
     update: jest.Mock;
     deleteMany: jest.Mock;
+    createMany: jest.Mock;
   };
   chatMessage: {
     findUnique: jest.Mock;
@@ -465,5 +467,73 @@ describe("reaching past a conversation", () => {
       }),
     ).rejects.toMatchObject({ code: "notMember" });
     expect(publish).not.toHaveBeenCalled();
+  });
+});
+
+describe("syncRideConversation", () => {
+  const ride = {
+    rideId: "ride-1",
+    chapterId: "chapter-1",
+    title: "Sonnenhof",
+  };
+
+  it("opens the ride's chat as an ownerless group of whoever is on it", async () => {
+    db.conversation.findUnique.mockResolvedValueOnce(null);
+    db.conversation.create.mockResolvedValue({
+      id: "conv-ride",
+      _count: { members: 2 },
+      members: [],
+    });
+    expect(
+      await chat.syncRideConversation({
+        ...ride,
+        memberUserIds: ["pilot-1", "carer-1", "pilot-1"],
+      }),
+    ).toBe("conv-ride");
+    const { data } = db.conversation.create.mock.calls[0][0];
+    expect(data).toEqual(
+      expect.objectContaining({
+        kind: "group",
+        origin: "ride",
+        rideId: "ride-1",
+        createdByUserId: null,
+        members: {
+          create: [
+            { userId: "pilot-1", role: "member" },
+            { userId: "carer-1", role: "member" },
+          ],
+        },
+      }),
+    );
+  });
+
+  it("adds whoever joined the ride and removes whoever left", async () => {
+    db.conversation.findUnique.mockResolvedValueOnce({
+      id: "conv-ride",
+      frozenAt: null,
+    });
+    db.conversationMember.findMany.mockResolvedValue([
+      { userId: "pilot-1" },
+      { userId: "pilot-old" },
+    ]);
+    await chat.syncRideConversation({
+      ...ride,
+      memberUserIds: ["pilot-1", "carer-1"],
+    });
+    expect(db.conversationMember.createMany).toHaveBeenCalledWith({
+      data: [{ conversationId: "conv-ride", userId: "carer-1" }],
+      skipDuplicates: true,
+    });
+    expect(db.conversationMember.deleteMany).toHaveBeenCalledWith({
+      where: { conversationId: "conv-ride", userId: { in: ["pilot-old"] } },
+    });
+  });
+
+  it("opens nothing for a ride with nobody on it", async () => {
+    db.conversation.findUnique.mockResolvedValueOnce(null);
+    expect(
+      await chat.syncRideConversation({ ...ride, memberUserIds: [] }),
+    ).toBeNull();
+    expect(db.conversation.create).not.toHaveBeenCalled();
   });
 });

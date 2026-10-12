@@ -86,7 +86,7 @@ describe("who hears about a ride", () => {
     expect(await rideRescheduled.recipients(event)).not.toContain("admin-1");
   });
 
-  it("tells the pilot an admin assigned, and nobody when they signed up themself", async () => {
+  it("tells the pilot an admin assigned; a pilot who signed up hears it worked, and so do the riders' accounts", async () => {
     const base = { type: "ride.pilotAssigned" as const, ...scope };
     expect(
       await ridePilotAssigned.recipients({
@@ -105,7 +105,53 @@ describe("who hears about a ride", () => {
         self: true,
         pair: null,
       }),
-    ).toEqual([]);
+    ).toEqual(["pilot-1", "carer-1", "rider-1"]);
+  });
+
+  // Story 24b: one event, two readers — the pilot and the riders' side.
+  it("writes each row of a sign-up for its reader", async () => {
+    const event: EventOf<"ride.pilotAssigned"> = {
+      type: "ride.pilotAssigned",
+      ...scope,
+      actorUserId: "pilot-1",
+      userId: "pilot-1",
+      self: true,
+      pair: null,
+    };
+    const params = ridePilotAssigned.payload.parse(
+      await ridePilotAssigned.params(event),
+    );
+    const strings = getEmailStrings("en");
+    const forPilot = ridePilotAssigned.forRecipient!(params, "pilot-1");
+    const forCarer = ridePilotAssigned.forRecipient!(params, "carer-1");
+    expect(forPilot.audience).toBe("pilot");
+    expect(forCarer.audience).toBe("rider");
+    expect(
+      ridePilotAssigned.message(
+        { ...forCarer, pilotName: "Anke" },
+        strings,
+        "en",
+      ).subject,
+    ).toContain("Anke pilots your ride");
+    expect(ridePilotAssigned.message(forPilot, strings, "en").heading).toBe(
+      strings.rideSignedUp.heading,
+    );
+  });
+
+  it("keeps an admin's assignment addressed to the pilot alone", async () => {
+    const params = ridePilotAssigned.payload.parse(
+      await ridePilotAssigned.params({
+        type: "ride.pilotAssigned",
+        ...scope,
+        actorUserId: "admin-1",
+        userId: "pilot-1",
+        self: false,
+        pair: null,
+      }),
+    );
+    expect(ridePilotAssigned.forRecipient!(params, "pilot-1").audience).toBe(
+      "pilot",
+    );
   });
 
   it("tells both the rider and whoever manages them about a booking", async () => {

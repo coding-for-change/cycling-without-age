@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { chapters } from "@/features/chapters";
 import { DEFAULT_CHAPTER_SETTINGS } from "@/features/chapters/schemas";
 import { membership } from "@/features/membership";
@@ -98,6 +99,28 @@ beforeEach(() => {
 });
 
 describe("notify", () => {
+  it("writes each recipient's row as the kind addresses it", async () => {
+    kindOfMock.mockReturnValueOnce({
+      event: "pilotApplication.decided",
+      category: "application",
+      policy: { push: false, email: "never", optional: false },
+      payload: z.object({ reader: z.string().optional() }),
+      recipients: async () => ["user-a", "user-b"],
+      params: async () => ({}),
+      forRecipient: (params: object, recipientUserId: string) => ({
+        ...params,
+        reader: recipientUserId,
+      }),
+      href: () => "/somewhere",
+      message: () => ({}),
+    });
+    await notify(decided);
+    expect(create.mock.calls.map(([input]) => input.payload)).toEqual([
+      { reader: "user-a" },
+      { reader: "user-b" },
+    ]);
+  });
+
   it("writes one inbox row per recipient, in parameters not sentences", async () => {
     await notify(decided);
 

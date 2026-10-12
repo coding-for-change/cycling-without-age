@@ -141,6 +141,21 @@ const pilotDetailSelect = {
   ...pilotSelect,
   ...memberDetail,
   note: true,
+  roster: {
+    orderBy: { position: "asc" },
+    select: {
+      id: true,
+      passenger: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          user: { select: { phoneNumber: true } },
+          managedBy: { select: { name: true, phoneNumber: true } },
+        },
+      },
+    },
+  },
 } satisfies Prisma.RideSelect;
 
 export type PilotRideDetailRow = Prisma.RideGetPayload<{
@@ -152,6 +167,16 @@ const passengerDetailSelect = (passengerIds: string[]) =>
   ({
     ...passengerSelect,
     ...memberDetail,
+    announced: true,
+    assignments: {
+      ...memberAssignments(),
+      select: {
+        role: true,
+        user: {
+          select: { id: true, name: true, image: true, phoneNumber: true },
+        },
+      },
+    },
     roster: {
       where: { passengerId: { in: passengerIds } },
       orderBy: { position: "asc" },
@@ -727,6 +752,8 @@ const detailSelect = {
   destinationLongitude: true,
   note: true,
   seriesId: true,
+  announced: true,
+  staffingCheckedAt: true,
   cancellationReasonCode: true,
   cancellationNote: true,
   cancelledBy: { select: { id: true, name: true } },
@@ -896,4 +923,140 @@ export const findLatestRideForPilot = (userId: string, now: Date) =>
     },
     orderBy: [{ startsAt: "desc" }, { id: "desc" }],
     select: pilotSelect,
+  });
+
+/**
+ * What a pilot may know about a ride before signing up for it: when, where,
+ * what kind and how many ride along. Nobody's name, nobody's number.
+ */
+const openSelect = {
+  id: true,
+  chapterId: true,
+  model: true,
+  status: true,
+  startsAt: true,
+  endsAt: true,
+  title: true,
+  locationName: true,
+  locationAddress: true,
+  destinationName: true,
+  requiredPilots: true,
+  chapter: { select: { id: true, name: true, timeZone: true } },
+  _count: {
+    select: { roster: true, assignments: { where: { role: "pilot" } } },
+  },
+} satisfies Prisma.RideSelect;
+
+export type OpenRideRow = Prisma.RideGetPayload<{
+  select: typeof openSelect;
+}>;
+
+const stillAhead = (chapterIds: string[], now: Date) =>
+  ({
+    chapterId: { in: chapterIds },
+    status: "scheduled",
+    startsAt: { gt: now },
+  }) satisfies Prisma.RideWhereInput;
+
+export const findOpenRidesFor = (
+  userId: string,
+  chapterIds: string[],
+  now: Date,
+  until: Date,
+  take: number,
+) =>
+  prisma.ride.findMany({
+    where: {
+      ...stillAhead(chapterIds, now),
+      startsAt: { gt: now, lt: until },
+      assignments: { none: { userId } },
+    },
+    orderBy: [{ startsAt: "asc" }, { id: "asc" }],
+    select: openSelect,
+    take,
+  });
+
+export const findOpenRide = (rideId: string, chapterIds: string[], now: Date) =>
+  prisma.ride.findFirst({
+    where: { id: rideId, ...stillAhead(chapterIds, now) },
+    select: openSelect,
+  });
+
+export const findStaffingCandidates = (now: Date, until: Date, take: number) =>
+  prisma.ride.findMany({
+    where: {
+      status: "scheduled",
+      startsAt: { gt: now, lte: until },
+      staffingCheckedAt: null,
+    },
+    orderBy: [{ startsAt: "asc" }, { id: "asc" }],
+    select: {
+      id: true,
+      chapterId: true,
+      startsAt: true,
+      requiredPilots: true,
+      _count: { select: { assignments: { where: { role: "pilot" } } } },
+    },
+    take,
+  });
+
+/**
+ * An announced event as the chapter's riders see it before they book: the
+ * story, the place and how many seats are taken. Never who took them.
+ */
+const announcedSelect = {
+  id: true,
+  chapterId: true,
+  model: true,
+  status: true,
+  startsAt: true,
+  endsAt: true,
+  title: true,
+  description: true,
+  capacity: true,
+  locationName: true,
+  locationAddress: true,
+  latitude: true,
+  longitude: true,
+  chapter: {
+    select: { id: true, name: true, timeZone: true, address: true },
+  },
+  photos: {
+    orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+    select: { fileId: true },
+  },
+  _count: { select: { roster: true } },
+} satisfies Prisma.RideSelect;
+
+export type AnnouncedEventRow = Prisma.RideGetPayload<{
+  select: typeof announcedSelect;
+}>;
+
+const announcedIn = (chapterIds: string[], now: Date) =>
+  ({
+    ...stillAhead(chapterIds, now),
+    model: "event",
+    announced: true,
+  }) satisfies Prisma.RideWhereInput;
+
+export const findAnnouncedEvents = (
+  chapterIds: string[],
+  now: Date,
+  take: number,
+) =>
+  prisma.ride.findMany({
+    where: announcedIn(chapterIds, now),
+    orderBy: [{ startsAt: "asc" }, { id: "asc" }],
+    select: announcedSelect,
+    take,
+  });
+
+export const findAnnouncedEvent = (
+  rideId: string,
+  chapterIds: string[],
+  now: Date,
+) =>
+  prisma.ride.findFirst({
+    where: { id: rideId, ...announcedIn(chapterIds, now) },
+    select: announcedSelect,
   });

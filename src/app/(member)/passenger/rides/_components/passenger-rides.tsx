@@ -12,6 +12,7 @@ import { getDictionary, getLocale, type Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { MEMBER_LIFE } from "../../../_components/instant";
 import { ChapterMail } from "./chapter-mail";
+import { UpcomingEvents, loadUpcomingEvents } from "./upcoming-events";
 
 const rideHref = (rideId: string) => `/passenger/rides/${rideId}`;
 
@@ -20,8 +21,9 @@ export async function PassengerRides() {
   cacheLife(MEMBER_LIFE);
 
   const session = await requirePerspective("passenger");
-  const [mine, dict, language, head] = await Promise.all([
+  const [mine, events, dict, language, head] = await Promise.all([
     passengers.listRidersOfAccount(session.user.id),
+    loadUpcomingEvents(session.user.id),
     getDictionary(),
     getLocale(),
     headers(),
@@ -39,6 +41,13 @@ export async function PassengerRides() {
       <h1 className="text-2xl tracking-tight md:text-3xl">
         {dict.member.pages.rides.title}
       </h1>
+
+      <UpcomingEvents
+        events={events}
+        dict={dict}
+        locale={locale}
+        words={words}
+      />
 
       {upcoming.length ? (
         <section className="flex flex-col gap-3">

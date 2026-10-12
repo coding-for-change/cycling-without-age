@@ -26,14 +26,21 @@ jest.mock("@/features/fleet", () => ({
   fleet: { getTrishaw: jest.fn(), getLocation: jest.fn() },
 }));
 jest.mock("@/features/membership", () => ({
-  membership: { listChapterAdmins: jest.fn(), getMemberRoles: jest.fn() },
+  membership: {
+    listChapterAdmins: jest.fn(),
+    getMemberRoles: jest.fn(),
+    listPilotMembers: jest.fn(),
+  },
 }));
 jest.mock("@/features/rides", () => ({
   ...jest.requireActual("@/features/rides/schemas"),
   rides: { getRideFacts: jest.fn(), listRideParticipants: jest.fn() },
 }));
 jest.mock("@/features/passengers", () => ({
-  passengers: { getPassenger: jest.fn() },
+  passengers: {
+    getPassenger: jest.fn(),
+    listRiderAccountsOfChapters: jest.fn(),
+  },
 }));
 jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
 
@@ -211,6 +218,26 @@ const EVENTS: Record<EventType, DomainEvent> = {
     passengerId: "passenger-1",
     self: true,
   },
+  "ride.opened": {
+    type: "ride.opened",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+  },
+  "ride.understaffed": {
+    type: "ride.understaffed",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: null,
+    assigned: 1,
+    required: 2,
+  },
+  "ride.announced": {
+    type: "ride.announced",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+  },
 };
 
 const APP_RELATIVE = /^\/(?!\/)/;
@@ -379,11 +406,15 @@ describe("the templates the history feed has to label", () => {
       "poolAccessDecided",
       "poolAccessRequested",
       "rejection",
+      "rideAnnounced",
       "rideAssigned",
       "rideBooked",
       "rideBookingCancelled",
       "rideCancelled",
       "rideChanged",
+      "rideOpened",
+      "ridePilotWithdrew",
+      "rideUnderstaffed",
       "roleChanged",
       "welcome",
     ]);

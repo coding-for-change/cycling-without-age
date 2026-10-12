@@ -399,11 +399,17 @@
         "poolAccessDecided": "Pool-Antwort",
         "poolAccessRequested": "Pool-Anfrage",
         "rejection": "Abgelehnt",
+        "rideAnnounced": "Ausfahrt angekündigt",
         "rideAssigned": "Pilot eingeteilt",
         "rideBooked": "Platz gebucht",
         "rideBookingCancelled": "Platz freigegeben",
         "rideCancelled": "Fahrt abgesagt",
         "rideChanged": "Fahrt geändert",
+        "rideOpened": "Offene Fahrt",
+        "ridePilotFound": "Pilot gefunden",
+        "ridePilotWithdrew": "Pilot ausgetragen",
+        "rideSignedUp": "Eingetragen",
+        "rideUnderstaffed": "Unbesetzte Fahrt",
         "roleChanged": "Rollenänderung",
         "welcome": "Willkommen"
       },
@@ -866,6 +872,25 @@
         "placeholder": "Ladegerät einstecken, Sitz abwischen und den Schlüssel zurück in den Tresor legen.",
         "title": "Nach der Fahrt"
       },
+      "staffing": {
+        "body": "Wie Piloten Fahrten finden und wann du von einer Fahrt erfährst, der noch Piloten fehlen.",
+        "lead": {
+          "days": "{count, plural, one {# Tag vorher} other {# Tage vorher}}",
+          "hint": "So lange vor einer Fahrt, der noch Piloten fehlen, erfahren die Admins davon. Ab dann können sich Piloten nicht mehr in der App austragen und rufen stattdessen an.",
+          "hours": "{count, plural, one {# Stunde vorher} other {# Stunden vorher}}",
+          "label": "Vor unbesetzten Fahrten warnen"
+        },
+        "requiredPilots": {
+          "hint": "Was eine neue Fahrt braucht. Für jede Fahrt änderbar.",
+          "label": "Piloten pro Fahrt",
+          "option": "{count, plural, one {# Pilot} other {# Piloten}}"
+        },
+        "selfAssign": {
+          "hint": "Piloten sehen Fahrten, denen noch ein Pilot fehlt, und tragen sich ohne Nachfrage ein.",
+          "label": "Piloten tragen sich selbst ein"
+        },
+        "title": "Besetzung"
+      },
       "support": {
         "body": "Im Admin hakt etwas? Ein Satz genügt — er landet bei den Leuten, die das hier warten.",
         "drawer": {
@@ -919,6 +944,7 @@
     "roles": {
       "pilot": "Pilot"
     },
+    "staffing": "{assigned}/{required, plural, one {# Pilot} other {# Piloten}}",
     "statuses": {
       "cancelled": "Abgesagt",
       "completed": "Gefahren",
@@ -1835,10 +1861,12 @@
       "detail": {
         "about": "Über diese Ausfahrt",
         "andBack": "und um {time} zurück",
+        "call": "{name} anrufen",
         "cancelled": "Diese Ausfahrt ist abgesagt",
         "cancelledHint": "Es tut uns leid, dass es diesmal nicht klappt. Ihre Ortsgruppe plant gern die nächste mit Ihnen.",
         "completed": "Diese Ausfahrt hat stattgefunden. Wir hoffen, Sie hatten den Wind in den Haaren.",
         "contact": "Fragen zu dieser Ausfahrt? {chapter} hilft Ihnen gern weiter.",
+        "message": "Allen bei dieser Fahrt schreiben",
         "openInMaps": "In Karten öffnen",
         "pilot": "{count, plural, one {Wer Sie fährt} other {Wer Sie fährt}}",
         "pilotPending": "Noch nicht eingeteilt",
@@ -1855,6 +1883,28 @@
         "askBody": "Schreiben Sie dem Team ein paar Zeilen: wann Sie gern hinaus möchten und wohin. Man findet dort einen Tag, eine Uhrzeit und einen Piloten für Sie.",
         "subject": "Eine Ausfahrt mit Cycling Without Age",
         "title": "Gerade ist keine Ausfahrt geplant"
+      },
+      "events": {
+        "badge": "Ausfahrt",
+        "book": {
+          "done": "{count, plural, one {Platz gebucht} other {# Plätze gebucht}}. Wir freuen uns auf Sie!",
+          "hint": "Wählen Sie, wer mitkommen möchte. Um den Rest kümmert sich die Ortsgruppe.",
+          "more": "Jemand weiteren mitbringen",
+          "pick": "Wählen Sie, wer mitkommt",
+          "submit": "{count, plural, one {# Platz buchen} other {# Plätze buchen}}",
+          "title": "Platz buchen"
+        },
+        "errors": {
+          "rateLimited": "Das war viel auf einmal. Bitte warten Sie kurz und versuchen Sie es erneut.",
+          "rideClosed": "Für diese Ausfahrt sind keine Buchungen mehr möglich.",
+          "rideFull": "Die Ausfahrt ist inzwischen ausgebucht. Das tut uns leid.",
+          "riderNotInChapter": "Dieser Fahrgast fährt bei einer anderen Ortsgruppe.",
+          "unknownPassenger": "Für diesen Fahrgast buchen Sie nicht.",
+          "unknownRide": "Diese Ausfahrt ist nicht mehr verfügbar."
+        },
+        "open": "Plätze frei",
+        "seatsLeft": "{count, plural, =0 {Ausgebucht} one {Noch # Platz frei} other {Noch # Plätze frei}}",
+        "title": "Kommende Ausfahrten"
       },
       "past": "Vergangene Ausfahrten",
       "pastCount": "{count, plural, one {# Ausfahrt} other {# Ausfahrten}}",
@@ -1900,8 +1950,11 @@
       "detail": {
         "about": "Über diese Ausfahrt",
         "back": "Meine Ausfahrten",
+        "call": "{name} anrufen",
         "cancelled": "Diese Ausfahrt fällt aus.",
         "cancelledBody": "Sie bleibt auf deiner Liste, damit du Bescheid weißt.",
+        "chat": "Chat zur Fahrt",
+        "chatHint": "Alle, die bei der Fahrt dabei sind, und deine Ortsgruppe.",
         "crew": "Mit dir unterwegs",
         "destination": "Ziel",
         "map": "Karte der Ausfahrt",
@@ -1910,14 +1963,51 @@
         "noRiders": "Noch niemand gebucht.",
         "note": "Hinweis für Pilot:innen",
         "noTrishaws": "Noch keine Rikscha eingeplant.",
+        "pickup": {
+          "hint": "Wo die Rikscha steht und wie du hineinkommst.",
+          "title": "Rikscha abholen"
+        },
         "riders": "Fahrgäste",
         "roundTrip": "Hin und zurück",
         "solo": "Diesmal fährst du allein.",
         "start": "Start",
         "trishaws": "Rikschas",
-        "where": "Wo"
+        "via": "über {name}",
+        "where": "Wo",
+        "withdraw": {
+          "body": "Deine Ortsgruppe erfährt es und kann jemand anderen suchen.",
+          "cancel": "Ich bleibe dabei",
+          "confirm": "Austragen",
+          "done": "Du bist ausgetragen. Deine Ortsgruppe weiß Bescheid.",
+          "label": "Von dieser Fahrt austragen",
+          "title": "Von dieser Fahrt austragen?"
+        },
+        "withdrawClosed": "Weniger als {hours, plural, one {# Stunde} other {# Stunden}} vor der Fahrt geht das nur noch telefonisch: Ruf bitte {chapter} an."
+      },
+      "errors": {
+        "notAssigned": "Du bist nicht mehr für diese Fahrt eingetragen.",
+        "notPilot": "Eintragen können sich nur Piloten dieser Ortsgruppe.",
+        "rateLimited": "Das war viel auf einmal. Warte kurz und versuch es noch einmal.",
+        "rideClosed": "Diese Fahrt ist nicht mehr offen.",
+        "rideFullyStaffed": "Jemand war schneller: Die Fahrt hat jetzt alle Piloten.",
+        "selfSignUpOff": "Deine Ortsgruppe teilt die Piloten selbst ein. Melde dich dort.",
+        "tooLateToWithdraw": "So kurz vor der Fahrt geht das hier nicht mehr. Ruf bitte deine Ortsgruppe an.",
+        "unknownRide": "Diese Fahrt gibt es nicht mehr."
+      },
+      "open": {
+        "hint": "Diese Fahrten suchen noch einen Piloten. Nimm die, die zu dir passen.",
+        "needsMore": "{count, plural, one {Noch # Pilot gesucht} other {Noch # Piloten gesucht}}",
+        "riders": "{count, plural, =0 {Noch keine Fahrgäste} one {# Fahrgast} other {# Fahrgäste}}",
+        "title": "Offene Fahrten in {chapter}",
+        "titleAny": "Offene Fahrten"
       },
       "past": "Vergangene Ausfahrten",
+      "signUp": {
+        "cta": "Für diese Fahrt eintragen",
+        "done": "Du bist dabei. Danke dir!",
+        "intro": "{chapter} sucht einen Piloten. Sobald du dich einträgst, siehst du, mit wem du fährst, wie du sie erreichst, und einen Chat mit allen, die dabei sind.",
+        "to": "nach {destination}"
+      },
       "upcomingEmpty": "Gerade steht nichts an. Sobald deine Ortsgruppe dich für eine Ausfahrt einteilt, taucht sie hier auf."
     },
     "status": {
@@ -2014,6 +2104,11 @@
       "addPilotEmpty": "Keine weiteren Pilot:innen in diesem Chapter.",
       "addRider": "Fahrgast buchen",
       "addRiderEmpty": "Kein Fahrgast dieses Chapters mehr frei.",
+      "announce": {
+        "hint": "Die Fahrgäste der Ortsgruppe sehen sie auf ihrer Startseite und buchen selbst einen Platz, bis sie voll ist.",
+        "label": "Den Fahrgästen zeigen",
+        "title": "Fahrgäste können buchen"
+      },
       "back": "Alle Fahrten",
       "cancelledBy": "Abgesagt von {name}",
       "destination": "Ziel",
@@ -2048,6 +2143,7 @@
       "title": "{model} · {date}",
       "trishaws": "Rikschas",
       "unchanged": "Schon erledigt, nichts geändert.",
+      "unstaffed": "Unbesetzt",
       "wayBack": "Rückweg",
       "wayThere": "Hinweg",
       "where": "Wo",
@@ -2092,6 +2188,7 @@
       "capacityBelowRoster": "Es sind schon mehr Fahrgäste gebucht. Nimm zuerst einige heraus.",
       "capacityRequired": "Leg fest, wie viele Fahrgäste mitkommen können.",
       "destinationRequired": "Wähle, wohin die Fahrt geht.",
+      "eventsOnly": "Nur eine Ausfahrt kann den Fahrgästen gezeigt werden.",
       "invalidFile": "Dieses Foto kann hier nicht verwendet werden. Lade es erneut hoch.",
       "legsOverlap": "Die Hinfahrt würde in die Rückfahrt hineinlaufen. Verschiebe zuerst die andere Fahrt.",
       "notPilot": "Nur Pilot:innen dieses Chapters können eingeteilt werden.",
@@ -2124,6 +2221,7 @@
       },
       "edited": "{who, select, you {Du hast} other {{actor} hat}} {fields} geändert",
       "fields": {
+        "announced": "ob Fahrgäste buchen können",
         "capacity": "die Kapazität",
         "destination": "das Ziel",
         "location": "den Abholort",
@@ -2162,6 +2260,8 @@
     "schedule": {
       "addNote": "Notiz für die Piloten",
       "addTrishaws": "Rikschas hinzufügen",
+      "announce": "Fahrgäste können buchen",
+      "announceHint": "Den Fahrgästen der Ortsgruppe zeigen, damit sie selbst einen Platz buchen.",
       "capacity": "Plätze",
       "capacityPlaceholder": "Anzahl Plätze",
       "chapter": "Ortsgruppe",

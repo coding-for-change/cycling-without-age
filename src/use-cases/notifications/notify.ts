@@ -12,7 +12,7 @@ export async function notify({ id, event }: Envelope) {
     kind.recipients(event),
     kind.params(event),
   ]);
-  const payload = kind.payload.parse(params);
+  const shared = kind.payload.parse(params);
   const href = kind.href(event);
   const collapseKey = kind.collapseKey?.(event);
 
@@ -22,7 +22,9 @@ export async function notify({ id, event }: Envelope) {
         eventId: id,
         recipientUserId,
         category: kind.category,
-        payload,
+        payload: kind.forRecipient
+          ? kind.payload.parse(kind.forRecipient(shared, recipientUserId))
+          : shared,
         href,
         ...(collapseKey ? { collapseKey } : {}),
       });

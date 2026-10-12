@@ -110,6 +110,7 @@ import {
   TrishawOptionRow,
   type TrishawOptionLabels,
 } from "./trishaw-option-row";
+import { AnnounceField } from "./announce-field";
 
 export type ScheduleChapter = {
   id: string;
@@ -122,6 +123,7 @@ export type ScheduleChapter = {
   start: string;
   durationMinutes?: number;
   durationChosen?: boolean;
+  requiredPilots?: number;
 };
 
 type CrewMember = PersonOption & { chapterId: string };
@@ -271,7 +273,8 @@ function ScheduleRideSheet({
   const [destination, setDestination] = useState<Place | null>(null);
   const [roundTrip, setRoundTrip] = useState(true);
   const [stay, setStay] = useState(DEFAULT_STAY);
-  const [pilotsNeeded, setPilotsNeeded] = useState(1);
+  const [pilotsNeeded, setPilotsNeeded] = useState(chapter.requiredPilots ?? 1);
+  const [announced, setAnnounced] = useState(false);
   const [passengerIds, setPassengerIds] = useState<string[]>([]);
   const [pilotIds, setPilotIds] = useState<string[]>([]);
   const [noteOpen, setNoteOpen] = useState(false);
@@ -402,6 +405,9 @@ function ScheduleRideSheet({
     if (id === chapter.id) return;
     setChapterId(id);
     rememberChapter(id);
+    setPilotsNeeded(
+      chapters.find((candidate) => candidate.id === id)?.requiredPilots ?? 1,
+    );
     setSelected(new Set());
     setOrigin(null);
     setDestination(null);
@@ -470,6 +476,7 @@ function ScheduleRideSheet({
             ? Math.max(capacity, passengerIds.length)
             : null,
         photoFileIds: event ? photoIds : [],
+        announced: event && announced,
         passengerIds,
         pilotIds,
       });
@@ -824,6 +831,14 @@ function ScheduleRideSheet({
                 )}
               />
             </FieldRow>
+          ) : null}
+          {event ? (
+            <AnnounceField
+              checked={announced}
+              onChange={setAnnounced}
+              label={strings.announce}
+              hint={strings.announceHint}
+            />
           ) : null}
           <Suspense fallback={<CrewSkeleton />}>
             {crew ? (

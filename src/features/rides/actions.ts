@@ -29,6 +29,7 @@ import {
   type TrishawOption,
 } from "./components/trishaw-options";
 import {
+  announceInput,
   bookRiderInput,
   cancelRideInput,
   noteInput,
@@ -50,6 +51,7 @@ const MAPPED_ERRORS = [
   "capacityBelowRoster",
   "capacityRequired",
   "destinationRequired",
+  "eventsOnly",
   "invalidFile",
   "legsOverlap",
   "notPilot",
@@ -263,6 +265,17 @@ export async function bookRiderAction(
     input,
     (data, ride, actor) =>
       bookRider(ride, data.passengerId, actor, data.position),
+    changed,
+  );
+}
+
+export async function setRideAnnouncedAction(
+  input: unknown,
+): Promise<RideResult<{ changed: boolean }>> {
+  return onRide(
+    announceInput,
+    input,
+    (data, ride, actor) => rides.setAnnounced(ride.id, data.announced, actor),
     changed,
   );
 }

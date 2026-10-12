@@ -3,6 +3,7 @@ import { transaction, type DomainEvent } from "@/lib/events";
 import type { FileReadRule } from "@/lib/access";
 import type { $Enums, Prisma } from "@/generated/prisma";
 import {
+  OPEN_RIDES_DAYS,
   PLEASURE_LIMITS,
   bookRiderInput,
   cancelRideInput,
@@ -80,7 +81,14 @@ import {
   findRideIdForPassengers,
   findRideIdForPilot,
   findRideParticipants,
+  findAnnouncedEvent,
+  findAnnouncedEvents,
+  findOpenRide,
+  findOpenRidesFor,
+  findStaffingCandidates,
+  type AnnouncedEventRow,
   type FeedAudience,
+  type OpenRideRow,
   type PassengerRideDetailRow,
   type PassengerRideRow,
   type PilotRideDetailRow,
@@ -111,7 +119,9 @@ import {
 import type { ReportScope } from "./report-zones";
 
 export type {
+  AnnouncedEventRow,
   FeedAudience,
+  OpenRideRow,
   PassengerRideDetailRow,
   PassengerRideRow,
   PilotRideDetailRow,
@@ -512,7 +522,11 @@ async function reserveOrRefuse(
  * A round trip is two rows written together: both windows are checked under
  * the same lock, so the way there can never be booked without the way back.
  */
-export async function scheduleRide(input: RideData, actorUserId: Actor) {
+export async function scheduleRide(
+  input: RideData,
+  actorUserId: Actor,
+  { opensForSignUp = false }: { opensForSignUp?: boolean } = {},
+) {
   const {
     trishawIds,
     returnLeg,
@@ -586,6 +600,21 @@ export async function scheduleRide(input: RideData, actorUserId: Actor) {
       await staffAndBook(back, passengerIds, pilotIds, actorUserId, tx, emit, {
         role: "follow",
         otherRideId: ride.id,
+      });
+    if (opensForSignUp && pilotIds.length < data.requiredPilots)
+      for (const leg of [ride, ...(back ? [back] : [])])
+        await emit({
+          type: "ride.opened",
+          rideId: leg.id,
+          chapterId: leg.chapterId,
+          actorUserId,
+        });
+    if (data.announced)
+      await emit({
+        type: "ride.announced",
+        rideId: ride.id,
+        chapterId: ride.chapterId,
+        actorUserId,
       });
     return { ...ride, returnLegId: back?.id ?? null };
   });
@@ -740,7 +769,11 @@ export async function rescheduleRide(
           ? { role: "lead", otherRideId: moves[1].leg.id }
           : { role: "follow", otherRideId: id };
     for (const { leg, to } of moves) {
-      const row = await updateRide(leg.id, to, tx);
+      const row = await updateRide(
+        leg.id,
+        { ...to, staffingCheckedAt: null },
+        tx,
+      );
       updated ??= row;
       await record(
         tx,
@@ -1162,7 +1195,8 @@ export async function setRidePhotos(
 
 /**
  * Null for any file that is not a ride photo. A photo on a ride is for the
- * admins of that ride's chapter; one not on a ride yet only for its uploader.
+ * admins of that ride's chapter, and for all its members once the ride is an
+ * announced event; one not on a ride yet only for its uploader.
  */
 export async function photoReadRule(fileId: string) {
   const file = await findRidePhotoFile(fileId);
@@ -1172,7 +1206,10 @@ export async function photoReadRule(fileId: string) {
     ? {
         kind: "members",
         chapterIds: [ride.chapterId],
-        roles: ["admin"],
+        roles:
+          ride.model === "event" && ride.announced
+            ? ["admin", "pilot", "passenger"]
+            : ["admin"],
         admins: {
           chapters: [
             { chapterId: ride.chapterId, countryId: ride.chapter.countryId },
@@ -1256,6 +1293,255 @@ export async function addRideNote(
   const note = rideLogNote.parse(text);
   if (!(await findRideScope(rideId))) throw new DomainError("unknownRide");
   return insertRideLogEntry(rideId, actorUserId, "note", { text: note });
+}
+
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
+const OPEN_RIDES_ON_PAGE = 30;
+const STAFFING_BATCH = 200;
+
+const pilotsOn = (ride: RideDetailRow) => ridePilotCount(ride.assignments);
+
+const ridePilotCount = (assignments: { role: string }[]) =>
+  assignments.filter((assignment) => assignment.role === "pilot").length;
+
+const stillNeedsPilots = (ride: OpenRideRow) =>
+  ride._count.assignments < ride.requiredPilots;
+
+/**
+ * Rides in these chapters that still need a pilot and this pilot is not on
+ * yet, soonest first. The rows carry how many ride along, never who.
+ */
+export async function listOpenRidesForPilot(
+  userId: string,
+  chapterIds: string[],
+  now = new Date(),
+) {
+  if (!chapterIds.length) return [];
+  const rows = await findOpenRidesFor(
+    userId,
+    chapterIds,
+    now,
+    new Date(now.getTime() + OPEN_RIDES_DAYS * DAY_MS),
+    OPEN_RIDES_ON_PAGE * 2,
+  );
+  return rows.filter(stillNeedsPilots).slice(0, OPEN_RIDES_ON_PAGE);
+}
+
+export async function getOpenRideForPilot(
+  rideId: string,
+  chapterIds: string[],
+  now = new Date(),
+) {
+  if (!chapterIds.length) return null;
+  const ride = await findOpenRide(rideId, chapterIds, now);
+  return ride && stillNeedsPilots(ride) ? ride : null;
+}
+
+/**
+ * Lifecycle 3B-b: a pilot takes a seat on the saddle. The ride row is locked
+ * before the pilots are counted, so two pilots signing up for the last place
+ * at once queue up, and the second one finds the ride staffed.
+ */
+export async function selfAssign(
+  rideId: string,
+  userId: string,
+  now = new Date(),
+) {
+  return rideWrite(async (tx, emit) => {
+    const ride = await requireScheduled(rideId, tx);
+    if (ride.startsAt <= now) throw new DomainError("rideClosed");
+    if (isAssigned(ride, userId, "pilot")) return false;
+    if (pilotsOn(ride) >= ride.requiredPilots)
+      throw new DomainError("rideFullyStaffed");
+    await insertAssignment(
+      { rideId, userId, role: "pilot", assignedByUserId: null },
+      tx,
+    );
+    await record(
+      tx,
+      emit,
+      ride,
+      userId,
+      "pilotAssigned",
+      { userId, role: "pilot" },
+      { type: "ride.pilotAssigned", userId, self: true, pair: null },
+    );
+    return true;
+  });
+}
+
+/**
+ * A pilot steps back from a ride, but only from their own seat and only
+ * while there is time to find someone else. Inside the staffing window it is
+ * a phone call to the chapter instead.
+ */
+export async function withdraw(
+  rideId: string,
+  userId: string,
+  leadHours: number,
+  now = new Date(),
+) {
+  return rideWrite(async (tx, emit) => {
+    const ride = await requireScheduled(rideId, tx);
+    if (!isAssigned(ride, userId, "pilot"))
+      throw new DomainError("notAssigned");
+    if (ride.startsAt.getTime() - now.getTime() < leadHours * HOUR_MS)
+      throw new DomainError("tooLateToWithdraw");
+    await deleteAssignment(rideId, userId, "pilot", tx);
+    await record(
+      tx,
+      emit,
+      ride,
+      userId,
+      "pilotUnassigned",
+      { userId, role: "pilot" },
+      { type: "ride.pilotUnassigned", userId, self: true },
+    );
+    return true;
+  });
+}
+
+export const withdrawalClosesAt = (startsAt: Date, leadHours: number) =>
+  new Date(startsAt.getTime() - leadHours * HOUR_MS);
+
+/** Rides that could be inside some chapter's staffing window and were not checked yet. */
+export const listStaffingCandidates = (
+  maxLeadHours: number,
+  now = new Date(),
+) =>
+  findStaffingCandidates(
+    now,
+    new Date(now.getTime() + maxLeadHours * HOUR_MS),
+    STAFFING_BATCH,
+  );
+
+/**
+ * Lifecycle 3D: the check runs once per ride. The stamp and the warning are
+ * written in one transaction under the ride's lock, so a retried sweep finds
+ * the stamp and stays quiet, and a ride staffed in the meantime is stamped
+ * without a warning.
+ */
+export async function checkStaffing(rideId: string, now = new Date()) {
+  return rideWrite(async (tx, emit) => {
+    const ride = await requireRide(rideId, tx);
+    if (
+      ride.status !== "scheduled" ||
+      ride.startsAt <= now ||
+      ride.staffingCheckedAt
+    )
+      return false;
+    await updateRide(rideId, { staffingCheckedAt: now }, tx);
+    const assigned = pilotsOn(ride);
+    if (assigned >= ride.requiredPilots) return false;
+    await emit({
+      type: "ride.understaffed",
+      rideId,
+      chapterId: ride.chapterId,
+      actorUserId: null,
+      assigned,
+      required: ride.requiredPilots,
+    });
+    return true;
+  });
+}
+
+/** Only an event ride can be announced to the chapter's riders. */
+export async function setAnnounced(
+  rideId: string,
+  announced: boolean,
+  actorUserId: Actor,
+) {
+  return rideWrite(async (tx, emit) => {
+    const ride = await requireScheduled(rideId, tx);
+    if (announced && ride.model !== "event")
+      throw new DomainError("eventsOnly");
+    if (ride.announced === announced) return false;
+    await updateRide(rideId, { announced }, tx);
+    await record(
+      tx,
+      emit,
+      ride,
+      actorUserId,
+      "edited",
+      { fields: ["announced"] },
+      announced ? { type: "ride.announced" } : undefined,
+    );
+    return true;
+  });
+}
+
+export const listAnnouncedEvents = (
+  chapterIds: string[],
+  now = new Date(),
+  take = 20,
+) =>
+  chapterIds.length
+    ? findAnnouncedEvents(chapterIds, now, take)
+    : Promise.resolve([]);
+
+export const getAnnouncedEvent = (
+  rideId: string,
+  chapterIds: string[],
+  now = new Date(),
+) =>
+  chapterIds.length
+    ? findAnnouncedEvent(rideId, chapterIds, now)
+    : Promise.resolve(null);
+
+export const seatsLeft = (ride: {
+  capacity: number | null;
+  _count: { roster: number };
+}) =>
+  ride.capacity === null
+    ? null
+    : Math.max(0, ride.capacity - ride._count.roster);
+
+/**
+ * Lifecycle 4B-b: riders enrol themselves on an announced event. The ride is
+ * locked and the roster recounted before any seat is taken, and a booking that
+ * would overfill it is refused whole rather than seating half the family.
+ */
+export async function bookSeats(
+  rideId: string,
+  passengerIds: string[],
+  actorUserId: string,
+  now = new Date(),
+) {
+  return rideWrite(async (tx, emit) => {
+    const ride = await requireScheduled(rideId, tx);
+    if (ride.model !== "event" || !ride.announced || ride.startsAt <= now)
+      throw new DomainError("unknownRide");
+    const fresh = passengerIds.filter((id) => !isBooked(ride, id));
+    if (!fresh.length) return 0;
+    if (
+      ride.capacity !== null &&
+      ride.roster.length + fresh.length > ride.capacity
+    )
+      throw new DomainError("rideFull");
+    let position = Math.max(-1, ...ride.roster.map((e) => e.position)) + 1;
+    for (const passengerId of fresh) {
+      await insertRosterEntry(
+        {
+          rideId,
+          passengerId,
+          position: position++,
+          bookedByUserId: actorUserId,
+        },
+        tx,
+      );
+      await record(
+        tx,
+        emit,
+        ride,
+        actorUserId,
+        "riderBooked",
+        { passengerId },
+        { type: "ride.riderBooked", passengerId, pair: null },
+      );
+    }
+    return fresh.length;
+  });
 }
 
 const tallyRow = (row: TallyFactRow) => ({

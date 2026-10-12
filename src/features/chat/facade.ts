@@ -43,6 +43,7 @@ import type {
 import {
   deleteEmptyConversations,
   findConversationByDirectKey,
+  findConversationByRideId,
   findConversationById,
   findConversationWithCounts,
   findConversationsInScope,
@@ -55,6 +56,8 @@ import {
 import {
   countUnreadMemberships,
   deleteConversationMember,
+  deleteConversationMembers,
+  insertConversationMembers,
   findContactUserIds,
   findConversationMember,
   findMemberUserIds,
@@ -339,6 +342,102 @@ export async function createGroup(input: CreateGroupInput) {
     conversationId: created.id,
   });
   return readSummary(created.id, createdByUserId);
+}
+
+export type RideConversationInput = {
+  rideId: string;
+  chapterId: string;
+  title: string | null;
+  memberUserIds: string[];
+};
+
+/**
+ * A ride's chat is the ride's own group: whoever is on the ride and the
+ * chapter's admins. Its members follow the ride rather than anyone's choice,
+ * so it may hold fewer people than a group someone makes by hand, and it has
+ * no owner. Called again after every change on the ride, it adds whoever
+ * joined and removes whoever left.
+ */
+export async function syncRideConversation(
+  input: RideConversationInput,
+  retried = false,
+): Promise<string | null> {
+  const memberUserIds = [...new Set(input.memberUserIds)];
+  const existing = await findConversationByRideId(input.rideId);
+  if (!existing) {
+    if (!memberUserIds.length) return null;
+    const { wrapped, keyVersion } = wrapDek(generateDek());
+    try {
+      const created = await insertConversation({
+        kind: "group",
+        origin: "ride",
+        rideId: input.rideId,
+        title: input.title?.slice(0, 120) ?? null,
+        chapterId: input.chapterId,
+        createdByUserId: null,
+        dek: wrapped,
+        keyVersion,
+        members: memberUserIds.map((userId) => ({
+          userId,
+          role: "member" as const,
+        })),
+      });
+      await publishToUsers(memberUserIds, {
+        type: "conversation.created",
+        conversationId: created.id,
+      });
+      return created.id;
+    } catch (error) {
+      if (!isUniqueViolation(error) || retried) throw error;
+      return syncRideConversation(input, true);
+    }
+  }
+
+  const conversationId = existing.id;
+  const { added, removed, memberIds } = await transaction(async (tx) => {
+    await lockConversation(conversationId, tx);
+    const current = await findMemberUserIds(conversationId, tx);
+    const have = new Set(current);
+    const want = new Set(memberUserIds);
+    const added = memberUserIds.filter((userId) => !have.has(userId));
+    const removed = current.filter((userId) => !want.has(userId));
+    if (added.length)
+      await insertConversationMembers(conversationId, added, tx);
+    if (removed.length)
+      await deleteConversationMembers(conversationId, removed, tx);
+    return { added, removed, memberIds: memberUserIds };
+  });
+
+  if (added.length)
+    await publishToUsers(added, {
+      type: "conversation.created",
+      conversationId,
+    });
+  for (const userId of removed)
+    await publishToUsers([...memberIds, userId], {
+      type: "member.left",
+      conversationId,
+      userId,
+    });
+  if (added.length || removed.length)
+    await publishToUsers(memberIds, {
+      type: "conversation.updated",
+      conversationId,
+      patch: { memberCount: memberIds.length },
+    });
+  return conversationId;
+}
+
+export const hasRideConversation = async (rideId: string) =>
+  (await findConversationByRideId(rideId)) !== null;
+
+/** The ride's chat, when this person is in it. */
+export async function getRideConversationId(rideId: string, userId: string) {
+  const conversation = await findConversationByRideId(rideId);
+  if (!conversation) return null;
+  return (await findConversationMember(conversation.id, userId))
+    ? conversation.id
+    : null;
 }
 
 export async function listConversations(
