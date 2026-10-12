@@ -41,7 +41,11 @@ export async function addAssistedPassenger(
     invalidateReports(parsed.data.chapterId);
     return { ok: true };
   } catch (error) {
-    return actionFailure(error, { alreadyHasAccount: "exists" } as const);
+    return actionFailure(error, {
+      alreadyHasAccount: "exists",
+      unknownLocation: "invalid",
+      locationNotInChapter: "invalid",
+    } as const);
   }
 }
 

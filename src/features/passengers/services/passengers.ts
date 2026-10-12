@@ -74,3 +74,21 @@ export const findPassengerNames = (ids: string[]) =>
     where: { id: { in: ids } },
     select: { id: true, firstName: true, lastName: true },
   });
+
+export const updatePassengerNeeds = (
+  id: string,
+  data: Pick<
+    Prisma.PassengerUncheckedUpdateInput,
+    "needsWheelchairBike" | "note" | "rideLocationId"
+  >,
+) =>
+  prisma.passenger.update({
+    where: { id },
+    data,
+    select: {
+      id: true,
+      needsWheelchairBike: true,
+      note: true,
+      rideLocationId: true,
+    },
+  });

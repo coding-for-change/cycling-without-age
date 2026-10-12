@@ -465,13 +465,14 @@
       "chat": "Beskeder",
       "countries": "Lande",
       "help": "Få hjælp",
-      "locations": "Lokationer",
+      "locations": "Opbevaringssteder",
       "members": "Medlemmer",
       "overview": "Overblik",
       "passengers": "Passagerer",
       "reports": "Rapporter",
       "rides": "Ture",
-      "settings": "Indstillinger"
+      "settings": "Indstillinger",
+      "rideLocations": "Startsteder"
     },
     "navGroups": {
       "footer": "Konto",
@@ -875,6 +876,63 @@
         },
         "open": "Meld et problem",
         "title": "Meld et problem"
+      },
+      "hours": {
+        "title": "Køretider",
+        "body": "Hvornår jeres afdeling kører. Ugen skraverer resten, og planlægningen advarer, når en tur ligger udenfor.",
+        "unset": "Ingen køretider endnu, så hver time tæller som åben.",
+        "closed": "Lukket",
+        "addWindow": "Tilføj tider",
+        "from": "Fra",
+        "to": "Til",
+        "add": "Tilføj",
+        "cancel": "Annullér",
+        "remove": "Fjern {range}",
+        "copyMonday": "Kopiér mandag til hverdagene",
+        "invalid": "De tider overlapper, slutter før de begynder eller er kortere end 30 minutter.",
+        "closures": {
+          "title": "Lukkede dage",
+          "body": "Helligdage og fridage. Ugen skraverer dem, og planlægningen advarer.",
+          "date": "Dato",
+          "reason": "Grund",
+          "reasonPlaceholder": "Juleaften",
+          "add": "Tilføj lukket dag",
+          "empty": "Ingen lukkede dage forude.",
+          "remove": "Fjern {date}",
+          "added": "{date} er markeret som lukket.",
+          "removed": "{date} er åben igen."
+        },
+        "warnings": {
+          "outsideHours": "Uden for køretiderne ({hours})",
+          "closed": "Afdelingen har lukket den dag",
+          "closedReason": "Afdelingen har lukket den dag: {reason}",
+          "shortNotice": "Kortere varsel end jeres bookingregler ({notice})",
+          "beyondHorizon": "Længere ude i fremtiden, end I tager imod bookinger ({horizon})"
+        },
+        "shade": "Uden for køretiderne"
+      },
+      "booking": {
+        "title": "Booking",
+        "body": "Hvor langt frem ture planlægges, og hvad en ny tur starter med.",
+        "leadTime": {
+          "label": "Mindste varsel",
+          "hint": "Hvor længe før en tur den skal være booket. Planlægningen advarer, når varslet er kortere."
+        },
+        "horizon": {
+          "label": "Hvor langt frem",
+          "hint": "Det længste, en tur kan bookes frem i tiden."
+        },
+        "rideMinutes": {
+          "label": "Sædvanlig længde",
+          "hint": "Det starter en ny tur med i planlægningen."
+        },
+        "stayMinutes": {
+          "label": "Tid ved målet",
+          "hint": "Ved en tur frem og tilbage: hvor længe passagererne bliver, før det går hjem igen."
+        },
+        "noNotice": "Intet mindste varsel",
+        "hours": "{count, plural, one {1 time} other {# timer}}",
+        "days": "{count, plural, one {1 dag} other {# dage}}"
       }
     },
     "table": {
@@ -893,6 +951,125 @@
     "user": {
       "account": "Konto",
       "menuLabel": "Din konto"
+    },
+    "rideLocations": {
+      "title": "Startsteder",
+      "body": "Hvor jeres ture starter: plejecentre, boliger og offentlige steder. Vælg et, når du planlægger, så følger adresse, piloter og den sædvanlige længde med.",
+      "new": "Nyt startsted",
+      "commandNew": "Tilføj et startsted",
+      "pickChapter": "Vælg en afdeling for at tilføje et startsted.",
+      "empty": "Ingen startsteder endnu. Tilføj de plejecentre og steder, jeres afdeling kører fra.",
+      "kinds": {
+        "careCenter": "Plejecenter",
+        "residence": "Bolig",
+        "publicPlace": "Offentligt sted",
+        "other": "Andet"
+      },
+      "columns": {
+        "name": "Navn",
+        "kind": "Type",
+        "address": "Adresse",
+        "contact": "Kontakt",
+        "upcoming": "Kommende ture",
+        "chapter": "Afdeling",
+        "status": "Status"
+      },
+      "statuses": {
+        "active": "Aktiv",
+        "archived": "Arkiveret"
+      },
+      "noAddress": "Ingen adresse endnu",
+      "noContact": "Ingen kontakt endnu",
+      "upcomingCount": "{count, plural, =0 {Ingen} one {1 tur} other {# ture}}",
+      "create": {
+        "title": "Nyt startsted",
+        "body": "Et sted, jeres afdeling kører fra. Resten kan du udfylde senere på stedets side.",
+        "chapter": "Afdeling",
+        "name": "Navn",
+        "namePlaceholder": "Plejecenter Solgården",
+        "nameRequired": "Giv startstedet et navn.",
+        "kind": "Type",
+        "address": "Adresse",
+        "addressPlaceholder": "Søg efter adressen",
+        "contact": "Kontaktperson på stedet",
+        "contactName": "Navn",
+        "contactPhone": "Telefon",
+        "contactEmail": "E-mail",
+        "invalidEmail": "Den e-mailadresse ser ikke rigtig ud.",
+        "defaults": "Når du planlægger her",
+        "defaultsHint": "Det udfylder planlægningen. Du kan stadig ændre det for hver tur.",
+        "defaultMinutes": "Sædvanlig længde",
+        "chapterDefault": "Som i afdelingen",
+        "defaultTrishaws": "Rickshawer",
+        "defaultPilots": "Piloter",
+        "fewer": "Færre",
+        "more": "Flere",
+        "notes": "Noter til piloterne",
+        "notesPlaceholder": "Hvor man venter, hvem der åbner døren, hvilken indgang der har rampen …",
+        "submit": "Tilføj startsted",
+        "created": "{name} er klar.",
+        "addressHint": "Vælg adressen, passagererne kører fra, og træk så nålen hen til den rigtige dør."
+      },
+      "detail": {
+        "back": "Startsteder",
+        "name": "Navn",
+        "properties": "Egenskaber",
+        "kind": "Type",
+        "chapter": "Afdeling",
+        "added": "Oprettet {date}",
+        "place": "Adresse",
+        "map": "Kort over startstedet",
+        "mapUnavailable": "Kortet er ikke tilgængeligt lige nu.",
+        "openInGoogleMaps": "Åbn i Google Maps",
+        "contact": "Kontaktperson på stedet",
+        "contactName": "Navn",
+        "contactNamePlaceholder": "Hvem man spørger efter",
+        "contactPhone": "Telefon",
+        "contactPhonePlaceholder": "+45 …",
+        "contactEmail": "E-mail",
+        "contactEmailPlaceholder": "navn@example.org",
+        "defaults": "Når du planlægger her",
+        "defaultMinutes": "Sædvanlig længde",
+        "defaultTrishaws": "Rickshawer",
+        "defaultPilots": "Piloter",
+        "typicalRideKm": "Sædvanlig distance",
+        "typicalRideKmPlaceholder": "Kilometer pr. tur",
+        "km": "{km} km",
+        "notes": "Noter til piloterne",
+        "notesPlaceholder": "Hvor man venter, hvem der åbner døren, hvilken indgang der har rampen …",
+        "upcoming": "Kommende ture herfra",
+        "noUpcoming": "Der er ikke planlagt nogen ture herfra endnu.",
+        "riders": "{count, plural, =0 {Ingen passagerer endnu} one {1 passager} other {# passagerer}}",
+        "scheduleHere": "Planlæg en tur herfra",
+        "archivedNotice": "Startstedet er arkiveret. Det dukker ikke længere op, når du planlægger, og tidligere ture beholder navn og adresse.",
+        "danger": "Arkivér",
+        "dangerBody": "Når du arkiverer, forsvinder stedet fra planlægningen. Turene har deres egen kopi af navn og adresse, så intet ændrer sig i kalenderen.",
+        "archive": {
+          "open": "Arkivér startsted",
+          "title": "Arkivér {name}?",
+          "body": "Det forsvinder fra planlægningen. Ture, der allerede er planlagt her, beholder deres sted.",
+          "submit": "Arkivér",
+          "done": "{name} er arkiveret."
+        },
+        "restore": {
+          "open": "Gendan",
+          "done": "{name} er tilbage."
+        },
+        "cancel": "Annullér",
+        "status": {
+          "saving": "Gemmer …",
+          "saved": "Gemt"
+        }
+      },
+      "picker": {
+        "placeholder": "Startsted eller adresse",
+        "hint": "{kind} · {address}",
+        "defaults": "Udfyldt fra {name}: {pilots, plural, one {1 pilot} other {# piloter}}, {trishaws, plural, one {1 rickshaw} other {# rickshawer}}, {minutes}."
+      },
+      "errors": {
+        "unknownLocation": "Det startsted findes ikke længere. Genindlæs siden og prøv igen.",
+        "locationArchived": "Det startsted er arkiveret. Gendan det først."
+      }
     }
   },
   "calendar": {
@@ -1382,7 +1559,7 @@
         "locations": "Lokationer",
         "pools": "Puljer"
       },
-      "title": "Lokationer",
+      "title": "Opbevaringssteder",
       "trishawCount": "{count, plural, =0 {Ingen rickshawer} one {1 rickshaw} other {# rickshawer}}"
     },
     "trishaws": {
@@ -1824,7 +2001,24 @@
   },
   "passenger": {
     "browsing": "Du kigger på {chapter}",
-    "noChapter": "Du har ikke valgt en lokalafdeling endnu"
+    "noChapter": "Du har ikke valgt en lokalafdeling endnu",
+    "riderNeeds": {
+      "title": "Behov på turen",
+      "wheelchair": {
+        "label": "Har brug for en kørestolscykel",
+        "hint": "Afdelingen planlægger en rickshaw, der kan tage en kørestol."
+      },
+      "note": {
+        "label": "Note til piloterne",
+        "hint": "Alt, der hjælper på turen.",
+        "placeholder": "Hører dårligt, elsker turen langs havnen …"
+      },
+      "careCenter": {
+        "label": "Plejecenter",
+        "hint": "Hvor passageren bor, hvis afdelingen kører derfra.",
+        "none": "Intet"
+      }
+    }
   },
   "passkey": {
     "admin": {

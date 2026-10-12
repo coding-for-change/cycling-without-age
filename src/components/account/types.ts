@@ -30,4 +30,11 @@ export type AccountData = {
   calendarFeed: CalendarFeedState | null;
   signOutLabel: string;
   cancelLabel: string;
+  rider: {
+    needsWheelchairBike: boolean;
+    note: string | null;
+    rideLocationId: string | null;
+    careCenters: { id: string; name: string }[];
+    strings: Dictionary["passenger"]["riderNeeds"];
+  } | null;
 };

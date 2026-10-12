@@ -38,6 +38,10 @@ import {
 } from "./services/log";
 import { findRidePhotoFile, findStoredFiles } from "./services/photos";
 import {
+  countUpcomingRidesByLocation,
+  findUpcomingRidesAtLocation,
+} from "./services/at-location";
+import {
   conflictsUnderLock,
   countFutureRidesWithTrishaws,
   deleteAssignment,
@@ -420,6 +424,7 @@ export async function scheduleRide(input: RideData, actorUserId: Actor) {
             destinationLatitude: data.latitude,
             destinationLongitude: data.longitude,
             returnLegOfId: ride.id,
+            rideLocationId: null,
           },
           trishawIds,
           tx,
@@ -686,9 +691,14 @@ export async function updateRideDetails(
     );
     if (!changed.length) return ride;
 
-    const data = Object.fromEntries(
-      changed.map((field) => [field, blankToNull(wanted[field])]),
-    ) as Prisma.RideUncheckedUpdateInput;
+    const data = Object.fromEntries([
+      ...changed.map((field) => [field, blankToNull(wanted[field])]),
+      ...(changed.some((f) =>
+        (LOCATION_FIELDS as readonly string[]).includes(f),
+      )
+        ? [["rideLocationId", null]]
+        : []),
+    ]) as Prisma.RideUncheckedUpdateInput;
     const updated = await updateRide(id, data, tx);
     const shown = changed.filter(
       (field) =>
@@ -1154,6 +1164,27 @@ export async function activeParticipants(
 
 export const earliestRideStart = async (chapterIds: string[]) =>
   chapterIds.length ? findEarliestRideStart(chapterIds) : null;
+
+export async function countRidesAt(
+  locationIds: string[],
+  from = new Date(),
+): Promise<Map<string, number>> {
+  if (!locationIds.length) return new Map();
+  const rows = await countUpcomingRidesByLocation(locationIds, from);
+  return new Map(
+    rows.flatMap((row) =>
+      row.rideLocationId
+        ? [[row.rideLocationId, row._count._all] as const]
+        : [],
+    ),
+  );
+}
+
+export const listUpcomingRidesAt = (
+  locationId: string,
+  from = new Date(),
+  take = 20,
+) => findUpcomingRidesAtLocation(locationId, from, take);
 
 export {
   aggregateActivity,

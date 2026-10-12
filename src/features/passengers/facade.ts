@@ -1,4 +1,6 @@
 import { ownRiderDetailsPatch, passengerInput } from "./schemas";
+import { riderNeedsInput, type RiderNeedsInput } from "./schemas";
+import { updatePassengerNeeds } from "./services/passengers";
 import { DomainError } from "@/lib/domain-error";
 import type { OwnRiderDetailsPatchInput, PassengerInput } from "./schemas";
 import {
@@ -88,3 +90,12 @@ export const passengerNames = async (
         ]),
       )
     : {};
+
+export async function setRiderNeeds(
+  passengerId: string,
+  input: RiderNeedsInput,
+) {
+  const data = riderNeedsInput.parse(input);
+  if (Object.keys(data).length === 0) return null;
+  return updatePassengerNeeds(passengerId, data);
+}

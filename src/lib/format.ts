@@ -211,6 +211,17 @@ export function formatWeekdayNarrow(
   }).format(toCalendarDate(value));
 }
 
+export function formatWeekday(
+  value: Date | string,
+  locale: Locale,
+  width: "long" | "short" = "long",
+): string {
+  return dateTimeFormatter(locale, {
+    ...CALENDAR_UTC,
+    weekday: width,
+  }).format(toCalendarDate(value));
+}
+
 /** `Mar 7` (en-US) · `7. März` (de-DE) */
 export function formatDayMonthShort(
   value: Date | string,

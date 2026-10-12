@@ -11,6 +11,7 @@ export type IconKey =
   | "passengers"
   | "bikes"
   | "locations"
+  | "mapPin"
   | "chat"
   | "reports"
   | "chapters"

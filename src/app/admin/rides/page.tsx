@@ -49,6 +49,7 @@ const TRANSIENT = {
   date: null,
   start: null,
   end: null,
+  rideLocation: null,
 } as const;
 
 export default function RidesPage({
@@ -213,11 +214,16 @@ async function CalendarBody({
   dict: Dictionary;
 }) {
   const weekStart = startOfWeek(anchor, timeZone, weekStartsOn);
-  const weekRides = await rideFeature.listRidesInRange(
-    chapterIds,
-    weekStart,
-    addDays(weekStart, 7, timeZone),
-  );
+  const [weekRides, hours] = await Promise.all([
+    rideFeature.listRidesInRange(
+      chapterIds,
+      weekStart,
+      addDays(weekStart, 7, timeZone),
+    ),
+    chapterIds.length === 1
+      ? chapterFeature.getOperatingHours(chapterIds[0], weekStart)
+      : undefined,
+  ]);
 
   const keys = weekDays(anchor, timeZone, weekStartsOn).map((day) =>
     dayKey(day, timeZone),
@@ -277,6 +283,7 @@ async function CalendarBody({
           previousLabel: strings.previousDay,
           nextLabel: strings.nextDay,
         }}
+        openingHours={hours}
       />
     </div>
   );

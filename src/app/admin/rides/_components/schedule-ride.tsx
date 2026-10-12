@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { chapters as chapterFeature } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
+import { rideLocations } from "@/features/ride-locations";
 import { RIDE_MAX_MINUTES, RIDE_MIN_MINUTES, wallSlot } from "@/features/rides";
 import {
   isPilot,
@@ -31,6 +32,8 @@ import {
   type ScheduleChapter,
   type ScheduleCrew,
 } from "./schedule-ride-drawer";
+import type { HoursPolicy } from "./hours-warnings";
+import type { RideLocationChoice } from "./ride-location-field";
 
 const STAYS = [15, 30, 45, 60, 90, 120, 180, 240, 360];
 const LAST_START_HOUR = 20;
@@ -91,6 +94,52 @@ function defaultSlot(
   };
 }
 
+type Planning = {
+  policy: HoursPolicy;
+  rideMinutes: number;
+  stayMinutes: number;
+};
+
+async function loadPlanning(chapterIds: string[]) {
+  const [hours, settings, closures] = await Promise.all([
+    chapterFeature.getOperatingHoursOf(chapterIds),
+    Promise.all(chapterIds.map((id) => chapterFeature.getSettings(id))),
+    Promise.all(chapterIds.map((id) => chapterFeature.listClosures(id))),
+  ]);
+  return new Map<string, Planning>(
+    chapterIds.map((id, index) => [
+      id,
+      {
+        policy: {
+          hours: hours.get(id) ?? { windows: [], closures: [] },
+          closureReasons: Object.fromEntries(
+            closures[index].map((closure) => [closure.date, closure.reason]),
+          ),
+          leadTimeHours: settings[index].bookingLeadTimeHours,
+          horizonDays: settings[index].bookingHorizonDays,
+        },
+        rideMinutes: settings[index].defaultRideMinutes,
+        stayMinutes: settings[index].defaultStayMinutes,
+      },
+    ]),
+  );
+}
+
+const toChoice = (
+  location: Awaited<ReturnType<typeof rideLocations.listRideLocations>>[number],
+): RideLocationChoice => ({
+  id: location.id,
+  chapterId: location.chapterId,
+  kind: location.kind,
+  name: location.name,
+  address: location.address,
+  latitude: location.latitude,
+  longitude: location.longitude,
+  defaultTrishawCount: location.defaultTrishawCount,
+  defaultPilotCount: location.defaultPilotCount,
+  defaultMinutes: location.defaultMinutes,
+});
+
 async function loadCrew(chapterIds: string[]): Promise<ScheduleCrew> {
   const [riders, members] = await Promise.all([
     passengers.listPassengersOfChapters(chapterIds),
@@ -117,11 +166,14 @@ export async function ScheduleRide({
   const { chapterIds } = await readActiveScope(searchParams, "rides");
   if (!chapterIds.length) return null;
 
-  const [found, dict, language, head] = await Promise.all([
+  const opening = params.new === "1";
+  const [found, dict, language, head, planning, places] = await Promise.all([
     chapterFeature.getChapters(chapterIds),
     getDictionary(),
     getLocale(),
     headers(),
+    opening ? loadPlanning(chapterIds) : new Map<string, Planning>(),
+    opening ? rideLocations.listRideLocations(chapterIds) : [],
   ]);
   if (!found.length) return null;
 
@@ -132,15 +184,29 @@ export async function ScheduleRide({
 
   const chapters: ScheduleChapter[] = found
     .toSorted((a, b) => a.name.localeCompare(b.name, language))
-    .map((chapter) => ({
-      id: chapter.id,
-      name: chapter.name,
-      timeZone: chapter.timeZone,
-      address: chapter.address,
-      latitude: chapter.latitude,
-      longitude: chapter.longitude,
-      ...defaultSlot(params, chapter.timeZone, weekStartsOn, now),
-    }));
+    .map((chapter) => {
+      const plan = planning.get(chapter.id);
+      const slot = defaultSlot(params, chapter.timeZone, weekStartsOn, now);
+      return {
+        id: chapter.id,
+        name: chapter.name,
+        timeZone: chapter.timeZone,
+        address: chapter.address,
+        latitude: chapter.latitude,
+        longitude: chapter.longitude,
+        ...slot,
+        ...(plan
+          ? {
+              policy: plan.policy,
+              stayMinutes: plan.stayMinutes,
+              durationMinutes:
+                "durationChosen" in slot && slot.durationChosen
+                  ? slot.durationMinutes
+                  : plan.rideMinutes,
+            }
+          : {}),
+      };
+    });
 
   const choices = (minutes: number[]) =>
     minutes.map((value) => ({
@@ -170,6 +236,16 @@ export async function ScheduleRide({
       markdown={dict.common.markdown}
       models={dict.calendar.models}
       errors={rideErrors(dict)}
+      locations={places.map(toChoice)}
+      locationStrings={{
+        picker: dict.admin.rideLocations.picker,
+        kinds: dict.admin.rideLocations.kinds,
+      }}
+      hoursStrings={{
+        warnings: dict.admin.settings.hours.warnings,
+        hours: dict.admin.settings.booking.hours,
+        days: dict.admin.settings.booking.days,
+      }}
       fleet={{
         pool: common.pool,
         wheelchair: common.wheelchair,

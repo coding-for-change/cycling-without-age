@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { birthDate, gender } from "@/features/profile/schemas";
+import { riderNeedsInput } from "@/features/passengers/schemas";
 
 const email = z
   .string()
@@ -29,6 +30,7 @@ export const assistedPassengerInput = z.object({
   gender,
   contact,
   helper: helperInput.optional(),
+  needs: riderNeedsInput.optional(),
 });
 export type AssistedPassengerInput = z.infer<typeof assistedPassengerInput>;
 

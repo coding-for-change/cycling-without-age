@@ -333,6 +333,14 @@ describe("scheduleRide", () => {
       expect(eventTypes()).toEqual(["ride.scheduled"]);
     });
 
+    it("links only the way there to the Ride Location it starts from", async () => {
+      await schedule({ ...trip, rideLocationId: "loc-sonnenhof" }, ADMIN);
+      expect(db.ride.create.mock.calls[0][0].data.rideLocationId).toBe(
+        "loc-sonnenhof",
+      );
+      expect(db.ride.create.mock.calls[1][0].data.rideLocationId).toBeNull();
+    });
+
     it("checks both windows under one lock, before either row is written", async () => {
       await schedule(trip, ADMIN);
       expect(db.$transaction).toHaveBeenCalledTimes(1);
@@ -695,11 +703,21 @@ describe("updateRideDetails", () => {
       ADMIN,
     );
     expect(db.ride.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { locationName: "Englischer Garten" } }),
+      expect.objectContaining({
+        data: { locationName: "Englischer Garten", rideLocationId: null },
+      }),
     );
     expect(eventTypes()).toEqual(["ride.rescheduled"]);
     expect(emitted[0]).toEqual(
       expect.objectContaining({ changes: ["location"] }),
+    );
+  });
+
+  it("leaves the Ride Location link alone when the place stays", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    await rides.updateRideDetails("ride-1", { requiredPilots: 2 }, ADMIN);
+    expect(db.ride.update.mock.calls[0][0].data).not.toHaveProperty(
+      "rideLocationId",
     );
   });
 
@@ -1985,5 +2003,31 @@ describe("listRidesForList", () => {
   it("asks the database nothing without chapters", async () => {
     await rides.listRidesForList({ chapterIds: [] }, NOW);
     expect(db.ride.findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("rides at a Ride Location", () => {
+  it("counts upcoming scheduled rides per location", async () => {
+    const groupBy = jest.fn(async () => [
+      { rideLocationId: "loc-1", _count: { _all: 3 } },
+    ]);
+    (db.ride as unknown as { groupBy: jest.Mock }).groupBy = groupBy;
+    const now = new Date("2026-10-12T08:00:00Z");
+    const counts = await rides.countRidesAt(["loc-1", "loc-2"], now);
+    expect(counts.get("loc-1")).toBe(3);
+    expect(counts.get("loc-2")).toBeUndefined();
+    expect(groupBy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          rideLocationId: { in: ["loc-1", "loc-2"] },
+          status: "scheduled",
+          startsAt: { gte: now },
+        },
+      }),
+    );
+  });
+
+  it("asks nothing for no locations", async () => {
+    expect((await rides.countRidesAt([])).size).toBe(0);
   });
 });

@@ -8,6 +8,8 @@ import { readActiveScope, type AdminSearchParams } from "../active-scope";
 import { JoinLinkCard } from "./_components/join-link-card";
 import { NotificationSettingsCard } from "./_components/notification-settings-card";
 import { PostRideInstructionsCard } from "./_components/post-ride-instructions-card";
+import { RidingHoursSettings } from "./_components/riding-hours-settings";
+import { BookingSettings } from "./_components/booking-settings";
 import { PageFallback } from "@/components/page-fallback";
 import { markdownToolLabels } from "@/components/markdown-editor";
 
@@ -68,6 +70,8 @@ async function Settings({
                 field: strings.notifications.field,
               }}
             />
+            <RidingHoursSettings chapterId={chapter.id} />
+            <BookingSettings chapterId={chapter.id} />
           </>
         ) : (
           <p className="max-w-prose text-sm text-ink-soft">

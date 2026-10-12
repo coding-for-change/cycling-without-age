@@ -8,6 +8,9 @@ import { distanceMeters, type Coords } from "@/lib/geo";
 import {
   chapterInput,
   chapterSettingsInput,
+  closureInput,
+  OPERATING_HOURS,
+  operatingHoursInput,
   chapterUpdateInput,
   countryInput,
   countryUpdateInput,
@@ -18,9 +21,19 @@ import type {
   ChapterSettings,
   ChapterSettingsInput,
   ChapterUpdateInput,
+  ClosureInput,
   CountryInput,
   CountryUpdateInput,
+  OperatingHoursInput,
 } from "./schemas";
+import type { OperatingHours } from "@/lib/operating-hours";
+import {
+  deleteClosure,
+  findClosures,
+  findOperatingWindows,
+  replaceOperatingWindows,
+  upsertClosure,
+} from "./services/operating-hours";
 import {
   deleteCountryAdmin,
   deleteCountryById,
@@ -362,3 +375,113 @@ export const getChapterTimeZones = (ids: string[]) =>
 
 export const listChapterReportMeta = (ids: string[]) =>
   ids.length ? findChapterReportMeta(ids) : Promise.resolve([]);
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const isoDate = (date: Date) => date.toISOString().slice(0, 10);
+
+const dateOf = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
+
+const closuresFrom = (from?: Date) =>
+  dateOf(isoDate(new Date((from ?? new Date()).getTime() - DAY_MS)));
+
+async function requireChapter(chapterId: string) {
+  if (!(await findChapterCountryId(chapterId)))
+    throw new DomainError("unknownChapter");
+}
+
+export async function listOperatingWindows(chapterId: string) {
+  return (await findOperatingWindows([chapterId])).map(
+    ({ weekday, startMinute, endMinute }) => ({
+      weekday,
+      startMinute,
+      endMinute,
+    }),
+  );
+}
+
+export async function setOperatingWindows(
+  chapterId: string,
+  input: OperatingHoursInput,
+) {
+  const windows = operatingHoursInput.parse(input);
+  await requireChapter(chapterId);
+  await replaceOperatingWindows(chapterId, windows);
+  return listOperatingWindows(chapterId);
+}
+
+export type ChapterClosureRow = {
+  id: string;
+  date: string;
+  reason: string | null;
+};
+
+export async function listClosures(
+  chapterId: string,
+  from?: Date,
+): Promise<ChapterClosureRow[]> {
+  return (
+    await findClosures(
+      [chapterId],
+      closuresFrom(from),
+      OPERATING_HOURS.closuresShown,
+    )
+  ).map((closure) => ({
+    id: closure.id,
+    date: isoDate(closure.date),
+    reason: closure.reason,
+  }));
+}
+
+export async function addClosure(chapterId: string, input: ClosureInput) {
+  const { date, reason } = closureInput.parse(input);
+  await requireChapter(chapterId);
+  const closure = await upsertClosure(chapterId, dateOf(date), reason ?? null);
+  return { id: closure.id, date, reason: closure.reason };
+}
+
+export async function removeClosure(chapterId: string, closureId: string) {
+  const { count } = await deleteClosure(chapterId, closureId);
+  if (count === 0) throw new DomainError("notFound");
+}
+
+export async function getOperatingHoursOf(
+  chapterIds: string[],
+  from?: Date,
+): Promise<Map<string, OperatingHours>> {
+  if (!chapterIds.length) return new Map();
+  const [windows, closures] = await Promise.all([
+    findOperatingWindows(chapterIds),
+    findClosures(
+      chapterIds,
+      closuresFrom(from),
+      OPERATING_HOURS.closuresShown * chapterIds.length,
+    ),
+  ]);
+  return new Map(
+    chapterIds.map((chapterId) => [
+      chapterId,
+      {
+        windows: windows
+          .filter((window) => window.chapterId === chapterId)
+          .map(({ weekday, startMinute, endMinute }) => ({
+            weekday,
+            startMinute,
+            endMinute,
+          })),
+        closures: closures
+          .filter((closure) => closure.chapterId === chapterId)
+          .map((closure) => isoDate(closure.date)),
+      },
+    ]),
+  );
+}
+
+export const getOperatingHours = async (
+  chapterId: string,
+  from?: Date,
+): Promise<OperatingHours> =>
+  (await getOperatingHoursOf([chapterId], from)).get(chapterId) ?? {
+    windows: [],
+    closures: [],
+  };

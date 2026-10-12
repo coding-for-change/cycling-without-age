@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { birthDate, gender } from "@/features/profile";
+import { birthDate, gender } from "@/features/profile/schemas";
 
 export const passengerInput = z.object({
   chapterId: z.string().min(1).max(64),
@@ -18,3 +18,20 @@ export const ownRiderDetailsPatch = z.object({
 });
 export type OwnRiderDetailsPatch = z.infer<typeof ownRiderDetailsPatch>;
 export type OwnRiderDetailsPatchInput = z.input<typeof ownRiderDetailsPatch>;
+
+export const RIDER_NOTE_MAX = 1_000;
+
+export const riderNeedsInput = z
+  .object({
+    needsWheelchairBike: z.boolean(),
+    note: z
+      .string()
+      .trim()
+      .max(RIDER_NOTE_MAX)
+      .transform((value) => value || null)
+      .nullable(),
+    rideLocationId: z.string().min(1).max(64).nullable(),
+  })
+  .partial();
+export type RiderNeedsInput = z.input<typeof riderNeedsInput>;
+export type RiderNeeds = z.output<typeof riderNeedsInput>;

@@ -95,6 +95,22 @@ export const chapterUpdateInput = chapterInput
 export type ChapterUpdateInput = z.infer<typeof chapterUpdateInput>;
 
 export const CHAPTER_WELCOME_NOTE_MAX = 600;
+
+const MINUTES_PER_DAY = 24 * 60;
+
+export const BOOKING_LIMITS = {
+  leadTimeHours: { min: 0, max: 24 * 30 },
+  horizonDays: { min: 1, max: 365 },
+  rideMinutes: { min: 15, max: 12 * 60 },
+  stayMinutes: { min: 0, max: 12 * 60 },
+} as const;
+
+export const BOOKING_CHOICES = {
+  leadTimeHours: [0, 12, 24, 48, 72, 168],
+  horizonDays: [14, 30, 60, 90, 180, 365],
+  rideMinutes: [30, 45, 60, 90, 120, 180],
+  stayMinutes: [15, 30, 45, 60, 90, 120, 180, 240],
+} as const;
 export const CHAPTER_POST_RIDE_MAX = 5_000;
 
 export type ChapterSettings = {
@@ -104,6 +120,10 @@ export type ChapterSettings = {
   welcomeNote: string | null;
   postRideInstructions: string | null;
   damageAlertPush: boolean;
+  bookingLeadTimeHours: number;
+  bookingHorizonDays: number;
+  defaultRideMinutes: number;
+  defaultStayMinutes: number;
 };
 
 export const DEFAULT_CHAPTER_SETTINGS: ChapterSettings = {
@@ -113,6 +133,10 @@ export const DEFAULT_CHAPTER_SETTINGS: ChapterSettings = {
   welcomeNote: null,
   postRideInstructions: null,
   damageAlertPush: true,
+  bookingLeadTimeHours: 48,
+  bookingHorizonDays: 60,
+  defaultRideMinutes: 60,
+  defaultStayMinutes: 60,
 };
 
 export const chapterSettingsInput = z
@@ -142,6 +166,111 @@ export const chapterSettingsInput = z
       .max(CHAPTER_POST_RIDE_MAX)
       .nullable(),
     damageAlertPush: z.boolean(),
+    bookingLeadTimeHours: z
+      .number()
+      .int()
+      .min(BOOKING_LIMITS.leadTimeHours.min)
+      .max(BOOKING_LIMITS.leadTimeHours.max),
+    bookingHorizonDays: z
+      .number()
+      .int()
+      .min(BOOKING_LIMITS.horizonDays.min)
+      .max(BOOKING_LIMITS.horizonDays.max),
+    defaultRideMinutes: z
+      .number()
+      .int()
+      .min(BOOKING_LIMITS.rideMinutes.min)
+      .max(BOOKING_LIMITS.rideMinutes.max),
+    defaultStayMinutes: z
+      .number()
+      .int()
+      .min(BOOKING_LIMITS.stayMinutes.min)
+      .max(BOOKING_LIMITS.stayMinutes.max),
   })
   .partial();
 export type ChapterSettingsInput = z.infer<typeof chapterSettingsInput>;
+
+export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;
+export type Weekday = (typeof WEEKDAYS)[number];
+
+export const OPERATING_HOURS = {
+  stepMinutes: 15,
+  minWindowMinutes: 30,
+  maxWindowsPerDay: 4,
+  closureReasonMax: 200,
+  closuresShown: 50,
+} as const;
+
+const dayMinute = z
+  .number()
+  .int()
+  .min(0)
+  .max(MINUTES_PER_DAY)
+  .refine((minute) => minute % OPERATING_HOURS.stepMinutes === 0, "step");
+
+export const operatingWindowInput = z
+  .object({
+    weekday: z
+      .number()
+      .int()
+      .min(1)
+      .max(7)
+      .transform((day) => day as Weekday),
+    startMinute: dayMinute,
+    endMinute: dayMinute,
+  })
+  .superRefine((window, ctx) => {
+    if (window.endMinute <= window.startMinute)
+      ctx.addIssue({
+        code: "custom",
+        message: "endsAfterStart",
+        path: ["endMinute"],
+      });
+    else if (
+      window.endMinute - window.startMinute <
+      OPERATING_HOURS.minWindowMinutes
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "windowTooShort",
+        path: ["endMinute"],
+      });
+  });
+export type OperatingWindowInput = z.input<typeof operatingWindowInput>;
+export type OperatingWindow = z.output<typeof operatingWindowInput>;
+
+export const operatingHoursInput = z
+  .array(operatingWindowInput)
+  .max(WEEKDAYS.length * OPERATING_HOURS.maxWindowsPerDay)
+  .superRefine((windows, ctx) => {
+    for (const weekday of WEEKDAYS) {
+      const day = windows
+        .filter((window) => window.weekday === weekday)
+        .toSorted((a, b) => a.startMinute - b.startMinute);
+      if (day.length > OPERATING_HOURS.maxWindowsPerDay)
+        ctx.addIssue({ code: "custom", message: "tooManyWindows" });
+      for (let index = 1; index < day.length; index++)
+        if (day[index].startMinute < day[index - 1].endMinute)
+          ctx.addIssue({ code: "custom", message: "windowsOverlap" });
+    }
+  });
+export type OperatingHoursInput = z.input<typeof operatingHoursInput>;
+
+export const closureInput = z.object({
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .refine((date) => {
+      const [year, month, day] = date.split("-").map(Number);
+      const parsed = new Date(Date.UTC(year, month - 1, day));
+      return parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
+    }),
+  reason: z
+    .string()
+    .trim()
+    .max(OPERATING_HOURS.closureReasonMax)
+    .transform((value) => value || null)
+    .nullable()
+    .optional(),
+});
+export type ClosureInput = z.input<typeof closureInput>;

@@ -8,6 +8,10 @@ const COLUMNS = {
   welcomeNote: true,
   postRideInstructions: true,
   damageAlertPush: true,
+  bookingLeadTimeHours: true,
+  bookingHorizonDays: true,
+  defaultRideMinutes: true,
+  defaultStayMinutes: true,
 } as const;
 
 export const findChapterSettings = (chapterId: string) =>

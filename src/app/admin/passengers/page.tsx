@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { EmptyState } from "@/components/empty-state";
 import { chapters as chapterFeature } from "@/features/chapters";
 import { passengers } from "@/features/passengers";
+import { rideLocations } from "@/features/ride-locations";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { formatDate, resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
@@ -44,7 +45,7 @@ async function Passengers({
   const { active, scopeQuery, chapters, chapterIds } =
     await readActiveScope(searchParams);
 
-  const [list, dict, head, country, locale] = await Promise.all([
+  const [list, dict, head, country, locale, places] = await Promise.all([
     passengers.listPassengersOfChapters(chapterIds),
     getDictionary(),
     headers(),
@@ -52,6 +53,9 @@ async function Passengers({
       ? chapterFeature.getCountry(active.chapter.countryId)
       : null,
     getLocale(),
+    active.kind === "chapter"
+      ? rideLocations.listRideLocations([active.chapter.id])
+      : [],
   ]);
 
   const notation = resolveLocale(head.get("accept-language"));
@@ -91,6 +95,10 @@ async function Passengers({
             chapterId={active.chapter.id}
             country={dialling}
             labels={dict.admin.passengers.add}
+            needs={dict.passenger.riderNeeds}
+            careCenters={places
+              .filter((place) => place.kind !== "publicPlace")
+              .map((place) => ({ id: place.id, name: place.name }))}
             locale={locale}
             person={{
               firstName: dict.profile.firstName,

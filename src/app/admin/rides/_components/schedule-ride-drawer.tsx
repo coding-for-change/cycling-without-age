@@ -90,12 +90,18 @@ import {
   RIDE_MODELS,
   RIDE_NOTE_MAX,
   RIDE_TITLE_MAX,
+  returnWindow,
+  slotWindow,
   type RideModelName,
   type WallSlot,
 } from "@/features/rides/schemas";
 import { useDrawerParam } from "@/hooks/use-drawer-param";
 import { clockLabel, clockToMinutes, DEFAULT_SLOT_MINUTES } from "@/lib/clock";
-import type { Locale as NotationLocale } from "@/lib/format";
+import {
+  formatDuration,
+  wordsLocale,
+  type Locale as NotationLocale,
+} from "@/lib/format";
 import type { RideErrors } from "@/features/rides/components/strings";
 import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
@@ -110,6 +116,17 @@ import {
   TrishawOptionRow,
   type TrishawOptionLabels,
 } from "./trishaw-option-row";
+import {
+  placeOfLocation,
+  RideLocationField,
+  type RideLocationChoice,
+  type RideLocationFieldStrings,
+} from "./ride-location-field";
+import {
+  HoursWarnings,
+  type HoursPolicy,
+  type HoursWarningStrings,
+} from "./hours-warnings";
 
 export type ScheduleChapter = {
   id: string;
@@ -122,6 +139,8 @@ export type ScheduleChapter = {
   start: string;
   durationMinutes?: number;
   durationChosen?: boolean;
+  policy?: HoursPolicy;
+  stayMinutes?: number;
 };
 
 type CrewMember = PersonOption & { chapterId: string };
@@ -157,6 +176,9 @@ type Props = {
   models: Dictionary["calendar"]["models"];
   errors: RideErrors;
   fleet: FleetLabels;
+  locations?: RideLocationChoice[];
+  locationStrings: Pick<RideLocationFieldStrings, "picker" | "kinds">;
+  hoursStrings: HoursWarningStrings;
 };
 
 const DEFAULT_STAY = 60;
@@ -236,10 +258,21 @@ function ScheduleRideSheet({
   models,
   errors,
   fleet,
+  locations = [],
+  locationStrings,
+  hoursStrings,
 }: Props & { open: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { close } = useDrawerParam();
+  const { go } = useDrawerParam();
+  const close = () =>
+    go((params) => {
+      params.delete("new");
+      params.delete("rideLocation");
+    });
+  const requestedLocation = locations.find(
+    (candidate) => candidate.id === searchParams.get("rideLocation"),
+  );
   const formId = useId();
   const titleId = useId();
   const roundTripId = useId();
@@ -253,7 +286,9 @@ function ScheduleRideSheet({
   );
   const [pending, startTransition] = useTransition();
 
-  const [chapterId, setChapterId] = useState(() => rememberedChapter(chapters));
+  const [chapterId, setChapterId] = useState(
+    () => requestedLocation?.chapterId ?? rememberedChapter(chapters),
+  );
   const chapter =
     chapters.find((candidate) => candidate.id === chapterId) ?? chapters[0];
   const home = chapterPlace(chapter);
@@ -265,13 +300,22 @@ function ScheduleRideSheet({
   const [slot, setSlot] = useState<WallSlot>({
     date: chapter.date,
     start: chapter.start,
-    durationMinutes: chapter.durationMinutes ?? DEFAULT_SLOT_MINUTES,
+    durationMinutes:
+      (!chapter.durationChosen && requestedLocation?.defaultMinutes) ||
+      (chapter.durationMinutes ?? DEFAULT_SLOT_MINUTES),
   });
-  const [origin, setOrigin] = useState<Place | null>(null);
+  const [rideLocation, setRideLocation] = useState<RideLocationChoice | null>(
+    requestedLocation ?? null,
+  );
+  const [origin, setOrigin] = useState<Place | null>(() =>
+    requestedLocation ? placeOfLocation(requestedLocation) : null,
+  );
   const [destination, setDestination] = useState<Place | null>(null);
   const [roundTrip, setRoundTrip] = useState(true);
-  const [stay, setStay] = useState(DEFAULT_STAY);
-  const [pilotsNeeded, setPilotsNeeded] = useState(1);
+  const [stay, setStay] = useState(chapter.stayMinutes ?? DEFAULT_STAY);
+  const [pilotsNeeded, setPilotsNeeded] = useState(
+    requestedLocation?.defaultPilotCount ?? 1,
+  );
   const [passengerIds, setPassengerIds] = useState<string[]>([]);
   const [pilotIds, setPilotIds] = useState<string[]>([]);
   const [noteOpen, setNoteOpen] = useState(false);
@@ -403,6 +447,7 @@ function ScheduleRideSheet({
     setChapterId(id);
     rememberChapter(id);
     setSelected(new Set());
+    setRideLocation(null);
     setOrigin(null);
     setDestination(null);
     setPassengerIds([]);
@@ -412,6 +457,31 @@ function ScheduleRideSheet({
   const changeSlot = (next: WallSlot) => {
     if (next.durationMinutes !== slot.durationMinutes) endEdited.current = true;
     setSlot(next);
+  };
+
+  const pickPlace = (place: Place | null) => {
+    setRideLocation(null);
+    setOrigin(place);
+  };
+
+  const pickLocation = (location: RideLocationChoice) => {
+    setRideLocation(location);
+    setOrigin(placeOfLocation(location));
+    if (!pleasure) changePilotsNeeded(location.defaultPilotCount);
+    if (location.defaultMinutes && !endEdited.current)
+      setSlot((current) => ({
+        ...current,
+        durationMinutes: location.defaultMinutes ?? current.durationMinutes,
+      }));
+    if (options && selected.size === 0)
+      setSelected(
+        new Set(
+          options
+            .filter((option) => option.blocked === null)
+            .slice(0, pleasure ? 1 : location.defaultTrishawCount)
+            .map((option) => option.id),
+        ),
+      );
   };
 
   const changePilotsNeeded = (next: number) => {
@@ -446,6 +516,7 @@ function ScheduleRideSheet({
         chapterId: chapter.id,
         model,
         slot,
+        rideLocationId: rideLocation?.id ?? null,
         locationName: origin?.name ?? null,
         locationAddress: origin?.address ?? null,
         latitude: origin?.latitude ?? null,
@@ -479,7 +550,10 @@ function ScheduleRideSheet({
       });
       if (result.ok)
         router.replace(
-          hrefWith(`/admin/rides/${result.id}`, searchParams, { new: null }),
+          hrefWith(`/admin/rides/${result.id}`, searchParams, {
+            new: null,
+            rideLocation: null,
+          }),
         );
     });
   };
@@ -641,18 +715,59 @@ function ScheduleRideSheet({
               strings={when}
             />
 
-            <PlaceRow
+            {chapter.policy ? (
+              <HoursWarnings
+                slot={slot}
+                returnSlot={
+                  twoWay
+                    ? returnWindow(slotWindow(slot, chapter.timeZone), stay)
+                    : null
+                }
+                timeZone={chapter.timeZone}
+                policy={chapter.policy}
+                notation={locale}
+                language={language}
+                strings={hoursStrings}
+              />
+            ) : null}
+
+            <RideLocationField
               key={`origin-${chapter.id}`}
-              icon={MapPin}
-              value={origin}
-              onChange={setOrigin}
-              shortcut={home}
-              shortcutHint={strings.chapterLocation}
-              strings={placeStrings(strings.origin, strings.originPlaceholder)}
-              clearLabel={strings.clearPlace}
+              locations={locations.filter(
+                (candidate) => candidate.chapterId === chapter.id,
+              )}
+              location={rideLocation}
+              place={origin}
+              home={home}
+              onLocation={pickLocation}
+              onPlace={pickPlace}
+              strings={{
+                ...locationStrings,
+                search: placeStrings(strings.origin, strings.originPlaceholder),
+                chapterLocation: strings.chapterLocation,
+                clear: strings.clearPlace,
+              }}
               language={language}
               failed={errors.generic}
             />
+            {rideLocation ? (
+              <p className="pl-9 text-xs text-ink-soft">
+                {formatMessage(
+                  locationStrings.picker.defaults,
+                  {
+                    name: rideLocation.name,
+                    pilots: rideLocation.defaultPilotCount,
+                    trishaws: rideLocation.defaultTrishawCount,
+                    minutes: formatDuration(
+                      (rideLocation.defaultMinutes ?? slot.durationMinutes) *
+                        60,
+                      wordsLocale(language),
+                    ),
+                  },
+                  language,
+                )}
+              </p>
+            ) : null}
 
             {functional ? (
               <>
