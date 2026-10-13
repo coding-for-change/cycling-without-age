@@ -891,6 +891,10 @@ export async function updateRideDetails(
       parsed.model !== undefined &&
       parsed.model !== "functional" &&
       ride.model === "functional";
+    const leavingEvent =
+      parsed.model !== undefined &&
+      parsed.model !== "event" &&
+      ride.model === "event";
     if (
       parsed.model !== undefined &&
       parsed.model !== ride.model &&
@@ -925,9 +929,12 @@ export async function updateRideDetails(
     );
     if (!changed.length) return ride;
 
-    const data = Object.fromEntries(
-      changed.map((field) => [field, blankToNull(wanted[field])]),
-    ) as Prisma.RideUncheckedUpdateInput;
+    const data = {
+      ...Object.fromEntries(
+        changed.map((field) => [field, blankToNull(wanted[field])]),
+      ),
+      ...(leavingEvent ? { announced: false } : {}),
+    } as Prisma.RideUncheckedUpdateInput;
     const updated = await updateRide(id, data, tx);
     const shown = changed.filter(
       (field) =>

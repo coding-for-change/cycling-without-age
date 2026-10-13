@@ -73,6 +73,7 @@ async function PassengerRide({ rideId }: { rideId: string }) {
   );
   const seatsLeft = rides.seatsLeft(ride);
   const canBookMore =
+    ride.model === "event" &&
     ride.announced &&
     ride.status === "scheduled" &&
     ride.startsAt > new Date() &&

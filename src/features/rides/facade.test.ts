@@ -719,6 +719,18 @@ describe("rescheduling a wall-clock patch", () => {
 });
 
 describe("updateRideDetails", () => {
+  // Booking a seat is for events only: one that becomes another model is no
+  // longer offered, and turning it back into an event does not offer it again.
+  it("takes an event off the riders' list when it becomes another model", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ announced: true, title: null, capacity: null }),
+    );
+    await rides.updateRideDetails("ride-1", { model: "pleasure" }, ADMIN);
+    expect(db.ride.update.mock.calls[0][0].data).toEqual(
+      expect.objectContaining({ model: "pleasure", announced: false }),
+    );
+  });
+
   it("writes only what changed and tells riders when the place moved", async () => {
     db.ride.findUnique.mockResolvedValue(scheduled());
     await rides.updateRideDetails(
