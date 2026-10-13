@@ -71,10 +71,11 @@ export const findPassengersOfChapters = (chapterIds: string[]) =>
     },
   });
 
-export const findRiderAccountsOfChapters = (chapterIds: string[]) =>
+export const findBookingAccountsOfChapters = (chapterIds: string[]) =>
   prisma.passenger.findMany({
     where: { chapterId: { in: chapterIds } },
-    select: { managedByUserId: true, userId: true },
+    select: { managedByUserId: true },
+    distinct: ["managedByUserId"],
   });
 
 export const countPassengersManagedBy = (managedByUserId: string) =>

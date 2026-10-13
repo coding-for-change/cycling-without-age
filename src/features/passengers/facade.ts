@@ -2,7 +2,7 @@ import { ownRiderDetailsPatch, passengerInput } from "./schemas";
 import { DomainError } from "@/lib/domain-error";
 import type { OwnRiderDetailsPatchInput, PassengerInput } from "./schemas";
 import {
-  findRiderAccountsOfChapters,
+  findBookingAccountsOfChapters,
   countPassengersInChapters,
   countPassengersManagedBy,
   findPassengerById,
@@ -34,18 +34,15 @@ export const listPassengersManagedBy = (userId: string) =>
 export const listPassengersOfChapters = (chapterIds: string[]) =>
   findPassengersOfChapters(chapterIds);
 
-/** Every account that manages or is a rider of these chapters. */
-export const listRiderAccountsOfChapters = async (chapterIds: string[]) =>
+/**
+ * The accounts that book for these chapters' riders: whoever manages a rider,
+ * which is the rider's own account when it books for itself.
+ */
+export const listBookingAccountsOfChapters = async (chapterIds: string[]) =>
   chapterIds.length
-    ? [
-        ...new Set(
-          (await findRiderAccountsOfChapters(chapterIds)).flatMap((rider) =>
-            [rider.managedByUserId, rider.userId].filter((id): id is string =>
-              Boolean(id),
-            ),
-          ),
-        ),
-      ]
+    ? (await findBookingAccountsOfChapters(chapterIds)).map(
+        (rider) => rider.managedByUserId,
+      )
     : [];
 
 export type PassengerRow = Awaited<

@@ -140,8 +140,8 @@ export const ridePilotWithdrew = defineKind({
 });
 
 /**
- * Lifecycle 4B-b: an event the chapter announces reaches the accounts behind
- * its riders, who can book a seat from the link. Several at once are one card.
+ * Lifecycle 4B-b: an event the chapter announces reaches the accounts that book
+ * for its riders, from the link. Several at once are one card.
  */
 export const rideAnnounced = defineKind({
   event: "ride.announced",
@@ -151,7 +151,7 @@ export const rideAnnounced = defineKind({
   recipients: async (event) =>
     (await rideStillExists(event.rideId))
       ? excluding(
-          await passengers.listRiderAccountsOfChapters([event.chapterId]),
+          await passengers.listBookingAccountsOfChapters([event.chapterId]),
           event.actorUserId,
         )
       : [],

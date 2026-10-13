@@ -39,7 +39,7 @@ jest.mock("@/features/rides", () => ({
 jest.mock("@/features/passengers", () => ({
   passengers: {
     getPassenger: jest.fn(),
-    listRiderAccountsOfChapters: jest.fn(),
+    listBookingAccountsOfChapters: jest.fn(),
   },
 }));
 jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
