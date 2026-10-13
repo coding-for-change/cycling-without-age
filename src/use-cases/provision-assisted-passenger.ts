@@ -38,16 +38,18 @@ export async function provisionAssistedPassenger({
   });
 
   await membership.joinAsPassenger(userId, chapterId, adminUserId);
-  const passenger = await passengers.addPassenger({
-    chapterId,
-    managedByUserId: userId,
-    userId: owner ? null : userId,
-    firstName,
-    lastName,
-    birthDate,
-    gender,
-  });
-  if (needs) await passengers.setRiderNeeds(passenger.id, needs);
+  await passengers.addPassenger(
+    {
+      chapterId,
+      managedByUserId: userId,
+      userId: owner ? null : userId,
+      firstName,
+      lastName,
+      birthDate,
+      gender,
+    },
+    needs,
+  );
 
   await activity.record({
     userId,

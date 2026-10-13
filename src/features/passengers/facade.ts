@@ -30,8 +30,12 @@ export type PassengerRow = Awaited<
   ReturnType<typeof findPassengersOfChapters>
 >[number];
 
-export async function addPassenger(input: PassengerInput) {
+export async function addPassenger(
+  input: PassengerInput,
+  needs: RiderNeedsInput = {},
+) {
   const data = passengerInput.parse(input);
+  const riderNeeds = riderNeedsInput.parse(needs);
   const [existing] = await findPassengersManagedBy(data.managedByUserId);
   if (existing && existing.chapterId !== data.chapterId) {
     throw new DomainError("passengerChapterMismatch");
@@ -39,7 +43,11 @@ export async function addPassenger(input: PassengerInput) {
   if (data.userId && (await findPassengerOfUser(data.userId))) {
     throw new DomainError("alreadyHasPassenger");
   }
-  return insertPassenger({ ...data, userId: data.userId ?? null });
+  return insertPassenger({
+    ...data,
+    ...riderNeeds,
+    userId: data.userId ?? null,
+  });
 }
 
 export const countPassengers = (userId: string) =>
