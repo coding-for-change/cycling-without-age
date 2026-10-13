@@ -2,7 +2,8 @@ import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
 import { rides } from "@/features/rides";
 
-const PICKUP_WINDOW_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
+const PICKUP_LEAD_HOURS = 24;
 
 /** Each trishaw with the location it waits at, if the chapter can still reach it. */
 async function trishawPlaces(chapterId: string, trishawIds: string[]) {
@@ -46,13 +47,22 @@ export async function finishRideView(rideId: string, userId: string) {
   };
 }
 
-export const pickupOpens = (startsAt: Date) =>
-  new Date(startsAt.getTime() - PICKUP_WINDOW_MS);
+/**
+ * The pickup pack opens a day before the ride, but never while the pilot may
+ * still step back: in a chapter whose staffing window is shorter than a day,
+ * an access code read and a seat given up would leave the code with someone
+ * no longer on the ride.
+ */
+export const pickupOpens = (startsAt: Date, staffingLeadHours: number) =>
+  new Date(
+    startsAt.getTime() -
+      Math.min(PICKUP_LEAD_HOURS, staffingLeadHours) * HOUR_MS,
+  );
 
 /**
  * The pickup pack on an assigned pilot's ride page: where each trishaw waits
- * and its access code, from a day before the ride until it ends. The caller
- * passes a ride it already read as this pilot's own.
+ * and its access code, until the ride ends. The caller passes a ride it
+ * already read as this pilot's own.
  */
 export async function pickupView(
   ride: {
@@ -64,13 +74,10 @@ export async function pickupView(
   },
   now = new Date(),
 ) {
-  if (
-    ride.status !== "scheduled" ||
-    now < pickupOpens(ride.startsAt) ||
-    now > ride.endsAt ||
-    !ride.trishaws.length
-  )
+  if (ride.status !== "scheduled" || now > ride.endsAt || !ride.trishaws.length)
     return null;
+  const { staffingCheckLeadHours } = await chapters.getSettings(ride.chapterId);
+  if (now < pickupOpens(ride.startsAt, staffingCheckLeadHours)) return null;
   return trishawPlaces(
     ride.chapterId,
     ride.trishaws.map(({ trishaw }) => trishaw.id),

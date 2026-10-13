@@ -959,7 +959,9 @@ starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 1
 - **Contact exchange on match** (stories 24a/24b). The assigned pilot's select carries each
   rider's own phone, or the managing account's name and phone; the rider's account's select
   carries the assigned pilots' phones. Neither carries an email, and the open shape neither.
-- **Pickup pack.** From 24 hours before the ride until it ends, the assigned pilot's page shows
+- **Pickup pack.** From 24 hours before the ride (or from the close of the chapter's staffing
+  window, when that is later, so a pilot who can still step back never holds the code) until it
+  ends, the assigned pilot's page shows
   each trishaw's storage location and access code (`use-cases/finish-ride.ts` → `pickupView`,
   rendered by `features/fleet/components/storage-access-card.tsx`, which the finish page uses
   too).
