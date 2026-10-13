@@ -948,6 +948,8 @@ const openSelect = {
   chapter: { select: { id: true, name: true, timeZone: true } },
   _count: { select: { roster: true } },
   assignments: { where: { role: "pilot" }, select: { userId: true } },
+  returnLeg: otherLeg,
+  returnLegOf: otherLeg,
 } satisfies Prisma.RideSelect;
 
 export type OpenRideQueryRow = Prisma.RideGetPayload<{

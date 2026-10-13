@@ -1106,7 +1106,12 @@ export async function unassignVolunteer(
       actorUserId,
       "pilotUnassigned",
       { userId, role },
-      { type: "ride.pilotUnassigned", userId, self: actorUserId === userId },
+      {
+        type: "ride.pilotUnassigned",
+        userId,
+        self: actorUserId === userId,
+        pair: null,
+      },
     );
     return true;
   });
@@ -1410,6 +1415,24 @@ export async function getOpenRideForPilot(
 }
 
 /**
+ * A round trip is one outing for whoever pilots it: signing up for one leg
+ * takes the other too while it still needs a pilot, and stepping back from
+ * one leaves the other while there is still time. Both legs are locked by
+ * `requireRide`, so the other leg is read under the same lock.
+ */
+async function otherLegOf(ride: RideDetailRow, tx: Tx) {
+  const other = ride.returnLeg ?? ride.returnLegOf;
+  return other?.status === "scheduled" ? findRideDetail(other.id, tx) : null;
+}
+
+const pairOfLegs = (legs: RideDetailRow[], leg: RideDetailRow): RidePair =>
+  legs.length < 2
+    ? null
+    : leg.returnLeg
+      ? { role: "lead", otherRideId: leg.returnLeg.id }
+      : { role: "follow", otherRideId: leg.returnLegOf!.id };
+
+/**
  * Lifecycle 3B-b: a pilot takes a seat on the saddle. The ride row is locked
  * before the pilots are counted, so two pilots signing up for the last place
  * at once queue up, and the second one finds the ride staffed.
@@ -1425,19 +1448,36 @@ export async function selfAssign(
     if (isAssigned(ride, userId, "pilot")) return false;
     if ((await pilotsOn(ride, tx)) >= ride.requiredPilots)
       throw new DomainError("rideFullyStaffed");
-    await insertAssignment(
-      { rideId, userId, role: "pilot", assignedByUserId: null },
-      tx,
-    );
-    await record(
-      tx,
-      emit,
+    const other = await otherLegOf(ride, tx);
+    const legs = [
       ride,
-      userId,
-      "pilotAssigned",
-      { userId, role: "pilot" },
-      { type: "ride.pilotAssigned", userId, self: true, pair: null },
-    );
+      ...(other &&
+      other.startsAt > now &&
+      !isAssigned(other, userId, "pilot") &&
+      (await pilotsOn(other, tx)) < other.requiredPilots
+        ? [other]
+        : []),
+    ];
+    for (const leg of legs) {
+      await insertAssignment(
+        { rideId: leg.id, userId, role: "pilot", assignedByUserId: null },
+        tx,
+      );
+      await record(
+        tx,
+        emit,
+        leg,
+        userId,
+        "pilotAssigned",
+        { userId, role: "pilot" },
+        {
+          type: "ride.pilotAssigned",
+          userId,
+          self: true,
+          pair: pairOfLegs(legs, leg),
+        },
+      );
+    }
     return true;
   });
 }
@@ -1453,22 +1493,37 @@ export async function withdraw(
   leadHours: number,
   now = new Date(),
 ) {
+  const tooLate = (leg: RideDetailRow) =>
+    leg.startsAt.getTime() - now.getTime() < leadHours * HOUR_MS;
   return rideWrite(async (tx, emit) => {
     const ride = await requireScheduled(rideId, tx);
     if (!isAssigned(ride, userId, "pilot"))
       throw new DomainError("notAssigned");
-    if (ride.startsAt.getTime() - now.getTime() < leadHours * HOUR_MS)
-      throw new DomainError("tooLateToWithdraw");
-    await deleteAssignment(rideId, userId, "pilot", tx);
-    await record(
-      tx,
-      emit,
+    if (tooLate(ride)) throw new DomainError("tooLateToWithdraw");
+    const other = await otherLegOf(ride, tx);
+    const legs = [
       ride,
-      userId,
-      "pilotUnassigned",
-      { userId, role: "pilot" },
-      { type: "ride.pilotUnassigned", userId, self: true },
-    );
+      ...(other && isAssigned(other, userId, "pilot") && !tooLate(other)
+        ? [other]
+        : []),
+    ];
+    for (const leg of legs) {
+      await deleteAssignment(leg.id, userId, "pilot", tx);
+      await record(
+        tx,
+        emit,
+        leg,
+        userId,
+        "pilotUnassigned",
+        { userId, role: "pilot" },
+        {
+          type: "ride.pilotUnassigned",
+          userId,
+          self: true,
+          pair: pairOfLegs(legs, leg),
+        },
+      );
+    }
     return true;
   });
 }

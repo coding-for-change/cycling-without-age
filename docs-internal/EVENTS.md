@@ -221,8 +221,8 @@ the worker):
 | `ride.rescheduled` | `changes`: `time` · `location` · `destination` | `rescheduleRide` (once per leg it moves: moving the way there moves a scheduled way back too), `updateRideDetails` (a new place only; the note and pilots needed are history, not news) |
 | `ride.cancelled` | `reasonCode` | `cancelRide`, once per leg it cancels |
 | `ride.deleted` | — | `deleteRide`, once per leg it deletes (a cancelled other leg of a round trip goes too); the ride's history goes with it, so this row is what records who deleted it |
-| `ride.pilotAssigned` | `userId`, `self` | `assignVolunteer` |
-| `ride.pilotUnassigned` | `userId`, `self` | `unassignVolunteer` |
+| `ride.pilotAssigned` | `userId`, `self` | `assignVolunteer`, `selfAssign` (per leg it takes: signing up for a round trip takes the other leg too while it still needs a pilot) |
+| `ride.pilotUnassigned` | `userId`, `self` | `unassignVolunteer`, `withdraw` (per leg it leaves: stepping back from a round trip leaves the other leg too while it is outside the staffing window) |
 | `ride.riderBooked` | `passengerId` | `bookRider` |
 | `ride.riderRemoved` | `passengerId`, `self` (the rider's own account gave the seat up) | `cancelBooking` |
 | `ride.opened` | — | `scheduleRide`, per leg, when the chapter lets pilots sign up and the ride is short of pilots |
@@ -268,8 +268,9 @@ ride's chat members in step (`use-cases/ride-chat.ts`).
 
 **A round trip is announced once.** When one change reaches both legs — cancelling the way
 there with the way back, moving the way there (which moves the way back), or scheduling a
-round trip with riders and pilots — each leg still emits its own event, but `ride.cancelled`,
-`ride.rescheduled`, `ride.riderBooked` and `ride.pilotAssigned` carry a `pair`: the way there's
+round trip with riders and pilots, or a pilot signing up for or stepping back from both legs —
+each leg still emits its own event, but `ride.cancelled`, `ride.rescheduled`, `ride.riderBooked`,
+`ride.pilotAssigned`, `ride.pilotUnassigned` and `ride.opened` carry a `pair`: the way there's
 event is `{ role: "lead", otherRideId }` and the way back's `{ role: "follow", otherRideId }`.
 A kind sends nothing for a follower, and the lead's message says "and the way back" and goes
 to everyone on either leg. `pair` defaults to `null`, so events stored before it parse as

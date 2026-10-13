@@ -220,6 +220,7 @@
     "footer": "You received this email because you look after a rider with a Cycling Without Age chapter.",
     "heading": "Your ride has a pilot",
     "intro": "{pilot} will pilot the ride on {date}, {time}, starting at {place} ({ride}). Their phone number is with the ride in the app, and so is a chat with everyone on it.",
+    "introBoth": "{pilot} will pilot the round trip on {date}: there at {time}, starting at {place} ({ride}), and the way back. Their phone number is with the ride in the app, and so is a chat with everyone on it.",
     "preview": "{ride} · {time}",
     "someone": "A pilot",
     "subject": "{pilot} pilots your ride on {date}"
@@ -229,6 +230,7 @@
     "footer": "You received this email because you help run a Cycling Without Age chapter. You can turn these off in your notification settings.",
     "heading": "A pilot stepped back",
     "intro": "{pilot} is no longer piloting the ride on {date}, {time}, at {place} ({ride}). It may need someone else now.",
+    "introBoth": "{pilot} is no longer piloting the round trip on {date}: there at {time}, at {place} ({ride}), and the way back. Both legs may need someone else now.",
     "preview": "{ride} · {time}",
     "someone": "A pilot",
     "subject": "{pilot} stepped back from the ride on {date}"
@@ -249,6 +251,7 @@
     "footer": "You received this email because you pilot with a Cycling Without Age chapter.",
     "heading": "You're signed up",
     "intro": "You're piloting on {date}, {time}, starting at {place} ({ride}). The riders, how to reach them and the ride chat are in the app.",
+    "introBoth": "You're piloting a round trip on {date}: there at {time}, starting at {place} ({ride}), and the way back. The riders, how to reach them and the ride chat are in the app.",
     "preview": "{ride} · {time}",
     "subject": "You're piloting on {date}"
   },

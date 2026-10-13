@@ -82,10 +82,16 @@ export const ridePilotAssigned = defineKind({
     if (followsItsPair(event.pair) || !(await rideStillExists(event.rideId)))
       return [];
     if (!event.self) return excluding([event.userId], event.actorUserId);
-    const ride = await rides.listRideParticipants(event.rideId);
+    const legs = await Promise.all([
+      rides.listRideParticipants(event.rideId),
+      event.pair?.role === "lead"
+        ? rides.listRideParticipants(event.pair.otherRideId)
+        : null,
+    ]);
+    const riderAccounts = legs.flatMap((leg) => leg?.riderAccountUserIds ?? []);
     return [
       event.userId,
-      ...excluding(ride?.riderAccountUserIds ?? [], event.userId),
+      ...excluding([...new Set(riderAccounts)], event.userId),
     ];
   },
   params: async (event) => ({
@@ -117,7 +123,11 @@ export const ridePilotAssigned = defineKind({
         subject: formatMessage(copy.subject, values, locale),
         preview: formatMessage(copy.preview, values, locale),
         heading: formatMessage(copy.heading, values, locale),
-        body: formatMessage(copy.intro, values, locale),
+        body: formatMessage(
+          params.bothWays ? copy.introBoth : copy.intro,
+          values,
+          locale,
+        ),
         cta: copy.cta,
         footer: copy.footer,
         template: "ridePilotFound",
@@ -129,7 +139,11 @@ export const ridePilotAssigned = defineKind({
         subject: formatMessage(copy.subject, words, locale),
         preview: formatMessage(copy.preview, words, locale),
         heading: formatMessage(copy.heading, words, locale),
-        body: formatMessage(copy.intro, words, locale),
+        body: formatMessage(
+          params.bothWays ? copy.introBoth : copy.intro,
+          words,
+          locale,
+        ),
         cta: copy.cta,
         footer: copy.footer,
         template: "rideSignedUp",

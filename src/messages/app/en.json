@@ -1976,6 +1976,7 @@
         "where": "Where",
         "withdraw": {
           "body": "Your chapter will be told and can look for someone else.",
+          "bodyBoth": "You'll step back from both legs of the round trip, as far as there is still time. Your chapter will be told and can look for someone else.",
           "cancel": "Keep my seat",
           "confirm": "Step back",
           "done": "You've stepped back. Your chapter knows.",
@@ -2003,6 +2004,8 @@
       },
       "past": "Past rides",
       "signUp": {
+        "alsoWayBack": "Part of a round trip: you'll pilot the way back too, {time}, if it still needs a pilot.",
+        "alsoWayThere": "Part of a round trip: you'll pilot the way there too, {time}, if it still needs a pilot.",
         "cta": "Sign up for this ride",
         "done": "You're on the ride. Thank you!",
         "intro": "{chapter} is looking for a pilot. Once you sign up you'll see who you're riding with, how to reach them and a chat with everyone on the ride.",

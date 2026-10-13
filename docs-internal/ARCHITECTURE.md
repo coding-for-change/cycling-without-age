@@ -945,7 +945,10 @@ starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 1
 - **Signing up and stepping back.** `use-cases/sign-up-for-ride.ts` checks the `pilot` role on
   the membership row of the ride's own chapter (a country admin or superadmin is not a pilot
   there) and the chapter's setting, then `rides.selfAssign` locks the ride row and recounts the
-  pilots under the lock (`rideFullyStaffed`), so two pilots taking the last seat queue up.
+  pilots under the lock (`rideFullyStaffed`), so two pilots taking the last seat queue up. A
+  round trip is one outing: `requireRide` locks both legs, signing up for one takes the other
+  while it still needs a pilot, and stepping back leaves both while there is time — one
+  message for both, through the events' `pair`.
   `withdrawFromRide` passes the chapter's lead to `rides.withdraw`, which removes only the
   pilot's own row and refuses inside the staffing window (`tooLateToWithdraw`: call the
   chapter). The Actions live in `app/(member)/pilot/rides/actions.ts`, rate-limited, behind

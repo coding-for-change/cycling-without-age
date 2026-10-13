@@ -139,6 +139,51 @@ describe("who hears about a ride", () => {
     );
   });
 
+  it("tells the riders of both legs once when a pilot takes a round trip", async () => {
+    (rides.listRideParticipants as jest.Mock).mockImplementation((rideId) =>
+      Promise.resolve({
+        chapterId: "chapter-1",
+        pilotUserIds: [],
+        riderAccountUserIds:
+          rideId === "ride-1" ? ["carer-1"] : ["carer-1", "carer-2"],
+      }),
+    );
+    const event: EventOf<"ride.pilotAssigned"> = {
+      type: "ride.pilotAssigned",
+      ...scope,
+      actorUserId: "pilot-1",
+      userId: "pilot-1",
+      self: true,
+      pair: { role: "lead", otherRideId: "ride-2" },
+    };
+    expect(await ridePilotAssigned.recipients(event)).toEqual([
+      "pilot-1",
+      "carer-1",
+      "carer-2",
+    ]);
+    expect(
+      await ridePilotAssigned.recipients({
+        ...event,
+        rideId: "ride-2",
+        pair: { role: "follow", otherRideId: "ride-1" },
+      }),
+    ).toEqual([]);
+    const params = ridePilotAssigned.payload.parse(
+      await ridePilotAssigned.params(event),
+    );
+    const strings = getEmailStrings("en");
+    expect(
+      ridePilotAssigned.message(
+        {
+          ...ridePilotAssigned.forRecipient!(params, "carer-1"),
+          pilotName: "Anke",
+        },
+        strings,
+        "en",
+      ).body,
+    ).toContain("and the way back");
+  });
+
   it("keeps an admin's assignment addressed to the pilot alone", async () => {
     const params = ridePilotAssigned.payload.parse(
       await ridePilotAssigned.params({

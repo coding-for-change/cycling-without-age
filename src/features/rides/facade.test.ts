@@ -2334,6 +2334,119 @@ describe("pilots signing up themselves", () => {
   });
 });
 
+describe("a pilot taking a round trip", () => {
+  const BEFORE = new Date("2026-09-01T08:00:00Z");
+  const pilot = (id: string) => ({ role: "pilot", user: { id } });
+  const there = (overrides: Record<string, unknown> = {}) =>
+    scheduled({
+      id: "ride-there",
+      model: "functional",
+      endsAt: new Date("2026-09-08T08:30:00Z"),
+      returnLeg: { id: "ride-back", status: "scheduled" },
+      ...overrides,
+    });
+  const back = (overrides: Record<string, unknown> = {}) =>
+    scheduled({
+      id: "ride-back",
+      model: "functional",
+      startsAt: new Date("2026-09-08T15:00:00Z"),
+      endsAt: new Date("2026-09-08T15:30:00Z"),
+      returnLegOf: { id: "ride-there", status: "scheduled" },
+      ...overrides,
+    });
+  const legs = (...rows: Record<string, unknown>[]) =>
+    db.ride.findUnique.mockImplementation(({ where }) =>
+      Promise.resolve(rows.find((row) => row.id === where.id) ?? null),
+    );
+  const assignedTo = () =>
+    db.rideAssignment.create.mock.calls.map(([args]) => args.data.rideId);
+  const pairs = () =>
+    emitted.map((event) => [
+      (event as { rideId?: string }).rideId,
+      (event as { pair?: { role: string } | null }).pair?.role ?? null,
+    ]);
+
+  beforeEach(() => db.member.findMany.mockResolvedValue([]));
+
+  it("takes the way back with the way there, announced once", async () => {
+    legs(there(), back());
+    await rides.selfAssign("ride-there", "pilot-1", BEFORE);
+    expect(assignedTo()).toEqual(["ride-there", "ride-back"]);
+    expect(pairs()).toEqual([
+      ["ride-there", "lead"],
+      ["ride-back", "follow"],
+    ]);
+  });
+
+  it("takes the way there with the way back, still led by the way there", async () => {
+    legs(there(), back());
+    await rides.selfAssign("ride-back", "pilot-1", BEFORE);
+    expect(assignedTo()).toEqual(["ride-back", "ride-there"]);
+    expect(pairs()).toEqual([
+      ["ride-back", "follow"],
+      ["ride-there", "lead"],
+    ]);
+  });
+
+  it("leaves a leg that has its pilots or is cancelled", async () => {
+    db.member.findMany.mockResolvedValue([
+      { organizationId: CHAPTER, userId: "pilot-2" },
+    ]);
+    legs(there(), back({ assignments: [pilot("pilot-2")] }));
+    await rides.selfAssign("ride-there", "pilot-1", BEFORE);
+    expect(assignedTo()).toEqual(["ride-there"]);
+    expect(pairs()).toEqual([["ride-there", null]]);
+
+    jest.clearAllMocks();
+    emitted.length = 0;
+    legs(
+      there({ returnLeg: { id: "ride-back", status: "cancelled" } }),
+      back({ status: "cancelled" }),
+    );
+    await rides.selfAssign("ride-there", "pilot-1", BEFORE);
+    expect(assignedTo()).toEqual(["ride-there"]);
+  });
+
+  it("steps back from both legs, but not from one inside its window", async () => {
+    legs(
+      there({ assignments: [pilot("pilot-1")] }),
+      back({ assignments: [pilot("pilot-1")] }),
+    );
+    await rides.withdraw("ride-back", "pilot-1", 48, BEFORE);
+    expect(
+      db.rideAssignment.deleteMany.mock.calls.map(
+        ([args]) => args.where.rideId,
+      ),
+    ).toEqual(["ride-back", "ride-there"]);
+    expect(pairs()).toEqual([
+      ["ride-back", "follow"],
+      ["ride-there", "lead"],
+    ]);
+
+    jest.clearAllMocks();
+    emitted.length = 0;
+    legs(
+      there({ assignments: [pilot("pilot-1")] }),
+      back({
+        startsAt: new Date("2026-09-10T15:00:00Z"),
+        endsAt: new Date("2026-09-10T15:30:00Z"),
+        assignments: [pilot("pilot-1")],
+      }),
+    );
+    await rides.withdraw(
+      "ride-back",
+      "pilot-1",
+      48,
+      new Date("2026-09-07T12:00:00Z"),
+    );
+    expect(
+      db.rideAssignment.deleteMany.mock.calls.map(
+        ([args]) => args.where.rideId,
+      ),
+    ).toEqual(["ride-back"]);
+  });
+});
+
 describe("what a pilot sees before signing up", () => {
   it("lists open rides without a name or a number on them", async () => {
     db.ride.findMany.mockResolvedValue([]);

@@ -367,7 +367,13 @@ export async function PilotRide({
         <div className="mt-auto flex flex-col pt-4">
           <WithdrawButton
             rideId={ride.id}
-            labels={strings.withdraw}
+            labels={{
+              ...strings.withdraw,
+              body:
+                otherLegOpen && otherLeg?.status === "scheduled"
+                  ? strings.withdraw.bodyBoth
+                  : strings.withdraw.body,
+            }}
             errors={{ ...dict.common.errors, ...dict.pilot.rides.errors }}
           />
         </div>

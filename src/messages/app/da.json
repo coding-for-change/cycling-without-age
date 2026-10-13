@@ -1976,6 +1976,7 @@
         "where": "Hvor",
         "withdraw": {
           "body": "Din afdeling får besked og kan finde en anden.",
+          "bodyBoth": "Du melder fra til begge veje af turen, så vidt der stadig er tid. Din afdeling får besked og kan finde en anden.",
           "cancel": "Jeg bliver",
           "confirm": "Meld fra",
           "done": "Du har meldt fra. Din afdeling ved det.",
@@ -2003,6 +2004,8 @@
       },
       "past": "Tidligere ture",
       "signUp": {
+        "alsoWayBack": "En del af en tur ud og hjem: Du kører også hjemturen, {time}, hvis den stadig mangler en pilot.",
+        "alsoWayThere": "En del af en tur ud og hjem: Du kører også udturen, {time}, hvis den stadig mangler en pilot.",
         "cta": "Tilmeld dig turen",
         "done": "Du er med på turen. Tak!",
         "intro": "{chapter} søger en pilot. Når du tilmelder dig, kan du se, hvem du kører med, hvordan du får fat i dem, og en chat med alle på turen.",

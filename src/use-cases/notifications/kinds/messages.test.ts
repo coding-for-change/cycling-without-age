@@ -201,6 +201,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     actorUserId: SUBJECT,
     userId: SUBJECT,
     self: true,
+    pair: null,
   },
   "ride.riderBooked": {
     type: "ride.riderBooked",
@@ -351,6 +352,13 @@ describe("a message for both legs of a round trip", () => {
     { ...EVENTS["ride.cancelled"], pair: lead },
     { ...EVENTS["ride.rescheduled"], changes: ["time"], pair: lead },
     { ...EVENTS["ride.pilotAssigned"], pair: lead },
+    {
+      ...EVENTS["ride.pilotAssigned"],
+      actorUserId: SUBJECT,
+      self: true,
+      pair: lead,
+    },
+    { ...EVENTS["ride.pilotUnassigned"], pair: lead },
     { ...EVENTS["ride.riderBooked"], pair: lead },
     { ...EVENTS["ride.opened"], pair: lead },
   ] as DomainEvent[];

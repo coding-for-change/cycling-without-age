@@ -220,6 +220,7 @@
     "footer": "Sie erhalten diese E-Mail, weil Sie einen Fahrgast bei einer Ortsgruppe von Cycling Without Age begleiten.",
     "heading": "Ihre Fahrt hat einen Piloten",
     "intro": "{pilot} fährt die Fahrt am {date}, {time}, mit Start bei {place} ({ride}). Die Telefonnummer finden Sie bei der Fahrt in der App, dazu einen Chat mit allen, die dabei sind.",
+    "introBoth": "{pilot} fährt Ihre Fahrt am {date} hin und zurück: Hinfahrt {time}, Start bei {place} ({ride}). Die Telefonnummer finden Sie bei der Fahrt in der App, dazu einen Chat mit allen, die dabei sind.",
     "preview": "{ride} · {time}",
     "someone": "Ein Pilot",
     "subject": "{pilot} fährt Ihre Fahrt am {date}"
@@ -229,6 +230,7 @@
     "footer": "Sie erhalten diese E-Mail, weil Sie eine Ortsgruppe von Cycling Without Age mitgestalten. In Ihren Benachrichtigungen können Sie sie abschalten.",
     "heading": "Ein Pilot hat sich ausgetragen",
     "intro": "{pilot} fährt die Fahrt am {date}, {time}, bei {place} ({ride}) nicht mehr. Vielleicht braucht sie jetzt jemand anderen.",
+    "introBoth": "{pilot} fährt die Fahrt am {date} hin und zurück nicht mehr: Hinfahrt {time}, bei {place} ({ride}). Vielleicht brauchen beide Strecken jetzt jemand anderen.",
     "preview": "{ride} · {time}",
     "someone": "Ein Pilot",
     "subject": "{pilot} hat sich für den {date} ausgetragen"
@@ -249,6 +251,7 @@
     "footer": "Du erhältst diese E-Mail, weil du bei einer Ortsgruppe von Cycling Without Age fährst.",
     "heading": "Du bist dabei",
     "intro": "Du fährst am {date}, {time}, Start bei {place} ({ride}). Fahrgäste, wie du sie erreichst, und den Chat zur Fahrt findest du in der App.",
+    "introBoth": "Du fährst am {date} hin und zurück: Hinfahrt {time}, Start bei {place} ({ride}). Fahrgäste, wie du sie erreichst, und den Chat zur Fahrt findest du in der App.",
     "preview": "{ride} · {time}",
     "subject": "Du fährst am {date}"
   },

@@ -1976,6 +1976,7 @@
         "where": "Wo",
         "withdraw": {
           "body": "Deine Ortsgruppe erfährt es und kann jemand anderen suchen.",
+          "bodyBoth": "Du trägst dich von beiden Strecken der Fahrt aus, soweit noch Zeit ist. Deine Ortsgruppe erfährt es und kann jemand anderen suchen.",
           "cancel": "Ich bleibe dabei",
           "confirm": "Austragen",
           "done": "Du bist ausgetragen. Deine Ortsgruppe weiß Bescheid.",
@@ -2003,6 +2004,8 @@
       },
       "past": "Vergangene Ausfahrten",
       "signUp": {
+        "alsoWayBack": "Teil einer Fahrt hin und zurück: Du fährst auch die Rückfahrt, {time}, wenn sie noch einen Piloten sucht.",
+        "alsoWayThere": "Teil einer Fahrt hin und zurück: Du fährst auch die Hinfahrt, {time}, wenn sie noch einen Piloten sucht.",
         "cta": "Für diese Fahrt eintragen",
         "done": "Du bist dabei. Danke dir!",
         "intro": "{chapter} sucht einen Piloten. Sobald du dich einträgst, siehst du, mit wem du fährst, wie du sie erreichst, und einen Chat mit allen, die dabei sind.",

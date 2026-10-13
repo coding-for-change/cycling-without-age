@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarClock, MapPin, UsersRound } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowLeftRight,
+  CalendarClock,
+  MapPin,
+  UsersRound,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { calendarDate } from "@/lib/calendar";
 import {
@@ -38,6 +44,10 @@ export async function OpenRide({
   const strings = dict.pilot.rides;
   const zone = ride.chapter.timeZone;
   const missing = Math.max(0, ride.requiredPilots - ride._count.assignments);
+  const now = new Date();
+  const otherLeg = [ride.returnLeg, ride.returnLegOf].find(
+    (leg) => leg?.status === "scheduled" && leg.startsAt > now,
+  );
 
   return (
     <>
@@ -76,7 +86,7 @@ export async function OpenRide({
             {formatTimeRange(ride.startsAt, ride.endsAt, locale, zone)}
           </time>
           <span aria-hidden>·</span>
-          <span>{formatRelativeTime(ride.startsAt, words, new Date())}</span>
+          <span>{formatRelativeTime(ride.startsAt, words, now)}</span>
         </p>
         <p className="text-2sm text-ink-soft">
           {[dict.calendar.models[ride.model], ride.chapter.name].join(" · ")}
@@ -107,6 +117,30 @@ export async function OpenRide({
             ) : null}
           </span>
         </li>
+        {otherLeg ? (
+          <li className="flex min-h-12 items-start gap-3 px-4 py-3">
+            <ArrowLeftRight
+              aria-hidden
+              className="text-ink-soft mt-0.5 size-4 shrink-0"
+            />
+            <span>
+              {formatMessage(
+                otherLeg === ride.returnLeg
+                  ? strings.signUp.alsoWayBack
+                  : strings.signUp.alsoWayThere,
+                {
+                  time: formatTimeRange(
+                    otherLeg.startsAt,
+                    otherLeg.endsAt,
+                    locale,
+                    zone,
+                  ),
+                },
+                words,
+              )}
+            </span>
+          </li>
+        ) : null}
         <li className="flex min-h-12 items-center gap-3 px-4 py-3">
           <UsersRound
             aria-hidden
