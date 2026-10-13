@@ -5,7 +5,6 @@ import { EmptyState } from "@/components/empty-state";
 import { ICONS } from "@/components/icons";
 import { markdownToolLabels } from "@/components/markdown-editor";
 import { Button } from "@/components/ui/button";
-import { chapters as chapterFeature } from "@/features/chapters";
 import { BOOKING_CHOICES } from "@/features/chapters/schemas";
 import { rideLocations } from "@/features/ride-locations";
 import { rides } from "@/features/rides";
@@ -84,7 +83,7 @@ async function RideLocations({
         byName.compare(a.name, b.name),
     );
 
-  const chapterOptions = (await chapterFeature.getChapters(chapterIds))
+  const chapterOptions = chapters
     .map((chapter) => ({ id: chapter.id, name: chapter.name }))
     .sort((a, b) => byName.compare(a.name, b.name));
 
