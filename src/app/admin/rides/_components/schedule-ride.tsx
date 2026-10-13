@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { chapters as chapterFeature } from "@/features/chapters";
+import { DEFAULT_CHAPTER_SETTINGS } from "@/features/chapters/schemas";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
 import { rideLocations } from "@/features/ride-locations";
@@ -104,25 +105,26 @@ type Planning = {
 async function loadPlanning(chapterIds: string[]) {
   const [hours, settings] = await Promise.all([
     chapterFeature.getOperatingHoursOf(chapterIds),
-    Promise.all(chapterIds.map((id) => chapterFeature.getSettings(id))),
+    chapterFeature.getSettingsOf(chapterIds),
   ]);
   return new Map<string, Planning>(
-    chapterIds.map((id, index) => {
+    chapterIds.map((id) => {
       const { windows, closures, closureReasons } = hours.get(id) ?? {
         ...NO_HOURS,
         closureReasons: {},
       };
+      const policy = settings.get(id) ?? DEFAULT_CHAPTER_SETTINGS;
       return [
         id,
         {
           policy: {
             hours: { windows, closures },
             closureReasons,
-            leadTimeHours: settings[index].bookingLeadTimeHours,
-            horizonDays: settings[index].bookingHorizonDays,
+            leadTimeHours: policy.bookingLeadTimeHours,
+            horizonDays: policy.bookingHorizonDays,
           },
-          rideMinutes: settings[index].defaultRideMinutes,
-          stayMinutes: settings[index].defaultStayMinutes,
+          rideMinutes: policy.defaultRideMinutes,
+          stayMinutes: policy.defaultStayMinutes,
         },
       ];
     }),

@@ -45,6 +45,12 @@ export const findRideLocationById = (id: string) =>
 export const countRideLocations = (where: Prisma.RideLocationWhereInput) =>
   prisma.rideLocation.count({ where });
 
+export const findRideLocationCountries = (countryIds: string[]) =>
+  prisma.rideLocation.findMany({
+    where: { chapter: { countryId: { in: countryIds } } },
+    select: { chapter: { select: { countryId: true } } },
+  });
+
 export const findRideLocationChapter = (id: string) =>
   prisma.rideLocation.findUnique({
     where: { id },

@@ -13,7 +13,11 @@ jest.mock("@/lib/prisma", () => {
     },
     event: { create: jest.fn(async () => ({ id: "event-1" })) },
     organization: { findUnique: jest.fn() },
-    chapterSettings: { findUnique: jest.fn(), upsert: jest.fn() },
+    chapterSettings: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      upsert: jest.fn(),
+    },
     chapterOperatingWindow: {
       findMany: jest.fn(),
       deleteMany: jest.fn(),
@@ -49,7 +53,11 @@ const db = prisma as unknown as {
   };
   event: { create: jest.Mock };
   organization: { findUnique: jest.Mock };
-  chapterSettings: { findUnique: jest.Mock; upsert: jest.Mock };
+  chapterSettings: {
+    findUnique: jest.Mock;
+    findMany: jest.Mock;
+    upsert: jest.Mock;
+  };
   chapterOperatingWindow: {
     findMany: jest.Mock;
     deleteMany: jest.Mock;
@@ -149,6 +157,19 @@ describe("reading a chapter's settings", () => {
     db.chapterSettings.findUnique.mockResolvedValue(row);
 
     await expect(chapters.getSettings(CHAPTER)).resolves.toEqual(row);
+  });
+
+  it("reads many chapters in one query, defaults for those without a row", async () => {
+    const row = { ...DEFAULT_CHAPTER_SETTINGS, defaultRideMinutes: 90 };
+    db.chapterSettings.findMany.mockResolvedValue([
+      { chapterId: CHAPTER, ...row },
+    ]);
+
+    const settings = await chapters.getSettingsOf([CHAPTER, "other"]);
+
+    expect(db.chapterSettings.findMany).toHaveBeenCalledTimes(1);
+    expect(settings.get(CHAPTER)).toEqual(row);
+    expect(settings.get("other")).toEqual(DEFAULT_CHAPTER_SETTINGS);
   });
 });
 

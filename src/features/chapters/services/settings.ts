@@ -20,6 +20,12 @@ export const findChapterSettings = (chapterId: string) =>
     select: COLUMNS,
   });
 
+export const findSettingsOfChapters = (chapterIds: string[]) =>
+  prisma.chapterSettings.findMany({
+    where: { chapterId: { in: chapterIds } },
+    select: { chapterId: true, ...COLUMNS },
+  });
+
 export const upsertChapterSettings = (
   chapterId: string,
   data: Omit<Prisma.ChapterSettingsUncheckedCreateInput, "chapterId">,

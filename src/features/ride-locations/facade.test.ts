@@ -200,13 +200,20 @@ describe("using a location for a ride", () => {
     expect(db.rideLocation.count).toHaveBeenLastCalledWith({
       where: { chapterId: CHAPTER },
     });
-    db.rideLocation.count.mockResolvedValueOnce(5);
-    expect(await rideLocations.countCountryRideLocations(["dk"])).toEqual(
-      new Map([["dk", 5]]),
+    db.rideLocation.findMany.mockResolvedValueOnce([
+      { chapter: { countryId: "dk" } },
+      { chapter: { countryId: "dk" } },
+      { chapter: { countryId: "de" } },
+    ]);
+    expect(
+      await rideLocations.countCountryRideLocations(["dk", "de", "se"]),
+    ).toEqual(
+      new Map([
+        ["dk", 2],
+        ["de", 1],
+      ]),
     );
-    expect(db.rideLocation.count).toHaveBeenLastCalledWith({
-      where: { chapter: { countryId: "dk" } },
-    });
+    expect(db.rideLocation.findMany).toHaveBeenCalledTimes(1);
   });
 
   it("refuses a public place as a rider's Care Center", async () => {

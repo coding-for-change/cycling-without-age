@@ -7,6 +7,7 @@ import type {
 } from "./schemas";
 import {
   countRideLocations,
+  findRideLocationCountries,
   findRideLocationById,
   findRideLocationChapter,
   findRideLocations,
@@ -131,14 +132,9 @@ export const countChapterRideLocations = (chapterId: string) =>
   countRideLocations({ chapterId });
 
 export async function countCountryRideLocations(countryIds: string[]) {
-  const rows = await Promise.all(
-    countryIds.map(
-      async (countryId) =>
-        [
-          countryId,
-          await countRideLocations({ chapter: { countryId } }),
-        ] as const,
-    ),
-  );
-  return new Map<string, number>(rows);
+  const counts = new Map<string, number>();
+  if (!countryIds.length) return counts;
+  for (const { chapter } of await findRideLocationCountries(countryIds))
+    counts.set(chapter.countryId, (counts.get(chapter.countryId) ?? 0) + 1);
+  return counts;
 }

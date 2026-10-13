@@ -52,6 +52,7 @@ import {
 } from "./services/countries";
 import {
   findChapterSettings,
+  findSettingsOfChapters,
   upsertChapterSettings,
 } from "./services/settings";
 import {
@@ -327,6 +328,23 @@ export const getSettings = async (
   chapterId: string,
 ): Promise<ChapterSettings> =>
   (await findChapterSettings(chapterId)) ?? DEFAULT_CHAPTER_SETTINGS;
+
+export async function getSettingsOf(
+  chapterIds: string[],
+): Promise<Map<string, ChapterSettings>> {
+  if (!chapterIds.length) return new Map();
+  const stored = new Map<string, ChapterSettings>(
+    (await findSettingsOfChapters(chapterIds)).map(
+      ({ chapterId, ...settings }) => [chapterId, settings],
+    ),
+  );
+  return new Map(
+    chapterIds.map((chapterId) => [
+      chapterId,
+      stored.get(chapterId) ?? DEFAULT_CHAPTER_SETTINGS,
+    ]),
+  );
+}
 
 export async function updateSettings(
   chapterId: string,
