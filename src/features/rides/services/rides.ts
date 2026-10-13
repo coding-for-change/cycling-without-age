@@ -754,6 +754,7 @@ const detailSelect = {
   note: true,
   seriesId: true,
   announced: true,
+  announcedAt: true,
   staffingCheckedAt: true,
   cancellationReasonCode: true,
   cancellationNote: true,

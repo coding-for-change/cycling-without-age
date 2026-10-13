@@ -224,6 +224,19 @@ describe("scheduleRide", () => {
     );
   });
 
+  it("stamps an event announced as it is scheduled", async () => {
+    await schedule({ ...base, model: "event", announced: true }, ADMIN);
+    expect(db.ride.create.mock.calls[0][0].data).toEqual(
+      expect.objectContaining({
+        announced: true,
+        announcedAt: expect.any(Date),
+      }),
+    );
+    expect(eventTypes()).toContain("ride.announced");
+    await schedule(base, ADMIN);
+    expect(db.ride.create.mock.calls[1][0].data.announcedAt).toBeNull();
+  });
+
   it("refuses a trishaw already reserved for an overlapping window", async () => {
     db.rideTrishaw.findMany.mockResolvedValue([
       { trishawId: TRISHAW, rideId: "ride-existing" },
@@ -2487,8 +2500,22 @@ describe("booking seats on an announced event", () => {
       "eventsOnly",
     );
     db.ride.findUnique.mockResolvedValue(scheduled({ announced: false }));
-    expect(await rides.setAnnounced("ride-1", true, ADMIN)).toBe(true);
+    expect(await rides.setAnnounced("ride-1", true, ADMIN, BEFORE)).toBe(true);
     expect(eventTypes()).toEqual(["ride.announced"]);
+    expect(db.ride.update.mock.calls[0][0].data).toEqual({
+      announced: true,
+      announcedAt: BEFORE,
+    });
+  });
+
+  // Taking an announcement back to fix a typo must not tell everyone twice.
+  it("tells the riders only the first time an event is announced", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ announced: false, announcedAt: new Date(0) }),
+    );
+    expect(await rides.setAnnounced("ride-1", true, ADMIN, BEFORE)).toBe(true);
+    expect(db.ride.update.mock.calls[0][0].data).toEqual({ announced: true });
+    expect(emitted).toEqual([]);
   });
 
   it("shows the public event without anyone's name", async () => {

@@ -905,6 +905,8 @@ model Ride {
 
   /// An event ride the chapter's riders see and can book a seat on themselves.
   announced         Boolean   @default(false)
+  /// Set the first time the event is announced, so its riders are told once.
+  announcedAt       DateTime?
   /// Set once the staffing check has flagged the ride, so it is flagged only once.
   staffingCheckedAt DateTime?
 

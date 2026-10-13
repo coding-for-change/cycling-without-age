@@ -532,8 +532,12 @@ export async function scheduleRide(
     passengerIds,
     pilotIds,
     photoFileIds,
-    ...data
+    ...fields
   } = shapedForModel(input);
+  const data = {
+    ...fields,
+    announcedAt: fields.announced ? new Date() : null,
+  };
   return rideWrite(async (tx, emit) => {
     await requireRidePhotos(photoFileIds, actorUserId, null, tx);
     await reserveOrRefuse(tx, trishawIds, [
@@ -1500,18 +1504,27 @@ export async function checkStaffing(rideId: string, now = new Date()) {
   });
 }
 
-/** Only an event ride can be announced to the chapter's riders. */
+/**
+ * Only an event ride can be announced to the chapter's riders. They are told
+ * the first time; taking it back and announcing it again tells nobody twice.
+ */
 export async function setAnnounced(
   rideId: string,
   announced: boolean,
   actorUserId: Actor,
+  now = new Date(),
 ) {
   return rideWrite(async (tx, emit) => {
     const ride = await requireScheduled(rideId, tx);
     if (announced && ride.model !== "event")
       throw new DomainError("eventsOnly");
     if (ride.announced === announced) return false;
-    await updateRide(rideId, { announced }, tx);
+    const firstTime = announced && !ride.announcedAt;
+    await updateRide(
+      rideId,
+      { announced, ...(firstTime ? { announcedAt: now } : {}) },
+      tx,
+    );
     await record(
       tx,
       emit,
@@ -1519,7 +1532,7 @@ export async function setAnnounced(
       actorUserId,
       "edited",
       { fields: ["announced"] },
-      announced ? { type: "ride.announced" } : undefined,
+      firstTime ? { type: "ride.announced" } : undefined,
     );
     return true;
   });
