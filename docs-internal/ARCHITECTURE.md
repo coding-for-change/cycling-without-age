@@ -968,7 +968,9 @@ starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 1
   per group, only the unchecked rides already inside that window, and `rides.checkStaffing` stamps
   `Ride.staffingCheckedAt` and emits `ride.understaffed` in one transaction under the ride's
   lock — a retried sweep finds the stamp and stays quiet. The way there checks its way back
-  along, so a round trip short both ways is one warning. Moving a ride clears the stamp. A
+  along, so a round trip short both ways is one warning. The sweep runs on the worker that
+  dispatches every outbox event, so one run checks at most 50 rides and the next carries on, and
+  a ride whose check fails is logged and passed over. Moving a ride clears the stamp. A
   ride scheduled already inside its window is stamped as it is scheduled (the admin sees what it
   is short of), and `20261013110000_ride_staffing_checked_backfill` stamps the rides already
   inside their window when this ships, so the first sweep does not flag them all at once.

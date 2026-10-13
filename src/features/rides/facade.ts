@@ -1606,13 +1606,14 @@ export const listStaffingCandidates = async (
   chapterIds: string[],
   leadHours: number,
   now = new Date(),
+  take = STAFFING_BATCH,
 ) =>
-  chapterIds.length
+  chapterIds.length && take > 0
     ? findStaffingCandidates(
         chapterIds,
         now,
         new Date(now.getTime() + leadHours * HOUR_MS),
-        STAFFING_BATCH,
+        take,
       )
     : [];
 
