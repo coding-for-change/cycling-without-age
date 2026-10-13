@@ -21,12 +21,6 @@ import { defineKind } from "./types";
  */
 const rideLink = (rideId: string) => `/rides/${rideId}`;
 
-/**
- * `notify` asks a kind for recipients and params of the same event side by
- * side; both need the rider, so the lookup is shared per event.
- */
-const riders = new WeakMap<object, ReturnType<typeof lookUpRider>>();
-
 async function lookUpRider(passengerId: string) {
   const rider = await passengers.getPassenger(passengerId);
   return rider
@@ -38,14 +32,6 @@ async function lookUpRider(passengerId: string) {
       }
     : { name: null, accounts: [] };
 }
-
-const riderOf = (event: { passengerId: string }) => {
-  const known = riders.get(event);
-  if (known) return known;
-  const rider = lookUpRider(event.passengerId);
-  riders.set(event, rider);
-  return rider;
-};
 
 /**
  * People are stored as ids and named only when a message is written, so a
@@ -275,7 +261,10 @@ export const rideBookingConfirmed = defineKind({
   recipients: async (event) =>
     followsItsPair(event.pair) || !(await rideStillExists(event.rideId))
       ? []
-      : excluding((await riderOf(event)).accounts, event.actorUserId),
+      : excluding(
+          (await lookUpRider(event.passengerId)).accounts,
+          event.actorUserId,
+        ),
   params: async (event) => ({
     ...(await factsOfRide(event.rideId, event.pair)),
     riderId: event.passengerId,
