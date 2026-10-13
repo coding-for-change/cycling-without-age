@@ -58,16 +58,23 @@ export function RideLocationsTable({
           `${row.name} ${row.address ?? ""} ${row.contact ?? ""}`,
       },
       cell: ({ row }) => (
-        <Link
-          href={href(row.original)}
-          onClick={stopRowClick}
-          className={cn(
-            "font-medium hover:underline",
-            row.original.archived && "text-ink-soft",
-          )}
-        >
-          {row.original.name}
-        </Link>
+        <span className="flex items-center gap-2">
+          <Link
+            href={href(row.original)}
+            onClick={stopRowClick}
+            className={cn(
+              "font-medium hover:underline",
+              row.original.archived && "text-ink-soft",
+            )}
+          >
+            {row.original.name}
+          </Link>
+          {row.original.archived ? (
+            <Badge className="bg-canvas-deep font-normal text-ink-soft">
+              {strings.statuses.archived}
+            </Badge>
+          ) : null}
+        </span>
       ),
     },
     {
@@ -87,7 +94,12 @@ export function RideLocationsTable({
       meta: { label: labels.address },
       cell: ({ row }) =>
         row.original.address ? (
-          <span className="text-ink-soft">{row.original.address}</span>
+          <span
+            title={row.original.address}
+            className="block max-w-64 truncate text-ink-soft"
+          >
+            {row.original.address}
+          </span>
         ) : (
           <span className="text-ink-faint">{strings.noAddress}</span>
         ),
@@ -98,7 +110,12 @@ export function RideLocationsTable({
       meta: { label: labels.contact },
       cell: ({ row }) =>
         row.original.contact ? (
-          <span className="text-ink-soft">{row.original.contact}</span>
+          <span
+            title={row.original.contact}
+            className="block max-w-48 truncate text-ink-soft"
+          >
+            {row.original.contact}
+          </span>
         ) : (
           <span className="text-ink-faint">{strings.noContact}</span>
         ),
@@ -110,6 +127,14 @@ export function RideLocationsTable({
             accessorFn: (row: RideLocationListRow) => row.chapterName,
             filterFn: "equalsString" as const,
             meta: { label: labels.chapter },
+            cell: ({ row }: { row: { original: RideLocationListRow } }) => (
+              <span
+                title={row.original.chapterName}
+                className="block max-w-48 truncate"
+              >
+                {row.original.chapterName}
+              </span>
+            ),
           },
         ]
       : []),
@@ -191,6 +216,7 @@ export function RideLocationsTable({
       filters={filters}
       rowHref={href}
       getRowId={(row) => row.id}
+      initialHidden={showChapter ? ["contact", "status"] : ["status"]}
     />
   );
 }
