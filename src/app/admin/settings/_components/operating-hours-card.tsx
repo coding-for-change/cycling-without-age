@@ -115,7 +115,7 @@ export function OperatingHoursCard({
               >
                 <span className="text-sm font-medium">{name}</span>
                 <div className="flex flex-wrap items-center gap-1.25">
-                  {day.length === 0 ? (
+                  {day.length === 0 && shown.length > 0 ? (
                     <span className="text-2sm text-ink-faint">
                       {strings.closed}
                     </span>
