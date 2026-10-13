@@ -167,6 +167,7 @@ export const eventSchema = z.discriminatedUnion("type", [
     ...rideScope,
     assigned: z.number().int().min(0),
     required: z.number().int().min(1),
+    pair: ridePair,
   }),
   z.object({
     type: z.literal("ride.announced"),

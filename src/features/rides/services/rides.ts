@@ -998,11 +998,24 @@ export const findOpenRide = (rideId: string, chapterIds: string[], now: Date) =>
     select: openSelect,
   });
 
+/**
+ * The way back of a round trip is checked with its way there, as long as that
+ * one is still ahead and unchecked: one outing, one warning.
+ */
 const uncheckedWithin = (now: Date, until: Date) =>
   ({
     status: "scheduled",
     startsAt: { gt: now, lte: until },
     staffingCheckedAt: null,
+    NOT: {
+      returnLegOf: {
+        is: {
+          status: "scheduled",
+          startsAt: { gt: now },
+          staffingCheckedAt: null,
+        },
+      },
+    },
   }) satisfies Prisma.RideWhereInput;
 
 export const findChaptersWithUncheckedRides = async (now: Date, until: Date) =>

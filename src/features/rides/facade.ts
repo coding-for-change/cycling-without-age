@@ -1620,7 +1620,8 @@ export const listStaffingCandidates = async (
  * Lifecycle 3D: the check runs once per ride. The stamp and the warning are
  * written in one transaction under the ride's lock, so a retried sweep finds
  * the stamp and stays quiet, and a ride staffed in the meantime is stamped
- * without a warning.
+ * without a warning. The way there takes its way back along: both legs short
+ * are one warning, through the events' `pair`.
  */
 export async function checkStaffing(rideId: string, now = new Date()) {
   return rideWrite(async (tx, emit) => {
@@ -1631,18 +1632,29 @@ export async function checkStaffing(rideId: string, now = new Date()) {
       ride.staffingCheckedAt
     )
       return false;
-    await updateRide(rideId, { staffingCheckedAt: now }, tx);
-    const assigned = await pilotsOn(ride, tx);
-    if (assigned >= ride.requiredPilots) return false;
-    await emit({
-      type: "ride.understaffed",
-      rideId,
-      chapterId: ride.chapterId,
-      actorUserId: null,
-      assigned,
-      required: ride.requiredPilots,
-    });
-    return true;
+    const back =
+      ride.returnLeg?.status === "scheduled"
+        ? await findRideDetail(ride.returnLeg.id, tx)
+        : null;
+    const legs = [ride, ...(back && !back.staffingCheckedAt ? [back] : [])];
+    const short: { leg: RideDetailRow; assigned: number }[] = [];
+    for (const leg of legs) {
+      await updateRide(leg.id, { staffingCheckedAt: now }, tx);
+      const assigned = await pilotsOn(leg, tx);
+      if (assigned < leg.requiredPilots) short.push({ leg, assigned });
+    }
+    const shortLegs = short.map(({ leg }) => leg);
+    for (const { leg, assigned } of short)
+      await emit({
+        type: "ride.understaffed",
+        rideId: leg.id,
+        chapterId: leg.chapterId,
+        actorUserId: null,
+        assigned,
+        required: leg.requiredPilots,
+        pair: pairOfLegs(shortLegs, leg),
+      });
+    return short.length > 0;
   });
 }
 

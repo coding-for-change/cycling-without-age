@@ -260,6 +260,7 @@
     "footer": "Sie erhalten diese E-Mail, weil Sie eine Ortsgruppe von Cycling Without Age mitgestalten.",
     "heading": "Einer Fahrt fehlen noch Piloten",
     "intro": "Die Fahrt am {date}, {time}, bei {place} ({ride}) hat {assigned} von {required, plural, one {# Piloten} other {# Piloten}}. Finden Sie bald jemanden, oder sagen Sie den Fahrgästen rechtzeitig Bescheid.",
+    "introBoth": "Der Fahrt am {date} hin und zurück fehlen in beide Richtungen noch Piloten: Die Hinfahrt um {time} ab {place} ({ride}) hat {assigned} von {required, plural, one {# Piloten} other {# Piloten}}. Finden Sie bald jemanden, oder sagen Sie den Fahrgästen rechtzeitig Bescheid.",
     "preview": "{ride} · {time}",
     "subject": "Fahrt am {date} ist nicht besetzt"
   },

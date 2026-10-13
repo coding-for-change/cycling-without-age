@@ -2679,6 +2679,54 @@ describe("the staffing check", () => {
     ]);
   });
 
+  // One outing, one warning: the way back is checked with the way there.
+  it("warns once about a round trip short both ways", async () => {
+    const legs = [
+      scheduled({
+        id: "ride-there",
+        model: "functional",
+        returnLeg: { id: "ride-back", status: "scheduled" },
+      }),
+      scheduled({
+        id: "ride-back",
+        model: "functional",
+        startsAt: new Date("2026-09-08T15:00:00Z"),
+        endsAt: new Date("2026-09-08T15:30:00Z"),
+        returnLegOf: { id: "ride-there", status: "scheduled" },
+      }),
+    ];
+    db.ride.findUnique.mockImplementation(({ where }) =>
+      Promise.resolve(legs.find((leg) => leg.id === where.id) ?? null),
+    );
+    expect(await rides.checkStaffing("ride-there", NOW)).toBe(true);
+    expect(db.ride.update.mock.calls.map(([args]) => args.where.id)).toEqual([
+      "ride-there",
+      "ride-back",
+    ]);
+    expect(
+      emitted.map((event) => [
+        (event as { rideId?: string }).rideId,
+        (event as { pair?: { role: string } | null }).pair?.role,
+      ]),
+    ).toEqual([
+      ["ride-there", "lead"],
+      ["ride-back", "follow"],
+    ]);
+  });
+
+  it("leaves a way back to its way there while that one is still to check", async () => {
+    await rides.listStaffingCandidates([CHAPTER], 48, NOW);
+    expect(db.ride.findMany.mock.calls[0][0].where.NOT).toEqual({
+      returnLegOf: {
+        is: {
+          status: "scheduled",
+          startsAt: { gt: NOW },
+          staffingCheckedAt: null,
+        },
+      },
+    });
+  });
+
   it("checks a moved ride again", async () => {
     db.ride.findUnique.mockResolvedValue(scheduled());
     await rides.rescheduleRide(

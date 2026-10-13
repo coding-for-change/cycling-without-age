@@ -260,6 +260,7 @@
     "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling.",
     "heading": "En tur mangler stadig piloter",
     "intro": "Turen {date}, {time}, ved {place} ({ride}) har {assigned} af {required, plural, one {# pilot} other {# piloter}}. Find nogen snart, eller giv passagererne besked i god tid.",
+    "introBoth": "Turen ud og hjem {date} mangler stadig piloter begge veje: Udturen {time} fra {place} ({ride}) har {assigned} af {required, plural, one {# pilot} other {# piloter}}. Find nogen snart, eller giv passagererne besked i god tid.",
     "preview": "{ride} · {time}",
     "subject": "Turen {date} mangler piloter"
   },

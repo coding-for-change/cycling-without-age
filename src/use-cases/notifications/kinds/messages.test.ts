@@ -233,6 +233,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     actorUserId: null,
     assigned: 1,
     required: 2,
+    pair: null,
   },
   "ride.announced": {
     type: "ride.announced",
@@ -359,6 +360,7 @@ describe("a message for both legs of a round trip", () => {
       pair: lead,
     },
     { ...EVENTS["ride.pilotUnassigned"], pair: lead },
+    { ...EVENTS["ride.understaffed"], pair: lead },
     { ...EVENTS["ride.riderBooked"], pair: lead },
     { ...EVENTS["ride.opened"], pair: lead },
   ] as DomainEvent[];

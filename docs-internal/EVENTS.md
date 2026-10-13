@@ -226,7 +226,7 @@ the worker):
 | `ride.riderBooked` | `passengerId` | `bookRider` |
 | `ride.riderRemoved` | `passengerId`, `self` (the rider's own account gave the seat up) | `cancelBooking` |
 | `ride.opened` | — | `scheduleRide`, per leg, when the chapter lets pilots sign up and the ride is still ahead and short of pilots |
-| `ride.understaffed` | `assigned`, `required` | `checkStaffing` (the worker's staffing check), once per ride, with `actorUserId: null` |
+| `ride.understaffed` | `assigned`, `required` | `checkStaffing` (the worker's staffing check), once per ride, with `actorUserId: null`; the way there checks its way back along |
 | `ride.announced` | — | `scheduleRide` with `announced`, `setAnnounced` when it is switched on the first time; only for an event still ahead |
 
 `self` is true when the pilot acted for themself: `selfAssign` and `withdraw` emit
@@ -270,7 +270,7 @@ ride's chat members in step (`use-cases/ride-chat.ts`).
 there with the way back, moving the way there (which moves the way back), or scheduling a
 round trip with riders and pilots, or a pilot signing up for or stepping back from both legs —
 each leg still emits its own event, but `ride.cancelled`, `ride.rescheduled`, `ride.riderBooked`,
-`ride.pilotAssigned`, `ride.pilotUnassigned` and `ride.opened` carry a `pair`: the way there's
+`ride.pilotAssigned`, `ride.pilotUnassigned`, `ride.opened` and `ride.understaffed` carry a `pair`: the way there's
 event is `{ role: "lead", otherRideId }` and the way back's `{ role: "follow", otherRideId }`.
 A kind sends nothing for a follower, and the lead's message says "and the way back" and goes
 to everyone on either leg. `pair` defaults to `null`, so events stored before it parse as

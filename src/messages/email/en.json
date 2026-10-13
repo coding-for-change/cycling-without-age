@@ -260,6 +260,7 @@
     "footer": "You received this email because you help run a Cycling Without Age chapter.",
     "heading": "A ride is still short of pilots",
     "intro": "The ride on {date}, {time}, at {place} ({ride}) has {assigned} of {required, plural, one {# pilot} other {# pilots}}. Find someone soon, or let the riders know in time.",
+    "introBoth": "The round trip on {date} is still short of pilots both ways: the way there at {time}, from {place} ({ride}), has {assigned} of {required, plural, one {# pilot} other {# pilots}}. Find someone soon, or let the riders know in time.",
     "preview": "{ride} · {time}",
     "subject": "Unstaffed ride on {date}"
   },

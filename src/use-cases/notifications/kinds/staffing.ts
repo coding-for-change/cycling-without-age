@@ -70,11 +70,11 @@ export const rideUnderstaffed = defineKind({
     required: z.string().regex(/^\d+$/),
   }),
   recipients: async (event) =>
-    (await rideStillExists(event.rideId))
+    !followsItsPair(event.pair) && (await rideStillExists(event.rideId))
       ? chapterAdminIds(event.chapterId)
       : [],
   params: async (event) => ({
-    ...(await factsOfRide(event.rideId)),
+    ...(await factsOfRide(event.rideId, event.pair)),
     assigned: String(event.assigned),
     required: String(event.required),
   }),
@@ -90,7 +90,11 @@ export const rideUnderstaffed = defineKind({
       subject: formatMessage(copy.subject, values, locale),
       preview: formatMessage(copy.preview, values, locale),
       heading: formatMessage(copy.heading, values, locale),
-      body: formatMessage(copy.intro, values, locale),
+      body: formatMessage(
+        params.bothWays ? copy.introBoth : copy.intro,
+        values,
+        locale,
+      ),
       cta: copy.cta,
       footer: copy.footer,
       template: "rideUnderstaffed",
