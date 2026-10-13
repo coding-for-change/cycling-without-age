@@ -18,7 +18,11 @@ import { formatMessage } from "@/lib/i18n/format";
 import { MAP_ENABLED } from "@/lib/mapbox-map";
 import { hrefWith } from "@/lib/search-params";
 import { BackLink } from "../../../_components/detail-page";
-import { readActiveScope, type AdminSearchParams } from "../../../active-scope";
+import {
+  readActiveScope,
+  scopeQuery as scopeQueryOf,
+  type AdminSearchParams,
+} from "../../../active-scope";
 import { RideLocationDetail } from "./ride-location-detail";
 
 export async function RideLocationBody({
@@ -28,7 +32,7 @@ export async function RideLocationBody({
   params: Promise<{ locationId: string }>;
   searchParams: Promise<AdminSearchParams>;
 }) {
-  const [{ scopeQuery }, { locationId }] = await Promise.all([
+  const [{ scope, scopeQuery }, { locationId }] = await Promise.all([
     readActiveScope(searchParams, "rideLocations"),
     params,
   ]);
@@ -49,6 +53,9 @@ export async function RideLocationBody({
   const notation = resolveLocale(head.get("accept-language"));
   const words = wordsLocale(language);
   const backHref = `/admin/ride-locations${scopeQuery}`;
+  const home = scope.chapters.find(
+    (chapter) => chapter.id === location.chapterId,
+  );
 
   return (
     <>
@@ -91,10 +98,11 @@ export async function RideLocationBody({
             words,
           ),
         }))}
-        scheduleHref={hrefWith("/admin/rides", scopeQuery, {
-          new: "1",
-          rideLocation: location.id,
-        })}
+        scheduleHref={hrefWith(
+          "/admin/rides",
+          home ? scopeQueryOf({ kind: "chapter", chapter: home }) : scopeQuery,
+          { new: "1", rideLocation: location.id },
+        )}
         minutes={BOOKING_CHOICES.rideMinutes.map((value) => ({
           value,
           label: formatDuration(value * 60, words),
