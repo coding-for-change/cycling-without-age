@@ -243,6 +243,24 @@ describe("scheduleRide", () => {
     expect(db.ride.create.mock.calls[1][0].data.announcedAt).toBeNull();
   });
 
+  it("counts a ride scheduled inside its staffing window as checked", async () => {
+    const lead = { staffingLeadHours: 48 };
+    await rides.scheduleRide(rideInput.parse(ahead), ADMIN, lead);
+    expect(db.ride.create.mock.calls[0][0].data.staffingCheckedAt).toEqual(
+      expect.any(Date),
+    );
+    await rides.scheduleRide(
+      rideInput.parse({
+        ...ahead,
+        startsAt: new Date(Date.now() + 72 * 3_600_000),
+        endsAt: new Date(Date.now() + 74 * 3_600_000),
+      }),
+      ADMIN,
+      lead,
+    );
+    expect(db.ride.create.mock.calls[1][0].data.staffingCheckedAt).toBeNull();
+  });
+
   // An admin writing yesterday's ride into the calendar tells nobody about it.
   it("offers and announces only a ride still ahead", async () => {
     const offered = async (input: RideInput) => {

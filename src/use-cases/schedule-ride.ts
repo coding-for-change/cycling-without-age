@@ -65,7 +65,10 @@ export async function scheduleRideAt(
           : undefined,
     },
     actorUserId,
-    { opensForSignUp: settings.pilotsMaySelfAssign },
+    {
+      opensForSignUp: settings.pilotsMaySelfAssign,
+      staffingLeadHours: settings.staffingCheckLeadHours,
+    },
   );
 }
 

@@ -61,6 +61,7 @@ beforeEach(() => {
   });
   (chapters.getSettings as jest.Mock).mockResolvedValue({
     pilotsMaySelfAssign: true,
+    staffingCheckLeadHours: 48,
   });
   scheduleRide.mockResolvedValue({ id: "ride-new" });
   (passengers.getPassengers as jest.Mock).mockResolvedValue([]);
@@ -105,16 +106,20 @@ describe("scheduleRideAt", () => {
         returnLeg: undefined,
       }),
       ADMIN,
-      { opensForSignUp: true },
+      { opensForSignUp: true, staffingLeadHours: 48 },
     );
   });
 
   it("opens the ride to pilots only where the chapter lets them sign up", async () => {
     (chapters.getSettings as jest.Mock).mockResolvedValue({
       pilotsMaySelfAssign: false,
+      staffingCheckLeadHours: 24,
     });
     await scheduleAt(form);
-    expect(scheduleRide.mock.calls[0][2]).toEqual({ opensForSignUp: false });
+    expect(scheduleRide.mock.calls[0][2]).toEqual({
+      opensForSignUp: false,
+      staffingLeadHours: 24,
+    });
   });
 
   it("books the way back after the stay, as long as the way there", async () => {

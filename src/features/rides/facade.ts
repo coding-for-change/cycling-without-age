@@ -560,13 +560,20 @@ async function reserveOrRefuse(
  * cancelled ride releases it. Whether the chapter may use the trishaw at all is
  * the fleet's question, asked by the use case before this runs.
  *
+ * A ride scheduled already inside its chapter's staffing window counts as
+ * checked: the admin scheduling it sees what it is short of, and the sweep
+ * would only repeat it to them minutes later.
+ *
  * A round trip is two rows written together: both windows are checked under
  * the same lock, so the way there can never be booked without the way back.
  */
 export async function scheduleRide(
   input: RideData,
   actorUserId: Actor,
-  { opensForSignUp = false }: { opensForSignUp?: boolean } = {},
+  {
+    opensForSignUp = false,
+    staffingLeadHours = null,
+  }: { opensForSignUp?: boolean; staffingLeadHours?: number | null } = {},
 ) {
   const {
     trishawIds,
@@ -578,9 +585,13 @@ export async function scheduleRide(
   } = shapedForModel(input);
   const now = new Date();
   const ahead = fields.startsAt > now;
+  const insideStaffingWindow =
+    staffingLeadHours !== null &&
+    fields.startsAt.getTime() - now.getTime() <= staffingLeadHours * HOUR_MS;
   const data = {
     ...fields,
     announcedAt: fields.announced && ahead ? now : null,
+    staffingCheckedAt: insideStaffingWindow ? now : null,
   };
   return rideWrite(async (tx, emit) => {
     await requireRidePhotos(photoFileIds, actorUserId, null, tx);

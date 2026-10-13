@@ -964,10 +964,13 @@ starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 1
   rendered by `features/fleet/components/storage-access-card.tsx`, which the finish page uses
   too).
 - **Staffing check** (3D). `use-cases/ride-sweep.ts` runs every five minutes in the worker
-  (`MONITORS["ride-sweep"]`). `staffing-check.ts` reads the unchecked rides inside the widest
-  window, keeps each to its own chapter's lead, and `rides.checkStaffing` stamps
+  (`MONITORS["ride-sweep"]`). `staffing-check.ts` groups the chapters by their lead and reads,
+  per group, only the unchecked rides already inside that window, and `rides.checkStaffing` stamps
   `Ride.staffingCheckedAt` and emits `ride.understaffed` in one transaction under the ride's
-  lock — a retried sweep finds the stamp and stays quiet. Moving a ride clears the stamp.
+  lock — a retried sweep finds the stamp and stays quiet. Moving a ride clears the stamp. A
+  ride scheduled already inside its window is stamped as it is scheduled (the admin sees what it
+  is short of), and `20261013110000_ride_staffing_checked_backfill` stamps the rides already
+  inside their window when this ships, so the first sweep does not flag them all at once.
 - **Ride chat.** A `Conversation` with `origin: ride` and a unique `rideId`, owned by nobody.
   The `syncRideChat` worker listener (`ride.pilotAssigned`, `ride.pilotUnassigned`,
   `ride.riderBooked`, `ride.riderRemoved`) runs `use-cases/ride-chat.ts`: once a pilot is on the
