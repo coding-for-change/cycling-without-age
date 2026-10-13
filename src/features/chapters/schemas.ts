@@ -198,7 +198,6 @@ export const OPERATING_HOURS = {
   minWindowMinutes: 30,
   maxWindowsPerDay: 4,
   closureReasonMax: 200,
-  closuresShown: 50,
 } as const;
 
 const dayMinute = z

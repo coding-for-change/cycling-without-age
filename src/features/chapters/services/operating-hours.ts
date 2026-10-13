@@ -31,11 +31,10 @@ export const replaceOperatingWindows = (
     }),
   ]);
 
-export const findClosures = (chapterIds: string[], from: Date, take: number) =>
+export const findClosures = (chapterIds: string[], from: Date) =>
   prisma.chapterClosure.findMany({
     where: { chapterId: { in: chapterIds }, date: { gte: from } },
     orderBy: { date: "asc" },
-    take,
     select: { chapterId: true, ...closureSelect },
   });
 

@@ -9,7 +9,6 @@ import {
   chapterInput,
   chapterSettingsInput,
   closureInput,
-  OPERATING_HOURS,
   operatingHoursInput,
   chapterUpdateInput,
   countryInput,
@@ -420,17 +419,13 @@ export async function listClosures(
   chapterId: string,
   from?: Date,
 ): Promise<ChapterClosureRow[]> {
-  return (
-    await findClosures(
-      [chapterId],
-      closuresFrom(from),
-      OPERATING_HOURS.closuresShown,
-    )
-  ).map((closure) => ({
-    id: closure.id,
-    date: isoDate(closure.date),
-    reason: closure.reason,
-  }));
+  return (await findClosures([chapterId], closuresFrom(from))).map(
+    (closure) => ({
+      id: closure.id,
+      date: isoDate(closure.date),
+      reason: closure.reason,
+    }),
+  );
 }
 
 export async function addClosure(chapterId: string, input: ClosureInput) {
@@ -452,11 +447,7 @@ export async function getOperatingHoursOf(
   if (!chapterIds.length) return new Map();
   const [windows, closures] = await Promise.all([
     findOperatingWindows(chapterIds),
-    findClosures(
-      chapterIds,
-      closuresFrom(from),
-      OPERATING_HOURS.closuresShown * chapterIds.length,
-    ),
+    findClosures(chapterIds, closuresFrom(from)),
   ]);
   return new Map(
     chapterIds.map((chapterId) => [

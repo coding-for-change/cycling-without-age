@@ -313,4 +313,13 @@ describe("riding hours", () => {
       closures: ["2026-12-24"],
     });
   });
+
+  it("never caps closures, so one chapter's dates cannot hide another's", async () => {
+    db.chapterOperatingWindow.findMany.mockResolvedValue([]);
+    db.chapterClosure.findMany.mockResolvedValue([]);
+    await chapters.getOperatingHoursOf([CHAPTER, "other"]);
+    await chapters.listClosures(CHAPTER);
+    for (const [query] of db.chapterClosure.findMany.mock.calls)
+      expect(query).not.toHaveProperty("take");
+  });
 });
