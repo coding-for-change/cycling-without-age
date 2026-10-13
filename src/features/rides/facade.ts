@@ -85,6 +85,7 @@ import {
   findAnnouncedEvents,
   findOpenRide,
   findOpenRidesFor,
+  findChaptersWithUncheckedRides,
   findStaffingCandidates,
   type AnnouncedEventRow,
   type FeedAudience,
@@ -1463,16 +1464,30 @@ export async function withdraw(
 export const withdrawalClosesAt = (startsAt: Date, leadHours: number) =>
   new Date(startsAt.getTime() - leadHours * HOUR_MS);
 
-/** Rides that could be inside some chapter's staffing window and were not checked yet. */
-export const listStaffingCandidates = (
-  maxLeadHours: number,
-  now = new Date(),
-) =>
-  findStaffingCandidates(
+/** Chapters with a ride not checked yet that could be inside some staffing window. */
+export const listChaptersToCheck = (maxLeadHours: number, now = new Date()) =>
+  findChaptersWithUncheckedRides(
     now,
     new Date(now.getTime() + maxLeadHours * HOUR_MS),
-    STAFFING_BATCH,
   );
+
+/**
+ * Rides of these chapters already inside a staffing window of `leadHours` and
+ * not checked yet. Every one is due, so a full batch still makes progress.
+ */
+export const listStaffingCandidates = async (
+  chapterIds: string[],
+  leadHours: number,
+  now = new Date(),
+) =>
+  chapterIds.length
+    ? findStaffingCandidates(
+        chapterIds,
+        now,
+        new Date(now.getTime() + leadHours * HOUR_MS),
+        STAFFING_BATCH,
+      )
+    : [];
 
 /**
  * Lifecycle 3D: the check runs once per ride. The stamp and the warning are

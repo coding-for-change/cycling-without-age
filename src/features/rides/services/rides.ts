@@ -985,21 +985,32 @@ export const findOpenRide = (rideId: string, chapterIds: string[], now: Date) =>
     select: openSelect,
   });
 
-export const findStaffingCandidates = (now: Date, until: Date, take: number) =>
+const uncheckedWithin = (now: Date, until: Date) =>
+  ({
+    status: "scheduled",
+    startsAt: { gt: now, lte: until },
+    staffingCheckedAt: null,
+  }) satisfies Prisma.RideWhereInput;
+
+export const findChaptersWithUncheckedRides = async (now: Date, until: Date) =>
+  (
+    await prisma.ride.findMany({
+      where: uncheckedWithin(now, until),
+      distinct: ["chapterId"],
+      select: { chapterId: true },
+    })
+  ).map((ride) => ride.chapterId);
+
+export const findStaffingCandidates = (
+  chapterIds: string[],
+  now: Date,
+  until: Date,
+  take: number,
+) =>
   prisma.ride.findMany({
-    where: {
-      status: "scheduled",
-      startsAt: { gt: now, lte: until },
-      staffingCheckedAt: null,
-    },
+    where: { chapterId: { in: chapterIds }, ...uncheckedWithin(now, until) },
     orderBy: [{ startsAt: "asc" }, { id: "asc" }],
-    select: {
-      id: true,
-      chapterId: true,
-      startsAt: true,
-      requiredPilots: true,
-      _count: { select: { assignments: { where: { role: "pilot" } } } },
-    },
+    select: { id: true },
     take,
   });
 

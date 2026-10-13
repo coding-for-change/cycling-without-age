@@ -7,12 +7,14 @@ jest.mock("@/features/chapters", () => ({
   chapters: { getSettingsOf: jest.fn() },
 }));
 jest.mock("@/features/rides", () => ({
-  rides: { listStaffingCandidates: jest.fn(), checkStaffing: jest.fn() },
+  rides: {
+    listChaptersToCheck: jest.fn(),
+    listStaffingCandidates: jest.fn(),
+    checkStaffing: jest.fn(),
+  },
 }));
 
 const NOW = new Date("2026-10-12T08:00:00Z");
-const hoursAhead = (hours: number) =>
-  new Date(NOW.getTime() + hours * 60 * 60 * 1000);
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -20,39 +22,46 @@ beforeEach(() => {
 });
 
 describe("staffingCheck", () => {
-  it("checks each ride against its own chapter's window", async () => {
-    (rides.listStaffingCandidates as jest.Mock).mockResolvedValue([
-      { id: "soon-a", chapterId: "a", startsAt: hoursAhead(20) },
-      { id: "later-a", chapterId: "a", startsAt: hoursAhead(30) },
-      { id: "later-b", chapterId: "b", startsAt: hoursAhead(30) },
-    ]);
+  it("reads each chapter's rides only inside its own window", async () => {
+    (rides.listChaptersToCheck as jest.Mock).mockResolvedValue(["a", "b", "c"]);
     (chapters.getSettingsOf as jest.Mock).mockResolvedValue(
       new Map([
         ["a", { staffingCheckLeadHours: 24 }],
-        ["b", { staffingCheckLeadHours: 48 }],
+        ["b", { staffingCheckLeadHours: 168 }],
+        ["c", { staffingCheckLeadHours: 24 }],
       ]),
     );
+    (rides.listStaffingCandidates as jest.Mock).mockImplementation(
+      async (chapterIds: string[]) =>
+        chapterIds.includes("a") ? [{ id: "soon-a" }] : [{ id: "later-b" }],
+    );
     expect(await staffingCheck(NOW)).toBe(2);
+    expect(rides.listChaptersToCheck).toHaveBeenCalledWith(168, NOW);
+    expect((rides.listStaffingCandidates as jest.Mock).mock.calls).toEqual([
+      [["a", "c"], 24, NOW],
+      [["b"], 168, NOW],
+    ]);
     expect(
       (rides.checkStaffing as jest.Mock).mock.calls.map(([id]) => id),
     ).toEqual(["soon-a", "later-b"]);
-    expect(rides.listStaffingCandidates).toHaveBeenCalledWith(168, NOW);
   });
 
   it("counts only the rides it actually flagged", async () => {
-    (rides.listStaffingCandidates as jest.Mock).mockResolvedValue([
-      { id: "checked", chapterId: "a", startsAt: hoursAhead(1) },
-    ]);
+    (rides.listChaptersToCheck as jest.Mock).mockResolvedValue(["a"]);
     (chapters.getSettingsOf as jest.Mock).mockResolvedValue(
       new Map([["a", { staffingCheckLeadHours: 24 }]]),
     );
+    (rides.listStaffingCandidates as jest.Mock).mockResolvedValue([
+      { id: "checked" },
+    ]);
     (rides.checkStaffing as jest.Mock).mockResolvedValue(false);
     expect(await staffingCheck(NOW)).toBe(0);
   });
 
   it("reads no settings when nothing is due", async () => {
-    (rides.listStaffingCandidates as jest.Mock).mockResolvedValue([]);
+    (rides.listChaptersToCheck as jest.Mock).mockResolvedValue([]);
     expect(await staffingCheck(NOW)).toBe(0);
     expect(chapters.getSettingsOf).not.toHaveBeenCalled();
+    expect(rides.listStaffingCandidates).not.toHaveBeenCalled();
   });
 });
