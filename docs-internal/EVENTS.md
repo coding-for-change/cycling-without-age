@@ -225,9 +225,9 @@ the worker):
 | `ride.pilotUnassigned` | `userId`, `self` | `unassignVolunteer`, `withdraw` (per leg it leaves: stepping back from a round trip leaves the other leg too while it is outside the staffing window) |
 | `ride.riderBooked` | `passengerId` | `bookRider` |
 | `ride.riderRemoved` | `passengerId`, `self` (the rider's own account gave the seat up) | `cancelBooking` |
-| `ride.opened` | — | `scheduleRide`, per leg, when the chapter lets pilots sign up and the ride is short of pilots |
+| `ride.opened` | — | `scheduleRide`, per leg, when the chapter lets pilots sign up and the ride is still ahead and short of pilots |
 | `ride.understaffed` | `assigned`, `required` | `checkStaffing` (the worker's staffing check), once per ride, with `actorUserId: null` |
-| `ride.announced` | — | `scheduleRide` with `announced`, `setAnnounced` when it is switched on |
+| `ride.announced` | — | `scheduleRide` with `announced`, `setAnnounced` when it is switched on the first time; only for an event still ahead |
 
 `self` is true when the pilot acted for themself: `selfAssign` and `withdraw` emit
 `ride.pilotAssigned` / `ride.pilotUnassigned` with `self: true`, and `bookSeats` emits one

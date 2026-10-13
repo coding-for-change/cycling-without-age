@@ -576,9 +576,11 @@ export async function scheduleRide(
     photoFileIds,
     ...fields
   } = shapedForModel(input);
+  const now = new Date();
+  const ahead = fields.startsAt > now;
   const data = {
     ...fields,
-    announcedAt: fields.announced ? new Date() : null,
+    announcedAt: fields.announced && ahead ? now : null,
   };
   return rideWrite(async (tx, emit) => {
     await requireRidePhotos(photoFileIds, actorUserId, null, tx);
@@ -646,7 +648,7 @@ export async function scheduleRide(
         role: "follow",
         otherRideId: ride.id,
       });
-    if (opensForSignUp && pilotIds.length < data.requiredPilots) {
+    if (ahead && opensForSignUp && pilotIds.length < data.requiredPilots) {
       await emit({
         type: "ride.opened",
         rideId: ride.id,
@@ -663,7 +665,7 @@ export async function scheduleRide(
           pair: { role: "follow", otherRideId: ride.id },
         });
     }
-    if (data.announced)
+    if (data.announcedAt)
       await emit({
         type: "ride.announced",
         rideId: ride.id,
@@ -1634,8 +1636,9 @@ export async function checkStaffing(rideId: string, now = new Date()) {
 }
 
 /**
- * Only an event ride can be announced to the chapter's riders. They are told
- * the first time; taking it back and announcing it again tells nobody twice.
+ * Only an event ride still ahead can be announced to the chapter's riders.
+ * They are told the first time; taking it back and announcing it again tells
+ * nobody twice.
  */
 export async function setAnnounced(
   rideId: string,
@@ -1647,6 +1650,7 @@ export async function setAnnounced(
     const ride = await requireScheduled(rideId, tx);
     if (announced && ride.model !== "event")
       throw new DomainError("eventsOnly");
+    if (announced && ride.startsAt <= now) throw new DomainError("rideClosed");
     if (ride.announced === announced) return false;
     const firstTime = announced && !ride.announcedAt;
     await updateRide(

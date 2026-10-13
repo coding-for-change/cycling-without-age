@@ -267,7 +267,7 @@ export async function RideBody({
         <RideAnnounce
           rideId={ride.id}
           announced={ride.announced}
-          editable={editable}
+          editable={editable && (ride.announced || ride.startsAt > new Date())}
           labels={{ ...dict.rides.detail.announce, field }}
         />
       ) : null}

@@ -224,8 +224,14 @@ describe("scheduleRide", () => {
     );
   });
 
+  const ahead = {
+    ...base,
+    startsAt: new Date(Date.now() + 86_400_000),
+    endsAt: new Date(Date.now() + 90_000_000),
+  };
+
   it("stamps an event announced as it is scheduled", async () => {
-    await schedule({ ...base, model: "event", announced: true }, ADMIN);
+    await schedule({ ...ahead, model: "event", announced: true }, ADMIN);
     expect(db.ride.create.mock.calls[0][0].data).toEqual(
       expect.objectContaining({
         announced: true,
@@ -233,8 +239,25 @@ describe("scheduleRide", () => {
       }),
     );
     expect(eventTypes()).toContain("ride.announced");
-    await schedule(base, ADMIN);
+    await schedule(ahead, ADMIN);
     expect(db.ride.create.mock.calls[1][0].data.announcedAt).toBeNull();
+  });
+
+  // An admin writing yesterday's ride into the calendar tells nobody about it.
+  it("offers and announces only a ride still ahead", async () => {
+    const offered = async (input: RideInput) => {
+      emitted.length = 0;
+      await rides.scheduleRide(rideInput.parse(input), ADMIN, {
+        opensForSignUp: true,
+      });
+      return eventTypes();
+    };
+    expect(
+      await offered({ ...ahead, model: "event", announced: true }),
+    ).toEqual(expect.arrayContaining(["ride.opened", "ride.announced"]));
+    const past = await offered({ ...base, model: "event", announced: true });
+    expect(past).not.toContain("ride.opened");
+    expect(past).not.toContain("ride.announced");
   });
 
   it("refuses a trishaw already reserved for an overlapping window", async () => {
@@ -2707,6 +2730,28 @@ describe("booking seats on an announced event", () => {
       announced: true,
       announcedAt: BEFORE,
     });
+  });
+
+  it("refuses to announce an event that has started", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ announced: false }));
+    expect(
+      await codeOf(
+        rides.setAnnounced(
+          "ride-1",
+          true,
+          ADMIN,
+          new Date("2026-09-08T09:00:00Z"),
+        ),
+      ),
+    ).toBe("rideClosed");
+    expect(
+      await rides.setAnnounced(
+        "ride-1",
+        false,
+        ADMIN,
+        new Date("2026-09-08T09:00:00Z"),
+      ),
+    ).toBe(false);
   });
 
   // Taking an announcement back to fix a typo must not tell everyone twice.
