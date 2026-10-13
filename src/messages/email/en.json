@@ -202,6 +202,7 @@
     "footer": "You received this email because you pilot with a Cycling Without Age chapter. You can turn these off in your notification settings.",
     "heading": "A ride needs a pilot",
     "intro": "{chapter} is looking for a pilot on {date}, {time}, starting at {place} ({ride}). If you're free, sign up in the app.",
+    "introBoth": "{chapter} is looking for a pilot for a round trip on {date}: there at {time}, starting at {place} ({ride}), and the way back. If you're free, sign up in the app.",
     "preview": "{ride} · {time}",
     "subject": "A ride on {date} needs a pilot"
   },

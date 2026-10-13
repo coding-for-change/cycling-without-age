@@ -601,14 +601,23 @@ export async function scheduleRide(
         role: "follow",
         otherRideId: ride.id,
       });
-    if (opensForSignUp && pilotIds.length < data.requiredPilots)
-      for (const leg of [ride, ...(back ? [back] : [])])
+    if (opensForSignUp && pilotIds.length < data.requiredPilots) {
+      await emit({
+        type: "ride.opened",
+        rideId: ride.id,
+        chapterId: ride.chapterId,
+        actorUserId,
+        pair: back ? { role: "lead", otherRideId: back.id } : null,
+      });
+      if (back)
         await emit({
           type: "ride.opened",
-          rideId: leg.id,
-          chapterId: leg.chapterId,
+          rideId: back.id,
+          chapterId: back.chapterId,
           actorUserId,
+          pair: { role: "follow", otherRideId: ride.id },
         });
+    }
     if (data.announced)
       await emit({
         type: "ride.announced",

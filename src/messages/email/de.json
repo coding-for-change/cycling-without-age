@@ -202,6 +202,7 @@
     "footer": "Du erhältst diese E-Mail, weil du bei einer Ortsgruppe von Cycling Without Age fährst. In deinen Benachrichtigungen kannst du sie abschalten.",
     "heading": "Eine Fahrt sucht einen Piloten",
     "intro": "{chapter} sucht für den {date}, {time}, einen Piloten, Start bei {place} ({ride}). Wenn du Zeit hast, trag dich in der App ein.",
+    "introBoth": "{chapter} sucht für den {date} einen Piloten für eine Fahrt hin und zurück: Hinfahrt {time}, Start bei {place} ({ride}). Wenn du Zeit hast, trag dich in der App ein.",
     "preview": "{ride} · {time}",
     "subject": "Fahrt am {date} sucht einen Piloten"
   },

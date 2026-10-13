@@ -223,6 +223,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     rideId: "ride-1",
     chapterId: CHAPTER,
     actorUserId: ACTOR,
+    pair: null,
   },
   "ride.understaffed": {
     type: "ride.understaffed",
@@ -351,6 +352,7 @@ describe("a message for both legs of a round trip", () => {
     { ...EVENTS["ride.rescheduled"], changes: ["time"], pair: lead },
     { ...EVENTS["ride.pilotAssigned"], pair: lead },
     { ...EVENTS["ride.riderBooked"], pair: lead },
+    { ...EVENTS["ride.opened"], pair: lead },
   ] as DomainEvent[];
 
   it.each(locales)("reads as finished prose in %s", async (locale) => {

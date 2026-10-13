@@ -202,6 +202,7 @@
     "footer": "Du modtager denne e-mail, fordi du er pilot i en Cycling Without Age-afdeling. Du kan slå dem fra i dine notifikationer.",
     "heading": "En tur mangler en pilot",
     "intro": "{chapter} søger en pilot {date}, {time}, med start ved {place} ({ride}). Har du tid, så tilmeld dig i appen.",
+    "introBoth": "{chapter} søger en pilot til en tur ud og hjem {date}: udturen er {time} fra {place} ({ride}). Har du tid, så tilmeld dig i appen.",
     "preview": "{ride} · {time}",
     "subject": "Turen {date} mangler en pilot"
   },

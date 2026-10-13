@@ -6,6 +6,7 @@ import { formatMessage } from "@/lib/i18n/format";
 import { chapterAdminIds, excluding, nameOfPerson } from "./lookups";
 import {
   factsOfRide,
+  followsItsPair,
   rideFacts,
   rideStillExists,
   rideWords,
@@ -22,7 +23,8 @@ export const rideOpened = defineKind({
   policy: { push: true, email: "ifNoPush", optional: true },
   payload: z.object(rideFacts),
   recipients: async (event) => {
-    if (!(await rideStillExists(event.rideId))) return [];
+    if (followsItsPair(event.pair) || !(await rideStillExists(event.rideId)))
+      return [];
     const [pilots, ride] = await Promise.all([
       membership.listPilotMembers([event.chapterId]),
       rides.listRideParticipants(event.rideId),
@@ -35,7 +37,7 @@ export const rideOpened = defineKind({
       event.actorUserId,
     );
   },
-  params: (event) => factsOfRide(event.rideId),
+  params: (event) => factsOfRide(event.rideId, event.pair),
   href: (event) => `/pilot/rides/${event.rideId}`,
   collapseKey: (event) => `rides-open:${event.chapterId}`,
   message: (params, strings, locale) => {
@@ -45,7 +47,11 @@ export const rideOpened = defineKind({
       subject: formatMessage(copy.subject, values, locale),
       preview: formatMessage(copy.preview, values, locale),
       heading: formatMessage(copy.heading, values, locale),
-      body: formatMessage(copy.intro, values, locale),
+      body: formatMessage(
+        params.bothWays ? copy.introBoth : copy.intro,
+        values,
+        locale,
+      ),
       cta: copy.cta,
       footer: copy.footer,
       template: "rideOpened",

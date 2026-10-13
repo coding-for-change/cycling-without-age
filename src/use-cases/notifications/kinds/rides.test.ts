@@ -10,6 +10,7 @@ import {
   ridePilotAssigned,
   rideRescheduled,
 } from "./rides";
+import { rideOpened } from "./staffing";
 
 jest.mock("@/features/membership", () => ({
   membership: { listChapterAdmins: jest.fn() },
@@ -203,6 +204,14 @@ describe("who hears about a ride", () => {
           ...scope,
           actorUserId: "admin-1",
           passengerId: "passenger-1",
+          pair: follow,
+        }),
+      ).toEqual([]);
+      expect(
+        await rideOpened.recipients({
+          type: "ride.opened",
+          ...scope,
+          actorUserId: "admin-1",
           pair: follow,
         }),
       ).toEqual([]);
