@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { TriangleAlert } from "lucide-react";
 import { slotWindow, type WallSlot } from "@/features/rides/schemas";
+import { dayKey } from "@/lib/calendar";
 import { clockRangeLabel } from "@/lib/clock";
 import { formatWeekday, wordsLocale, type Locale } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
@@ -11,6 +12,7 @@ import type { Locale as Language } from "@/lib/i18n/locales";
 import {
   fitsHours,
   windowsOn,
+  type HoursFit,
   type OperatingHours,
 } from "@/lib/operating-hours";
 
@@ -60,18 +62,25 @@ export function HoursWarnings({
       ? count(strings.days, hours / HOURS_PER_DAY)
       : count(strings.hours, hours);
 
+  const dayOf = (fit: HoursFit) => {
+    const leg = legs[fits.indexOf(fit)];
+    return leg ? dayKey(leg.startsAt, timeZone) : null;
+  };
+  const closedOn = dayOf("closed");
+  const outsideOn = dayOf("outsideHours");
+
   const messages: string[] = [];
-  if (fits.includes("closed")) {
-    const reason = policy.closureReasons[slot.date];
+  if (closedOn) {
+    const reason = policy.closureReasons[closedOn];
     messages.push(
       reason
         ? formatMessage(strings.warnings.closedReason, { reason }, words)
         : strings.warnings.closed,
     );
-  } else if (fits.includes("outsideHours")) {
-    const day = `${formatWeekday(slot.date, words, "short")} ${windowsOn(
+  } else if (outsideOn) {
+    const day = `${formatWeekday(outsideOn, words, "short")} ${windowsOn(
       policy.hours,
-      slot.date,
+      outsideOn,
     )
       .map((window) => clockRangeLabel(window.from, window.to, notation))
       .join(", ")}`;
