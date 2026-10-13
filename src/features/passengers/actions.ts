@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/auth-guards";
 import { actionFailure } from "@/lib/domain-error";
 import { withinRateLimit } from "@/lib/rate-limit";
@@ -38,7 +37,6 @@ export async function updateOwnRiderNeedsAction(
 
   try {
     await setOwnRiderNeeds(session.user.id, parsed.data);
-    revalidatePath("/", "layout");
     return { ok: true };
   } catch (error) {
     return actionFailure(error, {
