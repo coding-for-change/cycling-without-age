@@ -101,6 +101,18 @@ export type RideLocationDetailLabels = {
 };
 
 const KM = /^\d{1,3}([.,]\d)?$/;
+
+const breakAfterAt = (email: string) => {
+  const at = email.indexOf("@");
+  if (at < 0) return email;
+  return (
+    <>
+      {email.slice(0, at + 1)}
+      <wbr />
+      {email.slice(at + 1)}
+    </>
+  );
+};
 const CHAPTER_DEFAULT = "";
 const range = (max: number) =>
   Array.from({ length: max }, (_, index) => index + 1);
@@ -149,6 +161,7 @@ export function RideLocationDetail({
           label={label}
           placeholder={placeholder}
           validate={key === "contactEmail" ? isEmail : undefined}
+          display={key === "contactEmail" ? breakAfterAt : undefined}
           onSave={(next) => save({ [key]: next })}
           labels={field}
           className="text-2sm"
