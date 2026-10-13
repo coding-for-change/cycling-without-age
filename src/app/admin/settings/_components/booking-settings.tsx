@@ -1,7 +1,8 @@
-import { BOOKING_CHOICES, chapters } from "@/features/chapters";
+import { BOOKING_CHOICES, type ChapterSettings } from "@/features/chapters";
 import { formatDuration, wordsLocale } from "@/lib/format";
-import { getDictionary, getLocale } from "@/lib/i18n";
+import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/locales";
 import { BookingPolicyCard } from "./booking-policy-card";
 
 const HOURS_PER_DAY = 24;
@@ -11,12 +12,17 @@ const withCurrent = (values: readonly number[], current: number) =>
     ? [...values]
     : [...values, current].toSorted((a, b) => a - b);
 
-export async function BookingSettings({ chapterId }: { chapterId: string }) {
-  const [settings, dict, language] = await Promise.all([
-    chapters.getSettings(chapterId),
-    getDictionary(),
-    getLocale(),
-  ]);
+export function BookingSettings({
+  chapterId,
+  settings,
+  dict,
+  language,
+}: {
+  chapterId: string;
+  settings: ChapterSettings;
+  dict: Dictionary;
+  language: Locale;
+}) {
   const words = wordsLocale(language);
   const strings = dict.admin.settings.booking;
   const count = (template: string, value: number) =>

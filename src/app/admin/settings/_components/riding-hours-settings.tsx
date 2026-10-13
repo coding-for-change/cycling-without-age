@@ -7,7 +7,8 @@ import {
   resolveLocale,
   wordsLocale,
 } from "@/lib/format";
-import { getDictionary, getLocale } from "@/lib/i18n";
+import type { Dictionary } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n/locales";
 import { OperatingHoursCard } from "./operating-hours-card";
 
 const MONDAY = new Date(Date.UTC(2024, 0, 1));
@@ -15,14 +16,16 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 export async function RidingHoursSettings({
   chapterId,
+  dict,
+  language,
 }: {
   chapterId: string;
+  dict: Dictionary;
+  language: Locale;
 }) {
-  const [windows, closures, dict, language, head] = await Promise.all([
+  const [windows, closures, head] = await Promise.all([
     chapters.listOperatingWindows(chapterId),
     chapters.listClosures(chapterId),
-    getDictionary(),
-    getLocale(),
     headers(),
   ]);
   const notation = resolveLocale(head.get("accept-language"));

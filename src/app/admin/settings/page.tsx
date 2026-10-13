@@ -70,8 +70,17 @@ async function Settings({
                 field: strings.notifications.field,
               }}
             />
-            <RidingHoursSettings chapterId={chapter.id} />
-            <BookingSettings chapterId={chapter.id} />
+            <RidingHoursSettings
+              chapterId={chapter.id}
+              dict={dict}
+              language={language}
+            />
+            <BookingSettings
+              chapterId={chapter.id}
+              settings={settings}
+              dict={dict}
+              language={language}
+            />
           </>
         ) : (
           <p className="max-w-prose text-sm text-ink-soft">
