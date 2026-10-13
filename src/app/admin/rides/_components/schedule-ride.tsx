@@ -24,6 +24,7 @@ import {
 import { rideErrors } from "@/features/rides/components/strings";
 import { formatDuration, resolveLocale, wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
+import { NO_HOURS } from "@/lib/operating-hours";
 import { first } from "@/lib/search-params";
 import { readActiveScope, type AdminSearchParams } from "../../active-scope";
 import { readWeekAnchor } from "../../week-param";
@@ -101,27 +102,30 @@ type Planning = {
 };
 
 async function loadPlanning(chapterIds: string[]) {
-  const [hours, settings, closures] = await Promise.all([
+  const [hours, settings] = await Promise.all([
     chapterFeature.getOperatingHoursOf(chapterIds),
     Promise.all(chapterIds.map((id) => chapterFeature.getSettings(id))),
-    Promise.all(chapterIds.map((id) => chapterFeature.listClosures(id))),
   ]);
   return new Map<string, Planning>(
-    chapterIds.map((id, index) => [
-      id,
-      {
-        policy: {
-          hours: hours.get(id) ?? { windows: [], closures: [] },
-          closureReasons: Object.fromEntries(
-            closures[index].map((closure) => [closure.date, closure.reason]),
-          ),
-          leadTimeHours: settings[index].bookingLeadTimeHours,
-          horizonDays: settings[index].bookingHorizonDays,
+    chapterIds.map((id, index) => {
+      const { windows, closures, closureReasons } = hours.get(id) ?? {
+        ...NO_HOURS,
+        closureReasons: {},
+      };
+      return [
+        id,
+        {
+          policy: {
+            hours: { windows, closures },
+            closureReasons,
+            leadTimeHours: settings[index].bookingLeadTimeHours,
+            horizonDays: settings[index].bookingHorizonDays,
+          },
+          rideMinutes: settings[index].defaultRideMinutes,
+          stayMinutes: settings[index].defaultStayMinutes,
         },
-        rideMinutes: settings[index].defaultRideMinutes,
-        stayMinutes: settings[index].defaultStayMinutes,
-      },
-    ]),
+      ];
+    }),
   );
 }
 

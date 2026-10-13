@@ -25,7 +25,7 @@ import type {
   CountryUpdateInput,
   OperatingHoursInput,
 } from "./schemas";
-import type { OperatingHours } from "@/lib/operating-hours";
+import { NO_HOURS, type OperatingHours } from "@/lib/operating-hours";
 import {
   deleteClosure,
   findClosures,
@@ -440,39 +440,48 @@ export async function removeClosure(chapterId: string, closureId: string) {
   if (count === 0) throw new DomainError("notFound");
 }
 
+export type ChapterHours = OperatingHours & {
+  closureReasons: Record<string, string | null>;
+};
+
 export async function getOperatingHoursOf(
   chapterIds: string[],
   from?: Date,
-): Promise<Map<string, OperatingHours>> {
+): Promise<Map<string, ChapterHours>> {
   if (!chapterIds.length) return new Map();
   const [windows, closures] = await Promise.all([
     findOperatingWindows(chapterIds),
     findClosures(chapterIds, closuresFrom(from)),
   ]);
   return new Map(
-    chapterIds.map((chapterId) => [
-      chapterId,
-      {
-        windows: windows
-          .filter((window) => window.chapterId === chapterId)
-          .map(({ weekday, startMinute, endMinute }) => ({
-            weekday,
-            startMinute,
-            endMinute,
-          })),
-        closures: closures
-          .filter((closure) => closure.chapterId === chapterId)
-          .map((closure) => isoDate(closure.date)),
-      },
-    ]),
+    chapterIds.map((chapterId) => {
+      const own = closures.filter((closure) => closure.chapterId === chapterId);
+      return [
+        chapterId,
+        {
+          windows: windows
+            .filter((window) => window.chapterId === chapterId)
+            .map(({ weekday, startMinute, endMinute }) => ({
+              weekday,
+              startMinute,
+              endMinute,
+            })),
+          closures: own.map((closure) => isoDate(closure.date)),
+          closureReasons: Object.fromEntries(
+            own.map((closure) => [isoDate(closure.date), closure.reason]),
+          ),
+        },
+      ];
+    }),
   );
 }
 
-export const getOperatingHours = async (
+export async function getOperatingHours(
   chapterId: string,
   from?: Date,
-): Promise<OperatingHours> =>
-  (await getOperatingHoursOf([chapterId], from)).get(chapterId) ?? {
-    windows: [],
-    closures: [],
-  };
+): Promise<OperatingHours> {
+  const hours = (await getOperatingHoursOf([chapterId], from)).get(chapterId);
+  return hours
+    ? { windows: hours.windows, closures: hours.closures }
+    : NO_HOURS;
+}

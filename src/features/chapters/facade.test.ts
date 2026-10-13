@@ -312,6 +312,10 @@ describe("riding hours", () => {
       windows: [window(1, 9, 12)],
       closures: ["2026-12-24"],
     });
+    expect(
+      (await chapters.getOperatingHoursOf([CHAPTER, "other"])).get(CHAPTER)
+        ?.closureReasons,
+    ).toEqual({ "2026-12-24": null });
   });
 
   it("never caps closures, so one chapter's dates cannot hide another's", async () => {
