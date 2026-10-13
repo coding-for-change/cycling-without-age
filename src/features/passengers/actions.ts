@@ -44,6 +44,7 @@ export async function updateOwnRiderNeedsAction(
     return actionFailure(error, {
       unknownLocation: "invalid",
       locationNotInChapter: "invalid",
+      locationNotCareCenter: "invalid",
     } as const);
   }
 }

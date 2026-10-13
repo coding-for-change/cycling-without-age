@@ -31,6 +31,7 @@ export type DomainErrorCode =
   | "legsOverlap"
   | "locationArchived"
   | "locationNotEmpty"
+  | "locationNotCareCenter"
   | "locationNotInChapter"
   | "notAssigned"
   | "notChapterMember"

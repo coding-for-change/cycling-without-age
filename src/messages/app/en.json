@@ -2017,6 +2017,7 @@
       "careCenter": {
         "label": "Care Center",
         "hint": "Where the rider lives, if the chapter rides from there.",
+        "gone": "{name} (no longer offered)",
         "none": "None"
       }
     }

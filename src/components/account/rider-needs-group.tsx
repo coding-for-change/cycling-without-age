@@ -14,6 +14,7 @@ import {
   RIDER_NOTE_MAX,
   type RiderNeedsInput,
 } from "@/features/passengers/schemas";
+import { formatMessage } from "@/lib/i18n/format";
 import type { OwnRiderNeeds } from "@/use-cases/set-own-rider-needs";
 import type { AccountData } from "./types";
 
@@ -28,11 +29,20 @@ export function RiderNeedsGroup({ data }: { data: AccountData }) {
     <RiderNeeds
       strings={data.riderNeeds}
       labels={data.strings.field}
+      language={data.language}
     />
   );
 }
 
-function RiderNeeds({ strings, labels }: { strings: Strings; labels: Labels }) {
+function RiderNeeds({
+  strings,
+  labels,
+  language,
+}: {
+  strings: Strings;
+  labels: Labels;
+  language: AccountData["language"];
+}) {
   const [rider, setRider] = useState<OwnRiderNeeds | null | undefined>();
 
   useEffect(() => {
@@ -75,7 +85,13 @@ function RiderNeeds({ strings, labels }: { strings: Strings; labels: Labels }) {
             { value: NONE, label: strings.careCenter.none },
             ...rider.careCenters.map((place) => ({
               value: place.id,
-              label: place.name,
+              label: place.offered
+                ? place.name
+                : formatMessage(
+                    strings.careCenter.gone,
+                    { name: place.name },
+                    language,
+                  ),
             })),
           ]}
           labels={labels}

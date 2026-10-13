@@ -1003,8 +1003,10 @@ kept. The nav calls them "Ride locations" and "Storage locations" so the two nev
   recorded for Report 11 (distance ridden); no report reads it yet.
 - **Riders.** `Passenger` gained `needsWheelchairBike`, `note` and `rideLocationId` (their
   Care Center). An admin sets them when adding a rider; an account edits its own rider in the
-  account surface through `use-cases/set-own-rider-needs`, which checks the Care Center
-  belongs to the rider's chapter. The account surface loads that group only when it opens,
+  account surface through `use-cases/set-own-rider-needs`. Both go through
+  `rideLocations.requireCareCenter`: a live location of the rider's chapter that is not a
+  public place (`locationNotCareCenter`). A link to a location that has since been archived
+  stays visible in the picker, marked "no longer offered", so the rider can clear it. The account surface loads that group only when it opens,
   and only for an account with the passenger role, so `loadAccount` (which every sidebar
   runs) never pays for it.
 - **Who may.** Creating needs `requireChapterAdmin(chapterId)`; updating, archiving and

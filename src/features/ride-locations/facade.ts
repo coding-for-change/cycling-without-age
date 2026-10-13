@@ -87,6 +87,13 @@ export async function requireUsableRideLocation(id: string, chapterId: string) {
   return location;
 }
 
+export async function requireCareCenter(id: string, chapterId: string) {
+  const location = await requireUsableRideLocation(id, chapterId);
+  if (location.kind === "publicPlace")
+    throw new DomainError("locationNotCareCenter");
+  return location;
+}
+
 export async function createRideLocation(input: RideLocationInput) {
   const data = rideLocationInput.parse(input);
   return toRideLocation(await insertRideLocation(data));

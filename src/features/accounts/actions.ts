@@ -45,6 +45,7 @@ export async function addAssistedPassenger(
       alreadyHasAccount: "exists",
       unknownLocation: "invalid",
       locationNotInChapter: "invalid",
+      locationNotCareCenter: "invalid",
     } as const);
   }
 }

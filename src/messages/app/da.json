@@ -2017,6 +2017,7 @@
       "careCenter": {
         "label": "Plejecenter",
         "hint": "Hvor passageren bor, hvis afdelingen kører derfra.",
+        "gone": "{name} (tilbydes ikke længere)",
         "none": "Intet"
       }
     }

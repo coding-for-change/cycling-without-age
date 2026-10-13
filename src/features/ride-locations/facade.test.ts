@@ -208,4 +208,17 @@ describe("using a location for a ride", () => {
       where: { chapter: { countryId: "dk" } },
     });
   });
+
+  it("refuses a public place as a rider's Care Center", async () => {
+    db.rideLocation.findUnique.mockResolvedValueOnce(
+      record({ kind: "publicPlace" }),
+    );
+    await expect(
+      rideLocations.requireCareCenter("loc-1", CHAPTER),
+    ).rejects.toMatchObject({ code: "locationNotCareCenter" });
+    db.rideLocation.findUnique.mockResolvedValueOnce(record());
+    await expect(
+      rideLocations.requireCareCenter("loc-1", CHAPTER),
+    ).resolves.toMatchObject({ id: "loc-1" });
+  });
 });

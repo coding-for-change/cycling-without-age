@@ -24,10 +24,7 @@ export async function provisionAssistedPassenger({
   } = input;
   const owner = helper && helper.contact === contact ? helper : null;
   if (needs?.rideLocationId)
-    await rideLocations.requireUsableRideLocation(
-      needs.rideLocationId,
-      chapterId,
-    );
+    await rideLocations.requireCareCenter(needs.rideLocationId, chapterId);
 
   const { userId } = await accounts.provisionUserStrict({
     name: owner ? owner.name : `${firstName} ${lastName}`,

@@ -2017,6 +2017,7 @@
       "careCenter": {
         "label": "Pflegeeinrichtung",
         "hint": "Wo der Fahrgast wohnt, falls die Ortsgruppe von dort losfährt.",
+        "gone": "{name} (nicht mehr im Angebot)",
         "none": "Keine"
       }
     }
