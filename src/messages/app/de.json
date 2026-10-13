@@ -1065,7 +1065,9 @@
       "picker": {
         "placeholder": "Abfahrtsort oder Adresse",
         "hint": "{kind} · {address}",
-        "defaults": "Aus {name} übernommen: {pilots, plural, one {1 Pilot:in} other {# Pilot:innen}}, {trishaws, plural, one {1 Rikscha} other {# Rikschas}}, {minutes}."
+        "pilots": "{count, plural, one {1 Pilot:in} other {# Pilot:innen}}",
+        "trishaws": "{count, plural, one {1 Rikscha} other {# Rikschas}}",
+        "defaults": "Aus {name} übernommen: {parts}."
       },
       "errors": {
         "unknownLocation": "Diesen Abfahrtsort gibt es nicht mehr. Lade die Seite neu und versuch es noch mal.",

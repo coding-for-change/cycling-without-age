@@ -1065,7 +1065,9 @@
       "picker": {
         "placeholder": "Startsted eller adresse",
         "hint": "{kind} · {address}",
-        "defaults": "Udfyldt fra {name}: {pilots, plural, one {1 pilot} other {# piloter}}, {trishaws, plural, one {1 rickshaw} other {# rickshawer}}, {minutes}."
+        "pilots": "{count, plural, one {1 pilot} other {# piloter}}",
+        "trishaws": "{count, plural, one {1 rickshaw} other {# rickshawer}}",
+        "defaults": "Udfyldt fra {name}: {parts}."
       },
       "errors": {
         "unknownLocation": "Det startsted findes ikke længere. Genindlæs siden og prøv igen.",

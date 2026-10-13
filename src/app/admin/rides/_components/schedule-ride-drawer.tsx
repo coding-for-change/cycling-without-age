@@ -99,6 +99,7 @@ import { useDrawerParam } from "@/hooks/use-drawer-param";
 import { clockLabel, clockToMinutes, DEFAULT_SLOT_MINUTES } from "@/lib/clock";
 import {
   formatDuration,
+  formatList,
   wordsLocale,
   type Locale as NotationLocale,
 } from "@/lib/format";
@@ -200,6 +201,13 @@ const chapterPlace = (chapter: ScheduleChapter): Place | null =>
         latitude: chapter.latitude,
         longitude: chapter.longitude,
       };
+
+type Prefilled = {
+  name: string;
+  pilots: number | null;
+  trishaws: number | null;
+  minutes: number | null;
+};
 
 const firstFree = (options: TrishawOption[], count: number) =>
   new Set(
@@ -326,6 +334,18 @@ function ScheduleRideSheet({
   const [pilotsNeeded, setPilotsNeeded] = useState(
     requestedLocation?.defaultPilotCount ?? 1,
   );
+  const [prefilled, setPrefilled] = useState<Prefilled | null>(() =>
+    requestedLocation
+      ? {
+          name: requestedLocation.name,
+          pilots: requestedLocation.defaultPilotCount,
+          trishaws: null,
+          minutes: chapter.durationChosen
+            ? null
+            : requestedLocation.defaultMinutes,
+        }
+      : null,
+  );
   const [passengerIds, setPassengerIds] = useState<string[]>([]);
   const [pilotIds, setPilotIds] = useState<string[]>([]);
   const [noteOpen, setNoteOpen] = useState(false);
@@ -370,15 +390,20 @@ function ScheduleRideSheet({
       setFetched({ key: request, options });
       if (!options) return;
       setKnown(options);
-      const prefill = trishawPrefill.current;
+      const prefill =
+        trishawPrefill.current === null
+          ? null
+          : firstFree(options, trishawPrefill.current);
       trishawPrefill.current = null;
       setSelected((current) => {
         const free = firstFree(options, options.length);
         const kept = [...current].filter((id) => free.has(id));
-        return kept.length === 0 && prefill !== null
-          ? firstFree(options, prefill)
-          : new Set(kept);
+        return kept.length === 0 && prefill ? prefill : new Set(kept);
       });
+      if (prefill)
+        setPrefilled((current) =>
+          current ? { ...current, trishaws: prefill.size } : current,
+        );
     }, LOOKUP_DELAY_MS);
     return () => {
       live = false;
@@ -462,6 +487,7 @@ function ScheduleRideSheet({
     setChapterId(id);
     rememberChapter(id);
     trishawPrefill.current = null;
+    setPrefilled(null);
     setSelected(new Set());
     setRideLocation(null);
     setOrigin(null);
@@ -483,6 +509,7 @@ function ScheduleRideSheet({
 
   const pickPlace = (place: Place | null) => {
     trishawPrefill.current = null;
+    setPrefilled(null);
     setRideLocation(null);
     setOrigin(place);
   };
@@ -490,16 +517,24 @@ function ScheduleRideSheet({
   const pickLocation = (location: RideLocationChoice) => {
     setRideLocation(location);
     setOrigin(placeOfLocation(location));
-    if (!pleasure)
-      changePilotsNeeded(Math.max(location.defaultPilotCount, pilotIds.length));
-    if (location.defaultMinutes && !endEdited.current)
-      setSlot((current) => ({
-        ...current,
-        durationMinutes: location.defaultMinutes ?? current.durationMinutes,
-      }));
+    const pilots = pleasure
+      ? null
+      : Math.max(location.defaultPilotCount, pilotIds.length);
+    if (pilots !== null) changePilotsNeeded(pilots);
+    const minutes = endEdited.current ? null : location.defaultMinutes;
+    if (minutes)
+      setSlot((current) => ({ ...current, durationMinutes: minutes }));
     const trishaws = pleasure ? 1 : location.defaultTrishawCount;
+    const chosen =
+      options && selected.size === 0 ? firstFree(options, trishaws) : null;
     if (!options) trishawPrefill.current = trishaws;
-    else if (selected.size === 0) setSelected(firstFree(options, trishaws));
+    else if (chosen) setSelected(chosen);
+    setPrefilled({
+      name: location.name,
+      pilots,
+      trishaws: chosen ? chosen.size : null,
+      minutes,
+    });
   };
 
   const changePilotsNeeded = (next: number) => {
@@ -593,6 +628,29 @@ function ScheduleRideSheet({
   });
 
   const photoLabels: PhotoGalleryLabels = { ...gallery, errors };
+  const prefilledParts = prefilled
+    ? [
+        !pleasure &&
+        prefilled.pilots !== null &&
+        prefilled.pilots === pilotsNeeded
+          ? formatMessage(
+              locationStrings.picker.pilots,
+              { count: prefilled.pilots },
+              language,
+            )
+          : null,
+        prefilled.trishaws && prefilled.trishaws === picked.length
+          ? formatMessage(
+              locationStrings.picker.trishaws,
+              { count: prefilled.trishaws },
+              language,
+            )
+          : null,
+        prefilled.minutes && prefilled.minutes === slot.durationMinutes
+          ? formatDuration(prefilled.minutes * 60, wordsLocale(language))
+          : null,
+      ].filter((part): part is string => part !== null)
+    : [];
   const showMap = Boolean(origin || (functional && destination));
   const trishawCount = picked.length;
 
@@ -768,19 +826,13 @@ function ScheduleRideSheet({
               language={language}
               failed={errors.generic}
             />
-            {rideLocation ? (
+            {prefilledParts.length ? (
               <p className="pl-9 text-xs text-ink-soft">
                 {formatMessage(
                   locationStrings.picker.defaults,
                   {
-                    name: rideLocation.name,
-                    pilots: rideLocation.defaultPilotCount,
-                    trishaws: rideLocation.defaultTrishawCount,
-                    minutes: formatDuration(
-                      (rideLocation.defaultMinutes ?? slot.durationMinutes) *
-                        60,
-                      wordsLocale(language),
-                    ),
+                    name: prefilled?.name ?? "",
+                    parts: formatList(prefilledParts, wordsLocale(language)),
                   },
                   language,
                 )}
