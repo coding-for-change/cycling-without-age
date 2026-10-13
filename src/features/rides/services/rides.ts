@@ -308,10 +308,11 @@ export const findPassengerRidesOn = (
 export const findStillPiloting = async (
   chapterIds: string[],
   userIds: string[],
+  db: Prisma.TransactionClient = prisma,
 ) =>
   new Set(
     (
-      await prisma.member.findMany({
+      await db.member.findMany({
         where: {
           organizationId: { in: chapterIds },
           userId: { in: userIds },
@@ -927,7 +928,9 @@ export const findLatestRideForPilot = (userId: string, now: Date) =>
 
 /**
  * What a pilot may know about a ride before signing up for it: when, where,
- * what kind and how many ride along. Nobody's name, nobody's number.
+ * what kind and how many ride along. Nobody's name, nobody's number — the
+ * pilots' ids are only read to count who still pilots, and never leave the
+ * facade.
  */
 const openSelect = {
   id: true,
@@ -942,12 +945,11 @@ const openSelect = {
   destinationName: true,
   requiredPilots: true,
   chapter: { select: { id: true, name: true, timeZone: true } },
-  _count: {
-    select: { roster: true, assignments: { where: { role: "pilot" } } },
-  },
+  _count: { select: { roster: true } },
+  assignments: { where: { role: "pilot" }, select: { userId: true } },
 } satisfies Prisma.RideSelect;
 
-export type OpenRideRow = Prisma.RideGetPayload<{
+export type OpenRideQueryRow = Prisma.RideGetPayload<{
   select: typeof openSelect;
 }>;
 

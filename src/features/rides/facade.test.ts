@@ -2241,11 +2241,29 @@ describe("pilots signing up themselves", () => {
     db.ride.findUnique.mockResolvedValue(
       scheduled({ assignments: [pilot("pilot-2")] }),
     );
+    db.member.findMany.mockResolvedValue([
+      { organizationId: CHAPTER, userId: "pilot-2" },
+    ]);
     expect(await codeOf(rides.selfAssign("ride-1", "pilot-1", BEFORE))).toBe(
       "rideFullyStaffed",
     );
     expect(db.rideAssignment.create).not.toHaveBeenCalled();
     expect(emitted).toEqual([]);
+  });
+
+  // A demoted pilot keeps the assignment row, but not the seat.
+  it("does not count a pilot who no longer pilots in the chapter", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ assignments: [pilot("pilot-2")] }),
+    );
+    db.member.findMany.mockResolvedValue([]);
+    expect(await rides.selfAssign("ride-1", "pilot-1", BEFORE)).toBe(true);
+    expect(db.member.findMany.mock.calls[0][0].where).toEqual(
+      expect.objectContaining({
+        organizationId: { in: [CHAPTER] },
+        userId: { in: ["pilot-2"] },
+      }),
+    );
   });
 
   it("refuses a ride that has started or is no longer going ahead", async () => {
@@ -2316,18 +2334,34 @@ describe("what a pilot sees before signing up", () => {
       }),
     );
     expect(args.select.roster).toBeUndefined();
-    expect(args.select.assignments).toBeUndefined();
+    expect(args.select.assignments).toEqual({
+      where: { role: "pilot" },
+      select: { userId: true },
+    });
     expect(args.select.note).toBeUndefined();
     expect(JSON.stringify(args.select)).not.toMatch(/phone|email|firstName/);
   });
 
   it("leaves out rides that have all their pilots", async () => {
+    const row = (id: string, requiredPilots: number, pilotIds: string[]) => ({
+      id,
+      chapterId: CHAPTER,
+      requiredPilots,
+      _count: { roster: 0 },
+      assignments: pilotIds.map((userId) => ({ userId })),
+    });
     db.ride.findMany.mockResolvedValue([
-      { id: "full", requiredPilots: 1, _count: { assignments: 1, roster: 0 } },
-      { id: "open", requiredPilots: 2, _count: { assignments: 1, roster: 3 } },
+      row("full", 1, ["pilot-2"]),
+      row("open", 2, ["pilot-2"]),
+      row("demoted", 1, ["pilot-3"]),
+    ]);
+    db.member.findMany.mockResolvedValue([
+      { organizationId: CHAPTER, userId: "pilot-2" },
     ]);
     const open = await rides.listOpenRidesForPilot("pilot-1", [CHAPTER]);
-    expect(open.map((ride) => ride.id)).toEqual(["open"]);
+    expect(open.map((ride) => ride.id)).toEqual(["open", "demoted"]);
+    expect(open.map((ride) => ride._count.assignments)).toEqual([1, 0]);
+    expect(open[0]).not.toHaveProperty("assignments");
   });
 
   it("asks nothing for a pilot of no chapter", async () => {
@@ -2371,9 +2405,23 @@ describe("the staffing check", () => {
     db.ride.findUnique.mockResolvedValue(
       scheduled({ assignments: [{ role: "pilot", user: { id: "p" } }] }),
     );
+    db.member.findMany.mockResolvedValue([
+      { organizationId: CHAPTER, userId: "p" },
+    ]);
     expect(await rides.checkStaffing("ride-1", NOW)).toBe(false);
     expect(db.ride.update).toHaveBeenCalled();
     expect(emitted).toEqual([]);
+  });
+
+  it("warns about a ride whose only pilot no longer pilots", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ assignments: [{ role: "pilot", user: { id: "p" } }] }),
+    );
+    db.member.findMany.mockResolvedValue([]);
+    expect(await rides.checkStaffing("ride-1", NOW)).toBe(true);
+    expect(emitted).toEqual([
+      expect.objectContaining({ type: "ride.understaffed", assigned: 0 }),
+    ]);
   });
 
   it("checks a moved ride again", async () => {

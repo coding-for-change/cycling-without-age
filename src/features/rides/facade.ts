@@ -88,7 +88,7 @@ import {
   findStaffingCandidates,
   type AnnouncedEventRow,
   type FeedAudience,
-  type OpenRideRow,
+  type OpenRideQueryRow,
   type PassengerRideDetailRow,
   type PassengerRideRow,
   type PilotRideDetailRow,
@@ -121,7 +121,6 @@ import type { ReportScope } from "./report-zones";
 export type {
   AnnouncedEventRow,
   FeedAudience,
-  OpenRideRow,
   PassengerRideDetailRow,
   PassengerRideRow,
   PilotRideDetailRow,
@@ -1309,10 +1308,52 @@ const DAY_MS = 24 * HOUR_MS;
 const OPEN_RIDES_ON_PAGE = 30;
 const STAFFING_BATCH = 200;
 
-const pilotsOn = (ride: RideDetailRow) => ridePilotCount(ride.assignments);
+/**
+ * A pilot who was demoted or left the chapter keeps their assignment row but
+ * no longer fills a seat: only pilots still piloting in the ride's chapter
+ * count, as in the crew lists.
+ */
+async function pilotCounter(chapterIds: string[], pilotIds: string[], db?: Tx) {
+  const active = pilotIds.length
+    ? await findStillPiloting(
+        [...new Set(chapterIds)],
+        [...new Set(pilotIds)],
+        db,
+      )
+    : new Set<string>();
+  return (chapterId: string, ids: string[]) =>
+    ids.filter((id) => active.has(`${chapterId}:${id}`)).length;
+}
 
-const ridePilotCount = (assignments: { role: string }[]) =>
-  assignments.filter((assignment) => assignment.role === "pilot").length;
+async function pilotsOn(ride: RideDetailRow, tx: Tx) {
+  const pilotIds = ride.assignments
+    .filter((assignment) => assignment.role === "pilot")
+    .map((assignment) => assignment.user.id);
+  const count = await pilotCounter([ride.chapterId], pilotIds, tx);
+  return count(ride.chapterId, pilotIds);
+}
+
+const pilotIdsOf = (row: OpenRideQueryRow) =>
+  row.assignments.map((assignment) => assignment.userId);
+
+async function withPilotsOn(rows: OpenRideQueryRow[]) {
+  const count = await pilotCounter(
+    rows.map((row) => row.chapterId),
+    rows.flatMap(pilotIdsOf),
+  );
+  return rows.map(({ assignments, ...row }) => ({
+    ...row,
+    _count: {
+      ...row._count,
+      assignments: count(
+        row.chapterId,
+        assignments.map((assignment) => assignment.userId),
+      ),
+    },
+  }));
+}
+
+export type OpenRideRow = Awaited<ReturnType<typeof withPilotsOn>>[number];
 
 const stillNeedsPilots = (ride: OpenRideRow) =>
   ride._count.assignments < ride.requiredPilots;
@@ -1334,7 +1375,9 @@ export async function listOpenRidesForPilot(
     new Date(now.getTime() + OPEN_RIDES_DAYS * DAY_MS),
     OPEN_RIDES_ON_PAGE * 2,
   );
-  return rows.filter(stillNeedsPilots).slice(0, OPEN_RIDES_ON_PAGE);
+  return (await withPilotsOn(rows))
+    .filter(stillNeedsPilots)
+    .slice(0, OPEN_RIDES_ON_PAGE);
 }
 
 export async function getOpenRideForPilot(
@@ -1343,8 +1386,10 @@ export async function getOpenRideForPilot(
   now = new Date(),
 ) {
   if (!chapterIds.length) return null;
-  const ride = await findOpenRide(rideId, chapterIds, now);
-  return ride && stillNeedsPilots(ride) ? ride : null;
+  const row = await findOpenRide(rideId, chapterIds, now);
+  if (!row) return null;
+  const [ride] = await withPilotsOn([row]);
+  return stillNeedsPilots(ride) ? ride : null;
 }
 
 /**
@@ -1361,7 +1406,7 @@ export async function selfAssign(
     const ride = await requireScheduled(rideId, tx);
     if (ride.startsAt <= now) throw new DomainError("rideClosed");
     if (isAssigned(ride, userId, "pilot")) return false;
-    if (pilotsOn(ride) >= ride.requiredPilots)
+    if ((await pilotsOn(ride, tx)) >= ride.requiredPilots)
       throw new DomainError("rideFullyStaffed");
     await insertAssignment(
       { rideId, userId, role: "pilot", assignedByUserId: null },
@@ -1441,7 +1486,7 @@ export async function checkStaffing(rideId: string, now = new Date()) {
     )
       return false;
     await updateRide(rideId, { staffingCheckedAt: now }, tx);
-    const assigned = pilotsOn(ride);
+    const assigned = await pilotsOn(ride, tx);
     if (assigned >= ride.requiredPilots) return false;
     await emit({
       type: "ride.understaffed",
