@@ -17,7 +17,6 @@ import {
   ChevronRight,
   Flag,
   MapPin,
-  Minus,
   NotebookPen,
   Plus,
   X,
@@ -26,6 +25,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { notify } from "@/components/action-feedback";
 import { AppDrawer, submitOnCmdEnter } from "@/components/app-drawer";
+import { CountStepper } from "@/components/count-stepper";
 import {
   MarkdownEditor,
   type MarkdownToolLabels,
@@ -190,8 +190,6 @@ const LAST_CHAPTER = "cwa:rides:schedule:chapter";
 const FIELD =
   "flex h-9 w-full min-w-0 items-center gap-2 rounded-lg border border-line px-2.5 text-left text-2sm transition-colors hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none data-[state=open]:bg-canvas-deep";
 const EMPTY_FIELD = "border-dashed text-ink-soft";
-const STEP_BUTTON =
-  "inline-flex h-full w-9 items-center justify-center text-ink-soft transition-colors first:rounded-l-lg last:rounded-r-lg hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40";
 
 const chapterPlace = (chapter: ScheduleChapter): Place | null =>
   chapter.latitude === null || chapter.longitude === null
@@ -916,9 +914,10 @@ function ScheduleRideSheet({
           </FieldRow>
           {pleasure ? null : (
             <FieldRow label={strings.pilotsNeeded}>
-              <PilotsStepper
+              <CountStepper
                 value={pilotsNeeded}
                 min={Math.max(1, pilotIds.length)}
+                max={RIDE_MAX_PILOTS}
                 onChange={changePilotsNeeded}
                 label={strings.pilotsNeeded}
                 fewer={strings.fewerPilots}
@@ -1340,65 +1339,6 @@ function TrishawPicker({
         {body()}
       </PopoverContent>
     </Popover>
-  );
-}
-
-function PilotsStepper({
-  value,
-  min,
-  onChange,
-  label,
-  fewer,
-  more,
-}: {
-  value: number;
-  min: number;
-  onChange: (next: number) => void;
-  label: string;
-  fewer: string;
-  more: string;
-}) {
-  const step = (by: number) => {
-    onChange(value + by);
-    haptics.selectionChanged();
-  };
-  return (
-    <div
-      role="group"
-      aria-label={label}
-      className="inline-flex h-9 w-fit items-center rounded-lg border border-line text-2sm"
-    >
-      <button
-        type="button"
-        aria-label={fewer}
-        disabled={value <= min}
-        onClick={() => step(-1)}
-        className={STEP_BUTTON}
-      >
-        <Minus
-          aria-hidden
-          className="size-3.5"
-        />
-      </button>
-      <span
-        aria-live="polite"
-        className="min-w-8 text-center tabular-nums"
-      >
-        {value}
-      </span>
-      <button
-        type="button"
-        aria-label={more}
-        disabled={value >= RIDE_MAX_PILOTS}
-        onClick={() => step(1)}
-        className={STEP_BUTTON}
-      >
-        <Plus
-          aria-hidden
-          className="size-3.5"
-        />
-      </button>
-    </div>
   );
 }
 

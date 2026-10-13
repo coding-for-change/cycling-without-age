@@ -11,6 +11,7 @@ import {
 import { toast } from "sonner";
 import { notify } from "@/components/action-feedback";
 import { AppDrawer, submitOnCmdEnter } from "@/components/app-drawer";
+import { CountStepper } from "@/components/count-stepper";
 import {
   MarkdownEditor,
   type MarkdownToolLabels,
@@ -38,7 +39,6 @@ import {
   LocationPlace,
   type Place,
 } from "../../locations/_components/location-place";
-import { CountStepper } from "./count-stepper";
 
 type Option = { id: string; name: string };
 type Choice = { value: number; label: string };
@@ -381,6 +381,7 @@ function RideLocationForm({
               label={create.defaultTrishaws}
               fewer={create.fewer}
               more={create.more}
+              className="h-11 text-sm"
             />
           </div>
           <div className="grid gap-2">
@@ -395,6 +396,7 @@ function RideLocationForm({
               label={create.defaultPilots}
               fewer={create.fewer}
               more={create.more}
+              className="h-11 text-sm"
             />
           </div>
         </div>

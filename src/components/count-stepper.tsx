@@ -2,6 +2,7 @@
 
 import { Minus, Plus } from "lucide-react";
 import { haptics } from "@/lib/native/haptics";
+import { cn } from "@/lib/utils";
 
 const STEP_BUTTON =
   "inline-flex h-full w-9 items-center justify-center text-ink-soft transition-colors first:rounded-l-lg last:rounded-r-lg hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40";
@@ -14,6 +15,7 @@ export function CountStepper({
   label,
   fewer,
   more,
+  className,
 }: {
   value: number;
   min: number;
@@ -22,6 +24,7 @@ export function CountStepper({
   label: string;
   fewer: string;
   more: string;
+  className?: string;
 }) {
   const step = (by: number) => {
     onChange(value + by);
@@ -32,7 +35,10 @@ export function CountStepper({
     <div
       role="group"
       aria-label={label}
-      className="inline-flex h-11 w-fit items-center rounded-lg border border-line text-sm"
+      className={cn(
+        "inline-flex h-9 w-fit items-center rounded-lg border border-line text-2sm",
+        className,
+      )}
     >
       <button
         type="button"
