@@ -483,7 +483,8 @@ function ScheduleRideSheet({
   const pickLocation = (location: RideLocationChoice) => {
     setRideLocation(location);
     setOrigin(placeOfLocation(location));
-    if (!pleasure) changePilotsNeeded(location.defaultPilotCount);
+    if (!pleasure)
+      changePilotsNeeded(Math.max(location.defaultPilotCount, pilotIds.length));
     if (location.defaultMinutes && !endEdited.current)
       setSlot((current) => ({
         ...current,
