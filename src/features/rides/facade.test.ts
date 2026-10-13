@@ -2377,6 +2377,40 @@ describe("what a pilot sees before signing up", () => {
     expect(open[0]).not.toHaveProperty("assignments");
   });
 
+  // A busy chapter's staffed rides fill a whole batch; the open one behind
+  // them still shows, and rides sharing a start time are not skipped.
+  it("reads on past a full batch of staffed rides", async () => {
+    const at = new Date("2026-09-10T08:00:00Z");
+    const staffed = Array.from({ length: 60 }, (_, index) => ({
+      id: `staffed-${String(index).padStart(2, "0")}`,
+      chapterId: CHAPTER,
+      startsAt: at,
+      requiredPilots: 1,
+      _count: { roster: 0 },
+      assignments: [{ userId: "pilot-2" }],
+    }));
+    db.ride.findMany.mockResolvedValueOnce(staffed).mockResolvedValueOnce([
+      {
+        id: "open",
+        chapterId: CHAPTER,
+        startsAt: at,
+        requiredPilots: 1,
+        _count: { roster: 0 },
+        assignments: [],
+      },
+    ]);
+    db.member.findMany.mockResolvedValue([
+      { organizationId: CHAPTER, userId: "pilot-2" },
+    ]);
+    const open = await rides.listOpenRidesForPilot("pilot-1", [CHAPTER]);
+    expect(open.map((ride) => ride.id)).toEqual(["open"]);
+    expect(db.ride.findMany).toHaveBeenCalledTimes(2);
+    expect(db.ride.findMany.mock.calls[1][0].where.OR).toEqual([
+      { startsAt: { gt: at } },
+      { startsAt: at, id: { gt: "staffed-59" } },
+    ]);
+  });
+
   it("asks nothing for a pilot of no chapter", async () => {
     expect(await rides.listOpenRidesForPilot("pilot-1", [])).toEqual([]);
     expect(await rides.getOpenRideForPilot("ride-1", [])).toBeNull();

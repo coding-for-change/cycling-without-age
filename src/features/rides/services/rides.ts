@@ -961,18 +961,29 @@ const stillAhead = (chapterIds: string[], now: Date) =>
     startsAt: { gt: now },
   }) satisfies Prisma.RideWhereInput;
 
+export type RideCursor = { startsAt: Date; id: string };
+
 export const findOpenRidesFor = (
   userId: string,
   chapterIds: string[],
   now: Date,
   until: Date,
   take: number,
+  after?: RideCursor,
 ) =>
   prisma.ride.findMany({
     where: {
       ...stillAhead(chapterIds, now),
       startsAt: { gt: now, lt: until },
       assignments: { none: { userId } },
+      ...(after
+        ? {
+            OR: [
+              { startsAt: { gt: after.startsAt } },
+              { startsAt: after.startsAt, id: { gt: after.id } },
+            ],
+          }
+        : {}),
     },
     orderBy: [{ startsAt: "asc" }, { id: "asc" }],
     select: openSelect,

@@ -90,6 +90,7 @@ import {
   type AnnouncedEventRow,
   type FeedAudience,
   type OpenRideQueryRow,
+  type RideCursor,
   type PassengerRideDetailRow,
   type PassengerRideRow,
   type PilotRideDetailRow,
@@ -1311,6 +1312,7 @@ export async function addRideNote(
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 const OPEN_RIDES_ON_PAGE = 30;
+const OPEN_RIDES_BATCH = OPEN_RIDES_ON_PAGE * 2;
 const STAFFING_BATCH = 200;
 
 /**
@@ -1365,7 +1367,10 @@ const stillNeedsPilots = (ride: OpenRideRow) =>
 
 /**
  * Rides in these chapters that still need a pilot and this pilot is not on
- * yet, soonest first. The rows carry how many ride along, never who.
+ * yet, soonest first. The rows carry how many ride along, never who. Whether
+ * a ride is staffed is only known once its pilots are counted, so the window
+ * is read in batches until the page is full: a run of staffed rides never
+ * hides an open one behind it.
  */
 export async function listOpenRidesForPilot(
   userId: string,
@@ -1373,16 +1378,23 @@ export async function listOpenRidesForPilot(
   now = new Date(),
 ) {
   if (!chapterIds.length) return [];
-  const rows = await findOpenRidesFor(
-    userId,
-    chapterIds,
-    now,
-    new Date(now.getTime() + OPEN_RIDES_DAYS * DAY_MS),
-    OPEN_RIDES_ON_PAGE * 2,
-  );
-  return (await withPilotsOn(rows))
-    .filter(stillNeedsPilots)
-    .slice(0, OPEN_RIDES_ON_PAGE);
+  const until = new Date(now.getTime() + OPEN_RIDES_DAYS * DAY_MS);
+  const open: OpenRideRow[] = [];
+  let after: RideCursor | undefined;
+  while (open.length < OPEN_RIDES_ON_PAGE) {
+    const rows = await findOpenRidesFor(
+      userId,
+      chapterIds,
+      now,
+      until,
+      OPEN_RIDES_BATCH,
+      after,
+    );
+    open.push(...(await withPilotsOn(rows)).filter(stillNeedsPilots));
+    if (rows.length < OPEN_RIDES_BATCH) break;
+    after = rows[rows.length - 1];
+  }
+  return open.slice(0, OPEN_RIDES_ON_PAGE);
 }
 
 export async function getOpenRideForPilot(
