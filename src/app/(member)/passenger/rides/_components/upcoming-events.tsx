@@ -121,6 +121,7 @@ function EventCard({
         {event.description?.trim() ? (
           <RichText
             text={event.description}
+            variant="preview"
             className="line-clamp-2 text-sm"
           />
         ) : null}
