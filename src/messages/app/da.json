@@ -353,6 +353,7 @@
       "passengers": "{count, plural, one {1 passager} other {# passagerer}}",
       "pending": "{count, plural, one {1 åben ansøgning} other {# åbne ansøgninger}}",
       "pilots": "{count, plural, one {1 pilotvagt} other {# pilotvagter}}",
+      "rideLocations": "{count, plural, one {1 startsted} other {# startsteder}}",
       "riders": "{count, plural, one {1 booking af en passager} other {# bookinger af passagerer}}",
       "rides": "{count, plural, one {1 tur, også tidligere} other {# ture, også tidligere}}",
       "roles": "{count, plural, one {1 medlemskab af en afdeling} other {# medlemskaber af afdelinger}}",

@@ -353,6 +353,7 @@
       "passengers": "{count, plural, one {1 passenger} other {# passengers}}",
       "pending": "{count, plural, one {1 open application} other {# open applications}}",
       "pilots": "{count, plural, one {1 pilot assignment} other {# pilot assignments}}",
+      "rideLocations": "{count, plural, one {1 ride location} other {# ride locations}}",
       "riders": "{count, plural, one {1 rider booking} other {# rider bookings}}",
       "rides": "{count, plural, one {1 ride, past ones included} other {# rides, past ones included}}",
       "roles": "{count, plural, one {1 chapter membership} other {# chapter memberships}}",

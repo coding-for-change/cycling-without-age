@@ -9,6 +9,7 @@ jest.mock("@/lib/prisma", () => ({
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      count: jest.fn(),
     },
   },
 }));
@@ -19,6 +20,7 @@ const db = prisma as unknown as {
     findUnique: jest.Mock;
     create: jest.Mock;
     update: jest.Mock;
+    count: jest.Mock;
   };
 };
 
@@ -190,5 +192,20 @@ describe("using a location for a ride", () => {
   it("lists nothing without chapters", async () => {
     expect(await rideLocations.listRideLocations([])).toEqual([]);
     expect(db.rideLocation.findMany).not.toHaveBeenCalled();
+  });
+
+  it("counts what a chapter or country delete takes with it, archived included", async () => {
+    db.rideLocation.count.mockResolvedValueOnce(3);
+    expect(await rideLocations.countChapterRideLocations(CHAPTER)).toBe(3);
+    expect(db.rideLocation.count).toHaveBeenLastCalledWith({
+      where: { chapterId: CHAPTER },
+    });
+    db.rideLocation.count.mockResolvedValueOnce(5);
+    expect(await rideLocations.countCountryRideLocations(["dk"])).toEqual(
+      new Map([["dk", 5]]),
+    );
+    expect(db.rideLocation.count).toHaveBeenLastCalledWith({
+      where: { chapter: { countryId: "dk" } },
+    });
   });
 });

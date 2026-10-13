@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
+import { rideLocations } from "@/features/ride-locations";
 import { readActiveScope, type AdminSearchParams } from "../active-scope";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
@@ -37,11 +38,13 @@ async function Countries({
     chapters.listCountries(),
   ]);
   const countryIds = countries.map((country) => country.id);
-  const [admins, footprints, fleetFootprints] = await Promise.all([
-    chapters.listAdminsByCountry(countryIds),
-    chapters.listCountryFootprints(countryIds),
-    fleet.listCountryFleetFootprints(countryIds),
-  ]);
+  const [admins, footprints, fleetFootprints, rideLocationCounts] =
+    await Promise.all([
+      chapters.listAdminsByCountry(countryIds),
+      chapters.listCountryFootprints(countryIds),
+      fleet.listCountryFleetFootprints(countryIds),
+      rideLocations.countCountryRideLocations(countryIds),
+    ]);
 
   const rows: CountryRow[] = countries.map((country) => {
     const footprint = footprints.get(country.id);
@@ -56,6 +59,7 @@ async function Countries({
           members: footprint?.members,
           passengers: footprint?.passengers,
           rides: footprint?.rides,
+          rideLocations: rideLocationCounts.get(country.id),
           ...fleetFootprints.get(country.id),
         },
         dict.admin.deletion,

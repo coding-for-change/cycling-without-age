@@ -6,6 +6,7 @@ import type {
   RideLocationUpdateInput,
 } from "./schemas";
 import {
+  countRideLocations,
   findRideLocationById,
   findRideLocationChapter,
   findRideLocations,
@@ -117,4 +118,20 @@ export async function restoreRideLocation(id: string) {
   const location = await requireLocation(id);
   if (!location.archivedAt) return;
   await updateRideLocationById(id, { archivedAt: null });
+}
+
+export const countChapterRideLocations = (chapterId: string) =>
+  countRideLocations({ chapterId });
+
+export async function countCountryRideLocations(countryIds: string[]) {
+  const rows = await Promise.all(
+    countryIds.map(
+      async (countryId) =>
+        [
+          countryId,
+          await countRideLocations({ chapter: { countryId } }),
+        ] as const,
+    ),
+  );
+  return new Map<string, number>(rows);
 }

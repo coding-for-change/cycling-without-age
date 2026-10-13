@@ -353,6 +353,7 @@
       "passengers": "{count, plural, one {1 Fahrgast} other {# Fahrgäste}}",
       "pending": "{count, plural, one {1 offene Anfrage} other {# offene Anfragen}}",
       "pilots": "{count, plural, one {1 Einteilung einer Pilot:in} other {# Einteilungen von Pilot:innen}}",
+      "rideLocations": "{count, plural, one {1 Abfahrtsort} other {# Abfahrtsorte}}",
       "riders": "{count, plural, one {1 Buchung eines Fahrgasts} other {# Buchungen von Fahrgästen}}",
       "rides": "{count, plural, one {1 Ausfahrt, vergangene eingeschlossen} other {# Ausfahrten, vergangene eingeschlossen}}",
       "roles": "{count, plural, one {1 Mitgliedschaft in einer Ortsgruppe} other {# Mitgliedschaften in Ortsgruppen}}",
