@@ -933,7 +933,7 @@ export async function updateRideDetails(
       ...Object.fromEntries(
         changed.map((field) => [field, blankToNull(wanted[field])]),
       ),
-      ...(leavingEvent ? { announced: false } : {}),
+      ...(leavingEvent && ride.announced ? { announced: false } : {}),
     } as Prisma.RideUncheckedUpdateInput;
     const updated = await updateRide(id, data, tx);
     const shown = changed.filter(
