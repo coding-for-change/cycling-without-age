@@ -7,6 +7,7 @@ import {
   recordActivity,
   recordsActivityFor,
 } from "./listeners/record-activity";
+import { leaveRideCrewsListener } from "./listeners/leave-ride-crews";
 import {
   syncRideChatListener,
   syncsRideChat,
@@ -26,6 +27,9 @@ export const handlers = Object.fromEntries(
       ...(recordsActivityFor(type) ? { recordActivity } : {}),
       ...(type === "chat.messageSent" ? { chatNotify: notifyChatMessage } : {}),
       ...(syncsRideChat(type) ? { syncRideChat: syncRideChatListener } : {}),
+      ...(type === "member.roleChanged"
+        ? { leaveRideCrews: leaveRideCrewsListener }
+        : {}),
     },
   ]),
 ) as Registry;

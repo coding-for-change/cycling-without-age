@@ -14,6 +14,7 @@ jest.mock("@/lib/prisma", () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
       delete: jest.fn(),
     },
     rideTrishaw: { findMany: jest.fn() },
@@ -72,6 +73,7 @@ const db = prisma as unknown as {
     findUnique: jest.Mock;
     create: jest.Mock;
     update: jest.Mock;
+    updateMany: jest.Mock;
     delete: jest.Mock;
   };
   rideTrishaw: { findMany: jest.Mock };
@@ -2724,6 +2726,32 @@ describe("the staffing check", () => {
           staffingCheckedAt: null,
         },
       },
+    });
+  });
+
+  it("checks again the rides a pilot left by stepping back or losing the role", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        staffingCheckedAt: new Date("2026-09-01T08:00:00Z"),
+        assignments: [{ role: "pilot", user: { id: "p" } }],
+      }),
+    );
+    await rides.withdraw("ride-1", "p", 12, new Date("2026-09-05T08:00:00Z"));
+    expect(db.ride.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { staffingCheckedAt: null } }),
+    );
+
+    db.ride.updateMany.mockResolvedValue({ count: 2 });
+    expect(await rides.reopenStaffingChecksOf("p", CHAPTER, NOW)).toBe(2);
+    expect(db.ride.updateMany).toHaveBeenCalledWith({
+      where: {
+        chapterId: CHAPTER,
+        status: "scheduled",
+        startsAt: { gt: NOW },
+        staffingCheckedAt: { not: null },
+        assignments: { some: { userId: "p", role: "pilot" } },
+      },
+      data: { staffingCheckedAt: null },
     });
   });
 

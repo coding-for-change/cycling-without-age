@@ -264,7 +264,9 @@ or `"rider"` per row and the bell, the push and the mail read it back.
 `ride.scheduled` and `ride.deleted` still have no listener and are marked processed without
 a job. The four roster events (`ride.pilotAssigned`, `ride.pilotUnassigned`,
 `ride.riderBooked`, `ride.riderRemoved`) also have a `syncRideChat` listener that keeps the
-ride's chat members in step (`use-cases/ride-chat.ts`).
+ride's chat members in step (`use-cases/ride-chat.ts`), and `member.roleChanged` has a
+`leaveRideCrews` listener: a demotion or removal checks the person's upcoming rides for pilots
+again and syncs every ride chat of the chapter they are in (`use-cases/leave-ride-crews.ts`).
 
 **A round trip is announced once.** When one change reaches both legs — cancelling the way
 there with the way back, moving the way there (which moves the way back), or scheduling a

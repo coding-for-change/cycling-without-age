@@ -1040,6 +1040,22 @@ export const findStaffingCandidates = (
     take,
   });
 
+export const clearStaffingChecksOfPilot = (
+  userId: string,
+  chapterId: string,
+  now: Date,
+) =>
+  prisma.ride.updateMany({
+    where: {
+      chapterId,
+      status: "scheduled",
+      startsAt: { gt: now },
+      staffingCheckedAt: { not: null },
+      assignments: { some: { userId, role: "pilot" } },
+    },
+    data: { staffingCheckedAt: null },
+  });
+
 /**
  * An announced event as the chapter's riders see it before they book: the
  * story, the place and how many seats are taken. Never who took them.

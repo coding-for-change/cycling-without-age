@@ -971,6 +971,9 @@ starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 1
   along, so a round trip short both ways is one warning. The sweep runs on the worker that
   dispatches every outbox event, so one run checks at most 50 rides and the next carries on, and
   a ride whose check fails is logged and passed over. Moving a ride clears the stamp. A
+  pilot stepping back clears the stamp of the legs they left, and a pilot demoted or removed
+  in the chapter clears it on every upcoming ride they were on (`use-cases/leave-ride-crews.ts`,
+  the `member.roleChanged` listener), so a seat that empties after the check is checked again. A
   ride scheduled already inside its window is stamped as it is scheduled (the admin sees what it
   is short of), and `20261013110000_ride_staffing_checked_backfill` stamps the rides already
   inside their window when this ships, so the first sweep does not flag them all at once.
@@ -980,7 +983,8 @@ starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 1
   ride it opens the chat, and from then on keeps its members equal to the ride's pilots, its
   riders' accounts and the chapter's admins — on an event only the pilots and admins, because
   the families who booked seats never learn of each other (`chat.syncRideConversation`,
-  idempotent). Two syncs may read the roster in one order and write it in the other, so a sync
+  idempotent). A demotion or removal in the chapter (`member.roleChanged`) syncs every ride chat
+  the person is in, so a former pilot or admin leaves them at once. Two syncs may read the roster in one order and write it in the other, so a sync
   that changed the members reads the roster again and writes until a read finds nothing to
   change; the roster is read outside the conversation's lock, so a waiting sync never needs a
   second pool connection. A racing creator that loses the unique `rideId` joins that loop.

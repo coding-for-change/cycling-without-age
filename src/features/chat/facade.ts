@@ -47,6 +47,7 @@ import {
   findConversationById,
   findConversationWithCounts,
   findConversationsInScope,
+  findRideIdsOfMemberChats,
   insertConversation,
   lockConversation,
   stampAnnouncementOnly,
@@ -465,6 +466,10 @@ async function announceMemberChanges(
     patch: { memberCount: memberIds.length },
   });
 }
+
+/** The rides of this chapter whose chat this person is in. */
+export const listRideChatsOf = (userId: string, chapterId: string) =>
+  findRideIdsOfMemberChats(userId, chapterId);
 
 /** The ride's chat, when this person is in it. */
 export async function getRideConversationId(rideId: string, userId: string) {

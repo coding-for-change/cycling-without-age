@@ -30,6 +30,22 @@ export const findConversationByRideId = (
     select: { id: true, frozenAt: true },
   });
 
+export const findRideIdsOfMemberChats = async (
+  userId: string,
+  chapterId: string,
+) =>
+  (
+    await prisma.conversation.findMany({
+      where: {
+        origin: "ride",
+        chapterId,
+        rideId: { not: null },
+        members: { some: { userId } },
+      },
+      select: { rideId: true },
+    })
+  ).flatMap(({ rideId }) => (rideId ? [rideId] : []));
+
 export const findConversationByDirectKey = (
   directKey: string,
   db: Prisma.TransactionClient = prisma,

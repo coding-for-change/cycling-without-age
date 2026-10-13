@@ -87,6 +87,7 @@ import {
   findOpenRidesFor,
   findChaptersWithUncheckedRides,
   findStaffingCandidates,
+  clearStaffingChecksOfPilot,
   type AnnouncedEventRow,
   type FeedAudience,
   type OpenRideQueryRow,
@@ -1569,6 +1570,8 @@ export async function withdraw(
     ];
     for (const leg of legs) {
       await deleteAssignment(leg.id, userId, "pilot", tx);
+      if (leg.staffingCheckedAt)
+        await updateRide(leg.id, { staffingCheckedAt: null }, tx);
       await record(
         tx,
         emit,
@@ -1616,6 +1619,17 @@ export const listStaffingCandidates = async (
         take,
       )
     : [];
+
+/**
+ * A pilot who stops piloting in a chapter leaves their seats empty, so the
+ * upcoming rides they were on are checked again: the next sweep warns about
+ * those now short and quietly stamps the rest.
+ */
+export const reopenStaffingChecksOf = async (
+  userId: string,
+  chapterId: string,
+  now = new Date(),
+) => (await clearStaffingChecksOfPilot(userId, chapterId, now)).count;
 
 /**
  * Lifecycle 3D: the check runs once per ride. The stamp and the warning are
