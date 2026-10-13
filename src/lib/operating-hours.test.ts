@@ -2,11 +2,9 @@ import { instantAt, MINUTES_IN_DAY } from "./calendar";
 import {
   closedRanges,
   fitsHours,
-  isOpenAt,
   isoWeekday,
   NO_HOURS,
   openingBand,
-  windowsAt,
   windowsOn,
   type OperatingHours,
 } from "./operating-hours";
@@ -52,47 +50,6 @@ describe("windowsOn", () => {
     expect(windowsOn(HOURS, "2026-10-20")).toEqual([]);
     expect(windowsOn(HOURS, "2026-10-14")).toEqual([]);
   });
-
-  it("reads the day in the chapter's zone", () => {
-    const lateMondayInDenver = at("2026-10-12", 23, 0, DENVER);
-    expect(windowsAt(HOURS, lateMondayInDenver, DENVER)).toEqual([]);
-    expect(windowsAt(HOURS, lateMondayInDenver, BERLIN)).toHaveLength(2);
-  });
-});
-
-describe("isOpenAt", () => {
-  it("is open inside a window and closed between windows", () => {
-    expect(isOpenAt(HOURS, at("2026-10-13", 10), BERLIN)).toBe(true);
-    expect(isOpenAt(HOURS, at("2026-10-13", 13), BERLIN)).toBe(false);
-  });
-
-  it("treats the end of a window as closed", () => {
-    expect(isOpenAt(HOURS, at("2026-10-13", 12), BERLIN)).toBe(false);
-  });
-
-  it("is always open when no hours are set, except on a closure", () => {
-    expect(isOpenAt(NO_HOURS, at("2026-10-14", 3), BERLIN)).toBe(true);
-    expect(
-      isOpenAt(
-        { windows: [], closures: ["2026-10-14"] },
-        at("2026-10-14", 3),
-        BERLIN,
-      ),
-    ).toBe(false);
-  });
-
-  it("keeps wall-clock hours across the spring DST change", () => {
-    const sunday = "2026-03-29";
-    expect(isOpenAt(HOURS, at(sunday, 10), BERLIN)).toBe(true);
-    expect(isOpenAt(HOURS, at(sunday, 9, 45), BERLIN)).toBe(false);
-    expect(isOpenAt(HOURS, at(sunday, 15, 59), BERLIN)).toBe(true);
-  });
-
-  it("keeps wall-clock hours across the autumn DST change", () => {
-    const sunday = "2026-10-25";
-    expect(isOpenAt(HOURS, at(sunday, 10), BERLIN)).toBe(true);
-    expect(isOpenAt(HOURS, at(sunday, 16), BERLIN)).toBe(false);
-  });
 });
 
 describe("fitsHours", () => {
@@ -126,6 +83,17 @@ describe("fitsHours", () => {
     expect(fitsHours(NO_HOURS, span("2026-10-14", 600, 660), BERLIN)).toBe(
       "unconfigured",
     );
+  });
+
+  it("reads the day in the chapter's zone", () => {
+    const lateMondayInDenver = span(
+      "2026-10-12",
+      23 * 60,
+      23 * 60 + 30,
+      DENVER,
+    );
+    expect(fitsHours(HOURS, lateMondayInDenver, DENVER)).toBe("closed");
+    expect(fitsHours(HOURS, lateMondayInDenver, BERLIN)).toBe("outsideHours");
   });
 
   it("measures a ride on the DST day in wall-clock minutes", () => {

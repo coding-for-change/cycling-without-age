@@ -32,8 +32,6 @@ export const findUpcomingRidesAtLocation = (
       model: true,
       title: true,
       startsAt: true,
-      endsAt: true,
-      requiredPilots: true,
-      _count: { select: { roster: true, assignments: true } },
+      _count: { select: { roster: true } },
     },
   });

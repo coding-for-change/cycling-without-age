@@ -241,7 +241,7 @@ date and an optional reason). Windows are replaced as a set (`chapters.setOperat
 validated by `operatingHoursInput`: on the 15-minute grid, at least 30 minutes, no overlap
 within a day). `chapters.getOperatingHours(chapterId)` returns the plain
 `{ windows, closures }` shape that the pure helpers in `src/lib/operating-hours.ts` read:
-`windowsOn`, `isOpenAt`, `fitsHours`, `closedRanges`, `openingBand`. They work on the
+`windowsOn`, `fitsHours`, `closedRanges`, `openingBand`. They work on the
 chapter's wall clock (a ride at 10:00 on a DST Sunday is inside a 10:00–16:00 window), and
 no windows at all means "always open", so a chapter that never set hours sees no warnings.
 

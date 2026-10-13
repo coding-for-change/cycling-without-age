@@ -37,28 +37,6 @@ export function windowsOn(hours: OperatingHours, date: string): MinuteRange[] {
     .toSorted((a, b) => a.from - b.from);
 }
 
-export function windowsAt(
-  hours: OperatingHours,
-  instant: Date,
-  timeZone: string,
-): MinuteRange[] {
-  return windowsOn(hours, dayKey(instant, timeZone));
-}
-
-export function isOpenAt(
-  hours: OperatingHours,
-  instant: Date,
-  timeZone: string,
-): boolean {
-  const date = dayKey(instant, timeZone);
-  if (isClosedOn(hours, date)) return false;
-  if (!isConfigured(hours)) return true;
-  const minute = clockMinutes(instant, timeZone);
-  return windowsOn(hours, date).some(
-    (window) => minute >= window.from && minute < window.to,
-  );
-}
-
 export function fitsHours(
   hours: OperatingHours,
   span: Span,

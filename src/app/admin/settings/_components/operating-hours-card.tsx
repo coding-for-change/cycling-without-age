@@ -29,7 +29,7 @@ type Strings = Dictionary["admin"]["settings"]["hours"];
 export type WeekdayLabel = { weekday: number; name: string };
 export type ClosureLabel = ChapterClosureRow & { label: string };
 
-const WEEKDAYS_MON_FRI = [2, 3, 4, 5];
+const TUESDAY_TO_FRIDAY = [2, 3, 4, 5];
 const PILL =
   "inline-flex h-8 items-center gap-1 rounded-full bg-mint-tint pr-1 pl-3 text-2sm text-ink tabular-nums";
 
@@ -84,8 +84,8 @@ export function OperatingHoursCard({
   const monday = shown.filter((window) => window.weekday === 1);
   const copyMonday = () =>
     write([
-      ...shown.filter((window) => !WEEKDAYS_MON_FRI.includes(window.weekday)),
-      ...WEEKDAYS_MON_FRI.flatMap((weekday) =>
+      ...shown.filter((window) => !TUESDAY_TO_FRIDAY.includes(window.weekday)),
+      ...TUESDAY_TO_FRIDAY.flatMap((weekday) =>
         monday.map((window) => ({ ...window, weekday })),
       ),
     ]);
