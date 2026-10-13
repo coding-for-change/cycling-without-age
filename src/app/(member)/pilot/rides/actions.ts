@@ -28,11 +28,29 @@ export type PilotRideResult = ActionResult<
 
 const SIGN_UP_LIMIT = { max: 20, windowMs: 60 * 60_000 };
 
-const { attempt } = createAttempt(MAPPED_ERRORS, () => {
+const revalidateRides = () => {
   revalidatePath("/pilot", "layout");
   revalidatePath("/passenger", "layout");
   revalidatePath("/admin", "layout");
-});
+};
+
+const { attempt } = createAttempt(MAPPED_ERRORS, revalidateRides);
+
+/**
+ * A refusal because the ride moved on under the screen — it filled up or
+ * closed — reloads the screen too, so it stops offering what is gone.
+ */
+const STALE: readonly PilotRideError[] = [
+  "notAssigned",
+  "rideClosed",
+  "rideFullyStaffed",
+  "tooLateToWithdraw",
+];
+
+const refreshedIfStale = (result: PilotRideResult) => {
+  if (!result.ok && STALE.includes(result.error)) revalidateRides();
+  return result;
+};
 
 /**
  * The pilot's own seat on a ride of a chapter they pilot for. The chapter is
@@ -56,9 +74,11 @@ export async function signUpForRideAction(
   if (!pilot) return { ok: false, error: "unknownRide" };
   if (!withinRateLimit(`ride-sign-up:${pilot.userId}`, SIGN_UP_LIMIT))
     return { ok: false, error: "rateLimited" };
-  return attempt(async () => ({
-    changed: await signUpForRide(pilot.rideId, pilot.userId),
-  }));
+  return refreshedIfStale(
+    await attempt(async () => ({
+      changed: await signUpForRide(pilot.rideId, pilot.userId),
+    })),
+  );
 }
 
 export async function withdrawFromRideAction(
@@ -68,7 +88,9 @@ export async function withdrawFromRideAction(
   if (!pilot) return { ok: false, error: "unknownRide" };
   if (!withinRateLimit(`ride-sign-up:${pilot.userId}`, SIGN_UP_LIMIT))
     return { ok: false, error: "rateLimited" };
-  return attempt(async () => ({
-    changed: await withdrawFromRide(pilot.rideId, pilot.userId),
-  }));
+  return refreshedIfStale(
+    await attempt(async () => ({
+      changed: await withdrawFromRide(pilot.rideId, pilot.userId),
+    })),
+  );
 }

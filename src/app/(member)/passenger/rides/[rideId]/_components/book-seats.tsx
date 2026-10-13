@@ -19,7 +19,8 @@ export type BookSeatsLabels = {
 
 /**
  * Seats on an announced event for the riders this account books for. One
- * rider is preselected; with several, the account picks who comes along.
+ * rider is preselected; with several, the account picks who comes along. A
+ * booking shrinks the list, so only riders still on it count as chosen.
  */
 export function BookSeats({
   rideId,
@@ -35,14 +36,17 @@ export function BookSeats({
   labels: BookSeatsLabels;
 }) {
   const headingId = useId();
-  const [chosen, setChosen] = useState<ReadonlySet<string>>(
-    () => new Set(riders.length === 1 ? [riders[0].id] : []),
+  const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
+  const chosen = new Set(
+    riders.length === 1
+      ? [riders[0].id]
+      : riders.filter((rider) => picked.has(rider.id)).map((rider) => rider.id),
   );
   const [pending, startTransition] = useTransition();
   const tooMany = seatsLeft !== null && chosen.size > seatsLeft;
 
   const toggle = (id: string, on: boolean) =>
-    setChosen((current) => {
+    setPicked((current) => {
       const next = new Set(current);
       if (on) next.add(id);
       else next.delete(id);
@@ -55,6 +59,7 @@ export function BookSeats({
         rideId,
         passengerIds: [...chosen],
       });
+      if (result.ok) setPicked(new Set());
       notify(result, {
         done: formatMessage(
           labels.done,

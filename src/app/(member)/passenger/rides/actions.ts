@@ -25,11 +25,28 @@ export type SeatBookingResult = ActionResult<
 
 const BOOKING_LIMIT = { max: 10, windowMs: 60 * 60_000 };
 
-const { attempt } = createAttempt(MAPPED_ERRORS, () => {
+const revalidateRides = () => {
   revalidatePath("/passenger", "layout");
   revalidatePath("/pilot", "layout");
   revalidatePath("/admin", "layout");
-});
+};
+
+const { attempt } = createAttempt(MAPPED_ERRORS, revalidateRides);
+
+/**
+ * A refusal because the ride moved on under the screen — it filled up or
+ * closed — reloads the screen too, so it stops offering what is gone.
+ */
+const STALE: readonly SeatBookingError[] = [
+  "rideClosed",
+  "rideFull",
+  "unknownRide",
+];
+
+const refreshedIfStale = (result: SeatBookingResult) => {
+  if (!result.ok && STALE.includes(result.error)) revalidateRides();
+  return result;
+};
 
 /**
  * Seats on an announced event, for riders this account manages. Which riders
@@ -44,11 +61,13 @@ export async function bookEventSeatsAction(
   const session = await requireAuth();
   if (!withinRateLimit(`seat-booking:${session.user.id}`, BOOKING_LIMIT))
     return { ok: false, error: "rateLimited" };
-  return attempt(async () => ({
-    booked: await bookEventSeats(
-      parsed.data.rideId,
-      parsed.data.passengerIds,
-      session.user.id,
-    ),
-  }));
+  return refreshedIfStale(
+    await attempt(async () => ({
+      booked: await bookEventSeats(
+        parsed.data.rideId,
+        parsed.data.passengerIds,
+        session.user.id,
+      ),
+    })),
+  );
 }
