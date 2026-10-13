@@ -95,7 +95,7 @@ function EventCard({
           className="aspect-video w-full"
         />
       ) : null}
-      <span className="flex flex-1 flex-col gap-1.25 p-4">
+      <div className="flex flex-1 flex-col gap-1.25 p-4">
         <span className="text-2sm text-ink-soft flex items-center gap-1.25">
           <CalendarClock
             aria-hidden
@@ -139,7 +139,7 @@ function EventCard({
             ? strings.open
             : formatMessage(strings.seatsLeft, { count: left }, words)}
         </Badge>
-      </span>
+      </div>
     </Link>
   );
 }
