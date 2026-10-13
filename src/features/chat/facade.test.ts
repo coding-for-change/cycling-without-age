@@ -90,6 +90,7 @@ const db = prisma as unknown as {
     deleteMany: jest.Mock;
   };
   event: { create: jest.Mock };
+  $queryRaw: jest.Mock;
 };
 
 const CONVERSATION = "conversation-saturday";
@@ -471,11 +472,14 @@ describe("reaching past a conversation", () => {
 });
 
 describe("syncRideConversation", () => {
-  const ride = {
+  const ride = (memberUserIds: string[]) => ({
     rideId: "ride-1",
-    chapterId: "chapter-1",
-    title: "Sonnenhof",
-  };
+    load: jest.fn(async () => ({
+      chapterId: "chapter-1",
+      title: "Sonnenhof",
+      memberUserIds,
+    })),
+  });
 
   it("opens the ride's chat as an ownerless group of whoever is on it", async () => {
     db.conversation.findUnique.mockResolvedValueOnce(null);
@@ -484,18 +488,17 @@ describe("syncRideConversation", () => {
       _count: { members: 2 },
       members: [],
     });
-    expect(
-      await chat.syncRideConversation({
-        ...ride,
-        memberUserIds: ["pilot-1", "carer-1", "pilot-1"],
-      }),
-    ).toBe("conv-ride");
+    const input = ride(["pilot-1", "carer-1", "pilot-1"]);
+    expect(await chat.syncRideConversation(input)).toBe("conv-ride");
+    expect(input.load).toHaveBeenCalledWith(false);
     const { data } = db.conversation.create.mock.calls[0][0];
     expect(data).toEqual(
       expect.objectContaining({
         kind: "group",
         origin: "ride",
         rideId: "ride-1",
+        chapterId: "chapter-1",
+        title: "Sonnenhof",
         createdByUserId: null,
         members: {
           create: [
@@ -516,10 +519,7 @@ describe("syncRideConversation", () => {
       { userId: "pilot-1" },
       { userId: "pilot-old" },
     ]);
-    await chat.syncRideConversation({
-      ...ride,
-      memberUserIds: ["pilot-1", "carer-1"],
-    });
+    await chat.syncRideConversation(ride(["pilot-1", "carer-1"]));
     expect(db.conversationMember.createMany).toHaveBeenCalledWith({
       data: [{ conversationId: "conv-ride", userId: "carer-1" }],
       skipDuplicates: true,
@@ -529,11 +529,42 @@ describe("syncRideConversation", () => {
     });
   });
 
+  // Two syncs for one ride race: the roster is read only once the chat is
+  // locked, so the later sync applies the later roster, never an old one.
+  it("reads the roster only under the conversation's lock", async () => {
+    db.conversation.findUnique.mockResolvedValueOnce({
+      id: "conv-ride",
+      frozenAt: null,
+    });
+    db.conversationMember.findMany.mockResolvedValue([]);
+    const input = ride(["pilot-1"]);
+    await chat.syncRideConversation(input);
+    const locked = db.$queryRaw.mock.calls.findIndex(
+      ([sql]: [TemplateStringsArray]) => sql.join("?").includes("FOR UPDATE"),
+    );
+    expect(locked).toBeGreaterThanOrEqual(0);
+    expect(input.load).toHaveBeenCalledWith(true);
+    expect(db.$queryRaw.mock.invocationCallOrder[locked]).toBeLessThan(
+      input.load.mock.invocationCallOrder[0],
+    );
+  });
+
   it("opens nothing for a ride with nobody on it", async () => {
     db.conversation.findUnique.mockResolvedValueOnce(null);
-    expect(
-      await chat.syncRideConversation({ ...ride, memberUserIds: [] }),
-    ).toBeNull();
+    expect(await chat.syncRideConversation(ride([]))).toBeNull();
     expect(db.conversation.create).not.toHaveBeenCalled();
+  });
+
+  it("leaves the members alone for a ride that is gone", async () => {
+    db.conversation.findUnique.mockResolvedValueOnce({
+      id: "conv-ride",
+      frozenAt: null,
+    });
+    await chat.syncRideConversation({
+      rideId: "ride-1",
+      load: jest.fn(async () => null),
+    });
+    expect(db.conversationMember.createMany).not.toHaveBeenCalled();
+    expect(db.conversationMember.deleteMany).not.toHaveBeenCalled();
   });
 });

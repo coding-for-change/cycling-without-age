@@ -344,11 +344,21 @@ export async function createGroup(input: CreateGroupInput) {
   return readSummary(created.id, createdByUserId);
 }
 
-export type RideConversationInput = {
-  rideId: string;
+export type RideChat = {
   chapterId: string;
   title: string | null;
   memberUserIds: string[];
+};
+
+export type RideConversationInput = {
+  rideId: string;
+  /**
+   * The ride's chat as it should be right now, or null when it should not be
+   * open (yet). `open` says whether the chat already exists. Read only once
+   * the conversation is locked, so of two syncs racing for one ride the later
+   * one applies the later roster.
+   */
+  load: (open: boolean) => Promise<RideChat | null>;
 };
 
 /**
@@ -362,18 +372,19 @@ export async function syncRideConversation(
   input: RideConversationInput,
   retried = false,
 ): Promise<string | null> {
-  const memberUserIds = [...new Set(input.memberUserIds)];
   const existing = await findConversationByRideId(input.rideId);
   if (!existing) {
-    if (!memberUserIds.length) return null;
+    const ride = await input.load(false);
+    const memberUserIds = [...new Set(ride?.memberUserIds ?? [])];
+    if (!ride || !memberUserIds.length) return null;
     const { wrapped, keyVersion } = wrapDek(generateDek());
     try {
       const created = await insertConversation({
         kind: "group",
         origin: "ride",
         rideId: input.rideId,
-        title: input.title?.slice(0, 120) ?? null,
-        chapterId: input.chapterId,
+        title: ride.title?.slice(0, 120) ?? null,
+        chapterId: ride.chapterId,
         createdByUserId: null,
         dek: wrapped,
         keyVersion,
@@ -396,6 +407,9 @@ export async function syncRideConversation(
   const conversationId = existing.id;
   const { added, removed, memberIds } = await transaction(async (tx) => {
     await lockConversation(conversationId, tx);
+    const ride = await input.load(true);
+    if (!ride) return { added: [], removed: [], memberIds: [] };
+    const memberUserIds = [...new Set(ride.memberUserIds)];
     const current = await findMemberUserIds(conversationId, tx);
     const have = new Set(current);
     const want = new Set(memberUserIds);
@@ -427,9 +441,6 @@ export async function syncRideConversation(
     });
   return conversationId;
 }
-
-export const hasRideConversation = async (rideId: string) =>
-  (await findConversationByRideId(rideId)) !== null;
 
 /** The ride's chat, when this person is in it. */
 export async function getRideConversationId(rideId: string, userId: string) {

@@ -7,21 +7,22 @@ import { rides } from "@/features/rides";
  * pilots, the accounts behind its riders and the chapter's admins — kept in
  * step with the roster after every change, never edited by hand.
  */
-export async function syncRideChat(rideId: string) {
+export const syncRideChat = (rideId: string) =>
+  chat.syncRideConversation({
+    rideId,
+    load: (open) => rideChatOf(rideId, open),
+  });
+
+async function rideChatOf(rideId: string, open: boolean) {
   const [participants, facts] = await Promise.all([
     rides.listRideParticipants(rideId),
     rides.getRideFacts(rideId),
   ]);
   if (!participants || !facts) return null;
-  if (
-    !participants.pilotUserIds.length &&
-    !(await chat.hasRideConversation(rideId))
-  )
-    return null;
+  if (!open && !participants.pilotUserIds.length) return null;
 
   const admins = await membership.listChapterAdmins(participants.chapterId);
-  return chat.syncRideConversation({
-    rideId,
+  return {
     chapterId: participants.chapterId,
     title: facts.title ?? facts.locationName ?? null,
     memberUserIds: [
@@ -29,5 +30,5 @@ export async function syncRideChat(rideId: string) {
       ...participants.riderAccountUserIds,
       ...admins.map((admin) => admin.userId),
     ],
-  });
+  };
 }

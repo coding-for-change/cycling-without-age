@@ -1,10 +1,10 @@
-import { chat } from "@/features/chat";
+import { chat, type RideConversationInput } from "@/features/chat";
 import { membership } from "@/features/membership";
 import { rides } from "@/features/rides";
 import { syncRideChat } from "./ride-chat";
 
 jest.mock("@/features/chat", () => ({
-  chat: { syncRideConversation: jest.fn(), hasRideConversation: jest.fn() },
+  chat: { syncRideConversation: jest.fn() },
 }));
 jest.mock("@/features/membership", () => ({
   membership: { listChapterAdmins: jest.fn() },
@@ -14,6 +14,14 @@ jest.mock("@/features/rides", () => ({
 }));
 
 const participants = rides.listRideParticipants as jest.Mock;
+const sync = chat.syncRideConversation as jest.Mock;
+
+const loaded = async (open: boolean) => {
+  await syncRideChat("ride-1");
+  const [input] = sync.mock.calls[0] as [RideConversationInput];
+  expect(input.rideId).toBe("ride-1");
+  return input.load(open);
+};
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -24,8 +32,7 @@ beforeEach(() => {
   (membership.listChapterAdmins as jest.Mock).mockResolvedValue([
     { userId: "admin-1" },
   ]);
-  (chat.syncRideConversation as jest.Mock).mockResolvedValue("conv-1");
-  (chat.hasRideConversation as jest.Mock).mockResolvedValue(false);
+  sync.mockResolvedValue("conv-1");
 });
 
 describe("syncRideChat", () => {
@@ -35,9 +42,7 @@ describe("syncRideChat", () => {
       pilotUserIds: ["pilot-1"],
       riderAccountUserIds: ["carer-1"],
     });
-    expect(await syncRideChat("ride-1")).toBe("conv-1");
-    expect(chat.syncRideConversation).toHaveBeenCalledWith({
-      rideId: "ride-1",
+    expect(await loaded(false)).toEqual({
       chapterId: "chapter-1",
       title: "Sonnenhof",
       memberUserIds: ["pilot-1", "carer-1", "admin-1"],
@@ -50,25 +55,25 @@ describe("syncRideChat", () => {
       pilotUserIds: [],
       riderAccountUserIds: ["carer-1"],
     });
-    expect(await syncRideChat("ride-1")).toBeNull();
-    expect(chat.syncRideConversation).not.toHaveBeenCalled();
+    expect(await loaded(false)).toBeNull();
   });
 
   it("keeps an existing chat in step when the last pilot leaves", async () => {
-    (chat.hasRideConversation as jest.Mock).mockResolvedValue(true);
     participants.mockResolvedValue({
       chapterId: "chapter-1",
       pilotUserIds: [],
       riderAccountUserIds: ["carer-1"],
     });
-    await syncRideChat("ride-1");
-    expect(chat.syncRideConversation).toHaveBeenCalledWith(
+    expect(await loaded(true)).toEqual(
       expect.objectContaining({ memberUserIds: ["carer-1", "admin-1"] }),
     );
   });
 
-  it("does nothing for a ride that is gone", async () => {
+  it("reads nothing until the chat asks, and nothing for a ride that is gone", async () => {
+    await syncRideChat("ride-1");
+    expect(participants).not.toHaveBeenCalled();
+    sync.mockClear();
     participants.mockResolvedValue(null);
-    expect(await syncRideChat("ride-1")).toBeNull();
+    expect(await loaded(true)).toBeNull();
   });
 });
