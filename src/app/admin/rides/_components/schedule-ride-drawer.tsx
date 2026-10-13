@@ -531,7 +531,7 @@ function ScheduleRideSheet({
     else if (chosen) setSelected(chosen);
     setPrefilled({
       name: location.name,
-      pilots,
+      pilots: pilots === location.defaultPilotCount ? pilots : null,
       trishaws: chosen ? chosen.size : null,
       minutes,
     });
