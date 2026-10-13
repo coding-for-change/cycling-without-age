@@ -30,6 +30,7 @@ import {
   type RideLocationKind,
 } from "@/features/ride-locations/schemas";
 import { useDrawerParam } from "@/hooks/use-drawer-param";
+import { isEmail } from "@/lib/email";
 import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
@@ -45,7 +46,6 @@ type Choice = { value: number; label: string };
 type Strings = Dictionary["admin"]["rideLocations"];
 
 const EMPTY_PLACE: Place = { address: null, latitude: null, longitude: null };
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export type RideLocationDrawerLabels = {
   strings: Strings;
@@ -171,7 +171,7 @@ function RideLocationForm({
     const trimmed = name.trim();
     if (!trimmed) return refuse(create.nameRequired);
     const email = contactEmail.trim();
-    if (email && !EMAIL.test(email)) return refuse(create.invalidEmail);
+    if (email && !isEmail(email)) return refuse(create.invalidEmail);
 
     startTransition(async () => {
       const result = await createRideLocationAction({

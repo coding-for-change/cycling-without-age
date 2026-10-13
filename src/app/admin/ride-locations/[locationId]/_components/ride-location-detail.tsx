@@ -27,6 +27,7 @@ import {
   type RideLocationKind,
   type RideLocationUpdateInput,
 } from "@/features/ride-locations/schemas";
+import { isEmail } from "@/lib/email";
 import { googleMapsUrl } from "@/lib/geo";
 import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
@@ -99,7 +100,6 @@ export type RideLocationDetailLabels = {
   markdown: MarkdownToolLabels;
 };
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const KM = /^\d{1,3}([.,]\d)?$/;
 const CHAPTER_DEFAULT = "";
 const range = (max: number) =>
@@ -148,9 +148,7 @@ export function RideLocationDetail({
           value={location[key]}
           label={label}
           placeholder={placeholder}
-          validate={
-            key === "contactEmail" ? (next) => EMAIL.test(next) : undefined
-          }
+          validate={key === "contactEmail" ? isEmail : undefined}
           onSave={(next) => save({ [key]: next })}
           labels={field}
           className="text-2sm"
