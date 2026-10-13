@@ -292,6 +292,7 @@ function ScheduleRideSheet({
   const endEdited = useRef(
     chapters.some((chapter) => chapter.durationChosen === true),
   );
+  const stayEdited = useRef(false);
   const trishawPrefill = useRef<number | null>(
     requestedLocation?.defaultTrishawCount ?? null,
   );
@@ -458,6 +459,8 @@ function ScheduleRideSheet({
 
   const pickChapter = (id: string) => {
     if (id === chapter.id) return;
+    const next = chapters.find((candidate) => candidate.id === id);
+    if (!next) return;
     setChapterId(id);
     rememberChapter(id);
     trishawPrefill.current = null;
@@ -467,6 +470,12 @@ function ScheduleRideSheet({
     setDestination(null);
     setPassengerIds([]);
     setPilotIds([]);
+    if (!stayEdited.current) setStay(next.stayMinutes ?? DEFAULT_STAY);
+    if (!endEdited.current)
+      setSlot((current) => ({
+        ...current,
+        durationMinutes: next.durationMinutes ?? DEFAULT_SLOT_MINUTES,
+      }));
   };
 
   const changeSlot = (next: WallSlot) => {
@@ -848,9 +857,10 @@ function ScheduleRideSheet({
                     <NativeSelect
                       id={stayId}
                       value={stay}
-                      onChange={(change) =>
-                        setStay(Number(change.target.value))
-                      }
+                      onChange={(change) => {
+                        stayEdited.current = true;
+                        setStay(Number(change.target.value));
+                      }}
                       className="h-8 border-line text-2sm"
                       size="sm"
                     >
