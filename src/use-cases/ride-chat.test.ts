@@ -27,6 +27,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   (rides.getRideFacts as jest.Mock).mockResolvedValue({
     title: null,
+    model: "pleasure",
     locationName: "Sonnenhof",
   });
   (membership.listChapterAdmins as jest.Mock).mockResolvedValue([
@@ -47,6 +48,22 @@ describe("syncRideChat", () => {
       title: "Sonnenhof",
       memberUserIds: ["pilot-1", "carer-1", "admin-1"],
     });
+  });
+
+  it("keeps the families who booked an event out of its chat", async () => {
+    (rides.getRideFacts as jest.Mock).mockResolvedValue({
+      title: "Summer fair",
+      model: "event",
+      locationName: "Sonnenhof",
+    });
+    participants.mockResolvedValue({
+      chapterId: "chapter-1",
+      pilotUserIds: ["pilot-1"],
+      riderAccountUserIds: ["carer-1", "carer-2"],
+    });
+    expect(await loaded(false)).toEqual(
+      expect.objectContaining({ memberUserIds: ["pilot-1", "admin-1"] }),
+    );
   });
 
   it("opens no chat for a ride nobody pilots yet", async () => {

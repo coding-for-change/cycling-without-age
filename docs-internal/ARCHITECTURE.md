@@ -966,7 +966,8 @@ starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 1
   The `syncRideChat` worker listener (`ride.pilotAssigned`, `ride.pilotUnassigned`,
   `ride.riderBooked`, `ride.riderRemoved`) runs `use-cases/ride-chat.ts`: once a pilot is on the
   ride it opens the chat, and from then on keeps its members equal to the ride's pilots, its
-  riders' accounts and the chapter's admins (`chat.syncRideConversation`, idempotent, a unique
+  riders' accounts and the chapter's admins — on an event only the pilots and admins, because
+  the families who booked seats never learn of each other (`chat.syncRideConversation`, idempotent, a unique
   violation from a racing listener is retried once). Freezing it is PR 6's.
 - **Announced events** (4B-b). `Ride.announced` is set in the drawer or the detail page's
   "Riders can book" panel, for event rides only (`eventsOnly`). Announced events show on the

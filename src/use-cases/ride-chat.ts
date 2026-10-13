@@ -5,7 +5,9 @@ import { rides } from "@/features/rides";
 /**
  * A ride's chat opens once a pilot is on it, and from then on holds its
  * pilots, the accounts behind its riders and the chapter's admins — kept in
- * step with the roster after every change, never edited by hand.
+ * step with the roster after every change, never edited by hand. On an event
+ * the riders' accounts are families who booked on their own and never learn
+ * of each other, so its chat is the crew's and the admins' only.
  */
 export const syncRideChat = (rideId: string) =>
   chat.syncRideConversation({
@@ -27,7 +29,7 @@ async function rideChatOf(rideId: string, open: boolean) {
     title: facts.title ?? facts.locationName ?? null,
     memberUserIds: [
       ...participants.pilotUserIds,
-      ...participants.riderAccountUserIds,
+      ...(facts.model === "event" ? [] : participants.riderAccountUserIds),
       ...admins.map((admin) => admin.userId),
     ],
   };
