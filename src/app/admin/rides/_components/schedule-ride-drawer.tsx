@@ -203,6 +203,14 @@ const chapterPlace = (chapter: ScheduleChapter): Place | null =>
         longitude: chapter.longitude,
       };
 
+const firstFree = (options: TrishawOption[], count: number) =>
+  new Set(
+    options
+      .filter((option) => option.blocked === null)
+      .slice(0, count)
+      .map((option) => option.id),
+  );
+
 const minutesForRoute = (route: Route) => {
   const raw = route.durationSec / 60 + ROUTE_BUFFER_MINUTES;
   const rounded = Math.ceil(raw / ROUTE_ROUNDING) * ROUTE_ROUNDING;
@@ -284,6 +292,9 @@ function ScheduleRideSheet({
   const endEdited = useRef(
     chapters.some((chapter) => chapter.durationChosen === true),
   );
+  const trishawPrefill = useRef<number | null>(
+    requestedLocation?.defaultTrishawCount ?? null,
+  );
   const [pending, startTransition] = useTransition();
 
   const [chapterId, setChapterId] = useState(
@@ -358,16 +369,17 @@ function ScheduleRideSheet({
       if (!live) return;
       const options = result?.ok ? result.options : null;
       setFetched({ key: request, options });
-      if (options) setKnown(options);
-      if (options)
-        setSelected((current) => {
-          const free = new Set(
-            options
-              .filter((option) => option.blocked === null)
-              .map((option) => option.id),
-          );
-          return new Set([...current].filter((id) => free.has(id)));
-        });
+      if (!options) return;
+      setKnown(options);
+      const prefill = trishawPrefill.current;
+      trishawPrefill.current = null;
+      setSelected((current) => {
+        const free = firstFree(options, options.length);
+        const kept = [...current].filter((id) => free.has(id));
+        return kept.length === 0 && prefill !== null
+          ? firstFree(options, prefill)
+          : new Set(kept);
+      });
     }, LOOKUP_DELAY_MS);
     return () => {
       live = false;
@@ -440,12 +452,15 @@ function ScheduleRideSheet({
     setPassengerIds((current) => trim(current, nextLimits.passengers));
     setPilotIds((current) => trim(current, nextLimits.pilots));
     setSelected((current) => new Set(trim([...current], nextLimits.trishaws)));
+    if (next === "pleasure" && trishawPrefill.current !== null)
+      trishawPrefill.current = 1;
   };
 
   const pickChapter = (id: string) => {
     if (id === chapter.id) return;
     setChapterId(id);
     rememberChapter(id);
+    trishawPrefill.current = null;
     setSelected(new Set());
     setRideLocation(null);
     setOrigin(null);
@@ -460,6 +475,7 @@ function ScheduleRideSheet({
   };
 
   const pickPlace = (place: Place | null) => {
+    trishawPrefill.current = null;
     setRideLocation(null);
     setOrigin(place);
   };
@@ -473,15 +489,9 @@ function ScheduleRideSheet({
         ...current,
         durationMinutes: location.defaultMinutes ?? current.durationMinutes,
       }));
-    if (options && selected.size === 0)
-      setSelected(
-        new Set(
-          options
-            .filter((option) => option.blocked === null)
-            .slice(0, pleasure ? 1 : location.defaultTrishawCount)
-            .map((option) => option.id),
-        ),
-      );
+    const trishaws = pleasure ? 1 : location.defaultTrishawCount;
+    if (!options) trishawPrefill.current = trishaws;
+    else if (selected.size === 0) setSelected(firstFree(options, trishaws));
   };
 
   const changePilotsNeeded = (next: number) => {
