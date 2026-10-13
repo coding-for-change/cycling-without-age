@@ -970,8 +970,12 @@ starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 1
   `ride.riderBooked`, `ride.riderRemoved`) runs `use-cases/ride-chat.ts`: once a pilot is on the
   ride it opens the chat, and from then on keeps its members equal to the ride's pilots, its
   riders' accounts and the chapter's admins — on an event only the pilots and admins, because
-  the families who booked seats never learn of each other (`chat.syncRideConversation`, idempotent, a unique
-  violation from a racing listener is retried once). Freezing it is PR 6's.
+  the families who booked seats never learn of each other (`chat.syncRideConversation`,
+  idempotent). Two syncs may read the roster in one order and write it in the other, so a sync
+  that changed the members reads the roster again and writes until a read finds nothing to
+  change; the roster is read outside the conversation's lock, so a waiting sync never needs a
+  second pool connection. A racing creator that loses the unique `rideId` joins that loop.
+  Freezing it is PR 6's.
 - **Announced events** (4B-b). `Ride.announced` is set in the drawer or the detail page's
   "Riders can book" panel, for event rides only (`eventsOnly`). Announced events show on the
   passenger start screen and `/passenger/rides` for the chapters of the riders the account

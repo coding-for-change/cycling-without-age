@@ -354,12 +354,12 @@ export type RideConversationInput = {
   rideId: string;
   /**
    * The ride's chat as it should be right now, or null when it should not be
-   * open (yet). `open` says whether the chat already exists. Read only once
-   * the conversation is locked, so of two syncs racing for one ride the later
-   * one applies the later roster.
+   * open (yet). `open` says whether the chat already exists.
    */
   load: (open: boolean) => Promise<RideChat | null>;
 };
+
+const RIDE_CHAT_ROUNDS = 5;
 
 /**
  * A ride's chat is the ride's own group: whoever is on the ride and the
@@ -370,58 +370,84 @@ export type RideConversationInput = {
  */
 export async function syncRideConversation(
   input: RideConversationInput,
-  retried = false,
 ): Promise<string | null> {
   const existing = await findConversationByRideId(input.rideId);
-  if (!existing) {
-    const ride = await input.load(false);
-    const memberUserIds = [...new Set(ride?.memberUserIds ?? [])];
-    if (!ride || !memberUserIds.length) return null;
-    const { wrapped, keyVersion } = wrapDek(generateDek());
-    try {
-      const created = await insertConversation({
-        kind: "group",
-        origin: "ride",
-        rideId: input.rideId,
-        title: ride.title?.slice(0, 120) ?? null,
-        chapterId: ride.chapterId,
-        createdByUserId: null,
-        dek: wrapped,
-        keyVersion,
-        members: memberUserIds.map((userId) => ({
-          userId,
-          role: "member" as const,
-        })),
-      });
-      await publishToUsers(memberUserIds, {
-        type: "conversation.created",
-        conversationId: created.id,
-      });
-      return created.id;
-    } catch (error) {
-      if (!isUniqueViolation(error) || retried) throw error;
-      return syncRideConversation(input, true);
-    }
+  const conversationId = existing?.id ?? (await openRideConversation(input));
+  if (!conversationId) return null;
+  await followRide(conversationId, input);
+  return conversationId;
+}
+
+async function openRideConversation(input: RideConversationInput) {
+  const ride = await input.load(false);
+  const memberUserIds = [...new Set(ride?.memberUserIds ?? [])];
+  if (!ride || !memberUserIds.length) return null;
+  const { wrapped, keyVersion } = wrapDek(generateDek());
+  try {
+    const created = await insertConversation({
+      kind: "group",
+      origin: "ride",
+      rideId: input.rideId,
+      title: ride.title?.slice(0, 120) ?? null,
+      chapterId: ride.chapterId,
+      createdByUserId: null,
+      dek: wrapped,
+      keyVersion,
+      members: memberUserIds.map((userId) => ({
+        userId,
+        role: "member" as const,
+      })),
+    });
+    await publishToUsers(memberUserIds, {
+      type: "conversation.created",
+      conversationId: created.id,
+    });
+    return created.id;
+  } catch (error) {
+    if (!isUniqueViolation(error)) throw error;
+    return (await findConversationByRideId(input.rideId))?.id ?? null;
   }
+}
 
-  const conversationId = existing.id;
-  const { added, removed, memberIds } = await transaction(async (tx) => {
-    await lockConversation(conversationId, tx);
+/**
+ * Two syncs for one ride may read its roster in one order and write it in the
+ * other. Whoever changed the members reads the roster again and writes once
+ * more, until a read finds nothing left to change: the last writer always
+ * checks its write against a roster read after it. The roster is read outside
+ * the lock, so a sync waiting for it holds no second connection.
+ */
+async function followRide(
+  conversationId: string,
+  input: RideConversationInput,
+) {
+  for (let round = 0; round < RIDE_CHAT_ROUNDS; round++) {
     const ride = await input.load(true);
-    if (!ride) return { added: [], removed: [], memberIds: [] };
+    if (!ride) return;
     const memberUserIds = [...new Set(ride.memberUserIds)];
-    const current = await findMemberUserIds(conversationId, tx);
-    const have = new Set(current);
-    const want = new Set(memberUserIds);
-    const added = memberUserIds.filter((userId) => !have.has(userId));
-    const removed = current.filter((userId) => !want.has(userId));
-    if (added.length)
-      await insertConversationMembers(conversationId, added, tx);
-    if (removed.length)
-      await deleteConversationMembers(conversationId, removed, tx);
-    return { added, removed, memberIds: memberUserIds };
-  });
+    const { added, removed } = await transaction(async (tx) => {
+      await lockConversation(conversationId, tx);
+      const current = await findMemberUserIds(conversationId, tx);
+      const have = new Set(current);
+      const want = new Set(memberUserIds);
+      const added = memberUserIds.filter((userId) => !have.has(userId));
+      const removed = current.filter((userId) => !want.has(userId));
+      if (added.length)
+        await insertConversationMembers(conversationId, added, tx);
+      if (removed.length)
+        await deleteConversationMembers(conversationId, removed, tx);
+      return { added, removed };
+    });
+    if (!added.length && !removed.length) return;
+    await announceMemberChanges(conversationId, memberUserIds, added, removed);
+  }
+}
 
+async function announceMemberChanges(
+  conversationId: string,
+  memberIds: string[],
+  added: string[],
+  removed: string[],
+) {
   if (added.length)
     await publishToUsers(added, {
       type: "conversation.created",
@@ -433,13 +459,11 @@ export async function syncRideConversation(
       conversationId,
       userId,
     });
-  if (added.length || removed.length)
-    await publishToUsers(memberIds, {
-      type: "conversation.updated",
-      conversationId,
-      patch: { memberCount: memberIds.length },
-    });
-  return conversationId;
+  await publishToUsers(memberIds, {
+    type: "conversation.updated",
+    conversationId,
+    patch: { memberCount: memberIds.length },
+  });
 }
 
 /** The ride's chat, when this person is in it. */

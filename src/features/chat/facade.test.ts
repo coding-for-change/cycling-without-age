@@ -488,6 +488,10 @@ describe("syncRideConversation", () => {
       _count: { members: 2 },
       members: [],
     });
+    db.conversationMember.findMany.mockResolvedValue([
+      { userId: "pilot-1" },
+      { userId: "carer-1" },
+    ]);
     const input = ride(["pilot-1", "carer-1", "pilot-1"]);
     expect(await chat.syncRideConversation(input)).toBe("conv-ride");
     expect(input.load).toHaveBeenCalledWith(false);
@@ -529,24 +533,79 @@ describe("syncRideConversation", () => {
     });
   });
 
-  // Two syncs for one ride race: the roster is read only once the chat is
-  // locked, so the later sync applies the later roster, never an old one.
-  it("reads the roster only under the conversation's lock", async () => {
+  // The roster is read before the lock, so a waiting sync holds no second
+  // connection, and a write that changed something is checked again.
+  it("reads the roster outside the lock and writes until it holds still", async () => {
     db.conversation.findUnique.mockResolvedValueOnce({
       id: "conv-ride",
       frozenAt: null,
     });
-    db.conversationMember.findMany.mockResolvedValue([]);
-    const input = ride(["pilot-1"]);
+    db.conversationMember.findMany
+      .mockResolvedValueOnce([{ userId: "pilot-1" }])
+      .mockResolvedValueOnce([{ userId: "pilot-1" }, { userId: "pilot-old" }])
+      .mockResolvedValueOnce([{ userId: "pilot-1" }]);
+    const input = {
+      rideId: "ride-1",
+      load: jest
+        .fn()
+        .mockResolvedValue({
+          chapterId: "chapter-1",
+          title: "Sonnenhof",
+          memberUserIds: ["pilot-1"],
+        })
+        .mockResolvedValueOnce({
+          chapterId: "chapter-1",
+          title: "Sonnenhof",
+          memberUserIds: ["pilot-1", "pilot-old"],
+        }),
+    };
     await chat.syncRideConversation(input);
+    expect(input.load).toHaveBeenCalledTimes(3);
+    expect(input.load).toHaveBeenCalledWith(true);
     const locked = db.$queryRaw.mock.calls.findIndex(
       ([sql]: [TemplateStringsArray]) => sql.join("?").includes("FOR UPDATE"),
     );
-    expect(locked).toBeGreaterThanOrEqual(0);
-    expect(input.load).toHaveBeenCalledWith(true);
-    expect(db.$queryRaw.mock.invocationCallOrder[locked]).toBeLessThan(
-      input.load.mock.invocationCallOrder[0],
+    expect(input.load.mock.invocationCallOrder[0]).toBeLessThan(
+      db.$queryRaw.mock.invocationCallOrder[locked],
     );
+    expect(db.conversationMember.createMany).toHaveBeenCalledWith({
+      data: [{ conversationId: "conv-ride", userId: "pilot-old" }],
+      skipDuplicates: true,
+    });
+    expect(db.conversationMember.deleteMany).toHaveBeenCalledWith({
+      where: { conversationId: "conv-ride", userId: { in: ["pilot-old"] } },
+    });
+  });
+
+  // A pilot who signed up and stepped back at once: the sync that opens the
+  // chat read the old roster, so it checks the chat against a fresh one.
+  it("checks a chat it just opened against the roster", async () => {
+    db.conversation.findUnique.mockResolvedValueOnce(null);
+    db.conversation.create.mockResolvedValue({
+      id: "conv-ride",
+      _count: { members: 2 },
+      members: [],
+    });
+    db.conversationMember.findMany
+      .mockResolvedValueOnce([{ userId: "pilot-1" }, { userId: "admin-1" }])
+      .mockResolvedValueOnce([{ userId: "admin-1" }]);
+    const load = jest
+      .fn()
+      .mockResolvedValueOnce({
+        chapterId: "chapter-1",
+        title: "Sonnenhof",
+        memberUserIds: ["pilot-1", "admin-1"],
+      })
+      .mockResolvedValue({
+        chapterId: "chapter-1",
+        title: "Sonnenhof",
+        memberUserIds: ["admin-1"],
+      });
+    await chat.syncRideConversation({ rideId: "ride-1", load });
+    expect(load.mock.calls).toEqual([[false], [true], [true]]);
+    expect(db.conversationMember.deleteMany).toHaveBeenCalledWith({
+      where: { conversationId: "conv-ride", userId: { in: ["pilot-1"] } },
+    });
   });
 
   it("opens nothing for a ride with nobody on it", async () => {
