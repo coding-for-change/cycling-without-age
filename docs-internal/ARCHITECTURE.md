@@ -999,8 +999,8 @@ kept. The nav calls them "Ride locations" and "Storage locations" so the two nev
   form; past rides keep their snapshot. Archived rows are read-only until restored.
 - **Defaults.** `defaultPilotCount`, `defaultTrishawCount` and `defaultMinutes` prefill the
   scheduling drawer when the location is picked (or when it opens from "Schedule a ride
-  here", `?rideLocation=<id>`); the admin can still change each one. `typicalRideKm` feeds
-  Report 11.
+  here", `?rideLocation=<id>`); the admin can still change each one. `typicalRideKm` is
+  recorded for Report 11 (distance ridden); no report reads it yet.
 - **Riders.** `Passenger` gained `needsWheelchairBike`, `note` and `rideLocationId` (their
   Care Center). An admin sets them when adding a rider; an account edits its own rider in the
   account surface through `use-cases/set-own-rider-needs`, which checks the Care Center

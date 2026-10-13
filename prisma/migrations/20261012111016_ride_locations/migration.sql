@@ -53,13 +53,11 @@ CREATE TABLE `ride_location` (
     `defaultTrishawCount` INTEGER NOT NULL DEFAULT 1,
     `defaultPilotCount` INTEGER NOT NULL DEFAULT 1,
     `defaultMinutes` INTEGER NULL,
-    `storageLocationId` VARCHAR(191) NULL,
     `archivedAt` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
     INDEX `ride_location_chapterId_archivedAt_idx`(`chapterId`, `archivedAt`),
-    INDEX `ride_location_storageLocationId_idx`(`storageLocationId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -83,6 +81,3 @@ ALTER TABLE `ride` ADD CONSTRAINT `ride_rideLocationId_fkey` FOREIGN KEY (`rideL
 
 -- AddForeignKey
 ALTER TABLE `ride_location` ADD CONSTRAINT `ride_location_chapterId_fkey` FOREIGN KEY (`chapterId`) REFERENCES `organization`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `ride_location` ADD CONSTRAINT `ride_location_storageLocationId_fkey` FOREIGN KEY (`storageLocationId`) REFERENCES `storage_location`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

@@ -764,8 +764,6 @@ model StorageLocation {
   createdAt DateTime                 @default(now())
   updatedAt DateTime                 @updatedAt
 
-  rideLocations RideLocation[]
-
   @@index([ownerChapterId])
   @@index([countryId, kind])
   @@map("storage_location")
@@ -982,8 +980,6 @@ model RideLocation {
   defaultTrishawCount Int              @default(1)
   defaultPilotCount   Int              @default(1)
   defaultMinutes      Int?
-  storageLocationId   String?
-  storageLocation     StorageLocation? @relation(fields: [storageLocationId], references: [id], onDelete: SetNull)
   archivedAt          DateTime?
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
@@ -992,7 +988,6 @@ model RideLocation {
   passengers Passenger[]
 
   @@index([chapterId, archivedAt])
-  @@index([storageLocationId])
   @@map("ride_location")
 }
 
