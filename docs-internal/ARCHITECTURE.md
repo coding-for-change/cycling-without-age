@@ -939,6 +939,8 @@ starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 1
 - **Open rides.** A pilot sees the scheduled, future rides of the chapters they pilot for that
   let pilots sign up, still short of `requiredPilots` and without them on it
   (`rides.listOpenRidesForPilot`, behind `use-cases/open-rides.ts`, which reads the setting).
+  Whether a ride is still short is only known once its pilots are counted, so the 60-day window
+  is read in batches on a `(startsAt, id)` cursor until the page holds 30 open rides.
   The open shape (`openSelect`) carries time, place, model and counts — no rider names, no
   phone numbers, no note. `/pilot/rides/[rideId]` shows that shape to a pilot who is not on the
   ride, and the assigned shape to one who is.

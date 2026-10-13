@@ -101,7 +101,10 @@ type DeliveryPolicy = {
   skips with `"already read"` if the notification has a `readAt`, and with
   `"push delivered"` if the sibling `push` delivery is `sent`. Otherwise the mail goes out.
 - `collapseKey?(event)` is optional and lands on the `Notification` row. It is the handle
-  for "five ride requests become one card" later; no kind sets it today.
+  for "five ride requests become one card" later. `trishawDamageReported`, `rideOpened`,
+  `ridePilotWithdrew` and `rideAnnounced` set one, but nothing reads the column yet:
+  `deliverPush` does not pass it to `sendPush` and the bell does not group by it, so no
+  notification collapses today. Which kinds should replace each other's banners is COD-267.
 - `chapterAllowsPush?(chapterId)` is optional too: the **chapter's** say on the push
   channel, read in `deliverPush` right after the recipient's own preference, so a chapter
   that switched the alert off still leaves a `Delivery` row — `"disabled by chapter"` —
@@ -244,17 +247,17 @@ category `ride`:
 | `rideCancelled` | `ride.cancelled` | pilots, riders' accounts and chapter admins, minus the actor (Report 14) | push, mail always | `/rides/{id}` |
 | `rideRescheduled` | `ride.rescheduled` | pilots and riders' accounts, minus the actor | push, mail if no push | `/rides/{id}` |
 | `rideBookingConfirmed` | `ride.riderBooked` | the account managing the rider, and the rider's own account | push, mail always | `/passenger/rides/{id}` |
-| `rideBookingCancelled` | `ride.riderRemoved` with `self` | chapter admins, collapsed per ride | push, mail if no push, opt-out-able | `/admin/rides/{id}` |
+| `rideBookingCancelled` | `ride.riderRemoved` with `self` | chapter admins | push, mail if no push, opt-out-able | `/admin/rides/{id}` |
 
 PR 5 added four more, in `kinds/staffing.ts`, and widened `ridePilotAssigned`:
 
 | Kind | Event | Who hears it | Policy | Link |
 | --- | --- | --- | --- | --- |
 | `ridePilotAssigned` | `ride.pilotAssigned` with `self` | the pilot ("you're signed up", 3C) and the riders' accounts ("{pilot} pilots your ride", story 24b) | push, mail if no push | `/rides/{id}` |
-| `rideOpened` | `ride.opened` | the chapter's pilots not on the ride, minus the actor, collapsed per chapter | push, mail if no push, opt-out-able | `/pilot/rides/{id}` |
+| `rideOpened` | `ride.opened` | the chapter's pilots not on the ride, minus the actor | push, mail if no push, opt-out-able | `/pilot/rides/{id}` |
 | `rideUnderstaffed` | `ride.understaffed` | chapter admins | push, mail if no push | `/admin/rides/{id}` |
-| `ridePilotWithdrew` | `ride.pilotUnassigned` with `self` | chapter admins minus the actor, collapsed per ride | push, mail if no push, opt-out-able | `/admin/rides/{id}` |
-| `rideAnnounced` | `ride.announced` | the accounts behind the chapter's riders, minus the actor, collapsed per chapter | push, mail if no push, opt-out-able | `/passenger/rides/{id}` |
+| `ridePilotWithdrew` | `ride.pilotUnassigned` with `self` | chapter admins minus the actor | push, mail if no push, opt-out-able | `/admin/rides/{id}` |
+| `rideAnnounced` | `ride.announced` | the accounts behind the chapter's riders, minus the actor | push, mail if no push, opt-out-able | `/passenger/rides/{id}` |
 
 **One event, two readers.** A self sign-up reaches the pilot and the riders' side with
 different words. A kind may define `forRecipient(params, recipientUserId)`; `notify` stores
