@@ -949,6 +949,9 @@ starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 1
   round trip is one outing: `requireRide` locks both legs, signing up for one takes the other
   while it still needs a pilot, and stepping back leaves both while there is time — one
   message for both, through the events' `pair`.
+  Every pilot count — signing up, an admin's assignment, the model rules, the admin's
+  "Unstaffed" badge and week grid, the staffing check — counts only pilots still holding the
+  role in the ride's chapter; the admin still sees a demoted one, marked, to take them off.
   `withdrawFromRide` passes the chapter's lead to `rides.withdraw`, which removes only the
   pilot's own row and refuses inside the staffing window (`tooLateToWithdraw`: call the
   chapter). The Actions live in `app/(member)/pilot/rides/actions.ts`, rate-limited, behind

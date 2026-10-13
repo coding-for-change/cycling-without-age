@@ -66,6 +66,13 @@ export const ridePilots = <A extends { role: string }>(ride: {
   assignments: A[];
 }) => ride.assignments.filter((a) => a.role === "pilot");
 
+/** The pilots who fill a seat: a demoted one is listed but no longer counts. */
+export const seatedPilots = <
+  A extends { role: string; stillPiloting?: boolean },
+>(ride: {
+  assignments: A[];
+}) => ridePilots(ride).filter((a) => a.stillPiloting !== false);
+
 /** The trishaws committed to a ride, in name order. */
 export const rideTrishaws = (ride: Pick<RideCalendarRow, "trishaws">) =>
   ride.trishaws.map((reservation) => reservation.trishaw);

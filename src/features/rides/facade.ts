@@ -134,10 +134,14 @@ export type {
   TrishawRideRow,
 };
 
-export const listRidesInRange = (chapterIds: string[], from: Date, to: Date) =>
+export const listRidesInRange = async (
+  chapterIds: string[],
+  from: Date,
+  to: Date,
+) =>
   chapterIds.length
-    ? findRidesInRange(chapterIds, from, to)
-    : Promise.resolve([]);
+    ? withPilotStanding(await findRidesInRange(chapterIds, from, to))
+    : [];
 
 export const listRidesForPilot = async (userId: string, from: Date, to: Date) =>
   withActiveCrew(await findRidesForPilot(userId, from, to));
@@ -217,6 +221,36 @@ async function withActiveCrew<T extends Crewed>(rows: T[]): Promise<T[]> {
 
 const withActiveCrewOf = async <T extends Crewed>(row: T | null) =>
   row ? (await withActiveCrew([row]))[0] : null;
+
+/**
+ * Admins still see a pilot who was demoted or left on the ride, so they can
+ * take them off, but that seat counts as empty — as it does for signing up
+ * and for the staffing check.
+ */
+type WithStanding<T extends Crewed> = Omit<T, "assignments"> & {
+  assignments: (T["assignments"][number] & { stillPiloting: boolean })[];
+};
+
+async function withPilotStanding<T extends Crewed>(
+  rows: T[],
+): Promise<WithStanding<T>[]> {
+  const userIds = [
+    ...new Set(rows.flatMap((row) => row.assignments.map((a) => a.user.id))),
+  ];
+  const active = userIds.length
+    ? await findStillPiloting(
+        [...new Set(rows.map((row) => row.chapterId))],
+        userIds,
+      )
+    : new Set<string>();
+  return rows.map((row) => ({
+    ...row,
+    assignments: row.assignments.map((a) => ({
+      ...a,
+      stillPiloting: active.has(`${row.chapterId}:${a.user.id}`),
+    })),
+  }));
+}
 
 export async function listPilotRides(userId: string, now = new Date()) {
   const [upcoming, past] = await Promise.all([
@@ -326,7 +360,10 @@ export const getFinishableRideForPilot = (
 export const latestRideForPilot = (userId: string, now = new Date()) =>
   findLatestRideForPilot(userId, now);
 
-export const getRideDetail = (id: string) => findRideDetail(id);
+export const getRideDetail = async (id: string) => {
+  const ride = await findRideDetail(id);
+  return ride ? (await withPilotStanding([ride]))[0] : null;
+};
 
 export const countRideLog = (rideId: string) => countLogOfRide(rideId);
 
@@ -455,11 +492,14 @@ async function requireRide(id: string, tx: Tx) {
   return ride;
 }
 
-const modelShapeOf = (ride: RideDetailRow): RideModelShape => ({
+const modelShapeOf = async (
+  ride: RideDetailRow,
+  tx: Tx,
+): Promise<RideModelShape> => ({
   ...ride,
   passengers: ride.roster.length,
   trishaws: ride.trishaws.length,
-  pilots: ride.assignments.length,
+  pilots: await pilotsOn(ride, tx),
   photos: ride.photos.length,
 });
 
@@ -868,7 +908,7 @@ export async function updateRideDetails(
         ? Object.fromEntries(DESTINATION_FIELDS.map((field) => [field, null]))
         : {}),
     };
-    const current = modelShapeOf(ride);
+    const current = await modelShapeOf(ride, tx);
     refuseNewModelIssues(current, {
       ...current,
       ...Object.fromEntries(
@@ -1031,7 +1071,7 @@ export async function setRideTrishaws(
     const kept = new Set(before.map((trishaw) => trishaw.id));
     if (before.length === ids.length && ids.every((id) => kept.has(id)))
       return ride;
-    const current = modelShapeOf(ride);
+    const current = await modelShapeOf(ride, tx);
     refuseNewModelIssues(current, { ...current, trishaws: ids.length });
 
     await reserveOrRefuse(tx, ids, [ride], [rideId]);
@@ -1070,7 +1110,7 @@ export async function assignVolunteer(
   return rideWrite(async (tx, emit) => {
     const ride = await requireScheduled(rideId, tx);
     if (isAssigned(ride, userId, role)) return false;
-    requireRoom(ride, "pilots", ride.assignments.length);
+    requireRoom(ride, "pilots", await pilotsOn(ride, tx));
     const self = actorUserId === userId;
     await insertAssignment(
       { rideId, userId, role, assignedByUserId: self ? null : actorUserId },

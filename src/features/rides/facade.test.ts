@@ -1758,7 +1758,13 @@ describe("model limits", () => {
     expect(db.ride.update).toHaveBeenCalledTimes(1);
   });
 
+  const stillPiloting = (...userIds: string[]) =>
+    db.member.findMany.mockResolvedValue(
+      userIds.map((userId) => ({ organizationId: CHAPTER, userId })),
+    );
+
   it("refuses fewer pilots needed than are already on the ride", async () => {
+    stillPiloting("pilot-1", "pilot-2");
     db.ride.findUnique.mockResolvedValue(
       scheduled({
         requiredPilots: 3,
@@ -1777,6 +1783,7 @@ describe("model limits", () => {
   });
 
   it("refuses a pilot once the pilots needed are on the ride", async () => {
+    stillPiloting("pilot-1", "pilot-2");
     db.ride.findUnique.mockResolvedValue(
       scheduled({
         requiredPilots: 2,
@@ -1790,6 +1797,41 @@ describe("model limits", () => {
       await codeOf(rides.assignVolunteer("ride-1", "pilot-3", ADMIN)),
     ).toBe("pilotsFull");
     expect(db.rideAssignment.create).not.toHaveBeenCalled();
+  });
+
+  // The demoted pilot stays listed, but the seat is free for the admin too,
+  // as it is for a pilot signing up.
+  it("frees the seat of a pilot who no longer pilots in the chapter", async () => {
+    stillPiloting();
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        model: "pleasure",
+        assignments: [{ role: "pilot", user: { id: "pilot-1" } }],
+      }),
+    );
+    expect(await rides.assignVolunteer("ride-1", "pilot-2", ADMIN)).toBe(true);
+  });
+
+  it("marks the pilots an admin sees by whether they still pilot", async () => {
+    stillPiloting("pilot-1");
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        assignments: [
+          { role: "pilot", user: { id: "pilot-1" } },
+          { role: "pilot", user: { id: "pilot-2" } },
+        ],
+      }),
+    );
+    const ride = await rides.getRideDetail("ride-1");
+    expect(
+      ride?.assignments.map(({ user, stillPiloting }) => [
+        user.id,
+        stillPiloting,
+      ]),
+    ).toEqual([
+      ["pilot-1", true],
+      ["pilot-2", false],
+    ]);
   });
 
   it("refuses to take an event with photos to another model", async () => {

@@ -24,7 +24,7 @@ import { DayHeading } from "./day-heading";
 import {
   rideGroundedNote,
   rideHeadline,
-  ridePilots,
+  seatedPilots,
   rideTone,
   rideTrishawNames,
   type CalendarStrings,
@@ -113,7 +113,7 @@ export function RideWeek({
         : null,
       formatMessage(
         strings.staffing,
-        { assigned: ridePilots(ride).length, required: ride.requiredPilots },
+        { assigned: seatedPilots(ride).length, required: ride.requiredPilots },
         words,
       ),
     ]

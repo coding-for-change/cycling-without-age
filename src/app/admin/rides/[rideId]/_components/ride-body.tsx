@@ -12,7 +12,10 @@ import {
   toPersonChoice,
   toPilotChoice,
 } from "@/features/rides/components/crew-choices";
-import { ridePilots } from "@/features/rides/components/ride-presentation";
+import {
+  ridePilots,
+  seatedPilots,
+} from "@/features/rides/components/ride-presentation";
 import {
   rideDetailStrings,
   rideErrors,
@@ -138,6 +141,7 @@ export async function RideBody({
 
   const booked = new Set(ride.roster.map((entry) => entry.passenger.id));
   const pilots = ridePilots(ride);
+  const seated = seatedPilots(ride).length;
   const onRide = new Set(pilots.map((assignment) => assignment.user.id));
 
   const riderChoices = chapterPassengers
@@ -236,10 +240,12 @@ export async function RideBody({
       <RidePilots
         rideId={ride.id}
         editable={editable}
-        assigned={pilots.map(({ user }) => ({
+        assigned={pilots.map(({ user, stillPiloting }) => ({
           ...toPersonChoice(user),
           href: `/admin/members/${user.id}${scopeQuery}`,
+          seated: stillPiloting,
         }))}
+        seated={seated}
         required={ride.requiredPilots}
         limit={limits.pilots}
         choices={pilotChoices}
@@ -251,9 +257,7 @@ export async function RideBody({
         }}
         pick={people}
         unstaffed={
-          editable &&
-          ride.startsAt > new Date() &&
-          pilots.length < ride.requiredPilots
+          editable && ride.startsAt > new Date() && seated < ride.requiredPilots
             ? detail.unstaffed
             : null
         }
