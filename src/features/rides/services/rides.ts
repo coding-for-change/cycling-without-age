@@ -1107,6 +1107,12 @@ export const findAnnouncedEvents = (
     take,
   });
 
+export const findBookingsOn = (rideIds: string[], passengerIds: string[]) =>
+  prisma.rideRosterEntry.findMany({
+    where: { rideId: { in: rideIds }, passengerId: { in: passengerIds } },
+    select: { rideId: true, passengerId: true },
+  });
+
 export const findAnnouncedEvent = (
   rideId: string,
   chapterIds: string[],

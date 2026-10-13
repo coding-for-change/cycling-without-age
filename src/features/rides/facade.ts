@@ -83,6 +83,7 @@ import {
   findRideParticipants,
   findAnnouncedEvent,
   findAnnouncedEvents,
+  findBookingsOn,
   findOpenRide,
   findOpenRidesFor,
   findChaptersWithUncheckedRides,
@@ -1709,14 +1710,39 @@ export async function setAnnounced(
   });
 }
 
-export const listAnnouncedEvents = (
-  chapterIds: string[],
+/**
+ * The announced events in the chapters of these riders that still have one
+ * of them to bring along: an event every rider of its chapter is booked on
+ * is already among the account's own rides.
+ */
+export async function listAnnouncedEvents(
+  riders: { id: string; chapterId: string }[],
   now = new Date(),
   take = 20,
-) =>
-  chapterIds.length
-    ? findAnnouncedEvents(chapterIds, now, take)
-    : Promise.resolve([]);
+) {
+  if (!riders.length) return [];
+  const events = await findAnnouncedEvents(
+    [...new Set(riders.map((rider) => rider.chapterId))],
+    now,
+    take,
+  );
+  if (!events.length) return events;
+  const booked = new Set(
+    (
+      await findBookingsOn(
+        events.map((event) => event.id),
+        riders.map((rider) => rider.id),
+      )
+    ).map((entry) => `${entry.rideId}:${entry.passengerId}`),
+  );
+  return events.filter((event) =>
+    riders.some(
+      (rider) =>
+        rider.chapterId === event.chapterId &&
+        !booked.has(`${event.id}:${rider.id}`),
+    ),
+  );
+}
 
 export const getAnnouncedEvent = (
   rideId: string,

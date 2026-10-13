@@ -994,7 +994,8 @@ starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 1
 - **Announced events** (4B-b). `Ride.announced` is set in the drawer or the detail page's
   "Riders can book" panel, for event rides only (`eventsOnly`). Announced events show on the
   passenger start screen and `/passenger/rides` for the chapters of the riders the account
-  manages, through `announcedSelect`: photos, story, place and seats left, never another
+  manages, until every one of them in the event's chapter is booked on it (it is then among the
+  account's own rides), through `announcedSelect`: photos, story, place and seats left, never another
   rider. "Book a seat" (`app/(member)/passenger/rides/actions.ts`, rate-limited) goes through
   `use-cases/book-event-seat.ts` — riders the account manages, in the event's chapter — and
   `rides.bookSeats` locks the ride, recounts the roster against `capacity` and refuses a booking

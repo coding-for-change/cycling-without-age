@@ -2858,6 +2858,28 @@ describe("booking seats on an announced event", () => {
     expect(emitted).toEqual([]);
   });
 
+  it("leaves out an event every rider of its chapter is already booked on", async () => {
+    db.ride.findMany.mockResolvedValue([
+      { id: "fair", chapterId: CHAPTER },
+      { id: "picnic", chapterId: CHAPTER },
+      { id: "elsewhere", chapterId: "chapter-other" },
+    ]);
+    db.rideRosterEntry.findMany.mockResolvedValue([
+      { rideId: "fair", passengerId: "p-1" },
+      { rideId: "fair", passengerId: "p-2" },
+      { rideId: "picnic", passengerId: "p-1" },
+    ]);
+    const events = await rides.listAnnouncedEvents(
+      [
+        { id: "p-1", chapterId: CHAPTER },
+        { id: "p-2", chapterId: CHAPTER },
+        { id: "p-3", chapterId: "chapter-other" },
+      ],
+      BEFORE,
+    );
+    expect(events.map((event) => event.id)).toEqual(["picnic", "elsewhere"]);
+  });
+
   it("shows the public event without anyone's name", async () => {
     db.ride.findFirst.mockResolvedValue(null);
     await rides.getAnnouncedEvent("ride-1", [CHAPTER]);

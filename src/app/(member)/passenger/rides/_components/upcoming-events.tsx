@@ -15,12 +15,14 @@ import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
 
-/** Announced events in the chapters of the riders this account books for. */
+/**
+ * Announced events in the chapters of the riders this account books for,
+ * while one of them could still come along.
+ */
 export async function loadUpcomingEvents(userId: string) {
-  const managed = await passengers.listPassengersManagedBy(userId);
-  return rides.listAnnouncedEvents([
-    ...new Set(managed.map((rider) => rider.chapterId)),
-  ]);
+  return rides.listAnnouncedEvents(
+    await passengers.listPassengersManagedBy(userId),
+  );
 }
 
 /**
