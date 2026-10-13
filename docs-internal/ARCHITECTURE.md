@@ -1004,7 +1004,9 @@ kept. The nav calls them "Ride locations" and "Storage locations" so the two nev
 - **Riders.** `Passenger` gained `needsWheelchairBike`, `note` and `rideLocationId` (their
   Care Center). An admin sets them when adding a rider; an account edits its own rider in the
   account surface through `use-cases/set-own-rider-needs`, which checks the Care Center
-  belongs to the rider's chapter.
+  belongs to the rider's chapter. The account surface loads that group only when it opens,
+  and only for an account with the passenger role, so `loadAccount` (which every sidebar
+  runs) never pays for it.
 - **Who may.** Creating needs `requireChapterAdmin(chapterId)`; updating, archiving and
   restoring load the location first and guard on its stored `chapterId`, never on a chapter
   the client names. The list and detail pages sit behind `readActiveScope(…, "rideLocations")`

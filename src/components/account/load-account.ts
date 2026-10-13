@@ -6,8 +6,6 @@ import { calendarFeedUrl } from "@/lib/app-url";
 import { getSession } from "@/lib/auth-guards";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { profile as profileFacade } from "@/features/profile";
-import { passengers } from "@/features/passengers";
-import { rideLocations } from "@/features/ride-locations";
 import { resolveLocale, toIsoDateUtc } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { perspectiveChoices } from "@/lib/perspectives";
@@ -17,19 +15,14 @@ export const loadAccount = cache(async (): Promise<AccountData | null> => {
   const session = await getSession();
   if (!session) return null;
 
-  const [person, dict, language, head, feed, ownRider] = await Promise.all([
+  const [person, dict, language, head, feed] = await Promise.all([
     profileFacade.getProfile(session.user.id),
     getDictionary(),
     getLocale(),
     headers(),
     calendarFeeds.getFeed(session.user.id),
-    passengers.getOwnPassenger(session.user.id),
   ]);
-  const careCenters = ownRider
-    ? (await rideLocations.listRideLocations([ownRider.chapterId]))
-        .filter((place) => place.kind !== "publicPlace")
-        .map((place) => ({ id: place.id, name: place.name }))
-    : [];
+  const perspectives = availablePerspectives(session.access);
 
   const email = person?.email ?? session.user.email;
   const seed = avatarSeed(email);
@@ -56,9 +49,7 @@ export const loadAccount = cache(async (): Promise<AccountData | null> => {
     },
     hasRides:
       (person?._count.passengers ?? 0) > 0 ||
-      availablePerspectives(session.access).some(
-        (perspective) => perspective !== "admin",
-      ),
+      perspectives.some((perspective) => perspective !== "admin"),
     calendarFeed: feed
       ? {
           url: calendarFeedUrl(feed.token),
@@ -67,14 +58,8 @@ export const loadAccount = cache(async (): Promise<AccountData | null> => {
       : null,
     signOutLabel: dict.common.signOut,
     cancelLabel: dict.common.back,
-    rider: ownRider
-      ? {
-          needsWheelchairBike: ownRider.needsWheelchairBike,
-          note: ownRider.note,
-          rideLocationId: ownRider.rideLocationId,
-          careCenters,
-          strings: dict.passenger.riderNeeds,
-        }
+    riderNeeds: perspectives.includes("passenger")
+      ? dict.passenger.riderNeeds
       : null,
   };
 });

@@ -4,13 +4,28 @@ import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/auth-guards";
 import { actionFailure } from "@/lib/domain-error";
 import { withinRateLimit } from "@/lib/rate-limit";
-import { setOwnRiderNeeds } from "@/use-cases/set-own-rider-needs";
+import {
+  getOwnRiderNeeds,
+  setOwnRiderNeeds,
+  type OwnRiderNeeds,
+} from "@/use-cases/set-own-rider-needs";
 import { riderNeedsInput } from "./schemas";
 
 export type RiderNeedsResult =
   { ok: true } | { ok: false; error: "invalid" | "generic" };
 
 const SAVE_LIMIT = { max: 60, windowMs: 60_000 };
+
+export async function ownRiderNeedsAction(): Promise<
+  { ok: true; rider: OwnRiderNeeds | null } | { ok: false; error: "generic" }
+> {
+  const session = await requireAuth();
+  try {
+    return { ok: true, rider: await getOwnRiderNeeds(session.user.id) };
+  } catch (error) {
+    return actionFailure(error, {});
+  }
+}
 
 export async function updateOwnRiderNeedsAction(
   input: unknown,
