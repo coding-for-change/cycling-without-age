@@ -722,7 +722,7 @@ function ScheduleRideSheet({
         onSubmit={submit}
         onKeyDown={submitOnCmdEnter}
         aria-busy={pending}
-        className="grid"
+        className="grid grid-cols-[minmax(0,1fr)]"
       >
         <Section className="gap-3">
           <div className="grid gap-1.25">
@@ -781,7 +781,7 @@ function ScheduleRideSheet({
         </Section>
 
         <Section>
-          <div className="-mx-2 grid gap-1">
+          <div className="-mx-2 grid grid-cols-[minmax(0,1fr)] gap-1">
             <WhenField
               value={slot}
               onChange={changeSlot}
@@ -827,7 +827,7 @@ function ScheduleRideSheet({
               failed={errors.generic}
             />
             {prefilledParts.length ? (
-              <p className="pl-9 text-xs text-ink-soft">
+              <p className="pr-2 pl-9 text-xs text-ink-soft">
                 {formatMessage(
                   locationStrings.picker.defaults,
                   {
@@ -1102,7 +1102,7 @@ function Section({
   return (
     <div
       className={cn(
-        "grid border-t border-line py-4 first:border-t-0 first:pt-0 last:pb-0",
+        "grid grid-cols-[minmax(0,1fr)] border-t border-line py-4 first:border-t-0 first:pt-0 last:pb-0",
         className,
       )}
     >
