@@ -200,6 +200,22 @@ describe("notify", () => {
     ]);
   });
 
+  it("writes one row for a person a kind names twice", async () => {
+    kindOfMock.mockReturnValueOnce({
+      ...jest
+        .requireActual("@/use-cases/notifications/kinds")
+        .kindOf("pilotApplication.decided"),
+      recipients: async () => ["user-a", "user-b", "user-a"],
+    });
+
+    await notify(decided);
+
+    expect(create.mock.calls.map(([input]) => input.recipientUserId)).toEqual([
+      "user-a",
+      "user-b",
+    ]);
+  });
+
   it("passes a kind's collapse key on to the inbox row", async () => {
     kindOfMock.mockReturnValueOnce({
       ...jest

@@ -17,7 +17,7 @@ export async function notify({ id, event }: Envelope) {
   const collapseKey = kind.collapseKey?.(event);
 
   await Promise.all(
-    recipients.map(async (recipientUserId) => {
+    [...new Set(recipients)].map(async (recipientUserId) => {
       const notification = await notifications.create({
         eventId: id,
         recipientUserId,
