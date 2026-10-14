@@ -2010,7 +2010,8 @@
         "cta": "Für diese Fahrt eintragen",
         "done": "Du bist dabei. Danke dir!",
         "intro": "{chapter} sucht einen Piloten. Sobald du dich einträgst, siehst du, mit wem du fährst, wie du sie erreichst, und einen Chat mit allen, die dabei sind.",
-        "to": "nach {destination}"
+        "to": "nach {destination}",
+        "late": "Die Fahrt ist in weniger als {hours, plural, one {# Stunde} other {# Stunden}}. Sobald du dich einträgst, kannst du nur noch telefonisch bei {chapter} absagen."
       },
       "upcomingEmpty": "Gerade steht nichts an. Sobald deine Ortsgruppe dich für eine Ausfahrt einteilt, taucht sie hier auf."
     },

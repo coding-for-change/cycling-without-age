@@ -8,6 +8,8 @@ import {
   UsersRound,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { chapters } from "@/features/chapters";
+import { rides } from "@/features/rides";
 import { calendarDate } from "@/lib/calendar";
 import {
   formatRelativeTime,
@@ -23,7 +25,8 @@ import { SignUpButton } from "./sign-up-button";
 /**
  * A ride the pilot is not on yet, as their chapter offers it: when, where,
  * what kind and how many ride along. Names, numbers and the pickup code come
- * only once they have signed up.
+ * only once they have signed up. Inside the staffing window it says so
+ * first, because from then on stepping back is a call to the chapter.
  */
 export async function OpenRide({
   rideId,
@@ -44,7 +47,11 @@ export async function OpenRide({
   const strings = dict.pilot.rides;
   const zone = ride.chapter.timeZone;
   const missing = Math.max(0, ride.requiredPilots - ride._count.assignments);
+  const settings = await chapters.getSettings(ride.chapterId);
   const now = new Date();
+  const late =
+    now >=
+    rides.withdrawalClosesAt(ride.startsAt, settings.staffingCheckLeadHours);
   const otherLeg = [ride.returnLeg, ride.returnLegOf].find(
     (leg) => leg?.status === "scheduled" && leg.startsAt > now,
   );
@@ -163,6 +170,19 @@ export async function OpenRide({
           words,
         )}
       </p>
+
+      {late ? (
+        <p className="text-2sm text-ink-soft border-line rounded-2xl border p-4">
+          {formatMessage(
+            strings.signUp.late,
+            {
+              hours: settings.staffingCheckLeadHours,
+              chapter: ride.chapter.name,
+            },
+            words,
+          )}
+        </p>
+      ) : null}
 
       <div className="mt-auto flex flex-col pt-4">
         <SignUpButton

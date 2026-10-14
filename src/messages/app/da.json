@@ -2010,7 +2010,8 @@
         "cta": "Tilmeld dig turen",
         "done": "Du er med på turen. Tak!",
         "intro": "{chapter} søger en pilot. Når du tilmelder dig, kan du se, hvem du kører med, hvordan du får fat i dem, og en chat med alle på turen.",
-        "to": "til {destination}"
+        "to": "til {destination}",
+        "late": "Turen er om mindre end {hours, plural, one {# time} other {# timer}}, så når du har tilmeldt dig, sker afmelding over telefonen til {chapter}."
       },
       "upcomingEmpty": "Der er ikke noget på vej lige nu. Når din afdeling sætter dig på en tur, dukker den op her."
     },

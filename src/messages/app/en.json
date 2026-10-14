@@ -2010,7 +2010,8 @@
         "cta": "Sign up for this ride",
         "done": "You're on the ride. Thank you!",
         "intro": "{chapter} is looking for a pilot. Once you sign up you'll see who you're riding with, how to reach them and a chat with everyone on the ride.",
-        "to": "to {destination}"
+        "to": "to {destination}",
+        "late": "The ride is less than {hours, plural, one {# hour} other {# hours}} away, so once you sign up, stepping back is a phone call to {chapter}."
       },
       "upcomingEmpty": "Nothing coming up right now. When your chapter puts you on a ride, it lands here."
     },
