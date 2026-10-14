@@ -7,7 +7,7 @@ import {
   factsOfRide,
   followsItsPair,
   rideAudience,
-  rideStillExists,
+  rideNotOver,
   rideFacts,
   rideWords,
 } from "./ride-facts";
@@ -79,7 +79,7 @@ export const ridePilotAssigned = defineKind({
   policy: { push: true, email: "ifNoPush", optional: false },
   payload: z.object({ ...rideFacts, ...person, ...pilot }),
   recipients: async (event) => {
-    if (followsItsPair(event.pair) || !(await rideStillExists(event.rideId)))
+    if (followsItsPair(event.pair) || !(await rideNotOver(event.rideId)))
       return [];
     if (!event.self) return excluding([event.userId], event.actorUserId);
     const legs = await Promise.all([
@@ -273,7 +273,7 @@ export const rideBookingConfirmed = defineKind({
   policy: { push: true, email: "always", optional: false },
   payload: z.object({ ...rideFacts, ...rider }),
   recipients: async (event) =>
-    followsItsPair(event.pair) || !(await rideStillExists(event.rideId))
+    followsItsPair(event.pair) || !(await rideNotOver(event.rideId))
       ? []
       : excluding(
           (await lookUpRider(event.passengerId)).accounts,
@@ -318,7 +318,7 @@ export const rideBookingCancelled = defineKind({
   policy: { push: true, email: "ifNoPush", optional: true },
   payload: z.object({ ...rideFacts, ...rider }),
   recipients: async (event) =>
-    event.self && (await rideStillExists(event.rideId))
+    event.self && (await rideNotOver(event.rideId))
       ? excluding(await chapterAdminIds(event.chapterId), event.actorUserId)
       : [],
   params: async (event) => ({

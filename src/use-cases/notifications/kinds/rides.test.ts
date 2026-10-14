@@ -29,6 +29,14 @@ jest.mock("@/features/profile", () => ({
 const CHAPTER = "chapter-muenchen";
 const scope = { rideId: "ride-1", chapterId: CHAPTER };
 
+beforeAll(() => {
+  jest.useFakeTimers({
+    now: new Date("2026-10-20T08:00:00Z"),
+    doNotFake: ["nextTick", "setImmediate", "queueMicrotask"],
+  });
+});
+afterAll(() => jest.useRealTimers());
+
 beforeEach(() => {
   jest.clearAllMocks();
   (rides.listRideParticipants as jest.Mock).mockResolvedValue({
@@ -107,6 +115,55 @@ describe("who hears about a ride", () => {
         pair: null,
       }),
     ).toEqual(["pilot-1", "carer-1", "rider-1"]);
+  });
+
+  it("tells nobody that someone was put on or taken off a ride already over", async () => {
+    (rides.getRideFacts as jest.Mock).mockResolvedValue({
+      title: null,
+      model: "pleasure",
+      destinationName: null,
+      startsAt: new Date("2026-10-12T08:00:00Z"),
+      endsAt: new Date("2026-10-12T10:00:00Z"),
+      locationName: "Sonnenhof",
+      chapter: { name: "München", timeZone: "Europe/Berlin" },
+    });
+    const assigned = {
+      type: "ride.pilotAssigned" as const,
+      ...scope,
+      actorUserId: "admin-1",
+      userId: "pilot-1",
+      pair: null,
+    };
+    const rider = {
+      ...scope,
+      actorUserId: "admin-1",
+      passengerId: "passenger-1",
+      pair: null,
+    };
+    expect(
+      await ridePilotAssigned.recipients({ ...assigned, self: false }),
+    ).toEqual([]);
+    expect(
+      await ridePilotAssigned.recipients({
+        ...assigned,
+        actorUserId: "pilot-1",
+        self: true,
+      }),
+    ).toEqual([]);
+    expect(
+      await rideBookingConfirmed.recipients({
+        type: "ride.riderBooked",
+        ...rider,
+      }),
+    ).toEqual([]);
+    expect(
+      await rideBookingCancelled.recipients({
+        type: "ride.riderRemoved",
+        ...rider,
+        actorUserId: "carer-1",
+        self: true,
+      }),
+    ).toEqual([]);
   });
 
   // Story 24b: one event, two readers — the pilot and the riders' side.

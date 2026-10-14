@@ -259,6 +259,10 @@ PR 5 added four more, in `kinds/staffing.ts`, and widened `ridePilotAssigned`:
 | `ridePilotWithdrew` | `ride.pilotUnassigned` with `self` | chapter admins minus the actor | push, mail if no push, opt-out-able | `/admin/rides/{id}` |
 | `rideAnnounced` | `ride.announced` | the accounts behind the chapter's riders, minus the actor | push, mail if no push, opt-out-able | `/passenger/rides/{id}` |
 
+**A ride already over is history.** `ridePilotAssigned`, `rideBookingConfirmed` and
+`rideBookingCancelled` tell nobody when the ride has ended (`rideNotOver`), so an admin
+recording last Monday's crew and riders doesn't send "you're piloting on Monday".
+
 **One event, two readers.** A self sign-up reaches the pilot and the riders' side with
 different words. A kind may define `forRecipient(params, recipientUserId)`; `notify` stores
 each recipient's row with what it returns, so `ridePilotAssigned` remembers `audience: "pilot"`
