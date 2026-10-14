@@ -2001,7 +2001,10 @@
         "needsMore": "{count, plural, one {Noch # Pilot gesucht} other {Noch # Piloten gesucht}}",
         "riders": "{count, plural, =0 {Noch keine Fahrgäste} one {# Fahrgast} other {# Fahrgäste}}",
         "title": "Offene Fahrten in {chapter}",
-        "titleAny": "Offene Fahrten"
+        "titleAny": "Offene Fahrten",
+        "goneTitle": "Hier wird kein Pilot mehr gesucht",
+        "goneBody": "Vielleicht hat schon jemand übernommen, oder die Fahrt wurde verschoben oder abgesagt. Die anderen offenen Fahrten deiner Ortsgruppe findest du unter Meine Ausfahrten.",
+        "goneCta": "Offene Fahrten ansehen"
       },
       "past": "Vergangene Ausfahrten",
       "signUp": {

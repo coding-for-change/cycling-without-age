@@ -1,13 +1,15 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   ArrowLeftRight,
   CalendarClock,
+  CircleCheck,
   MapPin,
   UsersRound,
 } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { chapters } from "@/features/chapters";
 import { rides } from "@/features/rides";
 import { calendarDate } from "@/lib/calendar";
@@ -26,7 +28,9 @@ import { SignUpButton } from "./sign-up-button";
  * A ride the pilot is not on yet, as their chapter offers it: when, where,
  * what kind and how many ride along. Names, numbers and the pickup code come
  * only once they have signed up. Inside the staffing window it says so
- * first, because from then on stepping back is a call to the chapter.
+ * first, because from then on stepping back is a call to the chapter. A ride
+ * that filled up, moved or closed since the pilot was told about it says so
+ * instead of a bare 404.
  */
 export async function OpenRide({
   rideId,
@@ -42,9 +46,33 @@ export async function OpenRide({
   words: Locale;
 }) {
   const ride = await getOpenRide(rideId, pilotChapterIds);
-  if (!ride) notFound();
-
   const strings = dict.pilot.rides;
+  if (!ride)
+    return (
+      <>
+        <BackLink label={strings.detail.back} />
+        <EmptyState
+          icon={CircleCheck}
+          title={strings.open.goneTitle}
+          action={
+            <Button
+              asChild
+              variant="outline"
+            >
+              <Link
+                href="/pilot/rides"
+                transitionTypes={["pop"]}
+              >
+                {strings.open.goneCta}
+              </Link>
+            </Button>
+          }
+        >
+          {strings.open.goneBody}
+        </EmptyState>
+      </>
+    );
+
   const zone = ride.chapter.timeZone;
   const missing = Math.max(0, ride.requiredPilots - ride._count.assignments);
   const settings = await chapters.getSettings(ride.chapterId);
@@ -58,17 +86,7 @@ export async function OpenRide({
 
   return (
     <>
-      <Link
-        href="/pilot/rides"
-        transitionTypes={["pop"]}
-        className="text-2sm text-ink-soft hover:text-ink -my-2 inline-flex min-h-11 w-fit items-center gap-1.25 rounded-md transition-colors motion-reduce:transition-none"
-      >
-        <ArrowLeft
-          aria-hidden
-          className="size-4"
-        />
-        {strings.detail.back}
-      </Link>
+      <BackLink label={strings.detail.back} />
 
       <header className="flex flex-col gap-1.25">
         <Badge className="bg-mint-tint text-ink w-fit">
@@ -193,5 +211,21 @@ export async function OpenRide({
         />
       </div>
     </>
+  );
+}
+
+function BackLink({ label }: { label: string }) {
+  return (
+    <Link
+      href="/pilot/rides"
+      transitionTypes={["pop"]}
+      className="text-2sm text-ink-soft hover:text-ink -my-2 inline-flex min-h-11 w-fit items-center gap-1.25 rounded-md transition-colors motion-reduce:transition-none"
+    >
+      <ArrowLeft
+        aria-hidden
+        className="size-4"
+      />
+      {label}
+    </Link>
   );
 }

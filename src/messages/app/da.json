@@ -2001,7 +2001,10 @@
         "needsMore": "{count, plural, one {Mangler # pilot} other {Mangler # piloter}}",
         "riders": "{count, plural, =0 {Ingen passagerer endnu} one {# passager} other {# passagerer}}",
         "title": "Åbne ture i {chapter}",
-        "titleAny": "Åbne ture"
+        "titleAny": "Åbne ture",
+        "goneTitle": "Turen mangler ikke længere en pilot",
+        "goneBody": "Måske har en anden taget den, eller turen er flyttet eller aflyst. Afdelingens andre åbne ture finder du under Mine ture.",
+        "goneCta": "Se åbne ture"
       },
       "past": "Tidligere ture",
       "signUp": {

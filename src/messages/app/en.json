@@ -2001,7 +2001,10 @@
         "needsMore": "{count, plural, one {Needs # more pilot} other {Needs # more pilots}}",
         "riders": "{count, plural, =0 {No riders booked yet} one {# rider} other {# riders}}",
         "title": "Open rides in {chapter}",
-        "titleAny": "Open rides"
+        "titleAny": "Open rides",
+        "goneTitle": "No pilot needed here anymore",
+        "goneBody": "Someone else may have taken it, or the ride was moved or cancelled. Your chapter's other open rides are on My rides.",
+        "goneCta": "See open rides"
       },
       "past": "Past rides",
       "signUp": {
