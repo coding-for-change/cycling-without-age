@@ -62,20 +62,32 @@ export function OpenRides({
                 className="hover:bg-canvas-deep flex min-h-14 items-center gap-3 px-4 py-3 transition-colors motion-reduce:transition-none"
               >
                 <span className="flex min-w-0 flex-1 flex-col gap-1">
-                  <span className="text-2sm text-ink-soft">
-                    {formatShortDateWithWeekday(
-                      calendarDate(ride.startsAt, zone),
-                      locale,
-                    )}
-                    {" · "}
-                    <time dateTime={ride.startsAt.toISOString()}>
-                      {formatTimeRange(
-                        ride.startsAt,
-                        ride.endsAt,
+                  <span className="flex items-start justify-between gap-3">
+                    <span className="text-2sm text-ink-soft">
+                      {formatShortDateWithWeekday(
+                        calendarDate(ride.startsAt, zone),
                         locale,
-                        zone,
                       )}
-                    </time>
+                      {" · "}
+                      <time
+                        dateTime={ride.startsAt.toISOString()}
+                        className="whitespace-nowrap"
+                      >
+                        {formatTimeRange(
+                          ride.startsAt,
+                          ride.endsAt,
+                          locale,
+                          zone,
+                        )}
+                      </time>
+                    </span>
+                    <Badge className="bg-mint-tint text-ink shrink-0">
+                      {formatMessage(
+                        strings.needsMore,
+                        { count: missing },
+                        words,
+                      )}
+                    </Badge>
                   </span>
                   <span className="truncate font-medium">
                     {ride.title?.trim() || dict.calendar.models[ride.model]}
@@ -100,9 +112,6 @@ export function OpenRides({
                     </span>
                   </span>
                 </span>
-                <Badge className="bg-mint-tint text-ink shrink-0">
-                  {formatMessage(strings.needsMore, { count: missing }, words)}
-                </Badge>
                 <ChevronRight
                   aria-hidden
                   className="text-ink-soft size-4 shrink-0"
