@@ -1892,7 +1892,8 @@
           "more": "Bring someone else along",
           "pick": "Pick who's coming",
           "submit": "{count, plural, one {Book # seat} other {Book # seats}}",
-          "title": "Book a seat"
+          "title": "Book a seat",
+          "tooMany": "{count, plural, one {Only # seat left, pick one} other {Only # seats left, pick up to #}}"
         },
         "errors": {
           "rateLimited": "That was a lot at once. Please wait a moment and try again.",

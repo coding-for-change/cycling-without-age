@@ -14,13 +14,15 @@ export type BookSeatsLabels = {
   submit: string;
   done: string;
   pick: string;
+  tooMany: string;
   errors: NotifyLabels["errors"];
 };
 
 /**
- * Seats on an announced event for the riders this account books for. One
- * rider is preselected; with several, the account picks who comes along. A
- * booking shrinks the list, so only riders still on it count as chosen.
+ * Seats on an announced event for the riders this account books for, always
+ * named so it is clear who is booked. A lone rider starts ticked; with
+ * several, the account picks who comes along. A booking shrinks the list, so
+ * only riders still on it count as chosen.
  */
 export function BookSeats({
   rideId,
@@ -36,11 +38,11 @@ export function BookSeats({
   labels: BookSeatsLabels;
 }) {
   const headingId = useId();
-  const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
+  const [picked, setPicked] = useState<ReadonlySet<string>>(
+    () => new Set(riders.length === 1 ? [riders[0].id] : []),
+  );
   const chosen = new Set(
-    riders.length === 1
-      ? [riders[0].id]
-      : riders.filter((rider) => picked.has(rider.id)).map((rider) => rider.id),
+    riders.filter((rider) => picked.has(rider.id)).map((rider) => rider.id),
   );
   const [pending, startTransition] = useTransition();
   const tooMany = seatsLeft !== null && chosen.size > seatsLeft;
@@ -84,24 +86,20 @@ export function BookSeats({
         </h2>
         <p className="text-2sm text-ink-soft">{labels.hint}</p>
       </div>
-      {riders.length > 1 ? (
-        <ul className="border-line divide-line divide-y rounded-2xl border">
-          {riders.map((rider) => (
-            <li key={rider.id}>
-              <label className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3">
-                <Checkbox
-                  checked={chosen.has(rider.id)}
-                  onCheckedChange={(next) => toggle(rider.id, next === true)}
-                  disabled={pending}
-                />
-                <span className="min-w-0 truncate font-medium">
-                  {rider.name}
-                </span>
-              </label>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      <ul className="border-line divide-line divide-y rounded-2xl border">
+        {riders.map((rider) => (
+          <li key={rider.id}>
+            <label className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3">
+              <Checkbox
+                checked={chosen.has(rider.id)}
+                onCheckedChange={(next) => toggle(rider.id, next === true)}
+                disabled={pending}
+              />
+              <span className="min-w-0 truncate font-medium">{rider.name}</span>
+            </label>
+          </li>
+        ))}
+      </ul>
       <Button
         variant="brand"
         size="hero"
@@ -111,7 +109,9 @@ export function BookSeats({
       >
         {chosen.size === 0
           ? labels.pick
-          : formatMessage(labels.submit, { count: chosen.size }, language)}
+          : tooMany
+            ? formatMessage(labels.tooMany, { count: seatsLeft }, language)
+            : formatMessage(labels.submit, { count: chosen.size }, language)}
       </Button>
     </section>
   );

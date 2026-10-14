@@ -1892,7 +1892,8 @@
           "more": "Jemand weiteren mitbringen",
           "pick": "Wählen Sie, wer mitkommt",
           "submit": "{count, plural, one {# Platz buchen} other {# Plätze buchen}}",
-          "title": "Platz buchen"
+          "title": "Platz buchen",
+          "tooMany": "{count, plural, one {Nur noch # Platz frei, bitte eine Person wählen} other {Nur noch # Plätze frei, bitte höchstens # wählen}}"
         },
         "errors": {
           "rateLimited": "Das war viel auf einmal. Bitte warten Sie kurz und versuchen Sie es erneut.",

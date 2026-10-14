@@ -1892,7 +1892,8 @@
           "more": "Tag en mere med",
           "pick": "Vælg, hvem der kommer",
           "submit": "{count, plural, one {Book # plads} other {Book # pladser}}",
-          "title": "Book en plads"
+          "title": "Book en plads",
+          "tooMany": "{count, plural, one {Kun # plads tilbage, vælg én} other {Kun # pladser tilbage, vælg højst #}}"
         },
         "errors": {
           "rateLimited": "Det var meget på én gang. Vent lidt, og prøv igen.",
