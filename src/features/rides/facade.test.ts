@@ -195,6 +195,8 @@ const eventTypes = () => emitted.map((event) => event.type);
 const lockedSql = () =>
   db.$queryRaw.mock.calls.map(([sql]) => String(sql.strings.join("?")));
 
+afterEach(() => jest.useRealTimers());
+
 beforeEach(() => {
   jest.clearAllMocks();
   emitted.length = 0;
@@ -640,6 +642,10 @@ describe("moving a round trip", () => {
   });
 
   it("keeps the time at the destination when the way there gets longer", async () => {
+    jest.useFakeTimers({
+      now: new Date("2026-09-01T08:00:00Z"),
+      doNotFake: ["nextTick", "setImmediate", "queueMicrotask"],
+    });
     rows([there(), back()]);
     await rides.rescheduleRide(
       "ride-there",
@@ -798,8 +804,32 @@ describe("rescheduling a wall-clock patch", () => {
     });
   });
 
+  // The rain pushed the start back half an hour: who already came stands.
+  it("asks nobody again once the door has opened", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        startsAt: new Date(Date.now() + 30 * 60_000),
+        endsAt: new Date(Date.now() + 150 * 60_000),
+      }),
+    );
+    await rides.rescheduleRide(
+      "ride-1",
+      {
+        startsAt: new Date(Date.now() + 60 * 60_000),
+        endsAt: new Date(Date.now() + 180 * 60_000),
+      },
+      ADMIN,
+    );
+    expect(db.ride.update).toHaveBeenCalled();
+    expect(db.rideRosterEntry.updateMany).not.toHaveBeenCalled();
+  });
+
   // A new end is no news: nobody is reminded again and no answer is undone.
   it("reminds again and asks again only when the start moves", async () => {
+    jest.useFakeTimers({
+      now: new Date("2026-09-01T08:00:00Z"),
+      doNotFake: ["nextTick", "setImmediate", "queueMicrotask"],
+    });
     db.ride.findUnique.mockResolvedValue(scheduled());
     await rides.rescheduleRide("ride-1", { durationMinutes: 60 }, ADMIN);
     expect(db.rideRosterEntry.updateMany).not.toHaveBeenCalled();

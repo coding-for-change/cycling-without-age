@@ -1126,8 +1126,9 @@ debrief and the frozen ride chat. One migration, `20261016120000_ride_execution`
   with its way there (one message, through `pair`), unless the way there has nobody to remind
   itself. A ride with nobody to remind is stamped without an event, and the lead is read again
   under the lock, so a ride moved away after the sweep listed it waits. Moving a ride's start
-  clears all three stamps with `staffingCheckedAt` and asks every confirmed or checked-in seat
-  again (`booked`); a new end only clears the staffing stamp. A ride scheduled already inside
+  clears all three stamps with `staffingCheckedAt` and, while the ride is still ahead of its
+  door, asks every confirmed or checked-in seat again (`booked`, walk-ups excepted); a new end
+  only clears the staffing stamp. A ride scheduled already inside
   its demand window is stamped as checked, like the staffing check. The four checks of a sweep
   are independent: one that fails is logged, the others run, and the run then fails for the
   monitor. Rides already inside a window when this ships get their reminder on the first sweep:

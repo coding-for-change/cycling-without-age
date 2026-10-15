@@ -939,7 +939,8 @@ export async function rescheduleRide(
         { ...to, ...(startMoved ? UNSWEPT : { staffingCheckedAt: null }) },
         tx,
       );
-      if (startMoved) await askSeatsAgain(leg.id, tx);
+      if (startMoved && leg.startsAt.getTime() - CHECK_IN_LEAD_MS > Date.now())
+        await askSeatsAgain(leg.id, tx);
       updated ??= row;
       await record(
         tx,
@@ -1528,8 +1529,10 @@ const DAY_MS = 24 * HOUR_MS;
 
 /**
  * A ride whose start moves is reminded and checked again for its new time, and
- * a seat confirmed or checked in for the old one is asked about again. A
- * walk-up was there in person and has nobody to answer for them, so they stay.
+ * a seat confirmed or checked in for the old one is asked about again — while
+ * the ride is still ahead of its door: once check-in has opened, who came
+ * stands. A walk-up was there in person and has nobody to answer for them, so
+ * they stay.
  */
 const askSeatsAgain = (rideId: string, tx: Tx) =>
   updateRosterAttendance(
