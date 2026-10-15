@@ -366,24 +366,43 @@ export async function getRideForPassengers(
   };
 }
 
+type ParticipantSeat = {
+  passenger: { managedByUserId: string; userId: string | null } | null;
+};
+
+const accountsOf = (seats: ParticipantSeat[]) => [
+  ...new Set(
+    seats.flatMap(({ passenger }) =>
+      passenger
+        ? [passenger.managedByUserId, passenger.userId].filter(
+            (id): id is string => Boolean(id),
+          )
+        : [],
+    ),
+  ),
+];
+
+/**
+ * Who the ride concerns now — its pilots and the accounts behind the seats
+ * still taken — and every household ever booked on it. A seat given up still
+ * counts as a household: one family's answer never lets another into what was
+ * said about it.
+ */
 export async function listRideParticipants(rideId: string) {
   const ride = await findRideParticipants(rideId);
   if (!ride) return null;
+  const seated = ride.roster.filter(
+    (entry) => entry.attendance !== "cancelled",
+  );
   return {
     chapterId: ride.chapterId,
     pilotUserIds: [...new Set(ride.assignments.map((a) => a.userId))],
-    riderCount: ride.roster.length,
-    riderAccountUserIds: [
-      ...new Set(
-        ride.roster.flatMap(({ passenger }) =>
-          passenger
-            ? [passenger.managedByUserId, passenger.userId].filter(
-                (id): id is string => Boolean(id),
-              )
-            : [],
-        ),
-      ),
-    ],
+    riderCount: seated.length,
+    riderAccountUserIds: accountsOf(seated),
+    household: {
+      riders: ride.roster.length,
+      accountUserIds: accountsOf(ride.roster),
+    },
   };
 }
 

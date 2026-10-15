@@ -465,8 +465,9 @@ export const findRideParticipants = (rideId: string) =>
         select: { userId: true },
       },
       roster: {
-        where: { ...ACTIVE_SEAT, passengerId: { not: null } },
+        where: { passengerId: { not: null } },
         select: {
+          attendance: true,
           passenger: { select: { managedByUserId: true, userId: true } },
         },
       },

@@ -1588,6 +1588,7 @@ describe("what a member may read", () => {
       pilotUserIds: ["pilot-1"],
       riderCount: 2,
       riderAccountUserIds: ["carer-1", "rider-2"],
+      household: { riders: 2, accountUserIds: ["carer-1", "rider-2"] },
     });
   });
 
@@ -4270,15 +4271,22 @@ describe("the ride day, edge by edge", () => {
         chapterId: CHAPTER,
         assignments: [],
         roster: [
-          { passenger: null },
-          { passenger: { managedByUserId: "carer-1", userId: null } },
+          {
+            attendance: "cancelled",
+            passenger: { managedByUserId: "carer-2", userId: null },
+          },
+          {
+            attendance: "booked",
+            passenger: { managedByUserId: "carer-1", userId: null },
+          },
         ],
       });
       expect(await rides.listRideParticipants("ride-1")).toMatchObject({
+        riderCount: 1,
         riderAccountUserIds: ["carer-1"],
+        household: { riders: 2, accountUserIds: ["carer-2", "carer-1"] },
       });
       expect(db.ride.findUnique.mock.calls[0][0].select.roster.where).toEqual({
-        attendance: { not: "cancelled" },
         passengerId: { not: null },
       });
     });

@@ -1141,7 +1141,9 @@ debrief and the frozen ride chat. One migration, `20261016120000_ride_execution`
   room. The last seat given up emits `ride.riderRemoved` with `rosterNowEmpty`, which tells the
   chapter's admins; the two legs of a round trip are one message only when both are left empty
   or both are not. A given-up seat keeps the ride's page open while the ride is ahead, without
-  the pilots' phone numbers; afterwards the ride is no longer the account's.
+  the pilots' phone numbers; afterwards the ride is no longer the account's. For the ride
+  chat's one-household rule a given-up seat still counts (`listRideParticipants().household`),
+  so one family leaving never lets another into what was said in the chat about it.
 - **Check-in and walk-ups** (6B). The door opens two hours before the start
   (`CHECK_IN_LEAD_MINUTES`). A pilot keeps it until the finish page closes a day after the ride
   ends; an admin may still record a ride later, for as long as its roster is not closed
