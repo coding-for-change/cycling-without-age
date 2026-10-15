@@ -437,13 +437,16 @@ async function onRideDay<
     executor: { rideId: string; actorUserId: string; as: Executor },
   ) => Promise<R>,
   reply?: (result: R) => T,
-  limit?: string,
+  limit?: keyof typeof DAY_LIMITS,
 ): Promise<RideResult<T>> {
   const parsed = schema.safeParse(input);
   if (!parsed.success) return INVALID;
   const executor = await executorOfRide(parsed.data.rideId);
   if (!executor) return { ok: false, error: "unknownRide" };
-  if (limit && !withinRateLimit(`${limit}:${executor.actorUserId}`, DAY_LIMIT))
+  if (
+    limit &&
+    !withinRateLimit(`${limit}:${executor.actorUserId}`, DAY_LIMITS[limit])
+  )
     return { ok: false, error: "rateLimited" };
   return attempt<T>(async () => {
     const result = await run(parsed.data, executor);
@@ -451,7 +454,14 @@ async function onRideDay<
   });
 }
 
-const DAY_LIMIT = { max: 120, windowMs: 60 * 60_000 };
+const HOUR_MS = 60 * 60_000;
+
+/** A big event checks in a hundred riders, and a few of them twice. */
+const DAY_LIMITS = {
+  "check-in": { max: 600, windowMs: HOUR_MS },
+  "walk-up": { max: 120, windowMs: HOUR_MS },
+  debrief: { max: 120, windowMs: HOUR_MS },
+};
 
 export async function setCheckedInAction(
   input: unknown,
@@ -462,6 +472,7 @@ export async function setCheckedInAction(
     (data, { rideId, actorUserId, as }) =>
       rides.setCheckedIn(rideId, data.entryId, data.checkedIn, actorUserId, as),
     changed,
+    "check-in",
   );
 }
 
@@ -478,8 +489,13 @@ export async function addWalkUpAction(
 }
 
 export async function removeWalkUpAction(input: unknown): Promise<RideResult> {
-  return onRideDay(rosterEntryRef, input, (data, { rideId, actorUserId, as }) =>
-    rides.removeWalkUp(rideId, data.entryId, actorUserId, as),
+  return onRideDay(
+    rosterEntryRef,
+    input,
+    (data, { rideId, actorUserId, as }) =>
+      rides.removeWalkUp(rideId, data.entryId, actorUserId, as),
+    undefined,
+    "walk-up",
   );
 }
 
