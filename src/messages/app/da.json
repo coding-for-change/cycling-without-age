@@ -2557,7 +2557,6 @@
       "checkIn": "Indtjekning",
       "checkInHint": "Tryk på passagererne, efterhånden som de kommer. Den, der ikke er tjekket ind, når turen afsluttes, tæller som udeblevet.",
       "checkInLabel": "Tjek {name} ind",
-      "checkInOpens": "Indtjekningen åbner to timer før turen.",
       "checkedIn": "{name} er tjekket ind",
       "checkedInCount": "{count} af {total} tjekket ind",
       "complete": {
@@ -2568,7 +2567,6 @@
         "label": "Afslut turen",
         "title": "Afslut turen?"
       },
-      "completed": "Afsluttet",
       "completedBy": "Afsluttet af {name}",
       "debrief": {
         "bikeCondition": "Rickshawens stand",

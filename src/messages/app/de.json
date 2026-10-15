@@ -2557,7 +2557,6 @@
       "checkIn": "Check-in",
       "checkInHint": "Tippe auf jeden Fahrgast, sobald er da ist. Wer beim Abschließen der Fahrt nicht eingecheckt ist, zählt als nicht erschienen.",
       "checkInLabel": "{name} einchecken",
-      "checkInOpens": "Der Check-in öffnet zwei Stunden vor der Fahrt.",
       "checkedIn": "{name} ist eingecheckt",
       "checkedInCount": "{count} von {total} eingecheckt",
       "complete": {
@@ -2568,7 +2567,6 @@
         "label": "Fahrt abschließen",
         "title": "Fahrt abschließen?"
       },
-      "completed": "Abgeschlossen",
       "completedBy": "Abgeschlossen von {name}",
       "debrief": {
         "bikeCondition": "Zustand der Rikscha",

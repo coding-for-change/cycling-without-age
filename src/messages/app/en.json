@@ -2557,7 +2557,6 @@
       "checkIn": "Check-in",
       "checkInHint": "Tap each rider as they arrive. Whoever isn't checked in when the ride is completed counts as a no-show.",
       "checkInLabel": "Check in {name}",
-      "checkInOpens": "Check-in opens two hours before the ride.",
       "checkedIn": "{name} is checked in",
       "checkedInCount": "{count} of {total} checked in",
       "complete": {
@@ -2568,7 +2567,6 @@
         "label": "Complete ride",
         "title": "Complete the ride?"
       },
-      "completed": "Completed",
       "completedBy": "Completed by {name}",
       "debrief": {
         "bikeCondition": "Condition of the trishaw",
