@@ -90,7 +90,8 @@ export function RideRoster({
   const byId = new Map(riders.map((rider) => [rider.id, rider]));
   const shown = order.flatMap((id) => byId.get(id) ?? []);
   const count = riders.length;
-  const taken = seated ?? count;
+  const listed = count + walkUps.length;
+  const taken = seated ?? listed;
   const full = limit !== null && taken >= limit;
   const canAdd = editable && !full && choices.length > 0;
   const say = (template: string, name: string) =>
@@ -146,8 +147,8 @@ export function RideRoster({
     <DetailSection
       title={labels.riders}
       description={
-        count > 0
-          ? formatMessage(labels.ridersCount, { count }, language)
+        listed > 0
+          ? formatMessage(labels.ridersCount, { count: listed }, language)
           : undefined
       }
       meta={
@@ -165,7 +166,7 @@ export function RideRoster({
         ) : null
       }
       action={
-        editable && count > 0 ? (
+        editable && listed > 0 ? (
           <PersonPicker
             options={choices}
             onPick={(rider) => book(rider)}
@@ -181,7 +182,7 @@ export function RideRoster({
       busy={pending}
       className="gap-3"
     >
-      {count === 0 ? (
+      {listed === 0 ? (
         <DetailEmpty
           action={
             editable ? (
@@ -206,7 +207,7 @@ export function RideRoster({
         >
           {labels.emptyRiders}
         </DetailEmpty>
-      ) : editable ? (
+      ) : count === 0 ? null : editable ? (
         <Sortable
           value={order}
           onValueChange={(next) => {
@@ -307,7 +308,10 @@ export function RideRoster({
           </h3>
           <DetailList>
             {givenUp.map((rider) => (
-              <DetailListRow key={rider.id}>
+              <DetailListRow
+                key={rider.id}
+                className="group/row"
+              >
                 <PersonChip {...rider} />
                 {editable ? (
                   <RowRemoveButton
