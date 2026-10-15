@@ -2573,6 +2573,7 @@
       },
       "completedBy": "Afsluttet af {name}",
       "debrief": {
+        "autosaves": "Gemmes af sig selv undervejs.",
         "bikeCondition": "Rickshawens stand",
         "bikePoor": "Er noget gået i stykker? Meld det ved rickshawen ovenfor, så det bliver lavet før næste tur.",
         "by": "Turrapport fra {name}",
@@ -2594,8 +2595,7 @@
           "good": "Godt",
           "poor": "Dårligt"
         },
-        "save": "Gem turrapport",
-        "saved": "Turrapporten er gemt. Tak!",
+        "savedStatus": "Gemt",
         "saving": "Gemmer …",
         "someone": "en tidligere pilot",
         "title": "Turrapport",

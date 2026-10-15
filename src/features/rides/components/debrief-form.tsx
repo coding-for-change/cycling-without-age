@@ -1,8 +1,8 @@
 "use client";
 
-import { useId, useState, type FormEvent } from "react";
-import { notify, type NotifyLabels } from "@/components/action-feedback";
-import { Button } from "@/components/ui/button";
+import { useEffect, useId, useRef, useState } from "react";
+import { toast } from "sonner";
+import type { NotifyLabels } from "@/components/action-feedback";
 import {
   Field,
   FieldDescription,
@@ -48,9 +48,9 @@ export type DebriefLabels = {
   note: string;
   notePlaceholder: string;
   invalidNumber: string;
-  save: string;
+  autosaves: string;
   saving: string;
-  saved: string;
+  savedStatus: string;
   errors: NotifyLabels["errors"];
 };
 
@@ -75,7 +75,39 @@ const withinRange = (raw: string, max: number) => {
   return value === null || (!Number.isNaN(value) && value <= max);
 };
 
-/** Story 31: the pilot's few lines after the ride, saved as often as they like. */
+const SAVE_AFTER_MS = 900;
+
+type Draft = {
+  distance: string;
+  donation: string;
+  bikeCondition: DebriefRatingName | null;
+  cooperation: DebriefRatingName | null;
+  note: string;
+};
+
+/** What the server gets for a draft, or null while a number is still wrong. */
+function payloadOf(draft: Draft, rideId: string, functional: boolean) {
+  if (
+    !withinRange(draft.distance, DEBRIEF_MAX_KM) ||
+    !withinRange(draft.donation, DEBRIEF_MAX_DONATION_CENTS / 100)
+  )
+    return null;
+  const amount = parseDecimal(draft.donation);
+  return {
+    rideId,
+    distanceKm: functional ? parseDecimal(draft.distance) : null,
+    donationCents: amount === null ? null : Math.round(amount * 100),
+    bikeCondition: draft.bikeCondition,
+    cooperation: draft.cooperation,
+    note: draft.note,
+  };
+}
+
+/**
+ * Story 31: the pilot's few lines after the ride. They save themselves a
+ * moment after each change, and on leaving the page, so the big button that
+ * closes the ride can never lose them.
+ */
 export function DebriefForm({
   rideId,
   functional,
@@ -114,32 +146,69 @@ export function DebriefForm({
   );
   const [cooperation, setCooperation] = useState(initial?.cooperation ?? null);
   const [note, setNote] = useState(initial?.note ?? "");
-  const [pending, setPending] = useState(false);
+  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [saved] = useState(() =>
+    JSON.stringify(
+      payloadOf(
+        { distance, donation, bikeCondition, cooperation, note },
+        rideId,
+        functional,
+      ),
+    ),
+  );
+  const lastSaved = useRef(saved);
+  const pending = useRef<(() => void) | null>(null);
 
   const distanceOk = withinRange(distance, DEBRIEF_MAX_KM);
   const donationOk = withinRange(donation, DEBRIEF_MAX_DONATION_CENTS / 100);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (pending || !distanceOk || !donationOk) return;
-    const km = functional ? parseDecimal(distance) : null;
-    const amount = parseDecimal(donation);
-    setPending(true);
-    const result = await submitDebriefAction({
+  useEffect(() => {
+    const payload = payloadOf(
+      { distance, donation, bikeCondition, cooperation, note },
       rideId,
-      distanceKm: km,
-      donationCents: amount === null ? null : Math.round(amount * 100),
-      bikeCondition,
-      cooperation,
-      note,
-    });
-    setPending(false);
-    notify(result, { done: labels.saved, errors: labels.errors });
-  }
+      functional,
+    );
+    const key = JSON.stringify(payload);
+    if (!payload || key === lastSaved.current) {
+      pending.current = null;
+      return;
+    }
+    const save = () => {
+      pending.current = null;
+      lastSaved.current = key;
+      setStatus("saving");
+      void submitDebriefAction(payload).then((result) => {
+        if (result.ok) {
+          setStatus("saved");
+          return;
+        }
+        lastSaved.current = "";
+        setStatus("idle");
+        toast.error(labels.errors[result.error] ?? labels.errors.generic);
+      });
+    };
+    pending.current = save;
+    const timer = setTimeout(save, SAVE_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, [
+    distance,
+    donation,
+    bikeCondition,
+    cooperation,
+    note,
+    rideId,
+    functional,
+    labels.errors,
+  ]);
+
+  useEffect(() => () => pending.current?.(), []);
 
   return (
     <form
-      onSubmit={submit}
+      onSubmit={(event) => {
+        event.preventDefault();
+        pending.current?.();
+      }}
       className="flex flex-col gap-5"
     >
       {functional ? (
@@ -228,14 +297,16 @@ export function DebriefForm({
         />
       </Field>
 
-      <Button
-        type="submit"
-        variant="outline"
-        disabled={pending || !distanceOk || !donationOk}
-        className="min-h-11 w-full rounded-full border-line sm:w-fit"
+      <p
+        aria-live="polite"
+        className="text-2sm text-ink-soft"
       >
-        {pending ? labels.saving : labels.save}
-      </Button>
+        {status === "saving"
+          ? labels.saving
+          : status === "saved"
+            ? labels.savedStatus
+            : labels.autosaves}
+      </p>
     </form>
   );
 }

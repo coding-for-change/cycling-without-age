@@ -2573,6 +2573,7 @@
       },
       "completedBy": "Completed by {name}",
       "debrief": {
+        "autosaves": "Saves by itself as you go.",
         "bikeCondition": "Condition of the trishaw",
         "bikePoor": "Something broken? Report it with the trishaw above, so it's fixed before the next ride.",
         "by": "{name}'s debrief",
@@ -2594,8 +2595,7 @@
           "good": "Good",
           "poor": "Poor"
         },
-        "save": "Save debrief",
-        "saved": "Debrief saved. Thank you!",
+        "savedStatus": "Saved",
         "saving": "Saving…",
         "someone": "A former pilot",
         "title": "Debrief",

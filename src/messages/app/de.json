@@ -2573,6 +2573,7 @@
       },
       "completedBy": "Abgeschlossen von {name}",
       "debrief": {
+        "autosaves": "Wird beim Schreiben von selbst gespeichert.",
         "bikeCondition": "Zustand der Rikscha",
         "bikePoor": "Ist etwas kaputt? Melde es oben bei der Rikscha, damit es vor der nächsten Fahrt repariert wird.",
         "by": "Fahrtbericht von {name}",
@@ -2594,8 +2595,7 @@
           "good": "Gut",
           "poor": "Schlecht"
         },
-        "save": "Fahrtbericht speichern",
-        "saved": "Fahrtbericht gespeichert. Danke dir!",
+        "savedStatus": "Gespeichert",
         "saving": "Speichert …",
         "someone": "einer ehemaligen Pilot:in",
         "title": "Fahrtbericht",
