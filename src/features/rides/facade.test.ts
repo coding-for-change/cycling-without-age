@@ -3843,6 +3843,23 @@ describe("the reminders and the demand check", () => {
 });
 
 describe("who runs a ride on the day as its pilot", () => {
+  // The finish page carries the access code: never for a pilot who never came.
+  it("opens the finish page only to a pilot not marked as a no-show", async () => {
+    db.ride.findFirst.mockResolvedValue(null);
+    const now = new Date("2026-09-08T11:00:00Z");
+    await rides.getFinishableRideForPilot("ride-1", "pilot-1", now);
+    expect(db.ride.findFirst.mock.calls[0][0].where).toMatchObject({
+      id: "ride-1",
+      assignments: {
+        some: {
+          userId: "pilot-1",
+          role: "pilot",
+          attendance: { not: "noShow" },
+        },
+      },
+    });
+  });
+
   it("asks for an assignment not marked as a no-show, in a chapter still piloted", async () => {
     db.ride.findFirst.mockResolvedValue(null);
     expect(await rides.pilotCanRun("ride-1", "pilot-1")).toBe(false);

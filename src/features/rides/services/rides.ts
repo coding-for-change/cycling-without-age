@@ -387,15 +387,17 @@ export const findRideIdForPilot = (rideId: string, userId: string) =>
   });
 
 /** Only a pilot still on the ride: one marked as never having come is not. */
+const runningPilotWhere = (userId: string) =>
+  ({
+    assignments: {
+      some: { userId, role: "pilot", attendance: { not: "noShow" } },
+    },
+    chapter: { members: { some: stillPiloting(userId) } },
+  }) satisfies Prisma.RideWhereInput;
+
 export const findRideIdForRunningPilot = (rideId: string, userId: string) =>
   prisma.ride.findFirst({
-    where: {
-      id: rideId,
-      assignments: {
-        some: { userId, role: "pilot", attendance: { not: "noShow" } },
-      },
-      chapter: { members: { some: stillPiloting(userId) } },
-    },
+    where: { id: rideId, ...runningPilotWhere(userId) },
     select: { id: true },
   });
 
@@ -1009,7 +1011,7 @@ export const findFinishableRideForPilot = (
   now: Date,
 ) =>
   prisma.ride.findFirst({
-    where: { id: rideId, ...pilotRideWhere(userId), ...finishableAt(now) },
+    where: { id: rideId, ...runningPilotWhere(userId), ...finishableAt(now) },
     select: calendarSelect,
   });
 

@@ -77,10 +77,11 @@ export async function PilotRide({
 
   const now = new Date();
   const otherLeg = ride.returnLeg ?? ride.returnLegOf;
-  const [otherLegOpen, settings, chatId, pickup] = await Promise.all([
+  const [otherLegOpen, settings, chatId, running, pickup] = await Promise.all([
     otherLeg ? rides.pilotCanOpen(otherLeg.id, userId) : false,
     chapters.getSettings(ride.chapterId),
     chat.getRideConversationId(ride.id, userId),
+    rides.pilotCanRun(ride.id, userId),
     pickupView(ride, now),
   ]);
   const ahead = ride.status === "scheduled" && ride.startsAt > now;
@@ -91,8 +92,8 @@ export async function PilotRide({
   const strings = dict.pilot.rides.detail;
   const zone = ride.chapter.timeZone;
   const cancelled = ride.status === "cancelled";
-  const canFinish = rides.isFinishable(ride, now);
-  const doorOpen = rides.checkInOpen(ride, "pilot", now);
+  const canFinish = running && rides.isFinishable(ride, now);
+  const doorOpen = running && rides.checkInOpen(ride, "pilot", now);
   const completed = ride.status === "completed";
   const crew = ride.assignments.filter(
     (assignment) => assignment.user.id !== userId,
@@ -243,7 +244,7 @@ export async function PilotRide({
         openInMaps={dict.fleet.finish.openInMaps}
       />
 
-      {pickup ? (
+      {pickup && running ? (
         <PickupCard
           places={pickup}
           dict={dict}
