@@ -1279,7 +1279,8 @@
       },
       "schedule": {
         "fromRequest": "{name}'s request",
-        "done": "Ride scheduled. {name} hears about it with the calendar file."
+        "done": "Ride scheduled. {name} hears about it with the calendar file.",
+        "someone": "the requester"
       },
       "errors": {
         "requestNotPending": "Someone already decided on this request. Reload to see what happened.",

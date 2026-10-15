@@ -1279,7 +1279,8 @@
       },
       "schedule": {
         "fromRequest": "Anfrage von {name}",
-        "done": "Fahrt eingeplant. {name} erfährt es mit der Kalenderdatei."
+        "done": "Fahrt eingeplant. {name} erfährt es mit der Kalenderdatei.",
+        "someone": "der anfragenden Person"
       },
       "errors": {
         "requestNotPending": "Über diese Anfrage wurde schon entschieden. Lade neu, um zu sehen, was passiert ist.",

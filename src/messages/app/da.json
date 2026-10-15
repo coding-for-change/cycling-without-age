@@ -1279,7 +1279,8 @@
       },
       "schedule": {
         "fromRequest": "{name}s ønske",
-        "done": "Turen er planlagt. {name} får besked med kalenderfilen."
+        "done": "Turen er planlagt. {name} får besked med kalenderfilen.",
+        "someone": "den, der ønskede"
       },
       "errors": {
         "requestNotPending": "Der er allerede taget stilling til ønsket. Genindlæs for at se, hvad der skete.",
