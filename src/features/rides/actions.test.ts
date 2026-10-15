@@ -2,6 +2,7 @@ import { rides } from "@/features/rides/index";
 import {
   addRideNoteAction,
   deleteRideAction,
+  rescheduleRideAction,
   updateRideAction,
 } from "@/features/rides/actions";
 
@@ -38,6 +39,7 @@ jest.mock("@/features/rides/index", () => ({
     updateRideDetails: jest.fn(async () => ({})),
     deleteRide: jest.fn(async () => undefined),
     addRideNote: jest.fn(async () => ({})),
+    rescheduleRide: jest.fn(async () => ({ changed: true })),
   },
 }));
 
@@ -65,5 +67,15 @@ describe("ride actions that answer with nothing but ok", () => {
 
     await expect(deleteRideAction("ride-1")).resolves.toEqual({ ok: true });
     expect(rides.deleteRide).toHaveBeenCalledWith("ride-1", "admin-1");
+  });
+
+  it("moves the ride before reporting the save", async () => {
+    await expect(
+      rescheduleRideAction("ride-1", {
+        startsAt: "2026-10-07T14:00:00.000Z",
+        endsAt: "2026-10-07T16:00:00.000Z",
+      }),
+    ).resolves.toEqual({ ok: true });
+    expect(rides.rescheduleRide).toHaveBeenCalledTimes(1);
   });
 });
