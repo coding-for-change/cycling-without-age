@@ -1308,7 +1308,8 @@
           "beyondHorizon": "Further ahead than you take bookings",
           "ridesThen": "{count, plural, one {1 other ride} other {# other rides}} in that window"
         },
-        "lapsed": "The time asked for has passed. You can still schedule it for another time, or decline it."
+        "lapsed": "The time asked for has passed. You can still schedule it for another time, or decline it.",
+        "rideCancelled": "The ride has since been cancelled."
       },
       "decline": {
         "title": "Decline the request",
@@ -2463,7 +2464,7 @@
         "bodies": {
           "pending": "{chapter} has your request and confirms the exact time. You'll hear back by message.",
           "scheduled": "{chapter} booked the ride. It's in your rides — and in the calendar file we emailed you.",
-          "scheduledGone": "{chapter} booked a ride for this request, but it has since been removed. Ask the chapter if it's still on.",
+          "scheduledGone": "{chapter} booked a ride for this request, but it has since been cancelled. Ask the chapter about another day.",
           "declined": "{chapter} can't make this ride happen. You're welcome to ask for another day.",
           "withdrawn": "You cancelled this request.",
           "lapsed": "{chapter} didn't get to your request before the time you asked for. You're welcome to ask again."

@@ -1308,7 +1308,8 @@
           "beyondHorizon": "Weiter im Voraus, als ihr bucht",
           "ridesThen": "{count, plural, one {1 weitere Fahrt} other {# weitere Fahrten}} in diesem Zeitfenster"
         },
-        "lapsed": "Die angefragte Zeit ist vorbei. Du kannst die Fahrt trotzdem zu einer anderen Zeit einplanen oder die Anfrage ablehnen."
+        "lapsed": "Die angefragte Zeit ist vorbei. Du kannst die Fahrt trotzdem zu einer anderen Zeit einplanen oder die Anfrage ablehnen.",
+        "rideCancelled": "Die Fahrt wurde inzwischen abgesagt."
       },
       "decline": {
         "title": "Anfrage ablehnen",
@@ -2463,7 +2464,7 @@
         "bodies": {
           "pending": "{chapter} hat Ihre Anfrage und bestätigt die genaue Uhrzeit. Sie bekommen eine Nachricht.",
           "scheduled": "{chapter} hat die Fahrt gebucht. Sie steht bei Ihren Fahrten – und in der Kalenderdatei, die wir Ihnen gemailt haben.",
-          "scheduledGone": "{chapter} hatte für diese Anfrage eine Fahrt gebucht, die inzwischen entfernt wurde. Fragen Sie bei der Ortsgruppe nach, ob sie noch stattfindet.",
+          "scheduledGone": "{chapter} hatte für diese Anfrage eine Fahrt gebucht, die inzwischen abgesagt wurde. Fragen Sie bei der Ortsgruppe nach einem anderen Tag.",
           "declined": "{chapter} kann diese Fahrt leider nicht möglich machen. Fragen Sie gern einen anderen Tag an.",
           "withdrawn": "Sie haben diese Anfrage zurückgezogen.",
           "lapsed": "{chapter} ist vor dem gewünschten Termin nicht mehr dazu gekommen, Ihre Anfrage zu beantworten. Fragen Sie gern noch einmal an."

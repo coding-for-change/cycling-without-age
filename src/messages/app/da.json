@@ -1308,7 +1308,8 @@
           "beyondHorizon": "Længere ude, end I booker",
           "ridesThen": "{count, plural, one {1 anden tur} other {# andre ture}} i det tidsrum"
         },
-        "lapsed": "Det ønskede tidspunkt er gået. Du kan stadig planlægge turen til et andet tidspunkt eller afvise ønsket."
+        "lapsed": "Det ønskede tidspunkt er gået. Du kan stadig planlægge turen til et andet tidspunkt eller afvise ønsket.",
+        "rideCancelled": "Turen er siden blevet aflyst."
       },
       "decline": {
         "title": "Afvis ønsket",
@@ -2463,7 +2464,7 @@
         "bodies": {
           "pending": "{chapter} har dit ønske og bekræfter det præcise tidspunkt. Du får besked.",
           "scheduled": "{chapter} har booket turen. Den står under dine ture – og i den kalenderfil, vi har mailet dig.",
-          "scheduledGone": "{chapter} bookede en tur til dette ønske, men den er siden fjernet. Spørg afdelingen, om den stadig bliver til noget.",
+          "scheduledGone": "{chapter} bookede en tur til dette ønske, men den er siden blevet aflyst. Spørg afdelingen om en anden dag.",
           "declined": "{chapter} kan desværre ikke få denne tur til at lykkes. Du er velkommen til at ønske en anden dag.",
           "withdrawn": "Du har trukket dette ønske tilbage.",
           "lapsed": "{chapter} nåede ikke at svare på dit ønske før det tidspunkt, du bad om. Du er velkommen til at ønske igen."

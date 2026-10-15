@@ -71,7 +71,9 @@ async function OwnRequest({ id }: { id: string }) {
   const route = requestedRoute(request);
   const state = rideRequests.lapsed(request) ? "lapsed" : request.status;
   const { icon: Icon, tone } = STATE[state];
-  const rideGone = request.status === "scheduled" && !request.rideId;
+  const rideGone =
+    request.status === "scheduled" &&
+    (!request.ride || request.ride.status === "cancelled");
 
   const rows = [
     { label: page.riders, value: requestedRiders(request).join(", ") },

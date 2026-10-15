@@ -261,13 +261,20 @@ export async function RequestBody({
                   </p>
                   {request.status === "scheduled" ? (
                     rideHref ? (
-                      <Button
-                        asChild
-                        variant="outline"
-                        className="w-full"
-                      >
-                        <Link href={rideHref}>{detail.seeRide}</Link>
-                      </Button>
+                      <>
+                        {request.ride?.status === "cancelled" ? (
+                          <p className="text-ink-soft">
+                            {detail.rideCancelled}
+                          </p>
+                        ) : null}
+                        <Button
+                          asChild
+                          variant="outline"
+                          className="w-full"
+                        >
+                          <Link href={rideHref}>{detail.seeRide}</Link>
+                        </Button>
+                      </>
                     ) : (
                       <p className="text-ink-soft">{detail.rideGone}</p>
                     )
