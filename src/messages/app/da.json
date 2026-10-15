@@ -1320,7 +1320,8 @@
         "fromRequest": "{name}s ønske",
         "done": "Turen er planlagt. {name} får besked med kalenderfilen.",
         "someone": "den, der ønskede",
-        "note": "Det skrev den, der ønskede turen, til afdelingen. Piloterne ser kun det, du skriver i beskeden til piloterne."
+        "note": "Det skrev den, der ønskede turen, til afdelingen. Piloterne ser kun det, du skriver i beskeden til piloterne.",
+        "stale": "Dette ønske venter ikke længere: Det er trukket tilbage, eller der er allerede taget stilling til det. Luk visningen for at se, hvad der skete."
       },
       "errors": {
         "requestNotPending": "Der er allerede taget stilling til ønsket. Genindlæs for at se, hvad der skete.",

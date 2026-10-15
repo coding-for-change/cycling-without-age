@@ -277,7 +277,7 @@ export function ScheduleRideDrawer(props: Props) {
 function ScheduleRideSheet({
   open,
   chapters,
-  request = null,
+  request: offered = null,
   requestStrings,
   crew,
   stays,
@@ -300,12 +300,23 @@ function ScheduleRideSheet({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { go } = useDrawerParam();
+  const [request] = useState(offered);
+  const asked = searchParams.get("request");
+  const stale = asked !== null && request?.id !== asked;
   const close = () =>
-    go((params) => {
-      params.delete("new");
-      params.delete("rideLocation");
-      params.delete("request");
-    });
+    asked
+      ? router.push(
+          hrefWith(`/admin/rides/requests/${asked}`, searchParams, {
+            new: null,
+            request: null,
+            rideLocation: null,
+          }),
+          { scroll: false },
+        )
+      : go((params) => {
+          params.delete("new");
+          params.delete("rideLocation");
+        });
   const requestedLocation = locations.find(
     (candidate) =>
       candidate.id ===
@@ -595,7 +606,7 @@ function ScheduleRideSheet({
 
   const submit = (formEvent: FormEvent<HTMLFormElement>) => {
     formEvent.preventDefault();
-    if (pending) return;
+    if (pending || stale) return;
     const trimmedTitle = title.trim();
     if (event && !trimmedTitle) {
       setTitleInvalid(true);
@@ -767,7 +778,7 @@ function ScheduleRideSheet({
           <Button
             type="submit"
             form={formId}
-            disabled={pending}
+            disabled={pending || stale}
             variant="brand"
             className="min-h-10"
           >
@@ -787,6 +798,16 @@ function ScheduleRideSheet({
         aria-busy={pending}
         className="grid grid-cols-[minmax(0,1fr)]"
       >
+        {stale ? (
+          <Section className="gap-1.25">
+            <p
+              role="alert"
+              className="rounded-xl bg-canvas-deep px-3 py-2 text-2sm"
+            >
+              {requestStrings.stale}
+            </p>
+          </Section>
+        ) : null}
         {request?.note ? (
           <Section className="gap-1.25">
             <p className="text-2sm text-ink-soft">{requestStrings.note}</p>
