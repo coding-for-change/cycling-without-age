@@ -1509,7 +1509,8 @@ const DAY_MS = 24 * HOUR_MS;
 
 /**
  * A ride whose start moves is reminded and checked again for its new time, and
- * a seat confirmed or checked in for the old one is asked about again.
+ * a seat confirmed or checked in for the old one is asked about again. A
+ * walk-up was there in person and has nobody to answer for them, so they stay.
  */
 const askSeatsAgain = (rideId: string, tx: Tx) =>
   updateRosterAttendance(
@@ -1517,6 +1518,7 @@ const askSeatsAgain = (rideId: string, tx: Tx) =>
     ["confirmed", "checkedIn"],
     { attendance: "booked", confirmedAt: null, checkedInAt: null },
     tx,
+    { passengerId: { not: null } },
   );
 
 const UNSWEPT = {

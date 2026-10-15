@@ -654,6 +654,17 @@ describe("moving a round trip", () => {
       endsAt: new Date("2026-09-08T10:15:00Z"),
       ...UNSWEPT,
     });
+    // Only the way back's start moved: only it is reminded and asked again.
+    expect(db.ride.update.mock.calls[0][0].data).toEqual({
+      startsAt: new Date("2026-09-08T08:00:00Z"),
+      endsAt: new Date("2026-09-08T08:45:00Z"),
+      staffingCheckedAt: null,
+    });
+    expect(
+      db.rideRosterEntry.updateMany.mock.calls.map(
+        ([args]) => args.where.rideId,
+      ),
+    ).toEqual(["ride-back"]);
   });
 
   it("checks the trishaws for both new windows, ignoring both legs' old ones", async () => {
@@ -797,6 +808,7 @@ describe("rescheduling a wall-clock patch", () => {
     expect(db.ride.update.mock.calls[1][0].data).toMatchObject(UNSWEPT);
     expect(db.rideRosterEntry.updateMany).toHaveBeenCalledWith({
       where: {
+        passengerId: { not: null },
         rideId: "ride-1",
         attendance: { in: ["confirmed", "checkedIn"] },
       },
