@@ -1123,16 +1123,25 @@ debrief and the frozen ride chat. One migration, `20261016120000_ride_execution`
   `ride.volunteerReminderDue`, and `rides.checkDemand` stamps `demandCheckedAt` and emits
   `ride.noDemand` for an empty roster — each in one transaction under the ride's lock, so a
   retried sweep or a retried dispatch sends nothing twice. The way back of a round trip goes
-  with its way there (one message, through `pair`). A ride with nobody to remind is stamped
-  without an event. Moving a ride clears all three stamps with `staffingCheckedAt`. Rides already
-  inside a window when this ships get their reminder on the first sweep: a late "your ride is
-  coming up" still helps, so there is no backfill this time.
+  with its way there (one message, through `pair`), unless the way there has nobody to remind
+  itself. A ride with nobody to remind is stamped without an event, and the lead is read again
+  under the lock, so a ride moved away after the sweep listed it waits. Moving a ride's start
+  clears all three stamps with `staffingCheckedAt` and asks every confirmed or checked-in seat
+  again (`booked`); a new end only clears the staffing stamp. A ride scheduled already inside
+  its demand window is stamped as checked, like the staffing check. The four checks of a sweep
+  are independent: one that fails is logged, the others run, and the run then fails for the
+  monitor. Rides already inside a window when this ships get their reminder on the first sweep:
+  a late "your ride is coming up" still helps, so there is no backfill this time.
 - **Seat confirmation** (5B-b). The rider reminder links to `/passenger/rides/{id}`, where the
   account answers per rider: Confirm seat, Cancel my seat, or take a given-up seat back while
   there is room (`app/(member)/passenger/rides/actions.ts` → `use-cases/seat-confirmation.ts`,
   which accepts only riders of `passengers.listRidersOfAccount`). Both answers close when the
-  ride starts and reach the other leg of a round trip still ahead. The last seat given up emits
-  `ride.riderRemoved` with `rosterNowEmpty`, which tells the chapter's admins.
+  ride starts and reach the other leg of a round trip still ahead — a confirmation confirms a
+  booked seat there, and takes a given-up one back only with this one and only while it has
+  room. The last seat given up emits `ride.riderRemoved` with `rosterNowEmpty`, which tells the
+  chapter's admins; the two legs of a round trip are one message only when both are left empty
+  or both are not. A given-up seat keeps the ride's page open while the ride is ahead, without
+  the pilots' phone numbers; afterwards the ride is no longer the account's.
 - **Check-in and walk-ups** (6B). The door opens two hours before the start
   (`CHECK_IN_LEAD_MINUTES`). A pilot keeps it until the finish page closes a day after the ride
   ends; an admin may still record a ride later, for as long as its roster is not closed
@@ -1142,19 +1151,22 @@ debrief and the frozen ride chat. One migration, `20261016120000_ride_execution`
   with `passengerId: null`, the typed `guestName`, checked in at once. A walk-up takes a place and
   counts as a ride, but is no rider record — `passengerDetailSelect` and the feed read the roster
   filtered to the account's own riders, so a guest's name never reaches a rider's account, and
-  the rider tallies skip rows without a passenger.
+  the rider tallies skip rows without a passenger. The admin's roster lists them under "At the
+  door", so its count of places taken matches its rows.
 - **Roster closure** (6D). "Complete ride" (`CompleteRideButton`, a confirm dialog that shows the
   tally: "3 riders checked in, 1 trishaw, 2 hr") runs `use-cases/complete-ride.ts`:
   `rides.closeRoster` sets `status: completed`, `completedAt`/`completedByUserId`, turns
   `checkedIn` into `completed`, `booked`/`confirmed` into `noShow` and every pilot's `signedUp`
   into `completed`, and emits `ride.completed` — then `chat.freezeRideConversation` freezes the
-  ride's chat. A second tap is a no-op. An admin can mark a pilot who never came
+  ride's chat. A second tap changes nothing and leaves alone a chat its people kept going. An
+  admin can mark a pilot who never came
   (`setPilotNoShow`, Report 1) and **Reopen** a completed ride from the detail page's danger
   zone (`rides.reopenRide`, logged): every rider goes back to where they stood on the day, the
   ride stops counting until it is completed again, and the chat stays frozen until someone
   keeps chatting.
 - **Debrief** (story 31, 7E). One `RideDebrief` per pilot and ride (`@@unique([rideId,
-  userId])`), upserted from the finish page as often as the pilot likes: distance on a
+  userId])`), upserted from the finish page as often as the pilot likes while it is open (a day
+  after the ride; an admin's any time): distance on a
   functional ride only (Report 11), donations in the chapter's currency (`currencyOfRegion`
   from the chapter's country — never the reader's locale; COD-152's hook), the trishaw's
   condition, the cooperation with a care home, a note. The admin detail lists them as the day
@@ -1163,11 +1175,12 @@ debrief and the frozen ride chat. One migration, `20261016120000_ride_execution`
   (`continueConversationAction`, CHAT-PLAN 2.3), and the chat list badges a ride chat.
 - **Who may.** Check-in, walk-ups, completion and the debrief go through `executorOfRide` in
   `features/rides/actions.ts`: `requireAuth`, then the assigned pilot still piloting in the
-  ride's chapter (`rides.pilotCanOpen`, the pilot read's own rule) **or**
+  ride's chapter and not marked as a no-show (`rides.pilotCanRun`) **or**
   `requireChapterAdmin(ride.chapterId)`. An admin who also pilots the ride acts as the admin,
   so the pilot's one-day window never narrows what they may record. The facade takes the
   executor (`"pilot" | "admin"`) as a plain argument and never sees a session. Reopening and
-  marking a pilot as a no-show are `requireChapterAdmin` only.
+  marking a pilot as a no-show are `requireChapterAdmin` only. Check-in toggles, walk-ups and
+  debriefs are rate-limited per person.
 
 ### Storage locations: a bike lives at a place, not at a chapter
 

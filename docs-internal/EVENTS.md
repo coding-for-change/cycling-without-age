@@ -237,6 +237,12 @@ the worker):
 | `ride.completed` | `riders`, `noShows` | `closeRoster` (6D): the roster is closed and the ride counts |
 | `ride.reopened` | — | `reopenRide`: an admin takes a closed roster back |
 
+Some ride-day writes are history, not news, and only add a `RideLogEntry`: a check-in and
+its undo (`setCheckedIn`), a walk-up added or removed (`addWalkUp`, `removeWalkUp`), a pilot
+marked as a no-show (`setPilotNoShow`), a debrief (`submitDebrief`) and confirming a seat
+already held (`confirmSeat` emits `ride.riderBooked` only when it takes back a seat given up).
+`rosterReordered` was already one of them.
+
 `self` is true when the pilot acted for themself: `selfAssign` and `withdraw` emit
 `ride.pilotAssigned` / `ride.pilotUnassigned` with `self: true`, and `bookSeats` emits one
 `ride.riderBooked` per seat.
