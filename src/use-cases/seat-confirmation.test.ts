@@ -42,9 +42,12 @@ describe("answering for a seat", () => {
   });
 
   it("confirms nothing for a rider the account does not book for", async () => {
-    await expect(
-      confirmOwnSeat("ride-1", "someone-else", "carer-1"),
-    ).rejects.toThrow();
+    const refused = await confirmOwnSeat(
+      "ride-1",
+      "someone-else",
+      "carer-1",
+    ).catch((error) => error);
+    expect(domainCode(refused)).toBe("unknownPassenger");
     expect(rides.confirmSeat).not.toHaveBeenCalled();
   });
 });

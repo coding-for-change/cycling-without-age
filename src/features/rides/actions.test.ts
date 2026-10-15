@@ -14,6 +14,7 @@ import {
 } from "@/features/rides/actions";
 import { isChapterAdmin } from "@/lib/access";
 import { requireChapterAdmin } from "@/lib/auth-guards";
+import { withinRateLimit } from "@/lib/rate-limit";
 import { completeRide } from "@/use-cases/complete-ride";
 
 jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }));
@@ -23,6 +24,7 @@ jest.mock("@/lib/auth-guards", () => ({
   requireChapterAdmin: jest.fn(async () => ({ user: { id: "admin-1" } })),
 }));
 jest.mock("@/lib/access", () => ({ isChapterAdmin: jest.fn(() => false) }));
+jest.mock("@/lib/rate-limit", () => ({ withinRateLimit: jest.fn(() => true) }));
 jest.mock("@/use-cases/complete-ride", () => ({
   completeRide: jest.fn(async () => ({ riders: 2, noShows: 0 })),
 }));
@@ -228,5 +230,41 @@ describe("who runs a ride on the day", () => {
     await expect(run()).rejects.toThrow("403");
     expect(facade()).not.toHaveBeenCalled();
     expect(rides.pilotCanRun).not.toHaveBeenCalled();
+  });
+});
+
+describe("how often a ride day may be written", () => {
+  const HOUR = 3_600_000;
+  it.each([
+    [
+      "check-in",
+      () =>
+        setCheckedInAction({ rideId: "ride-1", entryId: "e", checkedIn: true }),
+      () => rides.setCheckedIn,
+      { max: 600, windowMs: HOUR },
+    ],
+    [
+      "walk-up",
+      () => addWalkUpAction({ rideId: "ride-1", firstName: "Inge" }),
+      () => rides.addWalkUp,
+      { max: 120, windowMs: HOUR },
+    ],
+    [
+      "walk-up",
+      () => removeWalkUpAction({ rideId: "ride-1", entryId: "e" }),
+      () => rides.removeWalkUp,
+      { max: 120, windowMs: HOUR },
+    ],
+    [
+      "debrief",
+      () => submitDebriefAction({ rideId: "ride-1" }),
+      () => rides.submitDebrief,
+      { max: 120, windowMs: HOUR },
+    ],
+  ])("slows %s down per person", async (scope, run, facade, limit) => {
+    (withinRateLimit as jest.Mock).mockReturnValueOnce(false);
+    await expect(run()).resolves.toEqual({ ok: false, error: "rateLimited" });
+    expect(withinRateLimit).toHaveBeenCalledWith(`${scope}:user-1`, limit);
+    expect(facade()).not.toHaveBeenCalled();
   });
 });

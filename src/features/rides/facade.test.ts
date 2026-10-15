@@ -289,9 +289,15 @@ describe("scheduleRide", () => {
 
   // The admin adding riders right after scheduling is not told it is empty.
   it("counts a ride scheduled inside its demand window as checked", async () => {
-    await rides.scheduleRide(rideInput.parse(ahead), ADMIN, {
-      demandLeadHours: 24,
-    });
+    await rides.scheduleRide(
+      rideInput.parse({
+        ...ahead,
+        startsAt: new Date(Date.now() + 12 * 3_600_000),
+        endsAt: new Date(Date.now() + 13 * 3_600_000),
+      }),
+      ADMIN,
+      { demandLeadHours: 24 },
+    );
     expect(db.ride.create.mock.calls[0][0].data).toMatchObject({
       demandCheckedAt: expect.any(Date),
       staffingCheckedAt: null,
@@ -3175,7 +3181,7 @@ describe("seats, check-in and the closed roster", () => {
   });
 
   // The way there empties, the way back still has someone: two messages.
-  it("pairs the two legs only when both are left as empty", async () => {
+  it("pairs the two legs only when both are left alike", async () => {
     const rows: Record<string, unknown> = {
       "ride-there": scheduled({
         id: "ride-there",
@@ -3209,6 +3215,42 @@ describe("seats, check-in and the closed roster", () => {
         rideId: "ride-back",
         rosterNowEmpty: false,
         pair: null,
+      }),
+    ]);
+  });
+
+  it("pairs the two legs when someone is left on both", async () => {
+    const rows: Record<string, unknown> = {
+      "ride-there": scheduled({
+        id: "ride-there",
+        model: "functional",
+        returnLeg: { id: "ride-back", status: "scheduled" },
+        roster: [entry(), entry({ id: "e2", passenger: { id: "p-2" } })],
+      }),
+      "ride-back": scheduled({
+        id: "ride-back",
+        model: "functional",
+        startsAt: new Date("2026-09-08T15:00:00Z"),
+        endsAt: new Date("2026-09-08T16:00:00Z"),
+        returnLegOf: { id: "ride-there", status: "scheduled" },
+        roster: [
+          entry({ id: "entry-back" }),
+          entry({ id: "e3", passenger: { id: "p-2" } }),
+        ],
+      }),
+    };
+    db.ride.findUnique.mockImplementation(({ where }) =>
+      Promise.resolve(rows[where.id]),
+    );
+    await rides.cancelSeat("ride-there", "passenger-1", "carer-1", BEFORE);
+    expect(emitted).toEqual([
+      expect.objectContaining({
+        rosterNowEmpty: false,
+        pair: { role: "lead", otherRideId: "ride-back" },
+      }),
+      expect.objectContaining({
+        rosterNowEmpty: false,
+        pair: { role: "follow", otherRideId: "ride-there" },
       }),
     ]);
   });
