@@ -39,7 +39,13 @@ describe.each([
     expect(requireAuth).not.toHaveBeenCalled();
   });
 
-  it("slows down a flood", async () => {
+  it("slows down a flood, with room for a carer's every rider", async () => {
+    await action(seat);
+    expect(withinRateLimit).toHaveBeenCalledWith("seat-answer:carer-1", {
+      max: 60,
+      windowMs: 3_600_000,
+    });
+    jest.clearAllMocks();
     (withinRateLimit as jest.Mock).mockReturnValueOnce(false);
     await expect(action(seat)).resolves.toEqual({
       ok: false,

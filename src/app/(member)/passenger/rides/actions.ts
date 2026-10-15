@@ -26,6 +26,8 @@ export type SeatBookingResult = ActionResult<
 >;
 
 const BOOKING_LIMIT = { max: 10, windowMs: 60 * 60_000 };
+/** One answer per rider, and a carer may book for a dozen of them. */
+const ANSWER_LIMIT = { max: 60, windowMs: 60 * 60_000 };
 
 const revalidateRides = () => {
   revalidatePath("/passenger", "layout");
@@ -91,7 +93,7 @@ async function answerSeat(
   const parsed = riderInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: "generic" };
   const session = await requireAuth();
-  if (!withinRateLimit(`seat-answer:${session.user.id}`, BOOKING_LIMIT))
+  if (!withinRateLimit(`seat-answer:${session.user.id}`, ANSWER_LIMIT))
     return { ok: false, error: "rateLimited" };
   const result = await attempt(async () => ({
     changed: await answer(
