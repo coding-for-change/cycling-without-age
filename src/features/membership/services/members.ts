@@ -126,3 +126,9 @@ export const findMembersWithRole = (chapterIds: string[], role: string) =>
     where: { organizationId: { in: chapterIds }, role: { contains: role } },
     select: { userId: true, organizationId: true, role: true },
   });
+
+export const findMembersOfUsers = (userIds: string[]) =>
+  prisma.member.findMany({
+    where: { userId: { in: userIds } },
+    select: { userId: true, organizationId: true, role: true },
+  });

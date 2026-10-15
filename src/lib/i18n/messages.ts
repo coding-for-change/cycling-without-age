@@ -13,3 +13,9 @@ export async function loadMessages(locale: Locale): Promise<Dictionary> {
   const { liveMessages } = await import("./translator-messages");
   return liveMessages(locale, messages[locale]);
 }
+
+export async function loadBundledMessages(locale: Locale): Promise<Dictionary> {
+  if (!isTranslatorMode()) return messages[locale];
+  const { taggedBundled } = await import("./translator-messages");
+  return taggedBundled(locale, messages[locale]);
+}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export type AdminTab = {
@@ -6,6 +7,7 @@ export type AdminTab = {
   href: string;
   label: string;
   count?: number;
+  badge?: ReactNode;
 };
 
 export function AdminTabs({
@@ -37,13 +39,17 @@ export function AdminTabs({
           )}
         >
           {tab.label}
-          {tab.count ? (
-            <span className="grid h-5 min-w-5 place-items-center rounded-full bg-mint-deep px-1.5 text-xs font-medium text-white tabular-nums">
-              {tab.count}
-            </span>
-          ) : null}
+          {tab.count ? <TabCount count={tab.count} /> : tab.badge}
         </Link>
       ))}
     </nav>
+  );
+}
+
+export function TabCount({ count }: { count: number }) {
+  return (
+    <span className="grid h-5 min-w-5 place-items-center rounded-full bg-mint-deep px-1.5 text-xs font-medium text-white tabular-nums">
+      {count}
+    </span>
   );
 }

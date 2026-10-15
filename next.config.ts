@@ -5,6 +5,22 @@ import { withSerwist } from "@serwist/turbopack";
 const nextConfig: NextConfig = {
   output: "standalone",
   serverExternalPackages: ["prom-client", "@sentry/core"],
+  outputFileTracingExcludes: {
+    "*": [
+      "decrypted.json",
+      "dump.yml",
+      "Dockerfile",
+      "docs/**/*",
+      "docs-internal/**/*",
+      "docs-legal/**/*",
+      "scripts/**/*",
+      "ios/**/*",
+      "android/**/*",
+      "coverage/**/*",
+      "test-results/**/*",
+      "playwright-report/**/*",
+    ],
+  },
   experimental: { authInterrupts: true },
   cacheComponents: true,
   partialPrefetching: true,

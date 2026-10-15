@@ -3,7 +3,6 @@ import Link from "next/link";
 import { cacheLife } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { ArrowRight, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { requirePerspective } from "@/lib/auth-guards";
 import { resolveLocale } from "@/lib/format";
@@ -17,6 +16,7 @@ import {
   SectionFallback,
 } from "../_components/home/home-fallback";
 import { NextRideCard } from "../_components/home/next-ride-card";
+import { SetupChecklist } from "../_components/home/setup-checklist";
 import { MEMBER_LIFE } from "../_components/instant";
 import { MemberPageShell } from "../_components/member-page";
 import { ApprovalCelebration } from "./_components/approval-celebration";
@@ -43,7 +43,7 @@ export default function PilotHomePage() {
         <ChapterCards perspective="pilot" />
       </Suspense>
       <Suspense fallback={null}>
-        <TrainingLink />
+        <SetupChecklist perspective="pilot" />
       </Suspense>
     </MemberPageShell>
   );
@@ -125,43 +125,5 @@ async function PilotStatus() {
         </Button>
       ) : null}
     </>
-  );
-}
-
-async function TrainingLink() {
-  "use cache: private";
-  cacheLife(MEMBER_LIFE);
-
-  const session = await requirePerspective("pilot");
-  const [dict, home] = await Promise.all([
-    getDictionary(),
-    getMemberHome(session.user.id),
-  ]);
-
-  const riding =
-    home.memberships.some((member) => member.roles.includes("pilot")) ||
-    home.applications.some((application) => application.status === "pending");
-  if (!riding) return null;
-
-  const { training, trainingHint } = dict.pilot.home;
-
-  return (
-    <Link
-      href="/pilot/training"
-      className="flex items-center gap-4 rounded-2xl bg-mint-tint p-4 transition-colors hover:bg-mint motion-reduce:transition-none"
-    >
-      <GraduationCap
-        className="size-5 shrink-0 text-ink"
-        aria-hidden
-      />
-      <span className="min-w-0">
-        <span className="block font-medium">{training}</span>
-        <span className="block text-sm text-ink-soft">{trainingHint}</span>
-      </span>
-      <ArrowRight
-        className="ml-auto size-4 shrink-0 text-ink-soft"
-        aria-hidden
-      />
-    </Link>
   );
 }

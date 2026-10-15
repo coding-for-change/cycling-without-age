@@ -34,6 +34,7 @@ export type StepDefaults = {
 
 export type StepContext = {
   role: OnboardingRole;
+  caretaker: boolean;
   progress: StepProgress | null;
   defaults: StepDefaults;
   presetChapterName: string | null;
@@ -95,6 +96,7 @@ async function Resolve({
 
   return render({
     role: progress.role ?? "passenger",
+    caretaker: account?.managesOthers === true,
     presetChapterName,
     claimBanner,
     defaults: {

@@ -58,10 +58,9 @@ export async function getOnboardingState(
     Boolean(preset.chapterId && preset.role);
 
   const profiled =
-    account?.managesOthers === true ||
-    (role === "pilot"
+    role === "pilot"
       ? account?.birthDate != null
-      : (account?._count.passengers ?? 0) > 0);
+      : account?.onboardedAt != null || (account?._count.passengers ?? 0) > 0;
 
   return {
     preset,
@@ -76,7 +75,6 @@ export async function getOnboardingState(
         (account?.passkeyPromptedAt != null &&
           Date.now() - account.passkeyPromptedAt.getTime() <
             PASSKEY_REPROMPT_MS),
-      nextStepsSeen: account?.pilotNextStepsSeenAt != null,
     },
   };
 }

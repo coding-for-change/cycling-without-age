@@ -186,7 +186,7 @@ export function CodeStep({
           <p
             id="code-error"
             role="alert"
-            className="mt-4 text-sm text-red"
+            className="mt-4 text-sm text-red-ink"
           >
             {error}
           </p>

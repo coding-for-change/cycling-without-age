@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import useEmblaCarousel from "embla-carousel-react";
 import { useCharacter } from "@/components/character";
@@ -9,12 +9,9 @@ import { cn } from "@/lib/utils";
 import { formatMessage } from "@/lib/i18n/format";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
-import { useSetCharacterPose } from "../../_components/character-stage";
 import { LanguagePicker } from "@/components/language-picker";
-import { HandsArt, TrishawArt } from "./slide-art";
 import { Globe } from "./globe";
-
-const AUTOPLAY_MS = 4000;
+import { WelcomeVideo } from "./welcome-video";
 
 type Strings = {
   slides: Record<string, { headline: string; body: string }>;
@@ -25,9 +22,9 @@ type Strings = {
   language: string;
   carouselLabel: string;
   progressLabel: string;
+  mute: string;
+  unmute: string;
 };
-
-const SLIDE_ART = [null, TrishawArt, HandsArt] as const;
 
 export function WelcomeCarousel({
   strings,
@@ -40,16 +37,18 @@ export function WelcomeCarousel({
 }) {
   const [emblaRef, embla] = useEmblaCarousel({ loop: false, align: "start" });
   const [current, setCurrent] = useState(0);
-  const [playing, setPlaying] = useState(true);
-  const setCharacterPose = useSetCharacterPose();
   const { play } = useCharacter();
   const tapOrigin = useRef<number | null>(null);
+  const videoBar = useRef<HTMLSpanElement>(null);
+  const [videoUnavailable, setVideoUnavailable] = useState(false);
   const slides = Object.values(strings.slides);
+  const videoDrivesStory = current === 0 && !videoUnavailable;
 
-  useEffect(() => {
-    setCharacterPose(current === 0 ? "hero" : "away");
-    return () => setCharacterPose(null);
-  }, [current, setCharacterPose]);
+  const markVideoUnavailable = useCallback(() => setVideoUnavailable(true), []);
+
+  const showVideoProgress = useCallback((fraction: number) => {
+    videoBar.current?.style.setProperty("transform", `scaleX(${fraction})`);
+  }, []);
 
   useEffect(() => {
     if (!embla) return;
@@ -57,26 +56,11 @@ export function WelcomeCarousel({
       setCurrent(embla.selectedScrollSnap());
       haptics.tap("light");
     };
-
-    const stop = () => setPlaying(false);
-    embla.on("select", onSelect).on("pointerDown", stop);
+    embla.on("select", onSelect);
     return () => {
-      embla.off("select", onSelect).off("pointerDown", stop);
+      embla.off("select", onSelect);
     };
   }, [embla]);
-
-  useEffect(() => {
-    if (!embla || !playing) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const last = current === slides.length - 1;
-    const id = window.setTimeout(
-      () => (last ? setPlaying(false) : embla.scrollNext()),
-      AUTOPLAY_MS,
-    );
-    return () => window.clearTimeout(id);
-  }, [embla, playing, current, slides.length]);
-
-  const takeOver = () => setPlaying(false);
 
   return (
     <div className="grid min-h-dvh grid-cols-1 grid-rows-[1fr_auto] lg:grid-cols-2 lg:grid-rows-1">
@@ -100,19 +84,17 @@ export function WelcomeCarousel({
               className="h-1 flex-1 overflow-hidden rounded-full bg-line"
             >
               {}
-              <span
-                style={
-                  { "--story-ms": `${AUTOPLAY_MS}ms` } as React.CSSProperties
-                }
-                className={cn(
-                  "block h-full rounded-full bg-ink",
-                  index > current
-                    ? "scale-x-0 origin-left"
-                    : index < current || !playing
-                      ? "scale-x-100 origin-left"
-                      : "story-fill",
-                )}
-              />
+              {index === 0 && videoDrivesStory ? (
+                <span
+                  ref={videoBar}
+                  className="block h-full origin-left scale-x-0 rounded-full bg-ink"
+                />
+              ) : (
+                <span
+                  data-filled={index <= current}
+                  className="block h-full origin-left scale-x-0 rounded-full bg-ink data-[filled=true]:scale-x-100"
+                />
+              )}
             </span>
           ))}
         </div>
@@ -140,7 +122,6 @@ export function WelcomeCarousel({
             if (event.key === "ArrowRight") embla?.scrollNext();
             else if (event.key === "ArrowLeft") embla?.scrollPrev();
             else return;
-            takeOver();
             event.preventDefault();
           }}
           className="flex min-h-0 flex-1 overflow-hidden focus-visible:outline-none"
@@ -157,22 +138,28 @@ export function WelcomeCarousel({
                 )}
                 className="flex min-w-0 flex-[0_0_100%] flex-col justify-end px-6 lg:px-10"
               >
-                {/* Slide one belongs to the character, which floats above this
-                    space from the layout. The rest carry their own scene. */}
-                {(() => {
-                  const Art = SLIDE_ART[index];
-                  return (
-                    <div className="flex min-h-0 flex-1 items-center justify-center py-4">
-                      {Art ? <Art /> : null}
-                      {index === slides.length - 1 && (
-                        <Globe
-                          markers={chapterCoords}
-                          active={current === index}
-                        />
-                      )}
-                    </div>
-                  );
-                })()}
+                <div
+                  className={cn(
+                    "flex min-h-0 flex-1 items-center justify-center py-4",
+                    index === 0 && "-mx-4 lg:-mx-8",
+                  )}
+                >
+                  {index === 0 ? (
+                    <WelcomeVideo
+                      locale={locale}
+                      active={current === 0}
+                      strings={strings}
+                      onProgress={showVideoProgress}
+                      onEnded={() => embla?.scrollNext()}
+                      onUnavailable={markVideoUnavailable}
+                    />
+                  ) : (
+                    <Globe
+                      markers={chapterCoords}
+                      active={current === index}
+                    />
+                  )}
+                </div>
                 <div className="shrink-0 pt-8 pb-6 lg:pb-10">
                   <h2 className="text-3xl leading-tight tracking-tight text-balance">
                     {slide.headline}

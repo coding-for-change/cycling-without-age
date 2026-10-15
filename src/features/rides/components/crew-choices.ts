@@ -1,19 +1,34 @@
+import {
+  pickupLabel,
+  pickupOf,
+  type PickupSource,
+} from "@/features/passengers/pickup";
 import { parseRoles } from "@/lib/access";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { fullName } from "@/lib/utils";
 
-export const toPassengerChoice = (passenger: {
-  id: string;
-  firstName: string;
-  lastName: string;
-  user: { email: string } | null;
-}) => ({
-  id: passenger.id,
-  name: fullName(passenger),
-  avatar: avatarSvg(
-    passenger.user ? avatarSeed(passenger.user.email) : passenger.id,
-  ),
-});
+export const toPassengerChoice = (
+  passenger: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    user: { email: string } | null;
+  } & Partial<PickupSource>,
+  careHome?: string,
+) => {
+  const hint =
+    careHome && passenger.residence !== undefined
+      ? pickupLabel(pickupOf(passenger as PickupSource), careHome)
+      : null;
+  return {
+    id: passenger.id,
+    name: fullName(passenger),
+    avatar: avatarSvg(
+      passenger.user ? avatarSeed(passenger.user.email) : passenger.id,
+    ),
+    ...(hint ? { hint } : {}),
+  };
+};
 
 export const toPersonChoice = (user: {
   id: string;

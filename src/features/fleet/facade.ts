@@ -151,7 +151,7 @@ const reachingChapterIds = (location: {
  */
 export async function fileReadRule(fileId: string) {
   const file = await findFileOwners(fileId);
-  if (!file) return null;
+  if (!file || file.kind === "profilePhoto") return null;
 
   const location = async (id: string | undefined) =>
     id ? findLocationById(id) : null;

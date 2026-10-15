@@ -18,6 +18,7 @@ const LABELS: Record<MemberNavKey, string> = {
   calendar: "Calendar",
   chat: "Chat",
   training: "Training",
+  profile: "Profile",
 };
 
 const hrefs = (perspective: "pilot" | "passenger") =>
@@ -36,12 +37,14 @@ describe("memberNav", () => {
       "/pilot/calendar",
       "/pilot/chat",
       "/pilot/training",
+      "/pilot/profile",
     ]);
     expect(hrefs("passenger")).toEqual([
       "/passenger",
       "/passenger/rides",
       "/passenger/calendar",
       "/passenger/chat",
+      "/passenger/profile",
     ]);
   });
 
@@ -123,6 +126,15 @@ describe("resolveMemberNav", () => {
         tab: false,
         parent: "home",
         label: "Training",
+      },
+      {
+        key: "profile",
+        href: "/pilot/profile",
+        icon: "profile",
+        symbol: "person.crop.circle.fill",
+        tab: false,
+        parent: "home",
+        label: "Profile",
       },
     ]);
   });

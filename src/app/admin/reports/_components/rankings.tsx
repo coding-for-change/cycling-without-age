@@ -88,7 +88,7 @@ function Movement({
       aria-label={label}
       className={cn(
         "inline-flex items-center gap-0.5 text-xs font-medium tabular-nums",
-        up ? "text-mint-deep" : "text-ink-soft",
+        up ? "text-mint-ink" : "text-ink-soft",
       )}
     >
       <Icon

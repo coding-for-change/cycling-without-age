@@ -1,26 +1,45 @@
 import Link from "next/link";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 export function PersonAvatar({
   svg,
+  photoUrl,
   size = "default",
   className,
 }: {
   svg: string;
+  photoUrl?: string | null;
   size?: "default" | "sm" | "lg";
   className?: string;
 }) {
+  const character = (
+    <span
+      aria-hidden
+      className="size-full [&>svg]:size-full"
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
+
   return (
     <Avatar
       size={size}
       className={className}
     >
-      <span
-        aria-hidden
-        className="size-full [&>svg]:size-full"
-        dangerouslySetInnerHTML={{ __html: svg }}
-      />
+      {photoUrl ? (
+        <>
+          <AvatarImage
+            src={photoUrl}
+            alt=""
+            className="object-cover"
+          />
+          <AvatarFallback className="bg-transparent">
+            {character}
+          </AvatarFallback>
+        </>
+      ) : (
+        character
+      )}
     </Avatar>
   );
 }

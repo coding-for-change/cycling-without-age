@@ -8,8 +8,7 @@ import {
   boundsOf,
   createMap,
   markerElement,
-  MINT,
-  MINT_DEEP,
+  mapTheme,
   prefersReducedMotion,
   whenReady,
 } from "@/lib/mapbox-canvas";
@@ -89,14 +88,14 @@ export default function ChapterMap({
         id: `${OTHERS}-fill`,
         type: "fill",
         source: OTHERS,
-        paint: { "fill-color": MINT, "fill-opacity": 0.1 },
+        paint: { "fill-color": mapTheme().mint, "fill-opacity": 0.1 },
       });
       instance.addLayer({
         id: `${OTHERS}-line`,
         type: "line",
         source: OTHERS,
         paint: {
-          "line-color": MINT_DEEP,
+          "line-color": mapTheme().mintDeep,
           "line-width": 1,
           "line-dasharray": [2, 2],
           "line-opacity": 0.5,
@@ -107,13 +106,13 @@ export default function ChapterMap({
         id: `${OWN}-fill`,
         type: "fill",
         source: OWN,
-        paint: { "fill-color": MINT, "fill-opacity": 0.22 },
+        paint: { "fill-color": mapTheme().mint, "fill-opacity": 0.22 },
       });
       instance.addLayer({
         id: `${OWN}-line`,
         type: "line",
         source: OWN,
-        paint: { "line-color": MINT_DEEP, "line-width": 2 },
+        paint: { "line-color": mapTheme().mintDeep, "line-width": 2 },
       });
     });
 

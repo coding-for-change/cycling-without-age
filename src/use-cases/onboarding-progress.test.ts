@@ -35,7 +35,7 @@ type Account = {
   consentDataAt: Date | null;
   consentSafetyAt: Date | null;
   passkeyPromptedAt: Date | null;
-  pilotNextStepsSeenAt: Date | null;
+  onboardedAt: Date | null;
   _count: { passkeys: number; passengers: number };
 };
 
@@ -46,7 +46,7 @@ const DONE: Account = {
   consentDataAt: new Date("2026-01-01"),
   consentSafetyAt: new Date("2026-01-01"),
   passkeyPromptedAt: null,
-  pilotNextStepsSeenAt: new Date("2026-01-01"),
+  onboardedAt: new Date("2026-01-01"),
   _count: { passkeys: 1, passengers: 1 },
 };
 
@@ -151,5 +151,19 @@ describe("the passkey re-prompt", () => {
     account({ passkeyPromptedAt: new Date(0) });
     const { progress } = await getOnboardingState("u1", EMPTY_PRESET);
     expect(progress.passkeyHandled).toBe(true);
+  });
+});
+
+describe("a passenger's profile step", () => {
+  it("stays done for a caretaker whose last rider was removed", async () => {
+    account({ managesOthers: true, _count: { passkeys: 1, passengers: 0 } });
+    const { progress } = await getOnboardingState("u1", EMPTY_PRESET);
+    expect(progress.profiled).toBe(true);
+  });
+
+  it("is open while onboarding has not finished and nobody is managed", async () => {
+    account({ onboardedAt: null, _count: { passkeys: 1, passengers: 0 } });
+    const { progress } = await getOnboardingState("u1", EMPTY_PRESET);
+    expect(progress.profiled).toBe(false);
   });
 });

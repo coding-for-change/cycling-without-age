@@ -12,6 +12,9 @@ jest.mock("@/features/notifications", () => ({
   notifications: { listInbox: jest.fn(), unseenCount: jest.fn() },
 }));
 jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
+jest.mock("@/features/passengers", () => ({
+  passengers: { getOwnPassenger: jest.fn() },
+}));
 
 const list = notifications.listInbox as jest.Mock;
 

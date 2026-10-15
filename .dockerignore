@@ -25,3 +25,14 @@ ios
 docs-internal
 *.log
 tsconfig.tsbuildinfo
+decrypted.json
+dump.yml
+Dockerfile
+scripts
+!scripts/docker-runtime-deps.mjs
+docs
+coverage
+test-results
+playwright-report
+src/generated
+*.png

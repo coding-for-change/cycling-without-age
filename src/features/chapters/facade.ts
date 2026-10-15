@@ -50,6 +50,7 @@ import {
   findChapterBySlug,
   findChapterTimeZones,
   findChapterCountryId,
+  findChapterCountryIds,
   findChapterFootprint,
   findChapterReportMeta,
   findChapters,
@@ -381,3 +382,12 @@ export const getChapterTimeZones = (ids: string[]) =>
 
 export const listChapterReportMeta = (ids: string[]) =>
   ids.length ? findChapterReportMeta(ids) : Promise.resolve([]);
+
+export const getChapterCountryIds = async (
+  ids: string[],
+): Promise<Map<string, string | null>> => {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return new Map();
+  const rows = await findChapterCountryIds(unique);
+  return new Map(rows.map((row) => [row.id, row.countryId]));
+};

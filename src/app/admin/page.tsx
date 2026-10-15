@@ -1,46 +1,81 @@
-import { Suspense } from "react";
-import Link from "next/link";
+import { Suspense, type ReactNode } from "react";
+import { cacheLife } from "next/cache";
 import { headers } from "next/headers";
-import { ArrowRight } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { activityKpis } from "@/use-cases/activity-report";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { resolveLocale } from "@/lib/format";
-import { cn } from "@/lib/utils";
+import { hrefWith } from "@/lib/search-params";
 import { AdminPageHeader, AdminPageShell } from "./_components/admin-page";
 import {
   KpiTilesSkeleton,
   PageHeaderSkeleton,
 } from "./_components/admin-skeletons";
-import { hrefWith } from "@/lib/search-params";
 import {
   isTrendMetric,
   kpiTiles,
   type KpiMetric,
 } from "./_components/kpi-data";
 import { KpiTiles } from "./_components/kpi-tiles";
+import { OpenReportsLink } from "./_components/overview-header";
 import { readActiveScope, type AdminSearchParams } from "./active-scope";
+import { ADMIN_LIFE, adminViewer } from "./admin-viewer";
 
-export default function OverviewPage({
-  searchParams,
-}: {
-  searchParams: Promise<AdminSearchParams>;
-}) {
+type PageProps = { searchParams: Promise<AdminSearchParams> };
+
+export default function OverviewPage({ searchParams }: PageProps) {
   return (
     <AdminPageShell>
       <Suspense fallback={<OverviewSkeleton />}>
-        <Overview searchParams={searchParams} />
+        <OverviewFrame
+          tiles={
+            <Suspense fallback={<KpiTilesSkeleton />}>
+              <OverviewKpis searchParams={searchParams} />
+            </Suspense>
+          }
+        />
       </Suspense>
     </AdminPageShell>
   );
 }
 
-async function Overview({
-  searchParams,
-}: {
-  searchParams: Promise<AdminSearchParams>;
-}) {
+async function OverviewFrame({ tiles }: { tiles: ReactNode }) {
+  "use cache: private";
+  cacheLife(ADMIN_LIFE);
+
+  const [viewer, dict] = await Promise.all([adminViewer(), getDictionary()]);
+  const strings = dict.admin.reports.overview;
+
+  return (
+    <>
+      <AdminPageHeader title={dict.admin.pages.overview.title}>
+        <Suspense fallback={<OpenReportsSkeleton />}>
+          <OpenReportsLink
+            viewer={viewer}
+            label={strings.open}
+          />
+        </Suspense>
+      </AdminPageHeader>
+      <section
+        aria-labelledby="overview-kpis"
+        className="flex flex-col gap-3"
+      >
+        <div className="flex flex-col">
+          <h2
+            id="overview-kpis"
+            className="text-sm font-medium"
+          >
+            {strings.title}
+          </h2>
+          <p className="text-xs text-ink-soft">{strings.subtitle}</p>
+        </div>
+        {tiles}
+      </section>
+    </>
+  );
+}
+
+async function OverviewKpis({ searchParams }: PageProps) {
   const { chapterIds, scopeQuery } = await readActiveScope(
     searchParams,
     "overview",
@@ -54,7 +89,6 @@ async function Overview({
   const notation = resolveLocale(head.get("accept-language"));
   const strings = dict.admin.reports;
   const tiles = kpiTiles(kpis, dict, notation);
-  const reports = hrefWith("/admin/reports", scopeQuery, {});
   const hrefs = Object.fromEntries(
     tiles.map((tile) => [
       tile.metric,
@@ -68,46 +102,19 @@ async function Overview({
   ) as Record<KpiMetric, string>;
 
   return (
-    <>
-      <AdminPageHeader title={dict.admin.pages.overview.title}>
-        <Link
-          href={reports}
-          className={cn(
-            buttonVariants({ variant: "ghost", size: "sm" }),
-            "gap-1.5 text-2sm",
-          )}
-        >
-          {strings.overview.open}
-          <ArrowRight
-            aria-hidden
-            className="size-4"
-          />
-        </Link>
-      </AdminPageHeader>
-      <section
-        aria-labelledby="overview-kpis"
-        className="flex flex-col gap-3"
-      >
-        <div className="flex flex-col">
-          <h2
-            id="overview-kpis"
-            className="text-sm font-medium"
-          >
-            {strings.overview.title}
-          </h2>
-          <p className="text-xs text-ink-soft">{strings.overview.subtitle}</p>
-        </div>
-        <KpiTiles
-          tiles={tiles}
-          locale={notation}
-          language={language}
-          strings={strings.kpis}
-          deltaStrings={strings.delta}
-          hrefs={hrefs}
-        />
-      </section>
-    </>
+    <KpiTiles
+      tiles={tiles}
+      locale={notation}
+      language={language}
+      strings={strings.kpis}
+      deltaStrings={strings.delta}
+      hrefs={hrefs}
+    />
   );
+}
+
+function OpenReportsSkeleton() {
+  return <Skeleton className="h-8 w-28" />;
 }
 
 function OverviewSkeleton() {

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { cacheLife } from "next/cache";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { ChatEmptyPane } from "@/features/chat/components/chat-empty-pane";
@@ -10,6 +11,7 @@ import { resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { getInbox } from "@/use-cases/chat/chat-inbox";
 import { getConversationView } from "@/use-cases/chat/conversation-view";
+import { ADMIN_LIFE } from "../../admin-viewer";
 
 const HOME = "/admin";
 
@@ -18,7 +20,7 @@ export async function AdminChatShell({ children }: { children: ReactNode }) {
   const userId = session.user.id;
 
   const [inbox, dict, language, head] = await Promise.all([
-    getInbox(userId),
+    getInbox(session),
     getDictionary(),
     getLocale(),
     headers(),
@@ -41,8 +43,10 @@ export async function AdminChatShell({ children }: { children: ReactNode }) {
 }
 
 export async function AdminChatPane() {
-  await requireAdminScope();
-  const dict = await getDictionary();
+  "use cache: private";
+  cacheLife(ADMIN_LIFE);
+
+  const [, dict] = await Promise.all([requireAdminScope(), getDictionary()]);
 
   return <ChatEmptyPane strings={dict.chat.list} />;
 }
@@ -58,7 +62,7 @@ export async function AdminChatThread({
   ]);
 
   const [view, dict, language, head] = await Promise.all([
-    getConversationView(conversationId, session.user.id),
+    getConversationView(conversationId, session),
     getDictionary(),
     getLocale(),
     headers(),

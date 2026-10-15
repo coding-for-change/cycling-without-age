@@ -8,7 +8,7 @@ export type OnboardingRole = "passenger" | "pilot";
 export const PASSKEY_REPROMPT_MS = 30 * 24 * 60 * 60 * 1000;
 
 export type OnboardingStep =
-  "role" | "location" | "consent" | "profile" | "passkey" | "pilotNextSteps";
+  "role" | "location" | "consent" | "profile" | "passkey";
 
 export type OnboardingProgress = {
   role: OnboardingRole | null;
@@ -17,17 +17,14 @@ export type OnboardingProgress = {
   consented: boolean;
   profiled: boolean;
   passkeyHandled: boolean;
-  nextStepsSeen: boolean;
 };
 
-/** Canonical order. The pilot closer only belongs to a pilot's run. */
 const ORDER: OnboardingStep[] = [
   "role",
   "location",
   "consent",
   "profile",
   "passkey",
-  "pilotNextSteps",
 ];
 
 export const STEP_PATH: Record<OnboardingStep, string> = {
@@ -36,7 +33,6 @@ export const STEP_PATH: Record<OnboardingStep, string> = {
   consent: "/onboarding/consent",
   profile: "/onboarding/profile",
   passkey: "/onboarding/passkey",
-  pilotNextSteps: "/onboarding/pilot",
 };
 
 export function onboardingSteps(
@@ -48,8 +44,6 @@ export function onboardingSteps(
   if (!progress.consented) steps.push("consent");
   if (!progress.profiled) steps.push("profile");
   if (!progress.passkeyHandled) steps.push("passkey");
-  if (progress.role === "pilot" && !progress.nextStepsSeen)
-    steps.push("pilotNextSteps");
   return steps;
 }
 
@@ -57,8 +51,6 @@ export function canViewStep(
   progress: OnboardingProgress,
   step: OnboardingStep,
 ): boolean {
-  if (step === "pilotNextSteps" && progress.role !== "pilot") return false;
-
   const next = nextOnboardingStep(progress);
   // Nothing left to do: every screen behind them is theirs to revisit.
   if (!next) return true;
@@ -74,7 +66,6 @@ export function nextOnboardingStep(
 
 export function stepProgress(
   {
-    role,
     presetRole,
     presetChapter,
   }: {
@@ -90,7 +81,6 @@ export function stepProgress(
     "consent",
     "profile",
     "passkey",
-    ...(role === "pilot" ? (["pilotNextSteps"] as const) : []),
   ];
   const index = run.indexOf(current);
   return index === -1 ? null : { index, total: run.length };

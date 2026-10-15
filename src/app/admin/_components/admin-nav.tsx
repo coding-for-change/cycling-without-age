@@ -47,13 +47,24 @@ export function AdminNav({
                   isActive={active}
                   tooltip={itemLabel}
                 >
-                  <Link
-                    href={href}
-                    aria-current={active ? "page" : undefined}
-                  >
-                    <Icon aria-hidden />
-                    <span>{itemLabel}</span>
-                  </Link>
+                  {key === "help" ? (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Icon aria-hidden />
+                      <span>{itemLabel}</span>
+                    </a>
+                  ) : (
+                    <Link
+                      href={href}
+                      aria-current={active ? "page" : undefined}
+                    >
+                      <Icon aria-hidden />
+                      <span>{itemLabel}</span>
+                    </Link>
+                  )}
                 </SidebarMenuButton>
                 <ChatBadge
                   count={badges?.[key] ?? 0}

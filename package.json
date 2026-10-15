@@ -16,6 +16,8 @@
     "db:migrate": "dotenv -e .env.local -- prisma migrate dev",
     "db:push": "dotenv -e .env.local -- prisma db push",
     "db:seed": "JITI_JSX=1 JITI_TSCONFIG_PATHS=1 dotenv -e .env.local -- jiti prisma/seed.ts",
+    "docs:record": "playwright test -c docs/_recordings/playwright.config.ts && docs/_recordings/scripts/encode.sh",
+    "docs:dev": "cd docs && mint dev",
     "db:seed:reports": "JITI_JSX=1 JITI_TSCONFIG_PATHS=1 dotenv -e .env.local -- jiti prisma/seed-reports-demo.ts",
     "cap:sync": "cap sync",
     "cap:assets": "capacitor-assets generate --ios --android --iconBackgroundColor '#92d2c6' --iconBackgroundColorDark '#92d2c6' --splashBackgroundColor '#92d2c6' --splashBackgroundColorDark '#92d2c6'",
@@ -112,6 +114,7 @@
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.5.0",
+    "@playwright/test": "^1.55.1",
     "@serwist/turbopack": "^9.5.13",
     "@tailwindcss/postcss": "^4",
     "@tolgee/cli": "^2.20.0",

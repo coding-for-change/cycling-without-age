@@ -14,7 +14,7 @@ import type { Perspective } from "@/lib/access";
 import { PerspectiveRow } from "./perspective-row";
 import { ProfileHeader } from "./profile-header";
 import { accountSections, AccountSectionBody, sectionTitle } from "./sections";
-import type { AccountData } from "./types";
+import { profileHref, type AccountData } from "./types";
 
 export function AccountSheet({
   data,
@@ -59,6 +59,11 @@ export function AccountSheet({
             name={data.profile.name}
             email={data.profile.email}
             avatar={data.profile.avatarAnimated}
+            photoUrl={data.profile.photoUrl}
+            href={profileHref(data.profile.href, activePerspective)}
+            linkLabel={data.profile.linkLabel}
+            people={data.profile.people}
+            onNavigate={() => onOpenChange(false)}
           />
           <PerspectiveRow
             data={data}

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { CharacterProvider } from "@/components/character";
 import { useCanGoBack } from "@/hooks/use-can-go-back";
 import { cn } from "@/lib/utils";
@@ -19,32 +19,14 @@ export function FlowChrome({
   children: ReactNode;
   backLabel: ReactNode;
 }) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const showBack = useCanGoBack() && !NO_BACK.has(pathname);
-
   return (
     <FlowStateProvider>
       <CharacterProvider>
         <div className="flow-shell relative flex min-h-dvh flex-col bg-canvas">
           <div className="fixed top-(--flow-top) left-4 z-30 flex items-center gap-4">
-            {showBack && (
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className={cn(
-                  "flex size-(--flow-bar) shrink-0 items-center justify-center rounded-full",
-                  "bg-grey-tint text-ink transition-colors hover:bg-line",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2",
-                )}
-              >
-                <ChevronLeft
-                  className="size-6"
-                  aria-hidden
-                />
-                <span className="sr-only">{backLabel}</span>
-              </button>
-            )}
+            <Suspense fallback={null}>
+              <BackButton label={backLabel} />
+            </Suspense>
             {/* Desktop only — the mobile screens keep the top edge clear for the step itself. */}
             <Image
               src="/logo.png"
@@ -55,9 +37,34 @@ export function FlowChrome({
             />
           </div>
 
-          <CharacterStage pathname={pathname}>{children}</CharacterStage>
+          <CharacterStage>{children}</CharacterStage>
         </div>
       </CharacterProvider>
     </FlowStateProvider>
+  );
+}
+
+function BackButton({ label }: { label: ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const canGoBack = useCanGoBack();
+  if (!canGoBack || NO_BACK.has(pathname)) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={() => router.back()}
+      className={cn(
+        "flex size-(--flow-bar) shrink-0 items-center justify-center rounded-full",
+        "bg-grey-tint text-ink transition-colors hover:bg-line",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2",
+      )}
+    >
+      <ChevronLeft
+        className="size-6"
+        aria-hidden
+      />
+      <span className="sr-only">{label}</span>
+    </button>
   );
 }

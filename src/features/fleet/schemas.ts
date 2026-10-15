@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { uploadCommit, uploadRequest } from "@/lib/storage/limits";
+import { FILE_KINDS, uploadCommit, uploadRequest } from "@/lib/storage/limits";
 
 export const TRISHAW_STATUSES = ["active", "maintenance", "retired"] as const;
 export const CATALOGUE_SCOPES = ["global", "country", "chapter"] as const;
@@ -16,13 +16,9 @@ const optionalText = (max: number) =>
     .transform((value) => value || null)
     .nullable();
 
-export const fileKind = z.enum([
-  "typePhoto",
-  "typeManual",
-  "trishawPhoto",
-  "entrancePhoto",
-  "damagePhoto",
-]);
+export const fileKind = z
+  .enum(FILE_KINDS)
+  .exclude(["ridePhoto", "profilePhoto"]);
 
 export const uploadRequestInput = uploadRequest.extend({ kind: fileKind });
 

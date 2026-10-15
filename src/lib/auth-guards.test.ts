@@ -36,6 +36,7 @@ jest.mock("next/headers", () => ({
     },
   }),
 }));
+jest.mock("next/cache", () => ({ cacheLife: jest.fn(), cacheTag: jest.fn() }));
 jest.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT:${url}`);
@@ -48,7 +49,7 @@ jest.mock("@/lib/auth", () => ({
   auth: { api: { getSession: jest.fn() } },
 }));
 jest.mock("@/features/profile", () => ({
-  profile: { getProfile: jest.fn() },
+  profile: { countPasskeys: jest.fn() },
 }));
 jest.mock("@/features/chapters", () => ({
   chapters: {
@@ -59,7 +60,7 @@ jest.mock("@/features/chapters", () => ({
 }));
 
 const getSessionMock = auth.api.getSession as unknown as jest.Mock;
-const getProfile = profile.getProfile as jest.Mock;
+const countPasskeys = profile.countPasskeys as jest.Mock;
 const getChapterCountryId = chapters.getChapterCountryId as jest.Mock;
 const listCountryScopes = chapters.listCountryScopes as jest.Mock;
 const listChapterScopes = chapters.listChapterScopes as jest.Mock;
@@ -109,7 +110,7 @@ const AARHUS_SCOPE = {
 const DE_SCOPE = { id: DE, code: "DE", name: "Deutschland" };
 
 const signedInAs = (access: Partial<Access>, passkeys = 1) => {
-  getProfile.mockResolvedValue({ _count: { passkeys } });
+  countPasskeys.mockResolvedValue(passkeys);
   return getSessionMock.mockResolvedValue({
     user: { id: "u1" },
     session: { id: "s1" },
@@ -471,7 +472,7 @@ describe("the admin passkey gate", () => {
     signedInAs({ memberships: [{ chapterId: BERLIN, roles: ["pilot"] }] }, 0);
 
     await expect(requireChapterRole(BERLIN, "pilot")).resolves.toBeTruthy();
-    expect(getProfile).not.toHaveBeenCalled();
+    expect(countPasskeys).not.toHaveBeenCalled();
   });
 });
 

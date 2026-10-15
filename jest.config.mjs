@@ -8,7 +8,11 @@ const nextJestConfig = createJestConfig({
   testEnvironment: "node",
   // `.claude/worktrees/*` holds sibling git worktrees whose test copies resolve
   // `@/*` back to this src, so their module mocks never apply.
-  modulePathIgnorePatterns: ["<rootDir>/.next/", "<rootDir>/.claude/"],
+  modulePathIgnorePatterns: [
+    "<rootDir>/.next/",
+    "<rootDir>/.claude/",
+    "<rootDir>/docs/",
+  ],
   // SWC rewrites `@/` in imports but not in jest.mock() specifiers.
   moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1" },
 });

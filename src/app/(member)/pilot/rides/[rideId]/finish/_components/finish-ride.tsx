@@ -202,7 +202,7 @@ function TrishawReturn({
             <Badge className="bg-red-tint text-ink">
               <TriangleAlert
                 aria-hidden
-                className="text-red"
+                className="text-red-ink"
               />
               {common.grounded}
             </Badge>

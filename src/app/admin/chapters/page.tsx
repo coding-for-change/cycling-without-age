@@ -1,40 +1,65 @@
 import { Suspense } from "react";
+import { cacheLife } from "next/cache";
 import { headers } from "next/headers";
-import Link from "next/link";
-import { List, Map as MapIcon, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { chapters as chapterFeature } from "@/features/chapters";
 import { CHAPTER_RADIUS_KM } from "@/features/chapters/schemas";
 import { joinUrl } from "@/lib/app-url";
+import { requireAdminScope } from "@/lib/auth-guards";
 import { resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
 import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
-import { hrefWith } from "@/lib/search-params";
 import { readActiveScope, type AdminSearchParams } from "../active-scope";
+import { ADMIN_LIFE, adminViewer } from "../admin-viewer";
+import { canReach } from "../nav";
+import { ChaptersActions } from "./_components/chapters-header";
 import type { ChapterPin } from "./_components/chapters-map-view";
+import {
+  ChapterRowsSkeleton,
+  ChaptersActionsSkeleton,
+  ChaptersHeaderSkeleton,
+} from "./_components/chapters-skeleton";
 import { ChaptersTable, type ChapterRow } from "./_components/chapters-table";
-import { PageFallback } from "@/components/page-fallback";
 
-export default function ChaptersPage({
-  searchParams,
-}: {
-  searchParams: Promise<AdminSearchParams>;
-}) {
+type PageProps = { searchParams: Promise<AdminSearchParams> };
+
+export default function ChaptersPage({ searchParams }: PageProps) {
   return (
     <AdminPageShell>
-      <Suspense fallback={<PageFallback />}>
+      <Suspense fallback={<ChaptersHeaderSkeleton />}>
+        <ChaptersHeader />
+      </Suspense>
+      <Suspense fallback={<ChapterRowsSkeleton />}>
         <Chapters searchParams={searchParams} />
       </Suspense>
     </AdminPageShell>
   );
 }
 
-async function Chapters({
-  searchParams,
-}: {
-  searchParams: Promise<AdminSearchParams>;
-}) {
+async function ChaptersHeader() {
+  "use cache: private";
+  cacheLife(ADMIN_LIFE);
+
+  const [{ scope }, viewer, dict] = await Promise.all([
+    requireAdminScope(),
+    adminViewer(),
+    getDictionary(),
+  ]);
+  if (!canReach(scope, "chapters")) return null;
+  const strings = dict.admin.chapters;
+
+  return (
+    <AdminPageHeader title={dict.admin.pages.chapters.title}>
+      <Suspense fallback={<ChaptersActionsSkeleton />}>
+        <ChaptersActions
+          viewer={viewer}
+          strings={{ ...strings.views, new: strings.new }}
+        />
+      </Suspense>
+    </AdminPageHeader>
+  );
+}
+
+async function Chapters({ searchParams }: PageProps) {
   const {
     scope,
     scopeQuery,
@@ -87,73 +112,26 @@ async function Chapters({
     radiusKm: chapter.serviceRadiusKm ?? CHAPTER_RADIUS_KM.default,
   }));
 
-  const href = (extra: Record<string, string>) =>
-    hrefWith("/admin/chapters", scopeQuery, extra);
-
-  const keepView: Record<string, string> =
-    view === "map" ? { view: "map" } : {};
-
-  const tab = "flex min-h-9 items-center gap-1.5 rounded-full px-3 text-2sm";
-  const activeTab = "bg-canvas text-ink shadow-soft";
-
   return (
-    <>
-      <AdminPageHeader title={dict.admin.pages.chapters.title}>
-        <div className="flex items-center gap-1 rounded-full bg-grey-tint p-1">
-          <Link
-            href={href({})}
-            aria-current={view === "list" ? "page" : undefined}
-            className={cn(tab, view === "list" ? activeTab : "text-ink-soft")}
-          >
-            <List
-              className="size-4"
-              aria-hidden
-            />
-            {dict.admin.chapters.views.list}
-          </Link>
-          <Link
-            href={href({ view: "map" })}
-            aria-current={view === "map" ? "page" : undefined}
-            className={cn(tab, view === "map" ? activeTab : "text-ink-soft")}
-          >
-            <MapIcon
-              className="size-4"
-              aria-hidden
-            />
-            {dict.admin.chapters.views.map}
-          </Link>
-        </div>
-        <Button
-          asChild
-          variant="brand"
-          className="min-h-11"
-        >
-          <Link href={href({ ...keepView, new: "1" })}>
-            <Plus aria-hidden />
-            {dict.admin.chapters.new}
-          </Link>
-        </Button>
-      </AdminPageHeader>
-      <ChaptersTable
-        rows={rows}
-        countries={scope.countries.map(({ id, name, code }) => ({
-          id,
-          name,
-          code,
-        }))}
-        canCreateCountry={scope.canCreateCountries}
-        pins={pins}
-        view={view}
-        language={language}
-        notation={notation}
-        joinBase={joinUrl("")}
-        scopeQuery={scopeQuery}
-        labels={{
-          ...dict.admin.chapters,
-          joinLink: dict.admin.settings.joinLink,
-        }}
-        table={dict.admin.table}
-      />
-    </>
+    <ChaptersTable
+      rows={rows}
+      countries={scope.countries.map(({ id, name, code }) => ({
+        id,
+        name,
+        code,
+      }))}
+      canCreateCountry={scope.canCreateCountries}
+      pins={pins}
+      view={view}
+      language={language}
+      notation={notation}
+      joinBase={joinUrl("")}
+      scopeQuery={scopeQuery}
+      labels={{
+        ...dict.admin.chapters,
+        joinLink: dict.admin.settings.joinLink,
+      }}
+      table={dict.admin.table}
+    />
   );
 }

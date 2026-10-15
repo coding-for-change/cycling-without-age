@@ -46,26 +46,28 @@ jobs:
           if ! command -v ansible-playbook &> /dev/null; then
             pipx install ansible-core
           fi
-          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > .vault_pass
-          cat << 'EOF' > dump.yml
+          SECRETS_DIR="$RUNNER_TEMP/secrets"
+          mkdir -p "$SECRETS_DIR" && chmod 700 "$SECRETS_DIR"
+          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > "$SECRETS_DIR/.vault_pass"
+          cat << EOF > "$SECRETS_DIR/dump.yml"
           - hosts: localhost
             gather_facts: false
             vars_files:
-              - .config/secrets.yml
+              - $GITHUB_WORKSPACE/.config/secrets.yml
             tasks:
               - copy:
-                  dest: decrypted.json
+                  dest: $SECRETS_DIR/decrypted.json
                   content: >
                     {{ { "TOLGEE_API_KEY": TOLGEE_API_KEY | default(""), "TOLGEE_PROJECT_ID": TOLGEE_PROJECT_ID | default("") } | to_json }}
                 no_log: true
           EOF
-          ansible-playbook dump.yml --vault-password-file .vault_pass
-          TOLGEE_API_KEY=$(jq -r '.TOLGEE_API_KEY // empty' decrypted.json)
+          ansible-playbook "$SECRETS_DIR/dump.yml" --vault-password-file "$SECRETS_DIR/.vault_pass"
+          TOLGEE_API_KEY=$(jq -r '.TOLGEE_API_KEY // empty' "$SECRETS_DIR/decrypted.json")
           if [ -z "$TOLGEE_API_KEY" ]; then echo "TOLGEE_API_KEY missing from the vault"; exit 1; fi
           echo "::add-mask::$TOLGEE_API_KEY"
           echo "TOLGEE_API_KEY=$TOLGEE_API_KEY" >> "$GITHUB_ENV"
-          echo "TOLGEE_PROJECT_ID=$(jq -r '.TOLGEE_PROJECT_ID // empty' decrypted.json)" >> "$GITHUB_ENV"
-          rm -f .vault_pass dump.yml decrypted.json
+          echo "TOLGEE_PROJECT_ID=$(jq -r '.TOLGEE_PROJECT_ID // empty' "$SECRETS_DIR/decrypted.json")" >> "$GITHUB_ENV"
+          rm -rf "$RUNNER_TEMP/secrets"
 
       - name: Check messages
         run: npx jest src/lib/i18n
@@ -131,25 +133,27 @@ jobs:
           if ! command -v ansible-playbook &> /dev/null; then
             pipx install ansible-core
           fi
-          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > .vault_pass
-          cat << 'EOF' > dump.yml
+          SECRETS_DIR="$RUNNER_TEMP/secrets"
+          mkdir -p "$SECRETS_DIR" && chmod 700 "$SECRETS_DIR"
+          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > "$SECRETS_DIR/.vault_pass"
+          cat << EOF > "$SECRETS_DIR/dump.yml"
           - hosts: localhost
             gather_facts: false
             vars_files:
-              - .config/secrets.yml
+              - $GITHUB_WORKSPACE/.config/secrets.yml
             tasks:
               - copy:
-                  dest: decrypted.json
+                  dest: $SECRETS_DIR/decrypted.json
                   content: >
                     {{ { "TOLGEE_API_KEY": TOLGEE_API_KEY | default("") } | to_json }}
                 no_log: true
           EOF
-          ansible-playbook dump.yml --vault-password-file .vault_pass
-          TOLGEE_API_KEY=$(jq -r '.TOLGEE_API_KEY // empty' decrypted.json)
+          ansible-playbook "$SECRETS_DIR/dump.yml" --vault-password-file "$SECRETS_DIR/.vault_pass"
+          TOLGEE_API_KEY=$(jq -r '.TOLGEE_API_KEY // empty' "$SECRETS_DIR/decrypted.json")
           if [ -z "$TOLGEE_API_KEY" ]; then echo "TOLGEE_API_KEY missing from the vault"; exit 1; fi
           echo "::add-mask::$TOLGEE_API_KEY"
           echo "TOLGEE_API_KEY=$TOLGEE_API_KEY" >> "$GITHUB_ENV"
-          rm -f .vault_pass dump.yml decrypted.json
+          rm -rf "$RUNNER_TEMP/secrets"
 
       - name: Pull from Tolgee
         run: |
