@@ -747,7 +747,7 @@ describe("rescheduling a wall-clock patch", () => {
         data: {
           startsAt: new Date("2026-09-08T08:00:00Z"),
           endsAt: new Date("2026-09-08T09:00:00Z"),
-          ...UNSWEPT,
+          staffingCheckedAt: null,
         },
       }),
     );
@@ -768,7 +768,24 @@ describe("rescheduling a wall-clock patch", () => {
     expect(db.ride.update.mock.calls[0][0].data).toEqual({
       startsAt: new Date("2026-09-08T09:00:00Z"),
       endsAt: new Date("2026-09-08T10:30:00Z"),
-      ...UNSWEPT,
+      staffingCheckedAt: null,
+    });
+  });
+
+  // A new end is no news: nobody is reminded again and no answer is undone.
+  it("reminds again and asks again only when the start moves", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    await rides.rescheduleRide("ride-1", { durationMinutes: 60 }, ADMIN);
+    expect(db.rideRosterEntry.updateMany).not.toHaveBeenCalled();
+
+    await rides.rescheduleRide("ride-1", { start: "11:00" }, ADMIN);
+    expect(db.ride.update.mock.calls[1][0].data).toMatchObject(UNSWEPT);
+    expect(db.rideRosterEntry.updateMany).toHaveBeenCalledWith({
+      where: {
+        rideId: "ride-1",
+        attendance: { in: ["confirmed", "checkedIn"] },
+      },
+      data: { attendance: "booked", confirmedAt: null, checkedInAt: null },
     });
   });
 

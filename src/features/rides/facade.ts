@@ -880,7 +880,13 @@ export async function rescheduleRide(
           ? { role: "lead", otherRideId: moves[1].leg.id }
           : { role: "follow", otherRideId: id };
     for (const { leg, to } of moves) {
-      const row = await updateRide(leg.id, { ...to, ...UNSWEPT }, tx);
+      const startMoved = leg.startsAt.getTime() !== to.startsAt.getTime();
+      const row = await updateRide(
+        leg.id,
+        { ...to, ...(startMoved ? UNSWEPT : { staffingCheckedAt: null }) },
+        tx,
+      );
+      if (startMoved) await askSeatsAgain(leg.id, tx);
       updated ??= row;
       await record(
         tx,
@@ -1450,7 +1456,18 @@ const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 60 * MINUTE_MS;
 const DAY_MS = 24 * HOUR_MS;
 
-/** A ride that moves is reminded, checked and staffed again for its new time. */
+/**
+ * A ride whose start moves is reminded and checked again for its new time, and
+ * a seat confirmed or checked in for the old one is asked about again.
+ */
+const askSeatsAgain = (rideId: string, tx: Tx) =>
+  updateRosterAttendance(
+    rideId,
+    ["confirmed", "checkedIn"],
+    { attendance: "booked", confirmedAt: null, checkedInAt: null },
+    tx,
+  );
+
 const UNSWEPT = {
   staffingCheckedAt: null,
   riderReminderSentAt: null,
