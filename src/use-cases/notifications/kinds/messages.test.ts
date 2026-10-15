@@ -319,6 +319,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     actorUserId: ACTOR,
     fromUserId: SUBJECT,
     toUserId: "user-new",
+    invited: false,
   },
 };
 

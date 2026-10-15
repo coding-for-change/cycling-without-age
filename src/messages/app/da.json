@@ -54,14 +54,16 @@
         "errors": {
           "generic": "Det virkede ikke. Prøv igen.",
           "handOverAdmin": "Giv din adminrolle videre først.",
-          "rateLimited": "Vent et øjeblik, og prøv igen."
+          "rateLimited": "Vent et øjeblik, og prøv igen.",
+          "managesRiders": "Du tager dig nu af en, der ikke står her. Genindlæs og tjek igen."
         },
         "label": "Skriv {word} for at bekræfte",
         "open": "Slet konto",
-        "riders": "{count, plural, one {1 person, du tager dig af, bliver også fjernet sammen med sine bookinger} other {# personer, du tager dig af, bliver også fjernet sammen med deres bookinger}}",
+        "riders": "{names}, som du tager dig af, med deres bookinger",
         "submit": "Slet konto",
         "title": "Slet din konto for altid?",
-        "word": "DELETE"
+        "word": "DELETE",
+        "ridersHint": "Skal de blive ved med at køre, så bed deres afdeling om at overdrage dem til en anden, før du sletter din konto."
       },
       "title": "Log ud eller slet"
     },
@@ -619,11 +621,46 @@
           "errors": {
             "generic": "Det virkede ikke. Prøv igen."
           }
-        }
+        },
+        "history": "Historik",
+        "historyEmpty": "Intet endnu. En overdragelse til en anden vises her.",
+        "handedOver": "{actor} overdrog {rider} fra {previous} til {next}"
       },
       "waiting": {
         "title": "Venter på svar",
         "row": "Spurgt {caretaker} · {date}"
+      },
+      "handOver": {
+        "open": "Overdrag …",
+        "title": "Overdrag {rider}",
+        "body": "Vælg, hvem der booker ture for {rider} fremover. Bookinger, profil og historik bliver, som de er.",
+        "modeLabel": "Hvem overtager",
+        "member": "En fra {chapter}",
+        "invite": "En ny",
+        "picker": {
+          "label": "Medlem",
+          "placeholder": "Vælg et medlem",
+          "search": "Søg i medlemmer",
+          "empty": "Intet medlem fundet",
+          "count": "{count} af {max}",
+          "full": "Én person ad gangen"
+        },
+        "noMembers": "Ingen andre i {chapter} kan overtage endnu. Invitér en ny.",
+        "name": "Navn",
+        "contact": "E-mail eller mobilnummer",
+        "contactHint": "Personen får en invitation og logger ind med dette.",
+        "invalid": "Skriv et navn og en gyldig e-mailadresse eller et mobilnummer.",
+        "submit": "Overdrag",
+        "done": "{name} tager sig nu af {rider}",
+        "invited": "{name} er inviteret og tager sig nu af {rider}",
+        "errors": {
+          "notChapterMember": "Personen er ikke medlem af passagerens afdeling. Personen skal være medlem først.",
+          "sameManager": "Personen tager sig allerede af passageren.",
+          "passengerChapterMismatch": "Personen tager sig allerede af passagerer i en anden afdeling.",
+          "tooManyRiders": "Personen tager sig allerede af så mange passagerer, som en konto kan.",
+          "unknownPassenger": "Passageren kan ikke overdrages længere. Genindlæs siden.",
+          "rateLimited": "Det var mange overdragelser i træk. Vent lidt, og prøv igen."
+        }
       }
     },
     "person": {
@@ -634,7 +671,8 @@
         "done": "{name} er slettet.",
         "errors": {
           "generic": "Det virkede ikke. Prøv igen.",
-          "self": "Du kan ikke slette din egen konto her."
+          "self": "Du kan ikke slette din egen konto her.",
+          "managesRiders": "Kontoen tager sig nu af passagerer, der ikke var listet. Genindlæs og tjek igen."
         },
         "label": "Skriv {word} for at bekræfte",
         "open": "Slet bruger",
@@ -663,7 +701,8 @@
       "profile": "Profil",
       "caretaker": {
         "title": "Står for",
-        "relationship": "Relation: {relationship}"
+        "relationship": "Relation: {relationship}",
+        "handOverHint": "Slettes kontoen, bliver disse passagerer slettet med. Overdrag dem til en anden fra deres egen side først, så de kan blive ved med at køre."
       }
     },
     "perspectives": {

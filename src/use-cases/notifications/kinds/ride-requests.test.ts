@@ -244,6 +244,7 @@ describe("a rider handed over", () => {
     actorUserId: ADMIN,
     fromUserId: CARER,
     toUserId: "user-daughter",
+    invited: false,
   };
 
   it("tells the new and the old manager, not the admin who did it", async () => {

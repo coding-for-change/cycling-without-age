@@ -1,8 +1,16 @@
+import { passengers } from "@/features/passengers";
+import { profile } from "@/features/profile";
 import { activity } from "@/lib/activity";
 import type { ActivityType, RecordEventInput } from "@/lib/activity";
 import type { Envelope, EventOf, EventType } from "@/lib/events/catalog";
 
-type Builder<K extends EventType> = (event: EventOf<K>) => RecordEventInput;
+type Built = RecordEventInput | RecordEventInput[];
+type Builder<K extends EventType> = (
+  event: EventOf<K>,
+) => Built | Promise<Built>;
+
+const nameOf = async (userId: string) =>
+  (await profile.getProfile(userId))?.name ?? "";
 
 const ROLE_EVENT: Record<"promote" | "demote" | "remove", ActivityType> = {
   promote: "roleGranted",
@@ -47,6 +55,27 @@ const builders: { [K in EventType]?: Builder<K> } = {
     actorUserId: event.actorUserId,
     type: "countryAdminRemoved",
   }),
+  "rider.handedOver": async (event) => {
+    const [names, previous, next] = await Promise.all([
+      passengers.passengerNames([event.passengerId]),
+      nameOf(event.fromUserId),
+      nameOf(event.toUserId),
+    ]);
+    const line = (userId: string, direction: "in" | "out") => ({
+      userId,
+      actorUserId: event.actorUserId,
+      chapterId: event.chapterId,
+      type: "riderHandedOver" as const,
+      payload: {
+        passengerId: event.passengerId,
+        rider: names[event.passengerId] ?? "",
+        previous,
+        next,
+        direction,
+      },
+    });
+    return [line(event.toUserId, "in"), line(event.fromUserId, "out")];
+  },
 };
 
 export const recordsActivityFor = (type: EventType) => type in builders;
@@ -54,5 +83,5 @@ export const recordsActivityFor = (type: EventType) => type in builders;
 export async function recordActivity({ event }: Envelope) {
   const build = builders[event.type] as Builder<EventType> | undefined;
   if (!build) throw new Error(`[activity] no builder for ${event.type}`);
-  await activity.record(build(event));
+  for (const line of [await build(event)].flat()) await activity.record(line);
 }

@@ -2,12 +2,21 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { HeartHandshake } from "lucide-react";
+import { chapters as chapterFeature } from "@/features/chapters";
+import { membership } from "@/features/membership";
 import { PersonAvatar } from "@/components/person-avatar";
 import { passengers } from "@/features/passengers";
 import { personProfiles, photoUrl } from "@/features/person-profiles";
 import { ProfileView } from "@/features/person-profiles/components/profile-view";
 import { profile } from "@/features/profile";
-import { avatarSvg } from "@/lib/avatar";
+import { activity } from "@/lib/activity";
+import { avatarSeed, avatarSvg } from "@/lib/avatar";
+import {
+  COUNTRIES,
+  defaultCountryFor,
+  isPhoneTempEmail,
+  type CountryCode,
+} from "@/lib/identity";
 import { resolveLocale, toIsoDateUtc } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
@@ -17,6 +26,7 @@ import {
   canRemoveRider,
   seesHealthDetails,
 } from "@/use-cases/person-access";
+import { ActivityFeed } from "../../../_components/activity-feed";
 import { deletionConsequences } from "../../../_components/deletion-consequences";
 import {
   BackLink,
@@ -29,6 +39,7 @@ import {
 } from "../../../_components/detail-page";
 import { SidePanel } from "../../../_components/side-panel";
 import { readActiveScope, type AdminSearchParams } from "../../../active-scope";
+import { HandOverRider } from "./hand-over-rider";
 import { RiderProperties } from "./rider-properties";
 
 export async function PassengerBody({
@@ -54,16 +65,46 @@ export async function PassengerBody({
   const { target, relation } = found;
   const removable = canRemoveRider(relation, target);
 
-  const [own, manager, dict, language, head, bookings] = await Promise.all([
+  const admin = relation === "admin";
+  const home = chapters.find((chapter) => chapter.id === rider.chapterId);
+  const [
+    own,
+    manager,
+    dict,
+    language,
+    head,
+    bookings,
+    members,
+    handOvers,
+    country,
+  ] = await Promise.all([
     personProfiles.getProfile(target.subject),
     rider.managedByUserId ? profile.getProfile(rider.managedByUserId) : null,
     getDictionary(),
     getLocale(),
     headers(),
     removable ? passengers.countRiderBookings(rider.id) : 0,
+    admin ? membership.listMembersOfChapters([rider.chapterId]) : [],
+    admin ? activity.listHandOversOfPassenger(rider.id, 50) : [],
+    admin && home ? chapterFeature.getCountry(home.countryId) : null,
   ]);
   const strings = dict.admin.passengers.detail;
   const notation = resolveLocale(head.get("accept-language"));
+  const code = country?.code.toUpperCase();
+  const dialling =
+    code && COUNTRIES.includes(code as CountryCode)
+      ? (code as CountryCode)
+      : defaultCountryFor(notation);
+  const candidates = members
+    .filter((member) => member.userId !== rider.managedByUserId)
+    .map((member) => ({
+      id: member.userId,
+      name: member.user.name || member.user.email,
+      avatar: avatarSvg(avatarSeed(member.user.email)),
+      hint: isPhoneTempEmail(member.user.email)
+        ? (member.user.phoneNumber ?? undefined)
+        : member.user.email,
+    }));
   const chapterName = chapters.find(
     (chapter) => chapter.id === rider.chapterId,
   )?.name;
@@ -144,7 +185,23 @@ export async function PassengerBody({
               language={language}
               notation={notation}
               backHref={`/admin/passengers${scopeQuery}`}
-            />
+            >
+              {admin ? (
+                <HandOverRider
+                  passengerId={rider.id}
+                  rider={target.name}
+                  chapter={chapterName ?? ""}
+                  members={candidates}
+                  country={dialling}
+                  strings={dict.admin.passengers.handOver}
+                  errors={{
+                    ...dict.common.errors,
+                    ...dict.admin.passengers.handOver.errors,
+                  }}
+                  language={language}
+                />
+              ) : null}
+            </RiderProperties>
           </SidePanel>
         }
       >
@@ -159,6 +216,21 @@ export async function PassengerBody({
             hero={false}
           />
         </DetailSection>
+        {admin ? (
+          <DetailSection title={strings.history}>
+            <ActivityFeed
+              events={handOvers}
+              viewerId={session.user.id}
+              labels={{
+                ...dict.admin.history,
+                riderHandedOver: strings.handedOver,
+              }}
+              empty={strings.historyEmpty}
+              notation={notation}
+              words={language}
+            />
+          </DetailSection>
+        ) : null}
       </DetailLayout>
     </>
   );

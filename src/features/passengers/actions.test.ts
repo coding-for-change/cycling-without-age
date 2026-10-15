@@ -22,6 +22,9 @@ jest.mock("@/lib/cache-tags", () => ({
 jest.mock("@/use-cases/add-managed-rider", () => ({
   addManagedRider: jest.fn(),
 }));
+jest.mock("@/use-cases/hand-over-rider", () => ({
+  handOverRider: jest.fn(),
+}));
 jest.mock("@/use-cases/manage-rider", () => ({
   updateManagedRider: jest.fn(),
   removeManagedRider: jest.fn(),

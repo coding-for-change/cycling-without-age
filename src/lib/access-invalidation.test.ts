@@ -104,6 +104,7 @@ jest.mock("@/features/chapters", () => ({
   },
 }));
 jest.mock("@/use-cases/delete-account", () => ({ deleteAccount: jest.fn() }));
+jest.mock("@/use-cases/hand-over-rider", () => ({ handOverRider: jest.fn() }));
 jest.mock("@/use-cases/pilot-steps", () => ({
   confirmPilotStep: jest.fn(),
   revokePilotStep: jest.fn(),

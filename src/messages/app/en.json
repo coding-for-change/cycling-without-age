@@ -54,14 +54,16 @@
         "errors": {
           "generic": "That didn't work. Try again.",
           "handOverAdmin": "Hand over your admin role first.",
-          "rateLimited": "Give it a moment and try again."
+          "rateLimited": "Give it a moment and try again.",
+          "managesRiders": "You now look after someone who isn't listed here. Reload and check again."
         },
         "label": "Type {word} to confirm",
         "open": "Delete account",
-        "riders": "{count, plural, one {1 person you look after will be removed too, with their bookings} other {# people you look after will be removed too, with their bookings}}",
+        "riders": "{names}, who you look after, with their bookings",
         "submit": "Delete account",
         "title": "Delete your account for good?",
-        "word": "DELETE"
+        "word": "DELETE",
+        "ridersHint": "To keep them riding, ask their chapter to hand them over to someone else before you delete your account."
       },
       "title": "Sign out or delete"
     },
@@ -619,11 +621,46 @@
           "errors": {
             "generic": "That didn't work. Try again."
           }
-        }
+        },
+        "history": "History",
+        "historyEmpty": "Nothing yet. A hand-over to someone else shows up here.",
+        "handedOver": "{actor} handed {rider} over from {previous} to {next}"
       },
       "waiting": {
         "title": "Waiting for an answer",
         "row": "Asked {caretaker} · {date}"
+      },
+      "handOver": {
+        "open": "Hand over…",
+        "title": "Hand {rider} over",
+        "body": "Choose who books rides for {rider} from now on. Their bookings, profile and history stay as they are.",
+        "modeLabel": "Who takes over",
+        "member": "Someone in {chapter}",
+        "invite": "Someone new",
+        "picker": {
+          "label": "Member",
+          "placeholder": "Pick a member",
+          "search": "Search members",
+          "empty": "No member found",
+          "count": "{count} of {max}",
+          "full": "One person at a time"
+        },
+        "noMembers": "Nobody else in {chapter} can take over yet. Invite someone new.",
+        "name": "Name",
+        "contact": "Email or mobile number",
+        "contactHint": "They get an invitation and sign in with this.",
+        "invalid": "Enter a name and a valid email address or mobile number.",
+        "submit": "Hand over",
+        "done": "{rider} is now looked after by {name}",
+        "invited": "{name} is invited and now looks after {rider}",
+        "errors": {
+          "notChapterMember": "That person isn't a member of the rider's chapter. They need to join it first.",
+          "sameManager": "They already look after this rider.",
+          "passengerChapterMismatch": "They already look after riders of another chapter.",
+          "tooManyRiders": "They already look after as many riders as one account can.",
+          "unknownPassenger": "This rider can't be handed over any more. Reload the page.",
+          "rateLimited": "That's a lot of hand-overs in a row. Wait a little and try again."
+        }
       }
     },
     "person": {
@@ -634,7 +671,8 @@
         "done": "{name} is gone.",
         "errors": {
           "generic": "That didn't work. Try again.",
-          "self": "You can't delete your own account."
+          "self": "You can't delete your own account.",
+          "managesRiders": "This account now looks after riders who weren't listed. Reload and check again."
         },
         "label": "Type {word} to confirm",
         "open": "Delete user",
@@ -663,7 +701,8 @@
       "profile": "Profile",
       "caretaker": {
         "title": "Looks after",
-        "relationship": "Relationship: {relationship}"
+        "relationship": "Relationship: {relationship}",
+        "handOverHint": "Deleting this account deletes these riders with it. Hand them over to someone else from their own page first to keep them riding."
       }
     },
     "perspectives": {

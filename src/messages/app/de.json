@@ -54,14 +54,16 @@
         "errors": {
           "generic": "Das hat nicht geklappt. Versuch es noch mal.",
           "handOverAdmin": "Gib zuerst deine Adminrolle ab.",
-          "rateLimited": "Einen Moment noch, dann versuch es erneut."
+          "rateLimited": "Einen Moment noch, dann versuch es erneut.",
+          "managesRiders": "Du betreust inzwischen jemanden, der hier nicht steht. Lade neu und prüfe es noch einmal."
         },
         "label": "Tipp {word} zur Bestätigung",
         "open": "Konto löschen",
-        "riders": "{count, plural, one {1 betreute Person wird samt ihren Buchungen mit entfernt} other {# betreute Personen werden samt ihren Buchungen mit entfernt}}",
+        "riders": "{names}, die du betreust, samt ihren Buchungen",
         "submit": "Konto löschen",
         "title": "Konto endgültig löschen?",
-        "word": "DELETE"
+        "word": "DELETE",
+        "ridersHint": "Damit sie weiter mitfahren können, bitte ihre Ortsgruppe, sie an jemand anderen zu übergeben, bevor du dein Konto löschst."
       },
       "title": "Abmelden oder löschen"
     },
@@ -619,11 +621,46 @@
           "errors": {
             "generic": "Das hat nicht geklappt. Versuch es noch einmal."
           }
-        }
+        },
+        "history": "Verlauf",
+        "historyEmpty": "Noch nichts. Eine Übergabe an jemand anderen erscheint hier.",
+        "handedOver": "{actor} hat {rider} von {previous} an {next} übergeben"
       },
       "waiting": {
         "title": "Warten auf Antwort",
         "row": "{caretaker} gefragt · {date}"
+      },
+      "handOver": {
+        "open": "Übergeben …",
+        "title": "{rider} übergeben",
+        "body": "Wähle, wer ab jetzt die Fahrten für {rider} bucht. Buchungen, Profil und Verlauf bleiben, wie sie sind.",
+        "modeLabel": "Wer übernimmt",
+        "member": "Jemand aus {chapter}",
+        "invite": "Jemand Neues",
+        "picker": {
+          "label": "Mitglied",
+          "placeholder": "Mitglied wählen",
+          "search": "Mitglieder suchen",
+          "empty": "Kein Mitglied gefunden",
+          "count": "{count} von {max}",
+          "full": "Eine Person auf einmal"
+        },
+        "noMembers": "In {chapter} kann noch niemand anderes übernehmen. Lade jemand Neues ein.",
+        "name": "Name",
+        "contact": "E-Mail oder Handynummer",
+        "contactHint": "Die Person bekommt eine Einladung und meldet sich damit an.",
+        "invalid": "Gib einen Namen und eine gültige E-Mail-Adresse oder Handynummer ein.",
+        "submit": "Übergeben",
+        "done": "{rider} wird jetzt von {name} betreut",
+        "invited": "{name} ist eingeladen und betreut jetzt {rider}",
+        "errors": {
+          "notChapterMember": "Diese Person ist kein Mitglied der Ortsgruppe des Fahrgasts. Sie muss erst beitreten.",
+          "sameManager": "Diese Person betreut den Fahrgast bereits.",
+          "passengerChapterMismatch": "Diese Person betreut schon Fahrgäste einer anderen Ortsgruppe.",
+          "tooManyRiders": "Diese Person betreut schon so viele Fahrgäste, wie ein Konto kann.",
+          "unknownPassenger": "Dieser Fahrgast kann nicht mehr übergeben werden. Lade die Seite neu.",
+          "rateLimited": "Das waren viele Übergaben hintereinander. Warte kurz und versuch es erneut."
+        }
       }
     },
     "person": {
@@ -634,7 +671,8 @@
         "done": "{name} ist gelöscht.",
         "errors": {
           "generic": "Das hat nicht geklappt. Versuch es noch mal.",
-          "self": "Dein eigenes Konto kannst du hier nicht löschen."
+          "self": "Dein eigenes Konto kannst du hier nicht löschen.",
+          "managesRiders": "Dieses Konto betreut inzwischen Fahrgäste, die nicht aufgeführt waren. Lade neu und prüfe es noch einmal."
         },
         "label": "Tipp {word} zur Bestätigung",
         "open": "Konto löschen",
@@ -663,7 +701,8 @@
       "profile": "Profil",
       "caretaker": {
         "title": "Kümmert sich um",
-        "relationship": "Beziehung: {relationship}"
+        "relationship": "Beziehung: {relationship}",
+        "handOverHint": "Wird dieses Konto gelöscht, werden diese Fahrgäste mit gelöscht. Übergib sie vorher auf ihrer eigenen Seite an jemand anderen, damit sie weiter mitfahren können."
       }
     },
     "perspectives": {

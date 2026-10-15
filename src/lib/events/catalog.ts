@@ -239,6 +239,8 @@ export const eventSchema = z.discriminatedUnion("type", [
     actorUserId: z.string().min(1),
     fromUserId: z.string().min(1),
     toUserId: z.string().min(1),
+    /** The account was set up for this, and its invitation tells it already. */
+    invited: z.boolean().default(false),
   }),
 ]);
 

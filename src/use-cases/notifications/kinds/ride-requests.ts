@@ -390,6 +390,7 @@ export const riderHandedOver = defineKind({
     excluding(
       [...new Set([event.toUserId, event.fromUserId])],
       event.actorUserId,
+      event.invited ? event.toUserId : null,
     ),
   params: async (event) => ({
     riderId: event.passengerId,

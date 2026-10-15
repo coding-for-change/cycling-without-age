@@ -4,6 +4,18 @@ import type { RecordEventInput } from "@/lib/activity";
 import { recordActivity } from "@/worker/listeners/record-activity";
 
 jest.mock("@/lib/activity", () => ({ activity: { record: jest.fn() } }));
+jest.mock("@/features/passengers", () => ({
+  passengers: {
+    passengerNames: jest.fn(async () => ({ "passenger-1": "Erna Huber" })),
+  },
+}));
+jest.mock("@/features/profile", () => ({
+  profile: {
+    getProfile: jest.fn(async (id: string) => ({
+      name: id === "user-old" ? "Anna Huber" : "Bea Huber",
+    })),
+  },
+}));
 
 const record = activity.record as jest.Mock;
 
@@ -181,4 +193,39 @@ describe("recordActivity", () => {
       expect(record).not.toHaveBeenCalled();
     },
   );
+});
+
+it("writes a hand-over into the history of both managers, names as they were", async () => {
+  await run({
+    type: "rider.handedOver",
+    passengerId: "passenger-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+    fromUserId: "user-old",
+    toUserId: "user-new",
+    invited: false,
+  });
+
+  const payload = {
+    passengerId: "passenger-1",
+    rider: "Erna Huber",
+    previous: "Anna Huber",
+    next: "Bea Huber",
+  };
+  expect(record.mock.calls.map(([line]) => line)).toEqual([
+    {
+      userId: "user-new",
+      actorUserId: ACTOR,
+      chapterId: CHAPTER,
+      type: "riderHandedOver",
+      payload: { ...payload, direction: "in" },
+    },
+    {
+      userId: "user-old",
+      actorUserId: ACTOR,
+      chapterId: CHAPTER,
+      type: "riderHandedOver",
+      payload: { ...payload, direction: "out" },
+    },
+  ]);
 });

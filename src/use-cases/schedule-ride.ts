@@ -90,7 +90,7 @@ export async function scheduleRideAt(
     {
       opensForSignUp: settings.pilotsMaySelfAssign,
       staffingLeadHours: settings.staffingCheckLeadHours,
-      requestId,
+      ...(requestId ? { requestId } : {}),
     },
   );
 }
