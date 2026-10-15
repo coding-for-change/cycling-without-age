@@ -31,6 +31,9 @@ export const findProfile = (userId: string) =>
     },
   });
 
+export const countPasskeysOf = (userId: string) =>
+  prisma.passkey.count({ where: { userId } });
+
 export const updateProfile = (userId: string, data: Prisma.UserUpdateInput) =>
   prisma.user.update({ where: { id: userId }, data });
 

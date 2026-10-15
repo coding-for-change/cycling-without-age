@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { headers } from "next/headers";
 import { EmptyState } from "@/components/empty-state";
 import { membership } from "@/features/membership";
@@ -12,21 +13,20 @@ import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { formatDate, formatNumber, resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
-import { AdminPageHeader } from "../../_components/admin-page";
 import { ICONS } from "@/components/icons";
 import { readActiveScope } from "../../active-scope";
-import { InviteDialog } from "./invite-dialog";
+import { InviteDrawer } from "./invite-dialog";
 import { MembersTable, type MemberRow } from "./members-table";
 import { RequestsTable, type RequestRow } from "./requests-table";
 import type { AdminSearchParams } from "../../active-scope";
 
-export async function MembersBody({
-  searchParams,
-}: {
-  searchParams: Promise<AdminSearchParams>;
-}) {
-  const { active, scopeQuery, chapters, chapterIds } =
-    await readActiveScope(searchParams);
+type Props = { searchParams: Promise<AdminSearchParams> };
+
+const loadMembers = cache(async (searchParams: Promise<AdminSearchParams>) => {
+  const { active, scopeQuery, chapters, chapterIds } = await readActiveScope(
+    searchParams,
+    "members",
+  );
 
   const [pending, members, riders, dict, head, locale] = await Promise.all([
     membership.listApplications(chapterIds, "pending"),
@@ -114,56 +114,76 @@ export async function MembersBody({
     };
   });
 
-  const MembersIcon = ICONS.members;
+  return {
+    active,
+    scopeQuery,
+    dict,
+    locale,
+    notation,
+    showChapter,
+    requests,
+    rows,
+  };
+});
+
+export async function MemberRequests({ searchParams }: Props) {
+  const { requests, showChapter, scopeQuery, dict, locale, notation } =
+    await loadMembers(searchParams);
+  if (requests.length === 0) return null;
 
   return (
-    <>
-      <AdminPageHeader title={dict.admin.pages.members.title}>
-        {active.kind === "chapter" ? (
-          <InviteDialog
-            chapterId={active.chapter.id}
-            chapterName={active.chapter.name}
-            roleLabel={dict.admin.members.columns.role}
-            labels={dict.admin.members.invite}
-            locale={locale}
-          />
-        ) : null}
-      </AdminPageHeader>
+    <RequestsTable
+      rows={requests}
+      showChapter={showChapter}
+      scopeQuery={scopeQuery}
+      labels={dict.admin.requests}
+      phoneColumn={dict.admin.members.columns.phone}
+      errors={dict.admin.members.errors}
+      table={dict.admin.table}
+      locale={locale}
+      count={formatMessage(
+        dict.admin.requests.count,
+        { count: formatNumber(requests.length, notation) },
+        locale,
+      )}
+    />
+  );
+}
 
-      {requests.length > 0 ? (
-        <RequestsTable
-          rows={requests}
-          showChapter={showChapter}
-          scopeQuery={scopeQuery}
-          labels={dict.admin.requests}
-          phoneColumn={dict.admin.members.columns.phone}
-          errors={dict.admin.members.errors}
-          table={dict.admin.table}
-          locale={locale}
-          count={formatMessage(
-            dict.admin.requests.count,
-            { count: formatNumber(requests.length, notation) },
-            locale,
-          )}
-        />
-      ) : null}
+export async function MemberList({ searchParams }: Props) {
+  const { rows, showChapter, scopeQuery, dict, locale } =
+    await loadMembers(searchParams);
+  const MembersIcon = ICONS.members;
 
-      <section className="grid gap-3">
-        <h2 className="text-lg font-medium">{dict.admin.members.title}</h2>
-        {rows.length > 0 ? (
-          <MembersTable
-            rows={rows}
-            showChapter={showChapter}
-            scopeQuery={scopeQuery}
-            labels={dict.admin.members}
-            chapterColumn={dict.admin.requests.columns.chapter}
-            table={dict.admin.table}
-            locale={locale}
-          />
-        ) : (
-          <EmptyState icon={MembersIcon}>{dict.admin.members.empty}</EmptyState>
-        )}
-      </section>
-    </>
+  if (rows.length === 0)
+    return (
+      <EmptyState icon={MembersIcon}>{dict.admin.members.empty}</EmptyState>
+    );
+
+  return (
+    <MembersTable
+      rows={rows}
+      showChapter={showChapter}
+      scopeQuery={scopeQuery}
+      labels={dict.admin.members}
+      chapterColumn={dict.admin.requests.columns.chapter}
+      table={dict.admin.table}
+      locale={locale}
+    />
+  );
+}
+
+export async function MemberInvite({ searchParams }: Props) {
+  const { active, dict, locale } = await loadMembers(searchParams);
+  if (active.kind !== "chapter") return null;
+
+  return (
+    <InviteDrawer
+      chapterId={active.chapter.id}
+      chapterName={active.chapter.name}
+      roleLabel={dict.admin.members.columns.role}
+      labels={dict.admin.members.invite}
+      locale={locale}
+    />
   );
 }

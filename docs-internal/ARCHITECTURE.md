@@ -489,9 +489,60 @@ cannot be prerendered, so each one streams behind its own `<Suspense>` and the s
 is just the ground and the content card. `sidebar_state` is deliberately not read in the
 layout: it would make the ground dynamic to save a single frame of animation.
 
-`requireAdminScope` currently scans all countries and all chapters per request (deduped by
-`cache`). That is marked in the source as a known ceiling: at a few hundred chapters it
-should resolve only the scope's own rows instead.
+`requireAdminScope` currently scans all countries and all chapters (deduped by `cache`, and
+held in `"use cache"` under the `admin-scopes` tag, which the chapter and country create /
+update / delete actions expire). That is marked in the source as a known ceiling: at a few
+hundred chapters it should resolve only the scope's own rows instead.
+
+### A session read is cheap: three caches
+
+Every admin pageload prefetches the App Shell of each sidebar link, and each of those renders
+runs the guards, so the session read must not cost a round of queries:
+
+- **better-auth cookie cache** (`session.cookieCache`, 5 min, `strategy: "jwe"`) skips the
+  session and user rows. JWE because the cached user carries name, email and phone number —
+  a signed-only cookie would leave them readable in the cookie jar and device backups.
+  The accepted cost: a ban, a revoked session or a changed `user.role` takes effect within
+  five minutes. Sign-out expires the cache cookie with the session cookie. A Server Component
+  cannot write cookies, so after the cache cookie expires the next action or route handler
+  re-issues it; until then renders fall back to the database.
+- **`buildSessionAccess`** (`customSession` runs it on every read) is `"use cache"`, keyed by
+  user id and global role, tagged by `accessCacheTags` in `lib/cache-tags.ts`:
+  `access:<userId>`, one `access:chapter:<id>` per membership and one `access:country:<id>`
+  per country administered (`access:wide` past 127). Every action that writes a membership or
+  a country-admin row calls `invalidateAccess(...)`: the affected user ids, or the chapter /
+  country ids for a cascade (chapter or country delete). better-auth's own organization and
+  admin endpoints are covered by an after-hook in `lib/auth.ts` (`expireAccess`, i.e.
+  `revalidateTag(..., { expire: 0 })`, since `updateTag` only works in actions). Writes from
+  another process (seed, scripts) are not seen by the tag, so the entry revalidates after
+  60 s and expires after 5 min. `src/lib/access-invalidation.test.ts` pins each action.
+- **Passkey count** for the admin gate is `"use cache"` per user under `passkeys:<userId>`,
+  expired by the same after-hook on `/passkey/verify-registration` and
+  `/passkey/delete-passkey`.
+
+### Instant admin headers
+
+`readActiveScope` awaits `searchParams`, which an App Shell never has, so a page that builds its
+header there shows a skeleton for the whole main area on every sidebar click. The pilot splits
+the page instead: the header and section headings are `"use cache: private"` components
+(`ADMIN_LIFE`, `stale` 300 s, the App Shell threshold) over `adminViewer()`
+(`admin/admin-viewer.ts` — the viewer's chapter and country ids plus the stored scope), and
+the scope-dependent bits (button visibility, tab hrefs) are resolved client-side from
+`useSearchParams()` by `viewerScope` (`admin/_components/viewer-scope.ts`; `chapterId` is set
+only when the active scope is a single chapter, never for a one-chapter country). Data — lists,
+the pools badge, the drawers — stays behind `readActiveScope(searchParams, nav)` in small
+Suspense boundaries passed into the cached header as slots, fed by one React-`cache()`d loader
+per page. `adminViewer` is display only: the data boundary and every action still enforce the
+scope. An uncached `getDictionary()` is not enough for the shell — header text has to come from
+the private-cached component.
+
+Every admin list page follows it (overview, rides, members, passengers, trishaws with its
+three tabs, locations, chapters, countries, reports, settings). What stays a Suspense island
+is what needs scoped data: list rows, KPI tiles, the rides and timeline week switchers
+(chapter time zones), "Neue Rikscha" (manageable locations), the add-passenger drawer
+(dialling country). Chat keeps its data-bound layout, because the title and controls live in
+the shared `features/chat` layout; only its loading state carries the real title. Detail
+pages (`[userId]`, `[rideId]`, …) are unchanged and keep their own `loading.tsx`.
 
 Every admin list renders through one client primitive, `DataTable`
 (`src/components/ui/data-table.tsx`, on `@tanstack/react-table`): search, column filters,
@@ -610,7 +661,7 @@ be a non-empty, printable, ≤512-character path starting `/` and not `//` or `/
 ### Admins must have a passkey (enrollment gate)
 
 A private `ensureAdminPasskey(userId)` in `lib/auth-guards.ts` reads
-`profile.getProfile(id)._count.passkeys` (request-cached) and, at zero, redirects to
+`profile.countPasskeys(id)` (`"use cache"`, tag `passkeys:<userId>`) and, at zero, redirects to
 `/onboarding/passkey?required=1&next=<current path or /admin>`. It runs in `requireAdminScope`,
 `requireSuperAdmin`, `requireCountryAdmin`, `requireChapterAdmin` and
 `requireCountryAdminOfChapter` — **after** the role check, so a pilot who satisfies

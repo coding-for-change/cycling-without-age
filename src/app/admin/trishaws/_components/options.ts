@@ -6,15 +6,6 @@ import { allowsAdmin, type Access } from "@/lib/access";
 import { wordsLocale } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
-import type { AdminTab } from "../../_components/admin-tabs";
-
-export const fleetTabs = (
-  labels: Dictionary["fleet"]["trishaws"]["tabs"],
-): AdminTab[] => [
-  { key: "trishaws", href: "/admin/trishaws", label: labels.trishaws },
-  { key: "models", href: "/admin/trishaws/types", label: labels.models },
-  { key: "timeline", href: "/admin/trishaws/timeline", label: labels.timeline },
-];
 
 export const typeOptions = (
   types: TrishawTypeRow[],

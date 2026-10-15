@@ -1,7 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { invalidateReports } from "@/lib/cache-tags";
+import {
+  invalidateAccess,
+  invalidateAdminScopes,
+  invalidateReports,
+} from "@/lib/cache-tags";
 import { actionFailure } from "@/lib/domain-error";
 import { z } from "zod";
 import {
@@ -57,6 +61,8 @@ export async function createChapterAction(
     return { ok: true, id: chapter.id, slug: chapter.slug, name: chapter.name };
   } catch (error) {
     return failed(error);
+  } finally {
+    invalidateAdminScopes();
   }
 }
 
@@ -81,6 +87,8 @@ export async function updateChapterAction(
     return { ok: true };
   } catch (error) {
     return failed(error);
+  } finally {
+    invalidateAdminScopes();
   }
 }
 
@@ -101,6 +109,9 @@ export async function deleteChapterAction(
     return { ok: true };
   } catch (error) {
     return failed(error);
+  } finally {
+    invalidateAdminScopes();
+    invalidateAccess({ chapterIds: [parsedId.data] });
   }
 }
 

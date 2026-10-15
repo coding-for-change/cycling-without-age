@@ -4,7 +4,10 @@ import { provisionAssistedPassenger } from "@/use-cases/provision-assisted-passe
 import { addAssistedPassenger } from "./actions";
 
 jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }));
-jest.mock("@/lib/cache-tags", () => ({ invalidateReports: jest.fn() }));
+jest.mock("@/lib/cache-tags", () => ({
+  invalidateReports: jest.fn(),
+  invalidateAccess: jest.fn(),
+}));
 jest.mock("@/lib/auth-guards", () => ({
   requireAuth: jest.fn(),
   requireChapterAdmin: jest.fn(),

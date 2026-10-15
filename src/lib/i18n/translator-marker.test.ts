@@ -35,3 +35,12 @@ describe("keyMarker", () => {
     ]);
   });
 });
+
+describe("keyMarker memoization", () => {
+  it("returns the same string for the same key", () => {
+    expect(keyMarker("home.title", "app")).toBe(keyMarker("home.title", "app"));
+    expect(keyMarker("home.title", "app")).not.toBe(
+      keyMarker("home.title", "email"),
+    );
+  });
+});

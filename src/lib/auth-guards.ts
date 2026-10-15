@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { cacheLife, cacheTag } from "next/cache";
 import { cookies, headers } from "next/headers";
 import { forbidden, redirect } from "next/navigation";
 import { setTag, setUser } from "@sentry/nextjs";
@@ -16,6 +17,7 @@ import {
   isSuperAdmin,
   resolveAdminScope,
 } from "@/lib/access";
+import { ADMIN_SCOPES_TAG, passkeysTag } from "@/lib/cache-tags";
 import { HOME_BY_ROLE, NEXT_COOKIE, safeNextPath } from "@/lib/redirects";
 import type { MemberPerspective } from "@/lib/redirects";
 import type {
@@ -60,9 +62,34 @@ function deny(): never {
   forbidden();
 }
 
+async function passkeyCount(userId: string) {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(passkeysTag(userId));
+  return profile.countPasskeys(userId);
+}
+
+async function adminScopeRows() {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(ADMIN_SCOPES_TAG);
+  const [countries, allChapters] = await Promise.all([
+    chapters.listCountryScopes(),
+    chapters.listChapterScopes(),
+  ]);
+  return {
+    countries: countries.map(({ id, code, name }) => ({ id, code, name })),
+    chapters: allChapters.map(({ id, slug, name, countryId }) => ({
+      id,
+      slug,
+      name,
+      countryId,
+    })),
+  };
+}
+
 const ensureAdminPasskey = cache(async (userId: string) => {
-  const account = await profile.getProfile(userId);
-  if ((account?._count.passkeys ?? 0) > 0) return;
+  if ((await passkeyCount(userId)) > 0) return;
 
   const from = (await currentPath()) ?? "/admin";
   redirect(`/onboarding/passkey?required=1&next=${encodeURIComponent(from)}`);
@@ -124,23 +151,11 @@ export const requireAdminScope = cache(
     // request by `cache`. Fine at three chapters; at three hundred, resolve only
     // the scope's own rows (`listChapters(countryId)` per administered country
     // plus the directly-administered ids).
-    const [countries, allChapters] = await Promise.all([
-      chapters.listCountryScopes(),
-      chapters.listChapterScopes(),
-    ]);
+    const rows = await adminScopeRows();
 
     return {
       session,
-      scope: resolveAdminScope(
-        session.access,
-        countries.map(({ id, code, name }) => ({ id, code, name })),
-        allChapters.map(({ id, slug, name, countryId }) => ({
-          id,
-          slug,
-          name,
-          countryId,
-        })),
-      ),
+      scope: resolveAdminScope(session.access, rows.countries, rows.chapters),
     };
   },
 );

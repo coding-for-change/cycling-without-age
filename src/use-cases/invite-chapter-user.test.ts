@@ -42,7 +42,10 @@ beforeEach(() => {
 
 describe("inviteChapterUser", () => {
   it("provisions the account and hands the invitation to membership", async () => {
-    await expect(invite()).resolves.toEqual({ created: true });
+    await expect(invite()).resolves.toEqual({
+      userId: "user-new",
+      created: true,
+    });
 
     expect(provisionUser).toHaveBeenCalledWith({
       name: "Pernille Holm",
@@ -67,7 +70,10 @@ describe("inviteChapterUser", () => {
   it("seeds it into an existing account that never chose one", async () => {
     provisionUser.mockResolvedValue({ userId: "user-old", created: false });
 
-    await expect(invite(["admin"])).resolves.toEqual({ created: false });
+    await expect(invite(["admin"])).resolves.toEqual({
+      userId: "user-old",
+      created: false,
+    });
 
     expect(setLocale).toHaveBeenCalledWith("user-old", "de");
     expect(inviteMember).toHaveBeenCalledWith(

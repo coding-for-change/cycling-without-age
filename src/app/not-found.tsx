@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getDictionary } from "@/lib/i18n";
+import { getBundledDictionary } from "@/lib/i18n";
 
 export default function NotFound() {
   return (
@@ -24,7 +24,7 @@ export default function NotFound() {
 }
 
 async function NotFoundContent() {
-  const dict = await getDictionary();
+  const dict = await getBundledDictionary();
   return (
     <>
       <h1 className="text-2xl font-semibold">{dict.notFound.title}</h1>

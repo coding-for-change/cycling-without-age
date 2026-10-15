@@ -15,7 +15,10 @@ jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }));
 jest.mock("@/lib/auth-guards", () => ({
   requireAuth: jest.fn(async () => session),
 }));
-jest.mock("@/lib/cache-tags", () => ({ invalidateReports: jest.fn() }));
+jest.mock("@/lib/cache-tags", () => ({
+  invalidateReports: jest.fn(),
+  invalidateAccess: jest.fn(),
+}));
 jest.mock("@/use-cases/add-managed-rider", () => ({
   addManagedRider: jest.fn(),
 }));

@@ -1,7 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { invalidateReports } from "@/lib/cache-tags";
+import {
+  expirePasskeys,
+  invalidateAccess,
+  invalidateReports,
+} from "@/lib/cache-tags";
 import { actionFailure } from "@/lib/domain-error";
 import { z } from "zod";
 import {
@@ -71,6 +75,7 @@ export async function decideApplicationAction(
     });
     revalidatePath("/admin", "layout");
     invalidateReports(application.chapterId);
+    invalidateAccess({ userIds: [application.userId] });
     return { ok: true };
   } catch (error) {
     return failed(error);
@@ -93,6 +98,7 @@ export async function changeMemberRoleAction(
     });
     revalidatePath("/admin", "layout");
     invalidateReports(parsed.data.chapterId);
+    invalidateAccess({ userIds: [parsed.data.userId] });
     return { ok: true };
   } catch (error) {
     return failed(error);
@@ -115,6 +121,9 @@ export async function deleteUserAction(
     return { ok: true };
   } catch (error) {
     return failed(error);
+  } finally {
+    invalidateAccess({ userIds: [parsed.data.userId] });
+    expirePasskeys(parsed.data.userId);
   }
 }
 

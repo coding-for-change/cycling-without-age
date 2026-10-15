@@ -1,9 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useId, useMemo, useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UserPlus } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -145,7 +143,7 @@ export function AddPassengerDrawer({
     genders: Record<(typeof GENDERS)[number], string>;
   };
 }) {
-  const { creating: open, openHref, close: clearParam } = useDrawerParam();
+  const { creating: open, close: clearParam } = useDrawerParam();
   const formId = useId();
   const anotherId = useId();
   const [another, setAnother] = useState(false);
@@ -252,100 +250,185 @@ export function AddPassengerDrawer({
   });
 
   return (
-    <>
-      <Button
-        asChild
-        variant="brand"
-        className="min-h-11"
-      >
-        <Link href={openHref}>
-          <UserPlus aria-hidden />
-          {labels.open}
-        </Link>
-      </Button>
-
-      <AdminDrawer
-        open={open}
-        onOpenChange={(next) => {
-          if (!next) close();
-        }}
-        title={labels.title}
-        description={labels.body}
-        footer={
-          <>
-            <div className="mr-auto flex items-center gap-3">
-              <Switch
-                id={anotherId}
-                checked={another}
-                onCheckedChange={setAnother}
-              />
-              <label
-                htmlFor={anotherId}
-                className="grid gap-1"
-              >
-                <span className="text-sm leading-none font-medium">
-                  {labels.another}
-                </span>
-                <span className="text-2sm text-ink-soft">
-                  {labels.anotherHint}
-                </span>
-              </label>
-            </div>
-            <Button
-              type="submit"
-              form={formId}
-              disabled={pending}
-              variant="brand"
-              className="min-h-11"
+    <AdminDrawer
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) close();
+      }}
+      title={labels.title}
+      description={labels.body}
+      footer={
+        <>
+          <div className="mr-auto flex items-center gap-3">
+            <Switch
+              id={anotherId}
+              checked={another}
+              onCheckedChange={setAnother}
+            />
+            <label
+              htmlFor={anotherId}
+              className="grid gap-1"
             >
-              {labels.submit}
-            </Button>
-          </>
-        }
-      >
-        <Form {...form}>
-          <form
-            id={formId}
-            onSubmit={submit}
-            onKeyDown={submitOnCmdEnter}
-            aria-busy={pending}
-            className="grid gap-5"
+              <span className="text-sm leading-none font-medium">
+                {labels.another}
+              </span>
+              <span className="text-2sm text-ink-soft">
+                {labels.anotherHint}
+              </span>
+            </label>
+          </div>
+          <Button
+            type="submit"
+            form={formId}
+            disabled={pending}
+            variant="brand"
+            className="min-h-11"
           >
-            <div className="grid gap-5 sm:grid-cols-2">
-              <TextField
-                control={form.control}
-                name="firstName"
-                label={person.firstName}
-                autoFocus
-                autoComplete="off"
+            {labels.submit}
+          </Button>
+        </>
+      }
+    >
+      <Form {...form}>
+        <form
+          id={formId}
+          onSubmit={submit}
+          onKeyDown={submitOnCmdEnter}
+          aria-busy={pending}
+          className="grid gap-5"
+        >
+          <div className="grid gap-5 sm:grid-cols-2">
+            <TextField
+              control={form.control}
+              name="firstName"
+              label={person.firstName}
+              autoFocus
+              autoComplete="off"
+            />
+            <TextField
+              control={form.control}
+              name="lastName"
+              label={person.lastName}
+              autoComplete="off"
+            />
+            <TextField
+              control={form.control}
+              name="birthDate"
+              label={person.birthDate}
+              type="date"
+              max={new Date().toISOString().slice(0, 10)}
+            />
+            <FormField
+              control={form.control}
+              name="gender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{person.gender}</FormLabel>
+                  <FormControl>
+                    <NativeSelect
+                      value={field.value ?? ""}
+                      onChange={(event) => field.onChange(event.target.value)}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      wrapperClassName="w-full"
+                      className="h-11 border-line text-base"
+                    >
+                      <NativeSelectOption
+                        value=""
+                        disabled
+                      >
+                        —
+                      </NativeSelectOption>
+                      {GENDERS.map((option) => (
+                        <NativeSelectOption
+                          key={option}
+                          value={option}
+                        >
+                          {person.genders[option]}
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelect>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="sm:col-span-2">
+              <PickupField
+                value={pickup}
+                onChange={(next) => {
+                  setPickupMissing(false);
+                  setPickup(next);
+                }}
+                strings={pickupStrings}
+                invalid={pickupMissing}
+                language={locale}
               />
-              <TextField
+            </div>
+            {withHelper ? null : (
+              <div className="sm:col-span-2">
+                <TextField
+                  control={form.control}
+                  name="contact"
+                  label={labels.contact}
+                  autoComplete="off"
+                />
+              </div>
+            )}
+          </div>
+
+          <FormField
+            control={form.control}
+            name="withHelper"
+            render={({ field }) => (
+              <FormItem className="flex min-h-11 flex-row items-center gap-3">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={(checked) =>
+                      field.onChange(checked === true)
+                    }
+                    className="size-5 border-line data-[state=checked]:border-mint-deep data-[state=checked]:bg-mint-deep"
+                  />
+                </FormControl>
+                <FormLabel className="font-normal">{labels.helper}</FormLabel>
+              </FormItem>
+            )}
+          />
+
+          {withHelper ? (
+            <div className="grid gap-5 rounded-2xl bg-canvas-deep p-4 sm:grid-cols-2">
+              <FormField
                 control={form.control}
-                name="lastName"
-                label={person.lastName}
-                autoComplete="off"
-              />
-              <TextField
-                control={form.control}
-                name="birthDate"
-                label={person.birthDate}
-                type="date"
-                max={new Date().toISOString().slice(0, 10)}
+                name="helperName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{labels.helperName}</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        autoComplete="off"
+                        className="h-11 border-line bg-canvas text-base"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
               <FormField
                 control={form.control}
-                name="gender"
+                name="helperRelationship"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{person.gender}</FormLabel>
+                    <FormLabel>{labels.helperRelationship}</FormLabel>
                     <FormControl>
                       <NativeSelect
-                        value={field.value ?? ""}
+                        value={field.value}
                         onChange={(event) => field.onChange(event.target.value)}
                         onBlur={field.onBlur}
                         name={field.name}
                         wrapperClassName="w-full"
-                        className="h-11 border-line text-base"
+                        className="h-11 border-line bg-canvas text-base"
                       >
                         <NativeSelectOption
                           value=""
@@ -353,12 +436,12 @@ export function AddPassengerDrawer({
                         >
                           —
                         </NativeSelectOption>
-                        {GENDERS.map((option) => (
+                        {Object.entries(relationships).map(([value, label]) => (
                           <NativeSelectOption
-                            key={option}
-                            value={option}
+                            key={value}
+                            value={value}
                           >
-                            {person.genders[option]}
+                            {label}
                           </NativeSelectOption>
                         ))}
                       </NativeSelect>
@@ -368,56 +451,12 @@ export function AddPassengerDrawer({
                 )}
               />
               <div className="sm:col-span-2">
-                <PickupField
-                  value={pickup}
-                  onChange={(next) => {
-                    setPickupMissing(false);
-                    setPickup(next);
-                  }}
-                  strings={pickupStrings}
-                  invalid={pickupMissing}
-                  language={locale}
-                />
-              </div>
-              {withHelper ? null : (
-                <div className="sm:col-span-2">
-                  <TextField
-                    control={form.control}
-                    name="contact"
-                    label={labels.contact}
-                    autoComplete="off"
-                  />
-                </div>
-              )}
-            </div>
-
-            <FormField
-              control={form.control}
-              name="withHelper"
-              render={({ field }) => (
-                <FormItem className="flex min-h-11 flex-row items-center gap-3">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={(checked) =>
-                        field.onChange(checked === true)
-                      }
-                      className="size-5 border-line data-[state=checked]:border-mint-deep data-[state=checked]:bg-mint-deep"
-                    />
-                  </FormControl>
-                  <FormLabel className="font-normal">{labels.helper}</FormLabel>
-                </FormItem>
-              )}
-            />
-
-            {withHelper ? (
-              <div className="grid gap-5 rounded-2xl bg-canvas-deep p-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
-                  name="helperName"
+                  name="helperContact"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{labels.helperName}</FormLabel>
+                      <FormLabel>{labels.helperContact}</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -429,83 +468,25 @@ export function AddPassengerDrawer({
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="helperRelationship"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{labels.helperRelationship}</FormLabel>
-                      <FormControl>
-                        <NativeSelect
-                          value={field.value}
-                          onChange={(event) =>
-                            field.onChange(event.target.value)
-                          }
-                          onBlur={field.onBlur}
-                          name={field.name}
-                          wrapperClassName="w-full"
-                          className="h-11 border-line bg-canvas text-base"
-                        >
-                          <NativeSelectOption
-                            value=""
-                            disabled
-                          >
-                            —
-                          </NativeSelectOption>
-                          {Object.entries(relationships).map(
-                            ([value, label]) => (
-                              <NativeSelectOption
-                                key={value}
-                                value={value}
-                              >
-                                {label}
-                              </NativeSelectOption>
-                            ),
-                          )}
-                        </NativeSelect>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="sm:col-span-2">
-                  <FormField
-                    control={form.control}
-                    name="helperContact"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{labels.helperContact}</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            autoComplete="off"
-                            className="h-11 border-line bg-canvas text-base"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div
-                  role="status"
-                  className="grid gap-1.25 rounded-xl bg-mint-tint px-3 py-2.75 text-sm text-ink sm:col-span-2"
-                >
-                  <p className="font-medium">{labels.helperNext.title}</p>
-                  <ul className="grid list-disc gap-1.25 pl-5">
-                    <li>
-                      {formatMessage(labels.helperNext.existing, next, locale)}
-                    </li>
-                    <li>
-                      {formatMessage(labels.helperNext.fresh, next, locale)}
-                    </li>
-                  </ul>
-                </div>
               </div>
-            ) : null}
-          </form>
-        </Form>
-      </AdminDrawer>
-    </>
+              <div
+                role="status"
+                className="grid gap-1.25 rounded-xl bg-mint-tint px-3 py-2.75 text-sm text-ink sm:col-span-2"
+              >
+                <p className="font-medium">{labels.helperNext.title}</p>
+                <ul className="grid list-disc gap-1.25 pl-5">
+                  <li>
+                    {formatMessage(labels.helperNext.existing, next, locale)}
+                  </li>
+                  <li>
+                    {formatMessage(labels.helperNext.fresh, next, locale)}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          ) : null}
+        </form>
+      </Form>
+    </AdminDrawer>
   );
 }

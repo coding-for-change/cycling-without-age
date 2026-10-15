@@ -25,6 +25,7 @@ import { phoneTempEmail } from "@/lib/identity";
 import { buildSessionAccess } from "@/use-cases/build-session-access";
 import { ORG_NAME } from "@/lib/brand";
 import { authEventKind } from "@/lib/auth-events";
+import { expireAccess, expirePasskeys } from "@/lib/cache-tags";
 import { logDomainEvent } from "@/lib/observability/logger";
 import { web } from "@/lib/observability/metrics";
 
@@ -59,6 +60,26 @@ const passkeyOrigins = (process.env.PASSKEY_ANDROID_ORIGINS ?? "")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+const PASSKEY_WRITES = new Set([
+  "/passkey/verify-registration",
+  "/passkey/delete-passkey",
+]);
+
+const ACCESS_WRITES = new Set([
+  "/organization/leave",
+  "/organization/remove-member",
+  "/organization/update-member-role",
+  "/organization/add-member",
+  "/organization/accept-invitation",
+  "/organization/delete",
+  "/admin/remove-user",
+]);
+
+const bodyId = (body: unknown, key: string) => {
+  const value = (body as Record<string, unknown> | null | undefined)?.[key];
+  return typeof value === "string" ? value : null;
+};
+
 export const auth = betterAuth({
   appName: ORG_NAME,
   database: prismaAdapter(prisma, { provider: "mysql" }),
@@ -66,14 +87,28 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 90,
     updateAge: 60 * 60 * 24,
+    cookieCache: { enabled: true, maxAge: 5 * 60, strategy: "jwe" },
   },
   hooks: {
     after: createAuthMiddleware(async (ctx) => {
+      const failed = ctx.context.returned instanceof APIError;
       web.authEvents.inc({
         kind: authEventKind(ctx.path),
-        outcome:
-          ctx.context.returned instanceof APIError ? "failure" : "success",
+        outcome: failed ? "failure" : "success",
       });
+      if (failed) return;
+
+      const session = ctx.context.session;
+      if (PASSKEY_WRITES.has(ctx.path) && session)
+        expirePasskeys(session.user.id);
+      if (ACCESS_WRITES.has(ctx.path))
+        expireAccess({
+          userIds: [session?.user.id, bodyId(ctx.body, "userId")],
+          chapterIds: [
+            bodyId(ctx.body, "organizationId"),
+            session?.session.activeOrganizationId ?? null,
+          ].filter((id): id is string => Boolean(id)),
+        });
     }),
   },
   databaseHooks: {
