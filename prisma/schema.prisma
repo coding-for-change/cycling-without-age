@@ -67,6 +67,8 @@ model User {
   chatReactions        ChatReaction[]
   rideAssignments      RideAssignment[]     @relation("rideAssignee")
   rideAssignmentsMade  RideAssignment[]     @relation("rideAssigner")
+  rideRequests         RideRequest[]        @relation("rideRequester")
+  rideRequestsDecided  RideRequest[]        @relation("rideRequestDecider")
   rideBookingsMade     RideRosterEntry[]    @relation("rideBooker")
   ridesCancelled       Ride[]               @relation("rideCanceller")
   rideLogEntries       RideLogEntry[]       @relation("rideLogActor")
@@ -192,6 +194,7 @@ model Organization {
   rideLocations    RideLocation[]
   operatingWindows ChapterOperatingWindow[]
   closures         ChapterClosure[]
+  rideRequests     RideRequest[]
 
   @@unique([slug])
   @@index([countryId])
@@ -294,7 +297,17 @@ model ChapterSettings {
   /// How far ahead of a ride an understaffed ride is flagged, and a pilot can no longer withdraw.
   staffingCheckLeadHours Int     @default(48)
 
+  /// Whether a Ride Request waits for an admin or becomes a ride when a trishaw is free.
+  schedulingMethod SchedulingMethod @default(scheduler)
+  /// Admins get a push for each new Ride Request.
+  requestAlertPush Boolean          @default(true)
+
   @@map("chapter_settings")
+}
+
+enum SchedulingMethod {
+  scheduler
+  auto
 }
 
 model ChapterOperatingWindow {
@@ -360,7 +373,7 @@ model Passenger {
   chapterId       String
   chapter         Organization @relation(fields: [chapterId], references: [id], onDelete: Cascade)
   managedByUserId String
-  managedBy       User         @relation("manages", fields: [managedByUserId], references: [id], onDelete: Cascade)
+  managedBy       User         @relation("manages", fields: [managedByUserId], references: [id], onDelete: Restrict)
   userId          String?      @unique
   user            User?        @relation("self", fields: [userId], references: [id], onDelete: SetNull)
 
@@ -380,8 +393,9 @@ model Passenger {
   updatedAt DateTime @updatedAt
 
   rideRoster   RideRosterEntry[]
-  profile      PersonProfile?    @relation("profileOfPassenger")
+  profile      PersonProfile?         @relation("profileOfPassenger")
   careRequests CareRequest[]
+  rideRequests RideRequestPassenger[]
 
   rideLocationId      String?
   rideLocation        RideLocation? @relation(fields: [rideLocationId], references: [id], onDelete: SetNull)
@@ -503,6 +517,7 @@ enum ActivityType {
   chapterUpdated
   chapterDeleted
   countryDeleted
+  riderHandedOver
 }
 
 model ActivityEvent {
@@ -838,6 +853,7 @@ model TrishawType {
   archivedAt           DateTime?
   createdByUserId      String?
   trishaws             Trishaw[]
+  rideRequests         RideRequest[]
   photos               TrishawTypePhoto[]
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
@@ -1079,6 +1095,8 @@ model Ride {
   rideLocationId String?
   rideLocation   RideLocation? @relation(fields: [rideLocationId], references: [id], onDelete: SetNull)
 
+  request RideRequest?
+
   @@index([chapterId, startsAt])
   @@index([status, startsAt])
   @@index([seriesId])
@@ -1115,8 +1133,9 @@ model RideLocation {
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
 
-  rides      Ride[]
-  passengers Passenger[]
+  rides        Ride[]
+  passengers   Passenger[]
+  rideRequests RideRequest[]
 
   @@index([chapterId, archivedAt])
   @@map("ride_location")
@@ -1225,4 +1244,83 @@ model CalendarFeed {
   updatedAt     DateTime  @updatedAt
 
   @@map("calendar_feed")
+}
+
+enum RideRequestStatus {
+  pending
+  scheduled
+  declined
+  withdrawn
+}
+
+/// Lifecycle phase 1: a rider, or the account booking for them, asks the
+/// chapter for a ride. The chapter schedules it (the ride's way there is
+/// `rideId`, the way back hangs off that ride) or declines it.
+model RideRequest {
+  id        String            @id @default(cuid())
+  chapterId String
+  chapter   Organization      @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  status    RideRequestStatus @default(pending)
+  model     RideModel
+
+  /// Null for a request taken without an account, once guest intake exists.
+  requesterUserId String?
+  requester       User?   @relation("rideRequester", fields: [requesterUserId], references: [id], onDelete: SetNull)
+  contactName     String? @db.VarChar(120)
+  contactPhone    String? @db.VarChar(40)
+  contactEmail    String? @db.VarChar(254)
+
+  rideLocationId  String?
+  rideLocation    RideLocation? @relation(fields: [rideLocationId], references: [id], onDelete: SetNull)
+  pickupName      String?       @db.VarChar(160)
+  pickupAddress   String?       @db.Text
+  pickupLatitude  Float?
+  pickupLongitude Float?
+
+  destinationName      String? @db.VarChar(160)
+  destinationAddress   String? @db.Text
+  destinationLatitude  Float?
+  destinationLongitude Float?
+  roundTrip            Boolean @default(true)
+
+  /// The window asked for, as instants of the chapter's wall clock.
+  requestedStartsAt DateTime
+  requestedEndsAt   DateTime
+
+  trishawTypeId String?
+  trishawType   TrishawType? @relation(fields: [trishawTypeId], references: [id], onDelete: SetNull)
+  note          String?      @db.Text
+
+  decidedByUserId String?
+  decidedBy       User?     @relation("rideRequestDecider", fields: [decidedByUserId], references: [id], onDelete: SetNull)
+  decidedAt       DateTime?
+  decisionNote    String?   @db.Text
+
+  /// The way there. A round trip's way back is that ride's `returnLeg`.
+  rideId String? @unique
+  ride   Ride?   @relation(fields: [rideId], references: [id], onDelete: SetNull)
+
+  passengers RideRequestPassenger[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([chapterId, status, requestedStartsAt])
+  @@index([requesterUserId, createdAt])
+  @@index([rideLocationId])
+  @@index([trishawTypeId])
+  @@index([decidedByUserId])
+  @@map("ride_request")
+}
+
+model RideRequestPassenger {
+  requestId   String
+  request     RideRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  passengerId String
+  passenger   Passenger   @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  position    Int         @default(0)
+
+  @@id([requestId, passengerId])
+  @@index([passengerId])
+  @@map("ride_request_passenger")
 }
