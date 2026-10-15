@@ -211,7 +211,7 @@ Neither writes a `Delivery` row — chat has no inbox row to hang one off. Inste
 …), which Bull Board shows as the job's return value, so a quiet mailbox can be explained
 from the `email` queue's *completed* tab.
 
-## Rides: events and who hears them (COD-258, COD-259, COD-262)
+## Rides: events and who hears them (COD-258, COD-259, COD-262, COD-263)
 
 Every write in `features/rides/facade.ts` emits exactly one event per ride it changes, inside
 the same transaction as the write and its `RideLogEntry`. The payload is ids and facts only,
@@ -226,11 +226,16 @@ the worker):
 | `ride.deleted` | — | `deleteRide`, once per leg it deletes (a cancelled other leg of a round trip goes too); the ride's history goes with it, so this row is what records who deleted it |
 | `ride.pilotAssigned` | `userId`, `self` | `assignVolunteer`, `selfAssign` (per leg it takes: signing up for a round trip takes the other leg too while it still needs a pilot) |
 | `ride.pilotUnassigned` | `userId`, `self` | `unassignVolunteer`, `withdraw` (per leg it leaves: stepping back from a round trip leaves the other leg too while it is outside the staffing window) |
-| `ride.riderBooked` | `passengerId` | `bookRider` |
-| `ride.riderRemoved` | `passengerId`, `self` (the rider's own account gave the seat up) | `cancelBooking` |
+| `ride.riderBooked` | `passengerId` | `bookRider`, `bookSeats`, and `confirmSeat` when it takes back a seat given up |
+| `ride.riderRemoved` | `passengerId`, `self` (the rider's own account gave the seat up), `rosterNowEmpty` (nobody is left to ride), `pair` | `cancelBooking` (an admin takes the rider off, the row goes), `cancelSeat` (the rider's side gives the seat up, the row stays as `cancelled`; per leg of a round trip it leaves) |
 | `ride.opened` | — | `scheduleRide`, per leg, when the chapter lets pilots sign up and the ride is still ahead and short of pilots |
 | `ride.understaffed` | `assigned`, `required` | `checkStaffing` (the worker's staffing check), once per ride, with `actorUserId: null`; the way there checks its way back along |
 | `ride.announced` | — | `scheduleRide` with `announced`, `setAnnounced` when it is switched on the first time; only for an event still ahead |
+| `ride.riderReminderDue` | `pair` | `sendReminder("riderReminderSentAt")` (the worker's rider reminder), once per ride, with `actorUserId: null`; stamped in the same transaction |
+| `ride.volunteerReminderDue` | `pair` | `sendReminder("volunteerReminderSentAt")` (the worker's pilot reminder), likewise |
+| `ride.noDemand` | `pair` | `checkDemand` (the worker's demand check, 4C), once per ride whose roster is empty inside the chapter's `demandCheckLeadHours` |
+| `ride.completed` | `riders`, `noShows` | `closeRoster` (6D): the roster is closed and the ride counts |
+| `ride.reopened` | — | `reopenRide`: an admin takes a closed roster back |
 
 `self` is true when the pilot acted for themself: `selfAssign` and `withdraw` emit
 `ride.pilotAssigned` / `ride.pilotUnassigned` with `self: true`, and `bookSeats` emits one
@@ -259,6 +264,23 @@ PR 5 added four more, in `kinds/staffing.ts`, and widened `ridePilotAssigned`:
 | `ridePilotWithdrew` | `ride.pilotUnassigned` with `self` | chapter admins minus the actor | push, mail if no push, opt-out-able | `/admin/rides/{id}` |
 | `rideAnnounced` | `ride.announced` | the accounts behind the chapter's riders, minus the actor | push, mail if no push, opt-out-able | `/passenger/rides/{id}` |
 
+PR 6 added three more, in `kinds/reminders.ts`, and widened `rideBookingCancelled`:
+
+| Kind | Event | Who hears it | Policy | Link |
+| --- | --- | --- | --- | --- |
+| `rideRiderReminder` | `ride.riderReminderDue` | the accounts behind the ride's riders still holding a seat, on either leg (5B-b): "Confirm or cancel the seat" | push, mail always, essential | `/passenger/rides/{id}` |
+| `ridePilotReminder` | `ride.volunteerReminderDue` | the ride's pilots still piloting in its chapter (stories 29, 30), with each trishaw and where it waits — never the access code | push, mail if no push, essential | `/pilot/rides/{id}` |
+| `rideNoDemand` | `ride.noDemand` | chapter admins: flag for cancellation (4C) | push, mail if no push | `/admin/rides/{id}` |
+| `rideBookingCancelled` | `ride.riderRemoved` with `self` **or** `rosterNowEmpty` | chapter admins minus the actor; "every rider has cancelled" when nobody is left (5B-b) | push, mail if no push, opt-out-able | `/admin/rides/{id}` |
+
+**Every reminder is its own event.** A `Notification` is unique per event and reader, so a
+reminder cannot ride on an existing event; the marker (`riderReminderSentAt`,
+`volunteerReminderSentAt`, `demandCheckedAt`) is stamped in the same `transaction()` as the
+emit under the ride's lock, so neither a retried sweep nor a retried dispatch tells anyone
+twice. Moving a ride clears all three, and the reminders go again for its new time.
+`ride.completed` and `ride.reopened` have no listener: the chat freezes in
+`use-cases/complete-ride.ts` itself.
+
 **A ride already over is history.** `ridePilotAssigned`, `rideBookingConfirmed` and
 `rideBookingCancelled` tell nobody when the ride has ended (`rideNotOver`), so an admin
 recording last Monday's crew and riders doesn't send "you're piloting on Monday".
@@ -279,7 +301,8 @@ again and syncs every ride chat of the chapter they are in (`use-cases/leave-rid
 there with the way back, moving the way there (which moves the way back), or scheduling a
 round trip with riders and pilots, or a pilot signing up for or stepping back from both legs —
 each leg still emits its own event, but `ride.cancelled`, `ride.rescheduled`, `ride.riderBooked`,
-`ride.pilotAssigned`, `ride.pilotUnassigned`, `ride.opened` and `ride.understaffed` carry a `pair`: the way there's
+`ride.riderRemoved`, `ride.pilotAssigned`, `ride.pilotUnassigned`, `ride.opened`, `ride.understaffed`,
+`ride.riderReminderDue`, `ride.volunteerReminderDue` and `ride.noDemand` carry a `pair`: the way there's
 event is `{ role: "lead", otherRideId }` and the way back's `{ role: "follow", otherRideId }`.
 A kind sends nothing for a follower, and the lead's message says "and the way back" and goes
 to everyone on either leg. `pair` defaults to `null`, so events stored before it parse as
