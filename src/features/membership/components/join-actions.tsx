@@ -6,7 +6,7 @@ import {
   applyToChaptersAsPilot,
   joinChapterAsPassenger,
   type MembershipActionResult,
-} from "@/features/membership/actions";
+} from "../actions";
 import { haptics } from "@/lib/native/haptics";
 import { Button } from "@/components/ui/button";
 

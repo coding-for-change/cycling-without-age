@@ -12,7 +12,7 @@ import { getDictionary } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BookRideCta } from "./_components/book-ride-cta";
-import { JoinActions } from "./_components/join-actions";
+import { JoinActions } from "@/features/membership/components/join-actions";
 
 type Params = { params: Promise<{ slug: string }> };
 
