@@ -427,7 +427,7 @@ export type DebriefData = z.output<typeof debriefInput>;
  * rather than guessed at.
  */
 export function parseDecimal(raw: string): number | null {
-  const text = raw.trim().replace(/\s/g, "");
+  const text = raw.trim();
   if (!text) return null;
   if (!/^\d+([.,]\d{1,2})?$/.test(text)) return Number.NaN;
   return Number(text.replace(",", "."));
