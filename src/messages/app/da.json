@@ -940,6 +940,25 @@
         "placeholder": "Sæt laderen i, tør sædet af, og læg nøglen tilbage i boksen.",
         "title": "Efter turen"
       },
+      "reminders": {
+        "body": "Hvornår passagerer og piloter bliver mindet om en tur, og hvornår en tur uden bookinger bliver meldt.",
+        "demand": {
+          "hint": "Admins får besked om en tur uden passagerer, så den kan aflyses i tide.",
+          "label": "Meld tomme ture"
+        },
+        "hours": "{count, plural, one {# time før} other {# timer før}}",
+        "minutes": "{count, plural, one {# minut før} other {# minutter før}}",
+        "days": "{count, plural, one {# dag før} other {# dage før}}",
+        "rider": {
+          "hint": "Kontoen bag hver passager bliver bedt om at bekræfte pladsen eller give den fri.",
+          "label": "Påmind passagerer"
+        },
+        "title": "Påmindelser",
+        "volunteer": {
+          "hint": "Piloterne får turen igen, med hvor rickshawen skal hentes.",
+          "label": "Påmind piloter"
+        }
+      },
       "staffing": {
         "body": "Hvordan piloter finder ture, og hvornår du hører om en tur, der stadig mangler piloter.",
         "lead": {
@@ -1066,6 +1085,7 @@
         "body": "Dine chats står til venstre. Åbn en — eller start en ny med nogen fra din afdeling.",
         "title": "Vælg en samtale"
       },
+      "rideBadge": "Tur",
       "search": "Søg i navne og grupper",
       "title": "Chat",
       "unreads": "Ulæste",
@@ -1107,7 +1127,9 @@
       "deleted": "Besked slettet",
       "edited": "redigeret",
       "frozen": {
-        "body": "Den lukkede, da turen sluttede. I kan begge tage den op igen.",
+        "body": "Den lukkede, da turen blev afsluttet. Alle her kan tage den op igen.",
+        "continued": "Chatten er åben igen.",
+        "keepChatting": "Skriv videre",
         "title": "Denne chat er slut"
       },
       "jumpToLatest": "Spring til den nyeste",
@@ -2001,6 +2023,38 @@
         "volunteers": "Vi kunne desværre ikke finde en pilot til turen. Det er vi kede af.",
         "weather": "Vejret er ikke med os denne gang, og vi vil hellere holde dig varm og tør."
       },
+      "seat": {
+        "cancel": {
+          "body": "Afdelingen kan så tilbyde pladsen til en anden. Du kan tage den tilbage her, så længe der er plads.",
+          "cancel": "Behold pladsen",
+          "confirm": "Giv pladsen fri",
+          "done": "Pladsen er givet fri. Afdelingen ved besked.",
+          "label": "Aflys min plads",
+          "title": "Giv {name}s plads fri?"
+        },
+        "confirm": "Bekræft pladsen",
+        "confirmed": "Pladsen er bekræftet. Vi ses!",
+        "errors": {
+          "pleasureLimit": "Turen er fuld igen. Din afdeling hjælper gerne.",
+          "rateLimited": "Det var meget på én gang. Vent et øjeblik, og prøv igen.",
+          "rideClosed": "Turen er begyndt, så pladsen kan ikke ændres længere.",
+          "rideFull": "Turen er fuld igen. Din afdeling hjælper gerne.",
+          "riderNotInChapter": "Denne passager kører med en anden afdeling.",
+          "unknownPassenger": "Det er ikke en passager, du booker for.",
+          "unknownRide": "Turen findes ikke længere."
+        },
+        "hint": "Bekræft hver plads – eller giv den fri, hvis planerne har ændret sig, så en anden kan køre med.",
+        "retake": "Tag pladsen tilbage",
+        "retaken": "Pladsen er taget tilbage. Vi ses!",
+        "states": {
+          "booked": "Ikke bekræftet endnu",
+          "cancelled": "Pladsen er givet fri",
+          "checkedIn": "Tjekket ind",
+          "completed": "Kørte med",
+          "confirmed": "Bekræftet",
+          "noShow": "Kørte ikke med"
+        }
+      },
       "write": "Skriv en mail"
     }
   },
@@ -2330,12 +2384,17 @@
     },
     "history": {
       "cancelled": "{who, select, you {Du} other {{actor}}} aflyste turen",
+      "checkInUndone": "{who, select, you {Du} other {{actor}}} fortrød {name}s indtjekning",
+      "checkedIn": "{who, select, you {Du} other {{actor}}} tjekkede {name} ind",
+      "completed": "{who, select, you {Du} other {{actor}}} afsluttede turen",
+      "completedTally": "{riders, plural, one {# passager} other {# passagerer}} kørte med, {noShows, plural, =0 {ingen udeblevne} one {# udeblevet} other {# udeblevne}}",
       "composer": {
         "added": "Kommentar tilføjet.",
         "label": "Kommentar",
         "placeholder": "Tilføj en kommentar til historikken – f.eks. passageren ønskede et tæppe",
         "submit": "Kommentér"
       },
+      "debriefed": "{who, select, you {Du} other {{actor}}} skrev en opsamling",
       "edited": "{who, select, you {Du} other {{actor}}} ændrede {fields}",
       "fields": {
         "announced": "om passagerer kan booke",
@@ -2351,9 +2410,12 @@
       "formerMember": "et tidligere medlem",
       "note": "{who, select, you {Du} other {{actor}}} kommenterede",
       "pilotAssigned": "{who, select, you {Du} other {{actor}}} satte {name} på som pilot",
+      "pilotNoShow": "{who, select, you {Du} other {{actor}}} markerede {name} som udeblevet",
+      "pilotShowed": "{who, select, you {Du} other {{actor}}} markerede, at {name} kørte",
       "pilotSignedUp": "{name} meldte sig som pilot",
       "pilotSteppedBack": "{name} meldte fra som pilot",
       "pilotUnassigned": "{who, select, you {Du} other {{actor}}} tog {name} af som pilot",
+      "reopened": "{who, select, you {Du} other {{actor}}} genåbnede turen",
       "rescheduled": "{who, select, you {Du} other {{actor}}} flyttede turen",
       "rescheduledWithLeg": "{who, select, you {Du} other {{actor}}} flyttede turen sammen med udturen",
       "riderBooked": "{who, select, you {Du} other {{actor}}} bookede {name}",
@@ -2361,9 +2423,13 @@
       "rosterReordered": "{who, select, you {Du} other {{actor}}} ændrede passagerernes rækkefølge",
       "scheduled": "{who, select, you {Du} other {{actor}}} planlagde turen",
       "scheduledReturn": "{who, select, you {Du} other {{actor}}} planlagde turen som hjemtur",
+      "seatCancelled": "{who, select, you {Du} other {{actor}}} gav {name}s plads fri",
+      "seatConfirmed": "{who, select, you {Du} other {{actor}}} bekræftede {name}s plads",
       "trishawsAdded": "Tilføjet: {names}",
       "trishawsChanged": "{who, select, you {Du} other {{actor}}} ændrede rickshawerne",
-      "trishawsRemoved": "Fjernet: {names}"
+      "trishawsRemoved": "Fjernet: {names}",
+      "walkUpAdded": "{who, select, you {Du} other {{actor}}} tilføjede {name}, der dukkede op",
+      "walkUpRemoved": "{who, select, you {Du} other {{actor}}} fjernede en, der var tilføjet på stedet"
     },
     "reasons": {
       "equipment": "Problem med rickshawen",
@@ -2477,6 +2543,121 @@
       "retry": "Prøv igen",
       "end": "Det er alt, der er booket indtil videre.",
       "ridersOf": "{count} af {capacity} pladser optaget"
+    },
+    "execution": {
+      "addWalkUp": "Tilføj en, der dukker op",
+      "attendance": {
+        "booked": "Booket",
+        "cancelled": "Har meldt fra",
+        "checkedIn": "Tjekket ind",
+        "completed": "Kørte med",
+        "confirmed": "Bekræftet",
+        "noShow": "Mødte ikke op"
+      },
+      "checkIn": "Indtjekning",
+      "checkInHint": "Tryk på hver passager, når de kommer. Den, der ikke er tjekket ind, når turen afsluttes, tæller som udeblevet.",
+      "checkInLabel": "Tjek {name} ind",
+      "checkInOpens": "Indtjekningen åbner to timer før turen.",
+      "checkedIn": "{name} er tjekket ind",
+      "checkedInCount": "{count} af {total} tjekket ind",
+      "complete": {
+        "body": "Det lukker listen og tæller turen: {tally}. Passagerer, der ikke er tjekket ind, tæller som udeblevne, og chatten til turen afsluttes.",
+        "cancel": "Ikke endnu",
+        "confirm": "Afslut turen",
+        "done": "Turen er afsluttet. Tak!",
+        "label": "Afslut turen",
+        "title": "Afslut turen?"
+      },
+      "completed": "Afsluttet",
+      "completedBy": "Afsluttet af {name}",
+      "debrief": {
+        "bikeCondition": "Rickshawens stand",
+        "bikePoor": "Er noget gået i stykker? Meld det ved rickshawen ovenfor, så det bliver lavet før næste tur.",
+        "by": "{name}s opsamling",
+        "cooperation": "Samarbejdet med plejehjemmet",
+        "cooperationHint": "Kun for en tur med et plejehjem eller en anden institution.",
+        "distance": "Kørt distance",
+        "distanceHint": "I kilometer, som målt undervejs.",
+        "donation": "Modtagne donationer",
+        "donationHint": "Giv dem til afdelingen. Tælles i {currency}.",
+        "donationHintNoCurrency": "Giv dem til afdelingen.",
+        "hint": "Et par linjer til afdelingen. Du kan ændre dem senere.",
+        "invalidNumber": "Skriv et tal, fx 12,5.",
+        "kilometres": "{km} km",
+        "none": "Ingen opsamling endnu.",
+        "note": "Andet",
+        "notePlaceholder": "Hvordan gik det? Er der noget, afdelingen skal vide?",
+        "ratings": {
+          "fair": "Nogenlunde",
+          "good": "God",
+          "poor": "Dårlig"
+        },
+        "save": "Gem opsamling",
+        "saved": "Opsamlingen er gemt. Tak!",
+        "saving": "Gemmer…",
+        "someone": "En tidligere pilot",
+        "title": "Opsamling",
+        "titleMany": "Opsamlinger",
+        "unset": "Ikke angivet"
+      },
+      "errors": {
+        "checkInClosed": "Indtjekningen er åben fra to timer før turen til en dag efter.",
+        "notAssigned": "Den pilot er ikke på turen.",
+        "pleasureLimit": "Turen er fuld.",
+        "rateLimited": "Det var meget på én gang. Vent et øjeblik, og prøv igen.",
+        "rideClosed": "Turen er lukket.",
+        "rideFull": "Turen er fuld.",
+        "rideNotCompleted": "Turen er ikke afsluttet.",
+        "rideNotStarted": "Turen er ikke begyndt endnu.",
+        "unknownPassenger": "Den passager er ikke længere på turen.",
+        "unknownRide": "Turen findes ikke længere."
+      },
+      "noRiders": "Ingen på listen endnu. Tilføj dem, der dukker op.",
+      "onTheDay": "På dagen",
+      "onTheDayHint": "Hvem kom, hvem kørte, og afslutningen af listen.",
+      "pilotAttendance": {
+        "completed": "Kørte",
+        "noShow": "Mødte ikke op",
+        "signedUp": "Tilmeldt"
+      },
+      "pilotNoShow": "Kom ikke",
+      "pilotNoShowLabel": "{name} kom ikke",
+      "pilotNoShowMarked": "{name} er markeret som udeblevet",
+      "pilotNoShowCleared": "{name} kørte alligevel",
+      "pilots": "Piloter",
+      "removeWalkUp": "Fjern {name}",
+      "reopen": {
+        "body": "Listen åbner igen, så du kan rette, hvem der kørte med. Turen tæller ikke, før den er afsluttet igen.",
+        "cancel": "Lad den være afsluttet",
+        "confirm": "Genåbn",
+        "done": "Turen er genåbnet",
+        "label": "Genåbn turen",
+        "title": "Genåbn denne tur?"
+      },
+      "riders": "Passagerer",
+      "tally": "{riders, plural, one {# passager tjekket ind} other {# passagerer tjekket ind}}, {trishaws, plural, =0 {ingen rickshaw} one {# rickshaw} other {# rickshaws}}, {duration}",
+      "undo": "Fortryd",
+      "undoCheckIn": "Fortryd indtjekning af {name}",
+      "undone": "Indtjekning fortrudt",
+      "walkUp": {
+        "added": "{name} kører med",
+        "body": "Skriv en på, der dukkede op uden booking. De bliver tjekket ind med det samme.",
+        "badge": "Dukkede op",
+        "firstName": "Fornavn",
+        "lastName": "Efternavn",
+        "removed": "{name} kører ikke med",
+        "submit": "Tilføj og tjek ind",
+        "submitting": "Tilføjer…",
+        "title": "En er dukket op",
+        "removeTitle": "Fjern {name} fra turen?",
+        "removeBody": "Kun for en, der blev tilføjet ved en fejl. Den, der kørte med, bliver på listen.",
+        "removeConfirm": "Fjern",
+        "keep": "Behold"
+      },
+      "completedNotice": "Turen er afsluttet og tæller med i statistikken.",
+      "finishHint": "Tjek alle ind, der kørte med, og afslut så turen. Passagerer, der ikke er tjekket ind, tæller som udeblevne.",
+      "danger": "Farezone",
+      "givenUp": "Har meldt fra"
     }
   },
   "signIn": {

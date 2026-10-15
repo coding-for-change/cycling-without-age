@@ -20,25 +20,33 @@ export async function trishawPlaces(chapterId: string, trishawIds: string[]) {
 
 /**
  * What a pilot sees after a ride: the chapter's standing instructions, then per
- * trishaw where it goes back and how to get in. Only the ride's own pilots who
- * are still members get it, and only locations the chapter can still reach —
- * the access code is on this page.
+ * trishaw where it goes back and how to get in, the roster to close and the
+ * pilot's own debrief. Only the ride's own pilots who are still members get
+ * it, and only locations the chapter can still reach — the access code is on
+ * this page.
  */
 export async function finishRideView(rideId: string, userId: string) {
   const ride = await rides.getFinishableRideForPilot(rideId, userId);
   if (!ride) return null;
 
-  const [settings, places, reported] = await Promise.all([
-    chapters.getSettings(ride.chapterId),
-    trishawPlaces(
-      ride.chapterId,
-      ride.trishaws.map(({ trishaw }) => trishaw.id),
-    ),
-    fleet.listDamagesReportedOnRide(rideId, userId),
-  ]);
+  const [settings, places, reported, crewView, debrief, currency] =
+    await Promise.all([
+      chapters.getSettings(ride.chapterId),
+      trishawPlaces(
+        ride.chapterId,
+        ride.trishaws.map(({ trishaw }) => trishaw.id),
+      ),
+      fleet.listDamagesReportedOnRide(rideId, userId),
+      rides.getRideForPilot(rideId, userId),
+      rides.getDebrief(rideId, userId),
+      rides.chapterCurrencyOfRide(rideId),
+    ]);
 
   return {
     ride,
+    roster: crewView?.roster ?? [],
+    debrief,
+    currency,
     instructions: settings.postRideInstructions,
     trishaws: places.map((place) => ({
       ...place,
