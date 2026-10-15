@@ -119,7 +119,12 @@ export async function claim(
 /** Puts a claimed request back when its ride could not be written. */
 export const release = (id: string) => releaseClaimedRequest(id);
 
-/** Links the scheduled ride and tells the requester, with both legs. */
+/**
+ * Links the scheduled ride and tells the requester, with both legs, once.
+ * The scheduling use case links right after the ride is written, and the
+ * ride's own `ride.scheduled` listener links again in case that step never
+ * ran; whichever comes second finds the link in place and does nothing.
+ */
 export async function markScheduled(
   id: string,
   ride: { id: string; returnLegId: string | null },
@@ -127,6 +132,7 @@ export async function markScheduled(
 ) {
   const request = await findRideRequestScope(id);
   if (!request) throw new DomainError("unknownRequest");
+  if (request.rideId === ride.id) return;
   return transaction(async (tx, emit) => {
     const { count } = await linkRequestToRide(id, ride.id, tx);
     if (count !== 1) throw new DomainError("requestNotPending");

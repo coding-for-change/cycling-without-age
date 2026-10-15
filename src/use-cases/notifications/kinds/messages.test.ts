@@ -204,6 +204,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     chapterId: CHAPTER,
     actorUserId: ACTOR,
     returnLegId: "ride-2",
+    requestId: null,
   },
   "ride.rescheduled": {
     type: "ride.rescheduled",

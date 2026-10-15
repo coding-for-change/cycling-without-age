@@ -696,6 +696,7 @@ export async function scheduleRide(
       chapterId: ride.chapterId,
       actorUserId,
       returnLegId: back?.id ?? null,
+      requestId,
     });
     await staffAndBook(
       ride,

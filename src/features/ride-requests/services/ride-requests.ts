@@ -90,7 +90,13 @@ export const findRideRequest = (id: string, db: Db = prisma) =>
 export const findRideRequestScope = (id: string) =>
   prisma.rideRequest.findUnique({
     where: { id },
-    select: { id: true, chapterId: true, status: true, requesterUserId: true },
+    select: {
+      id: true,
+      chapterId: true,
+      status: true,
+      requesterUserId: true,
+      rideId: true,
+    },
   });
 
 export const findRideRequests = (

@@ -8,6 +8,7 @@ import {
   recordsActivityFor,
 } from "./listeners/record-activity";
 import { leaveRideCrewsListener } from "./listeners/leave-ride-crews";
+import { linkRideRequestListener } from "./listeners/link-ride-request";
 import {
   syncRideChatListener,
   syncsRideChat,
@@ -29,6 +30,9 @@ export const handlers = Object.fromEntries(
       ...(syncsRideChat(type) ? { syncRideChat: syncRideChatListener } : {}),
       ...(type === "member.roleChanged"
         ? { leaveRideCrews: leaveRideCrewsListener }
+        : {}),
+      ...(type === "ride.scheduled"
+        ? { linkRideRequest: linkRideRequestListener }
         : {}),
     },
   ]),

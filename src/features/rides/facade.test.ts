@@ -359,6 +359,7 @@ describe("scheduleRide", () => {
         chapterId: CHAPTER,
         actorUserId: ADMIN,
         returnLegId: null,
+        requestId: null,
       },
     ]);
   });

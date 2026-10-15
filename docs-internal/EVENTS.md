@@ -223,7 +223,7 @@ the worker):
 
 | Event | Extra payload | Emitted by |
 | --- | --- | --- |
-| `ride.scheduled` | `returnLegId` (the way back of a round trip, or `null`) | `scheduleRide`, once for both legs |
+| `ride.scheduled` | `returnLegId` (the way back of a round trip, or `null`), `requestId` (the Ride Request it was scheduled from, or `null`) | `scheduleRide`, once for both legs |
 | `ride.rescheduled` | `changes`: `time` · `location` · `destination` | `rescheduleRide` (once per leg it moves: moving the way there moves a scheduled way back too), `updateRideDetails` (a new place only; the note and pilots needed are history, not news) |
 | `ride.cancelled` | `reasonCode` | `cancelRide`, once per leg it cancels |
 | `ride.deleted` | — | `deleteRide`, once per leg it deletes (a cancelled other leg of a round trip goes too); the ride's history goes with it, so this row is what records who deleted it |
@@ -271,8 +271,10 @@ different words. A kind may define `forRecipient(params, recipientUserId)`; `not
 each recipient's row with what it returns, so `ridePilotAssigned` remembers `audience: "pilot"`
 or `"rider"` per row and the bell, the push and the mail read it back.
 
-`ride.scheduled` and `ride.deleted` still have no listener and are marked processed without
-a job. The four roster events (`ride.pilotAssigned`, `ride.pilotUnassigned`,
+`ride.deleted` still has no listener and is marked processed without a job.
+`ride.scheduled` has one, `linkRideRequest` (COD-261): a ride scheduled from a Ride Request
+links that request if the scheduling use case stopped between writing the ride and linking
+it; `rideRequests.markScheduled` does nothing when the link is already there. The four roster events (`ride.pilotAssigned`, `ride.pilotUnassigned`,
 `ride.riderBooked`, `ride.riderRemoved`) also have a `syncRideChat` listener that keeps the
 ride's chat members in step (`use-cases/ride-chat.ts`), and `member.roleChanged` has a
 `leaveRideCrews` listener: a demotion or removal checks the person's upcoming rides for pilots

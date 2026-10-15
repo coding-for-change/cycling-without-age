@@ -120,6 +120,8 @@ export const eventSchema = z.discriminatedUnion("type", [
     type: z.literal("ride.scheduled"),
     ...rideScope,
     returnLegId: z.string().min(1).nullable(),
+    /** Scheduled from this Ride Request, which the ride's listener links. */
+    requestId: z.string().min(1).nullable().default(null),
   }),
   z.object({
     type: z.literal("ride.rescheduled"),

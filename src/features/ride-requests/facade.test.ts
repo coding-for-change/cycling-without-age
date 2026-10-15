@@ -154,6 +154,21 @@ describe("scheduling a request", () => {
     );
   });
 
+  it("links a ride once, however often it is asked to", async () => {
+    scope.mockResolvedValue({
+      ...pending,
+      status: "scheduled",
+      rideId: "ride-1",
+    });
+    await rideRequests.markScheduled(
+      "request-1",
+      { id: "ride-1", returnLegId: null },
+      null,
+    );
+    expect(linkRequestToRide).not.toHaveBeenCalled();
+    expect(emitted).toEqual([]);
+  });
+
   it("links the ride and tells the requester about both legs", async () => {
     (linkRequestToRide as jest.Mock).mockResolvedValue({ count: 1 });
     await rideRequests.markScheduled(
