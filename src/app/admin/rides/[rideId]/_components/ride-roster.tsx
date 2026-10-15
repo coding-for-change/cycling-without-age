@@ -56,6 +56,7 @@ export function RideRoster({
   editable,
   riders,
   givenUp = [],
+  walkUps = [],
   seated,
   choices,
   limit,
@@ -67,11 +68,12 @@ export function RideRoster({
   editable: boolean;
   riders: Person[];
   givenUp?: Person[];
+  walkUps?: Person[];
   seated?: number;
   choices: PersonOption[];
   limit: number | null;
   language: Locale;
-  labels: RosterLabels & { givenUp: string };
+  labels: RosterLabels & { givenUp: string; walkUps: string };
   pick: PickStrings;
 }) {
   const report = useSaveStatus();
@@ -283,6 +285,21 @@ export function RideRoster({
           ))}
         </DetailList>
       )}
+      {walkUps.length ? (
+        <div className="flex flex-col gap-1.25">
+          <h3 className="text-xs font-medium text-ink-soft">
+            {labels.walkUps}
+          </h3>
+          <DetailList>
+            {walkUps.map((rider) => (
+              <DetailListRow key={rider.id}>
+                <PersonChip {...rider} />
+                <Attendance rider={rider} />
+              </DetailListRow>
+            ))}
+          </DetailList>
+        </div>
+      ) : null}
       {givenUp.length ? (
         <div className="flex flex-col gap-1.25">
           <h3 className="text-xs font-medium text-ink-soft">
@@ -292,7 +309,6 @@ export function RideRoster({
             {givenUp.map((rider) => (
               <DetailListRow key={rider.id}>
                 <PersonChip {...rider} />
-                <Attendance rider={rider} />
                 {editable ? (
                   <RowRemoveButton
                     label={say(labels.remove, rider.name)}

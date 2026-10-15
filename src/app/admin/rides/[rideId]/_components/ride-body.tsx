@@ -39,6 +39,7 @@ import type { Coords } from "@/lib/geo";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { cyclingRoute } from "@/lib/mapbox";
+import { avatarSvg } from "@/lib/avatar";
 import { pick } from "@/lib/utils";
 import { markdownToolLabels } from "@/components/markdown-editor";
 import {
@@ -507,6 +508,23 @@ export async function RideBody({
           givenUp={ride.roster
             .filter((entry) => entry.attendance === "cancelled")
             .flatMap(rosterRow)}
+          walkUps={seatedRiders.flatMap((entry) =>
+            entry.passenger
+              ? []
+              : [
+                  {
+                    id: entry.id,
+                    name: entry.guestName ?? "",
+                    avatar: avatarSvg(entry.id),
+                    href: null,
+                    pickup: null,
+                    attendance: {
+                      value: entry.attendance,
+                      label: day.attendance[entry.attendance],
+                    },
+                  },
+                ],
+          )}
           seated={seatedRiders.length}
           choices={riderChoices}
           limit={limits.passengers}
@@ -515,6 +533,7 @@ export async function RideBody({
             ...pick(detail, ROSTER_LABELS),
             pickupLabel: dict.calendar.pickupLabel,
             givenUp: day.givenUp,
+            walkUps: day.walkUp.badge,
             errors,
           }}
           pick={{
