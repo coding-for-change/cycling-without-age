@@ -3543,12 +3543,56 @@ describe("the reminders and the demand check", () => {
 
   it("reads the rides due inside each lead, unstamped and still ahead", async () => {
     await rides.listRidesDue("demandCheckedAt", [CHAPTER], 120, NOW, 10);
-    const { where } = db.ride.findMany.mock.calls[0][0];
-    expect(where).toMatchObject({
+    expect(db.ride.findMany.mock.calls[0][0].where).toEqual({
       chapterId: { in: [CHAPTER] },
       status: "scheduled",
       startsAt: { gt: NOW, lte: new Date("2026-09-07T11:00:00Z") },
       demandCheckedAt: null,
+      NOT: {
+        returnLegOf: {
+          is: {
+            status: "scheduled",
+            startsAt: { gt: NOW },
+            demandCheckedAt: null,
+          },
+        },
+      },
+    });
+  });
+
+  // A way there with nobody to remind must not hold back its way back's reminder.
+  it("leaves a way back waiting only for a way there that is due itself", async () => {
+    const seated = {
+      roster: {
+        some: { attendance: { not: "cancelled" }, passengerId: { not: null } },
+      },
+    };
+    await rides.listRidesDue("riderReminderSentAt", [CHAPTER], 1440, NOW, 10);
+    expect(db.ride.findMany.mock.calls[0][0].where).toEqual({
+      chapterId: { in: [CHAPTER] },
+      status: "scheduled",
+      startsAt: { gt: NOW, lte: new Date("2026-09-08T09:00:00Z") },
+      riderReminderSentAt: null,
+      ...seated,
+      NOT: {
+        returnLegOf: {
+          is: {
+            status: "scheduled",
+            startsAt: { gt: NOW },
+            riderReminderSentAt: null,
+            ...seated,
+          },
+        },
+      },
+    });
+
+    await rides.listChaptersDue("volunteerReminderSentAt", 2880, NOW);
+    expect(db.ride.findMany.mock.calls[1][0]).toMatchObject({
+      where: {
+        assignments: { some: {} },
+        NOT: { returnLegOf: { is: { assignments: { some: {} } } } },
+      },
+      distinct: ["chapterId"],
     });
   });
 });

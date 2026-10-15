@@ -1145,7 +1145,8 @@ const DUE_ONLY_WITH: Record<RideMarker, Prisma.RideWhereInput> = {
 
 /**
  * Like the staffing check, the way back of a round trip goes with its way
- * there while that one is still ahead and unstamped: one outing, one message.
+ * there while that one is still ahead, unstamped and due itself: one outing,
+ * one message. A way there nobody is left to remind never holds its way back.
  */
 const dueWithin = (marker: RideMarker, now: Date, until: Date) =>
   ({
@@ -1155,7 +1156,12 @@ const dueWithin = (marker: RideMarker, now: Date, until: Date) =>
     ...DUE_ONLY_WITH[marker],
     NOT: {
       returnLegOf: {
-        is: { status: "scheduled", startsAt: { gt: now }, [marker]: null },
+        is: {
+          status: "scheduled",
+          startsAt: { gt: now },
+          [marker]: null,
+          ...DUE_ONLY_WITH[marker],
+        },
       },
     },
   }) as Prisma.RideWhereInput;
