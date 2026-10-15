@@ -27,6 +27,7 @@ import {
   seesHealthDetails,
 } from "@/use-cases/person-access";
 import { ActivityFeed } from "../../../_components/activity-feed";
+import { withHandOverNames } from "../../../_components/hand-over-names";
 import { deletionConsequences } from "../../../_components/deletion-consequences";
 import {
   BackLink,
@@ -85,7 +86,7 @@ export async function PassengerBody({
     headers(),
     removable ? passengers.countRiderBookings(rider.id) : 0,
     admin ? membership.listMembersOfChapters([rider.chapterId]) : [],
-    admin ? activity.listHandOversOfPassenger(rider.id, 50) : [],
+    admin ? activity.listForPassenger(rider.id, 50) : [],
     admin && home ? chapterFeature.getCountry(home.countryId) : null,
   ]);
   const strings = dict.admin.passengers.detail;
@@ -219,7 +220,10 @@ export async function PassengerBody({
         {admin ? (
           <DetailSection title={strings.history}>
             <ActivityFeed
-              events={handOvers}
+              events={await withHandOverNames(
+                handOvers,
+                dict.admin.history.someone,
+              )}
               viewerId={session.user.id}
               labels={{
                 ...dict.admin.history,

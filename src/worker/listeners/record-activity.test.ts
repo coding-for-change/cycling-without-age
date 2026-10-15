@@ -3,18 +3,8 @@ import type { DomainEvent } from "@/lib/events/catalog";
 import type { RecordEventInput } from "@/lib/activity";
 import { recordActivity } from "@/worker/listeners/record-activity";
 
-jest.mock("@/lib/activity", () => ({ activity: { record: jest.fn() } }));
-jest.mock("@/features/passengers", () => ({
-  passengers: {
-    passengerNames: jest.fn(async () => ({ "passenger-1": "Erna Huber" })),
-  },
-}));
-jest.mock("@/features/profile", () => ({
-  profile: {
-    getProfile: jest.fn(async (id: string) => ({
-      name: id === "user-old" ? "Anna Huber" : "Bea Huber",
-    })),
-  },
+jest.mock("@/lib/activity", () => ({
+  activity: { record: jest.fn(), recordMany: jest.fn() },
 }));
 
 const record = activity.record as jest.Mock;
@@ -195,7 +185,7 @@ describe("recordActivity", () => {
   );
 });
 
-it("writes a hand-over into the history of both managers, names as they were", async () => {
+it("writes a hand-over into both managers' histories at once, ids only", async () => {
   await run({
     type: "rider.handedOver",
     passengerId: "passenger-1",
@@ -206,26 +196,17 @@ it("writes a hand-over into the history of both managers, names as they were", a
     invited: false,
   });
 
-  const payload = {
+  const line = (userId: string, direction: string) => ({
+    userId,
+    actorUserId: ACTOR,
+    chapterId: CHAPTER,
     passengerId: "passenger-1",
-    rider: "Erna Huber",
-    previous: "Anna Huber",
-    next: "Bea Huber",
-  };
-  expect(record.mock.calls.map(([line]) => line)).toEqual([
-    {
-      userId: "user-new",
-      actorUserId: ACTOR,
-      chapterId: CHAPTER,
-      type: "riderHandedOver",
-      payload: { ...payload, direction: "in" },
-    },
-    {
-      userId: "user-old",
-      actorUserId: ACTOR,
-      chapterId: CHAPTER,
-      type: "riderHandedOver",
-      payload: { ...payload, direction: "out" },
-    },
+    type: "riderHandedOver",
+    payload: { fromUserId: "user-old", toUserId: "user-new", direction },
+  });
+  expect(record).not.toHaveBeenCalled();
+  expect(activity.recordMany).toHaveBeenCalledWith([
+    line("user-new", "in"),
+    line("user-old", "out"),
   ]);
 });

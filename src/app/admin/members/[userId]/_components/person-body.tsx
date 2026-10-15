@@ -20,6 +20,7 @@ import {
   MetaBadge,
 } from "../../../_components/detail-page";
 import { ActivityFeed } from "../../../_components/activity-feed";
+import { withHandOverNames } from "../../../_components/hand-over-names";
 import { deletionConsequences } from "../../../_components/deletion-consequences";
 import { TimelineBubble } from "../../../_components/timeline";
 import { activity } from "@/lib/activity";
@@ -394,7 +395,10 @@ export async function PersonBody({
           showMoreLabel={dict.admin.history.showMore}
         >
           <ActivityFeed
-            events={events.slice(0, shown)}
+            events={await withHandOverNames(
+              events.slice(0, shown),
+              dict.admin.history.someone,
+            )}
             viewerId={session.user.id}
             labels={dict.admin.history}
             empty={dict.admin.person.historyEmpty}

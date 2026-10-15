@@ -396,6 +396,7 @@ model Passenger {
   profile      PersonProfile?         @relation("profileOfPassenger")
   careRequests CareRequest[]
   rideRequests RideRequestPassenger[]
+  activity     ActivityEvent[]
 
   rideLocationId      String?
   rideLocation        RideLocation? @relation(fields: [rideLocationId], references: [id], onDelete: SetNull)
@@ -528,12 +529,16 @@ model ActivityEvent {
   actor       User?         @relation("activityActor", fields: [actorUserId], references: [id], onDelete: SetNull)
   chapterId   String?
   chapter     Organization? @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  /// A rider the line is about, when it is one without an account of their own.
+  passengerId String?
+  passenger   Passenger?    @relation(fields: [passengerId], references: [id], onDelete: Cascade)
   type        ActivityType
   payload     Json?
   createdAt   DateTime      @default(now())
 
   @@index([userId, createdAt])
   @@index([chapterId, createdAt])
+  @@index([passengerId, createdAt])
   @@map("activity_event")
 }
 

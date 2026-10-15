@@ -2,26 +2,34 @@ import { recordEventInput } from "./schemas";
 import type { RecordEventInput } from "./schemas";
 import {
   findEventsOfChapter,
+  findEventsOfPassenger,
   findEventsOfUser,
-  findHandOversOfPassenger,
   insertEvent,
+  insertEvents,
 } from "./events";
 
 export type ActivityEvent = Awaited<
   ReturnType<typeof findEventsOfUser>
 >[number];
 
-export function record(input: RecordEventInput) {
-  const { userId, type, actorUserId, chapterId, payload } =
+const rowOf = (input: RecordEventInput) => {
+  const { userId, type, actorUserId, chapterId, passengerId, payload } =
     recordEventInput.parse(input);
-  return insertEvent({
+  return {
     userId,
     type,
     actorUserId: actorUserId ?? null,
     chapterId: chapterId ?? null,
+    passengerId: passengerId ?? null,
     payload,
-  });
-}
+  };
+};
+
+export const record = (input: RecordEventInput) => insertEvent(rowOf(input));
+
+/** Several lines about one happening, written together or not at all. */
+export const recordMany = (inputs: RecordEventInput[]) =>
+  insertEvents(inputs.map(rowOf));
 
 export const listForUser = (
   userId: string,
@@ -35,5 +43,6 @@ export const listForUser = (
 export const listForChapter = (chapterId: string, take: number) =>
   findEventsOfChapter(chapterId, take);
 
-export const listHandOversOfPassenger = (passengerId: string, take: number) =>
-  findHandOversOfPassenger(passengerId, take);
+/** The history of a rider without an account of their own. */
+export const listForPassenger = (passengerId: string, take: number) =>
+  findEventsOfPassenger(passengerId, take);

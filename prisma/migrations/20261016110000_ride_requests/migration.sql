@@ -84,3 +84,12 @@ ALTER TABLE `ride_request_passenger` ADD CONSTRAINT `ride_request_passenger_requ
 
 -- AddForeignKey
 ALTER TABLE `ride_request_passenger` ADD CONSTRAINT `ride_request_passenger_passengerId_fkey` FOREIGN KEY (`passengerId`) REFERENCES `passenger`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AlterTable
+ALTER TABLE `activity_event` ADD COLUMN `passengerId` VARCHAR(191) NULL;
+
+-- CreateIndex
+CREATE INDEX `activity_event_passengerId_createdAt_idx` ON `activity_event`(`passengerId`, `createdAt`);
+
+-- AddForeignKey
+ALTER TABLE `activity_event` ADD CONSTRAINT `activity_event_passengerId_fkey` FOREIGN KEY (`passengerId`) REFERENCES `passenger`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

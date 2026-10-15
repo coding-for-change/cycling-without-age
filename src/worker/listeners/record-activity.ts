@@ -1,16 +1,10 @@
-import { passengers } from "@/features/passengers";
-import { profile } from "@/features/profile";
 import { activity } from "@/lib/activity";
 import type { ActivityType, RecordEventInput } from "@/lib/activity";
 import type { Envelope, EventOf, EventType } from "@/lib/events/catalog";
 
-type Built = RecordEventInput | RecordEventInput[];
 type Builder<K extends EventType> = (
   event: EventOf<K>,
-) => Built | Promise<Built>;
-
-const nameOf = async (userId: string) =>
-  (await profile.getProfile(userId))?.name ?? "";
+) => RecordEventInput | RecordEventInput[];
 
 const ROLE_EVENT: Record<"promote" | "demote" | "remove", ActivityType> = {
   promote: "roleGranted",
@@ -55,27 +49,19 @@ const builders: { [K in EventType]?: Builder<K> } = {
     actorUserId: event.actorUserId,
     type: "countryAdminRemoved",
   }),
-  "rider.handedOver": async (event) => {
-    const [names, previous, next] = await Promise.all([
-      passengers.passengerNames([event.passengerId]),
-      nameOf(event.fromUserId),
-      nameOf(event.toUserId),
-    ]);
-    const line = (userId: string, direction: "in" | "out") => ({
-      userId,
+  "rider.handedOver": (event) =>
+    (["in", "out"] as const).map((direction) => ({
+      userId: direction === "in" ? event.toUserId : event.fromUserId,
       actorUserId: event.actorUserId,
       chapterId: event.chapterId,
+      passengerId: event.passengerId,
       type: "riderHandedOver" as const,
       payload: {
-        passengerId: event.passengerId,
-        rider: names[event.passengerId] ?? "",
-        previous,
-        next,
+        fromUserId: event.fromUserId,
+        toUserId: event.toUserId,
         direction,
       },
-    });
-    return [line(event.toUserId, "in"), line(event.fromUserId, "out")];
-  },
+    })),
 };
 
 export const recordsActivityFor = (type: EventType) => type in builders;
@@ -83,5 +69,7 @@ export const recordsActivityFor = (type: EventType) => type in builders;
 export async function recordActivity({ event }: Envelope) {
   const build = builders[event.type] as Builder<EventType> | undefined;
   if (!build) throw new Error(`[activity] no builder for ${event.type}`);
-  for (const line of [await build(event)].flat()) await activity.record(line);
+  const built = build(event);
+  if (Array.isArray(built)) await activity.recordMany(built);
+  else await activity.record(built);
 }

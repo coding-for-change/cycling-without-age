@@ -387,10 +387,13 @@ to a member of the rider's chapter, or to someone new, who gets an account (`acc
 passenger membership (`membership`) and the care invitation. A contact that already has an
 account outside the chapter is refused (`notChapterMember`), so nobody is put in charge of a
 stranger's rider by typing an address. `passengers.handOverRider` moves `managedByUserId`
-under a compare-and-set on the old manager and emits `rider.handedOver`; bookings, profile
-and history stay with the rider. Both managers are told, and the hand-over is written into
-both their histories (`riderHandedOver`), which the rider's page reads back by
-`payload.passengerId`.
+under a compare-and-set on the old manager and emits `rider.handedOver`; bookings, profile,
+history and open requests stay with the rider. The managers are told (not the admin who did
+it, and not a new account its invitation already speaks to), and one `createMany` writes the
+hand-over into both their histories (`riderHandedOver`). Those lines carry the rider in
+`ActivityEvent.passengerId`, which is how the rider's page reads them back and why deleting
+the rider deletes them; the payload holds ids only and the names are looked up as the
+history is read (`app/admin/_components/hand-over-names.ts`).
 
 `Passenger.managedBy` is `onDelete: Restrict`. Deleting an account that still manages riders
 without an account fails in the database, so `delete-account` deletes them only when asked to
@@ -662,6 +665,11 @@ scoped and only visible to admins of that chapter; country-level events (country
 no `chapterId` and surface only when the reader's scope is global —
 `activity.listForUser(userId, { chapterIds, includeGlobal })` defaults `includeGlobal` to
 `false` so a narrow read cannot leak them by omission.
+
+A line may also name a rider without an account of their own (`passengerId`, COD-261): such a
+rider has no account to hang a history on, so `activity.listForPassenger` reads the lines about
+them, and the rider's deletion takes those lines along. A builder may return several lines,
+which `activity.recordMany` writes in one statement.
 
 Labels live in the dictionary (`admin.history.<ActivityType>`) with a single `{actor}`
 placeholder, filled with the actor's name, "You", or "Someone" — the feed renders copy, the
