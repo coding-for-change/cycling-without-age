@@ -156,6 +156,7 @@
         "title": "Hvad skete der?",
         "tooShort": "Et par ord mere, tak — mindst ti tegn."
       },
+      "guides": "Guider",
       "open": "Meld et problem",
       "title": "Noget der driller?"
     },
@@ -506,6 +507,7 @@
         "title": "Lande"
       },
       "help": {
+        "action": "Åbn guiderne",
         "body": "Guides til afdelingsadmins — og en vej til et menneske, når en guide ikke er nok.",
         "title": "Få hjælp"
       },

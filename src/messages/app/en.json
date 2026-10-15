@@ -156,6 +156,7 @@
         "title": "Tell us what happened",
         "tooShort": "A few more words, please — at least ten characters."
       },
+      "guides": "Guides",
       "open": "Report a problem",
       "title": "Something not working?"
     },
@@ -506,6 +507,7 @@
         "title": "Countries"
       },
       "help": {
+        "action": "Open the guides",
         "body": "Guides for chapter admins, and a way to reach someone when a guide is not enough.",
         "title": "Get help"
       },

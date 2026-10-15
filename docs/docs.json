@@ -1,0 +1,421 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "maple",
+  "name": "CWA GO Guides",
+  "colors": {
+    "primary": "#28584E",
+    "light": "#92D2C6",
+    "dark": "#28584E"
+  },
+  "favicon": "/favicon.png",
+  "logo": {
+    "light": "/logo/logo.png",
+    "dark": "/logo/logo.png",
+    "href": "https://cwa.codingforchange.com"
+  },
+  "fonts": {
+    "family": "Inter"
+  },
+  "appearance": {
+    "default": "light"
+  },
+  "navigation": {
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Open CWA GO",
+          "icon": "arrow-up-right-from-square",
+          "href": "https://cwa.codingforchange.com"
+        }
+      ]
+    },
+    "languages": [
+      {
+        "language": "en",
+        "tabs": [
+          {
+            "tab": "Getting started",
+            "icon": "rocket",
+            "groups": [
+              {
+                "group": "Basics",
+                "pages": [
+                  "en/index",
+                  "en/getting-started/sign-in",
+                  "en/getting-started/install-the-app",
+                  "en/getting-started/your-account"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Pilots",
+            "icon": "bicycle",
+            "groups": [
+              {
+                "group": "Get started",
+                "pages": ["en/pilots/join-a-chapter"]
+              },
+              {
+                "group": "Rides",
+                "pages": [
+                  "en/pilots/sign-up-for-a-ride",
+                  "en/pilots/ride-day",
+                  "en/pilots/finish-your-ride",
+                  "en/pilots/stepping-back"
+                ]
+              },
+              {
+                "group": "Staying in touch",
+                "pages": ["en/pilots/chat", "en/pilots/notifications"]
+              }
+            ]
+          },
+          {
+            "tab": "Riders",
+            "icon": "heart",
+            "groups": [
+              {
+                "group": "Get started",
+                "pages": [
+                  "en/riders/join",
+                  "en/riders/booking-for-someone-else"
+                ]
+              },
+              {
+                "group": "Rides",
+                "pages": [
+                  "en/riders/your-rides",
+                  "en/riders/book-an-event",
+                  "en/riders/ask-for-a-ride",
+                  "en/riders/chat"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Chapter admins",
+            "icon": "users",
+            "groups": [
+              {
+                "group": "Set up",
+                "pages": [
+                  "en/chapter-admins/first-week",
+                  "en/chapter-admins/working-faster"
+                ]
+              },
+              {
+                "group": "People",
+                "pages": [
+                  "en/chapter-admins/pilots-and-invites",
+                  "en/chapter-admins/passengers",
+                  "en/chapter-admins/offboarding"
+                ]
+              },
+              {
+                "group": "Fleet",
+                "pages": [
+                  "en/chapter-admins/locations-and-trishaws",
+                  "en/chapter-admins/damage"
+                ]
+              },
+              {
+                "group": "Rides",
+                "pages": [
+                  "en/chapter-admins/schedule-a-ride",
+                  "en/chapter-admins/staffing",
+                  "en/chapter-admins/events",
+                  "en/chapter-admins/change-or-cancel"
+                ]
+              },
+              {
+                "group": "Insight & messages",
+                "pages": [
+                  "en/chapter-admins/reports",
+                  "en/chapter-admins/messages"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Super & country admins",
+            "icon": "globe",
+            "groups": [
+              {
+                "group": "Organisation",
+                "pages": [
+                  "en/organisation/scopes",
+                  "en/organisation/countries",
+                  "en/organisation/new-chapter",
+                  "en/organisation/pools",
+                  "en/organisation/models",
+                  "en/organisation/reports",
+                  "en/organisation/deleting"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "language": "de",
+        "tabs": [
+          {
+            "tab": "Erste Schritte",
+            "icon": "rocket",
+            "groups": [
+              {
+                "group": "Grundlagen",
+                "pages": [
+                  "de/index",
+                  "de/getting-started/sign-in",
+                  "de/getting-started/install-the-app",
+                  "de/getting-started/your-account"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Pilot:innen",
+            "icon": "bicycle",
+            "groups": [
+              {
+                "group": "Loslegen",
+                "pages": ["de/pilots/join-a-chapter"]
+              },
+              {
+                "group": "Fahrten",
+                "pages": [
+                  "de/pilots/sign-up-for-a-ride",
+                  "de/pilots/ride-day",
+                  "de/pilots/finish-your-ride",
+                  "de/pilots/stepping-back"
+                ]
+              },
+              {
+                "group": "In Kontakt bleiben",
+                "pages": ["de/pilots/chat", "de/pilots/notifications"]
+              }
+            ]
+          },
+          {
+            "tab": "Fahrgäste",
+            "icon": "heart",
+            "groups": [
+              {
+                "group": "Loslegen",
+                "pages": [
+                  "de/riders/join",
+                  "de/riders/booking-for-someone-else"
+                ]
+              },
+              {
+                "group": "Fahrten",
+                "pages": [
+                  "de/riders/your-rides",
+                  "de/riders/book-an-event",
+                  "de/riders/ask-for-a-ride",
+                  "de/riders/chat"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Ortsgruppen-Admins",
+            "icon": "users",
+            "groups": [
+              {
+                "group": "Einrichten",
+                "pages": [
+                  "de/chapter-admins/first-week",
+                  "de/chapter-admins/working-faster"
+                ]
+              },
+              {
+                "group": "Menschen",
+                "pages": [
+                  "de/chapter-admins/pilots-and-invites",
+                  "de/chapter-admins/passengers",
+                  "de/chapter-admins/offboarding"
+                ]
+              },
+              {
+                "group": "Flotte",
+                "pages": [
+                  "de/chapter-admins/locations-and-trishaws",
+                  "de/chapter-admins/damage"
+                ]
+              },
+              {
+                "group": "Fahrten",
+                "pages": [
+                  "de/chapter-admins/schedule-a-ride",
+                  "de/chapter-admins/staffing",
+                  "de/chapter-admins/events",
+                  "de/chapter-admins/change-or-cancel"
+                ]
+              },
+              {
+                "group": "Auswertung & Nachrichten",
+                "pages": [
+                  "de/chapter-admins/reports",
+                  "de/chapter-admins/messages"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Super- & Länder-Admins",
+            "icon": "globe",
+            "groups": [
+              {
+                "group": "Organisation",
+                "pages": [
+                  "de/organisation/scopes",
+                  "de/organisation/countries",
+                  "de/organisation/new-chapter",
+                  "de/organisation/pools",
+                  "de/organisation/models",
+                  "de/organisation/reports",
+                  "de/organisation/deleting"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "language": "da",
+        "tabs": [
+          {
+            "tab": "Kom i gang",
+            "icon": "rocket",
+            "groups": [
+              {
+                "group": "Grundlæggende",
+                "pages": [
+                  "da/index",
+                  "da/getting-started/sign-in",
+                  "da/getting-started/install-the-app",
+                  "da/getting-started/your-account"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Piloter",
+            "icon": "bicycle",
+            "groups": [
+              {
+                "group": "Kom i gang",
+                "pages": ["da/pilots/join-a-chapter"]
+              },
+              {
+                "group": "Ture",
+                "pages": [
+                  "da/pilots/sign-up-for-a-ride",
+                  "da/pilots/ride-day",
+                  "da/pilots/finish-your-ride",
+                  "da/pilots/stepping-back"
+                ]
+              },
+              {
+                "group": "Hold kontakten",
+                "pages": ["da/pilots/chat", "da/pilots/notifications"]
+              }
+            ]
+          },
+          {
+            "tab": "Passagerer",
+            "icon": "heart",
+            "groups": [
+              {
+                "group": "Kom i gang",
+                "pages": [
+                  "da/riders/join",
+                  "da/riders/booking-for-someone-else"
+                ]
+              },
+              {
+                "group": "Ture",
+                "pages": [
+                  "da/riders/your-rides",
+                  "da/riders/book-an-event",
+                  "da/riders/ask-for-a-ride",
+                  "da/riders/chat"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Afdelingsadmins",
+            "icon": "users",
+            "groups": [
+              {
+                "group": "Opsætning",
+                "pages": [
+                  "da/chapter-admins/first-week",
+                  "da/chapter-admins/working-faster"
+                ]
+              },
+              {
+                "group": "Mennesker",
+                "pages": [
+                  "da/chapter-admins/pilots-and-invites",
+                  "da/chapter-admins/passengers",
+                  "da/chapter-admins/offboarding"
+                ]
+              },
+              {
+                "group": "Flåde",
+                "pages": [
+                  "da/chapter-admins/locations-and-trishaws",
+                  "da/chapter-admins/damage"
+                ]
+              },
+              {
+                "group": "Ture",
+                "pages": [
+                  "da/chapter-admins/schedule-a-ride",
+                  "da/chapter-admins/staffing",
+                  "da/chapter-admins/events",
+                  "da/chapter-admins/change-or-cancel"
+                ]
+              },
+              {
+                "group": "Indsigt & beskeder",
+                "pages": [
+                  "da/chapter-admins/reports",
+                  "da/chapter-admins/messages"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Super- & landeadmins",
+            "icon": "globe",
+            "groups": [
+              {
+                "group": "Organisation",
+                "pages": [
+                  "da/organisation/scopes",
+                  "da/organisation/countries",
+                  "da/organisation/new-chapter",
+                  "da/organisation/pools",
+                  "da/organisation/models",
+                  "da/organisation/reports",
+                  "da/organisation/deleting"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "website": "https://cyclingwithoutage.org"
+    }
+  }
+}

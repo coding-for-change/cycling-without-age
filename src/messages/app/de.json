@@ -156,6 +156,7 @@
         "title": "Was ist passiert?",
         "tooShort": "Ein paar Worte mehr bitte — mindestens zehn Zeichen."
       },
+      "guides": "Anleitungen",
       "open": "Problem melden",
       "title": "Etwas funktioniert nicht?"
     },
@@ -506,6 +507,7 @@
         "title": "Länder"
       },
       "help": {
+        "action": "Anleitungen öffnen",
         "body": "Anleitungen für Ortsgruppen-Admins — und ein Weg zu einem Menschen, wenn eine Anleitung nicht reicht.",
         "title": "Hilfe holen"
       },
