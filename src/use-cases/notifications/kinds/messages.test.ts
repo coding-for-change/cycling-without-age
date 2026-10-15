@@ -244,6 +244,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     actorUserId: ACTOR,
     passengerId: "passenger-1",
     pair: null,
+    requestId: null,
   },
   "ride.riderRemoved": {
     type: "ride.riderRemoved",
@@ -274,6 +275,42 @@ const EVENTS: Record<EventType, DomainEvent> = {
     rideId: "ride-1",
     chapterId: CHAPTER,
     actorUserId: ACTOR,
+  },
+  "rideRequest.submitted": {
+    type: "rideRequest.submitted",
+    requestId: "request-1",
+    chapterId: CHAPTER,
+    actorUserId: SUBJECT,
+  },
+  "rideRequest.scheduled": {
+    type: "rideRequest.scheduled",
+    requestId: "request-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+    requesterUserId: SUBJECT,
+    rideId: "ride-1",
+    returnLegId: "ride-2",
+  },
+  "rideRequest.declined": {
+    type: "rideRequest.declined",
+    requestId: "request-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+    requesterUserId: SUBJECT,
+  },
+  "rideRequest.withdrawn": {
+    type: "rideRequest.withdrawn",
+    requestId: "request-1",
+    chapterId: CHAPTER,
+    actorUserId: SUBJECT,
+  },
+  "rider.handedOver": {
+    type: "rider.handedOver",
+    passengerId: "passenger-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+    fromUserId: SUBJECT,
+    toUserId: "user-new",
   },
 };
 
