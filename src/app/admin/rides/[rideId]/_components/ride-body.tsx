@@ -155,7 +155,9 @@ export async function RideBody({
 
   const booked = new Set(
     ride.roster.flatMap((entry) =>
-      entry.passenger ? [entry.passenger.id] : [],
+      entry.passenger && entry.attendance !== "cancelled"
+        ? [entry.passenger.id]
+        : [],
     ),
   );
   const seatedRiders = ride.roster.filter(
