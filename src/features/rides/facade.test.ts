@@ -4254,3 +4254,38 @@ describe("the ride day, edge by edge", () => {
     });
   });
 });
+
+describe("a rider's account that gave every seat up", () => {
+  const ride = (attendance: string) => ({
+    id: "ride-1",
+    chapterId: CHAPTER,
+    assignments: [
+      {
+        role: "pilot",
+        user: { id: "pilot-1", name: "Piet", phoneNumber: "+49 1" },
+      },
+    ],
+    roster: [{ id: "e1", attendance, passenger: { id: "passenger-1" } }],
+  });
+
+  beforeEach(() =>
+    db.member.findMany.mockResolvedValue([
+      { organizationId: CHAPTER, userId: "pilot-1" },
+    ]),
+  );
+
+  it("still sees who pilots, but not how to reach them", async () => {
+    db.ride.findFirst.mockResolvedValue(ride("cancelled"));
+    const seen = await rides.getRideForPassengers("ride-1", ["passenger-1"]);
+    expect(seen?.assignments[0].user).toMatchObject({
+      name: "Piet",
+      phoneNumber: null,
+    });
+  });
+
+  it("keeps the number while a seat is held", async () => {
+    db.ride.findFirst.mockResolvedValue(ride("booked"));
+    const seen = await rides.getRideForPassengers("ride-1", ["passenger-1"]);
+    expect(seen?.assignments[0].user.phoneNumber).toBe("+49 1");
+  });
+});

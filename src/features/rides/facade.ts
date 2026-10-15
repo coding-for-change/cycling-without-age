@@ -341,15 +341,30 @@ export const isFinishable = (
 export const getRideForPilot = async (rideId: string, userId: string) =>
   withActiveCrewOf(await findRideForPilot(rideId, userId));
 
-/** Only a ride one of these riders is on, showing only these riders. */
-export const getRideForPassengers = async (
+/**
+ * Only a ride one of these riders is on, showing only these riders. A pilot's
+ * number is for the riders who still hold a seat: an account that gave every
+ * seat up sees the crew's names, not how to reach them.
+ */
+export async function getRideForPassengers(
   rideId: string,
   passengerIds: string[],
   now = new Date(),
-) =>
-  passengerIds.length
-    ? withActiveCrewOf(await findRideForPassengers(rideId, passengerIds, now))
-    : null;
+) {
+  if (!passengerIds.length) return null;
+  const ride = await withActiveCrewOf(
+    await findRideForPassengers(rideId, passengerIds, now),
+  );
+  if (!ride || ride.roster.some((entry) => entry.attendance !== "cancelled"))
+    return ride;
+  return {
+    ...ride,
+    assignments: ride.assignments.map((assignment) => ({
+      ...assignment,
+      user: { ...assignment.user, phoneNumber: null },
+    })),
+  };
+}
 
 export async function listRideParticipants(rideId: string) {
   const ride = await findRideParticipants(rideId);

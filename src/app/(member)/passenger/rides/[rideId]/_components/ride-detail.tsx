@@ -159,9 +159,6 @@ async function PassengerRide({ rideId }: { rideId: string }) {
 
       <RidePilots
         ride={ride}
-        withPhones={ride.roster.some(
-          ({ attendance }) => attendance !== "cancelled",
-        )}
         strings={strings}
         words={words}
       />
@@ -282,15 +279,12 @@ function RideState({
   return null;
 }
 
-/** A pilot's number is for the riders who still hold a seat on the ride. */
 function RidePilots({
   ride,
-  withPhones,
   strings,
   words,
 }: {
   ride: PassengerRideDetailRow;
-  withPhones: boolean;
   strings: RideStrings;
   words: Locale;
 }) {
@@ -311,7 +305,7 @@ function RidePilots({
             <Person
               key={user.id}
               action={
-                withPhones && user.phoneNumber ? (
+                user.phoneNumber ? (
                   <a
                     href={`tel:${user.phoneNumber.replace(/[^\d+]/g, "")}`}
                     aria-label={formatMessage(
