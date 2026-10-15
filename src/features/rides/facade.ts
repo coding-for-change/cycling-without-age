@@ -607,8 +607,9 @@ async function reserveOrRefuse(
  * the fleet's question, asked by the use case before this runs.
  *
  * A ride scheduled already inside its chapter's staffing window counts as
- * checked: the admin scheduling it sees what it is short of, and the sweep
- * would only repeat it to them minutes later.
+ * checked, and one inside its demand window as checked for riders: the admin
+ * scheduling it sees what it is short of, and the sweep would only repeat it
+ * to them minutes later.
  *
  * A round trip is two rows written together: both windows are checked under
  * the same lock, so the way there can never be booked without the way back.
@@ -619,7 +620,12 @@ export async function scheduleRide(
   {
     opensForSignUp = false,
     staffingLeadHours = null,
-  }: { opensForSignUp?: boolean; staffingLeadHours?: number | null } = {},
+    demandLeadHours = null,
+  }: {
+    opensForSignUp?: boolean;
+    staffingLeadHours?: number | null;
+    demandLeadHours?: number | null;
+  } = {},
 ) {
   const {
     trishawIds,
@@ -631,13 +637,14 @@ export async function scheduleRide(
   } = shapedForModel(input);
   const now = new Date();
   const ahead = fields.startsAt > now;
-  const insideStaffingWindow =
-    staffingLeadHours !== null &&
-    fields.startsAt.getTime() - now.getTime() <= staffingLeadHours * HOUR_MS;
+  const inside = (leadHours: number | null) =>
+    leadHours !== null &&
+    fields.startsAt.getTime() - now.getTime() <= leadHours * HOUR_MS;
   const data = {
     ...fields,
     announcedAt: fields.announced && ahead ? now : null,
-    staffingCheckedAt: insideStaffingWindow ? now : null,
+    staffingCheckedAt: inside(staffingLeadHours) ? now : null,
+    demandCheckedAt: inside(demandLeadHours) ? now : null,
   };
   return rideWrite(async (tx, emit) => {
     await requireRidePhotos(photoFileIds, actorUserId, null, tx);

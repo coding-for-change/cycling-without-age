@@ -62,6 +62,7 @@ beforeEach(() => {
   (chapters.getSettings as jest.Mock).mockResolvedValue({
     pilotsMaySelfAssign: true,
     staffingCheckLeadHours: 48,
+    demandCheckLeadHours: 24,
   });
   scheduleRide.mockResolvedValue({ id: "ride-new" });
   (passengers.getPassengers as jest.Mock).mockResolvedValue([]);
@@ -106,7 +107,7 @@ describe("scheduleRideAt", () => {
         returnLeg: undefined,
       }),
       ADMIN,
-      { opensForSignUp: true, staffingLeadHours: 48 },
+      { opensForSignUp: true, staffingLeadHours: 48, demandLeadHours: 24 },
     );
   });
 
@@ -114,11 +115,13 @@ describe("scheduleRideAt", () => {
     (chapters.getSettings as jest.Mock).mockResolvedValue({
       pilotsMaySelfAssign: false,
       staffingCheckLeadHours: 24,
+      demandCheckLeadHours: 2,
     });
     await scheduleAt(form);
     expect(scheduleRide.mock.calls[0][2]).toEqual({
       opensForSignUp: false,
       staffingLeadHours: 24,
+      demandLeadHours: 2,
     });
   });
 

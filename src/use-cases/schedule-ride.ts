@@ -68,6 +68,7 @@ export async function scheduleRideAt(
     {
       opensForSignUp: settings.pilotsMaySelfAssign,
       staffingLeadHours: settings.staffingCheckLeadHours,
+      demandLeadHours: settings.demandCheckLeadHours,
     },
   );
 }

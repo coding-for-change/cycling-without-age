@@ -285,6 +285,21 @@ describe("scheduleRide", () => {
     expect(db.ride.create.mock.calls[1][0].data.staffingCheckedAt).toBeNull();
   });
 
+  // The admin adding riders right after scheduling is not told it is empty.
+  it("counts a ride scheduled inside its demand window as checked", async () => {
+    await rides.scheduleRide(rideInput.parse(ahead), ADMIN, {
+      demandLeadHours: 24,
+    });
+    expect(db.ride.create.mock.calls[0][0].data).toMatchObject({
+      demandCheckedAt: expect.any(Date),
+      staffingCheckedAt: null,
+    });
+    await rides.scheduleRide(rideInput.parse(ahead), ADMIN, {
+      demandLeadHours: 2,
+    });
+    expect(db.ride.create.mock.calls[1][0].data.demandCheckedAt).toBeNull();
+  });
+
   // An admin writing yesterday's ride into the calendar tells nobody about it.
   it("offers and announces only a ride still ahead", async () => {
     const offered = async (input: RideInput) => {
