@@ -70,6 +70,13 @@ const ICON: Record<Entry["type"], LucideIcon> = {
   debriefed: ClipboardPen,
 };
 
+/** Entries named by their roster row: a rider, or a walk-up who never was a member. */
+const ON_THE_ROSTER: readonly Entry["type"][] = [
+  "checkedIn",
+  "checkInUndone",
+  "walkUpAdded",
+];
+
 /** The facade logs every column it touched; people think in four things. */
 const FIELD_OF: Record<string, Field> = {
   model: "model",
@@ -157,7 +164,11 @@ export function RideHistory({
           who: entry.actor && entry.actor.id === viewerId ? "you" : "other",
           actor: entry.actor?.name ?? labels.someone,
         };
-        const name = text(payload.name) || labels.formerMember;
+        const name =
+          text(payload.name) ||
+          (ON_THE_ROSTER.includes(entry.type)
+            ? labels.formerRider
+            : labels.formerMember);
         const self = entry.actor !== null && entry.actor.id === payload.userId;
 
         let sentence: string;

@@ -76,13 +76,13 @@ export function RideDay({
           <p className="font-medium">{day.completedNotice}</p>
           {ride.completedAt ? (
             <p className="text-ink-soft">
-              {formatMessage(
-                day.completedBy,
-                {
-                  name: ride.completedBy?.name ?? dict.admin.history.someone,
-                },
-                language,
-              )}
+              {ride.completedBy
+                ? formatMessage(
+                    day.completedBy,
+                    { name: ride.completedBy.name },
+                    language,
+                  )
+                : day.completedByFormer}
               {" · "}
               <RelativeTime
                 at={ride.completedAt}

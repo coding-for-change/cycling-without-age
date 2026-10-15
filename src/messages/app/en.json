@@ -2411,6 +2411,7 @@
         "title": "the title"
       },
       "formerMember": "a former member",
+      "formerRider": "a former rider",
       "note": "{who, select, you {You} other {{actor}}} commented",
       "pilotAssigned": "{who, select, you {You} other {{actor}}} put {name} on as pilot",
       "pilotNoShow": "{who, select, you {You} other {{actor}}} marked {name} as a no-show",
@@ -2658,7 +2659,8 @@
       "finishHint": "Check everyone in who rode, then complete the ride. Riders who aren't checked in count as no-shows.",
       "danger": "Danger zone",
       "givenUp": "Gave up their seat",
-      "nobodyRode": "Nobody was on the roster."
+      "nobodyRode": "Nobody was on the roster.",
+      "completedByFormer": "Completed by a former member"
     }
   },
   "signIn": {

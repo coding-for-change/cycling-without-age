@@ -2411,6 +2411,7 @@
         "title": "den Titel"
       },
       "formerMember": "ein ehemaliges Mitglied",
+      "formerRider": "einen ehemaligen Fahrgast",
       "note": "{who, select, you {Du hast} other {{actor} hat}} kommentiert",
       "pilotAssigned": "{who, select, you {Du hast} other {{actor} hat}} {name} als Pilot:in eingeteilt",
       "pilotNoShow": "{who, select, you {Du hast} other {{actor} hat}} {name} als nicht erschienen markiert",
@@ -2658,7 +2659,8 @@
       "finishHint": "Checke alle ein, die mitgefahren sind, und schließ dann die Fahrt ab. Wer nicht eingecheckt ist, zählt als nicht erschienen.",
       "danger": "Gefahrenzone",
       "givenUp": "Platz abgesagt",
-      "nobodyRode": "Niemand stand auf der Liste."
+      "nobodyRode": "Niemand stand auf der Liste.",
+      "completedByFormer": "Von einem ehemaligen Mitglied abgeschlossen"
     }
   },
   "signIn": {

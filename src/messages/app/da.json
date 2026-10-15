@@ -2411,6 +2411,7 @@
         "title": "titlen"
       },
       "formerMember": "et tidligere medlem",
+      "formerRider": "en tidligere passager",
       "note": "{who, select, you {Du} other {{actor}}} kommenterede",
       "pilotAssigned": "{who, select, you {Du} other {{actor}}} satte {name} på som pilot",
       "pilotNoShow": "{who, select, you {Du} other {{actor}}} markerede {name} som udeblevet",
@@ -2658,7 +2659,8 @@
       "finishHint": "Tjek alle ind, der kørte med, og afslut så turen. Passagerer, der ikke er tjekket ind, tæller som udeblevne.",
       "danger": "Farezone",
       "givenUp": "Har meldt fra",
-      "nobodyRode": "Ingen stod på listen."
+      "nobodyRode": "Ingen stod på listen.",
+      "completedByFormer": "Afsluttet af et tidligere medlem"
     }
   },
   "signIn": {
