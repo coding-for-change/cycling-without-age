@@ -935,7 +935,7 @@ function WhenStep({
         locale={pickerLocale(language, notation)}
         weekStartsOn={1}
         showOutsideDays={false}
-        className="w-full rounded-2xl border border-line p-3 [--cell-size:--spacing(10)]"
+        className="self-start rounded-2xl border border-line p-3 [--cell-size:--spacing(10)] [&_button[data-selected-single=true]]:bg-mint-deep [&_button[data-selected-single=true]]:text-white"
       />
 
       {day ? (
