@@ -31,6 +31,7 @@ import { ChapterMail } from "../../_components/chapter-mail";
 import { BookSeats } from "./book-seats";
 import { EventInvite, seatLabels } from "./event-invite";
 import { RideHero } from "./ride-hero";
+import { SeatAnswers } from "./seat-answers";
 
 export async function RideDetail({
   params,
@@ -67,16 +68,18 @@ async function PassengerRide({ rideId }: { rideId: string }) {
       />
     );
 
-  const booked = new Set(ride.roster.map(({ passenger }) => passenger.id));
+  const booked = new Set(
+    ride.roster.flatMap(({ passenger }) => (passenger ? [passenger.id] : [])),
+  );
   const moreRiders = managed.filter(
     (rider) => rider.chapterId === ride.chapter.id && !booked.has(rider.id),
   );
   const seatsLeft = rides.seatsLeft(ride);
+  const ahead = ride.status === "scheduled" && ride.startsAt > new Date();
   const canBookMore =
     ride.model === "event" &&
     ride.announced &&
-    ride.status === "scheduled" &&
-    ride.startsAt > new Date() &&
+    ahead &&
     moreRiders.length > 0 &&
     seatsLeft !== 0;
 
@@ -132,11 +135,26 @@ async function PassengerRide({ rideId }: { rideId: string }) {
       ) : null}
 
       <Section title={strings.detail.riders}>
-        <ul className="flex flex-col gap-3">
-          {ride.roster.map(({ id, passenger }) => (
-            <Person key={id}>{fullName(passenger)}</Person>
-          ))}
-        </ul>
+        <SeatAnswers
+          rideId={ride.id}
+          riders={ride.roster.flatMap(({ passenger, attendance }) =>
+            passenger
+              ? [
+                  {
+                    passengerId: passenger.id,
+                    name: fullName(passenger),
+                    attendance,
+                  },
+                ]
+              : [],
+          )}
+          answerable={ahead}
+          language={language}
+          labels={{
+            ...strings.seat,
+            errors: { ...dict.common.errors, ...strings.seat.errors },
+          }}
+        />
       </Section>
 
       <RidePilots
