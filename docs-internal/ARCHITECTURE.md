@@ -1101,9 +1101,10 @@ starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 1
   The `syncRideChat` worker listener (`ride.pilotAssigned`, `ride.pilotUnassigned`,
   `ride.riderBooked`, `ride.riderRemoved`) runs `use-cases/ride-chat.ts`: once a pilot is on the
   ride it opens the chat, and from then on keeps its members equal to the ride's pilots, its
-  riders' accounts and the chapter's admins — on an event only the pilots and admins, because
-  the families who booked seats never learn of each other (`chat.syncRideConversation`,
-  idempotent). A demotion or removal in the chapter (`member.roleChanged`) syncs every ride chat
+  riders' accounts and the chapter's admins. Riders never learn of each other, so the riders'
+  accounts join only when they are one household — a single rider, or one account booking every
+  rider on the ride; a ride with riders of different households, and every event, keeps only the
+  pilots and admins (`chat.syncRideConversation`, idempotent). A demotion or removal in the chapter (`member.roleChanged`) syncs every ride chat
   the person is in, so a former pilot or admin leaves them at once. Two syncs may read the roster in one order and write it in the other, so a sync
   that changed the members reads the roster again and writes until a read finds nothing to
   change; the roster is read outside the conversation's lock, so a waiting sync never needs a

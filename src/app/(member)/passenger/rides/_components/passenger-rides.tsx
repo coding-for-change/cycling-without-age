@@ -15,6 +15,7 @@ import { ChapterMail } from "./chapter-mail";
 import { UpcomingEvents, loadUpcomingEvents } from "./upcoming-events";
 
 const rideHref = (rideId: string) => `/passenger/rides/${rideId}`;
+const PROFILE_BASE = "/passenger/profile";
 
 export async function PassengerRides() {
   "use cache: private";
@@ -60,6 +61,7 @@ export async function PassengerRides() {
             locale={locale}
             words={words}
             href={rideHref}
+            profileBase={PROFILE_BASE}
           />
         </section>
       ) : (
@@ -93,6 +95,7 @@ export async function PassengerRides() {
               locale={locale}
               words={words}
               href={rideHref}
+              profileBase={PROFILE_BASE}
             />
           </div>
         </details>

@@ -170,7 +170,8 @@ const pilotDetailSelect = {
           id: true,
           firstName: true,
           lastName: true,
-          user: { select: { phoneNumber: true } },
+          ...pickupColumns,
+          user: { select: { phoneNumber: true, ...pickupColumns } },
           managedBy: { select: { name: true, phoneNumber: true } },
         },
       },
@@ -907,6 +908,12 @@ export const findRideIdsWithTrishawFrom = async (
       select: { id: true },
     })
   ).map((ride) => ride.id);
+
+export const findUpcomingBookingsOf = (passengerIds: string[], now: Date) =>
+  prisma.rideRosterEntry.findMany({
+    where: { passengerId: { in: passengerIds }, ride: upcomingFrom(now) },
+    select: { rideId: true, passengerId: true },
+  });
 
 export const countFutureRidesWithTrishaws = (
   chapterId: string,

@@ -58,6 +58,7 @@ import {
   findRideById,
   findRideDetail,
   findRideIdsWithTrishawFrom,
+  findUpcomingBookingsOf,
   findRideLegIds,
   findRideScope,
   findRidesForCalendarFeed,
@@ -329,6 +330,7 @@ export async function listRideParticipants(rideId: string) {
   return {
     chapterId: ride.chapterId,
     pilotUserIds: [...new Set(ride.assignments.map((a) => a.userId))],
+    riderCount: ride.roster.length,
     riderAccountUserIds: [
       ...new Set(
         ride.roster.flatMap(({ passenger }) =>
@@ -1377,6 +1379,23 @@ export async function cancelBooking(
     );
     return true;
   });
+}
+
+/**
+ * A rider about to be deleted gives up every seat still ahead first, each as
+ * a cancelled booking, so the ride's history, its chat and — when their own
+ * side let go — its admins hear of it instead of the row just vanishing.
+ */
+export async function cancelUpcomingBookings(
+  passengerIds: string[],
+  actorUserId: Actor,
+  now = new Date(),
+) {
+  if (!passengerIds.length) return 0;
+  const bookings = await findUpcomingBookingsOf(passengerIds, now);
+  for (const { rideId, passengerId } of bookings)
+    await cancelBooking(rideId, passengerId, actorUserId);
+  return bookings.length;
 }
 
 /** A note in the ride's history. Unlike the note for pilots, it never changes. */
