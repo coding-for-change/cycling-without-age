@@ -624,4 +624,30 @@ describe("the last seat given up", () => {
       (await message(false)).heading,
     );
   });
+
+  // An admin took the last rider off: nobody "gave up" a seat.
+  it.each(locales)("says the rider was taken off in %s", async (locale) => {
+    const kind = kinds.find((k) => k.event === "ride.riderRemoved")!;
+    const params = kind.payload.parse(
+      await kind.params({
+        ...EVENTS["ride.riderRemoved"],
+        self: false,
+        rosterNowEmpty: true,
+      } as DomainEvent),
+    );
+    const removed = kind.message(params, getEmailStrings(locale), locale);
+    const gaveUp = kind.message(
+      { ...params, self: true },
+      getEmailStrings(locale),
+      locale,
+    );
+    expect(removed.body).toBe(
+      kind.message(
+        { ...params, bothWays: true },
+        getEmailStrings(locale),
+        locale,
+      ).body,
+    );
+    expect(removed.body).not.toBe(gaveUp.body);
+  });
 });

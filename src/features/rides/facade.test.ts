@@ -3086,6 +3086,45 @@ describe("seats, check-in and the closed roster", () => {
     ]);
   });
 
+  // The way there empties, the way back still has someone: two messages.
+  it("pairs the two legs only when both are left as empty", async () => {
+    const rows: Record<string, unknown> = {
+      "ride-there": scheduled({
+        id: "ride-there",
+        model: "functional",
+        returnLeg: { id: "ride-back", status: "scheduled" },
+        roster: [entry()],
+      }),
+      "ride-back": scheduled({
+        id: "ride-back",
+        model: "functional",
+        startsAt: new Date("2026-09-08T15:00:00Z"),
+        endsAt: new Date("2026-09-08T16:00:00Z"),
+        returnLegOf: { id: "ride-there", status: "scheduled" },
+        roster: [
+          entry({ id: "entry-back" }),
+          entry({ id: "e2", passenger: { id: "p-2" } }),
+        ],
+      }),
+    };
+    db.ride.findUnique.mockImplementation(({ where }) =>
+      Promise.resolve(rows[where.id]),
+    );
+    await rides.cancelSeat("ride-there", "passenger-1", "carer-1", BEFORE);
+    expect(emitted).toEqual([
+      expect.objectContaining({
+        rideId: "ride-there",
+        rosterNowEmpty: true,
+        pair: null,
+      }),
+      expect.objectContaining({
+        rideId: "ride-back",
+        rosterNowEmpty: false,
+        pair: null,
+      }),
+    ]);
+  });
+
   it("closes seat changes once the ride has started", async () => {
     db.ride.findUnique.mockResolvedValue(scheduled({ roster: [entry()] }));
     expect(

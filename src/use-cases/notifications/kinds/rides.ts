@@ -321,6 +321,7 @@ export const rideBookingCancelled = defineKind({
     ...rideFacts,
     ...rider,
     rosterNowEmpty: z.boolean().optional(),
+    self: z.boolean().optional(),
   }),
   recipients: async (event) =>
     (event.self || event.rosterNowEmpty) &&
@@ -332,6 +333,7 @@ export const rideBookingCancelled = defineKind({
     ...(await factsOfRide(event.rideId, event.pair)),
     riderId: event.passengerId,
     rosterNowEmpty: event.rosterNowEmpty,
+    self: event.self,
   }),
   hydrate: withRiderName,
   href: (event) => `/admin/rides/${event.rideId}`,
@@ -357,9 +359,11 @@ export const rideBookingCancelled = defineKind({
       ),
       body: formatMessage(
         empty
-          ? params.bothWays
-            ? copy.introEmptyBoth
-            : copy.introEmpty
+          ? params.self === false
+            ? copy.introEmptyRemoved
+            : params.bothWays
+              ? copy.introEmptyBoth
+              : copy.introEmpty
           : params.bothWays
             ? copy.introBoth
             : copy.intro,

@@ -2057,7 +2057,11 @@ export async function cancelSeat(
       ({ entry }) =>
         entry?.attendance === "booked" || entry?.attendance === "confirmed",
     );
-    const leavingLegs = leaving.map(({ leg }) => leg);
+    const leftEmpty = (leg: RideDetailRow) => seatedOn(leg).length === 1;
+    const oneMessage =
+      leaving.length === 2 &&
+      leftEmpty(leaving[0].leg) === leftEmpty(leaving[1].leg);
+    const leavingLegs = oneMessage ? leaving.map(({ leg }) => leg) : [];
     for (const { leg, entry } of leaving) {
       await updateRosterEntry(
         entry!.id,
@@ -2075,7 +2079,7 @@ export async function cancelSeat(
           type: "ride.riderRemoved",
           passengerId,
           self: true,
-          rosterNowEmpty: seatedOn(leg).length === 1,
+          rosterNowEmpty: leftEmpty(leg),
           pair: pairOfLegs(leavingLegs, leg),
         },
       );
