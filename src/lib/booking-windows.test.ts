@@ -239,27 +239,30 @@ describe("bookingDates and the horizon", () => {
     ).toBe("2026-11-03T23:00:00.000Z");
   });
 
-  it("accepts the last minute before the horizon and refuses the horizon itself", () => {
+  it("accepts a ride ending at the horizon and refuses one starting there", () => {
     const now = new Date("2026-10-05T08:00:00Z");
-    const end = horizonEnd({ ...POLICY, horizonDays: 3 }, BERLIN, now);
-    const open: OperatingHours = { windows: [], closures: [] };
-    const at = (start: Date) => ({
-      startsAt: start,
-      endsAt: new Date(start.getTime() + 15 * 60_000),
-    });
     const policy = { ...POLICY, leadTimeHours: 0, horizonDays: 3 };
+    const end = horizonEnd(policy, BERLIN, now);
+    const allDay: OperatingHours = { windows: weekdays(0, 24), closures: [] };
+    const quarter = 15 * 60_000;
     expect(
       bookingRefusal(
-        at(new Date(end.getTime() - 60_000)),
-        open,
+        { startsAt: new Date(end.getTime() - quarter), endsAt: end },
+        allDay,
         policy,
         BERLIN,
         now,
       ),
     ).toBeNull();
-    expect(bookingRefusal(at(end), open, policy, BERLIN, now)).toBe(
-      "beyondHorizon",
-    );
+    expect(
+      bookingRefusal(
+        { startsAt: end, endsAt: new Date(end.getTime() + quarter) },
+        allDay,
+        policy,
+        BERLIN,
+        now,
+      ),
+    ).toBe("beyondHorizon");
   });
 
   it("ends at the midnight after the last day", () => {
@@ -337,16 +340,14 @@ describe("bookingRefusal", () => {
     ).toBe("outsideHours");
   });
 
-  it("lets a chapter without hours ride any time", () => {
+  it("keeps a chapter without hours to the open day the form offers", () => {
+    const none: OperatingHours = { windows: [], closures: [] };
     expect(
-      bookingRefusal(
-        at("2026-10-08", 19, 20),
-        { windows: [], closures: [] },
-        POLICY,
-        BERLIN,
-        now,
-      ),
+      bookingRefusal(at("2026-10-08", 10, 11), none, POLICY, BERLIN, now),
     ).toBeNull();
+    expect(
+      bookingRefusal(at("2026-10-08", 19, 20), none, POLICY, BERLIN, now),
+    ).toBe("outsideHours");
   });
 });
 

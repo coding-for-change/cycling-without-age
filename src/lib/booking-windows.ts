@@ -205,9 +205,20 @@ export function bookableDays(
   });
 }
 
+const OPEN_DAY_HOURS = (closures: readonly string[]): OperatingHours => ({
+  windows: [1, 2, 3, 4, 5, 6, 7].flatMap((weekday) =>
+    OPEN_DAY.map((range) => ({
+      weekday,
+      startMinute: range.from,
+      endMinute: range.to,
+    })),
+  ),
+  closures,
+});
+
 /**
  * Why the chapter would refuse this window, or `null`. A chapter without
- * riding hours rides any time it is not closed.
+ * riding hours takes requests in the open day the form offers it.
  */
 export function bookingRefusal(
   span: Span,
@@ -220,8 +231,8 @@ export function bookingRefusal(
   if (span.startsAt >= horizonEnd(policy, timeZone, now))
     return "beyondHorizon";
   if (isClosedOn(hours, dayKey(span.startsAt, timeZone))) return "closedDate";
-  const fit = fitsHours(hours, span, timeZone);
-  return fit === "open" || fit === "unconfigured" ? null : "outsideHours";
+  const rules = isConfigured(hours) ? hours : OPEN_DAY_HOURS(hours.closures);
+  return fitsHours(rules, span, timeZone) === "open" ? null : "outsideHours";
 }
 
 export const windowLabel = (
