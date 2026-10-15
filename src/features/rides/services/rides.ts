@@ -1032,7 +1032,7 @@ export const countPastRidesOfPilot = (userId: string, now: Date) =>
 export const findLatestRideForPilot = (userId: string, now: Date) =>
   prisma.ride.findFirst({
     where: {
-      ...pilotRideWhere(userId),
+      ...runningPilotWhere(userId),
       ...finishableAt(now),
       status: { not: "cancelled" },
       startsAt: { lte: now },
