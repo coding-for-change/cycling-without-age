@@ -282,6 +282,7 @@ export function RideRequestForm({
         if (WHEN_ERRORS.includes(result.error)) {
           setSlot(null);
           goTo("when");
+          router.refresh();
         }
         return;
       }
