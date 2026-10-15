@@ -46,3 +46,22 @@ export const requestedRoute = (request: {
   from: request.rideLocation?.name ?? request.pickupName,
   to: request.destinationName,
 });
+
+/** "Sonnenhof · Sonnenstraße 12" — the name only once when the address starts with it. */
+export const placeLine = (name: string | null, address: string | null) =>
+  !name
+    ? address
+    : !address || address.startsWith(name)
+      ? (address ?? name)
+      : `${name} · ${address}`;
+
+/** "Get somewhere · Home → Dr. Weber · And back again" */
+export const routeLine = (
+  model: string,
+  from: string | null,
+  to: string | null,
+  roundTrip: string | null,
+) =>
+  [model, from && to ? `${from} → ${to}` : (from ?? to), roundTrip]
+    .filter(Boolean)
+    .join(" · ");

@@ -43,6 +43,7 @@ import {
   REQUEST_LIMITS,
   type RequestModel,
 } from "@/features/ride-requests/schemas";
+import { routeLine } from "@/features/ride-requests/components/request-words";
 import { useDraft } from "@/lib/auth-wall";
 import { toIsoDateLocal, type Locale as Notation } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
@@ -403,15 +404,14 @@ export function RideRequestForm({
                 ]),
             {
               label: strings.review.ride,
-              value: [
+              value: routeLine(
                 strings.models[model],
                 placeName(start, home, data.locations),
-                model === "functional" && destination
-                  ? `→ ${destination.name}${roundTrip ? ` · ${strings.where.roundTrip}` : ""}`
+                model === "functional" ? (destination?.name ?? null) : null,
+                model === "functional" && roundTrip
+                  ? strings.where.roundTrip
                   : null,
-              ]
-                .filter(Boolean)
-                .join(" · "),
+              ),
               step: "where" as const,
             },
             {

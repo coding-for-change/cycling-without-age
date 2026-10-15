@@ -16,6 +16,7 @@ import {
   requestedRiders,
   requestedRoute,
   requestedWhen,
+  routeLine,
 } from "@/features/ride-requests/components/request-words";
 import { id as requestId } from "@/features/ride-requests/schemas";
 import { requireAuth } from "@/lib/auth-guards";
@@ -73,17 +74,14 @@ async function OwnRequest({ id }: { id: string }) {
     { label: page.riders, value: requestedRiders(request).join(", ") },
     {
       label: page.ride,
-      value: [
+      value: routeLine(
         strings.models[
           request.model === "functional" ? "functional" : "pleasure"
         ],
         route.from,
-        route.to
-          ? `→ ${route.to}${request.roundTrip ? ` · ${strings.where.roundTrip}` : ""}`
-          : null,
-      ]
-        .filter(Boolean)
-        .join(" · "),
+        route.to,
+        route.to && request.roundTrip ? strings.where.roundTrip : null,
+      ),
     },
     { label: page.when, value: `${when.date}, ${when.time}` },
     ...(request.note ? [{ label: page.note, value: request.note }] : []),

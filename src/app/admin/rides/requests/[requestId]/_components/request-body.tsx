@@ -20,6 +20,7 @@ import { chapters } from "@/features/chapters";
 import { rideRequests, type RideRequestRow } from "@/features/ride-requests";
 import {
   requestedRiders,
+  placeLine,
   requestedRoute,
   requestedWhen,
 } from "@/features/ride-requests/components/request-words";
@@ -363,22 +364,14 @@ export async function RequestBody({
               <Fact
                 icon={MapPin}
                 label={detail.from}
-                value={[route.from, request.pickupAddress]
-                  .filter(
-                    (part, index, all) => part && all.indexOf(part) === index,
-                  )
-                  .join(" · ")}
+                value={placeLine(route.from, request.pickupAddress) ?? ""}
               />
             ) : null}
             {route.to ? (
               <Fact
                 icon={Flag}
                 label={detail.to}
-                value={[route.to, request.destinationAddress]
-                  .filter(
-                    (part, index, all) => part && all.indexOf(part) === index,
-                  )
-                  .join(" · ")}
+                value={placeLine(route.to, request.destinationAddress) ?? ""}
               />
             ) : null}
           </dl>
