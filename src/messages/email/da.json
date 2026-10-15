@@ -368,8 +368,7 @@
   },
   "rideRequestCommon": {
     "someone": "en passager",
-    "someoneAsking": "Nogen",
-    "someoneElse": "en anden"
+    "someoneAsking": "Nogen"
   },
   "rideRequestSubmitted": {
     "subject": "Turønske for {riders} {date}",
@@ -420,10 +419,10 @@
     "footer": "Du modtager denne e-mail, fordi en Cycling Without Age-afdeling har ændret, hvem der booker ture for en passager."
   },
   "riderHandedAway": {
-    "subject": "{rider} bliver nu hjulpet af {next}",
-    "preview": "{chapter} har overdraget {rider}",
+    "subject": "{chapter} har overdraget {rider}",
+    "preview": "{rider} har fået en ny kontaktperson",
     "heading": "{rider} har fået en ny kontaktperson",
-    "intro": "{chapter} har overdraget {rider} til {next}. Turønsker og bekræftelser for {rider} går nu dertil.",
+    "intro": "{chapter} har overdraget {rider} til en anden. Du booker ikke længere ture for {rider}, og turønsker og bekræftelser kommer ikke længere til dig.",
     "cta": "Åbn appen",
     "footer": "Du modtager denne e-mail, fordi en Cycling Without Age-afdeling har ændret, hvem der booker ture for en passager."
   }

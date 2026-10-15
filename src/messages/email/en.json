@@ -368,8 +368,7 @@
   },
   "rideRequestCommon": {
     "someone": "a rider",
-    "someoneAsking": "Someone",
-    "someoneElse": "someone else"
+    "someoneAsking": "Someone"
   },
   "rideRequestSubmitted": {
     "subject": "Ride request for {riders} on {date}",
@@ -420,10 +419,10 @@
     "footer": "You received this email because a Cycling Without Age chapter changed who books rides for a rider."
   },
   "riderHandedAway": {
-    "subject": "{rider} is now looked after by {next}",
-    "preview": "{chapter} handed {rider} over",
+    "subject": "{chapter} handed {rider} over",
+    "preview": "{rider} has a new contact",
     "heading": "{rider} has a new contact",
-    "intro": "{chapter} handed {rider} over to {next}. Ride requests and confirmations for {rider} now go to them.",
+    "intro": "{chapter} handed {rider} over to someone else. You no longer book rides for {rider}, and ride requests and confirmations no longer come to you.",
     "cta": "Open the app",
     "footer": "You received this email because a Cycling Without Age chapter changed who books rides for a rider."
   }

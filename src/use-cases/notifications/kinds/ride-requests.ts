@@ -371,7 +371,9 @@ export const rideRequestScheduled = defineKind({
 
 /**
  * A rider moved to another account: the one who now books for them and the
- * one who no longer does both hear it, each in their own words.
+ * one who no longer does both hear it, each in their own words. The one who
+ * no longer does is not told who does now — a hand-over can be a
+ * safeguarding decision.
  */
 export const riderHandedOver = defineKind({
   event: "rider.handedOver",
@@ -383,7 +385,6 @@ export const riderHandedOver = defineKind({
     chapterName: z.string().nullable(),
     fromUserId: z.string(),
     toUserId: z.string(),
-    nextName: z.string().nullable().optional(),
     audience: z.enum(["from", "to"]).optional(),
   }),
   recipients: async (event) =>
@@ -403,13 +404,12 @@ export const riderHandedOver = defineKind({
     audience:
       recipientUserId === params.toUserId ? ("to" as const) : ("from" as const),
   }),
-  hydrate: async (params) => {
-    const [names, nextName] = await Promise.all([
-      passengers.passengerNames([params.riderId]),
-      nameOfPerson(params.toUserId),
-    ]);
-    return { ...params, riderName: names[params.riderId] ?? null, nextName };
-  },
+  hydrate: async (params) => ({
+    ...params,
+    riderName:
+      (await passengers.passengerNames([params.riderId]))[params.riderId] ??
+      null,
+  }),
   href: () => "/passenger/profile/people",
   message: (params, strings, locale) => {
     const copy =
@@ -420,7 +420,6 @@ export const riderHandedOver = defineKind({
     const values = {
       rider: params.riderName ?? common.someone,
       chapter: params.chapterName ?? strings.rideCommon.theChapter,
-      next: params.nextName ?? common.someoneElse,
     };
     return {
       subject: formatMessage(copy.subject, values, locale),
