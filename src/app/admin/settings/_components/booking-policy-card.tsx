@@ -3,14 +3,19 @@
 import type { InlineFieldLabels } from "@/components/inline-field";
 import { SaveStatus, SaveStatusProvider } from "@/components/save-status";
 import { SelectRow } from "@/components/settings-rows";
-import type {
-  ChapterSettings,
-  ChapterSettingsInput,
+import {
+  SCHEDULING_METHODS,
+  type ChapterSettings,
+  type ChapterSettingsInput,
+  type SchedulingMethod,
 } from "@/features/chapters/schemas";
 import type { Dictionary } from "@/lib/i18n";
 import { updateChapterSettingsAction } from "../actions";
 
 type Strings = Dictionary["admin"]["settings"]["booking"];
+
+const isMethod = (value: string | null): value is SchedulingMethod =>
+  (SCHEDULING_METHODS as readonly (string | null)[]).includes(value);
 type Option = { value: string; label: string };
 
 export type BookingChoices = {
@@ -100,6 +105,21 @@ export function BookingPolicyCard({
             settings.defaultStayMinutes,
             "defaultStayMinutes",
           )}
+          <SelectRow
+            value={settings.schedulingMethod}
+            label={strings.method.label}
+            hint={strings.method.hint}
+            options={SCHEDULING_METHODS.map((method) => ({
+              value: method,
+              label: strings.method.options[method],
+            }))}
+            labels={labels.field}
+            onSave={(next) =>
+              isMethod(next)
+                ? save({ schedulingMethod: next })
+                : Promise.resolve({ ok: false, error: "generic" })
+            }
+          />
         </ul>
       </section>
     </SaveStatusProvider>
