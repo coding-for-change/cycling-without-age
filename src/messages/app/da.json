@@ -941,16 +941,16 @@
         "title": "Efter turen"
       },
       "reminders": {
-        "body": "Hvornår passagerer og piloter bliver mindet om en tur, og hvornår en tur uden bookinger bliver meldt.",
+        "body": "Hvornår passagerer og piloter bliver mindet om en tur, og hvornår admins får besked om en tur uden bookinger.",
         "demand": {
           "hint": "Admins får besked om en tur uden passagerer, så den kan aflyses i tide.",
-          "label": "Meld tomme ture"
+          "label": "Advar om tomme ture"
         },
         "hours": "{count, plural, one {# time før} other {# timer før}}",
         "minutes": "{count, plural, one {# minut før} other {# minutter før}}",
         "days": "{count, plural, one {# dag før} other {# dage før}}",
         "rider": {
-          "hint": "Kontoen bag hver passager bliver bedt om at bekræfte pladsen eller give den fri.",
+          "hint": "Passagerer eller deres hjælpere bliver bedt om at bekræfte pladsen eller give den fri.",
           "label": "Påmind passagerer"
         },
         "title": "Påmindelser",

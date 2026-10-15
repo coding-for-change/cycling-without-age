@@ -944,13 +944,13 @@
         "body": "When riders and pilots hear about an upcoming ride, and when a ride nobody is booked on is flagged.",
         "demand": {
           "hint": "Admins hear about a ride with an empty roster, so it can be cancelled in time.",
-          "label": "Flag empty rides"
+          "label": "Warn about empty rides"
         },
         "hours": "{count, plural, one {# hour before} other {# hours before}}",
         "minutes": "{count, plural, one {# minute before} other {# minutes before}}",
         "days": "{count, plural, one {# day before} other {# days before}}",
         "rider": {
-          "hint": "The account behind each rider is asked to confirm the seat or give it up.",
+          "hint": "Riders, or whoever books for them, are asked to confirm the seat or give it up.",
           "label": "Remind riders"
         },
         "title": "Reminders",

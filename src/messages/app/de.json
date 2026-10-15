@@ -944,13 +944,13 @@
         "body": "Wann Fahrgäste und Piloten an eine Fahrt erinnert werden und wann eine Fahrt ohne Buchung gemeldet wird.",
         "demand": {
           "hint": "Admins erfahren von einer Fahrt ohne Fahrgäste, damit sie rechtzeitig abgesagt werden kann.",
-          "label": "Leere Fahrten melden"
+          "label": "Vor leeren Fahrten warnen"
         },
         "hours": "{count, plural, one {# Stunde vorher} other {# Stunden vorher}}",
         "minutes": "{count, plural, one {# Minute vorher} other {# Minuten vorher}}",
         "days": "{count, plural, one {# Tag vorher} other {# Tage vorher}}",
         "rider": {
-          "hint": "Das Konto hinter jedem Fahrgast wird gebeten, den Platz zu bestätigen oder freizugeben.",
+          "hint": "Fahrgäste oder ihre Begleitpersonen werden gebeten, den Platz zu bestätigen oder freizugeben.",
           "label": "Fahrgäste erinnern"
         },
         "title": "Erinnerungen",
