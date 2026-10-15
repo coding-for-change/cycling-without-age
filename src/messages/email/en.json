@@ -153,10 +153,15 @@
     "cta": "Open the ride",
     "footer": "You received this email because you help run a Cycling Without Age chapter.",
     "heading": "A seat came free",
+    "headingEmpty": "Every rider has cancelled",
     "intro": "{rider} is no longer on the ride on {date}, {time}, at {place}. It may now have room for someone else, or have nobody left to ride.",
+    "introBoth": "{rider} is no longer on the round trip on {date}, the way there at {time} from {place}. It may now have room for someone else, or have nobody left to ride.",
+    "introEmpty": "{rider} gave up the last seat on the ride on {date}, {time}, at {place}. Nobody is left to ride — you may want to cancel it, so the pilots and the trishaw are free again.",
+    "introEmptyBoth": "{rider} gave up the last seat on the round trip on {date}, the way there at {time} from {place}. Nobody is left to ride either way — you may want to cancel it, so the pilots and the trishaw are free again.",
     "preview": "{ride} · {time}",
     "someone": "A rider",
-    "subject": "{rider} left the ride on {date}"
+    "subject": "{rider} left the ride on {date}",
+    "subjectEmpty": "Nobody is left on the ride on {date}"
   },
   "rideBookingConfirmed": {
     "cta": "See the ride",
@@ -365,5 +370,35 @@
     "cta": "Sign in",
     "footer": "You received this email because a Cycling Without Age chapter admin entered your address as someone who helps a passenger.",
     "someone": "someone"
+  },
+  "rideReminder": {
+    "cta": "Confirm or cancel the seat",
+    "footer": "You received this email because you book rides with a Cycling Without Age chapter.",
+    "heading": "Your ride is coming up",
+    "intro": "{ride} is on {date}, {time}, starting at {place}. Please confirm the seat in the app — or give it up if plans have changed, so the chapter can offer it to someone else.",
+    "introBoth": "{ride} is on {date}: there at {time}, starting at {place}, and back again. Please confirm the seat in the app — or give it up if plans have changed, so the chapter can offer it to someone else.",
+    "preview": "{ride} · {time}",
+    "subject": "Your ride on {date}"
+  },
+  "pilotReminder": {
+    "cta": "Open the ride",
+    "footer": "You received this email because you pilot with a Cycling Without Age chapter.",
+    "heading": "Your ride is still on",
+    "intro": "Nothing has changed: you're piloting on {date}, {time}, starting at {place} ({ride}). The riders, how to reach them, the access code and the ride's chat are in the app.",
+    "introBoth": "Nothing has changed: you're piloting there and back on {date}, the way there at {time}, starting at {place} ({ride}). The riders, how to reach them, the access code and the ride's chat are in the app.",
+    "pickupAsk": "{trishaw} — ask the chapter where it waits",
+    "pickupAt": "{trishaw} waits at {place}",
+    "pickupHeading": "Picking up the trishaw",
+    "preview": "{ride} · {time}",
+    "subject": "Reminder: you're piloting on {date}"
+  },
+  "rideNoDemand": {
+    "cta": "Open the ride",
+    "footer": "You received this email because you help run a Cycling Without Age chapter.",
+    "heading": "Nobody is booked yet",
+    "intro": "The ride on {date}, {time}, at {place} ({ride}) still has nobody on its roster. Book riders soon, or cancel it with the reason \"No riders\" so the pilots and the trishaw are free again.",
+    "introBoth": "The round trip on {date} still has nobody on its roster either way: the way there at {time} from {place} ({ride}). Book riders soon, or cancel it with the reason \"No riders\" so the pilots and the trishaw are free again.",
+    "preview": "{ride} · {time}",
+    "subject": "Nobody is booked for {date}"
   }
 }

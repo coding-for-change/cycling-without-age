@@ -422,7 +422,10 @@
         "welcome": "Velkommen",
         "careRequested": "Anmodning om at passe på",
         "careDecided": "Svar på anmodning",
-        "careInvited": "Invitation til hjælper"
+        "careInvited": "Invitation til hjælper",
+        "rideReminder": "Turpåmindelse",
+        "pilotReminder": "Pilotpåmindelse",
+        "rideNoDemand": "Ingen booket"
       },
       "you": "Du"
     },

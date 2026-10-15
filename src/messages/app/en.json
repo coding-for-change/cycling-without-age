@@ -422,7 +422,10 @@
         "welcome": "Welcome",
         "careRequested": "Care request",
         "careDecided": "Care answer",
-        "careInvited": "Caretaker invite"
+        "careInvited": "Caretaker invite",
+        "rideReminder": "Ride reminder",
+        "pilotReminder": "Pilot reminder",
+        "rideNoDemand": "Nobody booked"
       },
       "you": "You"
     },

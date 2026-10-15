@@ -422,7 +422,10 @@
         "welcome": "Willkommen",
         "careRequested": "Betreuungsanfrage",
         "careDecided": "Antwort auf Betreuung",
-        "careInvited": "Einladung Begleitperson"
+        "careInvited": "Einladung Begleitperson",
+        "rideReminder": "Fahrterinnerung",
+        "pilotReminder": "Pilotenerinnerung",
+        "rideNoDemand": "Niemand gebucht"
       },
       "you": "Du"
     },

@@ -23,7 +23,12 @@ jest.mock("@/features/chapters", () => ({
   },
 }));
 jest.mock("@/features/fleet", () => ({
-  fleet: { getTrishaw: jest.fn(), getLocation: jest.fn() },
+  fleet: {
+    getTrishaw: jest.fn(),
+    getLocation: jest.fn(),
+    getTrishaws: jest.fn(),
+    listLocationsForChapters: jest.fn(),
+  },
 }));
 jest.mock("@/features/membership", () => ({
   membership: {
@@ -34,7 +39,11 @@ jest.mock("@/features/membership", () => ({
 }));
 jest.mock("@/features/rides", () => ({
   ...jest.requireActual("@/features/rides/schemas"),
-  rides: { getRideFacts: jest.fn(), listRideParticipants: jest.fn() },
+  rides: {
+    getRideFacts: jest.fn(),
+    listRideParticipants: jest.fn(),
+    getRideScope: jest.fn(),
+  },
 }));
 jest.mock("@/features/passengers", () => ({
   passengers: {
@@ -68,6 +77,9 @@ const getRideFacts = rides.getRideFacts as jest.Mock;
 const listRideParticipants = rides.listRideParticipants as jest.Mock;
 const getPassenger = passengers.getPassenger as jest.Mock;
 const getMemberRoles = membership.getMemberRoles as jest.Mock;
+const getRideScope = rides.getRideScope as jest.Mock;
+const getTrishaws = fleet.getTrishaws as jest.Mock;
+const listLocationsForChapters = fleet.listLocationsForChapters as jest.Mock;
 
 const DICTIONARIES = { en, da, de } as Record<Locale, typeof en>;
 
@@ -252,6 +264,43 @@ const EVENTS: Record<EventType, DomainEvent> = {
     actorUserId: ACTOR,
     passengerId: "passenger-1",
     self: true,
+    rosterNowEmpty: false,
+    pair: null,
+  },
+  "ride.riderReminderDue": {
+    type: "ride.riderReminderDue",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: null,
+    pair: null,
+  },
+  "ride.volunteerReminderDue": {
+    type: "ride.volunteerReminderDue",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: null,
+    pair: null,
+  },
+  "ride.noDemand": {
+    type: "ride.noDemand",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: null,
+    pair: null,
+  },
+  "ride.completed": {
+    type: "ride.completed",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: SUBJECT,
+    riders: 3,
+    noShows: 1,
+  },
+  "ride.reopened": {
+    type: "ride.reopened",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
   },
   "ride.opened": {
     type: "ride.opened",
@@ -300,6 +349,18 @@ const known = () => {
   getProfile.mockResolvedValue({ name: "Anke Weiss" });
   getTrishaw.mockResolvedValue({ name: "Sonnenstrahl" });
   getLocation.mockResolvedValue({ name: "Depot Sonnenhof" });
+  getRideScope.mockResolvedValue({
+    id: "ride-1",
+    chapterId: CHAPTER,
+    trishawIds: ["trishaw-1", "trishaw-2"],
+  });
+  getTrishaws.mockResolvedValue([
+    { id: "trishaw-1", name: "Sonnenstrahl", storageLocation: { id: "loc-1" } },
+    { id: "trishaw-2", name: "Isarwind", storageLocation: { id: "gone" } },
+  ]);
+  listLocationsForChapters.mockResolvedValue([
+    { id: "loc-1", name: "Depot Sonnenhof", address: "Sonnenstraße 1" },
+  ]);
   getRideFacts.mockResolvedValue({
     title: null,
     model: "functional",
@@ -325,6 +386,7 @@ const unknown = () => {
   getProfile.mockResolvedValue(null);
   getTrishaw.mockResolvedValue(null);
   getLocation.mockResolvedValue(null);
+  getRideScope.mockResolvedValue(null);
   getRideFacts.mockResolvedValue(null);
   getPassenger.mockResolvedValue(null);
 };
@@ -397,6 +459,11 @@ describe("a message for both legs of a round trip", () => {
     { ...EVENTS["ride.understaffed"], pair: lead },
     { ...EVENTS["ride.riderBooked"], pair: lead },
     { ...EVENTS["ride.opened"], pair: lead },
+    { ...EVENTS["ride.riderReminderDue"], pair: lead },
+    { ...EVENTS["ride.volunteerReminderDue"], pair: lead },
+    { ...EVENTS["ride.noDemand"], pair: lead },
+    { ...EVENTS["ride.riderRemoved"], pair: lead },
+    { ...EVENTS["ride.riderRemoved"], rosterNowEmpty: true, pair: lead },
   ] as DomainEvent[];
 
   it.each(locales)("reads as finished prose in %s", async (locale) => {
@@ -452,6 +519,7 @@ describe("the templates the history feed has to label", () => {
       "damageReported",
       "invite",
       "memberJoined",
+      "pilotReminder",
       "poolAccessDecided",
       "poolAccessRequested",
       "rejection",
@@ -461,8 +529,10 @@ describe("the templates the history feed has to label", () => {
       "rideBookingCancelled",
       "rideCancelled",
       "rideChanged",
+      "rideNoDemand",
       "rideOpened",
       "ridePilotWithdrew",
+      "rideReminder",
       "rideUnderstaffed",
       "roleChanged",
       "welcome",
@@ -517,4 +587,38 @@ describe("the copy for a name nobody has filled in yet", () => {
       );
     },
   );
+});
+
+describe("the pilots' reminder", () => {
+  it.each(locales)("lists where each trishaw waits in %s", async (locale) => {
+    const kind = kinds.find((k) => k.event === "ride.volunteerReminderDue")!;
+    const params = kind.payload.parse(
+      await kind.params(EVENTS["ride.volunteerReminderDue"]),
+    );
+    const message = kind.message(params, getEmailStrings(locale), locale);
+    expect(message.steps?.items).toHaveLength(2);
+    expect(message.steps?.items[0]).toContain(
+      "Depot Sonnenhof, Sonnenstraße 1",
+    );
+    expect(message.steps?.items[1]).toContain("Isarwind");
+    expect(JSON.stringify(message)).not.toMatch(/accessCode|\d{4}#/);
+  });
+});
+
+describe("the last seat given up", () => {
+  it.each(locales)("reads differently in %s", async (locale) => {
+    const kind = kinds.find((k) => k.event === "ride.riderRemoved")!;
+    const event = EVENTS["ride.riderRemoved"];
+    const message = async (rosterNowEmpty: boolean) =>
+      kind.message(
+        kind.payload.parse(
+          await kind.params({ ...event, rosterNowEmpty } as DomainEvent),
+        ),
+        getEmailStrings(locale),
+        locale,
+      );
+    expect((await message(true)).heading).not.toBe(
+      (await message(false)).heading,
+    );
+  });
 });

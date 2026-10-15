@@ -6,7 +6,7 @@ const HOUR_MS = 60 * 60 * 1000;
 const PICKUP_LEAD_HOURS = 24;
 
 /** Each trishaw with the location it waits at, if the chapter can still reach it. */
-async function trishawPlaces(chapterId: string, trishawIds: string[]) {
+export async function trishawPlaces(chapterId: string, trishawIds: string[]) {
   const [trishaws, locations] = await Promise.all([
     fleet.getTrishaws(trishawIds),
     fleet.listLocationsForChapters([chapterId]),
