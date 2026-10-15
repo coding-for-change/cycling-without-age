@@ -1,5 +1,6 @@
 import { passengers } from "@/features/passengers";
 import { personProfiles } from "@/features/person-profiles";
+import { rides } from "@/features/rides";
 import type { Access } from "@/lib/access";
 import { accessPerson } from "./person-access";
 import { removeManagedRider, updateManagedRider } from "./manage-rider";
@@ -14,6 +15,9 @@ jest.mock("@/features/passengers", () => ({
 jest.mock("@/features/person-profiles", () => ({
   personProfiles: { listPhotoFilesOf: jest.fn(), purgePhotoFiles: jest.fn() },
 }));
+jest.mock("@/features/rides", () => ({
+  rides: { cancelUpcomingBookings: jest.fn() },
+}));
 jest.mock("@/lib/observability/logger", () => ({ logDomainEvent: jest.fn() }));
 
 const access = accessPerson as jest.Mock;
@@ -21,6 +25,7 @@ const update = passengers.updateManagedRider as jest.Mock;
 const remove = passengers.removeManagedRider as jest.Mock;
 const listPhotos = personProfiles.listPhotoFilesOf as jest.Mock;
 const purge = personProfiles.purgePhotoFiles as jest.Mock;
+const cancelBookings = rides.cancelUpcomingBookings as jest.Mock;
 
 const CHAPTER = "chapter-muenchen";
 const viewer = {
@@ -42,6 +47,9 @@ beforeEach(() => {
   order.length = 0;
   access.mockResolvedValue({ relation: "manager", target: target() });
   listPhotos.mockResolvedValue([{ id: "file-1", key: "files/1.webp" }]);
+  cancelBookings.mockImplementation(async () => {
+    order.push("cancel");
+  });
   remove.mockImplementation(async () => {
     order.push("remove");
   });
@@ -105,7 +113,18 @@ describe("removeManagedRider", () => {
     });
     expect(remove).toHaveBeenCalledWith("managed-greta");
     expect(purge).toHaveBeenCalledWith([{ id: "file-1", key: "files/1.webp" }]);
-    expect(order).toEqual(["remove", "purge"]);
+    expect(order).toEqual(["cancel", "remove", "purge"]);
+  });
+
+  it("gives up the rider's seats still ahead, as the one removing them", async () => {
+    access.mockResolvedValue({ relation: "manager", target: target() });
+
+    await removeManagedRider({ viewer, passengerId: "managed-greta" });
+
+    expect(cancelBookings).toHaveBeenCalledWith(
+      ["managed-greta"],
+      "daughter-lena",
+    );
   });
 
   it("refuses an admin of another chapter", async () => {
@@ -116,5 +135,6 @@ describe("removeManagedRider", () => {
     ).rejects.toMatchObject({ code: "unknownPassenger" });
     expect(remove).not.toHaveBeenCalled();
     expect(purge).not.toHaveBeenCalled();
+    expect(cancelBookings).not.toHaveBeenCalled();
   });
 });
