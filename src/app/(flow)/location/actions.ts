@@ -11,12 +11,13 @@ import {
   GUEST_CHAPTER_COOKIE,
   GUEST_CHAPTER_MAX_AGE,
 } from "@/lib/guest-chapter";
-import { cyclingRoute, retrievePlace, suggestPlaces } from "@/lib/mapbox";
+import { cyclingRoute, resolvePlaceFor } from "@/lib/mapbox";
 import { EMPTY_PRESET } from "@/lib/join-preset";
-import { withinRateLimit } from "@/lib/rate-limit";
-import type { PlaceSuggestion } from "@/lib/mapbox";
 import { resolveDestination } from "@/use-cases/onboarding-progress";
-import { settlePassengerLocation } from "@/use-cases/settle-passenger-location";
+import {
+  settleCaretakerLocation,
+  settlePassengerLocation,
+} from "@/use-cases/settle-passenger-location";
 
 const chapterId = z.string().min(1).max(64);
 
@@ -34,27 +35,6 @@ export async function rememberGuestChapter(
     maxAge: GUEST_CHAPTER_MAX_AGE,
   });
   return { ok: true };
-}
-
-const SEARCH_LIMIT = { max: 60, windowMs: 60_000 };
-const RESOLVE_LIMIT = { max: 20, windowMs: 60_000 };
-const searchInput = z.object({
-  query: z.string().trim().min(3).max(120),
-  sessionToken: z.string().uuid(),
-  language: z.string().max(8).optional(),
-});
-
-export async function suggestAddresses(
-  input: unknown,
-): Promise<PlaceSuggestion[]> {
-  const session = await requireAuth();
-  const parsed = searchInput.safeParse(input);
-  if (!parsed.success) return [];
-
-  if (!withinRateLimit(`places:${session.user.id}`, SEARCH_LIMIT)) return [];
-  return suggestPlaces(parsed.data.query, parsed.data.sessionToken, {
-    language: parsed.data.language,
-  });
 }
 
 export type HomeResolution =
@@ -86,21 +66,7 @@ export async function resolveHomeAddress(
   input: unknown,
 ): Promise<HomeResolution> {
   const session = await requireAuth();
-  if (!withinRateLimit(`resolve:${session.user.id}`, RESOLVE_LIMIT)) {
-    return { ok: false };
-  }
-  const parsed = z
-    .object({
-      mapboxId: z.string().min(1).max(200),
-      sessionToken: z.string().uuid(),
-    })
-    .safeParse(input);
-  if (!parsed.success) return { ok: false };
-
-  const place = await retrievePlace(
-    parsed.data.mapboxId,
-    parsed.data.sessionToken,
-  );
+  const place = await resolvePlaceFor(session.user.id, input);
   if (!place) return { ok: false };
 
   const nearest = await chapters.nearestChapter(place.coords);
@@ -176,6 +142,36 @@ export async function settlePassengerAt(
     revalidatePath("/onboarding");
     // Named outright rather than left to `/onboarding` to redirect: a cached
     // redirect replays. See `resolveDestination`.
+    return {
+      ok: true,
+      next: await resolveDestination(
+        session,
+        EMPTY_PRESET,
+        await readNextPath(),
+      ),
+    };
+  } catch (error) {
+    return actionFailure(error, {});
+  }
+}
+
+export async function settleCaretakerAt(
+  input: unknown,
+): Promise<LocationResult> {
+  const session = await requireAuth();
+  const parsed = chapterId.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "generic" };
+
+  if (!(await chapters.getChapter(parsed.data))) {
+    return { ok: false, error: "unknownChapter" };
+  }
+
+  try {
+    await settleCaretakerLocation({
+      userId: session.user.id,
+      chapterId: parsed.data,
+    });
+    revalidatePath("/onboarding");
     return {
       ok: true,
       next: await resolveDestination(

@@ -15,7 +15,7 @@ import {
   requireCountryAdminOfChapter,
 } from "@/lib/auth-guards";
 import {
-  retrievePlace,
+  resolvePlaceFor,
   reversePlace,
   suggestPlaces,
   type PlaceSuggestion,
@@ -106,7 +106,7 @@ export async function deleteChapterAction(
 
 const SLUG_LIMIT = { max: 60, windowMs: 60_000 };
 const SEARCH_LIMIT = { max: 60, windowMs: 60_000 };
-const RESOLVE_LIMIT = { max: 30, windowMs: 60_000 };
+const REVERSE_LIMIT = { max: 30, windowMs: 60_000 };
 
 export async function checkSlugAction(
   slug: string,
@@ -138,20 +138,11 @@ export async function suggestChapterPlaces(
   });
 }
 
-const resolveInput = z.object({
-  mapboxId: z.string().min(1).max(200),
-  sessionToken: z.string().uuid(),
-});
-
 export async function resolveChapterPlace(
   input: unknown,
 ): Promise<ResolvedPlace | null> {
   const { session } = await requireAdminScope();
-  const parsed = resolveInput.safeParse(input);
-  if (!parsed.success) return null;
-  if (!withinRateLimit(`resolve:${session.user.id}`, RESOLVE_LIMIT))
-    return null;
-  return retrievePlace(parsed.data.mapboxId, parsed.data.sessionToken);
+  return resolvePlaceFor(session.user.id, input);
 }
 
 const reverseInput = z.object({
@@ -166,7 +157,7 @@ export async function reverseChapterPlace(
   const { session } = await requireAdminScope();
   const parsed = reverseInput.safeParse(input);
   if (!parsed.success) return null;
-  if (!withinRateLimit(`reverse:${session.user.id}`, RESOLVE_LIMIT))
+  if (!withinRateLimit(`reverse:${session.user.id}`, REVERSE_LIMIT))
     return null;
   const { lat, lng, language } = parsed.data;
   return reversePlace({ lat, lng }, { language });

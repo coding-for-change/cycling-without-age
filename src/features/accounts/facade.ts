@@ -8,6 +8,7 @@ import {
   findProvenance,
   findUserByEmail,
   findUserByPhone,
+  findHelperDetails,
   findUserNames,
   markClaimed as markUserClaimed,
   removeUser,
@@ -21,6 +22,16 @@ export type ProvisionInput = {
   helper?: HelperInput;
   managesOthers?: boolean;
 };
+
+export async function findUserIdByContact(contact: string) {
+  const value = contactSchema.parse(contact);
+  const existing = value.startsWith("+")
+    ? await findUserByPhone(value)
+    : await findUserByEmail(value);
+  return existing?.id ?? null;
+}
+
+export const getHelperDetails = (userId: string) => findHelperDetails(userId);
 
 export async function provisionUser({
   name,

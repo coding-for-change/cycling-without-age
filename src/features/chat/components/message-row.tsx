@@ -30,6 +30,7 @@ export function MessageRow({
   own,
   senderName,
   senderAvatarSvg,
+  senderPhotoUrl,
   showAvatar,
   showName,
   receipt,
@@ -45,6 +46,7 @@ export function MessageRow({
   own: boolean;
   senderName: string | null;
   senderAvatarSvg: string | null;
+  senderPhotoUrl: string | null;
   showAvatar: boolean;
   showName: boolean;
   receipt: string | null;
@@ -131,7 +133,10 @@ export function MessageRow({
           <MessageAvatar
             className={cn("bg-transparent", !showAvatar && "invisible")}
           >
-            <ChatAvatar svg={senderAvatarSvg} />
+            <ChatAvatar
+              svg={senderAvatarSvg}
+              photoUrl={senderPhotoUrl}
+            />
           </MessageAvatar>
 
           <MessageContent>
@@ -209,7 +214,7 @@ export function MessageRow({
 
             {failed ? (
               <MessageFooter className="gap-1.5 text-ink-faint">
-                <span className="text-red">{strings.composer.notSent}</span>
+                <span className="text-red-ink">{strings.composer.notSent}</span>
                 <button
                   type="button"
                   onClick={() => onRetry(message)}

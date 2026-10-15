@@ -78,6 +78,7 @@ export function ConversationRow({
     >
       <ChatAvatar
         svg={item.display.avatarSvg}
+        photoUrl={item.display.photoUrl}
         online={item.online}
         size="lg"
       />

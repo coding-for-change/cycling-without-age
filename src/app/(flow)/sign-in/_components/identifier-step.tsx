@@ -198,7 +198,7 @@ export function IdentifierStep({
         <p
           id="identifier-error"
           role="alert"
-          className="mt-3 text-sm text-red"
+          className="mt-3 text-sm text-red-ink"
         >
           {error}
         </p>

@@ -1,8 +1,7 @@
 import { connection } from "next/server";
-import { fleet } from "@/features/fleet";
-import { rides } from "@/features/rides";
-import { canReadFile, getSession } from "@/lib/auth-guards";
-import { extensionOf, fileKindOf, presignGet } from "@/lib/storage";
+import { getSession } from "@/lib/auth-guards";
+import { extensionOf, presignGet } from "@/lib/storage";
+import { readableFile } from "@/use-cases/file-access";
 
 const PRIVATE = {
   "Cache-Control": "private, no-store",
@@ -25,14 +24,8 @@ export async function GET(
   if (!session)
     return new Response("Unauthorized", { status: 401, headers: PRIVATE });
 
-  const kind = await fileKindOf(id);
-  if (!kind) return notFound();
-  const found =
-    kind === "ridePhoto"
-      ? await rides.photoReadRule(id)
-      : await fleet.fileReadRule(id);
-  if (!found || !canReadFile(session, found.rule)) return notFound();
-  const { file } = found;
+  const file = await readableFile(session, id);
+  if (!file) return notFound();
 
   const url = await presignGet(
     file.key,

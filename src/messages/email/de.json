@@ -29,7 +29,9 @@
   "calendarFeed": {
     "cancelled": "Abgesagt: {title}",
     "description": "Fahrten mit Radeln ohne Alter. Hält sich von selbst aktuell.",
+    "descriptionCaretaker": "Die Fahrten der Menschen, die Sie begleiten, und Ihre eigenen, mit Radeln ohne Alter. Hält sich von selbst aktuell.",
     "destination": "Nach {place}",
+    "forRiders": "{title} · {names}",
     "details": "Details in der App: {url}",
     "models": {
       "event": "Gruppenfahrt",
@@ -38,6 +40,7 @@
     },
     "name": "Radeln ohne Alter",
     "pilot": "Pilot · {model}",
+    "riders": "{count, plural, one {Fahrgast} other {Fahrgäste}}: {names}",
     "trishaws": "Rikscha: {names}"
   },
   "chatDigest": {
@@ -159,6 +162,22 @@
     "passenger": "Passagier",
     "pilot": "Pilot"
   },
+  "welcomeCaretaker": {
+    "cta": "Erste Ausfahrt buchen",
+    "footer": "Sie erhalten diese E-Mail, weil für Ihre Adresse ein Konto angelegt wurde.",
+    "heading": "Wind im Haar für die Menschen, die Ihnen wichtig sind",
+    "how": {
+      "1": "Fragen Sie in der App nach einer Ausfahrt — Tag und Uhrzeit wählen Sie.",
+      "2": "Ein freiwilliger Pilot übernimmt sie und holt Ihren Fahrgast an der Tür ab.",
+      "3": "Ihr Fahrgast sitzt vorne und hat nur den Fahrtwind vor sich."
+    },
+    "howHeading": "So läuft eine Ausfahrt",
+    "intro": "Ihr Konto ist fertig. Sie können jetzt Ausfahrten für die Menschen buchen, um die Sie sich kümmern, und bei {chapter} wartet schon ein Pilot aufs Treten.",
+    "noteHeading": "Ein paar Zeilen von {chapter}",
+    "preview": "Ein Platz vorne wartet",
+    "subject": "Willkommen bei Cycling Without Age",
+    "title": "Willkommen bei {chapter}"
+  },
   "welcomePassenger": {
     "cta": "Erste Ausfahrt anfragen",
     "footer": "Sie erhalten diese E-Mail, weil für Ihre Adresse ein Konto angelegt wurde.",
@@ -190,5 +209,35 @@
     "preview": "Deine Pilotanfrage liegt beim Chapter",
     "subject": "Willkommen an Bord — drei Schritte bis zur ersten Ausfahrt",
     "title": "Willkommen bei {chapter}"
+  },
+  "careRequested": {
+    "subject": "{requester} bittet Sie, sich um {rider} zu kümmern",
+    "preview": "Fahrten für {rider} bei {chapter} buchen",
+    "heading": "Sich um {rider} kümmern?",
+    "intro": "{requester} von {chapter} möchte, dass Sie Fahrten für {rider} buchen. Öffnen Sie die Anfrage, um zuzusagen oder abzulehnen – bis dahin ändert sich nichts.",
+    "cta": "Anfrage öffnen",
+    "footer": "Sie erhalten diese E-Mail, weil eine Admin einer Cycling-Without-Age-Ortsgruppe Ihre Adresse als Begleitperson eines Fahrgasts eingetragen hat.",
+    "someone": "jemand"
+  },
+  "careDecided": {
+    "subjectAccepted": "{caretaker} kümmert sich jetzt um {rider}",
+    "subjectDeclined": "{caretaker} hat abgelehnt, sich um {rider} zu kümmern",
+    "headingAccepted": "{rider} ist dabei",
+    "headingDeclined": "Noch niemand kümmert sich um {rider}",
+    "introAccepted": "{caretaker} hat zugesagt. {rider} ist jetzt Fahrgast, und {caretaker} kann Fahrten buchen.",
+    "introDeclined": "{caretaker} hat abgelehnt, deshalb wurde {rider} nicht hinzugefügt. Füge {rider} mit einer anderen Begleitperson neu hinzu.",
+    "cta": "Fahrgäste öffnen",
+    "footer": "Du erhältst diese E-Mail, weil du jemanden gebeten hast, sich um einen Fahrgast zu kümmern.",
+    "someone": "jemand"
+  },
+  "careInvited": {
+    "subject": "Fahrten für {rider} bei {chapter} buchen",
+    "preview": "Ein Konto wartet auf Sie",
+    "heading": "Sie sind eingeladen",
+    "intro": "{inviter} von {chapter} hat ein Konto für Sie angelegt, damit Sie Fahrten für {rider} buchen können.",
+    "how": "Melden Sie sich mit dieser E-Mail-Adresse an, wir schicken Ihnen einen Code – kein Passwort nötig.",
+    "cta": "Anmelden",
+    "footer": "Sie erhalten diese E-Mail, weil eine Admin einer Cycling-Without-Age-Ortsgruppe Ihre Adresse als Begleitperson eines Fahrgasts eingetragen hat.",
+    "someone": "jemand"
   }
 }

@@ -310,6 +310,47 @@ duplication, marked in the schema.
 position. Per chapter rather than a constant — a rural chapter covers more ground than a city
 one, and the number is a policy, not a fact about geography.
 
+Onboarding ends at the passkey step for everyone. The pilot "next steps" screen is gone: the
+training videos, the workshop and the first ride are steps of the home-screen setup checklist
+instead, where they can actually be ticked off (see Person profiles).
+
+## Person profiles
+
+A small, optional profile — photo, bio, curated interests, up to three conversation starters,
+age, and for riders the accessibility tags — so a pilot and a rider meet as people. It is never
+part of sign-up; a dismissible checklist on the member homes nudges people towards it.
+
+### The profile belongs to the person who rides
+
+`PersonProfile` hangs on exactly one owner: the `User` when someone speaks for themself, or a
+managed `Passenger` (no account) when a relative or carer fills it in on their behalf. A
+provisioned account that its owner has not claimed yet (`createdByUserId` set, `claimedAt`
+null) is still the helper's to fill in; claiming hands it over. `transferPassengerProfileToUser`
+moves a managed rider's profile onto an account, ready for the day a rider can be linked to a
+new account (no flow does that yet).
+
+### Visibility is chapter-wide, health is narrower
+
+`use-cases/person-access` decides, from current memberships: approved pilots see everyone in
+their chapters, riders and their managers see the chapter's pilots, admins see their scope,
+and riders never see each other. Anyone else gets `notFound()` — the pages and
+`/api/files/[id]` answer the same way, so ids cannot be probed. Profile photos are
+`StoredFile`s of kind `profilePhoto` (512px square WebP, attention-cropped by `sharp`), served
+through `use-cases/file-access`, which applies the same rule. They are never written to
+`User.image`, because better-auth ships that column to the client with the session.
+
+The accessibility tags are health data (GDPR Art. 9). They are stored only after explicit
+consent — an optional box in the passenger consent step, or the same text inline on the
+profile — and a manager attests for a managed rider. Admins can never consent for anyone.
+Withdrawing clears consent and tags in one write. Only the person, their manager, admins and
+the chapter's pilots see them (`seesHealthDetails`), never another rider.
+
+### Deleting an account deletes its photos
+
+The schema cascades the rows, but objects in the bucket survive a cascade, so
+`use-cases/delete-account` collects the photo keys of the account and of the riders it manages
+before `accounts.deleteUser`, then deletes the objects.
+
 ## Command bar (COD-172)
 
 `src/lib/commands.ts` is the registry contract for the ⌘K palette: `IconKey`,

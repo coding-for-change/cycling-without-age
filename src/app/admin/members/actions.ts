@@ -4,13 +4,15 @@ import { revalidatePath } from "next/cache";
 import { invalidateReports } from "@/lib/cache-tags";
 import { actionFailure } from "@/lib/domain-error";
 import { z } from "zod";
-import { accounts } from "@/features/accounts";
 import {
   requireAuth,
   requireChapterAdmin,
   requireSuperAdmin,
 } from "@/lib/auth-guards";
 import { membership } from "@/features/membership";
+import { PILOT_STEPS } from "@/features/person-profiles";
+import { deleteAccount } from "@/use-cases/delete-account";
+import { confirmPilotStep, revokePilotStep } from "@/use-cases/pilot-steps";
 
 export type AdminActionResult =
   | { ok: true }
@@ -34,6 +36,11 @@ const roleChangeInput = z.object({
 });
 
 const deleteUserInput = z.object({ userId: id });
+
+const pilotStepConfirmInput = z.object({
+  userId: id,
+  step: z.enum(PILOT_STEPS),
+});
 
 const failed = (error: unknown): AdminActionResult =>
   actionFailure(error, {
@@ -102,9 +109,39 @@ export async function deleteUserAction(
     return { ok: false, error: "self" };
 
   try {
-    await accounts.deleteUser(parsed.data.userId);
+    await deleteAccount(parsed.data.userId);
     revalidatePath("/admin", "layout");
     invalidateReports();
+    return { ok: true };
+  } catch (error) {
+    return failed(error);
+  }
+}
+
+export async function confirmPilotStepAction(
+  input: z.input<typeof pilotStepConfirmInput>,
+): Promise<AdminActionResult> {
+  const parsed = pilotStepConfirmInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "generic" };
+
+  try {
+    await confirmPilotStep(parsed.data.userId, parsed.data.step);
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch (error) {
+    return failed(error);
+  }
+}
+
+export async function revokePilotStepAction(
+  input: z.input<typeof pilotStepConfirmInput>,
+): Promise<AdminActionResult> {
+  const parsed = pilotStepConfirmInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "generic" };
+
+  try {
+    await revokePilotStep(parsed.data.userId, parsed.data.step);
+    revalidatePath("/", "layout");
     return { ok: true };
   } catch (error) {
     return failed(error);

@@ -144,6 +144,28 @@ export const eventSchema = z.discriminatedUnion("type", [
     ...rideScope,
     passengerId: z.string().min(1),
   }),
+  z.object({
+    type: z.literal("care.requested"),
+    requestId: z.string().min(1),
+    chapterId: z.string().min(1),
+    userId: z.string().min(1),
+    actorUserId: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal("care.decided"),
+    requestId: z.string().min(1),
+    chapterId: z.string().min(1),
+    actorUserId: z.string().min(1),
+    requestedByUserId: z.string().min(1).nullable(),
+    accepted: z.boolean(),
+  }),
+  z.object({
+    type: z.literal("care.invited"),
+    chapterId: z.string().min(1),
+    userId: z.string().min(1),
+    actorUserId: z.string().min(1),
+    passengerId: z.string().min(1),
+  }),
 ]);
 
 export type DomainEvent = z.infer<typeof eventSchema>;

@@ -176,7 +176,7 @@ function MakeEventForm({
         <p
           id={ids.error}
           role="alert"
-          className="text-xs text-red"
+          className="text-xs text-red-ink"
         >
           {error}
         </p>

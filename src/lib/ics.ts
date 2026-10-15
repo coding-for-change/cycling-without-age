@@ -18,6 +18,8 @@ export type IcsEvent = {
   location?: string | null;
   url?: string | null;
   status?: IcsStatus;
+  color?: string | null;
+  categories?: string[];
 };
 
 export type IcsCalendar = {
@@ -92,6 +94,16 @@ export function foldLine(line: string): string {
 const text = (name: string, value: string | null | undefined) =>
   value ? [`${name}:${escapeText(value)}`] : [];
 
+const list = (name: string, values: string[] | undefined) => {
+  const items = (values ?? []).map(escapeText).filter(Boolean);
+  return items.length ? [`${name}:${items.join(",")}`] : [];
+};
+
+const CSS_COLOR_NAME = /^[a-z]+$/;
+
+const color = (value: string | null | undefined) =>
+  value && CSS_COLOR_NAME.test(value) ? [`COLOR:${value}`] : [];
+
 const uri = (name: string, value: string | null | undefined) =>
   value ? [`${name}:${singleLine(value)}`] : [];
 
@@ -107,6 +119,8 @@ function eventLines(event: IcsEvent): string[] {
     ...text("LOCATION", event.location),
     ...text("DESCRIPTION", event.description),
     ...uri("URL", event.url),
+    ...list("CATEGORIES", event.categories),
+    ...color(event.color),
     `STATUS:${event.status ?? "CONFIRMED"}`,
     "TRANSP:OPAQUE",
     "END:VEVENT",

@@ -2,6 +2,18 @@ import { prisma } from "@/lib/prisma";
 import { fullName } from "@/lib/utils";
 import { Prisma, type $Enums } from "@/generated/prisma";
 
+const pickupColumns = {
+  residence: true,
+  address: true,
+  latitude: true,
+  longitude: true,
+} as const;
+
+const riderPickup = {
+  ...pickupColumns,
+  user: { select: pickupColumns },
+} as const;
+
 /**
  * What every calendar surface renders. Kept in one place so the week grid, the
  * trishaw timeline and the two agendas cannot drift into different shapes.
@@ -79,7 +91,15 @@ const pilotSelect = {
     orderBy: { position: "asc" },
     select: {
       id: true,
-      passenger: { select: { id: true, firstName: true, lastName: true } },
+      passenger: {
+        select: {
+          id: true,
+          userId: true,
+          firstName: true,
+          lastName: true,
+          ...riderPickup,
+        },
+      },
     },
   },
 } satisfies Prisma.RideSelect;
@@ -144,13 +164,12 @@ export const findRidesForPassengers = (
   });
 
 /**
- * What a subscribed calendar is told: when, where, which bike — and nobody's
- * name. A feed leaves the app for whichever provider the reader's calendar
- * lives with, so the who stays behind the link back into the app.
- * `assignments` is narrowed to the reader, which is all that "am I the pilot
- * here" needs.
+ * What a subscribed calendar is told: when, where, which bike. A feed leaves
+ * the app for whichever provider the reader's calendar lives with, so the only
+ * names on it are the reader's own riders — `roster` is narrowed to them, and
+ * `assignments` to the reader, which is all that "am I the pilot here" needs.
  */
-const feedSelect = (userId: string) =>
+const feedSelect = (userId: string, passengerIds: string[]) =>
   ({
     id: true,
     chapterId: true,
@@ -169,6 +188,13 @@ const feedSelect = (userId: string) =>
       select: { trishaw: { select: { name: true } } },
     },
     assignments: { where: { userId }, select: { role: true } },
+    roster: {
+      where: { passengerId: { in: passengerIds } },
+      orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+      select: {
+        passenger: { select: { id: true, firstName: true, ...riderPickup } },
+      },
+    },
   }) satisfies Prisma.RideSelect;
 
 export type RideFeedRow = Prisma.RideGetPayload<{
@@ -178,7 +204,7 @@ export type RideFeedRow = Prisma.RideGetPayload<{
 export type FeedAudience = {
   /** Chapters whose rides the reader may see as their pilot. */
   pilotChapterIds: string[];
-  /** Riders the reader manages. */
+  /** Riders the reader manages, and the reader as a rider. */
   passengerIds: string[];
 };
 
@@ -219,7 +245,7 @@ export const findRidesForCalendarFeed = (
       ? [{ startsAt: "desc" }, { id: "desc" }]
       : [{ startsAt: "asc" }, { id: "asc" }],
     take,
-    select: feedSelect(userId),
+    select: feedSelect(userId, passengerIds),
   });
 
 export const findRideById = (
@@ -534,7 +560,8 @@ const detailSelect = {
           chapterId: true,
           managedByUserId: true,
           userId: true,
-          user: { select: { email: true } },
+          ...pickupColumns,
+          user: { select: { email: true, ...pickupColumns } },
         },
       },
     },
@@ -658,6 +685,15 @@ export const findFinishableRideForPilot = (
   prisma.ride.findFirst({
     where: { id: rideId, ...pilotRideWhere(userId), ...finishableAt(now) },
     select: calendarSelect,
+  });
+
+export const countPastRidesOfPilot = (userId: string, now: Date) =>
+  prisma.ride.count({
+    where: {
+      assignments: { some: { userId } },
+      status: { not: "cancelled" },
+      endsAt: { lte: now },
+    },
   });
 
 export const findLatestRideForPilot = (userId: string, now: Date) =>

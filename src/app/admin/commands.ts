@@ -17,6 +17,7 @@ import type { Dictionary, Locale } from "@/lib/i18n";
 import { LOCALE_LABELS, locales } from "@/lib/i18n/locales";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
 import { formatMessage } from "@/lib/i18n/format";
+import { themes } from "@/lib/theme";
 import { NAV, type NavItem, type NavKey } from "./nav";
 import { scopeChoices } from "./scopes";
 
@@ -143,6 +144,18 @@ const accountCommands = (
       run: { kind: "action" as const, id: "locale.set" as const, arg: locale },
       keywords: [],
     })),
+  ...themes.map((theme) => ({
+    id: `theme:${theme}`,
+    group: "account" as const,
+    label: formatMessage(
+      dict.admin.commands.theme,
+      { name: dict.common.theme[theme] },
+      active,
+    ),
+    icon: "theme" as const,
+    run: { kind: "action" as const, id: "theme.set" as const, arg: theme },
+    keywords: ["dark mode", "light mode", "appearance"],
+  })),
   {
     id: "sidebar-toggle",
     group: "account",

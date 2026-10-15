@@ -6,6 +6,7 @@ export type IconKey =
   | "home"
   | "calendar"
   | "training"
+  | "profile"
   | "rides"
   | "members"
   | "passengers"
@@ -21,11 +22,16 @@ export type IconKey =
   | "pilot"
   | "passenger"
   | "language"
+  | "theme"
   | "sidebar"
   | "signOut";
 
 export type CommandActionId =
-  "scope.set" | "sidebar.toggle" | "locale.set" | "session.signOut";
+  | "scope.set"
+  | "sidebar.toggle"
+  | "locale.set"
+  | "theme.set"
+  | "session.signOut";
 
 export type ScopeArg = "all" | `chapter:${string}` | `country:${string}`;
 

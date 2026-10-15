@@ -340,7 +340,7 @@ export async function syncInboxAction(
   if (!parsed.success) return GENERIC;
 
   try {
-    const conversations = await syncInbox(session.user.id, parsed.data.since);
+    const conversations = await syncInbox(session, parsed.data.since);
     return { ok: true, conversations };
   } catch (error) {
     return failed(error);

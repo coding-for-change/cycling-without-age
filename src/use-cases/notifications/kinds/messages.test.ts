@@ -27,6 +27,18 @@ jest.mock("@/features/membership", () => ({
   membership: { listChapterAdmins: jest.fn() },
 }));
 jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
+jest.mock("@/features/passengers", () => ({
+  passengers: {
+    getOwnPassenger: jest.fn().mockResolvedValue(null),
+    getCareRequest: jest
+      .fn()
+      .mockResolvedValue({ firstName: "Inge", lastName: "Holm" }),
+    getCareRequestPreview: jest.fn().mockResolvedValue({ firstName: "Inge" }),
+    getPassenger: jest
+      .fn()
+      .mockResolvedValue({ firstName: "Inge", lastName: "Holm" }),
+  },
+}));
 
 const getChapter = chapters.getChapter as jest.Mock;
 const getCountry = chapters.getCountry as jest.Mock;
@@ -126,6 +138,28 @@ const EVENTS: Record<EventType, DomainEvent> = {
     countryId: COUNTRY,
     chapterId: CHAPTER,
     actorUserId: ACTOR,
+  },
+  "care.requested": {
+    type: "care.requested",
+    requestId: "care-1",
+    chapterId: CHAPTER,
+    userId: SUBJECT,
+    actorUserId: ACTOR,
+  },
+  "care.decided": {
+    type: "care.decided",
+    requestId: "care-1",
+    chapterId: CHAPTER,
+    actorUserId: SUBJECT,
+    requestedByUserId: ACTOR,
+    accepted: true,
+  },
+  "care.invited": {
+    type: "care.invited",
+    chapterId: CHAPTER,
+    userId: SUBJECT,
+    actorUserId: ACTOR,
+    passengerId: "passenger-1",
   },
   "pool.accessDecided": {
     type: "pool.accessDecided",
@@ -299,6 +333,9 @@ describe("the templates the history feed has to label", () => {
     expect(await collect()).toEqual([
       "applicationSubmitted",
       "approval",
+      "careDecided",
+      "careInvited",
+      "careRequested",
       "countryAdminAppointed",
       "countryAdminRemoved",
       "damageReported",
@@ -316,6 +353,30 @@ describe("the templates the history feed has to label", () => {
     const labels = DICTIONARIES[locale].admin.history.templates;
     for (const template of await collect()) {
       expect(Object.keys(labels)).toContain(template);
+    }
+  });
+});
+
+describe("the welcome for a caretaker", () => {
+  it.each(locales)("reads as finished prose in %s", async (locale) => {
+    const kind = kinds.find((k) => k.event === "user.onboarded")!;
+    const params = kind.payload.parse({
+      chapterName: "München",
+      role: "passenger",
+      welcomeNote: null,
+      caretaker: true,
+    });
+    const message = kind.message(params, getEmailStrings(locale), locale);
+    const passenger = kind.message(
+      { ...params, caretaker: false },
+      getEmailStrings(locale),
+      locale,
+    );
+
+    expect(message.heading).not.toBe(passenger.heading);
+    for (const line of lines(message)) {
+      expect(line).not.toMatch(/\{\w+\}/);
+      expect(line.trim()).not.toBe("");
     }
   });
 });

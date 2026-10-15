@@ -3,7 +3,9 @@ import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/format";
 import { fullName } from "@/lib/utils";
-import type { RideCalendarRow } from "../facade";
+import { pickupLabel, pickupOf } from "@/features/passengers/pickup";
+import type { SubjectRef } from "@/features/person-profiles";
+import type { PilotRideRow, RideCalendarRow } from "../facade";
 import type { RideModelName } from "../schemas";
 
 export type CalendarStrings = Dictionary["calendar"];
@@ -78,10 +80,17 @@ export function rideTrishawNames(
   return names.length ? names.join(", ") : strings.noTrishaw;
 }
 
-/** "Anna Bauer, Karl Weber" — who an assigned pilot is taking out. */
-export const rideRiderNames = (
-  roster: { passenger: { firstName: string; lastName: string } }[],
-) => roster.map(({ passenger }) => fullName(passenger)).join(", ");
+export const rideRiderRefs = (
+  roster: PilotRideRow["roster"],
+  careHome: string,
+): { ref: SubjectRef; name: string; pickup: string | null }[] =>
+  roster.map(({ passenger }) => ({
+    ref: passenger.userId
+      ? { kind: "user", id: passenger.userId }
+      : { kind: "passenger", id: passenger.id },
+    name: fullName(passenger),
+    pickup: pickupLabel(pickupOf(passenger), careHome),
+  }));
 
 export type RideFleetStrings = { grounded: string; groundedOnRide: string };
 

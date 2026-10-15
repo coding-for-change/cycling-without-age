@@ -24,8 +24,9 @@ export const findProfile = (userId: string) =>
       consentSafetyAt: true,
       consentDataAt: true,
       passkeyPromptedAt: true,
-      pilotNextStepsSeenAt: true,
       onboardedAt: true,
+      createdByUserId: true,
+      claimedAt: true,
       _count: { select: { passkeys: true, passengers: true } },
     },
   });
@@ -40,6 +41,15 @@ export const stampOnboarded = (
   db.user.updateMany({
     where: { id: userId, onboardedAt: null },
     data: { onboardedAt: new Date() },
+  });
+
+export const fillHelperRelationship = (
+  userId: string,
+  helperRelationship: string,
+) =>
+  prisma.user.updateMany({
+    where: { id: userId, helperRelationship: null },
+    data: { helperRelationship },
   });
 
 export const findUserIdByEmail = (email: string) =>
@@ -71,5 +81,18 @@ export const findProfiles = (userIds: string[]) =>
       locale: true,
       notifyChatPush: true,
       notifyChatEmail: true,
+    },
+  });
+
+export const findAccessAccounts = (userIds: string[]) =>
+  prisma.user.findMany({
+    where: { id: { in: userIds } },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      birthDate: true,
+      createdByUserId: true,
+      claimedAt: true,
     },
   });

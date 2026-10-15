@@ -91,14 +91,17 @@ function defaultSlot(
   };
 }
 
-async function loadCrew(chapterIds: string[]): Promise<ScheduleCrew> {
+async function loadCrew(
+  chapterIds: string[],
+  careHome: string,
+): Promise<ScheduleCrew> {
   const [riders, members] = await Promise.all([
     passengers.listPassengersOfChapters(chapterIds),
     membership.listMembersOfChapters(chapterIds),
   ]);
   return {
     passengers: riders.map((passenger) => ({
-      ...toPassengerChoice(passenger),
+      ...toPassengerChoice(passenger, careHome),
       chapterId: passenger.chapterId,
     })),
     pilots: members.filter(isPilot).map((member) => ({
@@ -155,7 +158,7 @@ export async function ScheduleRide({
       chapters={chapters}
       crew={
         params.new === "1"
-          ? loadCrew(chapterIds)
+          ? loadCrew(chapterIds, dict.calendar.pickupCareHome)
           : Promise.resolve({ passengers: [], pilots: [] })
       }
       stays={choices(STAYS)}

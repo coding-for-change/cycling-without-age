@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { LanguagePicker } from "@/components/language-picker";
+import { ThemePicker, type ThemeStrings } from "@/components/theme-picker";
 import type { Locale } from "@/lib/i18n";
 import type { ScopeArg } from "@/lib/commands";
 import type { ResolvedNavItem } from "../nav";
@@ -27,6 +28,7 @@ export function AdminTopBar({
   defaultScope,
   locale,
   languageLabel,
+  themeStrings,
   menuLabel,
   bell,
 }: {
@@ -35,6 +37,7 @@ export function AdminTopBar({
   defaultScope: ScopeArg;
   locale: Locale;
   languageLabel: string;
+  themeStrings: ThemeStrings;
   menuLabel: string;
   bell: ReactNode;
 }) {
@@ -90,6 +93,10 @@ export function AdminTopBar({
         <LanguagePicker
           locale={locale}
           label={languageLabel}
+          className="hidden h-9 px-3 md:inline-flex"
+        />
+        <ThemePicker
+          strings={themeStrings}
           className="hidden h-9 px-3 md:inline-flex"
         />
       </div>

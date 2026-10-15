@@ -55,8 +55,8 @@ type RowContent = {
 
 const TONES: Record<SettingsRowTone, string> = {
   default: "text-ink",
-  action: "text-mint-deep",
-  destructive: "text-red",
+  action: "text-mint-ink",
+  destructive: "text-red-ink",
 };
 
 const rowClass = (tone: SettingsRowTone, className?: string) =>

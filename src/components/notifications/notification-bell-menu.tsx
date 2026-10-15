@@ -166,7 +166,7 @@ export function NotificationBellMenu({
             <EmptyHeader>
               <EmptyMedia
                 variant="icon"
-                className="bg-mint-tint text-mint-deep"
+                className="bg-mint-tint text-mint-ink"
               >
                 <Inbox aria-hidden />
               </EmptyMedia>
@@ -194,7 +194,7 @@ export function NotificationBellMenu({
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-mint-tint">
                       <Icon
                         aria-hidden
-                        className="size-4 text-mint-deep"
+                        className="size-4 text-mint-ink"
                       />
                       <span className="sr-only">
                         {strings.categories[row.category]}

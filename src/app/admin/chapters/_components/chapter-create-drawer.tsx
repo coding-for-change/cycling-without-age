@@ -881,7 +881,7 @@ function SlugRow({
             className={cn(
               "inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium",
               state === "free" && "bg-mint-tint text-ink",
-              state === "taken" && "text-red",
+              state === "taken" && "text-red-ink",
               state === "checking" && "text-ink-soft",
             )}
           >

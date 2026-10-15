@@ -81,7 +81,7 @@ export function JoinActions({
       {error ? (
         <p
           role="alert"
-          className="text-sm text-red"
+          className="text-sm text-red-ink"
         >
           {error}
         </p>

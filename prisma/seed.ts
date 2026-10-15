@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
+import type { ManagedRiderInput } from "@/features/passengers";
+import { profile } from "@/features/profile";
 import { fleet } from "@/features/fleet";
 import { rideInput, rides } from "@/features/rides";
 import { defaultLocationFor } from "@/use-cases/manage-chapter";
@@ -50,6 +52,12 @@ type Persona = {
     lastName: string;
     birthDate: string;
     gender: "female" | "male" | "other";
+  };
+  /** Riders this account books for without riding themself. */
+  manages?: {
+    chapter: string;
+    relationship: string;
+    riders: ManagedRiderInput[];
   };
 };
 
@@ -132,6 +140,36 @@ const PERSONAS: Persona[] = [
       lastName: "Passenger",
       birthDate: "1938-04-19",
       gender: "male",
+    },
+  },
+  {
+    email: address("caretaker"),
+    name: "Carla Caretaker",
+    chapterRoles: { muenchen: ["passenger"] },
+    manages: {
+      chapter: "muenchen",
+      relationship: "child",
+      riders: [
+        {
+          firstName: "Inge",
+          lastName: "Caretaker",
+          birthDate: "1936-09-02",
+          gender: "female",
+          pickup: { residence: "careHome" },
+        },
+        {
+          firstName: "Walter",
+          lastName: "Caretaker",
+          birthDate: "1933-01-17",
+          gender: "male",
+          pickup: {
+            residence: "home",
+            address: "Pariser Straße 21, 81667 München",
+            latitude: 48.1302,
+            longitude: 11.5946,
+          },
+        },
+      ],
     },
   },
   {
@@ -365,6 +403,11 @@ async function seedRides(
   const rider = await passengers.getOwnPassenger(
     userIds.get(address("passenger"))!,
   );
+  const [inge, walter] = (
+    await passengers.listPassengersManagedBy(userIds.get(address("caretaker"))!)
+  ).filter((managed) => managed.userId === null);
+  const cared = (...people: (typeof inge | undefined)[]) =>
+    people.flatMap((person) => (person ? [person.id] : []));
 
   // Offsets are days from today, not from Monday: the seed must leave something
   // in the past for the week grid and something ahead for the two agendas
@@ -382,7 +425,7 @@ async function seedRides(
       // FK could not express.
       location: "Seniorenheim Sonnenhof",
       staff: [pilot, multi],
-      riders: rider ? [rider.id] : [],
+      riders: [...(rider ? [rider.id] : []), ...cared(inge, walter)],
     },
     {
       chapter: "muenchen",
@@ -394,7 +437,7 @@ async function seedRides(
       title: "Ausfahrt in den Englischen Garten",
       location: "Englischer Garten",
       staff: [pilot],
-      riders: [],
+      riders: cared(walter),
     },
     {
       chapter: "muenchen",
@@ -417,7 +460,7 @@ async function seedRides(
       model: "pleasure" as const,
       location: "Seniorenheim Sonnenhof",
       staff: [pilot],
-      riders: [],
+      riders: cared(inge),
     },
     {
       chapter: "hamburg",
@@ -458,6 +501,7 @@ async function seedRides(
         destinationName: item.destination ?? null,
         title: item.title ?? null,
         capacity: item.model === "event" ? 8 : null,
+        requiredPilots: Math.max(1, item.staff.length),
       }),
       null,
     );
@@ -488,6 +532,9 @@ function describeRoles(persona: Persona) {
     ...(persona.pendingPilotApplications ?? []).map(
       (s) => `pilot pending @ ${s}`,
     ),
+    persona.manages
+      ? `caretaker of ${persona.manages.riders.length} @ ${persona.manages.chapter}`
+      : null,
   ]
     .filter(Boolean)
     .join(", ");
@@ -565,6 +612,18 @@ async function seed() {
         managedByUserId: userId,
         userId,
       });
+    }
+
+    if (persona.manages) {
+      const managed = await passengers.listPassengersManagedBy(userId);
+      if (!managed.some((rider) => rider.userId === null)) {
+        await passengers.addManagedPassengers(
+          userId,
+          chapterId(persona.manages.chapter),
+          persona.manages.riders,
+        );
+      }
+      await profile.markManagesOthers(userId, persona.manages.relationship);
     }
   }
 

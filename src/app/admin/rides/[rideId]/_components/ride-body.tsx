@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Ban } from "lucide-react";
 import { membership } from "@/features/membership";
-import { passengers } from "@/features/passengers";
+import { passengers, pickupLabel, pickupOf } from "@/features/passengers";
 import { modelLimits, rides, slotOf } from "@/features/rides";
 import { addRideNoteAction } from "@/features/rides/actions";
 import {
@@ -141,7 +141,9 @@ export async function RideBody({
 
   const riderChoices = chapterPassengers
     .filter((passenger) => !booked.has(passenger.id))
-    .map(toPassengerChoice);
+    .map((passenger) =>
+      toPassengerChoice(passenger, dict.calendar.pickupCareHome),
+    );
   const limits = modelLimits(ride.model, ride.capacity, ride.requiredPilots);
   const pilotChoices = chapterMembers
     .filter((member) => isPilot(member) && !onRide.has(member.userId))
@@ -430,12 +432,17 @@ export async function RideBody({
             href: passenger.userId
               ? `/admin/members/${passenger.userId}${scopeQuery}`
               : null,
+            pickup: pickupLabel(
+              pickupOf(passenger),
+              dict.calendar.pickupCareHome,
+            ),
           }))}
           choices={riderChoices}
           limit={limits.passengers}
           language={language}
           labels={{
             ...pick(detail, ROSTER_LABELS),
+            pickupLabel: dict.calendar.pickupLabel,
             errors,
           }}
           pick={{

@@ -60,3 +60,9 @@ export const findUserNames = (ids: string[]) =>
     where: { id: { in: ids } },
     select: { id: true, name: true },
   });
+
+export const findHelperDetails = (userId: string) =>
+  prisma.user.findUnique({
+    where: { id: userId },
+    select: { managesOthers: true, helperRelationship: true },
+  });

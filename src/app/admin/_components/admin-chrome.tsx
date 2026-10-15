@@ -25,6 +25,7 @@ export async function AdminChrome() {
       defaultScope={active}
       locale={locale}
       languageLabel={dict.common.language}
+      themeStrings={dict.common.theme}
       menuLabel={dict.admin.openMenu}
       bell={
         <Suspense
