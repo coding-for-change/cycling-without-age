@@ -417,5 +417,10 @@
     "socials": {
       "website": "https://cyclingwithoutage.org"
     }
+  },
+  "background": {
+    "color": {
+      "light": "#F4F2EF"
+    }
   }
 }
