@@ -285,18 +285,26 @@ export const findRidesForPilot = (userId: string, from: Date, to: Date) =>
     select: pilotSelect,
   });
 
+const passengerRideWhere = (passengerIds: string[]) =>
+  ({
+    roster: { some: { passengerId: { in: passengerIds }, ...ACTIVE_SEAT } },
+  }) satisfies Prisma.RideWhereInput;
+
 /**
  * A rider whose seat is given up no longer has the ride on their agenda, but
- * the ride's own page still opens for them — it is where they take it back.
+ * the ride's own page still opens for them while the ride is ahead — it is
+ * where they take the seat back. After that, the ride is no longer theirs.
  */
-const passengerRideWhere = (passengerIds: string[], givenUpToo = false) =>
+const passengerPageWhere = (passengerIds: string[], now: Date) =>
   ({
-    roster: {
-      some: {
-        passengerId: { in: passengerIds },
-        ...(givenUpToo ? {} : ACTIVE_SEAT),
+    OR: [
+      passengerRideWhere(passengerIds),
+      {
+        status: "scheduled",
+        startsAt: { gt: now },
+        roster: { some: { passengerId: { in: passengerIds } } },
       },
-    },
+    ],
   }) satisfies Prisma.RideWhereInput;
 
 export const findRidesForPassengers = (
@@ -381,9 +389,10 @@ export const findRideIdForPilot = (rideId: string, userId: string) =>
 export const findRideIdForPassengers = (
   rideId: string,
   passengerIds: string[],
+  now: Date,
 ) =>
   prisma.ride.findFirst({
-    where: { id: rideId, ...passengerRideWhere(passengerIds, true) },
+    where: { id: rideId, ...passengerPageWhere(passengerIds, now) },
     select: { id: true },
   });
 
@@ -393,9 +402,13 @@ export const findRideForPilot = (rideId: string, userId: string) =>
     select: pilotDetailSelect,
   });
 
-export const findRideForPassengers = (rideId: string, passengerIds: string[]) =>
+export const findRideForPassengers = (
+  rideId: string,
+  passengerIds: string[],
+  now: Date,
+) =>
   prisma.ride.findFirst({
-    where: { id: rideId, ...passengerRideWhere(passengerIds, true) },
+    where: { id: rideId, ...passengerPageWhere(passengerIds, now) },
     select: passengerDetailSelect(passengerIds),
   });
 

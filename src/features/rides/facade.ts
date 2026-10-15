@@ -311,9 +311,10 @@ export const pilotCanOpen = async (rideId: string, userId: string) =>
 export const passengersCanOpen = async (
   rideId: string,
   passengerIds: string[],
+  now = new Date(),
 ) =>
   passengerIds.length > 0 &&
-  (await findRideIdForPassengers(rideId, passengerIds)) !== null;
+  (await findRideIdForPassengers(rideId, passengerIds, now)) !== null;
 
 /**
  * The finish page shows a storage access code, so a ride can be finished
@@ -336,9 +337,10 @@ export const getRideForPilot = async (rideId: string, userId: string) =>
 export const getRideForPassengers = async (
   rideId: string,
   passengerIds: string[],
+  now = new Date(),
 ) =>
   passengerIds.length
-    ? withActiveCrewOf(await findRideForPassengers(rideId, passengerIds))
+    ? withActiveCrewOf(await findRideForPassengers(rideId, passengerIds, now))
     : null;
 
 export async function listRideParticipants(rideId: string) {

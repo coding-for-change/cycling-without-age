@@ -1516,11 +1516,26 @@ describe("what a member may read", () => {
 
   // A care home's carer manages several residents; the ride may carry others.
   it("shows a rider's account only its own riders, and not the pilots' note", async () => {
-    await rides.getRideForPassengers("ride-1", ["passenger-1"]);
+    const now = new Date("2026-09-07T09:00:00Z");
+    await rides.getRideForPassengers("ride-1", ["passenger-1"], now);
     const args = db.ride.findFirst.mock.calls[0][0];
     expect(args.where).toEqual({
       id: "ride-1",
-      roster: { some: { passengerId: { in: ["passenger-1"] } } },
+      OR: [
+        {
+          roster: {
+            some: {
+              passengerId: { in: ["passenger-1"] },
+              attendance: { not: "cancelled" },
+            },
+          },
+        },
+        {
+          status: "scheduled",
+          startsAt: { gt: now },
+          roster: { some: { passengerId: { in: ["passenger-1"] } } },
+        },
+      ],
     });
     expect(args.select.roster.where).toEqual({
       passengerId: { in: ["passenger-1"] },
@@ -1529,6 +1544,20 @@ describe("what a member may read", () => {
     expect(args.select.cancellationNote).toBeUndefined();
     expect(userOf(args.select)).toEqual({
       select: { ...noEmail.select, phoneNumber: true },
+    });
+  });
+
+  // A seat given up opens the ride's page only while the seat can be taken back.
+  it("opens a ride whose seat was given up only while it is ahead", async () => {
+    const now = new Date("2026-09-07T09:00:00Z");
+    db.ride.findFirst.mockResolvedValue(null);
+    expect(await rides.passengersCanOpen("ride-1", ["passenger-1"], now)).toBe(
+      false,
+    );
+    expect(db.ride.findFirst.mock.calls[0][0].where.OR[1]).toEqual({
+      status: "scheduled",
+      startsAt: { gt: now },
+      roster: { some: { passengerId: { in: ["passenger-1"] } } },
     });
   });
 
