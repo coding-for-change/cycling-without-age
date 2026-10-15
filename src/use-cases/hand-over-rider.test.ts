@@ -2,6 +2,7 @@ import { accounts } from "@/features/accounts";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
 import { profile } from "@/features/profile";
+import { rideRequests } from "@/features/ride-requests";
 import { domainCode } from "@/lib/domain-error";
 import { handOverRider } from "./hand-over-rider";
 
@@ -20,6 +21,9 @@ jest.mock("@/features/passengers", () => ({
 }));
 jest.mock("@/features/profile", () => ({
   profile: { markManagesOthers: jest.fn() },
+}));
+jest.mock("@/features/ride-requests", () => ({
+  rideRequests: { handOverOpenRequests: jest.fn() },
 }));
 
 const MUNICH = "chapter-muenchen";
@@ -65,6 +69,19 @@ describe("handOverRider", () => {
     );
     expect(profile.markManagesOthers).toHaveBeenCalledWith("user-daughter");
     expect(moved).toMatchObject({ toUserId: "user-daughter", invited: false });
+  });
+
+  it("takes the rider's open requests along to the new manager", async () => {
+    await handOverRider({
+      passengerId: "erna",
+      target: { kind: "member", userId: "user-daughter" },
+      actorUserId: ADMIN,
+    });
+    expect(rideRequests.handOverOpenRequests).toHaveBeenCalledWith(
+      "erna",
+      "user-old",
+      "user-daughter",
+    );
   });
 
   it("refuses an account outside the rider's chapter", async () => {

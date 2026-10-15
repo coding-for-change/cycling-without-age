@@ -3,6 +3,9 @@ import {
   claimPendingRequest,
   closePendingRequest,
   findDestinationsOfRequester,
+  findOpenRequestsOfRequesterWith,
+  removeRequestRider,
+  setRequester,
   findRideRequestScope,
   insertRideRequest,
   linkRequestToRide,
@@ -14,6 +17,10 @@ jest.mock("@/features/ride-requests/services/ride-requests", () => ({
   closePendingRequest: jest.fn(),
   countRideRequests: jest.fn(),
   findDestinationsOfRequester: jest.fn(),
+  findOpenRequestsOf: jest.fn(),
+  findOpenRequestsOfRequesterWith: jest.fn(),
+  removeRequestRider: jest.fn(),
+  setRequester: jest.fn(),
   findRideRequest: jest.fn(),
   findRideRequestScope: jest.fn(),
   findRideRequests: jest.fn(),
@@ -221,4 +228,24 @@ it("suggests each earlier destination once, newest first", async () => {
       (place) => place.name,
     ),
   ).toEqual(["Dr. Weber", "Café Luitpold"]);
+});
+
+describe("handOverOpenRequests", () => {
+  it("gives a request for this rider alone to the new manager, and takes the rider out of a shared one", async () => {
+    (findOpenRequestsOfRequesterWith as jest.Mock).mockResolvedValue([
+      { id: "alone", passengers: [{ passengerId: "erna" }] },
+      {
+        id: "shared",
+        passengers: [{ passengerId: "erna" }, { passengerId: "karl" }],
+      },
+    ]);
+    await rideRequests.handOverOpenRequests("erna", "user-old", "user-new");
+    expect(findOpenRequestsOfRequesterWith).toHaveBeenCalledWith(
+      "user-old",
+      "erna",
+    );
+    expect(setRequester).toHaveBeenCalledWith("alone", "user-new");
+    expect(removeRequestRider).toHaveBeenCalledWith("shared", "erna");
+    expect(setRequester).toHaveBeenCalledTimes(1);
+  });
 });

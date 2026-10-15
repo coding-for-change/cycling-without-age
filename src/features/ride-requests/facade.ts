@@ -8,6 +8,9 @@ import {
   countRideRequests,
   findDestinationsOfRequester,
   findOpenRequestsOf,
+  findOpenRequestsOfRequesterWith,
+  removeRequestRider,
+  setRequester,
   findRideRequest,
   findRideRequestScope,
   findRideRequests,
@@ -211,6 +214,25 @@ export async function withdrawOpenRequests(
         actorUserId,
       });
     });
+  return open.length;
+}
+
+/**
+ * A rider handed to another account takes their open requests along: one
+ * that asked for this rider alone now belongs to the new manager, who hears
+ * how it ends; one shared with the old manager's other riders goes on without
+ * this rider. The old manager is told nothing more about them.
+ */
+export async function handOverOpenRequests(
+  passengerId: string,
+  fromUserId: string,
+  toUserId: string,
+) {
+  const open = await findOpenRequestsOfRequesterWith(fromUserId, passengerId);
+  for (const request of open)
+    if (request.passengers.length === 1)
+      await setRequester(request.id, toUserId);
+    else await removeRequestRider(request.id, passengerId);
   return open.length;
 }
 

@@ -213,3 +213,25 @@ export const findOpenRequestsOf = ({
       passengers: { select: { passengerId: true } },
     },
   });
+
+export const findOpenRequestsOfRequesterWith = (
+  requesterUserId: string,
+  passengerId: string,
+) =>
+  prisma.rideRequest.findMany({
+    where: {
+      status: "pending",
+      requesterUserId,
+      passengers: { some: { passengerId } },
+    },
+    select: { id: true, passengers: { select: { passengerId: true } } },
+  });
+
+export const setRequester = (id: string, requesterUserId: string) =>
+  prisma.rideRequest.updateMany({
+    where: { id, status: "pending" },
+    data: { requesterUserId },
+  });
+
+export const removeRequestRider = (requestId: string, passengerId: string) =>
+  prisma.rideRequestPassenger.deleteMany({ where: { requestId, passengerId } });

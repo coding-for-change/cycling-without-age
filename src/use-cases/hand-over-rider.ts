@@ -2,6 +2,7 @@ import { accounts } from "@/features/accounts";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
 import { profile } from "@/features/profile";
+import { rideRequests } from "@/features/ride-requests";
 import { DomainError } from "@/lib/domain-error";
 
 export type HandOverTarget =
@@ -19,7 +20,8 @@ async function requireMemberOf(userId: string, chapterId: string) {
  * or someone new who gets an account and an invitation. A contact that
  * already has an account must belong to the chapter first, so nobody is put
  * in charge of a stranger's rider by typing an address. The rider keeps
- * their bookings, profile and history; only who books for them changes.
+ * their bookings, profile, history and open requests; only who books for
+ * them changes.
  */
 export async function handOverRider({
   passengerId,
@@ -58,6 +60,11 @@ export async function handOverRider({
     toUserId,
     actorUserId,
     { invited },
+  );
+  await rideRequests.handOverOpenRequests(
+    passengerId,
+    moved.fromUserId,
+    toUserId,
   );
   await profile.markManagesOthers(toUserId);
   if (invited)
