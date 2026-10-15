@@ -101,13 +101,26 @@ jobs:
           BRANCH_NAME_SAFE=$(echo "${{ github.ref_name }}" | tr -cd 'a-zA-Z0-9-' | tr 'A-Z' 'a-z')
           echo "BRANCH_NAME_SAFE=$BRANCH_NAME_SAFE" >> $GITHUB_ENV
 
-      - name: Build Docker image
-        env:
-          DOCKER_BUILDKIT: "1"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - name: Expose the Actions cache to Buildx
+        uses: crazy-max/ghaction-github-runtime@3cb05d89e1f492524af3d41a1c98c83bc3025124 # v3.1.0
+
+      - name: Login to registry
+        run: |
+          jq -r '.REGISTRY_PASSWORD // empty' decrypted.json | docker login registry.infra.codingforchange.com \
+            -u "$(jq -r '.REGISTRY_USERNAME // empty' decrypted.json)" \
+            --password-stdin
+
+      - name: Build and push Docker image
         run: |
           SENTRY_AUTH_TOKEN="$(jq -r '.SENTRY_AUTH_TOKEN // empty' decrypted.json)"
           export SENTRY_AUTH_TOKEN
-          docker build \
+          docker buildx build \
+            --cache-from type=gha,scope=cwa-main \
+            --cache-from type=gha,scope=cwa-${{ env.BRANCH_NAME_SAFE }} \
+            --cache-to type=gha,scope=cwa-${{ env.BRANCH_NAME_SAFE }},mode=max \
             --build-arg NEXT_PUBLIC_APP_URL=https://${{ env.BRANCH_NAME_SAFE }}.cwa.codingforchange.com \
             --build-arg NEXT_PUBLIC_MAPBOX_TOKEN="$(jq -r '.NEXT_PUBLIC_MAPBOX_TOKEN // empty' decrypted.json)" \
             --build-arg NEXT_PUBLIC_SENTRY_ENVIRONMENT=feature-${{ env.BRANCH_NAME_SAFE }} \
@@ -120,18 +133,8 @@ jobs:
             --secret id=sentry_token,env=SENTRY_AUTH_TOKEN \
             -t registry.infra.codingforchange.com/cwa-${{ env.BRANCH_NAME_SAFE }}:${{ github.sha }} \
             -t registry.infra.codingforchange.com/cwa-${{ env.BRANCH_NAME_SAFE }}:latest \
+            --push \
             .
-
-      - name: Login to registry
-        run: |
-          jq -r '.REGISTRY_PASSWORD // empty' decrypted.json | docker login registry.infra.codingforchange.com \
-            -u "$(jq -r '.REGISTRY_USERNAME // empty' decrypted.json)" \
-            --password-stdin
-
-      - name: Push Docker image
-        run: |
-          docker push registry.infra.codingforchange.com/cwa-${{ env.BRANCH_NAME_SAFE }}:${{ github.sha }}
-          docker push registry.infra.codingforchange.com/cwa-${{ env.BRANCH_NAME_SAFE }}:latest
 
       - name: Setup SSH
         run: |
@@ -231,7 +234,7 @@ jobs:
           # The app container migrates on start, so wait until the schema is there before seeding.
           $SSH $SSH_TARGET "cd ${TARGET_DIR} && \
             docker compose run --rm -T -e SEED_MAILBOX=${SEED_MAILBOX} app sh -c \
-              'for i in \$(seq 1 30); do npx prisma migrate deploy >/dev/null 2>&1 && exec node seed.js --if-empty --list-accounts; sleep 5; done; echo \"Database never became ready\" >&2; exit 1'" \
+              'for i in \$(seq 1 30); do prisma migrate deploy >/dev/null 2>&1 && exec node seed.js --if-empty --list-accounts; sleep 5; done; echo \"Database never became ready\" >&2; exit 1'" \
             | tee seed.log
           grep '^SEED_ACCOUNT' seed.log | cut -f2- > seed-accounts.tsv || true
 
