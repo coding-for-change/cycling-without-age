@@ -2638,7 +2638,6 @@
       "riders": "Passagerer",
       "tally": "{riders, plural, one {# passager tjekket ind} other {# passagerer tjekket ind}}, {trishaws, plural, =0 {ingen rickshaw} one {# rickshaw} other {# rickshaws}}, {duration}",
       "undo": "Fortryd",
-      "undoCheckIn": "Fortryd indtjekning af {name}",
       "undone": "Indtjekning fortrudt",
       "walkUp": {
         "added": "{name} kører med",
@@ -2658,7 +2657,8 @@
       "completedNotice": "Turen er afsluttet og tæller med i statistikken.",
       "finishHint": "Tjek alle ind, der kørte med, og afslut så turen. Passagerer, der ikke er tjekket ind, tæller som udeblevne.",
       "danger": "Farezone",
-      "givenUp": "Har meldt fra"
+      "givenUp": "Har meldt fra",
+      "nobodyRode": "Ingen stod på listen."
     }
   },
   "signIn": {

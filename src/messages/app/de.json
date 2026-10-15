@@ -2638,7 +2638,6 @@
       "riders": "Fahrgäste",
       "tally": "{riders, plural, one {# Fahrgast eingecheckt} other {# Fahrgäste eingecheckt}}, {trishaws, plural, =0 {keine Rikscha} one {# Rikscha} other {# Rikschas}}, {duration}",
       "undo": "Rückgängig",
-      "undoCheckIn": "Check-in von {name} zurücknehmen",
       "undone": "Check-in zurückgenommen",
       "walkUp": {
         "added": "{name} fährt mit",
@@ -2658,7 +2657,8 @@
       "completedNotice": "Diese Fahrt ist abgeschlossen und zählt in der Statistik.",
       "finishHint": "Checke alle ein, die mitgefahren sind, und schließ dann die Fahrt ab. Wer nicht eingecheckt ist, zählt als nicht erschienen.",
       "danger": "Gefahrenzone",
-      "givenUp": "Platz abgesagt"
+      "givenUp": "Platz abgesagt",
+      "nobodyRode": "Niemand stand auf der Liste."
     }
   },
   "signIn": {

@@ -2638,7 +2638,6 @@
       "riders": "Riders",
       "tally": "{riders, plural, one {# rider checked in} other {# riders checked in}}, {trishaws, plural, =0 {no trishaw} one {# trishaw} other {# trishaws}}, {duration}",
       "undo": "Undo",
-      "undoCheckIn": "Undo check-in for {name}",
       "undone": "Check-in undone",
       "walkUp": {
         "added": "{name} is on the ride",
@@ -2658,7 +2657,8 @@
       "completedNotice": "This ride is completed and counts in the statistics.",
       "finishHint": "Check everyone in who rode, then complete the ride. Riders who aren't checked in count as no-shows.",
       "danger": "Danger zone",
-      "givenUp": "Gave up their seat"
+      "givenUp": "Gave up their seat",
+      "nobodyRode": "Nobody was on the roster."
     }
   },
   "signIn": {

@@ -54,7 +54,6 @@ export const checkInStrings = (
     attendance: day.attendance,
     walkUpBadge: day.walkUp.badge,
     checkInLabel: day.checkInLabel,
-    undoCheckIn: day.undoCheckIn,
     checkedIn: day.checkedIn,
     checkedInCount: day.checkedInCount,
     undone: day.undone,
@@ -66,6 +65,7 @@ export const checkInStrings = (
     removeConfirm: day.walkUp.removeConfirm,
     cancel: day.walkUp.keep,
     noRiders: day.noRiders,
+    nobodyRode: day.nobodyRode,
     ...contact,
     errors: rideDayErrors(dict),
   };

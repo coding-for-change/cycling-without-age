@@ -27,7 +27,6 @@ export type CheckInLabels = {
   attendance: Record<RosterAttendanceName, string>;
   walkUpBadge: string;
   checkInLabel: string;
-  undoCheckIn: string;
   checkedIn: string;
   checkedInCount: string;
   undone: string;
@@ -39,6 +38,7 @@ export type CheckInLabels = {
   removeConfirm: string;
   cancel: string;
   noRiders: string;
+  nobodyRode: string;
   call?: string;
   via?: string;
   errors: NotifyLabels["errors"];
@@ -82,7 +82,10 @@ export function CheckInList({
   );
   const say = (template: string, values: Record<string, string | number>) =>
     formatMessage(template, values, language);
-  const here = shown.filter((entry) => entry.attendance === "checkedIn").length;
+  const here = shown.filter(
+    (entry) =>
+      entry.attendance === "checkedIn" || entry.attendance === "completed",
+  ).length;
 
   const toggle = (entry: CheckInEntry, next: boolean, undoing = false) =>
     startTransition(async () => {
@@ -94,7 +97,6 @@ export function CheckInList({
         checkedIn: next,
       });
       if (!result.ok) {
-        haptics.error();
         toast.error(labels.errors[result.error] ?? labels.errors.generic);
         return;
       }
@@ -118,7 +120,7 @@ export function CheckInList({
           compact ? "rounded-lg" : "rounded-2xl",
         )}
       >
-        {labels.noRiders}
+        {open ? labels.noRiders : labels.nobodyRode}
       </p>
     );
 
@@ -143,17 +145,14 @@ export function CheckInList({
               key={entry.id}
               className={cn(
                 "flex items-center gap-3 px-3",
-                compact ? "min-h-10 py-1.5" : "min-h-14 py-2",
+                compact ? "min-h-10 py-1" : "min-h-14 py-2",
               )}
             >
               {open ? (
                 <button
                   type="button"
                   aria-pressed={checkedIn}
-                  aria-label={say(
-                    checkedIn ? labels.undoCheckIn : labels.checkInLabel,
-                    { name: entry.name },
-                  )}
+                  aria-label={say(labels.checkInLabel, { name: entry.name })}
                   onClick={() => toggle(entry, !checkedIn)}
                   className={cn(
                     "grid shrink-0 place-items-center rounded-full border transition-colors focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none motion-reduce:transition-none",
@@ -220,7 +219,10 @@ export function CheckInList({
                   cancel={labels.cancel}
                   done={say(labels.removed, { name: entry.name })}
                   errors={labels.errors}
-                  className={cn("shrink-0 rounded-full", target)}
+                  className={cn(
+                    "shrink-0 rounded-full text-ink-soft hover:bg-canvas-deep hover:text-ink",
+                    target,
+                  )}
                   action={() =>
                     removeWalkUpAction({ rideId, entryId: entry.id })
                   }
