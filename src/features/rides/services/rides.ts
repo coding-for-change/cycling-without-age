@@ -915,6 +915,21 @@ export const findUpcomingBookingsOf = (passengerIds: string[], now: Date) =>
     select: { rideId: true, passengerId: true },
   });
 
+export const countBookingsBetween = (
+  passengerIds: string[],
+  window: { startsAt: Date; endsAt: Date },
+) =>
+  prisma.rideRosterEntry.count({
+    where: {
+      passengerId: { in: passengerIds },
+      ride: {
+        status: { not: "cancelled" },
+        startsAt: { lt: window.endsAt },
+        endsAt: { gt: window.startsAt },
+      },
+    },
+  });
+
 export const countFutureRidesWithTrishaws = (
   chapterId: string,
   trishawIds: string[],

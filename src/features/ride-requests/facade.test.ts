@@ -2,6 +2,8 @@ import { rideRequests } from "@/features/ride-requests";
 import {
   claimPendingRequest,
   closePendingRequest,
+  countOpenRequestsOfRequester,
+  countOpenRequestsOverlapping,
   findDestinationsOfRequester,
   findOpenRequestsOfRequesterWith,
   removeRequestRider,
@@ -16,6 +18,8 @@ jest.mock("@/features/ride-requests/services/ride-requests", () => ({
   claimPendingRequest: jest.fn(),
   closePendingRequest: jest.fn(),
   countRideRequests: jest.fn(),
+  countOpenRequestsOfRequester: jest.fn(),
+  countOpenRequestsOverlapping: jest.fn(),
   findDestinationsOfRequester: jest.fn(),
   findOpenRequestsOf: jest.fn(),
   findOpenRequestsOfRequesterWith: jest.fn(),
@@ -247,5 +251,39 @@ describe("handOverOpenRequests", () => {
     expect(setRequester).toHaveBeenCalledWith("alone", "user-new");
     expect(removeRequestRider).toHaveBeenCalledWith("shared", "erna");
     expect(setRequester).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("assertCanAsk", () => {
+  const window = {
+    startsAt: new Date("2026-10-08T08:00:00Z"),
+    endsAt: new Date("2026-10-08T09:00:00Z"),
+  };
+
+  beforeEach(() => {
+    (countOpenRequestsOverlapping as jest.Mock).mockResolvedValue(0);
+    (countOpenRequestsOfRequester as jest.Mock).mockResolvedValue(0);
+  });
+
+  it("lets a first request through", async () => {
+    await expect(
+      rideRequests.assertCanAsk(REQUESTER, ["mother"], window),
+    ).resolves.toBeUndefined();
+  });
+
+  it("refuses a rider already asked for in an overlapping window", async () => {
+    (countOpenRequestsOverlapping as jest.Mock).mockResolvedValue(1);
+    expect(
+      await codeOf(rideRequests.assertCanAsk(REQUESTER, ["mother"], window)),
+    ).toBe("alreadyRequested");
+  });
+
+  it("caps how many requests one account has waiting", async () => {
+    (countOpenRequestsOfRequester as jest.Mock).mockResolvedValue(
+      rideRequests.OPEN_REQUESTS_MAX,
+    );
+    expect(
+      await codeOf(rideRequests.assertCanAsk(REQUESTER, ["mother"], window)),
+    ).toBe("tooManyRequests");
   });
 });

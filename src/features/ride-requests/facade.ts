@@ -5,6 +5,8 @@ import { newRideRequest, type NewRideRequest } from "./schemas";
 import {
   claimPendingRequest,
   closePendingRequest,
+  countOpenRequestsOfRequester,
+  countOpenRequestsOverlapping,
   countRideRequests,
   findDestinationsOfRequester,
   findOpenRequestsOf,
@@ -35,6 +37,27 @@ const DESTINATIONS_MAX = 20;
  * that no ride could be made of it (`announce`), so nobody is asked to look
  * at a request that has already become a ride.
  */
+/** Open requests one account may have waiting at once. */
+export const OPEN_REQUESTS_MAX = 5;
+
+/**
+ * One request per rider and window: a rider already asked for in an
+ * overlapping window cannot be asked for again until that one is decided,
+ * and an account has at most a few requests waiting at once.
+ */
+export async function assertCanAsk(
+  requesterUserId: string,
+  passengerIds: string[],
+  window: { startsAt: Date; endsAt: Date },
+) {
+  const [overlapping, open] = await Promise.all([
+    countOpenRequestsOverlapping(passengerIds, window),
+    countOpenRequestsOfRequester(requesterUserId),
+  ]);
+  if (overlapping > 0) throw new DomainError("alreadyRequested");
+  if (open >= OPEN_REQUESTS_MAX) throw new DomainError("tooManyRequests");
+}
+
 export async function submit(
   input: NewRideRequest,
   { announce = true }: { announce?: boolean } = {},

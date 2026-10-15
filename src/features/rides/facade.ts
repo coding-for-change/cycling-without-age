@@ -44,6 +44,7 @@ import {
 } from "./services/at-location";
 import {
   conflictsUnderLock,
+  countBookingsBetween,
   countFutureRidesWithTrishaws,
   deleteAssignment,
   deleteRideById,
@@ -287,6 +288,14 @@ export async function listPassengerRides(
 }
 
 export const getRideFacts = (rideId: string) => findRideFacts(rideId);
+
+/** Whether any of these riders is already on a ride that overlaps the window. */
+export const ridersBookedBetween = async (
+  passengerIds: string[],
+  window: { startsAt: Date; endsAt: Date },
+) =>
+  passengerIds.length > 0 &&
+  (await countBookingsBetween(passengerIds, window)) > 0;
 
 export const pilotCanOpen = async (rideId: string, userId: string) =>
   (await findRideIdForPilot(rideId, userId)) !== null;

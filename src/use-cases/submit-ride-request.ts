@@ -4,6 +4,7 @@ import { membership } from "@/features/membership";
 import { passengers, pickupOf, type Pickup } from "@/features/passengers";
 import { profile } from "@/features/profile";
 import { rideLocations } from "@/features/ride-locations";
+import { rides } from "@/features/rides";
 import {
   REQUEST_LIMITS,
   rideRequestInput,
@@ -156,6 +157,12 @@ export async function submitRideRequest(
   );
   if (refusal) throw new DomainError(refusal);
 
+  const window = { startsAt: requestedStartsAt, endsAt: requestedEndsAt };
+  const riderIds = picked.map((rider) => rider.id);
+  await rideRequests.assertCanAsk(userId, riderIds, window);
+  if (await rides.ridersBookedBetween(riderIds, window))
+    throw new DomainError("riderBooked");
+
   const functional = data.model === "functional";
   const automatic = settings.schedulingMethod === "auto";
   const request = await rideRequests.submit(
@@ -163,7 +170,7 @@ export async function submitRideRequest(
       chapterId,
       requesterUserId: userId,
       model: data.model,
-      passengerIds: picked.map((rider) => rider.id),
+      passengerIds: riderIds,
       ...(await placeOf(data.rideLocationId, data.pickup, chapterId)),
       destinationName: functional ? (data.destination?.name ?? null) : null,
       destinationAddress: functional

@@ -2492,7 +2492,10 @@
         "unknownPassenger": "One of the riders is no longer on your list. Reload and try again.",
         "unknownRequest": "This request no longer exists.",
         "requestNotPending": "The chapter has already decided on this request.",
-        "rateLimited": "That's a lot of requests in a row. Wait a little and try again."
+        "rateLimited": "That's a lot of requests in a row. Wait a little and try again.",
+        "alreadyRequested": "There's already a request waiting for this rider at that time. Wait for the chapter's answer, or cancel that request first.",
+        "riderBooked": "This rider is already booked on a ride at that time.",
+        "tooManyRequests": "You have several requests waiting already. Once the chapter has answered them, you can ask again."
       },
       "booked": "Booked with {chapter}"
     }

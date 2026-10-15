@@ -235,3 +235,19 @@ export const setRequester = (id: string, requesterUserId: string) =>
 
 export const removeRequestRider = (requestId: string, passengerId: string) =>
   prisma.rideRequestPassenger.deleteMany({ where: { requestId, passengerId } });
+
+export const countOpenRequestsOverlapping = (
+  passengerIds: string[],
+  window: { startsAt: Date; endsAt: Date },
+) =>
+  prisma.rideRequest.count({
+    where: {
+      status: "pending",
+      requestedStartsAt: { lt: window.endsAt },
+      requestedEndsAt: { gt: window.startsAt },
+      passengers: { some: { passengerId: { in: passengerIds } } },
+    },
+  });
+
+export const countOpenRequestsOfRequester = (requesterUserId: string) =>
+  prisma.rideRequest.count({ where: { requesterUserId, status: "pending" } });

@@ -16,6 +16,7 @@ import { rideRequests } from "./index";
 import { decisionInput, id, rideRequestInput } from "./schemas";
 
 const REQUEST_ERRORS = [
+  "alreadyRequested",
   "beyondHorizon",
   "closedDate",
   "leadTime",
@@ -23,7 +24,9 @@ const REQUEST_ERRORS = [
   "notChapterMember",
   "outsideHours",
   "requestNotPending",
+  "riderBooked",
   "riderNotInChapter",
+  "tooManyRequests",
   "tooManyRiders",
   "unknownChapter",
   "unknownLocation",

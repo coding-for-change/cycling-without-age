@@ -2492,7 +2492,10 @@
         "unknownPassenger": "Ein Fahrgast steht nicht mehr auf Ihrer Liste. Laden Sie die Seite neu und versuchen Sie es noch einmal.",
         "unknownRequest": "Diese Anfrage gibt es nicht mehr.",
         "requestNotPending": "Die Ortsgruppe hat über diese Anfrage bereits entschieden.",
-        "rateLimited": "Das waren viele Anfragen hintereinander. Bitte warten Sie kurz und versuchen Sie es erneut."
+        "rateLimited": "Das waren viele Anfragen hintereinander. Bitte warten Sie kurz und versuchen Sie es erneut.",
+        "alreadyRequested": "Für diesen Fahrgast wartet zu dieser Zeit schon eine Anfrage. Warten Sie die Antwort der Ortsgruppe ab oder ziehen Sie die Anfrage zuerst zurück.",
+        "riderBooked": "Dieser Fahrgast ist zu dieser Zeit schon für eine Fahrt gebucht.",
+        "tooManyRequests": "Sie haben schon mehrere offene Anfragen. Sobald die Ortsgruppe geantwortet hat, können Sie neu anfragen."
       },
       "booked": "Bei {chapter} gebucht"
     }

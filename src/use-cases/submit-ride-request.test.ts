@@ -35,6 +35,7 @@ jest.mock("@/features/ride-locations", () => ({
 jest.mock("@/features/ride-requests", () => ({
   ...jest.requireActual("@/features/ride-requests/schemas"),
   rideRequests: {
+    assertCanAsk: jest.fn(),
     submit: jest.fn(),
     announce: jest.fn(),
     requirePending: jest.fn(),
@@ -45,7 +46,11 @@ jest.mock("@/features/ride-requests", () => ({
 }));
 jest.mock("@/features/rides", () => ({
   ...jest.requireActual("@/features/rides/schemas"),
-  rides: { bookedTrishawIds: jest.fn(), scheduleRide: jest.fn() },
+  rides: {
+    bookedTrishawIds: jest.fn(),
+    scheduleRide: jest.fn(),
+    ridersBookedBetween: jest.fn(async () => false),
+  },
 }));
 jest.mock("@/lib/observability/logger", () => ({
   logger: { error: jest.fn() },
@@ -247,6 +252,28 @@ describe("submitRideRequest", () => {
     expect(maxRidersFor([{ type: { seats: 1 } }, { type: { seats: 4 } }])).toBe(
       2,
     );
+  });
+
+  it("refuses a rider already asked for in an overlapping window", async () => {
+    (rideRequests.assertCanAsk as jest.Mock).mockRejectedValueOnce(
+      new DomainError("alreadyRequested"),
+    );
+    expect(await codeOf(submitRideRequest(request(), CARER, NOW))).toBe(
+      "alreadyRequested",
+    );
+    expect(rideRequests.assertCanAsk).toHaveBeenCalledWith(CARER, ["mother"], {
+      startsAt: new Date("2026-10-08T08:00:00Z"),
+      endsAt: new Date("2026-10-08T09:00:00Z"),
+    });
+    expect(submit).not.toHaveBeenCalled();
+  });
+
+  it("refuses a rider already booked on a ride at that time", async () => {
+    (rides.ridersBookedBetween as jest.Mock).mockResolvedValueOnce(true);
+    expect(await codeOf(submitRideRequest(request(), CARER, NOW))).toBe(
+      "riderBooked",
+    );
+    expect(submit).not.toHaveBeenCalled();
   });
 
   describe("lifecycle 1D", () => {
