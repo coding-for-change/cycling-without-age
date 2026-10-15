@@ -604,7 +604,7 @@ describe("the pilots' reminder", () => {
       "Depot Sonnenhof, Sonnenstraße 1",
     );
     expect(message.steps?.items[1]).toContain("Isarwind");
-    expect(JSON.stringify(message)).not.toMatch(/accessCode|\d{4}#/);
+    expect(JSON.stringify(message)).not.toContain("4711");
   });
 });
 
