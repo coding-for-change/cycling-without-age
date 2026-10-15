@@ -111,7 +111,10 @@ export const findRideRequests = (
       ...(status ? { status } : {}),
       ...(endingAfter ? { requestedEndsAt: { gt: endingAfter } } : {}),
     },
-    orderBy: [{ requestedStartsAt: "asc" }, { createdAt: "asc" }],
+    orderBy:
+      status === "pending"
+        ? [{ requestedStartsAt: "asc" }, { createdAt: "asc" }]
+        : [{ requestedStartsAt: "desc" }, { createdAt: "desc" }],
     take,
     select: requestSelect,
   });

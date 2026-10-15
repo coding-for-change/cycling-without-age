@@ -276,7 +276,10 @@ export const lapsed = (
   now = new Date(),
 ) => request.status === "pending" && request.requestedEndsAt <= now;
 
-/** The Ride Request List: the open ones soonest first, without lapsed ones. */
+/**
+ * The Ride Request List: the open ones soonest first, without lapsed ones;
+ * any other view latest first, so a long history shows its recent end.
+ */
 export const listRequests = async (
   chapterIds: string[],
   status: $Enums.RideRequestStatus | null = "pending",
