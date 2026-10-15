@@ -23,7 +23,11 @@ jest.mock("@/features/membership", () => ({
   membership: { listMembershipsOfUser: jest.fn() },
 }));
 jest.mock("@/features/passengers", () => ({
+  ...jest.requireActual("@/features/passengers/pickup"),
   passengers: { listPassengersManagedBy: jest.fn() },
+}));
+jest.mock("@/features/profile", () => ({
+  profile: { getProfile: jest.fn().mockResolvedValue(null) },
 }));
 jest.mock("@/features/ride-locations", () => ({
   rideLocations: { requireUsableRideLocation: jest.fn() },

@@ -1,7 +1,8 @@
 import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
 import { membership } from "@/features/membership";
-import { passengers } from "@/features/passengers";
+import { passengers, pickupOf, type Pickup } from "@/features/passengers";
+import { profile } from "@/features/profile";
 import { rideLocations } from "@/features/ride-locations";
 import {
   REQUEST_LIMITS,
@@ -37,18 +38,22 @@ export type BookableRider = {
   lastName: string;
   chapterId: string;
   bookable: boolean;
+  home: Pickup | null;
+  careCenterId: string | null;
 };
 
 /**
  * The riders an account books for, and whether it may still book for each:
  * only while it is a member of the rider's chapter. A carer who left the
  * chapter keeps the rider until the chapter hands them over, but cannot send
- * requests for them.
+ * requests for them. A rider who is the account itself is picked up where the
+ * account lives.
  */
 export async function ridersToBook(userId: string): Promise<BookableRider[]> {
-  const [riders, memberships] = await Promise.all([
+  const [riders, memberships, own] = await Promise.all([
     passengers.listPassengersManagedBy(userId),
     membership.listMembershipsOfUser(userId),
+    profile.getProfile(userId),
   ]);
   const member = new Set(
     memberships
@@ -61,6 +66,10 @@ export async function ridersToBook(userId: string): Promise<BookableRider[]> {
     lastName: rider.lastName,
     chapterId: rider.chapterId,
     bookable: member.has(rider.chapterId),
+    home: pickupOf(
+      rider.userId === userId && own ? { ...rider, user: own } : rider,
+    ),
+    careCenterId: rider.rideLocationId ?? null,
   }));
 }
 

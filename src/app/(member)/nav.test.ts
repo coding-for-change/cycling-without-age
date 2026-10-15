@@ -236,13 +236,16 @@ describe("isConversationPath", () => {
 });
 
 describe("primaryAction", () => {
-  it("points the one red button at the rides of that perspective", () => {
+  it("points the pilot's one red button at the open rides", () => {
     expect(primaryAction("pilot")).toEqual({
       href: "/pilot/rides",
       icon: "rides",
     });
+  });
+
+  it("points the passenger's one red button at the Ride Request Form", () => {
     expect(primaryAction("passenger")).toEqual({
-      href: "/passenger/rides",
+      href: "/passenger/rides/new",
       icon: "rides",
     });
   });
