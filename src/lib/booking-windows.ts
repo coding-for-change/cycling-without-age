@@ -57,7 +57,8 @@ export const OPEN_DAY: readonly MinuteRange[] = [
   { from: 13 * 60, to: 17 * 60 },
 ];
 
-const HOUR_MS = 60 * 60 * 1000;
+const MINUTE_MS = 60 * 1000;
+const HOUR_MS = 60 * MINUTE_MS;
 
 const NOON = 12 * 60;
 const EVENING = 17 * 60;
@@ -169,7 +170,13 @@ export function windowsOnDate(
         if (chip.to - from < ride) return [];
       }
       const startsAt = instantOn(date, from, timeZone);
+      const endsAt = instantOn(date, chip.to, timeZone);
       if (startsAt < earliest || startsAt >= latest) return [];
+      if (
+        endsAt.getTime() - startsAt.getTime() <
+        CLOCK_STEP_MINUTES * MINUTE_MS
+      )
+        return [];
       return [
         {
           date,
@@ -177,7 +184,7 @@ export function windowsOnDate(
           endMinute: chip.to,
           part: chip.long ? partOfDay(chip.from) : null,
           startsAt,
-          endsAt: instantOn(date, chip.to, timeZone),
+          endsAt,
         },
       ];
     }),

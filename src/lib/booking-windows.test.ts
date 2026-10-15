@@ -140,6 +140,26 @@ describe("windowsOnDate", () => {
       expect(first.startsAt.toISOString()).toBe("2026-03-29T08:00:00.000Z");
     });
 
+    it("never offers a window that does not exist on the spring-forward day", () => {
+      const nights: OperatingHours = {
+        windows: weekdays(1, 4),
+        closures: [],
+      };
+      const windows = windowsOnDate(
+        nights,
+        "2026-03-29",
+        POLICY,
+        BERLIN,
+        new Date("2026-03-20T08:00:00Z"),
+      );
+      expect(windows.length).toBeGreaterThan(0);
+      for (const window of windows)
+        expect(window.endsAt.getTime()).toBeGreaterThan(
+          window.startsAt.getTime(),
+        );
+      expect(windows.map(clock)).not.toContain("2-3");
+    });
+
     it("reads Denver's own clock, not Berlin's", () => {
       const [first] = windowsOnDate(
         MORNINGS,
@@ -166,6 +186,39 @@ describe("bookingDates and the horizon", () => {
       "2026-10-08",
       "2026-10-09",
     ]);
+  });
+
+  it("ends at local midnight across a DST change", () => {
+    expect(
+      horizonEnd(
+        POLICY,
+        BERLIN,
+        new Date("2026-10-20T08:00:00Z"),
+      ).toISOString(),
+    ).toBe("2026-11-03T23:00:00.000Z");
+  });
+
+  it("accepts the last minute before the horizon and refuses the horizon itself", () => {
+    const now = new Date("2026-10-05T08:00:00Z");
+    const end = horizonEnd({ ...POLICY, horizonDays: 3 }, BERLIN, now);
+    const open: OperatingHours = { windows: [], closures: [] };
+    const at = (start: Date) => ({
+      startsAt: start,
+      endsAt: new Date(start.getTime() + 15 * 60_000),
+    });
+    const policy = { ...POLICY, leadTimeHours: 0, horizonDays: 3 };
+    expect(
+      bookingRefusal(
+        at(new Date(end.getTime() - 60_000)),
+        open,
+        policy,
+        BERLIN,
+        now,
+      ),
+    ).toBeNull();
+    expect(bookingRefusal(at(end), open, policy, BERLIN, now)).toBe(
+      "beyondHorizon",
+    );
   });
 
   it("ends at the midnight after the last day", () => {
