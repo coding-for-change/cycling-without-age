@@ -12,7 +12,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { formatNumber, type Locale as Notation } from "@/lib/format";
+import {
+  currencyName,
+  currencySymbol,
+  formatNumber,
+  wordsLocale,
+  type Locale as Notation,
+} from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
 import { submitDebriefAction } from "../actions";
@@ -30,6 +36,7 @@ export type DebriefLabels = {
   hint: string;
   distance: string;
   distanceHint: string;
+  unit: string;
   donation: string;
   donationHint: string;
   donationHintNoCurrency: string;
@@ -148,7 +155,7 @@ export function DebriefForm({
               aria-invalid={!distanceOk || undefined}
               className="max-w-32 tabular-nums"
             />
-            <span className="text-sm text-ink-soft">km</span>
+            <span className="text-sm text-ink-soft">{labels.unit}</span>
           </div>
           {distanceOk ? (
             <FieldDescription>{labels.distanceHint}</FieldDescription>
@@ -171,13 +178,19 @@ export function DebriefForm({
             className="max-w-32 tabular-nums"
           />
           {currency ? (
-            <span className="text-sm text-ink-soft">{currency}</span>
+            <span className="text-sm text-ink-soft">
+              {currencySymbol(currency, notation)}
+            </span>
           ) : null}
         </div>
         {donationOk ? (
           <FieldDescription>
             {currency
-              ? formatMessage(labels.donationHint, { currency }, language)
+              ? formatMessage(
+                  labels.donationHint,
+                  { currency: currencyName(currency, wordsLocale(language)) },
+                  language,
+                )
               : labels.donationHintNoCurrency}
           </FieldDescription>
         ) : (

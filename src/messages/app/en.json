@@ -2600,6 +2600,7 @@
         "someone": "A former pilot",
         "title": "Debrief",
         "titleMany": "Debriefs",
+        "unit": "km",
         "unset": "Not said"
       },
       "errors": {

@@ -398,6 +398,35 @@ export function formatCurrency(
   );
 }
 
+/** The sign an amount field stands beside: "€", "kr.", "$". */
+export function currencySymbol(currency: string, locale: Locale): string {
+  return (
+    numberFormatter(locale, {
+      style: "currency",
+      currency,
+      currencyDisplay: "narrowSymbol",
+    })
+      .formatToParts(0)
+      .find((part) => part.type === "currency")?.value ?? currency
+  );
+}
+
+const currencyNames = new Map<string, Intl.DisplayNames>();
+
+/** The money's name in words: "euros" for `EUR` in English, "Euro" in German. */
+export function currencyName(currency: string, locale: Locale): string {
+  let names = currencyNames.get(locale);
+  if (!names) {
+    names = new Intl.DisplayNames([locale], { type: "currency" });
+    currencyNames.set(locale, names);
+  }
+  try {
+    return names.of(currency) ?? currency;
+  } catch {
+    return currency;
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* Machine-readable — deliberately locale-independent                         */
 /* -------------------------------------------------------------------------- */

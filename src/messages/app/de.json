@@ -2600,6 +2600,7 @@
         "someone": "einem ehemaligen Piloten",
         "title": "Fahrtbericht",
         "titleMany": "Fahrtberichte",
+        "unit": "km",
         "unset": "Keine Angabe"
       },
       "errors": {

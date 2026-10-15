@@ -1,4 +1,6 @@
 import {
+  currencyName,
+  currencySymbol,
   formatDayOfMonth,
   formatDistance,
   formatDuration,
@@ -128,5 +130,19 @@ describe("formatHour", () => {
   it("reads the hour in the given zone, not in UTC", () => {
     expect(formatHour(instant, "en-GB", "UTC")).toBe("08");
     expect(formatHour(instant, "en-GB", "America/Denver")).toBe("02");
+  });
+});
+
+describe("currencySymbol and currencyName", () => {
+  // The chapter's money, written the reader's way.
+  it("names the chapter's money in the reader's words", () => {
+    expect(currencySymbol("EUR", "de-DE")).toBe("€");
+    expect(currencySymbol("DKK", "da-DK")).toBe("kr.");
+    expect(currencyName("EUR", "de-DE")).toBe("Euro");
+    expect(currencyName("DKK", "en-GB")).toBe("Danish Krone");
+  });
+
+  it("falls back to the code for a currency it cannot name", () => {
+    expect(currencyName("not-a-code", "en-GB")).toBe("not-a-code");
   });
 });

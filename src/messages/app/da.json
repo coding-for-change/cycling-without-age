@@ -2600,6 +2600,7 @@
         "someone": "en tidligere pilot",
         "title": "Turrapport",
         "titleMany": "Turrapporter",
+        "unit": "km",
         "unset": "Ikke angivet"
       },
       "errors": {
