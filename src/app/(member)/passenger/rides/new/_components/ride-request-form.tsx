@@ -178,6 +178,7 @@ export function RideRequestForm({
     where:
       model !== null &&
       start !== null &&
+      (start.kind !== "home" || home !== null) &&
       (model === "pleasure" || destination !== null),
     when: date !== null && slot !== null,
     note: true,
