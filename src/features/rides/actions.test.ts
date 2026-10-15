@@ -160,6 +160,7 @@ describe("who runs a ride on the day", () => {
     expect(rides.submitDebrief).toHaveBeenCalledWith(
       expect.objectContaining({ rideId: "ride-1", donationCents: 500 }),
       "user-1",
+      "pilot",
     );
   });
 

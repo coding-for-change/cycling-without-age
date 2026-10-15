@@ -2343,12 +2343,14 @@ export type RideDebriefView = ReturnType<typeof debriefView>;
 
 /**
  * Story 31 and lifecycle 7E: one report per pilot and ride, written again as
- * often as they like. Distance is measured only on a functional ride (Report
- * 11), and a donation is counted in the chapter's own currency.
+ * often as they like while the finish page is open; an admin's, any time.
+ * Distance is measured only on a functional ride (Report 11), and a donation
+ * is counted in the chapter's own currency.
  */
 export async function submitDebrief(
   input: DebriefInput,
   userId: string,
+  as: Executor,
   now = new Date(),
 ) {
   const data = debriefInput.parse(input);
@@ -2357,6 +2359,8 @@ export async function submitDebrief(
     if (!ride) throw new DomainError("unknownRide");
     if (ride.status === "cancelled") throw new DomainError("rideClosed");
     if (ride.startsAt > now) throw new DomainError("rideNotStarted");
+    if (as === "pilot" && !withinPilotWindow(ride, now))
+      throw new DomainError("rideClosed");
     const currency =
       data.donationCents === null
         ? null

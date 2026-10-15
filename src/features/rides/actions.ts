@@ -498,7 +498,7 @@ export async function submitDebriefAction(input: unknown): Promise<RideResult> {
   return onRideDay(
     debriefInput,
     input,
-    (data, { actorUserId }) => rides.submitDebrief(data, actorUserId),
+    (data, { actorUserId, as }) => rides.submitDebrief(data, actorUserId, as),
     undefined,
     "debrief",
   );

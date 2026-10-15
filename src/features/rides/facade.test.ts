@@ -3621,6 +3621,7 @@ describe("the debrief", () => {
         note: "  ",
       },
       "pilot-1",
+      "pilot",
       AFTER,
     );
     expect(db.rideDebrief.upsert).toHaveBeenCalledWith(
@@ -3643,6 +3644,7 @@ describe("the debrief", () => {
     await rides.submitDebrief(
       { rideId: "ride-1", distanceKm: 3 },
       "pilot-1",
+      "pilot",
       AFTER,
     );
     expect(db.rideDebrief.upsert.mock.calls[0][0].update).toMatchObject({
@@ -3658,14 +3660,30 @@ describe("the debrief", () => {
         rides.submitDebrief(
           { rideId: "ride-1" },
           "p",
+          "pilot",
           new Date("2026-09-08T07:00:00Z"),
         ),
       ),
     ).toBe("rideNotStarted");
     ride({ status: "cancelled" });
     expect(
-      await codeOf(rides.submitDebrief({ rideId: "ride-1" }, "p", AFTER)),
+      await codeOf(
+        rides.submitDebrief({ rideId: "ride-1" }, "p", "pilot", AFTER),
+      ),
     ).toBe("rideClosed");
+  });
+
+  // The finish page closes a day after the ride; the debrief closes with it.
+  it("takes a pilot's debrief only while the finish page is open", async () => {
+    ride();
+    const later = new Date("2026-09-15T09:00:00Z");
+    expect(
+      await codeOf(
+        rides.submitDebrief({ rideId: "ride-1" }, "p", "pilot", later),
+      ),
+    ).toBe("rideClosed");
+    await rides.submitDebrief({ rideId: "ride-1" }, ADMIN, "admin", later);
+    expect(db.rideDebrief.upsert).toHaveBeenCalledTimes(1);
   });
 });
 
