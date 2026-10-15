@@ -153,7 +153,7 @@ function WalkUpForm({
       <Button
         type="submit"
         disabled={pending || !ready}
-        className="min-h-11 rounded-full"
+        className="min-h-11 rounded-full bg-mint-deep text-white hover:bg-mint-deep/90"
       >
         {pending ? labels.submitting : labels.submit}
       </Button>
