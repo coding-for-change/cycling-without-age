@@ -385,7 +385,7 @@ export function ConversationThread({
 
       {frozenAt ? (
         <div className="flex shrink-0 flex-wrap items-center gap-3 border-t border-line bg-canvas-deep px-4 py-3">
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 basis-60">
             <p className="flex items-baseline gap-2 text-sm font-medium text-ink">
               {strings.thread.frozen.title}
               <RelativeTime

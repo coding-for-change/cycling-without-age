@@ -40,7 +40,7 @@ export function KeepChattingButton({
           router.refresh();
         })
       }
-      className="min-h-11 rounded-full"
+      className="min-h-11 w-full rounded-full sm:w-auto"
     >
       <MessageCircle aria-hidden />
       {strings.thread.frozen.keepChatting}
