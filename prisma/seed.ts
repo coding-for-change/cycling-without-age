@@ -573,9 +573,14 @@ async function seedRideRequests(
     (managed) => managed.userId === null,
   );
   const own = await passengers.getOwnPassenger(passenger);
-  const window = (day: number, from: number, to: number) => ({
-    requestedStartsAt: at(today, day, from),
-    requestedEndsAt: at(today, day, to),
+  const ridingDay = (from: number) => {
+    let day = from;
+    while ([0, 1].includes(at(today, day, 12).getDay())) day += 1;
+    return day;
+  };
+  const window = (after: number, from: number, to: number) => ({
+    requestedStartsAt: at(today, ridingDay(after), from),
+    requestedEndsAt: at(today, ridingDay(after), to),
   });
   const none = {
     destinationName: null,
