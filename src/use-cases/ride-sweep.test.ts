@@ -149,7 +149,38 @@ describe("the pilots' reminder and the demand check", () => {
   });
 });
 
+describe("the share of one run", () => {
+  it("stops at 50 rides and leaves the next lead group to the next run", async () => {
+    listChaptersDue.mockResolvedValue(["a", "b"]);
+    getSettingsOf.mockResolvedValue(
+      new Map([
+        ["a", settings({ riderReminderLeadMinutes: 30 })],
+        ["b", settings({ riderReminderLeadMinutes: 1440 })],
+      ]),
+    );
+    listRidesDue.mockResolvedValue(
+      Array.from({ length: 50 }, (_, i) => ({ id: `ride-${i}` })),
+    );
+    await riderReminders(NOW);
+    expect(listRidesDue).toHaveBeenCalledTimes(1);
+    expect(sendReminder).toHaveBeenCalledTimes(50);
+  });
+});
+
 describe("rideSweep", () => {
+  // A broken staffing check must not keep riders from their reminder.
+  it("runs the other checks when one fails, then fails the run", async () => {
+    (rides.listChaptersToCheck as jest.Mock).mockRejectedValue(
+      new Error("db down"),
+    );
+    await expect(rideSweep(NOW)).rejects.toThrow("db down");
+    expect(listChaptersDue).toHaveBeenCalledTimes(3);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ stage: "understaffed" }),
+      "ride sweep failed",
+    );
+  });
+
   it("runs every check and reports each count", async () => {
     expect(await rideSweep(NOW)).toEqual({
       understaffed: 0,
