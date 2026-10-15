@@ -75,6 +75,13 @@ model User {
   reportedDamages      TrishawDamage[]      @relation("damageReporter")
   clearedDamages       TrishawDamage[]      @relation("damageClearer")
   trishawLogEntries    TrishawLogEntry[]    @relation("trishawLogActor")
+  personProfile        PersonProfile?       @relation("profileOfUser")
+  photoAgreements      PersonProfile[]      @relation("profilePhotoAgreedBy")
+  healthConsentsGiven  PersonProfile[]      @relation("profileHealthConsentBy")
+  pilotSteps           PilotStepTick[]      @relation("pilotStepOwner")
+  careRequests         CareRequest[]        @relation("careRequestCaretaker")
+  careRequestsMade     CareRequest[]        @relation("careRequestRequester")
+  confirmedPilotSteps  PilotStepTick[]      @relation("pilotStepConfirmer")
 
   @@unique([email])
   @@unique([phoneNumber])
@@ -171,6 +178,7 @@ model Organization {
   longitude        Float
   applications     ChapterApplication[]
   passengers       Passenger[]
+  careRequests     CareRequest[]
   events           ActivityEvent[]
   domainEvents     Event[]
   serviceRadiusKm  Int                      @default(10)
@@ -279,6 +287,13 @@ model ChapterSettings {
   defaultRideMinutes   Int          @default(60)
   defaultStayMinutes   Int          @default(60)
 
+  /// Pilots of the chapter may sign up for open rides themselves.
+  pilotsMaySelfAssign    Boolean @default(true)
+  /// Pilots a newly scheduled ride asks for.
+  requiredPilotsDefault  Int     @default(1)
+  /// How far ahead of a ride an understaffed ride is flagged, and a pilot can no longer withdraw.
+  staffingCheckLeadHours Int     @default(48)
+
   @@map("chapter_settings")
 }
 
@@ -354,10 +369,19 @@ model Passenger {
   birthDate DateTime @db.Date
   gender    Gender
 
+  /// Where a rider booked by someone else is picked up. A rider with their own
+  /// account keeps it on their User.
+  residence Residence?
+  address   String?    @db.Text
+  latitude  Float?
+  longitude Float?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  rideRoster RideRosterEntry[]
+  rideRoster   RideRosterEntry[]
+  profile      PersonProfile?    @relation("profileOfPassenger")
+  careRequests CareRequest[]
 
   rideLocationId      String?
   rideLocation        RideLocation? @relation(fields: [rideLocationId], references: [id], onDelete: SetNull)
@@ -368,6 +392,98 @@ model Passenger {
   @@index([managedByUserId])
   @@index([rideLocationId])
   @@map("passenger")
+}
+
+enum CareRequestStatus {
+  pending
+  accepted
+  declined
+}
+
+/// An admin asks someone who already has an account to look after a rider.
+/// The rider only becomes a Passenger once that person accepts.
+model CareRequest {
+  id                String            @id @default(cuid())
+  chapterId         String
+  chapter           Organization      @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  caretakerUserId   String
+  caretaker         User              @relation("careRequestCaretaker", fields: [caretakerUserId], references: [id], onDelete: Cascade)
+  requestedByUserId String?
+  requestedBy       User?             @relation("careRequestRequester", fields: [requestedByUserId], references: [id], onDelete: SetNull)
+  status            CareRequestStatus @default(pending)
+  firstName         String            @db.Text
+  lastName          String            @db.Text
+  birthDate         DateTime          @db.Date
+  gender            Gender
+  residence         Residence?
+  address           String?           @db.Text
+  latitude          Float?
+  longitude         Float?
+  relationship      String?           @db.VarChar(40)
+  helperName        String?           @db.VarChar(120)
+  passengerId       String?
+  passenger         Passenger?        @relation(fields: [passengerId], references: [id], onDelete: SetNull)
+  createdAt         DateTime          @default(now())
+  decidedAt         DateTime?
+
+  @@index([caretakerUserId, status])
+  @@index([chapterId, status])
+  @@index([requestedByUserId])
+  @@index([passengerId])
+  @@map("care_request")
+}
+
+/// What a person tells the people they ride with. Belongs to exactly one of a
+/// User (someone speaking for themself) or a managed Passenger (written on
+/// their behalf by the manager) — enforced by a CHECK in the migration.
+model PersonProfile {
+  id                    String      @id @default(cuid())
+  userId                String?     @unique
+  user                  User?       @relation("profileOfUser", fields: [userId], references: [id], onDelete: Cascade)
+  passengerId           String?     @unique
+  passenger             Passenger?  @relation("profileOfPassenger", fields: [passengerId], references: [id], onDelete: Cascade)
+  photoFileId           String?     @unique
+  photo                 StoredFile? @relation("profilePhoto", fields: [photoFileId], references: [id], onDelete: SetNull)
+  photoAgreedByUserId   String?
+  photoAgreedBy         User?       @relation("profilePhotoAgreedBy", fields: [photoAgreedByUserId], references: [id], onDelete: SetNull)
+  photoAgreedAt         DateTime?
+  bio                   String?     @db.VarChar(200)
+  interests             Json?
+  customInterests       Json?
+  prompts               Json?
+  hideAge               Boolean     @default(false)
+  accessibilityTags     Json?
+  accessibilityNone     Boolean     @default(false)
+  healthConsentAt       DateTime?
+  healthConsentByUserId String?
+  healthConsentBy       User?       @relation("profileHealthConsentBy", fields: [healthConsentByUserId], references: [id], onDelete: SetNull)
+  setupDismissedAt      DateTime?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  @@index([photoAgreedByUserId])
+  @@index([healthConsentByUserId])
+  @@map("person_profile")
+}
+
+enum PilotStep {
+  trainingVideos
+  workshop
+}
+
+model PilotStepTick {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation("pilotStepOwner", fields: [userId], references: [id], onDelete: Cascade)
+  step              PilotStep
+  tickedAt          DateTime  @default(now())
+  confirmedByUserId String?
+  confirmedBy       User?     @relation("pilotStepConfirmer", fields: [confirmedByUserId], references: [id], onDelete: SetNull)
+  confirmedAt       DateTime?
+
+  @@unique([userId, step])
+  @@index([confirmedByUserId])
+  @@map("pilot_step_tick")
 }
 
 enum ActivityType {
@@ -538,6 +654,10 @@ model Conversation {
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
 
+  /// The ride this conversation belongs to, when it is a ride chat.
+  rideId String? @unique
+  ride   Ride?   @relation(fields: [rideId], references: [id], onDelete: SetNull)
+
   members  ConversationMember[]
   messages ChatMessage[]
 
@@ -657,6 +777,7 @@ enum StoredFileKind {
   entrancePhoto
   damagePhoto
   ridePhoto
+  profilePhoto
 }
 
 /// An object in the private bucket. Served only through `/api/files/[id]`,
@@ -679,6 +800,7 @@ model StoredFile {
   typeGallery    TrishawTypePhoto[]
   trishawGallery TrishawPhoto[]
   ridePhotos     RidePhoto[]
+  profilePhoto   PersonProfile?     @relation("profilePhoto")
 
   @@map("stored_file")
 }
@@ -929,6 +1051,13 @@ model Ride {
   /// Shared by every ride of a recurring series, once recurrence exists.
   seriesId       String?
 
+  /// An event ride the chapter's riders see and can book a seat on themselves.
+  announced         Boolean   @default(false)
+  /// Set the first time the event is announced, so its riders are told once.
+  announcedAt       DateTime?
+  /// Set once the staffing check has flagged the ride, so it is flagged only once.
+  staffingCheckedAt DateTime?
+
   cancelledAt            DateTime?
   cancellationReasonCode RideCancellationReason?
   cancellationNote       String?                 @db.Text
@@ -941,6 +1070,8 @@ model Ride {
   damages     TrishawDamage[]
   log         RideLogEntry[]
   photos      RidePhoto[]
+
+  conversation Conversation?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

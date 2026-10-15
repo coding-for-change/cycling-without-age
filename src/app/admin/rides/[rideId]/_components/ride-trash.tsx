@@ -37,7 +37,8 @@ export type RideTrashLabels = {
   errors: { generic: string } & Record<string, string>;
 };
 
-const TRASH_BUTTON = "size-8 text-ink-soft hover:bg-red-tint hover:text-red";
+const TRASH_BUTTON =
+  "size-8 text-ink-soft hover:bg-red-tint hover:text-red-ink";
 
 export function RideTrash({
   rideId,

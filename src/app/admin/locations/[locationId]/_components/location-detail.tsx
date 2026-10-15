@@ -161,7 +161,7 @@ export function LocationDetail({
         errors={common.errors}
         action={() => archiveLocationAction(location.id)}
         onDone={() => router.push(backHref)}
-        className="size-8 text-ink-soft hover:bg-red-tint hover:text-red"
+        className="size-8 text-ink-soft hover:bg-red-tint hover:text-red-ink"
       />
     );
 

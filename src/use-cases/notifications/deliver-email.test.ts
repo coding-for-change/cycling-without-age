@@ -17,6 +17,9 @@ jest.mock("@/features/notifications", () => ({
   },
 }));
 jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
+jest.mock("@/features/passengers", () => ({
+  passengers: { getOwnPassenger: jest.fn() },
+}));
 jest.mock("@/features/chapters", () => ({
   chapters: {
     getChapter: jest.fn(),

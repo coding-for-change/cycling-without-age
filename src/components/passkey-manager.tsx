@@ -157,7 +157,7 @@ export function PasskeyManager({
                     <button
                       type="button"
                       disabled={busy}
-                      className="-mr-2 min-h-11 shrink-0 rounded-(--r-card) px-2 text-sm font-medium text-red transition-colors hover:text-red-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none"
+                      className="-mr-2 min-h-11 shrink-0 rounded-(--r-card) px-2 text-sm font-medium text-red-ink transition-colors hover:text-red-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none"
                     >
                       {strings.remove}
                     </button>

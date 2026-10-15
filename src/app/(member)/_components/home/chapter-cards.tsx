@@ -46,7 +46,7 @@ export async function ChapterCards({
               className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3"
             >
               <MapPin
-                className="size-4 text-mint-deep"
+                className="size-4 text-mint-ink"
                 aria-hidden
               />
               <span className="font-medium">{chapter.name}</span>

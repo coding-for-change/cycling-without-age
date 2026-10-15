@@ -13,6 +13,7 @@ export const PILOT_LABELS = [
   "removed",
   "remove",
   "unchanged",
+  "noLongerPilot",
 ] as const satisfies readonly (keyof Detail)[];
 
 export const ROSTER_LABELS = [
@@ -50,6 +51,6 @@ export const TRISHAW_LABELS = [
 export type PilotLabels = Pick<Detail, (typeof PILOT_LABELS)[number]> &
   Errors & { full: string };
 export type RosterLabels = Pick<Detail, (typeof ROSTER_LABELS)[number]> &
-  Errors;
+  Errors & { pickupLabel: string };
 export type TrishawPanelLabels = Pick<Detail, (typeof TRISHAW_LABELS)[number]> &
   Errors & { search: string; noMatch: string };

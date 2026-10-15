@@ -20,8 +20,10 @@ export type MemberRow = {
   email: string;
   phone: string | null;
   avatar: string;
+  photoUrl: string | null;
   roles: string[];
   isAdmin: boolean;
+  caretaker: string | null;
   since: string;
   sinceIso: string;
 };
@@ -60,7 +62,10 @@ export function MembersTable({
       },
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <PersonAvatar svg={row.original.avatar} />
+          <PersonAvatar
+            svg={row.original.avatar}
+            photoUrl={row.original.photoUrl}
+          />
           <div className="grid">
             <Link
               href={href(row.original)}
@@ -89,6 +94,11 @@ export function MembersTable({
               {role}
             </Badge>
           ))}
+          {row.original.caretaker ? (
+            <Badge className="bg-mint-tint font-normal text-ink">
+              {row.original.caretaker}
+            </Badge>
+          ) : null}
         </div>
       ),
     },

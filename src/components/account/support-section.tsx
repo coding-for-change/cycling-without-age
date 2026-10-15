@@ -1,9 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { LifeBuoy } from "lucide-react";
+import { BookOpen, LifeBuoy } from "lucide-react";
 import { ReportProblemDrawer } from "@/components/report-problem/report-problem-drawer";
-import { SettingsGroup, SettingsRow } from "@/components/settings-group";
+import {
+  SettingsGroup,
+  SettingsRow,
+  SettingsRowLink,
+} from "@/components/settings-group";
 import type { AccountData } from "./types";
 
 export function SupportSection({
@@ -22,6 +26,13 @@ export function SupportSection({
         label={label}
         footer={strings.body}
       >
+        <SettingsRowLink
+          icon={BookOpen}
+          label={strings.guides}
+          href={data.guidesHref}
+          external
+          chevron
+        />
         <SettingsRow
           icon={LifeBuoy}
           label={strings.open}

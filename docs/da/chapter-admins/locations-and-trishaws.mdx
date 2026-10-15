@@ -1,0 +1,55 @@
+---
+title: "Tilføj lokationer og rickshawer"
+description: "Angiv, hvor dine rickshawer står, og føj hver rickshaw til flåden."
+audience: ["chapter-admin", "country-admin", "superadmin"]
+public: true
+mode: "wide"
+---
+
+Hver rickshaw hører til en lokation. Piloterne ser lokationens adresse, indgang og adgangskode, når de henter og afleverer rickshawen.
+
+<video autoPlay muted loop playsInline className="w-full rounded-xl border border-gray-200 dark:border-gray-800" src="/videos/admin-new-location.mp4" />
+
+## Tilføj en lokation
+
+1. Åbn **Lokationer** i sidepanelet, og klik på **Ny lokation**.
+2. Skriv et **Navn**, fx "Garagen bag plejehjemmet".
+3. Skriv gaden under **Adresse**, og vælg resultatet. Træk i nålen for at finjustere.
+4. Udfyld **Sådan finder man indgangen**. Tilføj et **Foto af indgangen**, hvis du kan.
+5. Skriv **Adgangskode** til døren eller nøgleboksen.
+6. Tilføj **Adgangsnoter** og **Når den bringes tilbage**, fx "Sæt laderen i, og luk lågen."
+7. Klik på **Tilføj lokation**.
+
+Lokationens side åbner. Du kan senere rette et felt der med blyanten.
+
+<Note>
+Kun admins og piloter ser adgangskoden. Passagerer gør aldrig.
+</Note>
+
+## Tilføj en rickshaw
+
+<video autoPlay muted loop playsInline className="w-full rounded-xl border border-gray-200 dark:border-gray-800" src="/videos/admin-new-trishaw.mp4" />
+
+1. Åbn **Rickshawer**, og klik på **Ny rickshaw**.
+2. Giv den et **Navn**, piloterne kan genkende.
+3. Skriv **Stelnummer**, der er præget i stellet.
+4. Søg og vælg modellen under **Model**.
+5. Vælg under **Lokation**, hvor den står.
+6. Tilføj et **Foto** og en **Beskrivelse**, fx farven eller et regnslag.
+7. Klik på **Tilføj rickshaw**.
+
+<Warning>
+Tjek stelnummeret, før du gemmer. Det kan ikke ændres senere.
+</Warning>
+
+## Status og ugeplan
+
+En rickshaws **Status** er **Klar**, **På værksted** eller **Taget ud af drift**. Du ændrer den under **Om** på rickshawens side. Kun rickshawer, der er **Klar**, kan bookes.
+
+Fanen **Ugeplan** viser alle rickshawers ture uge for uge. Brug den til at se, hvilken rickshaw der er ledig.
+
+## Godt at vide
+
+- Ingen model, der passer? Modeller deles af en afdeling, et land eller alle. Se [Del rickshawmodeller](/da/organisation/models).
+- Deler I depot med andre afdelinger? Klik på **Tilmeld en pulje** under **Lokationer**, skriv **Puljekode** fra din landeadmin, og klik på **Send anmodning**. Se [Driv en rickshawpulje](/da/organisation/pools).
+- Din afdelings standardlokation kan ikke fjernes. En anden lokation kan arkiveres, når dens rickshawer er flyttet.

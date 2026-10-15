@@ -1,0 +1,49 @@
+---
+title: "Ændr eller aflys en tur"
+description: "Ret en tur, aflys den med en begrundelse, eller slet den for at frigøre tiden."
+audience: ["chapter-admin", "country-admin", "superadmin"]
+public: true
+mode: "wide"
+---
+
+Planer ændrer sig. Du retter en tur på dens side, aflyser den, når den ikke kan blive til noget, og sletter en aflyst tur, hvis du skal bruge tiden.
+
+<video autoPlay muted loop playsInline className="w-full rounded-xl border border-gray-200 dark:border-gray-800" src="/videos/admin-cancel-ride.mp4" />
+
+## Ændr en tur
+
+Klik på turen i kalenderen. Klik på et felt på dens side, og ret det: dato, start, varighed, sted, rickshawer, passagerer, piloter eller **Besked til piloterne**. Hver ændring gemmes med det samme, med **Fortryd** i beskeden. Se [Arbejd hurtigere i admin](/da/chapter-admins/working-faster).
+
+## Aflys en tur
+
+1. Åbn turen, og klik på **Aflys tur** yderst til højre i toppen.
+2. Vælg en begrundelse under **Hvorfor bliver den aflyst?**: **Vejret**, **Passageren meldte afbud**, **Plejehjem eller institution**, **Ingen pilot til rådighed**, **Problem med rickshawen**, **Ingen passagerer** eller **Noget andet**.
+3. Tilføj en **Note**, fx "Varsel om tordenvejr".
+4. Ved en tur-retur sætter du flueben ved **Aflys også hjemturen**, hvis den heller ikke bliver til noget.
+5. Klik på **Aflys tur**.
+
+Turen bliver stående i kalenderen, overstreget. Dens rickshawer er ledige til andre ture igen. Begrundelserne vises under **Aflysninger** i [Rapporter](/da/chapter-admins/reports).
+
+<Note>
+Alle på turen får besked: passagerer, piloter og de andre admins. En aflysning sendes altid også på e-mail.
+</Note>
+
+## Slet en aflyst tur
+
+<video autoPlay muted loop playsInline className="w-full rounded-xl border border-gray-200 dark:border-gray-800" src="/videos/admin-delete-ride.mp4" />
+
+1. Åbn den aflyste tur, og klik på **Slet tur** i toppen.
+2. Læs den røde boks. Den viser, hvad der forsvinder sammen med turen, fx "1 booking af en passager".
+3. Skriv det viste ord, fx `DELETE-17-10-2026`.
+4. Klik på **Slet tur**.
+
+Turen er væk fra kalenderen og fra alle rapporter. Passagerer, piloter og rickshawer bliver.
+
+<Warning>
+En slettet tur kan ikke hentes tilbage. Ved en tur-retur skal du aflyse den anden vej først. Du kan ikke slette, så længe den stadig skal køres.
+</Warning>
+
+## Godt at vide
+
+- Kun en aflyst tur kan slettes.
+- En aflyst tur kan ikke ændres mere. Kun dens **Historik** tager stadig imod kommentarer.

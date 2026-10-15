@@ -21,6 +21,8 @@ import type {
   ScopeArg,
 } from "@/lib/commands";
 import { setLocale } from "@/app/actions";
+import { isTheme } from "@/lib/theme";
+import { setTheme } from "@/lib/theme/client";
 import { ICONS } from "@/components/icons";
 import { useSwitchScope } from "./use-switch-scope";
 
@@ -80,6 +82,9 @@ export function CommandBar({
           document.documentElement.lang = arg;
           return setLocale(arg);
         });
+        return;
+      case "theme.set":
+        if (isTheme(arg)) setTheme(arg);
         return;
       case "session.signOut":
         signOut();

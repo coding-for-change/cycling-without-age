@@ -112,6 +112,8 @@ export const BOOKING_CHOICES = {
   stayMinutes: [15, 30, 45, 60, 90, 120, 180, 240],
 } as const;
 export const CHAPTER_POST_RIDE_MAX = 5_000;
+export const STAFFING_LEAD_HOURS = [12, 24, 48, 72, 168] as const;
+export const REQUIRED_PILOTS_MAX = 10;
 
 export type ChapterSettings = {
   notifyOnMemberJoined: boolean;
@@ -124,6 +126,9 @@ export type ChapterSettings = {
   bookingHorizonDays: number;
   defaultRideMinutes: number;
   defaultStayMinutes: number;
+  pilotsMaySelfAssign: boolean;
+  requiredPilotsDefault: number;
+  staffingCheckLeadHours: number;
 };
 
 export const DEFAULT_CHAPTER_SETTINGS: ChapterSettings = {
@@ -137,6 +142,9 @@ export const DEFAULT_CHAPTER_SETTINGS: ChapterSettings = {
   bookingHorizonDays: 60,
   defaultRideMinutes: 60,
   defaultStayMinutes: 60,
+  pilotsMaySelfAssign: true,
+  requiredPilotsDefault: 1,
+  staffingCheckLeadHours: 48,
 };
 
 export const chapterSettingsInput = z
@@ -186,6 +194,14 @@ export const chapterSettingsInput = z
       .int()
       .min(BOOKING_LIMITS.stayMinutes.min)
       .max(BOOKING_LIMITS.stayMinutes.max),
+    pilotsMaySelfAssign: z.boolean(),
+    requiredPilotsDefault: z.number().int().min(1).max(REQUIRED_PILOTS_MAX),
+    staffingCheckLeadHours: z
+      .number()
+      .int()
+      .refine((hours) =>
+        (STAFFING_LEAD_HOURS as readonly number[]).includes(hours),
+      ),
   })
   .partial();
 export type ChapterSettingsInput = z.infer<typeof chapterSettingsInput>;

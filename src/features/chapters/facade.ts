@@ -52,7 +52,7 @@ import {
 } from "./services/countries";
 import {
   findChapterSettings,
-  findSettingsOfChapters,
+  findChapterSettingsOf,
   upsertChapterSettings,
 } from "./services/settings";
 import {
@@ -62,6 +62,7 @@ import {
   findChapterBySlug,
   findChapterTimeZones,
   findChapterCountryId,
+  findChapterCountryIds,
   findChapterFootprint,
   findChapterReportMeta,
   findChapters,
@@ -329,19 +330,20 @@ export const getSettings = async (
 ): Promise<ChapterSettings> =>
   (await findChapterSettings(chapterId)) ?? DEFAULT_CHAPTER_SETTINGS;
 
+/** Every chapter asked about gets an answer, the defaults when it saved none. */
 export async function getSettingsOf(
   chapterIds: string[],
 ): Promise<Map<string, ChapterSettings>> {
-  if (!chapterIds.length) return new Map();
-  const stored = new Map<string, ChapterSettings>(
-    (await findSettingsOfChapters(chapterIds)).map(
-      ({ chapterId, ...settings }) => [chapterId, settings],
-    ),
+  const saved = chapterIds.length
+    ? await findChapterSettingsOf([...new Set(chapterIds)])
+    : [];
+  const byChapter = new Map(
+    saved.map(({ chapterId, ...settings }) => [chapterId, settings]),
   );
   return new Map(
     chapterIds.map((chapterId) => [
       chapterId,
-      stored.get(chapterId) ?? DEFAULT_CHAPTER_SETTINGS,
+      byChapter.get(chapterId) ?? DEFAULT_CHAPTER_SETTINGS,
     ]),
   );
 }
@@ -503,3 +505,12 @@ export async function getOperatingHours(
     ? { windows: hours.windows, closures: hours.closures }
     : NO_HOURS;
 }
+
+export const getChapterCountryIds = async (
+  ids: string[],
+): Promise<Map<string, string | null>> => {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return new Map();
+  const rows = await findChapterCountryIds(unique);
+  return new Map(rows.map((row) => [row.id, row.countryId]));
+};

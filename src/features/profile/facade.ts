@@ -18,6 +18,9 @@ import type {
   Residence,
 } from "./schemas";
 import {
+  countPasskeysOf,
+  fillHelperRelationship,
+  findAccessAccounts,
   findProfile,
   findProfiles,
   findProfilesByName,
@@ -32,6 +35,8 @@ export type Profile = NonNullable<Awaited<ReturnType<typeof findProfile>>>;
 export type ProfileSummary = Awaited<ReturnType<typeof findProfiles>>[number];
 
 export const getProfile = (userId: string) => findProfile(userId);
+
+export const countPasskeys = (userId: string) => countPasskeysOf(userId);
 
 export const getProfiles = async (
   userIds: string[],
@@ -147,8 +152,18 @@ export const markManagesOthers = (
   helperRelationship?: string | null,
 ) => updateProfile(userId, { managesOthers: true, helperRelationship });
 
+export async function suggestHelperRelationship(
+  userId: string,
+  value: string | null | undefined,
+) {
+  if (!value?.trim()) return;
+  await fillHelperRelationship(userId, value);
+}
+
 export const markPasskeyPrompted = (userId: string) =>
   updateProfile(userId, { passkeyPromptedAt: new Date() });
 
-export const markPilotNextStepsSeen = (userId: string) =>
-  updateProfile(userId, { pilotNextStepsSeenAt: new Date() });
+export const getAccessAccounts = async (userIds: string[]) => {
+  const unique = [...new Set(userIds)];
+  return unique.length === 0 ? [] : findAccessAccounts(unique);
+};

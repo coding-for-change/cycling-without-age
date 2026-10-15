@@ -6,7 +6,8 @@ import { matchesPath } from "@/lib/nav-match";
 
 export type { MemberPerspective };
 
-export type MemberNavKey = "home" | "rides" | "calendar" | "chat" | "training";
+export type MemberNavKey =
+  "home" | "rides" | "calendar" | "chat" | "training" | "profile";
 
 export type MemberNavRow = {
   key: MemberNavKey;
@@ -49,6 +50,14 @@ export const MEMBER_NAV: readonly MemberNavRow[] = [
     tab: false,
     parent: "home",
     only: "pilot",
+  },
+  {
+    key: "profile",
+    path: "/profile",
+    icon: "profile",
+    symbol: "person.crop.circle.fill",
+    tab: false,
+    parent: "home",
   },
 ];
 

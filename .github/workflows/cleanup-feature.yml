@@ -4,6 +4,12 @@ on:
   delete:
   pull_request:
     types: [closed]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch whose feature environment to tear down (e.g. main or feature/foo)"
+        type: string
+        required: true
 
 permissions:
   contents: read
@@ -13,6 +19,7 @@ jobs:
     # delete fires for tags too — only act on branches. Fork PRs have no
     # feature deployments (and no secrets), so skip them.
     if: >-
+      github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'delete' && github.event.ref_type == 'branch') ||
       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
@@ -29,16 +36,19 @@ jobs:
           if ! command -v ansible-playbook &> /dev/null; then
             pipx install ansible-core
           fi
-          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > .vault_pass
+          SECRETS_DIR="$RUNNER_TEMP/secrets"
+          mkdir -p "$SECRETS_DIR" && chmod 700 "$SECRETS_DIR"
+          echo "SECRETS_DIR=$SECRETS_DIR" >> "$GITHUB_ENV"
+          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > "$SECRETS_DIR/.vault_pass"
 
-          cat << 'EOF' > dump.yml
+          cat << EOF > "$SECRETS_DIR/dump.yml"
           - hosts: localhost
             gather_facts: false
             vars_files:
-              - .config/secrets.yml
+              - $GITHUB_WORKSPACE/.config/secrets.yml
             tasks:
               - copy:
-                  dest: decrypted.json
+                  dest: $SECRETS_DIR/decrypted.json
                   content: >
                     {{ {
                       "VPS_DEPLOY_KEY": VPS_DEPLOY_KEY | default("")
@@ -46,7 +56,7 @@ jobs:
                 no_log: true
           EOF
 
-          ansible-playbook dump.yml --vault-password-file .vault_pass
+          ansible-playbook "$SECRETS_DIR/dump.yml" --vault-password-file "$SECRETS_DIR/.vault_pass"
 
           # IMPORTANT: We purposefully DO NOT use echo "::add-mask::..." for VPS_DEPLOY_KEY.
           # Attempting to mask a multiline string using echo causes bash to expand it into multiple lines.
@@ -57,7 +67,7 @@ jobs:
       - name: Set Safe Branch Name
         env:
           # branch names are user-controlled — never interpolate them into shell directly
-          RAW_BRANCH: ${{ github.event_name == 'delete' && github.event.ref || github.event.pull_request.head.ref }}
+          RAW_BRANCH: ${{ github.event_name == 'workflow_dispatch' && inputs.branch || github.event_name == 'delete' && github.event.ref || github.event.pull_request.head.ref }}
         run: |
           BRANCH_NAME_SAFE=$(echo "$RAW_BRANCH" | tr -cd 'a-zA-Z0-9-' | tr 'A-Z' 'a-z')
           echo "BRANCH_NAME_SAFE=$BRANCH_NAME_SAFE" >> $GITHUB_ENV
@@ -66,7 +76,7 @@ jobs:
         if: env.BRANCH_NAME_SAFE != ''
         run: |
           mkdir -p ~/.ssh
-          jq -r '.VPS_DEPLOY_KEY // empty' decrypted.json > ~/.ssh/deploy_key
+          jq -r '.VPS_DEPLOY_KEY // empty' "$SECRETS_DIR/decrypted.json" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H codingforchange.com >> ~/.ssh/known_hosts
 
@@ -84,4 +94,4 @@ jobs:
 
       - name: Clean up Secrets
         if: always()
-        run: rm -f .vault_pass dump.yml decrypted.json
+        run: rm -rf "$RUNNER_TEMP/secrets"

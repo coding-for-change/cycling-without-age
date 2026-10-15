@@ -228,6 +228,9 @@ describe("account group", () => {
     expect(ids).toEqual([
       "locale:en",
       "locale:de",
+      "theme:light",
+      "theme:dark",
+      "theme:system",
       "sidebar-toggle",
       "sign-out",
     ]);
@@ -235,6 +238,16 @@ describe("account group", () => {
 
   it("names the language in its own words", () => {
     expect(labels(run(superadmin), "account")).toContain("Language: Dansk");
+  });
+
+  it("offers every appearance", () => {
+    expect(labels(run(superadmin), "account")).toEqual(
+      expect.arrayContaining([
+        "Appearance: Light",
+        "Appearance: Dark",
+        "Appearance: System",
+      ]),
+    );
   });
 });
 

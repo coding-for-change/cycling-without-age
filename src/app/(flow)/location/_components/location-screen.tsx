@@ -31,10 +31,11 @@ import { nextOnboardingPath } from "../../onboarding/actions";
 import {
   rememberGuestChapter,
   resolveHomeAddress,
+  settleCaretakerAt,
   settlePassengerAt,
-  suggestAddresses,
   type HomeResolution,
 } from "../actions";
+import { suggestAddresses } from "@/features/profile/actions";
 import { rankChapters } from "./rank";
 
 const ChapterMap = dynamic(() => import("./chapter-map"), {
@@ -66,7 +67,7 @@ export function LocationScreen({
   notation,
   progress,
 }: {
-  mode: "guest" | "pilot" | "passenger";
+  mode: "guest" | "pilot" | "passenger" | "caretaker";
   chapters: ChapterPin[];
   strings: Strings;
   words: string;
@@ -190,6 +191,11 @@ export function LocationScreen({
         return result.ok ? go(await nextOnboardingPath()) : fail(result.error);
       }
 
+      if (mode === "caretaker") {
+        const result = await settleCaretakerAt(selected[0]);
+        return result.ok ? go(result.next) : fail(result.error);
+      }
+
       if (atHome) {
         if (!home?.chapter) return fail("generic");
         const result = await settlePassengerAt({
@@ -266,7 +272,11 @@ export function LocationScreen({
             />
           )}
           <h1 className="text-2xl tracking-tight text-balance">
-            {mode === "passenger" ? strings.titlePassenger : strings.title}
+            {mode === "passenger"
+              ? strings.titlePassenger
+              : mode === "caretaker"
+                ? strings.titleCaretaker
+                : strings.title}
           </h1>
 
           {mode === "passenger" ? (
@@ -559,6 +569,7 @@ function HomePanel({
 type Strings = {
   title: string;
   titlePassenger: string;
+  titleCaretaker: string;
   subtitleNearby: string;
   subtitleAll: string;
   locating: string;

@@ -10,6 +10,7 @@ import { PushRegistrar } from "@/components/push-registrar";
 import { ServiceWorkerRegistrar } from "@/components/service-worker-registrar";
 import { TranslatorTools } from "@/components/translator-tools";
 import { translatorModeBuilt } from "@/lib/i18n/translator-mode";
+import { THEME_COLOR, themeScript } from "@/lib/theme";
 import "./globals.css";
 
 const inter = Inter({
@@ -28,6 +29,11 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   interactiveWidget: "resizes-content",
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: THEME_COLOR.light },
+    { media: "(prefers-color-scheme: dark)", color: THEME_COLOR.dark },
+  ],
 };
 
 const setLangScript = `(function(){try{var s=${JSON.stringify(locales)},m=document.cookie.match(/(?:^|; )${LOCALE_COOKIE}=([^;]*)/),l=m&&decodeURIComponent(m[1]);if(s.indexOf(l)<0){l=${JSON.stringify(defaultLocale)};var p=navigator.languages||[navigator.language];for(var i=0;i<p.length;i++){var c=(p[i]||"").slice(0,2).toLowerCase();if(s.indexOf(c)>=0){l=c;break}}}document.documentElement.lang=l}catch(e){}})()`;
@@ -48,6 +54,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: setLangScript }} />
         <script dangerouslySetInnerHTML={{ __html: setShellScript }} />
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-full flex flex-col font-sans">
         <NativeBootstrap />

@@ -9,6 +9,8 @@ import { firstName } from "@/lib/utils";
 import { primaryAction, type MemberPerspective } from "../../nav";
 import { MEMBER_LIFE } from "../instant";
 import { signInHref } from "@/lib/redirects";
+import { getPassengerAudience } from "@/use-cases/passenger-audience";
+import { audienceCopy } from "../audience-copy";
 
 export async function Greeting({
   perspective,
@@ -24,6 +26,10 @@ export async function Greeting({
     getLocale(),
   ]);
   const { guest, home, action } = dict.member;
+  const audience =
+    session && perspective === "passenger"
+      ? await getPassengerAudience(session.user.id)
+      : null;
 
   const heading = session
     ? formatMessage(
@@ -32,7 +38,14 @@ export async function Greeting({
         locale,
       )
     : guest.greeting;
-  const tagline = session ? home[perspective].tagline : guest.tagline;
+  const tagline = session
+    ? audienceCopy(
+        audience,
+        home[perspective].tagline,
+        home.passenger.caretakerTagline,
+        locale,
+      )
+    : guest.tagline;
   const hero = session
     ? { href: primaryAction(perspective).href, label: action[perspective] }
     : {

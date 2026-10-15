@@ -75,7 +75,7 @@ export async function deliverPush(notificationId: string) {
   }
 
   const locale = resolveEmailLocale(account.locale);
-  const message = renderMessage(kind, notification.payload, locale);
+  const message = await renderMessage(kind, notification.payload, locale);
 
   if (!isPushConfigured()) {
     devConsole.info(

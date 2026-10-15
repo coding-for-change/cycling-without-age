@@ -3,7 +3,9 @@ import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/format";
 import { fullName } from "@/lib/utils";
-import type { RideCalendarRow } from "../facade";
+import { pickupLabel, pickupOf } from "@/features/passengers/pickup";
+import type { SubjectRef } from "@/features/person-profiles";
+import type { PilotRideRow, RideCalendarRow } from "../facade";
 import type { RideModelName } from "../schemas";
 
 export type CalendarStrings = Dictionary["calendar"];
@@ -62,8 +64,16 @@ export const trishawMeta = (option: {
   location: string;
 }) => [option.model, option.seats, option.location].filter(Boolean).join(" · ");
 
-export const ridePilots = (ride: Pick<RideCalendarRow, "assignments">) =>
-  ride.assignments.filter((a) => a.role === "pilot");
+export const ridePilots = <A extends { role: string }>(ride: {
+  assignments: A[];
+}) => ride.assignments.filter((a) => a.role === "pilot");
+
+/** The pilots who fill a seat: a demoted one is listed but no longer counts. */
+export const seatedPilots = <
+  A extends { role: string; stillPiloting?: boolean },
+>(ride: {
+  assignments: A[];
+}) => ridePilots(ride).filter((a) => a.stillPiloting !== false);
 
 /** The trishaws committed to a ride, in name order. */
 export const rideTrishaws = (ride: Pick<RideCalendarRow, "trishaws">) =>
@@ -78,10 +88,17 @@ export function rideTrishawNames(
   return names.length ? names.join(", ") : strings.noTrishaw;
 }
 
-/** "Anna Bauer, Karl Weber" — who an assigned pilot is taking out. */
-export const rideRiderNames = (
-  roster: { passenger: { firstName: string; lastName: string } }[],
-) => roster.map(({ passenger }) => fullName(passenger)).join(", ");
+export const rideRiderRefs = (
+  roster: PilotRideRow["roster"],
+  careHome: string,
+): { ref: SubjectRef; name: string; pickup: string | null }[] =>
+  roster.map(({ passenger }) => ({
+    ref: passenger.userId
+      ? { kind: "user", id: passenger.userId }
+      : { kind: "passenger", id: passenger.id },
+    name: fullName(passenger),
+    pickup: pickupLabel(pickupOf(passenger), careHome),
+  }));
 
 export type RideFleetStrings = { grounded: string; groundedOnRide: string };
 

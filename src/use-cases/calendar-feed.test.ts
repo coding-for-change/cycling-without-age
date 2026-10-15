@@ -11,7 +11,13 @@ jest.mock("@/features/membership", () => ({
   membership: { listMembershipsOfUser: jest.fn() },
 }));
 jest.mock("@/features/passengers", () => ({
-  passengers: { listPassengersManagedBy: jest.fn() },
+  passengers: {
+    listPassengersManagedBy: jest.fn(),
+    getOwnPassenger: jest.fn(),
+    othersOf: <Rider extends { userId: string | null }>(riders: Rider[]) =>
+      riders.filter((rider) => rider.userId === null),
+  },
+  pickupOf: jest.requireActual("@/features/passengers/pickup").pickupOf,
 }));
 jest.mock("@/features/rides", () => ({
   rides: { listRidesForCalendarFeed: jest.fn() },
@@ -24,6 +30,7 @@ jest.mock("@/lib/observability/logger", () => ({
 const openFeed = calendarFeeds.openFeed as jest.Mock;
 const recordFetch = calendarFeeds.recordFetch as jest.Mock;
 const managedBy = passengers.listPassengersManagedBy as jest.Mock;
+const ownPassenger = passengers.getOwnPassenger as jest.Mock;
 const memberships = membership.listMembershipsOfUser as jest.Mock;
 const feedRides = rides.listRidesForCalendarFeed as jest.Mock;
 
@@ -44,8 +51,25 @@ const ride = (over: Record<string, unknown> = {}) => ({
   chapter: { name: "CWA München" },
   trishaws: [{ trishaw: { name: "Sonnenstrahl" } }],
   assignments: [],
+  roster: [],
   ...over,
 });
+
+const noPickup = {
+  residence: null,
+  address: null,
+  latitude: null,
+  longitude: null,
+  user: null,
+};
+
+const rider = (id: string, firstName: string, over = {}) => ({
+  passenger: { id, firstName, ...noPickup, ...over },
+});
+
+const SELF = { id: "passenger-1", userId: "user-1", firstName: "Jakob" };
+const ERNA = { id: "passenger-2", userId: null, firstName: "Erna" };
+const HANS = { id: "passenger-3", userId: null, firstName: "Hans" };
 
 const lines = (ics: string | null) =>
   (ics ?? "").replace(/\r\n /g, "").split("\r\n");
@@ -54,7 +78,8 @@ beforeEach(() => {
   jest.clearAllMocks();
   openFeed.mockResolvedValue({ id: "feed-1", userId: "user-1", locale: "en" });
   recordFetch.mockResolvedValue(undefined);
-  managedBy.mockResolvedValue([{ id: "passenger-1", firstName: "Erna" }]);
+  managedBy.mockResolvedValue([SELF]);
+  ownPassenger.mockResolvedValue(SELF);
   memberships.mockResolvedValue([
     { chapterId: "chapter-muenchen", roles: ["pilot"] },
     { chapterId: "chapter-hamburg", roles: ["passenger"] },
@@ -166,9 +191,17 @@ describe("renderCalendarFeed", () => {
     expect(out).toContain("SUMMARY:Gruppenfahrt");
   });
 
-  it("names nobody — not the riders the reader manages either", async () => {
+  it("names nobody on a rider's own feed — not even themself", async () => {
+    feedRides.mockResolvedValue([
+      ride({ roster: [rider("passenger-1", "Jakob")] }),
+    ]);
     const ics = await renderCalendarFeed("token", NOW);
-    expect(ics).not.toContain("Erna");
+    expect(ics).not.toContain("Jakob");
+    expect(ics).not.toContain("COLOR:");
+    expect(ics).not.toContain("CATEGORIES:");
+    expect(lines(ics)).toContain(
+      "X-WR-CALDESC:Your rides with Cycling Without Age. Keeps itself up to date.",
+    );
   });
 
   // "Last picked up" is a courtesy to the reader; it must never cost them the feed.
@@ -183,5 +216,157 @@ describe("renderCalendarFeed", () => {
     const out = lines(await renderCalendarFeed("token", NOW));
     expect(out[0]).toBe("BEGIN:VCALENDAR");
     expect(out).not.toContain("BEGIN:VEVENT");
+  });
+});
+
+describe("renderCalendarFeed for a caretaker", () => {
+  beforeEach(() => {
+    managedBy.mockResolvedValue([SELF, ERNA, HANS]);
+    ownPassenger.mockResolvedValue(SELF);
+    memberships.mockResolvedValue([
+      { chapterId: "chapter-muenchen", roles: ["passenger"] },
+    ]);
+  });
+
+  it("asks for their own rider even when someone else manages it", async () => {
+    managedBy.mockResolvedValue([ERNA]);
+    ownPassenger.mockResolvedValue({ ...SELF, managedByUserId: "user-9" });
+    await renderCalendarFeed("token", NOW);
+    expect(feedRides).toHaveBeenCalledWith(
+      "user-1",
+      { pilotChapterIds: [], passengerIds: ["passenger-2", "passenger-1"] },
+      expect.any(Date),
+      expect.any(Date),
+      NOW,
+    );
+  });
+
+  it("asks for each rider once", async () => {
+    await renderCalendarFeed("token", NOW);
+    expect(feedRides.mock.calls[0][1].passengerIds).toEqual([
+      "passenger-1",
+      "passenger-2",
+      "passenger-3",
+    ]);
+  });
+
+  it("names the rider in the title, the description and a category", async () => {
+    feedRides.mockResolvedValue([
+      ride({ roster: [rider("passenger-2", "Erna")] }),
+    ]);
+    const out = lines(await renderCalendarFeed("token", NOW));
+    expect(out).toContain("SUMMARY:Event ride · Erna");
+    expect(out).toContain(
+      "DESCRIPTION:CWA München\\nRider: Erna\\nTrishaw: Sonnenstrahl\\nDetails in the app: https://cwa.example/passenger",
+    );
+    expect(out).toContain("CATEGORIES:Erna");
+    expect(out).toContain("COLOR:teal");
+    expect(out).toContain(
+      "X-WR-CALDESC:The rides of the people you look after\\, and your own\\, with Cycling Without Age. Keeps itself up to date.",
+    );
+  });
+
+  it("keeps each rider's colour however the rides come in", async () => {
+    feedRides.mockResolvedValue([
+      ride({ id: "ride-1", roster: [rider("passenger-3", "Hans")] }),
+      ride({ id: "ride-2", roster: [rider("passenger-2", "Erna")] }),
+    ]);
+    const out = lines(await renderCalendarFeed("token", NOW));
+    expect(out.filter((line) => line.startsWith("COLOR:"))).toEqual([
+      "COLOR:darkorange",
+      "COLOR:teal",
+    ]);
+  });
+
+  it("names every one of their riders on a shared ride, in the first one's colour", async () => {
+    feedRides.mockResolvedValue([
+      ride({
+        roster: [rider("passenger-3", "Hans"), rider("passenger-2", "Erna")],
+      }),
+    ]);
+    const out = lines(await renderCalendarFeed("token", NOW));
+    expect(out).toContain("SUMMARY:Event ride · Hans\\, Erna");
+    expect(out.join("\n")).toContain("Riders: Hans\\, Erna");
+    expect(out).toContain("CATEGORIES:Hans,Erna");
+    expect(out).toContain("COLOR:darkorange");
+  });
+
+  it("never names someone else's rider on the same ride", async () => {
+    feedRides.mockResolvedValue([
+      ride({
+        roster: [rider("passenger-2", "Erna"), rider("passenger-x", "Hilde")],
+      }),
+    ]);
+    const ics = await renderCalendarFeed("token", NOW);
+    expect(ics).not.toContain("Hilde");
+    expect(lines(ics)).toContain("SUMMARY:Event ride · Erna");
+  });
+
+  it("does not name the caretaker when they ride themself", async () => {
+    feedRides.mockResolvedValue([
+      ride({ roster: [rider("passenger-1", "Jakob")] }),
+    ]);
+    const out = lines(await renderCalendarFeed("token", NOW));
+    expect(out).toContain("SUMMARY:Event ride");
+    expect(out.some((line) => line.startsWith("COLOR:"))).toBe(false);
+  });
+
+  it("sends the calendar to the rider's door when one rider lives at home", async () => {
+    feedRides.mockResolvedValue([
+      ride({
+        roster: [
+          rider("passenger-2", "Erna", {
+            residence: "home",
+            address: "Lindenweg 4, 80331 München",
+          }),
+        ],
+      }),
+    ]);
+    const out = lines(await renderCalendarFeed("token", NOW));
+    expect(out).toContain("LOCATION:Lindenweg 4\\, 80331 München");
+  });
+
+  it("keeps the ride's own place for a care home or for two riders", async () => {
+    const home = { residence: "home", address: "Lindenweg 4" };
+    feedRides.mockResolvedValue([
+      ride({
+        id: "ride-1",
+        roster: [rider("passenger-2", "Erna", { residence: "careHome" })],
+      }),
+      ride({
+        id: "ride-2",
+        roster: [
+          rider("passenger-2", "Erna", home),
+          rider("passenger-3", "Hans", home),
+        ],
+      }),
+    ]);
+    const ics = await renderCalendarFeed("token", NOW);
+    expect(ics).not.toContain("Lindenweg");
+    expect(
+      lines(ics).filter((line) => line.startsWith("LOCATION:")),
+    ).toHaveLength(2);
+  });
+
+  it("keeps the pilot title and adds their rider's name", async () => {
+    memberships.mockResolvedValue([
+      { chapterId: "chapter-muenchen", roles: ["pilot"] },
+    ]);
+    feedRides.mockResolvedValue([
+      ride({
+        assignments: [{ role: "pilot" }],
+        roster: [rider("passenger-2", "Erna")],
+      }),
+    ]);
+    const out = lines(await renderCalendarFeed("token", NOW));
+    expect(out).toContain("SUMMARY:Pilot · Event ride · Erna");
+  });
+
+  it("marks a cancelled ride with the rider's name kept", async () => {
+    feedRides.mockResolvedValue([
+      ride({ status: "cancelled", roster: [rider("passenger-2", "Erna")] }),
+    ]);
+    const out = lines(await renderCalendarFeed("token", NOW));
+    expect(out).toContain("SUMMARY:Cancelled: Event ride · Erna");
   });
 });

@@ -22,6 +22,7 @@ import {
   findMembersMatchingName,
   findMembersOfChapters,
   findMembersOfUser,
+  findMembersOfUsers,
   findMembersWithRole,
   upsertMemberRole,
   withChapterLock,
@@ -352,3 +353,16 @@ export const listPilotMembers = async (chapterIds: string[]) =>
         .filter((m) => parseRoles(m.role).includes("pilot"))
         .map((m) => ({ userId: m.userId, chapterId: m.organizationId }))
     : [];
+
+export const listMembershipsOfUsers = async (
+  userIds: string[],
+): Promise<Map<string, Membership[]>> => {
+  const byUser = new Map<string, Membership[]>();
+  if (userIds.length === 0) return byUser;
+  for (const m of await findMembersOfUsers([...new Set(userIds)])) {
+    const list = byUser.get(m.userId) ?? [];
+    list.push({ chapterId: m.organizationId, roles: parseRoles(m.role) });
+    byUser.set(m.userId, list);
+  }
+  return byUser;
+};

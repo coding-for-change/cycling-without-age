@@ -1,9 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useId, useMemo, useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UserPlus } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -18,26 +16,33 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { RIDER_NOTE_MAX } from "@/features/passengers/schemas";
 import { addAssistedPassenger } from "@/features/accounts/actions";
-import { assistedPassengerInput } from "@/features/accounts/schemas";
-import { parseIdentity, type CountryCode } from "@/lib/identity";
+import { gender as genderSchema } from "@/features/profile/schemas";
+import {
+  looksLikePhone,
+  parseIdentity,
+  type CountryCode,
+} from "@/lib/identity";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
 import { notify } from "@/components/action-feedback";
 import { useDrawerParam } from "../../_components/use-drawer-param";
 import { TextField } from "../../_components/text-field";
+import {
+  PickupField,
+  pickupPayload,
+  type PickupStrings,
+  type PickupValue,
+} from "./pickup-field";
 
-const GENDERS = assistedPassengerInput.shape.gender.options;
+const GENDERS = genderSchema.options;
 
 const schemaOf = (country: CountryCode, invalid: string) => {
   const text = z.string().trim().min(1, invalid);
@@ -46,11 +51,8 @@ const schemaOf = (country: CountryCode, invalid: string) => {
       firstName: text,
       lastName: text,
       birthDate: text,
-      gender: assistedPassengerInput.shape.gender,
-      contact: text.refine(
-        (value) => parseIdentity(value, country).ok,
-        invalid,
-      ),
+      gender: genderSchema,
+      contact: z.string().trim(),
       withHelper: z.boolean(),
       helperName: z.string().trim(),
       helperRelationship: z.string().trim(),
@@ -60,7 +62,11 @@ const schemaOf = (country: CountryCode, invalid: string) => {
       careCenterId: z.string(),
     })
     .superRefine((values, ctx) => {
-      if (!values.withHelper) return;
+      if (!values.withHelper) {
+        if (!parseIdentity(values.contact, country).ok)
+          ctx.addIssue({ code: "custom", message: invalid, path: ["contact"] });
+        return;
+      }
       if (!values.helperName)
         ctx.addIssue({
           code: "custom",
@@ -82,6 +88,8 @@ const schemaOf = (country: CountryCode, invalid: string) => {
     });
 };
 
+const CARE_HOME: PickupValue = { residence: "careHome" };
+
 type FormValues = z.infer<ReturnType<typeof schemaOf>>;
 
 const normalise = (value: string, country: CountryCode) => {
@@ -98,12 +106,23 @@ export type AddPassengerLabels = {
   helperName: string;
   helperRelationship: string;
   helperContact: string;
-  helperIsAccountHolder: string;
+  helperNext: {
+    title: string;
+    existing: string;
+    fresh: string;
+    someone: string;
+  };
   submit: string;
   another: string;
   anotherHint: string;
   added: string;
-  errors: { exists: string; invalid: string; generic: string };
+  sent: string;
+  errors: {
+    exists: string;
+    tooMany: string;
+    invalid: string;
+    generic: string;
+  };
 };
 
 export type RiderNeedsLabels = {
@@ -119,6 +138,8 @@ export function AddPassengerDrawer({
   chapterId,
   country,
   labels,
+  pickup: pickupStrings,
+  relationships,
   needs,
   careCenters,
   person,
@@ -127,6 +148,8 @@ export function AddPassengerDrawer({
   chapterId: string;
   country: CountryCode;
   labels: AddPassengerLabels;
+  pickup: PickupStrings;
+  relationships: Record<string, string>;
   needs: RiderNeedsLabels;
   careCenters: { id: string; name: string }[];
   locale: Locale;
@@ -138,10 +161,12 @@ export function AddPassengerDrawer({
     genders: Record<(typeof GENDERS)[number], string>;
   };
 }) {
-  const { creating: open, openHref, close: clearParam } = useDrawerParam();
+  const { creating: open, close: clearParam } = useDrawerParam();
   const formId = useId();
   const anotherId = useId();
   const [another, setAnother] = useState(false);
+  const [pickup, setPickup] = useState<PickupValue>(CARE_HOME);
+  const [pickupMissing, setPickupMissing] = useState(false);
   const [pending, startTransition] = useTransition();
   const schema = useMemo(
     () => schemaOf(country, labels.errors.invalid),
@@ -165,32 +190,43 @@ export function AddPassengerDrawer({
     },
   });
 
+  const resetPickup = () => {
+    setPickup(CARE_HOME);
+    setPickupMissing(false);
+  };
+
   const close = () => {
     form.reset();
+    resetPickup();
     clearParam();
   };
 
-  const [withHelper, contact, helperContact, helperName, firstName, lastName] =
-    useWatch({
+  const [withHelper, helperName, helperContact, firstName, lastName] = useWatch(
+    {
       control: form.control,
       name: [
         "withHelper",
-        "contact",
-        "helperContact",
         "helperName",
+        "helperContact",
         "firstName",
         "lastName",
       ],
-    });
-  const helperOwns =
-    withHelper &&
-    helperName.trim() !== "" &&
-    normalise(contact, country) !== null &&
-    normalise(contact, country) === normalise(helperContact, country);
+    },
+  );
+  const next = {
+    helper: helperName.trim() || labels.helperNext.someone,
+    passenger: `${firstName} ${lastName}`.trim() || labels.helperNext.someone,
+    channel: looksLikePhone(helperContact) ? "phone" : "email",
+  };
 
   const submit = form.handleSubmit((data) => {
-    const identity = normalise(data.contact, country);
-    if (!identity) return;
+    const identity = data.withHelper ? null : normalise(data.contact, country);
+    if (!data.withHelper && !identity) return;
+    const place = pickupPayload(pickup);
+    if (!place) {
+      setPickupMissing(true);
+      return;
+    }
     startTransition(async () => {
       const result = await addAssistedPassenger({
         chapterId,
@@ -198,7 +234,7 @@ export function AddPassengerDrawer({
         lastName: data.lastName,
         birthDate: data.birthDate,
         gender: data.gender,
-        contact: identity,
+        ...(identity ? { contact: identity } : {}),
         helper: data.withHelper
           ? {
               name: data.helperName,
@@ -207,6 +243,7 @@ export function AddPassengerDrawer({
                 normalise(data.helperContact, country) ?? data.helperContact,
             }
           : undefined,
+        pickup: place,
         needs: {
           needsWheelchairBike: data.needsWheelchairBike,
           note: data.riderNote || null,
@@ -216,8 +253,14 @@ export function AddPassengerDrawer({
       });
       notify(result, {
         done: formatMessage(
-          labels.added,
-          { name: `${data.firstName} ${data.lastName}`.trim() },
+          !result.ok || result.outcome === "created"
+            ? labels.added
+            : labels.sent,
+          {
+            name: `${data.firstName} ${data.lastName}`.trim(),
+            helper: data.helperName.trim(),
+            channel: looksLikePhone(data.helperContact) ? "phone" : "email",
+          },
           locale,
         ),
         errors: labels.errors,
@@ -228,121 +271,128 @@ export function AddPassengerDrawer({
         return;
       }
       form.reset();
+      resetPickup();
       form.setFocus("firstName");
     });
   });
 
   return (
-    <>
-      <Button
-        asChild
-        variant="brand"
-        className="min-h-11"
-      >
-        <Link href={openHref}>
-          <UserPlus aria-hidden />
-          {labels.open}
-        </Link>
-      </Button>
-
-      <AdminDrawer
-        open={open}
-        onOpenChange={(next) => {
-          if (!next) close();
-        }}
-        title={labels.title}
-        description={labels.body}
-        footer={
-          <>
-            <div className="mr-auto flex items-center gap-3">
-              <Switch
-                id={anotherId}
-                checked={another}
-                onCheckedChange={setAnother}
-              />
-              <label
-                htmlFor={anotherId}
-                className="grid gap-1"
-              >
-                <span className="text-sm leading-none font-medium">
-                  {labels.another}
-                </span>
-                <span className="text-2sm text-ink-soft">
-                  {labels.anotherHint}
-                </span>
-              </label>
-            </div>
-            <Button
-              type="submit"
-              form={formId}
-              disabled={pending}
-              variant="brand"
-              className="min-h-11"
+    <AdminDrawer
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) close();
+      }}
+      title={labels.title}
+      description={labels.body}
+      footer={
+        <>
+          <div className="mr-auto flex items-center gap-3">
+            <Switch
+              id={anotherId}
+              checked={another}
+              onCheckedChange={setAnother}
+            />
+            <label
+              htmlFor={anotherId}
+              className="grid gap-1"
             >
-              {labels.submit}
-            </Button>
-          </>
-        }
-      >
-        <Form {...form}>
-          <form
-            id={formId}
-            onSubmit={submit}
-            onKeyDown={submitOnCmdEnter}
-            aria-busy={pending}
-            className="grid gap-5"
+              <span className="text-sm leading-none font-medium">
+                {labels.another}
+              </span>
+              <span className="text-2sm text-ink-soft">
+                {labels.anotherHint}
+              </span>
+            </label>
+          </div>
+          <Button
+            type="submit"
+            form={formId}
+            disabled={pending}
+            variant="brand"
+            className="min-h-11"
           >
-            <div className="grid gap-5 sm:grid-cols-2">
-              <TextField
-                control={form.control}
-                name="firstName"
-                label={person.firstName}
-                autoFocus
-                autoComplete="off"
-              />
-              <TextField
-                control={form.control}
-                name="lastName"
-                label={person.lastName}
-                autoComplete="off"
-              />
-              <TextField
-                control={form.control}
-                name="birthDate"
-                label={person.birthDate}
-                type="date"
-                max={new Date().toISOString().slice(0, 10)}
-              />
-              <FormField
-                control={form.control}
-                name="gender"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{person.gender}</FormLabel>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
+            {labels.submit}
+          </Button>
+        </>
+      }
+    >
+      <Form {...form}>
+        <form
+          id={formId}
+          onSubmit={submit}
+          onKeyDown={submitOnCmdEnter}
+          aria-busy={pending}
+          className="grid gap-5"
+        >
+          <div className="grid gap-5 sm:grid-cols-2">
+            <TextField
+              control={form.control}
+              name="firstName"
+              label={person.firstName}
+              autoFocus
+              autoComplete="off"
+            />
+            <TextField
+              control={form.control}
+              name="lastName"
+              label={person.lastName}
+              autoComplete="off"
+            />
+            <TextField
+              control={form.control}
+              name="birthDate"
+              label={person.birthDate}
+              type="date"
+              max={new Date().toISOString().slice(0, 10)}
+            />
+            <FormField
+              control={form.control}
+              name="gender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{person.gender}</FormLabel>
+                  <FormControl>
+                    <NativeSelect
+                      value={field.value ?? ""}
+                      onChange={(event) => field.onChange(event.target.value)}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      wrapperClassName="w-full"
+                      className="h-11 border-line text-base"
                     >
-                      <FormControl>
-                        <SelectTrigger className="h-11 w-full border-line text-base">
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {GENDERS.map((option) => (
-                          <SelectItem
-                            key={option}
-                            value={option}
-                          >
-                            {person.genders[option]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                      <NativeSelectOption
+                        value=""
+                        disabled
+                      >
+                        —
+                      </NativeSelectOption>
+                      {GENDERS.map((option) => (
+                        <NativeSelectOption
+                          key={option}
+                          value={option}
+                        >
+                          {person.genders[option]}
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelect>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="sm:col-span-2">
+              <PickupField
+                value={pickup}
+                onChange={(next) => {
+                  setPickupMissing(false);
+                  setPickup(next);
+                }}
+                strings={pickupStrings}
+                invalid={pickupMissing}
+                language={locale}
               />
+            </div>
+            {withHelper ? null : (
               <div className="sm:col-span-2">
                 <TextField
                   control={form.control}
@@ -351,187 +401,201 @@ export function AddPassengerDrawer({
                   autoComplete="off"
                 />
               </div>
-            </div>
+            )}
+          </div>
 
-            <fieldset className="grid gap-4 rounded-2xl border border-line p-4">
-              <legend className="px-1 text-sm font-medium">
-                {needs.title}
-              </legend>
+          <fieldset className="grid gap-4 rounded-2xl border border-line p-4">
+            <legend className="px-1 text-sm font-medium">{needs.title}</legend>
+            <FormField
+              control={form.control}
+              name="needsWheelchairBike"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start justify-between gap-5">
+                  <div className="grid gap-1">
+                    <FormLabel>{needs.wheelchair.label}</FormLabel>
+                    <span className="text-2sm text-ink-soft">
+                      {needs.wheelchair.hint}
+                    </span>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      className="mt-1"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            {careCenters.length > 0 ? (
               <FormField
                 control={form.control}
-                name="needsWheelchairBike"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start justify-between gap-5">
-                    <div className="grid gap-1">
-                      <FormLabel>{needs.wheelchair.label}</FormLabel>
-                      <span className="text-2sm text-ink-soft">
-                        {needs.wheelchair.hint}
-                      </span>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="mt-1"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              {careCenters.length > 0 ? (
-                <FormField
-                  control={form.control}
-                  name="careCenterId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{needs.careCenter.label}</FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-11 w-full border-line text-base">
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value={NO_CARE_CENTER}>
-                            {needs.careCenter.none}
-                          </SelectItem>
-                          {careCenters.map((place) => (
-                            <SelectItem
-                              key={place.id}
-                              value={place.id}
-                            >
-                              {place.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <span className="text-2sm text-ink-soft">
-                        {needs.careCenter.hint}
-                      </span>
-                    </FormItem>
-                  )}
-                />
-              ) : null}
-              <FormField
-                control={form.control}
-                name="riderNote"
+                name="careCenterId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{needs.note.label}</FormLabel>
+                    <FormLabel>{needs.careCenter.label}</FormLabel>
                     <FormControl>
-                      <Textarea
-                        {...field}
-                        rows={2}
-                        maxLength={RIDER_NOTE_MAX}
-                        placeholder={needs.note.placeholder}
-                        className="min-h-16 border-line text-base"
-                      />
+                      <NativeSelect
+                        value={field.value}
+                        onChange={(event) => field.onChange(event.target.value)}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        wrapperClassName="w-full"
+                        className="h-11 border-line text-base"
+                      >
+                        <NativeSelectOption value={NO_CARE_CENTER}>
+                          {needs.careCenter.none}
+                        </NativeSelectOption>
+                        {careCenters.map((place) => (
+                          <NativeSelectOption
+                            key={place.id}
+                            value={place.id}
+                          >
+                            {place.name}
+                          </NativeSelectOption>
+                        ))}
+                      </NativeSelect>
                     </FormControl>
                     <span className="text-2sm text-ink-soft">
-                      {needs.note.hint}
+                      {needs.careCenter.hint}
                     </span>
                   </FormItem>
                 )}
               />
-            </fieldset>
-
+            ) : null}
             <FormField
               control={form.control}
-              name="withHelper"
+              name="riderNote"
               render={({ field }) => (
-                <FormItem className="flex min-h-11 flex-row items-center gap-3">
+                <FormItem>
+                  <FormLabel>{needs.note.label}</FormLabel>
                   <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={(checked) =>
-                        field.onChange(checked === true)
-                      }
-                      className="size-5 border-line data-[state=checked]:border-mint-deep data-[state=checked]:bg-mint-deep"
+                    <Textarea
+                      {...field}
+                      rows={2}
+                      maxLength={RIDER_NOTE_MAX}
+                      placeholder={needs.note.placeholder}
+                      className="min-h-16 border-line text-base"
                     />
                   </FormControl>
-                  <FormLabel className="font-normal">{labels.helper}</FormLabel>
+                  <span className="text-2sm text-ink-soft">
+                    {needs.note.hint}
+                  </span>
                 </FormItem>
               )}
             />
+          </fieldset>
 
-            {withHelper ? (
-              <div className="grid gap-5 rounded-2xl bg-canvas-deep p-4 sm:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="helperName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{labels.helperName}</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          autoComplete="off"
-                          className="h-11 border-line bg-canvas text-base"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="helperRelationship"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{labels.helperRelationship}</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          autoComplete="off"
-                          className="h-11 border-line bg-canvas text-base"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="sm:col-span-2">
-                  <FormField
-                    control={form.control}
-                    name="helperContact"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{labels.helperContact}</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            autoComplete="off"
-                            className="h-11 border-line bg-canvas text-base"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+          <FormField
+            control={form.control}
+            name="withHelper"
+            render={({ field }) => (
+              <FormItem className="flex min-h-11 flex-row items-center gap-3">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={(checked) =>
+                      field.onChange(checked === true)
+                    }
+                    className="size-5 border-line data-[state=checked]:border-mint-deep data-[state=checked]:bg-mint-deep"
                   />
-                </div>
-                {helperOwns ? (
-                  <p
-                    role="status"
-                    className="rounded-xl bg-mint-tint px-3 py-2 text-sm text-ink sm:col-span-2"
-                  >
-                    {formatMessage(
-                      labels.helperIsAccountHolder,
-                      {
-                        helper: helperName.trim(),
-                        passenger: `${firstName} ${lastName}`.trim(),
-                      },
-                      locale,
-                    )}
-                  </p>
-                ) : null}
+                </FormControl>
+                <FormLabel className="font-normal">{labels.helper}</FormLabel>
+              </FormItem>
+            )}
+          />
+
+          {withHelper ? (
+            <div className="grid gap-5 rounded-2xl bg-canvas-deep p-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="helperName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{labels.helperName}</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        autoComplete="off"
+                        className="h-11 border-line bg-canvas text-base"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="helperRelationship"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{labels.helperRelationship}</FormLabel>
+                    <FormControl>
+                      <NativeSelect
+                        value={field.value}
+                        onChange={(event) => field.onChange(event.target.value)}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        wrapperClassName="w-full"
+                        className="h-11 border-line bg-canvas text-base"
+                      >
+                        <NativeSelectOption
+                          value=""
+                          disabled
+                        >
+                          —
+                        </NativeSelectOption>
+                        {Object.entries(relationships).map(([value, label]) => (
+                          <NativeSelectOption
+                            key={value}
+                            value={value}
+                          >
+                            {label}
+                          </NativeSelectOption>
+                        ))}
+                      </NativeSelect>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="sm:col-span-2">
+                <FormField
+                  control={form.control}
+                  name="helperContact"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{labels.helperContact}</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          autoComplete="off"
+                          className="h-11 border-line bg-canvas text-base"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-            ) : null}
-          </form>
-        </Form>
-      </AdminDrawer>
-    </>
+              <div
+                role="status"
+                className="grid gap-1.25 rounded-xl bg-mint-tint px-3 py-2.75 text-sm text-ink sm:col-span-2"
+              >
+                <p className="font-medium">{labels.helperNext.title}</p>
+                <ul className="grid list-disc gap-1.25 pl-5">
+                  <li>
+                    {formatMessage(labels.helperNext.existing, next, locale)}
+                  </li>
+                  <li>
+                    {formatMessage(labels.helperNext.fresh, next, locale)}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          ) : null}
+        </form>
+      </Form>
+    </AdminDrawer>
   );
 }

@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { chapters } from "@/features/chapters";
 import { DEFAULT_CHAPTER_SETTINGS } from "@/features/chapters/schemas";
 import { membership } from "@/features/membership";
@@ -22,6 +23,9 @@ jest.mock("@/features/notifications", () => ({
   notifications: { create: jest.fn() },
 }));
 jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
+jest.mock("@/features/passengers", () => ({
+  passengers: { getOwnPassenger: jest.fn() },
+}));
 jest.mock("@/lib/events/queues", () => {
   const adds = new Map<string, jest.Mock>();
   return {
@@ -98,6 +102,28 @@ beforeEach(() => {
 });
 
 describe("notify", () => {
+  it("writes each recipient's row as the kind addresses it", async () => {
+    kindOfMock.mockReturnValueOnce({
+      event: "pilotApplication.decided",
+      category: "application",
+      policy: { push: false, email: "never", optional: false },
+      payload: z.object({ reader: z.string().optional() }),
+      recipients: async () => ["user-a", "user-b"],
+      params: async () => ({}),
+      forRecipient: (params: object, recipientUserId: string) => ({
+        ...params,
+        reader: recipientUserId,
+      }),
+      href: () => "/somewhere",
+      message: () => ({}),
+    });
+    await notify(decided);
+    expect(create.mock.calls.map(([input]) => input.payload)).toEqual([
+      { reader: "user-a" },
+      { reader: "user-b" },
+    ]);
+  });
+
   it("writes one inbox row per recipient, in parameters not sentences", async () => {
     await notify(decided);
 
@@ -174,6 +200,22 @@ describe("notify", () => {
 
     expect(create.mock.calls.map(([input]) => input.recipientUserId)).toEqual([
       "user-anke",
+    ]);
+  });
+
+  it("writes one row for a person a kind names twice", async () => {
+    kindOfMock.mockReturnValueOnce({
+      ...jest
+        .requireActual("@/use-cases/notifications/kinds")
+        .kindOf("pilotApplication.decided"),
+      recipients: async () => ["user-a", "user-b", "user-a"],
+    });
+
+    await notify(decided);
+
+    expect(create.mock.calls.map(([input]) => input.recipientUserId)).toEqual([
+      "user-a",
+      "user-b",
     ]);
   });
 

@@ -11,6 +11,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { LanguagePicker } from "@/components/language-picker";
+import { ThemePicker, type ThemeStrings } from "@/components/theme-picker";
 import type { AccountData } from "@/components/account/types";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,7 @@ export function MemberTopBar({
   signIn,
   locale,
   languageLabel,
+  themeStrings,
   bell,
 }: {
   items: ResolvedMemberNavItem[];
@@ -52,6 +54,7 @@ export function MemberTopBar({
   signIn: { href: string; label: string };
   locale: Locale;
   languageLabel: string;
+  themeStrings: ThemeStrings;
   bell: ReactNode;
 }) {
   const pathname = usePathname();
@@ -110,6 +113,10 @@ export function MemberTopBar({
         <LanguagePicker
           locale={locale}
           label={languageLabel}
+          className="hidden h-9 px-3 md:inline-flex"
+        />
+        <ThemePicker
+          strings={themeStrings}
           className="hidden h-9 px-3 md:inline-flex"
         />
       </div>

@@ -100,6 +100,7 @@ type Planning = {
   policy: HoursPolicy;
   rideMinutes: number;
   stayMinutes: number;
+  requiredPilots: number;
 };
 
 async function loadPlanning(chapterIds: string[]) {
@@ -125,6 +126,7 @@ async function loadPlanning(chapterIds: string[]) {
           },
           rideMinutes: policy.defaultRideMinutes,
           stayMinutes: policy.defaultStayMinutes,
+          requiredPilots: policy.requiredPilotsDefault,
         },
       ];
     }),
@@ -146,14 +148,17 @@ const toChoice = (
   defaultMinutes: location.defaultMinutes,
 });
 
-async function loadCrew(chapterIds: string[]): Promise<ScheduleCrew> {
+async function loadCrew(
+  chapterIds: string[],
+  careHome: string,
+): Promise<ScheduleCrew> {
   const [riders, members] = await Promise.all([
     passengers.listPassengersOfChapters(chapterIds),
     membership.listMembersOfChapters(chapterIds),
   ]);
   return {
     passengers: riders.map((passenger) => ({
-      ...toPassengerChoice(passenger),
+      ...toPassengerChoice(passenger, careHome),
       chapterId: passenger.chapterId,
     })),
     pilots: members.filter(isPilot).map((member) => ({
@@ -205,6 +210,7 @@ export async function ScheduleRide({
           ? {
               policy: plan.policy,
               stayMinutes: plan.stayMinutes,
+              requiredPilots: plan.requiredPilots,
               durationMinutes:
                 "durationChosen" in slot && slot.durationChosen
                   ? slot.durationMinutes
@@ -227,7 +233,7 @@ export async function ScheduleRide({
       chapters={chapters}
       crew={
         params.new === "1"
-          ? loadCrew(chapterIds)
+          ? loadCrew(chapterIds, dict.calendar.pickupCareHome)
           : Promise.resolve({ passengers: [], pilots: [] })
       }
       stays={choices(STAYS)}

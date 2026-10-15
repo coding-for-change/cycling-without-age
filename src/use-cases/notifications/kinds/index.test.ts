@@ -17,6 +17,9 @@ jest.mock("@/features/membership", () => ({
   membership: { listChapterAdmins: jest.fn() },
 }));
 jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
+jest.mock("@/features/passengers", () => ({
+  passengers: { getOwnPassenger: jest.fn() },
+}));
 
 describe("kinds", () => {
   it("defines at most one kind per event", () => {

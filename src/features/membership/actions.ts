@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { MAX_PILOT_CHAPTERS, membership } from "@/features/membership";
 import { requireAuth } from "@/lib/auth-guards";
+import { invalidateAccess } from "@/lib/cache-tags";
 import { actionFailure } from "@/lib/domain-error";
 
 export type MembershipActionResult =
@@ -23,6 +24,7 @@ export async function joinChapterAsPassenger(
   try {
     await membership.joinAsPassenger(session.user.id, parsed.data);
     revalidatePath("/onboarding");
+    invalidateAccess({ userIds: [session.user.id] });
     return { ok: true };
   } catch (error) {
     return actionFailure(error, {

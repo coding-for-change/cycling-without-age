@@ -23,6 +23,7 @@ running, the mailer prints the code to the `next dev` console instead.)
 | `pilot@cwa.local` | approved pilot in **München and Hamburg** (multi-chapter case) |
 | `pilot.pending@cwa.local` | pending pilot application for **München**, no membership yet |
 | `passenger@cwa.local` | passenger in **München**, phone `+4915112345678` (pre-verified) |
+| `caretaker@cwa.local` | caretaker in **München** who doesn't ride: books for Inge (care home) and Walter (own address) |
 | `multi@cwa.local` | pilot **and** chapter admin in **Hamburg**, plus country admin **DK** (role-stacking case) |
 
 ## Feature environments

@@ -1,7 +1,9 @@
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
 import { profile } from "@/features/profile";
+import type { ManagedRiderInput } from "@/features/passengers";
 import type { PersonalDetailsInput } from "@/features/profile";
+import { DomainError } from "@/lib/domain-error";
 import type { Locale } from "@/lib/i18n/locales";
 import type { OnboardingRole } from "@/lib/onboarding";
 
@@ -10,32 +12,53 @@ export async function completeOnboardingProfile({
   role,
   details,
   locale,
-  helperRelationship,
 }: {
   userId: string;
   role: OnboardingRole;
-  details: PersonalDetailsInput | null;
+  details: PersonalDetailsInput;
   locale: Locale;
-  helperRelationship?: string;
 }) {
   const chapterId = await chapterOf(userId, role);
 
-  if (!details) {
-    await profile.markManagesOthers(userId, helperRelationship);
-  } else {
-    await profile.setPersonalDetails(userId, details);
-    if (role === "passenger" && chapterId) {
-      await passengers.saveOwnPassenger({
-        ...details,
-        chapterId,
-        managedByUserId: userId,
-        userId,
-      });
-    }
+  await profile.setPersonalDetails(userId, details);
+  if (role === "passenger" && chapterId) {
+    await passengers.saveOwnPassenger({
+      ...details,
+      chapterId,
+      managedByUserId: userId,
+      userId,
+    });
   }
 
   await profile.setLocale(userId, locale);
   await profile.completeOnboarding(userId, { chapterId, role });
+}
+
+export async function completeCaretakerOnboarding({
+  userId,
+  name,
+  relationship,
+  riders,
+  locale,
+}: {
+  userId: string;
+  name: string;
+  relationship?: string;
+  riders: ManagedRiderInput[];
+  locale: Locale;
+}) {
+  const chapterId = (await membership.listMembershipsOfUser(userId)).find((m) =>
+    m.roles.includes("passenger"),
+  )?.chapterId;
+  if (!chapterId) throw new DomainError("notChapterMember");
+
+  await profile.updateOwnDetails(userId, { name });
+  await profile.markManagesOthers(userId, relationship);
+  await profile.setLocale(userId, locale);
+  const managed = await passengers.listPassengersManagedBy(userId);
+  if (!managed.some((passenger) => passenger.userId === null))
+    await passengers.addManagedPassengers(userId, chapterId, riders);
+  await profile.completeOnboarding(userId, { chapterId, role: "passenger" });
 }
 
 async function chapterOf(userId: string, role: OnboardingRole) {

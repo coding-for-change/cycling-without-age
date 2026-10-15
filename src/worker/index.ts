@@ -25,6 +25,7 @@ import { deliverChatDigest } from "@/use-cases/chat-notifications/deliver-chat-d
 import type { ChatDigestJob } from "@/use-cases/chat-notifications/deliver-chat-digest";
 import { deliverChatPush } from "@/use-cases/chat-notifications/deliver-chat-push";
 import type { ChatPushJob } from "@/use-cases/chat-notifications/deliver-chat-push";
+import { rideSweep } from "@/use-cases/ride-sweep";
 import { startBoard } from "./board";
 import {
   parkOnRateLimit,
@@ -110,8 +111,15 @@ async function pruneChat() {
     logger.info({ messages, conversations }, "pruned chat history");
 }
 
+async function sweepRides() {
+  const { understaffed } = await rideSweep();
+  if (understaffed > 0)
+    logger.info({ understaffed }, "flagged understaffed rides");
+}
+
 const MAINTENANCE: Record<MaintenanceName, () => Promise<void>> = {
   sweep,
+  "ride-sweep": sweepRides,
   "prune-devices": pruneDevices,
   "prune-chat": pruneChat,
 };

@@ -128,6 +128,7 @@ import {
   type HoursPolicy,
   type HoursWarningStrings,
 } from "./hours-warnings";
+import { AnnounceField } from "./announce-field";
 
 export type ScheduleChapter = {
   id: string;
@@ -142,6 +143,7 @@ export type ScheduleChapter = {
   durationChosen?: boolean;
   policy?: HoursPolicy;
   stayMinutes?: number;
+  requiredPilots?: number;
 };
 
 type CrewMember = PersonOption & { chapterId: string };
@@ -332,7 +334,7 @@ function ScheduleRideSheet({
   const [roundTrip, setRoundTrip] = useState(true);
   const [stay, setStay] = useState(chapter.stayMinutes ?? DEFAULT_STAY);
   const [pilotsNeeded, setPilotsNeeded] = useState(
-    requestedLocation?.defaultPilotCount ?? 1,
+    requestedLocation?.defaultPilotCount ?? chapter.requiredPilots ?? 1,
   );
   const [prefilled, setPrefilled] = useState<Prefilled | null>(() =>
     requestedLocation
@@ -346,6 +348,7 @@ function ScheduleRideSheet({
         }
       : null,
   );
+  const [announced, setAnnounced] = useState(false);
   const [passengerIds, setPassengerIds] = useState<string[]>([]);
   const [pilotIds, setPilotIds] = useState<string[]>([]);
   const [noteOpen, setNoteOpen] = useState(false);
@@ -488,6 +491,9 @@ function ScheduleRideSheet({
     rememberChapter(id);
     trishawPrefill.current = null;
     setPrefilled(null);
+    setPilotsNeeded(
+      chapters.find((candidate) => candidate.id === id)?.requiredPilots ?? 1,
+    );
     setSelected(new Set());
     setRideLocation(null);
     setOrigin(null);
@@ -594,6 +600,7 @@ function ScheduleRideSheet({
             ? Math.max(capacity, passengerIds.length)
             : null,
         photoFileIds: event ? photoIds : [],
+        announced: event && announced,
         passengerIds,
         pilotIds,
       });
@@ -764,7 +771,7 @@ function ScheduleRideSheet({
                   setTitle(change.target.value);
                   if (change.target.value.trim()) setTitleInvalid(false);
                 }}
-                className="w-full bg-transparent text-lg font-semibold text-ink outline-none placeholder:text-ink-faint aria-invalid:placeholder:text-red"
+                className="w-full bg-transparent text-lg font-semibold text-ink outline-none placeholder:text-ink-faint aria-invalid:placeholder:text-red-ink"
               />
               <MarkdownEditor
                 value={description}
@@ -1011,6 +1018,14 @@ function ScheduleRideSheet({
                 )}
               />
             </FieldRow>
+          ) : null}
+          {event ? (
+            <AnnounceField
+              checked={announced}
+              onChange={setAnnounced}
+              label={strings.announce}
+              hint={strings.announceHint}
+            />
           ) : null}
           <Suspense fallback={<CrewSkeleton />}>
             {crew ? (

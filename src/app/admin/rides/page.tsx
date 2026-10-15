@@ -1,8 +1,6 @@
-import Link from "next/link";
-import { Suspense } from "react";
-import { Plus } from "lucide-react";
+import { Suspense, cache, type ReactNode } from "react";
+import { cacheLife } from "next/cache";
 import { headers } from "next/headers";
-import { Button } from "@/components/ui/button";
 import { chapters as chapterFeature } from "@/features/chapters";
 import { rides as rideFeature } from "@/features/rides";
 import {
@@ -23,9 +21,10 @@ import { resolveLocale, wordsLocale, type Locale } from "@/lib/format";
 import { getDictionary, getLocale, type Dictionary } from "@/lib/i18n";
 import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
 import { first, hrefWith } from "@/lib/search-params";
-import { StickyToolbar } from "../_components/sticky-toolbar";
+import { StickyToolbarSkeleton } from "../_components/sticky-toolbar";
 import { WeekSwitcher } from "../_components/week-switcher";
 import { readActiveScope, type AdminSearchParams } from "../active-scope";
+import { ADMIN_LIFE, adminViewer } from "../admin-viewer";
 import { calendarTimeZone } from "../calendar-scope";
 import {
   dayNeighbours,
@@ -35,32 +34,40 @@ import {
 } from "../week-param";
 import { listRidesPageAction } from "@/features/rides/actions";
 import { rideErrors } from "@/features/rides/components/strings";
+import { RidesBodyFallback, RidesToolbar } from "./_components/rides-header";
 import {
-  RidesViewSwitch,
-  type RidesView,
-} from "./_components/rides-view-switch";
-import { RidesSkeleton } from "./_components/rides-skeleton";
+  RidesSkeleton,
+  WeekSwitcherSkeleton,
+} from "./_components/rides-skeleton";
 import { ScheduleRide } from "./_components/schedule-ride";
+import { TRANSIENT, ridesView } from "./rides-view";
 
 const LIST_PAGE = 30;
 
-const TRANSIENT = {
-  new: null,
-  date: null,
-  start: null,
-  end: null,
-  rideLocation: null,
-} as const;
+type PageProps = { searchParams: Promise<AdminSearchParams> };
 
-export default function RidesPage({
-  searchParams,
-}: {
-  searchParams: Promise<AdminSearchParams>;
-}) {
+export default function RidesPage({ searchParams }: PageProps) {
   return (
     <AdminPageShell>
       <Suspense fallback={<RidesSkeleton />}>
-        <Rides searchParams={searchParams} />
+        <RidesFrame
+          weekSwitcher={
+            <Suspense fallback={<WeekSwitcherSkeleton />}>
+              <RidesWeekSwitcher searchParams={searchParams} />
+            </Suspense>
+          }
+          body={
+            <Suspense
+              fallback={
+                <Suspense fallback={<RideWeekSkeleton />}>
+                  <RidesBodyFallback />
+                </Suspense>
+              }
+            >
+              <RidesBody searchParams={searchParams} />
+            </Suspense>
+          }
+        />
       </Suspense>
       <Suspense fallback={null}>
         <ScheduleRide searchParams={searchParams} />
@@ -69,11 +76,43 @@ export default function RidesPage({
   );
 }
 
-async function Rides({
-  searchParams,
+async function RidesFrame({
+  weekSwitcher,
+  body,
 }: {
-  searchParams: Promise<AdminSearchParams>;
+  weekSwitcher: ReactNode;
+  body: ReactNode;
 }) {
+  "use cache: private";
+  cacheLife(ADMIN_LIFE);
+
+  const [viewer, dict] = await Promise.all([adminViewer(), getDictionary()]);
+  const strings = dict.rides.week;
+
+  return (
+    <>
+      <AdminPageHeader title={dict.admin.pages.rides.title} />
+      <div className="-mt-3 flex flex-col gap-3">
+        <Suspense fallback={<StickyToolbarSkeleton />}>
+          <RidesToolbar
+            viewer={viewer}
+            strings={{
+              toolbar: strings.toolbar,
+              view: strings.view,
+              calendar: strings.views.calendar,
+              list: strings.views.list,
+              newRide: dict.admin.newRide,
+            }}
+            weekSwitcher={weekSwitcher}
+          />
+        </Suspense>
+        {body}
+      </div>
+    </>
+  );
+}
+
+const loadRides = cache(async (searchParams: Promise<AdminSearchParams>) => {
   const { scopeQuery, chapterIds } = await readActiveScope(
     searchParams,
     "rides",
@@ -88,106 +127,93 @@ async function Rides({
   ]);
 
   const locale = resolveLocale(head.get("accept-language"));
-  const words = wordsLocale(language);
   const weekStartsOn = firstDayOfWeek(locale);
   const { timeZone, label } = calendarTimeZone(zones);
   const now = new Date();
-  const view: RidesView = first(params.view) === "list" ? "list" : "calendar";
   const anchor = readWeekAnchor(params.week, timeZone, weekStartsOn, now);
-  const week = weekParam(anchor, timeZone);
-  const strings = dict.rides.week;
 
-  const hrefs: Record<RidesView, string> = {
-    calendar: hrefWith("/admin/rides", params, { ...TRANSIENT, view: null }),
-    list: hrefWith("/admin/rides", params, {
-      ...TRANSIENT,
-      view: "list",
-      week: null,
-      day: null,
-    }),
+  return {
+    scopeQuery,
+    chapterIds,
+    params,
+    dict,
+    locale,
+    words: wordsLocale(language),
+    weekStartsOn,
+    timeZone,
+    label,
+    now,
+    anchor,
+    week: weekParam(anchor, timeZone),
+    view: ridesView(first(params.view)),
   };
+});
+
+async function RidesWeekSwitcher({ searchParams }: PageProps) {
+  const { view, scopeQuery, anchor, timeZone, dict, locale, now } =
+    await loadRides(searchParams);
+  if (view === "list") return null;
+
+  return (
+    <WeekSwitcher
+      pathname="/admin/rides"
+      scopeQuery={scopeQuery}
+      anchor={anchor}
+      timeZone={timeZone}
+      strings={dict.calendar}
+      locale={locale}
+      now={now}
+    />
+  );
+}
+
+async function RidesBody({ searchParams }: PageProps) {
+  const {
+    view,
+    week,
+    label,
+    chapterIds,
+    params,
+    timeZone,
+    weekStartsOn,
+    anchor,
+    locale,
+    words,
+    now,
+    dict,
+  } = await loadRides(searchParams);
 
   return (
     <>
-      <AdminPageHeader title={dict.admin.pages.rides.title} />
-      <div className="-mt-3 flex flex-col gap-3">
-        <StickyToolbar label={strings.toolbar}>
-          <div className="flex h-8 items-center gap-3">
-            <RidesViewSwitch
-              value={view}
-              hrefs={hrefs}
-              strings={{
-                label: strings.view,
-                calendar: strings.views.calendar,
-                list: strings.views.list,
-              }}
-            />
-            {view === "calendar" ? (
-              <div className="min-w-0 max-lg:[&_p]:hidden">
-                <WeekSwitcher
-                  pathname="/admin/rides"
-                  scopeQuery={scopeQuery}
-                  anchor={anchor}
-                  timeZone={timeZone}
-                  strings={dict.calendar}
-                  locale={locale}
-                  now={now}
-                />
-              </div>
-            ) : null}
-            {chapterIds.length > 0 ? (
-              <Button
-                asChild
-                variant="brand"
-                size="sm"
-                className="ml-auto h-8"
-              >
-                <Link
-                  href={hrefWith("/admin/rides", params, {
-                    ...TRANSIENT,
-                    new: "1",
-                  })}
-                  aria-label={dict.admin.newRide}
-                >
-                  <Plus aria-hidden />
-                  <span className="max-sm:hidden">{dict.admin.newRide}</span>
-                </Link>
-              </Button>
-            ) : null}
-          </div>
-        </StickyToolbar>
-        {label ? <p className="text-2sm text-ink-soft">{label}</p> : null}
-        <Suspense
-          key={view === "list" ? "list" : `calendar:${week}`}
-          fallback={
-            view === "list" ? <RideListSkeleton /> : <RideWeekSkeleton />
-          }
-        >
-          {view === "list" ? (
-            <ListBody
-              chapterIds={chapterIds}
-              params={params}
-              timeZone={timeZone}
-              locale={locale}
-              words={words}
-              now={now}
-              dict={dict}
-            />
-          ) : (
-            <CalendarBody
-              chapterIds={chapterIds}
-              params={params}
-              timeZone={timeZone}
-              weekStartsOn={weekStartsOn}
-              anchor={anchor}
-              locale={locale}
-              words={words}
-              now={now}
-              dict={dict}
-            />
-          )}
-        </Suspense>
-      </div>
+      {label ? <p className="text-2sm text-ink-soft">{label}</p> : null}
+      <Suspense
+        key={view === "list" ? "list" : `calendar:${week}`}
+        fallback={view === "list" ? <RideListSkeleton /> : <RideWeekSkeleton />}
+      >
+        {view === "list" ? (
+          <ListBody
+            chapterIds={chapterIds}
+            params={params}
+            timeZone={timeZone}
+            locale={locale}
+            words={words}
+            now={now}
+            dict={dict}
+          />
+        ) : (
+          <CalendarBody
+            chapterIds={chapterIds}
+            params={params}
+            timeZone={timeZone}
+            weekStartsOn={weekStartsOn}
+            anchor={anchor}
+            locale={locale}
+            words={words}
+            now={now}
+            dict={dict}
+          />
+        )}
+      </Suspense>
     </>
   );
 }

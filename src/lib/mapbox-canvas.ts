@@ -2,8 +2,26 @@ import mapboxgl from "mapbox-gl";
 
 // --mint and --mint-deep. The one place brand colours are written as literals:
 // mapbox-gl paints into a canvas, where a CSS variable cannot reach.
-export const MINT = "#92d2c6";
-export const MINT_DEEP = "#28584e";
+const LIGHT = {
+  style: "mapbox://styles/mapbox/light-v11",
+  canvas: "#ffffff",
+  ink: "#2e2823",
+  inkSoft: "#5c5753",
+  mint: "#92d2c6",
+  mintDeep: "#28584e",
+};
+
+const DARK = {
+  style: "mapbox://styles/mapbox/dark-v11",
+  canvas: "#1c1916",
+  ink: "#1c1916",
+  inkSoft: "#b5b0aa",
+  mint: "#5aa898",
+  mintDeep: "#8fd0c3",
+};
+
+export const mapTheme = () =>
+  document.documentElement.classList.contains("dark") ? DARK : LIGHT;
 
 export const FALLBACK_VIEW = {
   center: [10.4, 51.2] as [number, number],
@@ -25,7 +43,7 @@ export function createMap(
   mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
   const instance = new mapboxgl.Map({
     container,
-    style: "mapbox://styles/mapbox/light-v11",
+    style: mapTheme().style,
     ...FALLBACK_VIEW,
     logoPosition: "bottom-left",
     attributionControl: false,

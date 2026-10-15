@@ -7,6 +7,11 @@ import {
   recordActivity,
   recordsActivityFor,
 } from "./listeners/record-activity";
+import { leaveRideCrewsListener } from "./listeners/leave-ride-crews";
+import {
+  syncRideChatListener,
+  syncsRideChat,
+} from "./listeners/sync-ride-chat";
 
 export type Listener<K extends EventType = EventType> = (
   envelope: Envelope<K>,
@@ -21,6 +26,10 @@ export const handlers = Object.fromEntries(
       ...(findKind(type) ? { notify } : {}),
       ...(recordsActivityFor(type) ? { recordActivity } : {}),
       ...(type === "chat.messageSent" ? { chatNotify: notifyChatMessage } : {}),
+      ...(syncsRideChat(type) ? { syncRideChat: syncRideChatListener } : {}),
+      ...(type === "member.roleChanged"
+        ? { leaveRideCrews: leaveRideCrewsListener }
+        : {}),
     },
   ]),
 ) as Registry;

@@ -7,6 +7,7 @@ export const FILE_KINDS = [
   "entrancePhoto",
   "damagePhoto",
   "ridePhoto",
+  "profilePhoto",
 ] as const;
 export type FileKind = (typeof FILE_KINDS)[number];
 
@@ -14,7 +15,12 @@ const MB = 1024 * 1024;
 
 export const IMAGE_MIMES = ["image/jpeg", "image/png", "image/webp"] as const;
 
-type Limit = { mimes: readonly string[]; maxBytes: number; image: boolean };
+type Limit = {
+  mimes: readonly string[];
+  maxBytes: number;
+  image: boolean;
+  square?: number;
+};
 
 const IMAGE: Limit = { mimes: IMAGE_MIMES, maxBytes: 10 * MB, image: true };
 
@@ -24,6 +30,7 @@ export const FILE_LIMITS: Record<FileKind, Limit> = {
   entrancePhoto: IMAGE,
   damagePhoto: IMAGE,
   ridePhoto: IMAGE,
+  profilePhoto: { ...IMAGE, square: 512 },
   typeManual: { mimes: ["application/pdf"], maxBytes: 20 * MB, image: false },
 };
 

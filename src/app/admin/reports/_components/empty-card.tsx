@@ -35,7 +35,7 @@ export function EmptyCard({
       />
       <span
         aria-hidden
-        className="relative grid size-11 place-items-center rounded-full bg-mint-tint text-mint-deep"
+        className="relative grid size-11 place-items-center rounded-full bg-mint-tint text-mint-ink"
       >
         <Icon className="size-5" />
       </span>

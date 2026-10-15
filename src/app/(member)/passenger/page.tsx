@@ -6,6 +6,8 @@ import {
   SectionFallback,
 } from "../_components/home/home-fallback";
 import { NextRideCard } from "../_components/home/next-ride-card";
+import { UpcomingEventsCard } from "../_components/home/upcoming-events-card";
+import { SetupChecklist } from "../_components/home/setup-checklist";
 import { MemberPageShell } from "../_components/member-page";
 
 export default function PassengerHomePage() {
@@ -18,7 +20,13 @@ export default function PassengerHomePage() {
         <NextRideCard perspective="passenger" />
       </Suspense>
       <Suspense fallback={<SectionFallback />}>
+        <UpcomingEventsCard />
+      </Suspense>
+      <Suspense fallback={<SectionFallback />}>
         <ChapterCards perspective="passenger" />
+      </Suspense>
+      <Suspense fallback={null}>
+        <SetupChecklist perspective="passenger" />
       </Suspense>
     </MemberPageShell>
   );

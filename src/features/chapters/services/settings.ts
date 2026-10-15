@@ -12,6 +12,9 @@ const COLUMNS = {
   bookingHorizonDays: true,
   defaultRideMinutes: true,
   defaultStayMinutes: true,
+  pilotsMaySelfAssign: true,
+  requiredPilotsDefault: true,
+  staffingCheckLeadHours: true,
 } as const;
 
 export const findChapterSettings = (chapterId: string) =>
@@ -20,7 +23,7 @@ export const findChapterSettings = (chapterId: string) =>
     select: COLUMNS,
   });
 
-export const findSettingsOfChapters = (chapterIds: string[]) =>
+export const findChapterSettingsOf = (chapterIds: string[]) =>
   prisma.chapterSettings.findMany({
     where: { chapterId: { in: chapterIds } },
     select: { chapterId: true, ...COLUMNS },

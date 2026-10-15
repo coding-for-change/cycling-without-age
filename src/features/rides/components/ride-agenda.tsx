@@ -1,4 +1,7 @@
-import { Bike, MapPin, UserRound } from "lucide-react";
+import { Fragment } from "react";
+import Link from "next/link";
+import { Bike, House, MapPin, UserRound } from "lucide-react";
+import { subjectSlug, type SubjectRef } from "@/features/person-profiles";
 import { calendarDate, dayKey } from "@/lib/calendar";
 import {
   formatShortDateWithWeekday,
@@ -7,10 +10,10 @@ import {
 } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
-import type { PilotRideRow, RideCalendarRow } from "../facade";
+import type { PassengerRideRow, PilotRideRow } from "../facade";
 import {
   ridePilots,
-  rideRiderNames,
+  rideRiderRefs,
   rideTone,
   rideTrishawNames,
   rideWhere,
@@ -23,7 +26,7 @@ import {
  * because the only difference is whether the rider names are known — and only
  * the assigned pilot is given them.
  */
-type AgendaRide = RideCalendarRow & Partial<Pick<PilotRideRow, "roster">>;
+type AgendaRide = PassengerRideRow & Partial<Pick<PilotRideRow, "roster">>;
 
 type Props = {
   rides: AgendaRide[];
@@ -33,6 +36,8 @@ type Props = {
   /** Words locale — plural forms are read, not computed. */
   words: Locale;
   title?: string;
+  href?: (rideId: string) => string;
+  profileBase?: string;
 };
 
 /**
@@ -43,7 +48,15 @@ type Props = {
  * Every time is rendered in the ride's own chapter zone, so a pilot reading
  * this abroad still sees when the ride actually starts.
  */
-export function RideAgenda({ rides, strings, locale, words, title }: Props) {
+export function RideAgenda({
+  rides,
+  strings,
+  locale,
+  words,
+  title,
+  href,
+  profileBase,
+}: Props) {
   if (!rides.length) {
     return (
       <section className="flex flex-col gap-3">
@@ -83,6 +96,8 @@ export function RideAgenda({ rides, strings, locale, words, title }: Props) {
                 strings={strings}
                 locale={locale}
                 words={words}
+                href={href?.(ride.id)}
+                profileBase={profileBase}
               />
             ))}
           </ul>
@@ -97,31 +112,51 @@ function AgendaRow({
   strings,
   locale,
   words,
+  href,
+  profileBase,
 }: {
   ride: AgendaRide;
   strings: CalendarStrings;
   locale: Locale;
   words: Locale;
+  href?: string;
+  profileBase?: string;
 }) {
   const zone = ride.chapter.timeZone;
   const where = rideWhere(ride, strings);
   const pilots = ridePilots(ride);
   const cancelled = ride.status === "cancelled";
+  const time = (
+    <time
+      dateTime={ride.startsAt.toISOString()}
+      className={cn("text-sm font-display", cancelled && "line-through")}
+    >
+      {formatTimeRange(ride.startsAt, ride.endsAt, locale, zone)}
+    </time>
+  );
 
   return (
     <li
       className={cn(
         "flex flex-col gap-1.25 rounded-lg border border-l-4 p-3.5",
         rideTone(ride),
+        href &&
+          "relative transition-colors has-[[data-ride-link]:focus-visible]:ring-2 has-[[data-ride-link]:focus-visible]:ring-ink has-[[data-ride-link]:hover]:bg-canvas-deep motion-reduce:transition-none",
       )}
     >
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <time
-          dateTime={ride.startsAt.toISOString()}
-          className={cn("text-sm font-display", cancelled && "line-through")}
-        >
-          {formatTimeRange(ride.startsAt, ride.endsAt, locale, zone)}
-        </time>
+        {href ? (
+          <Link
+            href={href}
+            transitionTypes={["push"]}
+            data-ride-link
+            className="outline-none after:absolute after:inset-0 after:rounded-lg"
+          >
+            {time}
+          </Link>
+        ) : (
+          time
+        )}
         <span className="text-2sm text-ink-soft">
           {strings.models[ride.model]}
         </span>
@@ -153,22 +188,81 @@ function AgendaRow({
             aria-hidden
             className="size-3.5 shrink-0"
           />
-          {pilots.length
-            ? pilots.map((p) => p.user.name).join(", ")
-            : strings.pilotNeeded}
+          {pilots.length ? (
+            <People
+              people={pilots.map((p) => ({
+                ref: { kind: "user", id: p.user.id },
+                name: p.user.name,
+              }))}
+              profileBase={profileBase}
+            />
+          ) : (
+            strings.pilotNeeded
+          )}
         </span>
         <span>
-          {ride.roster?.length
-            ? rideRiderNames(ride.roster)
-            : ride._count.roster
-              ? formatMessage(
-                  strings.riders,
-                  { count: ride._count.roster },
-                  words,
-                )
-              : strings.noRiders}
+          {ride._count.roster
+            ? formatMessage(
+                strings.riders,
+                { count: ride._count.roster },
+                words,
+              )
+            : strings.noRiders}
         </span>
       </div>
+
+      {ride.roster?.length ? (
+        <ul className="text-2sm flex flex-col gap-1">
+          {rideRiderRefs(ride.roster, strings.pickupCareHome).map((rider) => (
+            <li
+              key={subjectSlug(rider.ref)}
+              className="flex min-w-0 items-center gap-1.25"
+            >
+              <House
+                aria-hidden
+                className="size-3.5 shrink-0 text-ink-soft"
+              />
+              <People
+                people={[rider]}
+                profileBase={profileBase}
+              />
+              {rider.pickup ? (
+                <span
+                  className="truncate text-ink-soft"
+                  title={formatMessage(
+                    strings.pickupLabel,
+                    { place: rider.pickup },
+                    words,
+                  )}
+                >
+                  · {rider.pickup}
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </li>
   );
+}
+
+function People({
+  people,
+  profileBase,
+}: {
+  people: { ref: SubjectRef; name: string }[];
+  profileBase?: string;
+}) {
+  if (!profileBase) return people.map((person) => person.name).join(", ");
+  return people.map((person, index) => (
+    <Fragment key={subjectSlug(person.ref)}>
+      {index > 0 ? ", " : null}
+      <Link
+        href={`${profileBase}/${subjectSlug(person.ref)}`}
+        className="relative rounded-sm underline-offset-2 outline-none hover:text-ink hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+      >
+        {person.name}
+      </Link>
+    </Fragment>
+  ));
 }

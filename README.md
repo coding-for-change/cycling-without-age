@@ -6,7 +6,7 @@ Next.js 16 app with Prisma (MySQL), Tailwind CSS v4, and shadcn/ui. Deployed to 
 
 ```bash
 cp .env.example .env.local   # local DB credentials
-docker compose up -d --wait  # MySQL 3307, Redis 6380, Mailpit 8026, MinIO 9002
+docker compose up -d --wait  # MySQL 3307, Redis 6380, Mailpit 8026, RustFS 9002
 npm install
 npm run db:migrate           # apply Prisma migrations
 npm run dev                  # http://localhost:3000

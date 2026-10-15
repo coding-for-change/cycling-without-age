@@ -62,7 +62,7 @@ const cameraFile = (photo: Blob) =>
   });
 
 const TILE =
-  "group relative aspect-square overflow-hidden rounded-xl border border-line bg-white";
+  "group relative aspect-square overflow-hidden rounded-xl border border-line bg-paper";
 const COVER_TILE = "col-span-2 row-span-2";
 
 export function PhotoGallery({
@@ -281,7 +281,7 @@ export function PhotoGallery({
       {pending.map((item) => (
         <div
           key={item.key}
-          className="relative aspect-square overflow-hidden rounded-xl border border-line bg-white"
+          className="relative aspect-square overflow-hidden rounded-xl border border-line bg-paper"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

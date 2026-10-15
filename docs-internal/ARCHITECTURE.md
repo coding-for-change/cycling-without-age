@@ -334,6 +334,47 @@ duplication, marked in the schema.
 position. Per chapter rather than a constant — a rural chapter covers more ground than a city
 one, and the number is a policy, not a fact about geography.
 
+Onboarding ends at the passkey step for everyone. The pilot "next steps" screen is gone: the
+training videos, the workshop and the first ride are steps of the home-screen setup checklist
+instead, where they can actually be ticked off (see Person profiles).
+
+## Person profiles
+
+A small, optional profile — photo, bio, curated interests, up to three conversation starters,
+age, and for riders the accessibility tags — so a pilot and a rider meet as people. It is never
+part of sign-up; a dismissible checklist on the member homes nudges people towards it.
+
+### The profile belongs to the person who rides
+
+`PersonProfile` hangs on exactly one owner: the `User` when someone speaks for themself, or a
+managed `Passenger` (no account) when a relative or carer fills it in on their behalf. A
+provisioned account that its owner has not claimed yet (`createdByUserId` set, `claimedAt`
+null) is still the helper's to fill in; claiming hands it over. `transferPassengerProfileToUser`
+moves a managed rider's profile onto an account, ready for the day a rider can be linked to a
+new account (no flow does that yet).
+
+### Visibility is chapter-wide, health is narrower
+
+`use-cases/person-access` decides, from current memberships: approved pilots see everyone in
+their chapters, riders and their managers see the chapter's pilots, admins see their scope,
+and riders never see each other. Anyone else gets `notFound()` — the pages and
+`/api/files/[id]` answer the same way, so ids cannot be probed. Profile photos are
+`StoredFile`s of kind `profilePhoto` (512px square WebP, attention-cropped by `sharp`), served
+through `use-cases/file-access`, which applies the same rule. They are never written to
+`User.image`, because better-auth ships that column to the client with the session.
+
+The accessibility tags are health data (GDPR Art. 9). They are stored only after explicit
+consent — an optional box in the passenger consent step, or the same text inline on the
+profile — and a manager attests for a managed rider. Admins can never consent for anyone.
+Withdrawing clears consent and tags in one write. Only the person, their manager, admins and
+the chapter's pilots see them (`seesHealthDetails`), never another rider.
+
+### Deleting an account deletes its photos
+
+The schema cascades the rows, but objects in the bucket survive a cascade, so
+`use-cases/delete-account` collects the photo keys of the account and of the riders it manages
+before `accounts.deleteUser`, then deletes the objects.
+
 ## Command bar (COD-172)
 
 `src/lib/commands.ts` is the registry contract for the ⌘K palette: `IconKey`,
@@ -472,9 +513,60 @@ cannot be prerendered, so each one streams behind its own `<Suspense>` and the s
 is just the ground and the content card. `sidebar_state` is deliberately not read in the
 layout: it would make the ground dynamic to save a single frame of animation.
 
-`requireAdminScope` currently scans all countries and all chapters per request (deduped by
-`cache`). That is marked in the source as a known ceiling: at a few hundred chapters it
-should resolve only the scope's own rows instead.
+`requireAdminScope` currently scans all countries and all chapters (deduped by `cache`, and
+held in `"use cache"` under the `admin-scopes` tag, which the chapter and country create /
+update / delete actions expire). That is marked in the source as a known ceiling: at a few
+hundred chapters it should resolve only the scope's own rows instead.
+
+### A session read is cheap: three caches
+
+Every admin pageload prefetches the App Shell of each sidebar link, and each of those renders
+runs the guards, so the session read must not cost a round of queries:
+
+- **better-auth cookie cache** (`session.cookieCache`, 5 min, `strategy: "jwe"`) skips the
+  session and user rows. JWE because the cached user carries name, email and phone number —
+  a signed-only cookie would leave them readable in the cookie jar and device backups.
+  The accepted cost: a ban, a revoked session or a changed `user.role` takes effect within
+  five minutes. Sign-out expires the cache cookie with the session cookie. A Server Component
+  cannot write cookies, so after the cache cookie expires the next action or route handler
+  re-issues it; until then renders fall back to the database.
+- **`buildSessionAccess`** (`customSession` runs it on every read) is `"use cache"`, keyed by
+  user id and global role, tagged by `accessCacheTags` in `lib/cache-tags.ts`:
+  `access:<userId>`, one `access:chapter:<id>` per membership and one `access:country:<id>`
+  per country administered (`access:wide` past 127). Every action that writes a membership or
+  a country-admin row calls `invalidateAccess(...)`: the affected user ids, or the chapter /
+  country ids for a cascade (chapter or country delete). better-auth's own organization and
+  admin endpoints are covered by an after-hook in `lib/auth.ts` (`expireAccess`, i.e.
+  `revalidateTag(..., { expire: 0 })`, since `updateTag` only works in actions). Writes from
+  another process (seed, scripts) are not seen by the tag, so the entry revalidates after
+  60 s and expires after 5 min. `src/lib/access-invalidation.test.ts` pins each action.
+- **Passkey count** for the admin gate is `"use cache"` per user under `passkeys:<userId>`,
+  expired by the same after-hook on `/passkey/verify-registration` and
+  `/passkey/delete-passkey`.
+
+### Instant admin headers
+
+`readActiveScope` awaits `searchParams`, which an App Shell never has, so a page that builds its
+header there shows a skeleton for the whole main area on every sidebar click. The pilot splits
+the page instead: the header and section headings are `"use cache: private"` components
+(`ADMIN_LIFE`, `stale` 300 s, the App Shell threshold) over `adminViewer()`
+(`admin/admin-viewer.ts` — the viewer's chapter and country ids plus the stored scope), and
+the scope-dependent bits (button visibility, tab hrefs) are resolved client-side from
+`useSearchParams()` by `viewerScope` (`admin/_components/viewer-scope.ts`; `chapterId` is set
+only when the active scope is a single chapter, never for a one-chapter country). Data — lists,
+the pools badge, the drawers — stays behind `readActiveScope(searchParams, nav)` in small
+Suspense boundaries passed into the cached header as slots, fed by one React-`cache()`d loader
+per page. `adminViewer` is display only: the data boundary and every action still enforce the
+scope. An uncached `getDictionary()` is not enough for the shell — header text has to come from
+the private-cached component.
+
+Every admin list page follows it (overview, rides, members, passengers, trishaws with its
+three tabs, locations, chapters, countries, reports, settings). What stays a Suspense island
+is what needs scoped data: list rows, KPI tiles, the rides and timeline week switchers
+(chapter time zones), "Neue Rikscha" (manageable locations), the add-passenger drawer
+(dialling country). Chat keeps its data-bound layout, because the title and controls live in
+the shared `features/chat` layout; only its loading state carries the real title. Detail
+pages (`[userId]`, `[rideId]`, …) are unchanged and keep their own `loading.tsx`.
 
 Every admin list renders through one client primitive, `DataTable`
 (`src/components/ui/data-table.tsx`, on `@tanstack/react-table`): search, column filters,
@@ -593,7 +685,7 @@ be a non-empty, printable, ≤512-character path starting `/` and not `//` or `/
 ### Admins must have a passkey (enrollment gate)
 
 A private `ensureAdminPasskey(userId)` in `lib/auth-guards.ts` reads
-`profile.getProfile(id)._count.passkeys` (request-cached) and, at zero, redirects to
+`profile.countPasskeys(id)` (`"use cache"`, tag `passkeys:<userId>`) and, at zero, redirects to
 `/onboarding/passkey?required=1&next=<current path or /admin>`. It runs in `requireAdminScope`,
 `requireSuperAdmin`, `requireCountryAdmin`, `requireChapterAdmin` and
 `requireCountryAdminOfChapter` — **after** the role check, so a pilot who satisfies
@@ -954,6 +1046,80 @@ and deleting is what frees its square on the calendar (`rideNotCancelled` for an
 - **`seriesId`** is on every ride and unused. Recurrence will fill it; adding it now means no
   backfill then.
 
+### Staffing and self-service (COD-262)
+
+Lifecycle phase 3, and the event half of 4B-b. Three chapter settings drive it, each with its
+consumer in the same change: `pilotsMaySelfAssign`, `requiredPilotsDefault` (what the drawer
+starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 168).
+
+- **Open rides.** A pilot sees the scheduled, future rides of the chapters they pilot for that
+  let pilots sign up, still short of `requiredPilots` and without them on it
+  (`rides.listOpenRidesForPilot`, behind `use-cases/open-rides.ts`, which reads the setting).
+  Whether a ride is still short is only known once its pilots are counted, so the 60-day window
+  is read in batches on a `(startsAt, id)` cursor until the page holds 30 open rides.
+  The open shape (`openSelect`) carries time, place, model and counts — no rider names, no
+  phone numbers, no note. `/pilot/rides/[rideId]` shows that shape to a pilot who is not on the
+  ride, and the assigned shape to one who is.
+- **Signing up and stepping back.** `use-cases/sign-up-for-ride.ts` checks the `pilot` role on
+  the membership row of the ride's own chapter (a country admin or superadmin is not a pilot
+  there) and the chapter's setting, then `rides.selfAssign` locks the ride row and recounts the
+  pilots under the lock (`rideFullyStaffed`), so two pilots taking the last seat queue up. A
+  round trip is one outing: `requireRide` locks both legs, signing up for one takes the other
+  while it still needs a pilot, and stepping back leaves both while there is time — one
+  message for both, through the events' `pair`.
+  Every pilot count — signing up, an admin's assignment, the model rules, the admin's
+  "Unstaffed" badge and week grid, the staffing check — counts only pilots still holding the
+  role in the ride's chapter; the admin still sees a demoted one, marked, to take them off.
+  `withdrawFromRide` passes the chapter's lead to `rides.withdraw`, which removes only the
+  pilot's own row and refuses inside the staffing window (`tooLateToWithdraw`: call the
+  chapter). The Actions live in `app/(member)/pilot/rides/actions.ts`, rate-limited, behind
+  `requireAuth` and `hasChapterRole(…, "pilot")` on the ride's chapter read from the database.
+- **Contact exchange on match** (stories 24a/24b). The assigned pilot's select carries each
+  rider's own phone, or the managing account's name and phone; the rider's account's select
+  carries the assigned pilots' phones. Neither carries an email, and the open shape neither.
+- **Pickup pack.** From 24 hours before the ride (or from the close of the chapter's staffing
+  window, when that is later, so a pilot who can still step back never holds the code) until it
+  ends, the assigned pilot's page shows
+  each trishaw's storage location and access code (`use-cases/finish-ride.ts` → `pickupView`,
+  rendered by `features/fleet/components/storage-access-card.tsx`, which the finish page uses
+  too).
+- **Staffing check** (3D). `use-cases/ride-sweep.ts` runs every five minutes in the worker
+  (`MONITORS["ride-sweep"]`). `staffing-check.ts` groups the chapters by their lead and reads,
+  per group, only the unchecked rides already inside that window, and `rides.checkStaffing` stamps
+  `Ride.staffingCheckedAt` and emits `ride.understaffed` in one transaction under the ride's
+  lock — a retried sweep finds the stamp and stays quiet. The way there checks its way back
+  along, so a round trip short both ways is one warning. The sweep runs on the worker that
+  dispatches every outbox event, so one run checks at most 50 rides and the next carries on, and
+  a ride whose check fails is logged and passed over. Moving a ride clears the stamp. A
+  pilot stepping back clears the stamp of the legs they left, and a pilot demoted or removed
+  in the chapter clears it on every upcoming ride they were on (`use-cases/leave-ride-crews.ts`,
+  the `member.roleChanged` listener), so a seat that empties after the check is checked again. A
+  ride scheduled already inside its window is stamped as it is scheduled (the admin sees what it
+  is short of), and `20261013110000_ride_staffing_checked_backfill` stamps the rides already
+  inside their window when this ships, so the first sweep does not flag them all at once.
+- **Ride chat.** A `Conversation` with `origin: ride` and a unique `rideId`, owned by nobody.
+  The `syncRideChat` worker listener (`ride.pilotAssigned`, `ride.pilotUnassigned`,
+  `ride.riderBooked`, `ride.riderRemoved`) runs `use-cases/ride-chat.ts`: once a pilot is on the
+  ride it opens the chat, and from then on keeps its members equal to the ride's pilots, its
+  riders' accounts and the chapter's admins — on an event only the pilots and admins, because
+  the families who booked seats never learn of each other (`chat.syncRideConversation`,
+  idempotent). A demotion or removal in the chapter (`member.roleChanged`) syncs every ride chat
+  the person is in, so a former pilot or admin leaves them at once. Two syncs may read the roster in one order and write it in the other, so a sync
+  that changed the members reads the roster again and writes until a read finds nothing to
+  change; the roster is read outside the conversation's lock, so a waiting sync never needs a
+  second pool connection. A racing creator that loses the unique `rideId` joins that loop.
+  Freezing it is PR 6's.
+- **Announced events** (4B-b). `Ride.announced` is set in the drawer or the detail page's
+  "Riders can book" panel, for event rides only (`eventsOnly`). Announced events show on the
+  passenger start screen and `/passenger/rides` for the chapters of the riders the account
+  manages, until every one of them in the event's chapter is booked on it (it is then among the
+  account's own rides), through `announcedSelect`: photos, story, place and seats left, never another
+  rider. "Book a seat" (`app/(member)/passenger/rides/actions.ts`, rate-limited) goes through
+  `use-cases/book-event-seat.ts` — riders the account manages, in the event's chapter — and
+  `rides.bookSeats` locks the ride, recounts the roster against `capacity` and refuses a booking
+  that would overfill it as a whole (`rideFull`). The photos of an announced event are readable
+  by every member of its chapter (`rides.photoReadRule`).
+
 The admin surfaces are the week grid at `/admin/rides` (`?new=1` opens the scheduling drawer,
 and ⌘K "Schedule a ride" lands there) and the detail page `/admin/rides/[rideId]`, whose
 trishaws panel allocates trishaws in place.
@@ -1075,13 +1241,15 @@ and ships no calendar to the browser.
 | Surface | Guard | Rows it can reach |
 | --- | --- | --- |
 | `/admin/rides`, `/admin/bikes` | `readActiveScope(params, nav)` → `requireAdminScope` + the `NAV` row's own `visible` predicate; an out-of-scope `?chapter=`/`?country=` is a 403, never a silent widening | only `scopeChapters(scope, active)` |
-| `/pilot` | `requirePerspective("pilot")` | rides they are **assigned to** *and* whose chapter they are **still a member of** |
+| `/pilot` | `requirePerspective("pilot")` | rides they are **assigned to** *and* in whose chapter they **still hold the pilot role** |
 | `/passenger` | `getSession` | rides rostering a `Passenger` row they manage |
 | `/api/calendar/<token>.ics` | the token itself — see *Calendar feed* below | the union of the two rows above, for the token's owner, with no names |
 
 That second clause on `/pilot` is load-bearing: removing someone from a chapter deletes their
-`member` row and nothing else, so `RideAssignment` rows outlive the membership.
-`findRidesForPilot` therefore joins on current membership as well as the assignment.
+`member` row and nothing else, and demoting a pilot only rewrites the row's role list, so
+`RideAssignment` rows outlive both. Every pilot read (`pilotRideWhere`) therefore requires a
+member row in the ride's chapter whose role still contains `pilot`, as well as the assignment,
+and `listRideParticipants` applies the same rule, so a former pilot is not notified either.
 
 The **contact-detail exchange on match** runs both ways, as `references/04-ride-models.md` §7
 describes it: a rider sees the **pilot's name** once one is assigned, and the assigned pilot
@@ -1089,11 +1257,26 @@ sees the **rider names** on that ride. A pilot choosing whether a ride suits the
 who they will spend an hour with, so a bare roster count was the wrong answer.
 
 The exchange is between a rider and *their* pilot, and the selects enforce exactly that.
-`pilotSelect` in `rides/services` is `calendarSelect` plus the roster, and it is used by
-`findRidesForPilot` alone — deliberately not folded into the shared shape, because
-`/passenger` reads that too and two riders on one trishaw are managed by two different people.
-The admin week and the passenger agenda still get `_count.roster` and nothing more.
-`facade.test.ts` pins all three surfaces, so widening one by accident fails a test.
+`pilotSelect` in `rides/services` is `calendarSelect` plus the roster, used only where the
+reader is an assigned pilot — deliberately not folded into the shared shape, because two
+riders on one trishaw are managed by two different people. Riders' accounts read
+`passengerSelect`, which has a roster count and no names; on a ride's detail page
+(`passengerDetailSelect`) the roster is filtered to the riders that account manages. Members
+never read an email address: both member selects narrow `assignments.user` to id, name and
+image, and the email stays in `calendarSelect` for the admin surfaces. The note for pilots is
+in `pilotDetailSelect` only, and the admins' cancellation note in neither — a rider is told
+the reason in words from its code. `facade.test.ts` pins every surface, so widening one by
+accident fails a test. The crew a member sees is filtered the same way the reads are:
+`withActiveCrew` drops assignments of people who no longer hold the pilot role in the ride's
+chapter, so a demoted co-pilot stops "riding along" on everyone else's page too.
+
+The member pages are `/pilot/rides` and `/passenger/rides` (upcoming and the latest past,
+`listPilotRides` / `listPassengerRides`) and their details `/pilot/rides/[rideId]`
+(`getRideForPilot`: assigned *and* still a pilot there) and `/passenger/rides/[rideId]`
+(`getRideForPassengers` over `passengers.listRidersOfAccount`: the riders the account
+manages, plus its own rider row when someone else manages it). Both details call
+`notFound()` for anything else, so a guessed id reads the same as a missing one. The other
+leg of a round trip appears only to someone who is on it too.
 
 Phone numbers are the part of §7 still missing: `Passenger` carries a name, birth date and
 gender, but no number, so "the client's and/or the institution's phone" has nothing to read
@@ -1162,7 +1345,7 @@ own gate, like `/api/chat/stream`. What makes the address safe to keep showing:
 
 **What a feed may contain** is the union of `/pilot` and `/passenger`, under the same rules.
 Piloted rides follow `/pilot` exactly: the reader must hold the pilot role in some chapter
-(`requirePerspective("pilot")`), and the ride must be in a chapter they are still a member of
+(`requirePerspective("pilot")`), and the ride must be in a chapter where they still hold the pilot role
 (`findRidesForPilot`). The use case reads both from `membership.listMembershipsOfUser` and hands
 the rides query a list of chapter ids, so a demoted or departed pilot drops out on the next poll
 even though their `RideAssignment` rows remain. Ridden rides are those rostering a `Passenger`
