@@ -6,7 +6,7 @@ jest.mock("@/features/chapters", () => ({
   chapters: { getSettings: jest.fn() },
 }));
 jest.mock("@/features/fleet", () => ({
-  fleet: { getTrishaws: jest.fn(), listLocationsForChapters: jest.fn() },
+  fleet: { listTrishawPlaces: jest.fn() },
 }));
 jest.mock("@/features/rides", () => ({ rides: {} }));
 
@@ -22,11 +22,11 @@ const hoursBefore = (hours: number) =>
 
 beforeEach(() => {
   jest.clearAllMocks();
-  (fleet.getTrishaws as jest.Mock).mockResolvedValue([
-    { id: "trishaw-1", storageLocation: { id: "loc-1" } },
-  ]);
-  (fleet.listLocationsForChapters as jest.Mock).mockResolvedValue([
-    { id: "loc-1", accessCode: "4711" },
+  (fleet.listTrishawPlaces as jest.Mock).mockResolvedValue([
+    {
+      trishaw: { id: "trishaw-1" },
+      location: { id: "loc-1", accessCode: "4711" },
+    },
   ]);
 });
 

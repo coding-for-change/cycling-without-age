@@ -1,7 +1,7 @@
 import { z } from "zod";
+import { fleet } from "@/features/fleet";
 import { rides } from "@/features/rides";
 import { formatMessage } from "@/lib/i18n/format";
-import { trishawPlaces } from "@/use-cases/finish-ride";
 import { chapterAdminIds } from "./lookups";
 import {
   factsOfRide,
@@ -42,7 +42,7 @@ const pickupLines = z.array(pickupLine);
 async function pickupOf(rideId: string) {
   const ride = await rides.getRideScope(rideId);
   if (!ride?.trishawIds.length) return null;
-  const places = await trishawPlaces(
+  const places = await fleet.listTrishawPlaces(
     ride.chapterId,
     ride.trishawIds.slice(0, PICKUP_MAX),
   );

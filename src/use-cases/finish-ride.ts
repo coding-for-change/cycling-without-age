@@ -5,19 +5,6 @@ import { rides } from "@/features/rides";
 const HOUR_MS = 60 * 60 * 1000;
 const PICKUP_LEAD_HOURS = 24;
 
-/** Each trishaw with the location it waits at, if the chapter can still reach it. */
-export async function trishawPlaces(chapterId: string, trishawIds: string[]) {
-  const [trishaws, locations] = await Promise.all([
-    fleet.getTrishaws(trishawIds),
-    fleet.listLocationsForChapters([chapterId]),
-  ]);
-  const locationById = new Map(locations.map((l) => [l.id, l]));
-  return trishaws.map((trishaw) => ({
-    trishaw,
-    location: locationById.get(trishaw.storageLocation.id) ?? null,
-  }));
-}
-
 /**
  * What a pilot sees after a ride: the chapter's standing instructions, then per
  * trishaw where it goes back and how to get in, the roster to close and the
@@ -32,7 +19,7 @@ export async function finishRideView(rideId: string, userId: string) {
   const [settings, places, reported, crewView, debrief, currency] =
     await Promise.all([
       chapters.getSettings(ride.chapterId),
-      trishawPlaces(
+      fleet.listTrishawPlaces(
         ride.chapterId,
         ride.trishaws.map(({ trishaw }) => trishaw.id),
       ),
@@ -86,7 +73,7 @@ export async function pickupView(
     return null;
   const { staffingCheckLeadHours } = await chapters.getSettings(ride.chapterId);
   if (now < pickupOpens(ride.startsAt, staffingCheckLeadHours)) return null;
-  return trishawPlaces(
+  return fleet.listTrishawPlaces(
     ride.chapterId,
     ride.trishaws.map(({ trishaw }) => trishaw.id),
   );

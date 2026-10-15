@@ -26,8 +26,7 @@ jest.mock("@/features/fleet", () => ({
   fleet: {
     getTrishaw: jest.fn(),
     getLocation: jest.fn(),
-    getTrishaws: jest.fn(),
-    listLocationsForChapters: jest.fn(),
+    listTrishawPlaces: jest.fn(),
   },
 }));
 jest.mock("@/features/membership", () => ({
@@ -78,8 +77,7 @@ const listRideParticipants = rides.listRideParticipants as jest.Mock;
 const getPassenger = passengers.getPassenger as jest.Mock;
 const getMemberRoles = membership.getMemberRoles as jest.Mock;
 const getRideScope = rides.getRideScope as jest.Mock;
-const getTrishaws = fleet.getTrishaws as jest.Mock;
-const listLocationsForChapters = fleet.listLocationsForChapters as jest.Mock;
+const listTrishawPlaces = fleet.listTrishawPlaces as jest.Mock;
 
 const DICTIONARIES = { en, da, de } as Record<Locale, typeof en>;
 
@@ -354,12 +352,17 @@ const known = () => {
     chapterId: CHAPTER,
     trishawIds: ["trishaw-1", "trishaw-2"],
   });
-  getTrishaws.mockResolvedValue([
-    { id: "trishaw-1", name: "Sonnenstrahl", storageLocation: { id: "loc-1" } },
-    { id: "trishaw-2", name: "Isarwind", storageLocation: { id: "gone" } },
-  ]);
-  listLocationsForChapters.mockResolvedValue([
-    { id: "loc-1", name: "Depot Sonnenhof", address: "Sonnenstraße 1" },
+  listTrishawPlaces.mockResolvedValue([
+    {
+      trishaw: { id: "trishaw-1", name: "Sonnenstrahl" },
+      location: {
+        id: "loc-1",
+        name: "Depot Sonnenhof",
+        address: "Sonnenstraße 1",
+        accessCode: "4711",
+      },
+    },
+    { trishaw: { id: "trishaw-2", name: "Isarwind" }, location: null },
   ]);
   getRideFacts.mockResolvedValue({
     title: null,
