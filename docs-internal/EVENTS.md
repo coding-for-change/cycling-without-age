@@ -123,6 +123,9 @@ type DeliveryPolicy = {
 - All three read `features/chapters`' `ChapterSettings` row through the facade, which
   answers with the defaults while the chapter has no row. See
   [ARCHITECTURE.md](ARCHITECTURE.md) → *Chapter settings*.
+- `attachments?(params, strings, locale)` is optional: calendar files the mail carries, as
+  `{ filename, calendar }`. `deliverEmail` renders each `calendar` with `lib/ics` and hands it
+  to `sendMail` as `text/calendar`; push and the inbox ignore it.
 - `Message` is email-shaped. `heading` and `body` carry the mail; `title` is the shorter
   line the bell and the push banner use when a kind sets it (the welcome card reads
   "Welcome to München" while the mail keeps its heading). `steps` renders the numbered
@@ -311,6 +314,32 @@ The params carry the ride's start and end as ISO strings plus the chapter's zone
 `rideWords` writes them per recipient, in their language, on the chapter's wall clock: a carer
 abroad still reads the time the ride starts in Munich. German copy is du-form for pilots,
 Sie-form for riders' accounts and admins, and impersonal where one mail reaches all of them.
+
+## Ride requests and hand-overs (COD-261)
+
+| Event | Payload | Emitted by |
+| --- | --- | --- |
+| `rideRequest.submitted` | `requestId`, `chapterId`, `actorUserId` (the requester) | `rideRequests.submit`, or `announce` once automatic scheduling found no free trishaw |
+| `rideRequest.scheduled` | `requestId`, `chapterId`, `actorUserId` (`null` when automatic), `requesterUserId`, `rideId`, `returnLegId` | `rideRequests.markScheduled` |
+| `rideRequest.declined` | `requestId`, `chapterId`, `actorUserId`, `requesterUserId` | `rideRequests.decline` |
+| `rideRequest.withdrawn` | `requestId`, `chapterId`, `actorUserId` | `rideRequests.withdraw`, `withdrawOpenRequests` (an account or its riders leaving) |
+| `rider.handedOver` | `passengerId`, `chapterId`, `actorUserId`, `fromUserId`, `toUserId`, `invited` | `passengers.handOverRider` |
+
+`ride.riderBooked` gained `requestId` (default `null`): set when the rider was booked by
+scheduling that request.
+
+| Kind | Event | Who hears it | Policy | Link |
+| --- | --- | --- | --- | --- |
+| `rideRequestSubmitted` | `rideRequest.submitted` | chapter admins minus the requester — nobody once the request is no longer pending | push (chapter switch `requestAlertPush`), mail if no push, opt-out-able, collapsed `requests:{chapterId}` | `/admin/rides/requests/{id}` |
+| `rideRequestWithdrawn` | `rideRequest.withdrawn` | chapter admins minus the actor | as above | `/admin/rides/requests/{id}` |
+| `rideRequestScheduled` | `rideRequest.scheduled` | the requester | push, mail always, with `ride.ics` (one VEVENT per leg, no names) | `/passenger/rides/{rideId}` |
+| `rideRequestDeclined` | `rideRequest.declined` | the requester, with the admin's note | push, mail always | `/passenger/rides/requests/{id}` |
+| `riderHandedOver` | `rider.handedOver` | the new and the old manager minus the actor (not the new one when they were just invited — the invitation speaks for it); each reads their own words (`forRecipient`) | push, mail always | `/passenger/profile/people` |
+
+`rideBookingConfirmed` leaves out the requester of a `ride.riderBooked` that carries a
+`requestId`: `rideRequestScheduled` already told them, with the calendar file. A rider's own
+account, when it is not the requester, still hears it. `rider.handedOver` also has a
+`recordActivity` listener that writes a `riderHandedOver` line into both managers' histories.
 
 ## Watching the queues
 
