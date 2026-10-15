@@ -42,7 +42,7 @@ const roleChangeInput = z.object({
 
 const deleteUserInput = z.object({
   userId: id,
-  removeRiders: z.boolean().default(false),
+  removeRiders: z.array(id).max(50).default([]),
 });
 
 const pilotStepConfirmInput = z.object({

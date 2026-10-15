@@ -27,9 +27,10 @@ export const loadAccount = cache(async (): Promise<AccountData | null> => {
     calendarFeeds.getFeed(session.user.id),
     passengers.listPassengersManagedBy(session.user.id),
   ]);
-  const goneWith = passengers
-    .othersOf(riders)
-    .map((rider) => `${rider.firstName} ${rider.lastName}`.trim());
+  const goneWith = passengers.othersOf(riders).map((rider) => ({
+    id: rider.id,
+    name: `${rider.firstName} ${rider.lastName}`.trim(),
+  }));
   const perspectives = availablePerspectives(session.access);
 
   const email = person?.email ?? session.user.email;

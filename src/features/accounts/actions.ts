@@ -36,8 +36,10 @@ export type DeleteOwnAccountResult =
     };
 
 const deleteOwnInput = z
-  .object({ removeRiders: z.boolean().default(false) })
-  .default({ removeRiders: false });
+  .object({
+    removeRiders: z.array(z.string().min(1).max(64)).max(50).default([]),
+  })
+  .default({ removeRiders: [] });
 
 const ADD_LIMIT = { max: 60, windowMs: 60 * 60_000 };
 
@@ -112,9 +114,8 @@ export async function previewAvatar(email: unknown): Promise<string | null> {
 }
 
 /**
- * `removeRiders` is the account holder saying yes to the riders they were
- * shown by name; without it an account that still looks after someone is
- * not deleted.
+ * `removeRiders` names the riders the account holder was shown and agreed to
+ * remove; an account that looks after anyone else is not deleted.
  */
 export async function deleteOwnAccountAction(
   input?: unknown,

@@ -34,7 +34,9 @@ export function DangerSection({
 
   const remove = async () => {
     await forgetDevice();
-    return deleteOwnAccountAction({ removeRiders: riders.length > 0 });
+    return deleteOwnAccountAction({
+      removeRiders: riders.map((rider) => rider.id),
+    });
   };
 
   return (
@@ -63,7 +65,10 @@ export function DangerSection({
                       formatMessage(
                         strings.riders,
                         {
-                          names: formatList(riders, wordsLocale(data.language)),
+                          names: formatList(
+                            riders.map((rider) => rider.name),
+                            wordsLocale(data.language),
+                          ),
                         },
                         data.language,
                       ),

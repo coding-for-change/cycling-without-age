@@ -29,7 +29,7 @@ jest.mock("@/features/person-profiles", () => ({
 }));
 
 const order: string[] = [];
-const REMOVE = { removeRiders: true };
+const REMOVE = { removeRiders: ["managed-greta"] };
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -124,6 +124,14 @@ describe("deleteAccount", () => {
     expect(rides.cancelUpcomingBookings).not.toHaveBeenCalled();
     expect(rideRequests.withdrawOpenRequests).not.toHaveBeenCalled();
     expect(passengers.removeRidersWithoutAccount).not.toHaveBeenCalled();
+    expect(accounts.deleteUser).not.toHaveBeenCalled();
+  });
+
+  it("refuses when the riders shown are not the riders it now manages", async () => {
+    const run = deleteAccount("daughter-lena", "daughter-lena", {
+      removeRiders: ["someone-else"],
+    });
+    expect(await run.catch(domainCode)).toBe("managesRiders");
     expect(accounts.deleteUser).not.toHaveBeenCalled();
   });
 

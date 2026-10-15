@@ -99,6 +99,7 @@ export async function PersonBody({
   const open = inScopeApplications.filter((a) => a.status !== "approved");
 
   const lookedAfter = managedRows.filter((rider) => rider.userId !== userId);
+  const goneWith = lookedAfter.filter((rider) => !rider.userId);
   const visibleRiders = lookedAfter.filter((rider) =>
     chapterIds.includes(rider.chapterId),
   );
@@ -160,7 +161,7 @@ export async function PersonBody({
                         pending: applications.filter(
                           (a) => a.status !== "approved",
                         ).length,
-                        lookedAfter: lookedAfter.length,
+                        lookedAfter: goneWith.length,
                       },
                       dict.admin.deletion,
                       words,
@@ -174,7 +175,7 @@ export async function PersonBody({
                     action={deleteUserAction}
                     input={{
                       userId,
-                      removeRiders: lookedAfter.some((rider) => !rider.userId),
+                      removeRiders: goneWith.map((rider) => rider.id),
                     }}
                     redirectTo={backHref}
                   />
