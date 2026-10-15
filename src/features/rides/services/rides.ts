@@ -977,7 +977,11 @@ export const findRideIdsWithTrishawFrom = async (
 
 export const findUpcomingBookingsOf = (passengerIds: string[], now: Date) =>
   prisma.rideRosterEntry.findMany({
-    where: { passengerId: { in: passengerIds }, ride: upcomingFrom(now) },
+    where: {
+      passengerId: { in: passengerIds },
+      ...ACTIVE_SEAT,
+      ride: upcomingFrom(now),
+    },
     select: { rideId: true, passengerId: true },
   });
 

@@ -1315,6 +1315,7 @@ describe("roster and staffing", () => {
     expect(db.rideRosterEntry.findMany).toHaveBeenCalledWith({
       where: {
         passengerId: { in: ["passenger-1"] },
+        attendance: { not: "cancelled" },
         ride: { status: "scheduled", endsAt: { gt: now } },
       },
       select: { rideId: true, passengerId: true },
