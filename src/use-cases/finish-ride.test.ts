@@ -1,14 +1,22 @@
 import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
-import { pickupView } from "./finish-ride";
+import { rides } from "@/features/rides";
+import { finishRideView, pickupView } from "./finish-ride";
 
 jest.mock("@/features/chapters", () => ({
   chapters: { getSettings: jest.fn() },
 }));
 jest.mock("@/features/fleet", () => ({
-  fleet: { listTrishawPlaces: jest.fn() },
+  fleet: { listTrishawPlaces: jest.fn(), listDamagesReportedOnRide: jest.fn() },
 }));
-jest.mock("@/features/rides", () => ({ rides: {} }));
+jest.mock("@/features/rides", () => ({
+  rides: {
+    getFinishableRideForPilot: jest.fn(),
+    getRideForPilot: jest.fn(),
+    getDebrief: jest.fn(),
+    chapterCurrencyOfRide: jest.fn(),
+  },
+}));
 
 const ride = {
   chapterId: "chapter-1",
@@ -46,5 +54,34 @@ describe("pickupView", () => {
     });
     expect(await pickupView(ride, hoursBefore(13))).toBeNull();
     expect(await pickupView(ride, hoursBefore(11))).toHaveLength(1);
+  });
+});
+
+describe("finishRideView", () => {
+  it("gives the pilot the roster to close, their own debrief and the chapter's money", async () => {
+    (rides.getFinishableRideForPilot as jest.Mock).mockResolvedValue(ride);
+    (rides.getRideForPilot as jest.Mock).mockResolvedValue({
+      roster: [{ id: "entry-1", attendance: "checkedIn" }],
+    });
+    (rides.getDebrief as jest.Mock).mockResolvedValue({ donationCents: 500 });
+    (rides.chapterCurrencyOfRide as jest.Mock).mockResolvedValue("EUR");
+    (chapters.getSettings as jest.Mock).mockResolvedValue({
+      postRideInstructions: null,
+    });
+    (fleet.listDamagesReportedOnRide as jest.Mock).mockResolvedValue([]);
+    const view = await finishRideView("ride-1", "pilot-1");
+    expect(rides.getRideForPilot).toHaveBeenCalledWith("ride-1", "pilot-1");
+    expect(rides.getDebrief).toHaveBeenCalledWith("ride-1", "pilot-1");
+    expect(view).toMatchObject({
+      roster: [{ id: "entry-1", attendance: "checkedIn" }],
+      debrief: { donationCents: 500 },
+      currency: "EUR",
+    });
+  });
+
+  it("shows nothing to someone who is not the ride's pilot", async () => {
+    (rides.getFinishableRideForPilot as jest.Mock).mockResolvedValue(null);
+    expect(await finishRideView("ride-1", "someone")).toBeNull();
+    expect(rides.getDebrief).not.toHaveBeenCalled();
   });
 });

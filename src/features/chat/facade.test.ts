@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { publish } from "@/lib/realtime";
+import { publish, publishToUsers } from "@/lib/realtime";
 import { chat, MAX_MESSAGE_CHARS } from "@/features/chat";
 import {
   encryptText,
@@ -650,6 +650,11 @@ describe("freezeRideConversation", () => {
         data: { frozenAt: expect.any(Date) },
       }),
     );
+    expect(publishToUsers).toHaveBeenCalledWith([ME, OTHER], {
+      type: "conversation.updated",
+      conversationId: CONVERSATION,
+      patch: { frozenAt: expect.any(String) },
+    });
   });
 
   it("leaves a ride without a chat, or one already frozen, alone", async () => {
