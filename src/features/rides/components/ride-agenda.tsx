@@ -149,6 +149,13 @@ function AgendaRow({
           <Link
             href={href}
             transitionTypes={["push"]}
+            aria-label={[
+              formatTimeRange(ride.startsAt, ride.endsAt, locale, zone),
+              strings.models[ride.model],
+              where,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
             data-ride-link
             className="outline-none after:absolute after:inset-0 after:rounded-lg"
           >
