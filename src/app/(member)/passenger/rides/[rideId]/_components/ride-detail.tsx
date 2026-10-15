@@ -180,7 +180,7 @@ async function PassengerRide({ rideId }: { rideId: string }) {
           <div className="flex items-start gap-3">
             <MapPin
               aria-hidden
-              className="mt-0.5 size-4 shrink-0 text-mint-deep"
+              className="mt-0.5 size-4 shrink-0 text-mint-ink"
             />
             <div className="flex min-w-0 flex-col gap-1">
               <span className="font-medium">{ride.chapter.name}</span>

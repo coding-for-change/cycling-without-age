@@ -53,7 +53,7 @@ export function StorageAccessCard({
       <div className="flex items-start gap-3">
         <MapPin
           aria-hidden
-          className="text-mint-deep mt-0.5 size-4 shrink-0"
+          className="text-mint-ink mt-0.5 size-4 shrink-0"
         />
         <div className="flex min-w-0 flex-col gap-1">
           <p className="font-medium">

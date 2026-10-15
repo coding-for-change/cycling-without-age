@@ -111,7 +111,7 @@ export async function EventInvite({
         <div className="border-line flex items-start gap-3 rounded-2xl border p-4">
           <MapPin
             aria-hidden
-            className="text-mint-deep mt-0.5 size-4 shrink-0"
+            className="text-mint-ink mt-0.5 size-4 shrink-0"
           />
           <span className="flex min-w-0 flex-col">
             <span className="font-medium">

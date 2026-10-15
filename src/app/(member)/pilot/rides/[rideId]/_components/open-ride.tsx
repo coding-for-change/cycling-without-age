@@ -122,7 +122,7 @@ export async function OpenRide({
         <li className="flex min-h-12 items-start gap-3 px-4 py-3">
           <MapPin
             aria-hidden
-            className="text-mint-deep mt-0.5 size-4 shrink-0"
+            className="text-mint-ink mt-0.5 size-4 shrink-0"
           />
           <span className="flex min-w-0 flex-col">
             <span>{ride.locationName ?? strings.detail.noPlace}</span>
