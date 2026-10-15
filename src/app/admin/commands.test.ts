@@ -59,11 +59,18 @@ const navigateHrefs = (commands: ResolvedCommand[]) =>
     c.run.kind === "navigate" ? [c.run.href] : [],
   );
 
+const NESTED = /^\/admin\/[^/?]+\/[^?]+/;
+
+const isView = (href: string) => href.includes("?") || NESTED.test(href);
+
+const pageOf = (href: string) =>
+  href.split("?")[0].split("/").slice(0, 3).join("/");
+
 const hrefs = (commands: ResolvedCommand[]) =>
-  navigateHrefs(commands).filter((href) => !href.includes("?"));
+  navigateHrefs(commands).filter((href) => !isView(href));
 
 const views = (commands: ResolvedCommand[]) =>
-  navigateHrefs(commands).filter((href) => href.includes("?"));
+  navigateHrefs(commands).filter(isView);
 
 const labels = (commands: ResolvedCommand[], group: string) =>
   inGroup(commands, group).map((c) => c.label);
@@ -109,11 +116,15 @@ describe("views of a destination", () => {
     const pages = new Set(navFor(berlinAdmin).map((item) => item.href));
     expect(views(run(berlinAdmin)).length).toBeGreaterThan(0);
     for (const href of views(run(berlinAdmin)))
-      expect(pages.has(href.split("?")[0])).toBe(true);
+      expect(pages.has(pageOf(href))).toBe(true);
   });
 
   it("offers the rides list view", () => {
     expect(views(run(berlinAdmin))).toContain("/admin/rides?view=list");
+  });
+
+  it("offers the Ride Request List as a view of Rides", () => {
+    expect(views(run(berlinAdmin))).toContain("/admin/rides/requests");
   });
 });
 
