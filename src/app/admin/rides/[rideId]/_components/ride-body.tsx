@@ -310,6 +310,15 @@ export async function RideBody({
         }
       />
 
+      {ride.model === "event" ? (
+        <RideAnnounce
+          rideId={ride.id}
+          announced={ride.announced}
+          editable={editable && (ride.announced || ride.startsAt > new Date())}
+          labels={{ ...dict.rides.detail.announce, field }}
+        />
+      ) : null}
+
       {ride.status === "completed" ? (
         <SidePanel title={day.danger}>
           <RideReopen
@@ -318,15 +327,6 @@ export async function RideBody({
             errors={rideDayErrors(dict)}
           />
         </SidePanel>
-      ) : null}
-
-      {ride.model === "event" ? (
-        <RideAnnounce
-          rideId={ride.id}
-          announced={ride.announced}
-          editable={editable && (ride.announced || ride.startsAt > new Date())}
-          labels={{ ...dict.rides.detail.announce, field }}
-        />
       ) : null}
     </>
   );
