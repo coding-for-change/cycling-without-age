@@ -14,6 +14,7 @@ import { MEMBER_LIFE } from "../../../_components/instant";
 import { OpenRides, pilotChapterIds } from "./open-rides";
 
 const rideHref = (rideId: string) => `/pilot/rides/${rideId}`;
+const PROFILE_BASE = "/pilot/profile";
 
 export async function PilotRides() {
   "use cache: private";
@@ -67,6 +68,7 @@ export async function PilotRides() {
             locale={locale}
             words={words}
             href={rideHref}
+            profileBase={PROFILE_BASE}
           />
         ) : (
           <p className="text-2sm text-ink-soft border-line rounded-2xl border p-4">
@@ -91,6 +93,7 @@ export async function PilotRides() {
               locale={locale}
               words={words}
               href={rideHref}
+              profileBase={PROFILE_BASE}
             />
           </div>
         </details>

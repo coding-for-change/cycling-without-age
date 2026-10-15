@@ -18,6 +18,7 @@ export type CheckInEntry = {
   name: string;
   walkUp: boolean;
   attendance: RosterAttendanceName;
+  pickup?: string | null;
   phone?: string | null;
   via?: string | null;
 };
@@ -172,6 +173,11 @@ export function CheckInList({
                 <span className={cn("truncate", !compact && "font-medium")}>
                   {entry.name}
                 </span>
+                {entry.pickup ? (
+                  <span className="truncate text-2sm text-ink-soft">
+                    {entry.pickup}
+                  </span>
+                ) : null}
                 {entry.walkUp ? (
                   <span className="truncate text-2sm text-ink-soft">
                     {labels.walkUpBadge}

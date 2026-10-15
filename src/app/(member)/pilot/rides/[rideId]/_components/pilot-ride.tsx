@@ -16,6 +16,7 @@ import { RichText } from "@/components/markdown";
 import { Badge } from "@/components/ui/badge";
 import { chapters } from "@/features/chapters";
 import { chat } from "@/features/chat";
+import { pickupLabel, pickupOf } from "@/features/passengers";
 import { rides, type PilotRideDetailRow } from "@/features/rides";
 import { CheckInList } from "@/features/rides/components/check-in-list";
 import {
@@ -268,6 +269,9 @@ export async function PilotRide({
                 : (entry.guestName ?? ""),
               walkUp: !entry.passenger,
               attendance: entry.attendance,
+              pickup: entry.passenger
+                ? pickupLine(entry.passenger, dict, words)
+                : null,
               phone: entry.passenger
                 ? (entry.passenger.user?.phoneNumber ??
                   entry.passenger.managedBy.phoneNumber)
@@ -311,6 +315,7 @@ export async function PilotRide({
                   {passenger ? (
                     <RiderContact
                       name={fullName(passenger)}
+                      pickup={pickupLine(passenger, dict, words)}
                       phone={
                         passenger.user?.phoneNumber ??
                         passenger.managedBy.phoneNumber
@@ -450,15 +455,20 @@ export async function PilotRide({
   );
 }
 
-/** The rider, and the number that reaches them or whoever books for them. */
+/**
+ * The rider, where they are picked up, and the number that reaches them or
+ * whoever books for them.
+ */
 function RiderContact({
   name,
+  pickup,
   phone,
   via,
   strings,
   words,
 }: {
   name: string;
+  pickup: string | null;
   phone: string | null;
   via: string | null;
   strings: Dictionary["pilot"]["rides"]["detail"];
@@ -468,6 +478,9 @@ function RiderContact({
     <>
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate">{name}</span>
+        {pickup ? (
+          <span className="text-2sm text-ink-soft truncate">{pickup}</span>
+        ) : null}
         {phone && via ? (
           <span className="text-2sm text-ink-soft truncate">
             {formatMessage(strings.via, { name: via }, words)}
@@ -489,6 +502,17 @@ function RiderContact({
       ) : null}
     </>
   );
+}
+
+function pickupLine(
+  passenger: Parameters<typeof pickupOf>[0],
+  dict: Dictionary,
+  words: Locale,
+) {
+  const place = pickupLabel(pickupOf(passenger), dict.calendar.pickupCareHome);
+  return place
+    ? formatMessage(dict.calendar.pickupLabel, { place }, words)
+    : null;
 }
 
 const initial = (name: string) =>
