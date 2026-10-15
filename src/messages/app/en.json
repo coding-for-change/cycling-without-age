@@ -2493,7 +2493,8 @@
         "unknownRequest": "This request no longer exists.",
         "requestNotPending": "The chapter has already decided on this request.",
         "rateLimited": "That's a lot of requests in a row. Wait a little and try again."
-      }
+      },
+      "booked": "Booked with {chapter}"
     }
   },
   "passkey": {

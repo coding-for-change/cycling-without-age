@@ -2493,7 +2493,8 @@
         "unknownRequest": "Dette ønske findes ikke længere.",
         "requestNotPending": "Afdelingen har allerede besluttet sig om dette ønske.",
         "rateLimited": "Det var mange ønsker i træk. Vent lidt, og prøv igen."
-      }
+      },
+      "booked": "Booket hos {chapter}"
     }
   },
   "passkey": {

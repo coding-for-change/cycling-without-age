@@ -272,7 +272,7 @@ export function RideRequestForm({
       });
       notify(result, {
         done: formatMessage(
-          strings.sent,
+          result.ok && result.rideId ? strings.booked : strings.sent,
           { chapter: data.chapterName },
           language,
         ),

@@ -2493,7 +2493,8 @@
         "unknownRequest": "Diese Anfrage gibt es nicht mehr.",
         "requestNotPending": "Die Ortsgruppe hat über diese Anfrage bereits entschieden.",
         "rateLimited": "Das waren viele Anfragen hintereinander. Bitte warten Sie kurz und versuchen Sie es erneut."
-      }
+      },
+      "booked": "Bei {chapter} gebucht"
     }
   },
   "passkey": {
