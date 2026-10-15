@@ -390,8 +390,8 @@ function ScheduleRideSheet({
     request?.passengerIds ?? [],
   );
   const [pilotIds, setPilotIds] = useState<string[]>([]);
-  const [noteOpen, setNoteOpen] = useState(Boolean(request?.note));
-  const [note, setNote] = useState(request?.note ?? "");
+  const [noteOpen, setNoteOpen] = useState(false);
+  const [note, setNote] = useState("");
   const [titleInvalid, setTitleInvalid] = useState(false);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [attempt, setAttempt] = useState(0);
@@ -787,6 +787,14 @@ function ScheduleRideSheet({
         aria-busy={pending}
         className="grid grid-cols-[minmax(0,1fr)]"
       >
+        {request?.note ? (
+          <Section className="gap-1.25">
+            <p className="text-2sm text-ink-soft">{requestStrings.note}</p>
+            <p className="rounded-xl bg-mint-tint px-3 py-2 text-2sm break-words whitespace-pre-wrap">
+              {request.note}
+            </p>
+          </Section>
+        ) : null}
         <Section className="gap-3">
           <div className="grid gap-1.25">
             <Segmented

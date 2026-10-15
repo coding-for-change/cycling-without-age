@@ -1319,7 +1319,8 @@
       "schedule": {
         "fromRequest": "Anfrage von {name}",
         "done": "Fahrt eingeplant. {name} erfährt es mit der Kalenderdatei.",
-        "someone": "der anfragenden Person"
+        "someone": "der anfragenden Person",
+        "note": "Das hat die anfragende Person für die Ortsgruppe geschrieben. Piloten sehen nur, was du in die Nachricht für die Piloten schreibst."
       },
       "errors": {
         "requestNotPending": "Über diese Anfrage wurde schon entschieden. Lade neu, um zu sehen, was passiert ist.",
