@@ -1,13 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { seatBookingInput } from "@/features/rides";
+import { riderInput, seatBookingInput } from "@/features/rides";
 import { requireAuth } from "@/lib/auth-guards";
 import { createAttempt, type ActionResult } from "@/lib/domain-error";
 import { withinRateLimit } from "@/lib/rate-limit";
 import { bookEventSeats } from "@/use-cases/book-event-seat";
+import { cancelOwnSeat, confirmOwnSeat } from "@/use-cases/seat-confirmation";
 
 const MAPPED_ERRORS = [
+  "pleasureLimit",
   "rideClosed",
   "rideFull",
   "riderNotInChapter",
@@ -70,4 +72,46 @@ export async function bookEventSeatsAction(
       ),
     })),
   );
+}
+
+export type SeatAnswerResult = ActionResult<
+  SeatBookingError,
+  { changed: boolean }
+>;
+
+/**
+ * Lifecycle 5B-b, from the reminder's link: the account confirms or gives up
+ * the seat of a rider it books for, or its own. The use case asks which riders
+ * those are; the client only names the ride and the rider.
+ */
+async function answerSeat(
+  input: unknown,
+  answer: typeof confirmOwnSeat,
+): Promise<SeatAnswerResult> {
+  const parsed = riderInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "generic" };
+  const session = await requireAuth();
+  if (!withinRateLimit(`seat-answer:${session.user.id}`, BOOKING_LIMIT))
+    return { ok: false, error: "rateLimited" };
+  const result = await attempt(async () => ({
+    changed: await answer(
+      parsed.data.rideId,
+      parsed.data.passengerId,
+      session.user.id,
+    ),
+  }));
+  if (!result.ok && STALE.includes(result.error)) revalidateRides();
+  return result;
+}
+
+export async function confirmSeatAction(
+  input: unknown,
+): Promise<SeatAnswerResult> {
+  return answerSeat(input, confirmOwnSeat);
+}
+
+export async function cancelSeatAction(
+  input: unknown,
+): Promise<SeatAnswerResult> {
+  return answerSeat(input, cancelOwnSeat);
 }

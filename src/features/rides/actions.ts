@@ -2,7 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { requireAdminScope, requireChapterAdmin } from "@/lib/auth-guards";
+import { isChapterAdmin } from "@/lib/access";
+import {
+  requireAdminScope,
+  requireAuth,
+  requireChapterAdmin,
+} from "@/lib/auth-guards";
 import { createAttempt, type ActionResult } from "@/lib/domain-error";
 import { wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
@@ -16,13 +21,14 @@ import {
   withinUploadLimit,
 } from "@/lib/storage";
 import { bookRider } from "@/use-cases/book-rider";
+import { completeRide } from "@/use-cases/complete-ride";
 import {
   allocateTrishaws,
   freeTrishawsInWindow,
   scheduleRideAt,
 } from "@/use-cases/schedule-ride";
 import { staffRide } from "@/use-cases/staff-ride";
-import { rides, type RideScope } from "./index";
+import { rides, type Executor, type RideScope } from "./index";
 import { toListPage, type ListRidePage } from "./components/ride-list-rows";
 import {
   trishawOptions,
@@ -32,6 +38,11 @@ import {
   announceInput,
   bookRiderInput,
   cancelRideInput,
+  checkInInput,
+  debriefInput,
+  pilotNoShowInput,
+  rosterEntryRef,
+  walkUpInput,
   noteInput,
   pilotInput,
   reorderRosterInput,
@@ -50,10 +61,12 @@ import {
 const MAPPED_ERRORS = [
   "capacityBelowRoster",
   "capacityRequired",
+  "checkInClosed",
   "destinationRequired",
   "eventsOnly",
   "invalidFile",
   "legsOverlap",
+  "notAssigned",
   "notPilot",
   "otherLegScheduled",
   "partOfRoundTrip",
@@ -63,6 +76,8 @@ const MAPPED_ERRORS = [
   "rideClosed",
   "rideFull",
   "rideNotCancelled",
+  "rideNotCompleted",
+  "rideNotStarted",
   "riderNotInChapter",
   "rosterChanged",
   "titleRequired",
@@ -384,5 +399,125 @@ export async function estimateRouteAction(
       route: await cyclingRoute(parsed.data.from, parsed.data.to),
     }),
     { revalidate: false },
+  );
+}
+
+/**
+ * A ride on the day is run by one of its own pilots — assigned, and still
+ * piloting in its chapter — or by an admin of its chapter. An admin who also
+ * pilots it acts as the admin, so the pilot's one-day window never narrows
+ * what they may record. Anyone else is turned away by the admin guard.
+ */
+async function executorOfRide(
+  rideId: string,
+): Promise<{ rideId: string; actorUserId: string; as: Executor } | null> {
+  const session = await requireAuth();
+  const ride = await rides.getRide(rideId);
+  if (!ride) return null;
+  const actorUserId = session.user.id;
+  if (
+    !isChapterAdmin(session.access, ride.chapterId, ride.chapter.countryId) &&
+    (await rides.pilotCanOpen(ride.id, actorUserId))
+  )
+    return { rideId: ride.id, actorUserId, as: "pilot" };
+  await requireChapterAdmin(ride.chapterId);
+  return { rideId: ride.id, actorUserId, as: "admin" };
+}
+
+async function onRideDay<
+  S extends z.ZodType<{ rideId: string }>,
+  R,
+  T extends object = object,
+>(
+  schema: S,
+  input: unknown,
+  run: (
+    data: z.output<S>,
+    executor: { rideId: string; actorUserId: string; as: Executor },
+  ) => Promise<R>,
+  reply?: (result: R) => T,
+  limit?: string,
+): Promise<RideResult<T>> {
+  const parsed = schema.safeParse(input);
+  if (!parsed.success) return INVALID;
+  const executor = await executorOfRide(parsed.data.rideId);
+  if (!executor) return { ok: false, error: "unknownRide" };
+  if (limit && !withinRateLimit(`${limit}:${executor.actorUserId}`, DAY_LIMIT))
+    return { ok: false, error: "rateLimited" };
+  return attempt<T>(async () => {
+    const result = await run(parsed.data, executor);
+    return reply?.(result);
+  });
+}
+
+const DAY_LIMIT = { max: 120, windowMs: 60 * 60_000 };
+
+export async function setCheckedInAction(
+  input: unknown,
+): Promise<RideResult<{ changed: boolean }>> {
+  return onRideDay(
+    checkInInput,
+    input,
+    (data, { rideId, actorUserId, as }) =>
+      rides.setCheckedIn(rideId, data.entryId, data.checkedIn, actorUserId, as),
+    changed,
+  );
+}
+
+export async function addWalkUpAction(
+  input: unknown,
+): Promise<RideResult<{ entryId: string }>> {
+  return onRideDay(
+    walkUpInput,
+    input,
+    (data, { actorUserId, as }) => rides.addWalkUp(data, actorUserId, as),
+    (entryId) => ({ entryId }),
+    "walk-up",
+  );
+}
+
+export async function removeWalkUpAction(input: unknown): Promise<RideResult> {
+  return onRideDay(rosterEntryRef, input, (data, { rideId, actorUserId, as }) =>
+    rides.removeWalkUp(rideId, data.entryId, actorUserId, as),
+  );
+}
+
+export async function completeRideAction(
+  rideId: unknown,
+): Promise<RideResult<{ changed: boolean }>> {
+  return onRideDay(
+    rideRef,
+    { rideId },
+    (_, { rideId: id, actorUserId, as }) => completeRide(id, actorUserId, as),
+    (tally) => changed(tally !== null),
+  );
+}
+
+export async function submitDebriefAction(input: unknown): Promise<RideResult> {
+  return onRideDay(
+    debriefInput,
+    input,
+    (data, { actorUserId }) => rides.submitDebrief(data, actorUserId),
+    undefined,
+    "debrief",
+  );
+}
+
+/** Taking a closed roster back is the chapter's call, never the pilot's. */
+export async function reopenRideAction(rideId: unknown): Promise<RideResult> {
+  return onRide(rideRef, { rideId }, (_, ride, actor) =>
+    rides.reopenRide(ride.id, actor),
+  );
+}
+
+export async function setPilotNoShowAction(
+  input: unknown,
+): Promise<RideResult<{ changed: boolean }>> {
+  return onRide(
+    pilotNoShowInput,
+    input,
+    (data, ride, actor) =>
+      rides.setPilotNoShow(ride.id, data.userId, data.noShow, actor),
+    changed,
   );
 }
