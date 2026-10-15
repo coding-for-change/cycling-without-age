@@ -17,6 +17,7 @@ import {
   seatedPilots,
 } from "@/features/rides/components/ride-presentation";
 import {
+  rideDayErrors,
   rideDetailStrings,
   rideErrors,
   rideHistoryStrings,
@@ -51,6 +52,7 @@ import { hrefWith } from "@/lib/search-params";
 import { historyShown } from "../../../_components/history-more";
 import { HistorySection } from "../../../_components/history-section";
 import { NoteComposer } from "../../../_components/note-composer";
+import { SidePanel } from "../../../_components/side-panel";
 import { RelativeTime } from "../../../_components/timeline";
 import { readActiveScope, type AdminSearchParams } from "../../../active-scope";
 import { PILOT_LABELS, ROSTER_LABELS, TRISHAW_LABELS } from "./panel-labels";
@@ -62,6 +64,9 @@ import { RidePilots } from "./ride-pilots";
 import { RideRoster } from "./ride-roster";
 import { RideTrash } from "./ride-trash";
 import { RideTrishaws } from "./ride-trishaws";
+import { RideDay } from "./ride-day";
+import { RideDebriefs } from "./ride-debriefs";
+import { RideReopen } from "./ride-reopen";
 
 const DETAIL_ONLY = { history: null };
 
@@ -96,19 +101,28 @@ export async function RideBody({
   await requireChapterAdmin(ride.chapterId);
 
   const editable = ride.status === "scheduled";
+  const now = new Date();
+  const started = ride.status !== "cancelled" && ride.startsAt <= now;
   const shown = historyShown(query);
-  const [log, logTotal, chapterPassengers, chapterMembers, allocation] =
-    await Promise.all([
-      rides.listRideLog(ride.id, shown),
-      rides.countRideLog(ride.id),
-      editable
-        ? passengers.listPassengersOfChapters([ride.chapterId])
-        : Promise.resolve([]),
-      editable
-        ? membership.listMembersOfChapters([ride.chapterId])
-        : Promise.resolve([]),
-      editable ? trishawChoicesForRide(ride) : Promise.resolve(null),
-    ]);
+  const [
+    log,
+    logTotal,
+    chapterPassengers,
+    chapterMembers,
+    allocation,
+    debriefs,
+  ] = await Promise.all([
+    rides.listRideLog(ride.id, shown),
+    rides.countRideLog(ride.id),
+    editable
+      ? passengers.listPassengersOfChapters([ride.chapterId])
+      : Promise.resolve([]),
+    editable
+      ? membership.listMembersOfChapters([ride.chapterId])
+      : Promise.resolve([]),
+    editable ? trishawChoicesForRide(ride) : Promise.resolve(null),
+    started ? rides.listDebriefs(ride.id) : Promise.resolve([]),
+  ]);
 
   const notation = resolveLocale(head.get("accept-language"));
   const words = wordsLocale(language);
@@ -139,7 +153,36 @@ export async function RideBody({
       }
     : null;
 
-  const booked = new Set(ride.roster.map((entry) => entry.passenger.id));
+  const booked = new Set(
+    ride.roster.flatMap((entry) =>
+      entry.passenger ? [entry.passenger.id] : [],
+    ),
+  );
+  const seatedRiders = ride.roster.filter(
+    (entry) => entry.attendance !== "cancelled",
+  );
+  const day = dict.rides.execution;
+  const rosterRow = (entry: (typeof ride.roster)[number]) =>
+    entry.passenger
+      ? [
+          {
+            ...toPassengerChoice(entry.passenger),
+            href: entry.passenger.userId
+              ? `/admin/members/${entry.passenger.userId}${scopeQuery}`
+              : null,
+            pickup: pickupLabel(
+              pickupOf(entry.passenger),
+              dict.calendar.pickupCareHome,
+            ),
+            attendance: {
+              value: entry.attendance,
+              label: day.attendance[entry.attendance],
+            },
+          },
+        ]
+      : [];
+  const showsDay =
+    rides.checkInOpen(ride, "admin", now) || ride.status === "completed";
   const pilots = ridePilots(ride);
   const seated = seatedPilots(ride).length;
   const onRide = new Set(pilots.map((assignment) => assignment.user.id));
@@ -265,6 +308,16 @@ export async function RideBody({
         }
       />
 
+      {ride.status === "completed" ? (
+        <SidePanel title={day.danger}>
+          <RideReopen
+            rideId={ride.id}
+            labels={day.reopen}
+            errors={rideDayErrors(dict)}
+          />
+        </SidePanel>
+      ) : null}
+
       {ride.model === "event" ? (
         <RideAnnounce
           rideId={ride.id}
@@ -292,7 +345,7 @@ export async function RideBody({
           requiredPilots: ride.requiredPilots,
           title: ride.title,
           capacity: ride.capacity,
-          riders: ride.roster.length,
+          riders: seatedRiders.length,
           location: {
             name: ride.locationName,
             address: ride.locationAddress,
@@ -448,22 +501,18 @@ export async function RideBody({
         <RideRoster
           rideId={ride.id}
           editable={editable}
-          riders={ride.roster.map(({ passenger }) => ({
-            ...toPassengerChoice(passenger),
-            href: passenger.userId
-              ? `/admin/members/${passenger.userId}${scopeQuery}`
-              : null,
-            pickup: pickupLabel(
-              pickupOf(passenger),
-              dict.calendar.pickupCareHome,
-            ),
-          }))}
+          riders={seatedRiders.flatMap(rosterRow)}
+          givenUp={ride.roster
+            .filter((entry) => entry.attendance === "cancelled")
+            .flatMap(rosterRow)}
+          seated={seatedRiders.length}
           choices={riderChoices}
           limit={limits.passengers}
           language={language}
           labels={{
             ...pick(detail, ROSTER_LABELS),
             pickupLabel: dict.calendar.pickupLabel,
+            givenUp: day.givenUp,
             errors,
           }}
           pick={{
@@ -471,6 +520,27 @@ export async function RideBody({
             empty: riderChoices.length ? people.empty : detail.addRiderEmpty,
           }}
         />
+
+        {showsDay ? (
+          <RideDay
+            ride={ride}
+            scopeQuery={scopeQuery}
+            dict={dict}
+            language={language}
+            notation={notation}
+            now={now}
+          />
+        ) : null}
+
+        {started ? (
+          <RideDebriefs
+            debriefs={debriefs}
+            functional={ride.model === "functional"}
+            dict={dict}
+            language={language}
+            notation={notation}
+          />
+        ) : null}
 
         <DetailSection
           title={detail.noteForPilots}

@@ -3,13 +3,22 @@ import {
   Bike,
   CalendarClock,
   CalendarPlus,
+  CircleCheck,
+  CircleDashed,
+  ClipboardPen,
+  DoorOpen,
+  Flag,
   ListOrdered,
   Pencil,
+  RotateCcw,
   StickyNote,
+  UserCheck,
   UserMinus,
   UserPlus,
   UserRoundMinus,
   UserRoundPlus,
+  UserRoundX,
+  UserX,
   type LucideIcon,
 } from "lucide-react";
 import type { rides } from "@/features/rides";
@@ -49,6 +58,16 @@ const ICON: Record<Entry["type"], LucideIcon> = {
   riderRemoved: UserRoundMinus,
   rosterReordered: ListOrdered,
   note: StickyNote,
+  seatConfirmed: CircleCheck,
+  seatCancelled: UserRoundX,
+  checkedIn: UserCheck,
+  checkInUndone: CircleDashed,
+  walkUpAdded: DoorOpen,
+  walkUpRemoved: UserRoundMinus,
+  pilotNoShow: UserX,
+  completed: Flag,
+  reopened: RotateCcw,
+  debriefed: ClipboardPen,
 };
 
 /** The facade logs every column it touched; people think in four things. */
@@ -252,6 +271,52 @@ export function RideHistory({
           case "note":
             sentence = say(labels.note, actor);
             bubble = text(payload.text) || null;
+            break;
+          case "seatConfirmed":
+            sentence = say(labels.seatConfirmed, { ...actor, name });
+            break;
+          case "seatCancelled":
+            sentence = say(labels.seatCancelled, { ...actor, name });
+            break;
+          case "checkedIn":
+            sentence = say(labels.checkedIn, { ...actor, name });
+            break;
+          case "checkInUndone":
+            sentence = say(labels.checkInUndone, { ...actor, name });
+            break;
+          case "walkUpAdded":
+            sentence = say(labels.walkUpAdded, { ...actor, name });
+            break;
+          case "walkUpRemoved":
+            sentence = say(labels.walkUpRemoved, actor);
+            break;
+          case "pilotNoShow":
+            sentence = say(
+              payload.noShow === false
+                ? labels.pilotShowed
+                : labels.pilotNoShow,
+              { ...actor, name },
+            );
+            break;
+          case "completed":
+            sentence = say(labels.completed, actor);
+            details =
+              typeof payload.riders === "number" &&
+              typeof payload.noShows === "number"
+                ? [
+                    formatMessage(
+                      labels.completedTally,
+                      { riders: payload.riders, noShows: payload.noShows },
+                      words,
+                    ),
+                  ]
+                : [];
+            break;
+          case "reopened":
+            sentence = say(labels.reopened, actor);
+            break;
+          case "debriefed":
+            sentence = say(labels.debriefed, actor);
             break;
         }
 
