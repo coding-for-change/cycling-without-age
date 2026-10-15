@@ -40,4 +40,11 @@ describe("answering for a seat", () => {
     );
     expect(rides.cancelSeat).not.toHaveBeenCalled();
   });
+
+  it("confirms nothing for a rider the account does not book for", async () => {
+    await expect(
+      confirmOwnSeat("ride-1", "someone-else", "carer-1"),
+    ).rejects.toThrow();
+    expect(rides.confirmSeat).not.toHaveBeenCalled();
+  });
 });
