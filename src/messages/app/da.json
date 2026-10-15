@@ -955,7 +955,7 @@
         },
         "title": "Påmindelser",
         "volunteer": {
-          "hint": "Piloterne får turen igen, med hvor rickshawen skal hentes.",
+          "hint": "Piloterne får turen igen, med besked om, hvor rickshawen skal hentes.",
           "label": "Påmind piloter"
         }
       },
@@ -2030,7 +2030,7 @@
           "confirm": "Giv pladsen fri",
           "done": "Pladsen er givet fri. Afdelingen ved besked.",
           "label": "Aflys min plads",
-          "title": "Giv {name}s plads fri?"
+          "title": "Meld {name} fra turen?"
         },
         "confirm": "Bekræft pladsen",
         "confirmed": "Pladsen er bekræftet. Vi ses!",
@@ -2384,7 +2384,7 @@
     },
     "history": {
       "cancelled": "{who, select, you {Du} other {{actor}}} aflyste turen",
-      "checkInUndone": "{who, select, you {Du} other {{actor}}} fortrød {name}s indtjekning",
+      "checkInUndone": "{who, select, you {Du} other {{actor}}} fortrød indtjekningen af {name}",
       "checkedIn": "{who, select, you {Du} other {{actor}}} tjekkede {name} ind",
       "completed": "{who, select, you {Du} other {{actor}}} afsluttede turen",
       "completedTally": "{riders, plural, one {# passager} other {# passagerer}} kørte med, {noShows, plural, =0 {ingen udeblevne} one {# udeblevet} other {# udeblevne}}",
@@ -2423,8 +2423,8 @@
       "rosterReordered": "{who, select, you {Du} other {{actor}}} ændrede passagerernes rækkefølge",
       "scheduled": "{who, select, you {Du} other {{actor}}} planlagde turen",
       "scheduledReturn": "{who, select, you {Du} other {{actor}}} planlagde turen som hjemtur",
-      "seatCancelled": "{who, select, you {Du} other {{actor}}} gav {name}s plads fri",
-      "seatConfirmed": "{who, select, you {Du} other {{actor}}} bekræftede {name}s plads",
+      "seatCancelled": "{who, select, you {Du} other {{actor}}} meldte {name} fra",
+      "seatConfirmed": "{who, select, you {Du} other {{actor}}} bekræftede pladsen til {name}",
       "trishawsAdded": "Tilføjet: {names}",
       "trishawsChanged": "{who, select, you {Du} other {{actor}}} ændrede rickshawerne",
       "trishawsRemoved": "Fjernet: {names}",
@@ -2555,7 +2555,7 @@
         "noShow": "Mødte ikke op"
       },
       "checkIn": "Indtjekning",
-      "checkInHint": "Tryk på hver passager, når de kommer. Den, der ikke er tjekket ind, når turen afsluttes, tæller som udeblevet.",
+      "checkInHint": "Tryk på passagererne, efterhånden som de kommer. Den, der ikke er tjekket ind, når turen afsluttes, tæller som udeblevet.",
       "checkInLabel": "Tjek {name} ind",
       "checkInOpens": "Indtjekningen åbner to timer før turen.",
       "checkedIn": "{name} er tjekket ind",
@@ -2573,13 +2573,13 @@
       "debrief": {
         "bikeCondition": "Rickshawens stand",
         "bikePoor": "Er noget gået i stykker? Meld det ved rickshawen ovenfor, så det bliver lavet før næste tur.",
-        "by": "{name}s opsamling",
+        "by": "Opsamling fra {name}",
         "cooperation": "Samarbejdet med plejehjemmet",
         "cooperationHint": "Kun for en tur med et plejehjem eller en anden institution.",
         "distance": "Kørt distance",
         "distanceHint": "I kilometer, som målt undervejs.",
         "donation": "Modtagne donationer",
-        "donationHint": "Giv dem til afdelingen. Tælles i {currency}.",
+        "donationHint": "Giv dem til afdelingen. Beløb i {currency}.",
         "donationHintNoCurrency": "Giv dem til afdelingen.",
         "hint": "Et par linjer til afdelingen. Du kan ændre dem senere.",
         "invalidNumber": "Skriv et tal, fx 12,5.",
@@ -2595,14 +2595,14 @@
         "save": "Gem opsamling",
         "saved": "Opsamlingen er gemt. Tak!",
         "saving": "Gemmer…",
-        "someone": "En tidligere pilot",
+        "someone": "en tidligere pilot",
         "title": "Opsamling",
         "titleMany": "Opsamlinger",
         "unset": "Ikke angivet"
       },
       "errors": {
         "checkInClosed": "Indtjekningen er åben fra to timer før turen til en dag efter.",
-        "notAssigned": "Den pilot er ikke på turen.",
+        "notAssigned": "Den pilot er ikke sat på turen.",
         "pleasureLimit": "Turen er fuld.",
         "rateLimited": "Det var meget på én gang. Vent et øjeblik, og prøv igen.",
         "rideClosed": "Turen er lukket.",
@@ -2641,7 +2641,7 @@
       "undone": "Indtjekning fortrudt",
       "walkUp": {
         "added": "{name} kører med",
-        "body": "Skriv en på, der dukkede op uden booking. De bliver tjekket ind med det samme.",
+        "body": "Skriv en på, der er dukket op uden booking. Personen bliver tjekket ind med det samme.",
         "badge": "Dukkede op",
         "firstName": "Fornavn",
         "lastName": "Efternavn",
