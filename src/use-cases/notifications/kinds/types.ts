@@ -6,12 +6,16 @@ import type {
   NotificationPayload,
 } from "@/features/notifications";
 import type { DomainEvent, EventOf, EventType } from "@/lib/events/catalog";
+import type { IcsCalendar } from "@/lib/ics";
 import type { Locale } from "@/lib/i18n/locales";
 
 export type Message = NotificationMessage & {
   template?: string;
   title?: string;
 };
+
+/** A calendar file the mail carries; `deliver-email` renders it with `lib/ics`. */
+export type CalendarAttachment = { filename: string; calendar: IcsCalendar };
 
 export type DeliveryPolicy = {
   push: boolean;
@@ -48,6 +52,11 @@ export type Kind<
     strings: EmailStrings,
     locale: Locale,
   ) => Message;
+  attachments?: (
+    params: z.infer<P>,
+    strings: EmailStrings,
+    locale: Locale,
+  ) => CalendarAttachment[];
 };
 
 export const defineKind = <
@@ -77,4 +86,9 @@ export type AnyKind = {
     strings: EmailStrings,
     locale: Locale,
   ): Message;
+  attachments?(
+    params: NotificationPayload,
+    strings: EmailStrings,
+    locale: Locale,
+  ): CalendarAttachment[];
 };

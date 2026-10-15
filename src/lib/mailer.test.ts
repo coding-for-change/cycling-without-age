@@ -3,6 +3,9 @@ const send = jest.fn();
 jest.mock("resend", () => ({
   Resend: jest.fn(() => ({ emails: { send } })),
 }));
+jest.mock("@/lib/observability/logger", () => ({
+  devConsole: { info: jest.fn() },
+}));
 jest.mock("@react-email/components", () => ({
   render: jest.fn(async () => "<p>Hej Bo</p>"),
 }));
@@ -59,6 +62,40 @@ describe("sendMail against Resend", () => {
     const payload = send.mock.calls[0][0];
     expect(payload.html).toContain("Hej Bo");
     expect(payload).not.toHaveProperty("react");
+  });
+
+  it("passes an attachment through as bytes with its type", async () => {
+    answer(null);
+    const { sendMail } = await loadMailer();
+
+    await sendMail({
+      ...message,
+      attachments: [
+        {
+          filename: "ride.ics",
+          content: "BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n",
+          contentType: "text/calendar; charset=utf-8; method=PUBLISH",
+        },
+      ],
+    });
+
+    const [attachment] = send.mock.calls[0][0].attachments;
+    expect(attachment.filename).toBe("ride.ics");
+    expect(attachment.contentType).toBe(
+      "text/calendar; charset=utf-8; method=PUBLISH",
+    );
+    expect(Buffer.from(attachment.content).toString("utf8")).toBe(
+      "BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n",
+    );
+  });
+
+  it("sends no attachments field for a mail without any", async () => {
+    answer(null);
+    const { sendMail } = await loadMailer();
+
+    await sendMail(message);
+
+    expect(send.mock.calls[0][0]).not.toHaveProperty("attachments");
   });
 
   it("reads the wait out of retry-after when Resend throttles", async () => {
@@ -175,5 +212,43 @@ describe("sendMail outside production", () => {
     );
     expect(bodies[0].ReplyTo).toEqual([{ Email: "hej@muenchen.example" }]);
     expect(bodies[1].ReplyTo).toBeUndefined();
+  });
+});
+
+describe("sendMail against Mailpit", () => {
+  const fetchMock = jest.fn();
+
+  beforeEach(() => {
+    process.env = {
+      ...process.env,
+      NODE_ENV: "development",
+      MAILPIT_URL: "http://mailpit.test",
+    };
+    fetchMock.mockResolvedValue({ ok: true });
+    global.fetch = fetchMock as unknown as typeof fetch;
+  });
+
+  it("hands each attachment to Mailpit base64-encoded", async () => {
+    const { sendMail } = await loadMailer();
+
+    await sendMail({
+      ...message,
+      attachments: [
+        {
+          filename: "ride.ics",
+          content: "Kaffee ☕",
+          contentType: "text/calendar",
+        },
+      ],
+    });
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.Attachments).toEqual([
+      {
+        Filename: "ride.ics",
+        ContentType: "text/calendar",
+        Content: Buffer.from("Kaffee ☕", "utf8").toString("base64"),
+      },
+    ]);
   });
 });
