@@ -1,4 +1,5 @@
 cwa.codingforchange.com {
     import access_log
+    log_skip /docs-login
     reverse_proxy localhost:3002
 }

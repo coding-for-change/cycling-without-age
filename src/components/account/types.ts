@@ -28,6 +28,7 @@ export type AccountData = {
   };
   hasRides: boolean;
   calendarFeed: CalendarFeedState | null;
+  guidesHref: string | null;
   signOutLabel: string;
   cancelLabel: string;
 };

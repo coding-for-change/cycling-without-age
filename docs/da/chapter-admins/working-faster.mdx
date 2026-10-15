@@ -1,0 +1,50 @@
+---
+title: "Arbejd hurtigere i admin"
+description: "Kommandolinjen, tastaturgenveje, redigering direkte på siden og paneler."
+audience: ["chapter-admin", "country-admin", "superadmin"]
+public: true
+mode: "wide"
+---
+
+Det meste adminarbejde kræver kun få taster. Sådan finder du alt, retter direkte på siden og fortryder en fejl.
+
+<video autoPlay muted loop playsInline className="w-full rounded-xl border border-gray-200 dark:border-gray-800" src="/videos/admin-command-bar.mp4" />
+
+## Find alt med ⌘K
+
+1. Tryk på **⌘K** på en Mac eller **Ctrl+K** på Windows. Nederst i sidepanelet står der som påmindelse: **⌘ K til alt**.
+2. Skriv, hvad du leder efter, fx "rickshaw".
+3. Vælg et punkt med musen eller med ↑, ↓ og Enter.
+
+Listen har **Opret** (fx **Planlæg en tur**, **Tilføj en rickshaw**, **Bliv en del af en rickshawpulje**), **Gå til** for hver side, **Perspektiv** og **Konto**. Hverdagsord virker også: "cykel", "skade", "garage" eller "adgangskode" finder den rigtige side. Esc eller ⌘K igen lukker den.
+
+**⌘B** (Ctrl+B) viser eller skjuler sidepanelet.
+
+## Ret direkte på siden
+
+<video autoPlay muted loop playsInline className="w-full rounded-xl border border-gray-200 dark:border-gray-800" src="/videos/admin-inline-edit-undo.mp4" />
+
+På en detaljeside, fx for en tur, en rickshaw eller en lokation, ændrer du et felt lige dér, hvor det står.
+
+1. Klik på feltet eller dets blyant.
+2. Skriv ændringen.
+3. Tryk på Enter, eller klik et andet sted. I et længere tekstfelt trykker du på **⌘↵** (Ctrl+Enter).
+
+Det gemmes med det samme. Toppen viser **Gemmer** og derefter **Gemt**. En besked siger **Gemt.** med en **Fortryd**-knap. Klik på **Fortryd**, så ser du **Sat tilbage.** Tryk på Esc, mens du skriver, for at droppe ændringen.
+
+## Paneler
+
+Nye ting åbner i et panel til højre, på en telefon nedefra.
+
+- **⌘↵** (Ctrl+Enter) sender formularen, fx **Planlæg tur ⌘↵**.
+- Hvert panel har sit eget link, fx `/admin/rides?new=1`. Gem det som bogmærke, eller send det til en medadmin.
+- Esc eller at lukke panelet smider det væk, du har skrevet. Intet gemmes som kladde.
+
+<Warning>
+Når du sletter noget for altid, skal du skrive et ord, fx `DELETE-17-10-2026` for en tur eller `DELETE-FOHN` for rickshawen Föhn. Store eller små bogstaver er ligegyldigt. Den røde boks over feltet viser, hvad der forsvinder med.
+</Warning>
+
+## Godt at vide
+
+- Afsnit i højre side af en detaljeside kan foldes sammen med deres pil.
+- Historikken på en detaljeside registrerer hver ændring, også en fortrydelse.

@@ -4,6 +4,7 @@ import { calendarFeeds } from "@/features/calendar-feeds";
 import { availablePerspectives, canDeleteOwnAccount } from "@/lib/access";
 import { calendarFeedUrl } from "@/lib/app-url";
 import { getSession } from "@/lib/auth-guards";
+import { docsEntryHref } from "@/lib/docs-auth";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { profile as profileFacade } from "@/features/profile";
 import { resolveLocale, toIsoDateUtc } from "@/lib/format";
@@ -57,6 +58,7 @@ export const loadAccount = cache(async (): Promise<AccountData | null> => {
           lastFetchedAt: feed.lastFetchedAt?.toISOString() ?? null,
         }
       : null,
+    guidesHref: docsEntryHref(language),
     signOutLabel: dict.common.signOut,
     cancelLabel: dict.common.back,
   };
