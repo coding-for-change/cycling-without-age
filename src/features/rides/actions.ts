@@ -403,10 +403,11 @@ export async function estimateRouteAction(
 }
 
 /**
- * A ride on the day is run by one of its own pilots — assigned, and still
- * piloting in its chapter — or by an admin of its chapter. An admin who also
- * pilots it acts as the admin, so the pilot's one-day window never narrows
- * what they may record. Anyone else is turned away by the admin guard.
+ * A ride on the day is run by one of its own pilots — assigned, still piloting
+ * in its chapter and not marked as a no-show — or by an admin of its chapter.
+ * An admin who also pilots it acts as the admin, so the pilot's one-day window
+ * never narrows what they may record. Anyone else is turned away by the admin
+ * guard.
  */
 async function executorOfRide(
   rideId: string,
@@ -417,7 +418,7 @@ async function executorOfRide(
   const actorUserId = session.user.id;
   if (
     !isChapterAdmin(session.access, ride.chapterId, ride.chapter.countryId) &&
-    (await rides.pilotCanOpen(ride.id, actorUserId))
+    (await rides.pilotCanRun(ride.id, actorUserId))
   )
     return { rideId: ride.id, actorUserId, as: "pilot" };
   await requireChapterAdmin(ride.chapterId);

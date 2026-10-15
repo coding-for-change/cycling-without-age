@@ -386,6 +386,19 @@ export const findRideIdForPilot = (rideId: string, userId: string) =>
     select: { id: true },
   });
 
+/** Only a pilot still on the ride: one marked as never having come is not. */
+export const findRideIdForRunningPilot = (rideId: string, userId: string) =>
+  prisma.ride.findFirst({
+    where: {
+      id: rideId,
+      assignments: {
+        some: { userId, role: "pilot", attendance: { not: "noShow" } },
+      },
+      chapter: { members: { some: stillPiloting(userId) } },
+    },
+    select: { id: true },
+  });
+
 export const findRideIdForPassengers = (
   rideId: string,
   passengerIds: string[],

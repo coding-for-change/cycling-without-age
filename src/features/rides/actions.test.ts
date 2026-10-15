@@ -56,7 +56,7 @@ jest.mock("@/features/rides/index", () => ({
       chapterId: "chapter-muenchen",
       chapter: { countryId: "country-de" },
     })),
-    pilotCanOpen: jest.fn(async () => false),
+    pilotCanRun: jest.fn(async () => false),
     setCheckedIn: jest.fn(async () => true),
     submitDebrief: jest.fn(async () => ({})),
     reopenRide: jest.fn(async () => true),
@@ -110,9 +110,9 @@ describe("who runs a ride on the day", () => {
     });
 
   it("lets the ride's own pilot check riders in, as its pilot", async () => {
-    (rides.pilotCanOpen as jest.Mock).mockResolvedValueOnce(true);
+    (rides.pilotCanRun as jest.Mock).mockResolvedValueOnce(true);
     await expect(checkIn()).resolves.toEqual({ ok: true, changed: true });
-    expect(rides.pilotCanOpen).toHaveBeenCalledWith("ride-1", "user-1");
+    expect(rides.pilotCanRun).toHaveBeenCalledWith("ride-1", "user-1");
     expect(requireChapterAdmin).not.toHaveBeenCalled();
     expect(rides.setCheckedIn).toHaveBeenCalledWith(
       "ride-1",
@@ -145,15 +145,15 @@ describe("who runs a ride on the day", () => {
 
   it("treats an admin who also pilots the ride as its admin", async () => {
     (isChapterAdmin as jest.Mock).mockReturnValueOnce(true);
-    (rides.pilotCanOpen as jest.Mock).mockResolvedValue(true);
+    (rides.pilotCanRun as jest.Mock).mockResolvedValue(true);
     await completeRideAction("ride-1");
     expect(requireChapterAdmin).toHaveBeenCalledWith("chapter-muenchen");
     expect(completeRide).toHaveBeenCalledWith("ride-1", "user-1", "admin");
-    (rides.pilotCanOpen as jest.Mock).mockResolvedValue(false);
+    (rides.pilotCanRun as jest.Mock).mockResolvedValue(false);
   });
 
   it("files the debrief under whoever wrote it", async () => {
-    (rides.pilotCanOpen as jest.Mock).mockResolvedValueOnce(true);
+    (rides.pilotCanRun as jest.Mock).mockResolvedValueOnce(true);
     expect(
       await submitDebriefAction({ rideId: "ride-1", donationCents: 500 }),
     ).toEqual({ ok: true });
@@ -173,11 +173,11 @@ describe("who runs a ride on the day", () => {
 
   // Reopening is never the pilot's: only the chapter's admins.
   it("reopens only through the admin guard", async () => {
-    (rides.pilotCanOpen as jest.Mock).mockResolvedValue(true);
+    (rides.pilotCanRun as jest.Mock).mockResolvedValue(true);
     await reopenRideAction("ride-1");
     expect(requireChapterAdmin).toHaveBeenCalledWith("chapter-muenchen");
     expect(rides.reopenRide).toHaveBeenCalledWith("ride-1", "admin-1");
-    expect(rides.pilotCanOpen).not.toHaveBeenCalled();
-    (rides.pilotCanOpen as jest.Mock).mockResolvedValue(false);
+    expect(rides.pilotCanRun).not.toHaveBeenCalled();
+    (rides.pilotCanRun as jest.Mock).mockResolvedValue(false);
   });
 });

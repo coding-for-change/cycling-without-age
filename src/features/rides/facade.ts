@@ -88,6 +88,7 @@ import {
   findRideForPilot,
   findRideIdForPassengers,
   findRideIdForPilot,
+  findRideIdForRunningPilot,
   findRideParticipants,
   findAnnouncedEvent,
   findAnnouncedEvents,
@@ -307,6 +308,13 @@ export const getRideFacts = (rideId: string) => findRideFacts(rideId);
 
 export const pilotCanOpen = async (rideId: string, userId: string) =>
   (await findRideIdForPilot(rideId, userId)) !== null;
+
+/**
+ * Who may run the ride on the day as its pilot: assigned, still a pilot in its
+ * chapter, and not marked as never having come.
+ */
+export const pilotCanRun = async (rideId: string, userId: string) =>
+  (await findRideIdForRunningPilot(rideId, userId)) !== null;
 
 export const passengersCanOpen = async (
   rideId: string,

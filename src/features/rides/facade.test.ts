@@ -3823,3 +3823,25 @@ describe("the reminders and the demand check", () => {
     });
   });
 });
+
+describe("who runs a ride on the day as its pilot", () => {
+  it("asks for an assignment not marked as a no-show, in a chapter still piloted", async () => {
+    db.ride.findFirst.mockResolvedValue(null);
+    expect(await rides.pilotCanRun("ride-1", "pilot-1")).toBe(false);
+    expect(db.ride.findFirst.mock.calls[0][0].where).toEqual({
+      id: "ride-1",
+      assignments: {
+        some: {
+          userId: "pilot-1",
+          role: "pilot",
+          attendance: { not: "noShow" },
+        },
+      },
+      chapter: {
+        members: {
+          some: { userId: "pilot-1", role: { contains: "pilot" } },
+        },
+      },
+    });
+  });
+});
