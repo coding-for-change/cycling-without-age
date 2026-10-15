@@ -375,8 +375,8 @@
     "cta": "Bekræft eller aflys pladsen",
     "footer": "Du modtager denne e-mail, fordi du booker ture i en Cycling Without Age-afdeling.",
     "heading": "Din tur nærmer sig",
-    "intro": "{ride} er {date}, {time}, med start ved {place}. Bekræft pladsen i appen – eller giv den fri, hvis planerne har ændret sig, så afdelingen kan tilbyde den til en anden.",
-    "introBoth": "{ride} er {date}: udturen er {time} fra {place}, og så hjem igen. Bekræft pladsen i appen – eller giv den fri, hvis planerne har ændret sig, så afdelingen kan tilbyde den til en anden.",
+    "intro": "Din tur {date}, {time}, starter ved {place} ({ride}). Bekræft pladsen i appen – eller giv den fri, hvis planerne har ændret sig, så afdelingen kan tilbyde den til en anden.",
+    "introBoth": "Din tur ud og hjem {date}: udturen er {time} fra {place} ({ride}). Bekræft pladsen i appen – eller giv den fri, hvis planerne har ændret sig, så afdelingen kan tilbyde den til en anden.",
     "preview": "{ride} · {time}",
     "subject": "Din tur {date}"
   },
@@ -396,8 +396,8 @@
     "cta": "Åbn turen",
     "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling.",
     "heading": "Ingen er booket endnu",
-    "intro": "Turen {date}, {time}, ved {place} ({ride}) har stadig ingen passagerer. Book passagerer snart, eller aflys den med grunden \"Ingen passagerer\", så piloterne og rickshawen bliver fri igen.",
-    "introBoth": "Turen ud og hjem {date} har stadig ingen passagerer nogen af vejene: udturen {time} fra {place} ({ride}). Book passagerer snart, eller aflys den med grunden \"Ingen passagerer\", så piloterne og rickshawen bliver fri igen.",
+    "intro": "Turen {date}, {time}, ved {place} ({ride}) har stadig ingen passagerer. Book passagerer snart, eller aflys den med grunden “Ingen passagerer”, så piloterne og rickshawen bliver fri igen.",
+    "introBoth": "Turen ud og hjem {date} har stadig ingen passagerer nogen af vejene: udturen {time} fra {place} ({ride}). Book passagerer snart, eller aflys den med grunden “Ingen passagerer”, så piloterne og rickshawen bliver fri igen.",
     "preview": "{ride} · {time}",
     "subject": "Ingen er booket {date}"
   }

@@ -375,8 +375,8 @@
     "cta": "Confirm or cancel the seat",
     "footer": "You received this email because you book rides with a Cycling Without Age chapter.",
     "heading": "Your ride is coming up",
-    "intro": "{ride} is on {date}, {time}, starting at {place}. Please confirm the seat in the app — or give it up if plans have changed, so the chapter can offer it to someone else.",
-    "introBoth": "{ride} is on {date}: there at {time}, starting at {place}, and back again. Please confirm the seat in the app — or give it up if plans have changed, so the chapter can offer it to someone else.",
+    "intro": "Your ride on {date}, {time}, starts at {place} ({ride}). Please confirm the seat in the app — or give it up if plans have changed, so the chapter can offer it to someone else.",
+    "introBoth": "Your round trip on {date}: there at {time}, starting at {place} ({ride}), and back again. Please confirm the seat in the app — or give it up if plans have changed, so the chapter can offer it to someone else.",
     "preview": "{ride} · {time}",
     "subject": "Your ride on {date}"
   },
@@ -396,8 +396,8 @@
     "cta": "Open the ride",
     "footer": "You received this email because you help run a Cycling Without Age chapter.",
     "heading": "Nobody is booked yet",
-    "intro": "The ride on {date}, {time}, at {place} ({ride}) still has nobody on its roster. Book riders soon, or cancel it with the reason \"No riders\" so the pilots and the trishaw are free again.",
-    "introBoth": "The round trip on {date} still has nobody on its roster either way: the way there at {time} from {place} ({ride}). Book riders soon, or cancel it with the reason \"No riders\" so the pilots and the trishaw are free again.",
+    "intro": "The ride on {date}, {time}, at {place} ({ride}) still has nobody on its roster. Book riders soon, or cancel it with the reason “No riders” so the pilots and the trishaw are free again.",
+    "introBoth": "The round trip on {date} still has nobody on its roster either way: the way there at {time} from {place} ({ride}). Book riders soon, or cancel it with the reason “No riders” so the pilots and the trishaw are free again.",
     "preview": "{ride} · {time}",
     "subject": "Nobody is booked for {date}"
   }
