@@ -52,6 +52,9 @@ export type BookingRefusal =
 /** A stretch longer than this is one chip, not a row of hour slots. */
 export const LONG_WINDOW_MINUTES = 180;
 
+/** No window is longer than the longest ride a chapter can schedule. */
+export const MAX_WINDOW_MINUTES = 12 * 60;
+
 /** What a chapter that never set riding hours offers: it rides any day. */
 export const OPEN_DAY: readonly MinuteRange[] = [
   { from: 9 * 60, to: 12 * 60 },
@@ -166,8 +169,9 @@ export function windowsOnDate(
         from = ceilToStep(clockMinutes(earliest, timeZone));
         if (chip.to - from < ride) return [];
       }
+      const to = Math.min(chip.to, from + MAX_WINDOW_MINUTES);
       const startsAt = instantOn(date, from, timeZone);
-      const endsAt = instantOn(date, chip.to, timeZone);
+      const endsAt = instantOn(date, to, timeZone);
       if (startsAt < earliest || startsAt >= latest) return [];
       if (
         endsAt.getTime() - startsAt.getTime() <
@@ -178,7 +182,7 @@ export function windowsOnDate(
         {
           date,
           startMinute: from,
-          endMinute: chip.to,
+          endMinute: to,
           part: chip.long ? partOfDay(chip.from) : null,
           startsAt,
           endsAt,

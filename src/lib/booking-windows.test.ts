@@ -54,6 +54,15 @@ describe("windowsOnDate", () => {
     expect(window.part).toBe("morning");
   });
 
+  it("never offers a window longer than a ride can be", () => {
+    const longDays: OperatingHours = {
+      windows: weekdays(7, 21),
+      closures: [],
+    };
+    const [window] = windowsOnDate(longDays, "2026-10-08", POLICY, BERLIN, now);
+    expect(window.endMinute - window.startMinute).toBe(12 * 60);
+  });
+
   it("offers nothing on a closure", () => {
     expect(
       windowsOnDate(
