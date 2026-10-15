@@ -2,6 +2,7 @@ import { generateKeyPairSync, verify } from "node:crypto";
 import type { Access } from "./access";
 import {
   DOCS_SESSION_SECONDS,
+  DEFAULT_DOCS_HOST,
   docsCallbackUrl,
   docsEntryHref,
   docsGroups,
@@ -141,8 +142,9 @@ describe("docsCallbackUrl", () => {
 });
 
 describe("docsEntryHref", () => {
-  it("hides the guides when no docs host is set", () => {
-    expect(docsEntryHref("en", {})).toBeNull();
+  it("falls back to the CWA docs domain", () => {
+    expect(docsEntryHref("en", {})).toBe(`https://${DEFAULT_DOCS_HOST}/en`);
+    expect(DEFAULT_DOCS_HOST).toBe("docs.cwa.codingforchange.com");
   });
 
   it("links straight to the public guides without a signing key", () => {

@@ -3,14 +3,14 @@
   "theme": "almond",
   "name": "CWA Guides",
   "colors": {
-    "primary": "#28584E",
-    "light": "#92D2C6",
-    "dark": "#28584E"
+    "primary": "#2E2823",
+    "light": "#F2EDE6",
+    "dark": "#2E2823"
   },
   "favicon": "/favicon.png",
   "logo": {
     "light": "/logo/logo.png",
-    "dark": "/logo/logo.png",
+    "dark": "/logo/logo-dark.png",
     "href": "https://cwa.codingforchange.com"
   },
   "fonts": {
@@ -420,7 +420,8 @@
   },
   "background": {
     "color": {
-      "light": "#F4F2EF"
+      "light": "#FFFFFF",
+      "dark": "#1C1916"
     }
   }
 }

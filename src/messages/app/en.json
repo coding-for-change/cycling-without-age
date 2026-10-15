@@ -507,7 +507,6 @@
         "title": "Countries"
       },
       "help": {
-        "action": "Open the guides",
         "body": "Guides for chapter admins, and a way to reach someone when a guide is not enough.",
         "title": "Get help"
       },

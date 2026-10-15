@@ -1,6 +1,6 @@
 # CWA GO guides
 
-User guides for pilots, riders, chapter admins and super/country admins, published with Mintlify from this folder (deployment `cycling-without-age`, content directory `docs/`, deploy branch `main`).
+User guides for pilots, riders, chapter admins and super/country admins, published with Mintlify from this folder (deployment `cycling-without-age`, content directory `docs/`, deploy branch `main`), live at https://docs.cwa.codingforchange.com. Colours mirror the app (`style.css`: warm-grey ground, white card, espresso accent).
 
 - Preview: `npm run docs:dev` (http://localhost:3333 with `mint dev --port 3333`), check with `cd docs && mint broken-links` and `mint validate`.
 - Pages live in `en/`, `de/` and `da/` with identical trees; navigation is `docs.json`. Writing rules: `_recordings/STYLE.md`.

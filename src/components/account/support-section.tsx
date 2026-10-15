@@ -26,15 +26,13 @@ export function SupportSection({
         label={label}
         footer={strings.body}
       >
-        {data.guidesHref ? (
-          <SettingsRowLink
-            icon={BookOpen}
-            label={strings.guides}
-            href={data.guidesHref}
-            external
-            chevron
-          />
-        ) : null}
+        <SettingsRowLink
+          icon={BookOpen}
+          label={strings.guides}
+          href={data.guidesHref}
+          external
+          chevron
+        />
         <SettingsRow
           icon={LifeBuoy}
           label={strings.open}

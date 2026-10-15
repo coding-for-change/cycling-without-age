@@ -1,0 +1,67 @@
+:root {
+  --cwa-ground: #f4f2ef;
+  --cwa-ground-deeper: #e9e6e1;
+  --cwa-paper: #ffffff;
+  --cwa-ink: #2e2823;
+  --cwa-ink-soft: rgb(46 40 35 / 0.78);
+  --cwa-line: rgb(46 40 35 / 0.12);
+}
+
+html.dark {
+  --cwa-ground: #151310;
+  --cwa-ground-deeper: #312c27;
+  --cwa-paper: #1c1916;
+  --cwa-ink: #f2ede6;
+  --cwa-ink-soft: rgb(242 237 230 / 0.78);
+  --cwa-line: rgb(242 237 230 / 0.12);
+}
+
+body,
+#almond-background-color {
+  background: var(--cwa-ground) !important;
+}
+
+#content-container {
+  background: var(--cwa-paper) !important;
+  border-color: var(--cwa-line) !important;
+}
+
+#search-bar-entry {
+  background: var(--cwa-paper) !important;
+  border: 1px solid var(--cwa-line);
+}
+
+#navigation-items a[aria-current="page"] {
+  background: var(--cwa-ground-deeper) !important;
+  color: var(--cwa-ink) !important;
+  text-shadow: none !important;
+  font-weight: 500;
+}
+
+#navigation-items a:not([aria-current="page"]),
+.nav-anchor {
+  color: var(--cwa-ink-soft) !important;
+}
+
+#navigation-items a:not([aria-current="page"]):hover {
+  background: rgb(46 40 35 / 0.05) !important;
+  color: var(--cwa-ink) !important;
+}
+
+html.dark #navigation-items a:not([aria-current="page"]):hover {
+  background: rgb(242 237 230 / 0.05) !important;
+}
+
+.nav-tabs-item {
+  color: var(--cwa-ink-soft) !important;
+}
+
+.nav-tabs-item:hover,
+.nav-tabs-item[data-active="true"],
+.nav-tabs-item.font-semibold {
+  color: var(--cwa-ink) !important;
+}
+
+.eyebrow {
+  color: var(--cwa-ink-soft) !important;
+}

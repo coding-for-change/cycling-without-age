@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth-guards";
 import {
   docsCallbackUrl,
   docsGroups,
+  docsHost,
   docsRedirectPath,
   readDocsKey,
   signDocsToken,
@@ -13,9 +14,9 @@ import { signInHref } from "@/lib/redirects";
 
 export async function GET(request: Request) {
   await connection();
-  const host = process.env.DOCS_HOST;
+  const host = docsHost();
   const key = readDocsKey(process.env.DOCS_JWT_PRIVATE_KEY);
-  if (!host || !key) notFound();
+  if (!key) notFound();
 
   const target = docsRedirectPath(
     new URL(request.url).searchParams.get("redirect"),

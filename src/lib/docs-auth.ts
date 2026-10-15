@@ -68,13 +68,16 @@ export function docsCallbackUrl(input: {
   return url.toString();
 }
 
-export function docsEntryHref(
-  locale: string,
-  env: Record<string, string | undefined> = process.env,
-) {
-  if (!env.DOCS_HOST) return null;
+type Env = Record<string, string | undefined>;
+
+export const DEFAULT_DOCS_HOST = "docs.cwa.codingforchange.com";
+
+export const docsHost = (env: Env = process.env) =>
+  env.DOCS_HOST || DEFAULT_DOCS_HOST;
+
+export function docsEntryHref(locale: string, env: Env = process.env) {
   const path = `/${locale}`;
   return readDocsKey(env.DOCS_JWT_PRIVATE_KEY)
     ? `/docs-login?redirect=${encodeURIComponent(path)}`
-    : `https://${env.DOCS_HOST}${path}`;
+    : `https://${docsHost(env)}${path}`;
 }

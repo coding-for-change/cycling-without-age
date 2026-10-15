@@ -16,13 +16,7 @@ export function AdminPageShell({ children }: { children: ReactNode }) {
   );
 }
 
-export async function AdminPageBody({
-  page,
-  action,
-}: {
-  page: AdminPageKey;
-  action?: ReactNode;
-}) {
+export async function AdminPageBody({ page }: { page: AdminPageKey }) {
   await requireAdminScope();
   const { title, body } = (await getDictionary()).admin.pages[page];
   const Icon = ICONS[page];
@@ -33,7 +27,6 @@ export async function AdminPageBody({
       <EmptyState
         icon={Icon}
         className="flex-1 justify-start rounded-none border-none pt-16"
-        action={action}
       >
         {body}
       </EmptyState>
