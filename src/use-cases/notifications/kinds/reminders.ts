@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { fleet } from "@/features/fleet";
+import { passengers } from "@/features/passengers";
 import { rides } from "@/features/rides";
 import { formatMessage } from "@/lib/i18n/format";
-import { chapterAdminIds } from "./lookups";
+import { chapterAdminIds, excluding } from "./lookups";
 import {
   factsOfRide,
   followsItsPair,
@@ -13,6 +14,11 @@ import {
 import { defineKind } from "./types";
 
 type Pair = Parameters<typeof followsItsPair>[0];
+
+const nameOfRider = async (passengerId: string) => {
+  const rider = await passengers.getPassenger(passengerId);
+  return rider ? `${rider.firstName} ${rider.lastName}`.trim() : null;
+};
 
 /** Everyone on this leg, and on the way back when the message speaks for both. */
 async function onEitherLeg(
@@ -183,6 +189,51 @@ export const rideNoDemand = defineKind({
       cta: copy.cta,
       footer: copy.footer,
       template: "rideNoDemand",
+    };
+  },
+});
+
+/**
+ * 5B-b, the other way round: the admins were told nobody is left to ride,
+ * and now a family took its seat back. One message per leg that filled again.
+ */
+export const rideRosterRefilled = defineKind({
+  event: "ride.rosterRefilled",
+  category: "ride",
+  policy: { push: true, email: "ifNoPush", optional: true },
+  payload: z.object({
+    ...rideFacts,
+    riderId: z.string().nullable(),
+    riderName: z.string().nullable().optional(),
+  }),
+  recipients: async (event) =>
+    (await rideNotOver(event.rideId))
+      ? excluding(await chapterAdminIds(event.chapterId), event.actorUserId)
+      : [],
+  params: async (event) => ({
+    ...(await factsOfRide(event.rideId)),
+    riderId: event.passengerId,
+  }),
+  hydrate: async (params) => ({
+    ...params,
+    riderName: params.riderId ? await nameOfRider(params.riderId) : null,
+  }),
+  href: (event) => `/admin/rides/${event.rideId}`,
+  collapseKey: (event) => `ride:${event.rideId}`,
+  message: (params, strings, locale) => {
+    const copy = strings.rideRosterRefilled;
+    const values = {
+      ...rideWords(params, strings, locale),
+      rider: params.riderName ?? copy.someone,
+    };
+    return {
+      subject: formatMessage(copy.subject, values, locale),
+      preview: formatMessage(copy.preview, values, locale),
+      heading: formatMessage(copy.heading, values, locale),
+      body: formatMessage(copy.intro, values, locale),
+      cta: copy.cta,
+      footer: copy.footer,
+      template: "rideRosterRefilled",
     };
   },
 });

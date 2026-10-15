@@ -401,5 +401,14 @@
     "introBoth": "The round trip on {date} still has nobody on its roster either way: the way there at {time} from {place} ({ride}). Book riders soon, or cancel it with the reason “No riders” so the pilots and the trishaw are free again.",
     "preview": "{ride} · {time}",
     "subject": "Nobody is booked for {date}"
+  },
+  "rideRosterRefilled": {
+    "cta": "Open the ride",
+    "footer": "You received this email because you help run a Cycling Without Age chapter.",
+    "heading": "A rider is back",
+    "intro": "{rider} took the seat back on the ride on {date}, {time}, at {place}. The ride has someone to ride again.",
+    "preview": "{ride} · {time}",
+    "someone": "A rider",
+    "subject": "{rider} is riding on {date} after all"
   }
 }

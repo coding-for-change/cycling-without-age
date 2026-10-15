@@ -3253,6 +3253,19 @@ describe("seats, check-in and the closed roster", () => {
       scheduled({ roster: [entry({ attendance: "cancelled" })] }),
     );
     await rides.confirmSeat("ride-1", "passenger-1", "carer-1", BEFORE);
+    // The admins were told nobody was left: they hear the ride filled again.
+    expect(eventTypes()).toEqual(["ride.riderBooked", "ride.rosterRefilled"]);
+
+    emitted.length = 0;
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        roster: [
+          entry({ attendance: "cancelled" }),
+          entry({ id: "e2", passenger: { id: "p-2" } }),
+        ],
+      }),
+    );
+    await rides.confirmSeat("ride-1", "passenger-1", "carer-1", BEFORE);
     expect(eventTypes()).toEqual(["ride.riderBooked"]);
 
     db.ride.findUnique.mockResolvedValue(
@@ -3317,6 +3330,10 @@ describe("seats, check-in and the closed roster", () => {
           pair: { role: "lead", otherRideId: "ride-back" },
         }),
         expect.objectContaining({
+          type: "ride.rosterRefilled",
+          rideId: "ride-there",
+        }),
+        expect.objectContaining({
           type: "ride.riderBooked",
           rideId: "ride-back",
           pair: { role: "follow", otherRideId: "ride-there" },
@@ -3337,7 +3354,12 @@ describe("seats, check-in and the closed roster", () => {
       await rides.confirmSeat("ride-there", "passenger-1", "c", BEFORE);
       expect(updated()).toEqual(["entry-1"]);
       expect(emitted).toEqual([
-        expect.objectContaining({ rideId: "ride-there", pair: null }),
+        expect.objectContaining({
+          type: "ride.riderBooked",
+          rideId: "ride-there",
+          pair: null,
+        }),
+        expect.objectContaining({ type: "ride.rosterRefilled" }),
       ]);
     });
 

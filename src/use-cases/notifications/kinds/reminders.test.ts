@@ -7,6 +7,7 @@ import {
   rideNoDemand,
   ridePilotReminder,
   rideRiderReminder,
+  rideRosterRefilled,
 } from "./reminders";
 
 jest.mock("@/features/membership", () => ({
@@ -196,5 +197,19 @@ describe("a seat given up on a round trip", () => {
         pair: follow,
       }),
     ).toEqual([]);
+  });
+});
+
+describe("a seat taken back on an emptied ride", () => {
+  it("tells the other admins the ride has a rider again", async () => {
+    expect(
+      await rideRosterRefilled.recipients({
+        type: "ride.rosterRefilled",
+        rideId: "ride-1",
+        chapterId: CHAPTER,
+        actorUserId: "carer-1",
+        passengerId: "passenger-1",
+      }),
+    ).toEqual(["admin-1"]);
   });
 });

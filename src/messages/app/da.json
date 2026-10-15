@@ -425,7 +425,8 @@
         "careInvited": "Invitation til hjælper",
         "rideReminder": "Passagerpåmindelse",
         "pilotReminder": "Pilotpåmindelse",
-        "rideNoDemand": "Ingen booket"
+        "rideNoDemand": "Ingen booket",
+        "rideRosterRefilled": "Passager med igen"
       },
       "you": "Du"
     },

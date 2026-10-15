@@ -231,6 +231,7 @@ the worker):
 | `ride.opened` | — | `scheduleRide`, per leg, when the chapter lets pilots sign up and the ride is still ahead and short of pilots |
 | `ride.understaffed` | `assigned`, `required` | `checkStaffing` (the worker's staffing check), once per ride, with `actorUserId: null`; the way there checks its way back along |
 | `ride.announced` | — | `scheduleRide` with `announced`, `setAnnounced` when it is switched on the first time; only for an event still ahead |
+| `ride.rosterRefilled` | `passengerId` | `confirmSeat` when taking a seat back fills a roster that had emptied, once per outing |
 | `ride.riderReminderDue` | `pair` | `sendReminder("riderReminderSentAt")` (the worker's rider reminder), once per ride, with `actorUserId: null`; stamped in the same transaction |
 | `ride.volunteerReminderDue` | `pair` | `sendReminder("volunteerReminderSentAt")` (the worker's pilot reminder), likewise |
 | `ride.noDemand` | `pair` | `checkDemand` (the worker's demand check, 4C), once per ride whose roster is empty inside the chapter's `demandCheckLeadHours` |
@@ -270,13 +271,14 @@ PR 5 added four more, in `kinds/staffing.ts`, and widened `ridePilotAssigned`:
 | `ridePilotWithdrew` | `ride.pilotUnassigned` with `self` | chapter admins minus the actor | push, mail if no push, opt-out-able | `/admin/rides/{id}` |
 | `rideAnnounced` | `ride.announced` | the accounts behind the chapter's riders, minus the actor | push, mail if no push, opt-out-able | `/passenger/rides/{id}` |
 
-PR 6 added three more, in `kinds/reminders.ts`, and widened `rideBookingCancelled`:
+PR 6 added four more, in `kinds/reminders.ts`, and widened `rideBookingCancelled`:
 
 | Kind | Event | Who hears it | Policy | Link |
 | --- | --- | --- | --- | --- |
 | `rideRiderReminder` | `ride.riderReminderDue` | the accounts behind the ride's riders still holding a seat, on either leg (5B-b): "Confirm or cancel the seat" | push, mail always, essential | `/passenger/rides/{id}` |
 | `ridePilotReminder` | `ride.volunteerReminderDue` | the ride's pilots still piloting in its chapter (stories 29, 30), with each trishaw and where it waits — never the access code | push, mail if no push, essential | `/pilot/rides/{id}` |
 | `rideNoDemand` | `ride.noDemand` | chapter admins: flag for cancellation (4C) | push, mail if no push | `/admin/rides/{id}` |
+| `rideRosterRefilled` | `ride.rosterRefilled` | chapter admins minus the actor: the ride they were told was empty has a rider again | push, mail if no push, opt-out-able | `/admin/rides/{id}` |
 | `rideBookingCancelled` | `ride.riderRemoved` with `self` **or** `rosterNowEmpty` | chapter admins minus the actor; "nobody is left to ride" when the roster emptied (5B-b), worded as "was taken off" when an admin removed the last rider | push, mail if no push, opt-out-able | `/admin/rides/{id}` |
 
 **Every reminder is its own event.** A `Notification` is unique per event and reader, so a

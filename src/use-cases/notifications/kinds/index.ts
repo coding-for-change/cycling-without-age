@@ -13,6 +13,7 @@ import {
   rideNoDemand,
   ridePilotReminder,
   rideRiderReminder,
+  rideRosterRefilled,
 } from "./reminders";
 import {
   rideBookingCancelled,
@@ -54,6 +55,7 @@ export const kinds: AnyKind[] = [
   ridePilotWithdrew,
   rideRescheduled,
   rideRiderReminder,
+  rideRosterRefilled,
   rideUnderstaffed,
   trishawDamageReported,
   userOnboarded,

@@ -401,5 +401,14 @@
     "introBoth": "Turen ud og hjem {date} har stadig ingen passagerer nogen af vejene: udturen {time} fra {place} ({ride}). Book passagerer snart, eller aflys den med grunden “Ingen passagerer”, så piloterne og rickshawen bliver fri igen.",
     "preview": "{ride} · {time}",
     "subject": "Ingen er booket {date}"
+  },
+  "rideRosterRefilled": {
+    "cta": "Åbn turen",
+    "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling.",
+    "heading": "En passager er med igen",
+    "intro": "{rider} har taget pladsen tilbage på turen {date}, {time}, ved {place}. Turen har nogen at køre med igen.",
+    "preview": "{ride} · {time}",
+    "someone": "En passager",
+    "subject": "{rider} kører alligevel med {date}"
   }
 }

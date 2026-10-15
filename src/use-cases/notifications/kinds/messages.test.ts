@@ -265,6 +265,13 @@ const EVENTS: Record<EventType, DomainEvent> = {
     rosterNowEmpty: false,
     pair: null,
   },
+  "ride.rosterRefilled": {
+    type: "ride.rosterRefilled",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: "user-carer",
+    passengerId: "passenger-1",
+  },
   "ride.riderReminderDue": {
     type: "ride.riderReminderDue",
     rideId: "ride-1",
@@ -536,6 +543,7 @@ describe("the templates the history feed has to label", () => {
       "rideOpened",
       "ridePilotWithdrew",
       "rideReminder",
+      "rideRosterRefilled",
       "rideUnderstaffed",
       "roleChanged",
       "welcome",

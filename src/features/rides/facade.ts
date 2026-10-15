@@ -2040,8 +2040,9 @@ const hasRoom = (ride: RideDetailRow) => {
 
 /**
  * Lifecycle 5B-b: the rider's side confirms the seat, or takes back a seat
- * they gave up while there is still room. Taking it back is a booking again,
- * and the ride's chat and the chapter hear about it as one. The other leg of
+ * they gave up while there is still room. Taking it back is a booking again
+ * for the ride's chat and the rider's side; when it fills a roster that had
+ * emptied, the chapter's admins — told it was empty — hear it is not. The other leg of
  * a round trip is confirmed with it when it is booked, and taken back with it
  * only when this one is being taken back and that one still has room.
  */
@@ -2067,6 +2068,7 @@ export async function confirmSeat(
     const retaken = changing
       .filter(({ entry }) => entry!.attendance === "cancelled")
       .map(({ leg }) => leg);
+    const refilledLeg = retaken.find((leg) => seatedOn(leg).length === 0);
     for (const { leg, entry } of changing) {
       await updateRosterEntry(
         entry!.id,
@@ -2088,6 +2090,14 @@ export async function confirmSeat(
             }
           : undefined,
       );
+      if (leg === refilledLeg)
+        await emit({
+          type: "ride.rosterRefilled",
+          rideId: leg.id,
+          chapterId: leg.chapterId,
+          actorUserId,
+          passengerId,
+        });
     }
     return changing.length > 0;
   });

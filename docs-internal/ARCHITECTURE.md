@@ -1140,7 +1140,8 @@ debrief and the frozen ride chat. One migration, `20261016120000_ride_execution`
   ride starts and reach the other leg of a round trip still ahead — a confirmation confirms a
   booked seat there, and takes a given-up one back only with this one and only while it has
   room. The last seat given up emits `ride.riderRemoved` with `rosterNowEmpty`, which tells the
-  chapter's admins; the two legs of a round trip are one message only when both are left empty
+  chapter's admins, and a seat taken back on an emptied roster emits `ride.rosterRefilled`, so
+  they hear it has a rider again; the two legs of a round trip are one message only when both are left empty
   or both are not. A given-up seat keeps the ride's page open while the ride is ahead, without
   the pilots' phone numbers; afterwards the ride is no longer the account's. For the ride
   chat's one-household rule a given-up seat still counts (`listRideParticipants().household`),

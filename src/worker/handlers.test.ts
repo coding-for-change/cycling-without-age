@@ -19,6 +19,7 @@ describe("handlers", () => {
       "ride.riderReminderDue",
       "ride.volunteerReminderDue",
       "ride.noDemand",
+      "ride.rosterRefilled",
     ] as const)
       expect(listenersOf(type)).toEqual(["notify"]);
   });

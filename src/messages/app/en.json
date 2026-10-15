@@ -425,7 +425,8 @@
         "careInvited": "Caretaker invite",
         "rideReminder": "Rider reminder",
         "pilotReminder": "Pilot reminder",
-        "rideNoDemand": "Nobody booked"
+        "rideNoDemand": "Nobody booked",
+        "rideRosterRefilled": "Rider back"
       },
       "you": "You"
     },

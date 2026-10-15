@@ -425,7 +425,8 @@
         "careInvited": "Einladung Begleitperson",
         "rideReminder": "Fahrgasterinnerung",
         "pilotReminder": "Pilotenerinnerung",
-        "rideNoDemand": "Niemand gebucht"
+        "rideNoDemand": "Niemand gebucht",
+        "rideRosterRefilled": "Fahrgast wieder dabei"
       },
       "you": "Du"
     },
