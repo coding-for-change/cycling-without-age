@@ -423,7 +423,7 @@
         "careRequested": "Care request",
         "careDecided": "Care answer",
         "careInvited": "Caretaker invite",
-        "rideReminder": "Ride reminder",
+        "rideReminder": "Rider reminder",
         "pilotReminder": "Pilot reminder",
         "rideNoDemand": "Nobody booked"
       },
@@ -2581,7 +2581,7 @@
         "distance": "Distance ridden",
         "distanceHint": "In kilometres, as measured on the way.",
         "donation": "Donations received",
-        "donationHint": "Hand them to the chapter. Counted in {currency}.",
+        "donationHint": "Hand them to the chapter. Currency: {currency}.",
         "donationHintNoCurrency": "Hand them to the chapter.",
         "hint": "A few lines for the chapter. You can come back and change them.",
         "invalidNumber": "Please enter a number, like 12.5.",
@@ -2601,7 +2601,7 @@
         "title": "Debrief",
         "titleMany": "Debriefs",
         "unit": "km",
-        "unset": "Not said"
+        "unset": "Not given"
       },
       "errors": {
         "checkInClosed": "Check-in is open from two hours before the ride until a day after it.",

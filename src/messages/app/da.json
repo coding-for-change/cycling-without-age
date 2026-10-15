@@ -423,7 +423,7 @@
         "careRequested": "Anmodning om at passe på",
         "careDecided": "Svar på anmodning",
         "careInvited": "Invitation til hjælper",
-        "rideReminder": "Turpåmindelse",
+        "rideReminder": "Passagerpåmindelse",
         "pilotReminder": "Pilotpåmindelse",
         "rideNoDemand": "Ingen booket"
       },
@@ -2581,7 +2581,7 @@
         "distance": "Kørt distance",
         "distanceHint": "I kilometer, som målt undervejs.",
         "donation": "Modtagne donationer",
-        "donationHint": "Giv dem til afdelingen. Beløb i {currency}.",
+        "donationHint": "Giv dem til afdelingen. Valuta: {currency}.",
         "donationHintNoCurrency": "Giv dem til afdelingen.",
         "hint": "Et par linjer til afdelingen. Du kan ændre dem senere.",
         "invalidNumber": "Skriv et tal, fx 12,5.",
@@ -2591,12 +2591,12 @@
         "notePlaceholder": "Hvordan gik det? Er der noget, afdelingen skal vide?",
         "ratings": {
           "fair": "Nogenlunde",
-          "good": "God",
-          "poor": "Dårlig"
+          "good": "Godt",
+          "poor": "Dårligt"
         },
         "save": "Gem turrapport",
         "saved": "Turrapporten er gemt. Tak!",
-        "saving": "Gemmer…",
+        "saving": "Gemmer …",
         "someone": "en tidligere pilot",
         "title": "Turrapport",
         "titleMany": "Turrapporter",
@@ -2649,7 +2649,7 @@
         "lastName": "Efternavn",
         "removed": "{name} kører ikke med",
         "submit": "Tilføj og tjek ind",
-        "submitting": "Tilføjer…",
+        "submitting": "Tilføjer …",
         "title": "En er dukket op",
         "removeTitle": "Fjern {name} fra turen?",
         "removeBody": "Kun for en, der blev tilføjet ved en fejl. Den, der kørte med, bliver på listen.",

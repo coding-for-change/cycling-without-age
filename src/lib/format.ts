@@ -413,7 +413,7 @@ export function currencySymbol(currency: string, locale: Locale): string {
 
 const currencyNames = new Map<string, Intl.DisplayNames>();
 
-/** The money's name in words: "euros" for `EUR` in English, "Euro" in German. */
+/** The money's name as a label: "Euro", "Danish Krone", "Dänische Krone". */
 export function currencyName(currency: string, locale: Locale): string {
   let names = currencyNames.get(locale);
   if (!names) {

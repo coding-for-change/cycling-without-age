@@ -157,7 +157,7 @@
     "intro": "{rider} fährt am {date}, {time}, nicht mehr mit (Start bei {place}). Vielleicht ist jetzt Platz für jemand anderen – oder niemand mehr angemeldet.",
     "introBoth": "{rider} fährt am {date} nicht mehr hin und zurück mit (Hinfahrt {time} ab {place}). Vielleicht ist jetzt Platz für jemand anderen – oder niemand mehr angemeldet.",
     "introEmpty": "{rider} hat den letzten Platz der Fahrt am {date}, {time}, bei {place} abgesagt. Niemand fährt mehr mit – vielleicht möchten Sie die Fahrt absagen, damit Piloten und Rikscha wieder frei sind.",
-    "introEmptyBoth": "{rider} hat den letzten Platz der Fahrt am {date} hin und zurück abgesagt (Hinfahrt {time} ab {place}). In keine Richtung fährt mehr jemand mit – vielleicht möchten Sie die Fahrt absagen, damit Piloten und Rikscha wieder frei sind.",
+    "introEmptyBoth": "{rider} hat den letzten Platz der Fahrt am {date} hin und zurück abgesagt (Hinfahrt {time} ab {place}). Weder hin noch zurück fährt noch jemand mit – vielleicht möchten Sie die Fahrt absagen, damit Piloten und Rikscha wieder frei sind.",
     "introEmptyRemoved": "{rider} wurde von der Fahrt am {date}, {time}, bei {place} genommen, und niemand fährt mehr mit. Vielleicht möchten Sie die Fahrt absagen, damit Piloten und Rikscha wieder frei sind.",
     "preview": "{ride} · {time}",
     "someone": "Ein Fahrgast",
@@ -398,7 +398,7 @@
     "footer": "Sie erhalten diese E-Mail, weil Sie eine Ortsgruppe von Cycling Without Age mitgestalten.",
     "heading": "Noch niemand angemeldet",
     "intro": "Für die Fahrt am {date}, {time}, bei {place} ({ride}) ist noch niemand angemeldet. Buchen Sie bald Fahrgäste, oder sagen Sie die Fahrt mit dem Grund „Keine Fahrgäste“ ab, damit Piloten und Rikscha wieder frei sind.",
-    "introBoth": "Für die Fahrt am {date} hin und zurück ist in keine Richtung jemand angemeldet: Hinfahrt {time} ab {place} ({ride}). Buchen Sie bald Fahrgäste, oder sagen Sie die Fahrt mit dem Grund „Keine Fahrgäste“ ab, damit Piloten und Rikscha wieder frei sind.",
+    "introBoth": "Für die Hin- und Rückfahrt am {date} ist noch niemand angemeldet: Hinfahrt {time} ab {place} ({ride}). Buchen Sie bald Fahrgäste, oder sagen Sie die Fahrt mit dem Grund „Keine Fahrgäste“ ab, damit Piloten und Rikscha wieder frei sind.",
     "preview": "{ride} · {time}",
     "subject": "Für den {date} ist niemand angemeldet"
   }
