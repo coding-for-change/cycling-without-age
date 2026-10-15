@@ -39,6 +39,8 @@ import {
   RidesSkeleton,
   WeekSwitcherSkeleton,
 } from "./_components/rides-skeleton";
+import { RideTabs, RideTabsSkeleton } from "./_components/ride-tabs";
+import { RequestsWaiting } from "./_components/requests-waiting";
 import { ScheduleRide } from "./_components/schedule-ride";
 import { TRANSIENT, ridesView } from "./rides-view";
 
@@ -51,6 +53,14 @@ export default function RidesPage({ searchParams }: PageProps) {
     <AdminPageShell>
       <Suspense fallback={<RidesSkeleton />}>
         <RidesFrame
+          tabs={
+            <Suspense fallback={<RideTabsSkeleton />}>
+              <RideTabs
+                searchParams={searchParams}
+                current="rides"
+              />
+            </Suspense>
+          }
           weekSwitcher={
             <Suspense fallback={<WeekSwitcherSkeleton />}>
               <RidesWeekSwitcher searchParams={searchParams} />
@@ -77,9 +87,11 @@ export default function RidesPage({ searchParams }: PageProps) {
 }
 
 async function RidesFrame({
+  tabs,
   weekSwitcher,
   body,
 }: {
+  tabs: ReactNode;
   weekSwitcher: ReactNode;
   body: ReactNode;
 }) {
@@ -92,6 +104,7 @@ async function RidesFrame({
   return (
     <>
       <AdminPageHeader title={dict.admin.pages.rides.title} />
+      {tabs}
       <div className="-mt-3 flex flex-col gap-3">
         <Suspense fallback={<StickyToolbarSkeleton />}>
           <RidesToolbar
@@ -169,6 +182,7 @@ async function RidesWeekSwitcher({ searchParams }: PageProps) {
 
 async function RidesBody({ searchParams }: PageProps) {
   const {
+    scopeQuery,
     view,
     week,
     label,
@@ -186,6 +200,12 @@ async function RidesBody({ searchParams }: PageProps) {
   return (
     <>
       {label ? <p className="text-2sm text-ink-soft">{label}</p> : null}
+      <Suspense fallback={null}>
+        <RequestsWaiting
+          chapterIds={chapterIds}
+          scopeQuery={scopeQuery}
+        />
+      </Suspense>
       <Suspense
         key={view === "list" ? "list" : `calendar:${week}`}
         fallback={view === "list" ? <RideListSkeleton /> : <RideWeekSkeleton />}
