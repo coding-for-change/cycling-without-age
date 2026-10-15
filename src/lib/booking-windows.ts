@@ -9,6 +9,7 @@
  */
 import {
   addDays,
+  clockMinutes,
   dayKey,
   instantAt,
   MINUTES_IN_DAY,
@@ -162,11 +163,7 @@ export function windowsOnDate(
         if (!chip.long) return [];
         const sameDay = dayKey(earliest, timeZone) === date;
         if (!sameDay) return [];
-        const wall = Math.round(
-          (earliest.getTime() - instantOn(date, 0, timeZone).getTime()) /
-            60_000,
-        );
-        from = ceilToStep(wall);
+        from = ceilToStep(clockMinutes(earliest, timeZone));
         if (chip.to - from < ride) return [];
       }
       const startsAt = instantOn(date, from, timeZone);

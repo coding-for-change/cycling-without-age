@@ -160,6 +160,38 @@ describe("windowsOnDate", () => {
       expect(windows.map(clock)).not.toContain("2-3");
     });
 
+    it("trims a long stretch on the wall clock across the spring-forward night", () => {
+      const sundays: OperatingHours = {
+        windows: [{ weekday: 7, startMinute: 13 * 60, endMinute: 17 * 60 }],
+        closures: [],
+      };
+      const [window] = windowsOnDate(
+        sundays,
+        "2027-03-28",
+        { ...POLICY, leadTimeHours: 24 },
+        BERLIN,
+        new Date("2027-03-27T13:07:00Z"),
+      );
+      expect(clock(window)).toBe(`${(15 * 60 + 15) / 60}-17`);
+      expect(window.startsAt.toISOString()).toBe("2027-03-28T13:15:00.000Z");
+    });
+
+    it("trims a long stretch on the wall clock across the fall-back night", () => {
+      const sundays: OperatingHours = {
+        windows: [{ weekday: 7, startMinute: 13 * 60, endMinute: 17 * 60 }],
+        closures: [],
+      };
+      const [window] = windowsOnDate(
+        sundays,
+        "2026-10-25",
+        { ...POLICY, leadTimeHours: 24 },
+        BERLIN,
+        new Date("2026-10-24T12:07:00Z"),
+      );
+      expect(window.startMinute).toBe(13 * 60 + 15);
+      expect(window.startsAt.toISOString()).toBe("2026-10-25T12:15:00.000Z");
+    });
+
     it("reads Denver's own clock, not Berlin's", () => {
       const [first] = windowsOnDate(
         MORNINGS,
