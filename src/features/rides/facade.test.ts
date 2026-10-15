@@ -1464,6 +1464,7 @@ describe("what a member may read", () => {
     expect(await rides.listRideParticipants("ride-1")).toEqual({
       chapterId: "chapter-muenchen",
       pilotUserIds: ["pilot-1"],
+      riderCount: 2,
       riderAccountUserIds: ["carer-1", "rider-2"],
     });
   });

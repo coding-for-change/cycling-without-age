@@ -325,6 +325,7 @@ export async function listRideParticipants(rideId: string) {
   return {
     chapterId: ride.chapterId,
     pilotUserIds: [...new Set(ride.assignments.map((a) => a.userId))],
+    riderCount: ride.roster.length,
     riderAccountUserIds: [
       ...new Set(
         ride.roster.flatMap(({ passenger }) =>

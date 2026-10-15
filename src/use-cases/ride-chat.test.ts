@@ -41,6 +41,7 @@ describe("syncRideChat", () => {
     participants.mockResolvedValue({
       chapterId: "chapter-1",
       pilotUserIds: ["pilot-1"],
+      riderCount: 1,
       riderAccountUserIds: ["carer-1"],
     });
     expect(await loaded(false)).toEqual({
@@ -59,6 +60,47 @@ describe("syncRideChat", () => {
     participants.mockResolvedValue({
       chapterId: "chapter-1",
       pilotUserIds: ["pilot-1"],
+      riderAccountUserIds: ["carer-1", "carer-2"],
+    });
+    expect(await loaded(false)).toEqual(
+      expect.objectContaining({ memberUserIds: ["pilot-1", "admin-1"] }),
+    );
+  });
+
+  it("takes in a family who books every rider on the ride", async () => {
+    participants.mockResolvedValue({
+      chapterId: "chapter-1",
+      pilotUserIds: ["pilot-1"],
+      riderCount: 2,
+      riderAccountUserIds: ["carer-1"],
+    });
+    expect(await loaded(false)).toEqual(
+      expect.objectContaining({
+        memberUserIds: ["pilot-1", "carer-1", "admin-1"],
+      }),
+    );
+  });
+
+  it("takes in a rider and whoever books for them", async () => {
+    participants.mockResolvedValue({
+      chapterId: "chapter-1",
+      pilotUserIds: ["pilot-1"],
+      riderCount: 1,
+      riderAccountUserIds: ["carer-1", "rider-1"],
+    });
+    expect(await loaded(false)).toEqual(
+      expect.objectContaining({
+        memberUserIds: ["pilot-1", "carer-1", "rider-1", "admin-1"],
+      }),
+    );
+  });
+
+  // Two households on one pleasure ride never meet in its chat.
+  it("keeps riders of different households out of each other's chat", async () => {
+    participants.mockResolvedValue({
+      chapterId: "chapter-1",
+      pilotUserIds: ["pilot-1"],
+      riderCount: 2,
       riderAccountUserIds: ["carer-1", "carer-2"],
     });
     expect(await loaded(false)).toEqual(
