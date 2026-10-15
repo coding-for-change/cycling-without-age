@@ -425,7 +425,8 @@
         "careDecided": "Care answer",
         "careInvited": "Caretaker invite"
       },
-      "you": "You"
+      "you": "You",
+      "riderHandedOver": "{direction, select, in {{actor} handed {rider} over to this account, from {previous}} other {{actor} handed {rider} over to {next}}}"
     },
     "members": {
       "actions": "Actions for {name}",

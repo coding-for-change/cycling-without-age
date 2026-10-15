@@ -425,7 +425,8 @@
         "careDecided": "Antwort auf Betreuung",
         "careInvited": "Einladung Begleitperson"
       },
-      "you": "Du"
+      "you": "Du",
+      "riderHandedOver": "{direction, select, in {{actor} hat {rider} von {previous} an dieses Konto übergeben} other {{actor} hat {rider} an {next} übergeben}}"
     },
     "members": {
       "actions": "Aktionen für {name}",

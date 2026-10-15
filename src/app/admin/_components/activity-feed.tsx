@@ -1,4 +1,5 @@
 import {
+  ArrowRightLeft,
   CircleCheck,
   CircleX,
   Globe,
@@ -63,6 +64,7 @@ const ICON: Record<ActivityType, LucideIcon> = {
   chapterUpdated: Pencil,
   chapterDeleted: Trash2,
   countryDeleted: Trash2,
+  riderHandedOver: ArrowRightLeft,
 };
 
 export function ActivityFeed({

@@ -425,7 +425,8 @@
         "careDecided": "Svar på anmodning",
         "careInvited": "Invitation til hjælper"
       },
-      "you": "Du"
+      "you": "Du",
+      "riderHandedOver": "{direction, select, in {{actor} overdrog {rider} fra {previous} til denne konto} other {{actor} overdrog {rider} til {next}}}"
     },
     "members": {
       "actions": "Handlinger for {name}",
