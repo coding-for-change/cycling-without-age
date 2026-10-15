@@ -91,12 +91,14 @@ export async function withdrawRideRequestAction(
 
 /**
  * Every decision is authorised by the request's own chapter, read from the
- * database. Someone with no admin scope at all is turned away first.
+ * database. Someone with no admin scope at all is turned away first, and a
+ * request outside the admin's reach reads as a missing one.
  */
 async function adminOfRequest(requestId: string) {
-  await requireAdminScope();
+  const { scope } = await requireAdminScope();
   const request = await rideRequests.getRequest(requestId);
-  if (!request) return null;
+  if (!request || !scope.chapters.some((c) => c.id === request.chapterId))
+    return null;
   const { user } = await requireChapterAdmin(request.chapterId);
   return { request, actorUserId: user.id };
 }

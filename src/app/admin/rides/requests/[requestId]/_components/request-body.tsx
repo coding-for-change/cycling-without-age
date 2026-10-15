@@ -140,7 +140,8 @@ export async function RequestBody({
   if (!requestId.safeParse(id).success) notFound();
 
   const request = await rideRequests.getRequest(id);
-  if (!request) notFound();
+  if (!request || !scope.chapters.some((c) => c.id === request.chapterId))
+    notFound();
   await requireChapterAdmin(request.chapterId);
 
   const now = new Date();
