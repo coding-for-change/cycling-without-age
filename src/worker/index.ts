@@ -112,9 +112,17 @@ async function pruneChat() {
 }
 
 async function sweepRides() {
-  const { understaffed } = await rideSweep();
-  if (understaffed > 0)
-    logger.info({ understaffed }, "flagged understaffed rides");
+  const swept = await rideSweep();
+  if (Object.values(swept).some((count) => count > 0))
+    logger.info(
+      {
+        understaffed: swept.understaffed,
+        riders_reminded: swept.ridersReminded,
+        pilots_reminded: swept.pilotsReminded,
+        no_demand: swept.noDemand,
+      },
+      "swept upcoming rides",
+    );
 }
 
 const MAINTENANCE: Record<MaintenanceName, () => Promise<void>> = {

@@ -144,6 +144,7 @@ import {
 import type { ReportScope } from "./report-zones";
 
 export type {
+  RideMarker,
   AnnouncedEventRow,
   FeedAudience,
   PassengerRideDetailRow,

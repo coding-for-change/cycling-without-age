@@ -1,3 +1,8 @@
+import {
+  demandCheck,
+  riderReminders,
+  volunteerReminders,
+} from "./ride-reminders";
 import { staffingCheck } from "./staffing-check";
 
 /**
@@ -7,5 +12,8 @@ import { staffingCheck } from "./staffing-check";
  */
 export async function rideSweep(now = new Date()) {
   const understaffed = await staffingCheck(now);
-  return { understaffed };
+  const ridersReminded = await riderReminders(now);
+  const pilotsReminded = await volunteerReminders(now);
+  const noDemand = await demandCheck(now);
+  return { understaffed, ridersReminded, pilotsReminded, noDemand };
 }
