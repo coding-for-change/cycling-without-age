@@ -2459,7 +2459,8 @@
           "scheduled": "Booket",
           "declined": "Ikke denne gang",
           "withdrawn": "Trukket tilbage",
-          "lapsed": "Intet svar i tide"
+          "lapsed": "Intet svar i tide",
+          "closed": "Lukket"
         },
         "bodies": {
           "pending": "{chapter} har dit ønske og bekræfter det præcise tidspunkt. Du får besked.",
@@ -2467,7 +2468,8 @@
           "scheduledGone": "{chapter} bookede en tur til dette ønske, men den er siden blevet aflyst. Spørg afdelingen om en anden dag.",
           "declined": "{chapter} kan desværre ikke få denne tur til at lykkes. Du er velkommen til at ønske en anden dag.",
           "withdrawn": "Du har trukket dette ønske tilbage.",
-          "lapsed": "{chapter} nåede ikke at svare på dit ønske før det tidspunkt, du bad om. Du er velkommen til at ønske igen."
+          "lapsed": "{chapter} nåede ikke at svare på dit ønske før det tidspunkt, du bad om. Du er velkommen til at ønske igen.",
+          "closed": "Dette ønske blev lukket, fordi en passager, det var til, ikke længere er på din liste. Du er velkommen til at ønske igen."
         },
         "decisionNote": "En besked fra {chapter}",
         "riders": "Passagerer",

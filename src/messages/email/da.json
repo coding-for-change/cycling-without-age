@@ -386,7 +386,10 @@
     "heading": "Et turønske er trukket tilbage",
     "intro": "{requester} har ikke længere brug for turen for {riders} {date}, {time}. Der er ikke mere at gøre.",
     "cta": "Åbn ønsket",
-    "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling."
+    "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling.",
+    "subjectClosed": "Turønsket til {date} er lukket",
+    "headingClosed": "Et turønske er lukket",
+    "introClosed": "Ønsket for {riders} {date}, {time}, blev lukket, fordi en passager eller den, der ønskede, ikke længere er med. Der er ikke mere at gøre."
   },
   "rideRequestDeclined": {
     "subject": "{chapter} kan ikke tilbyde turen {date}",

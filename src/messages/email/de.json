@@ -386,7 +386,10 @@
     "heading": "Eine Fahrtanfrage wurde zurückgezogen",
     "intro": "{requester} braucht die Fahrt für {riders} am {date}, {time}, nicht mehr. Es gibt nichts mehr zu tun.",
     "cta": "Anfrage öffnen",
-    "footer": "Du erhältst diese E-Mail, weil du eine Cycling-Without-Age-Ortsgruppe mit betreust."
+    "footer": "Du erhältst diese E-Mail, weil du eine Cycling-Without-Age-Ortsgruppe mit betreust.",
+    "subjectClosed": "Die Fahrtanfrage für den {date} wurde geschlossen",
+    "headingClosed": "Eine Fahrtanfrage wurde geschlossen",
+    "introClosed": "Die Anfrage für {riders} am {date}, {time}, wurde geschlossen, weil ein Fahrgast oder die anfragende Person nicht mehr dabei ist. Es gibt nichts mehr zu tun."
   },
   "rideRequestDeclined": {
     "subject": "{chapter} kann die Fahrt am {date} nicht anbieten",

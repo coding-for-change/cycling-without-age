@@ -39,10 +39,11 @@ export async function RequestDetail({
 }
 
 const STATE: Record<
-  RideRequestRow["status"] | "lapsed",
+  RideRequestRow["status"] | "lapsed" | "closed",
   { icon: LucideIcon; tone: string }
 > = {
   lapsed: { icon: CalendarX2, tone: "bg-canvas-deep" },
+  closed: { icon: Undo2, tone: "bg-canvas-deep" },
   pending: { icon: Hourglass, tone: "bg-mint-tint" },
   scheduled: { icon: CalendarCheck2, tone: "bg-mint-tint" },
   declined: { icon: CalendarX2, tone: "bg-canvas-deep" },
@@ -69,7 +70,12 @@ async function OwnRequest({ id }: { id: string }) {
   const chapter = request.chapter.name;
   const when = requestedWhen(request, notation);
   const route = requestedRoute(request);
-  const state = rideRequests.lapsed(request) ? "lapsed" : request.status;
+  const state = rideRequests.lapsed(request)
+    ? "lapsed"
+    : request.status === "withdrawn" &&
+        request.decidedByUserId !== request.requesterUserId
+      ? "closed"
+      : request.status;
   const { icon: Icon, tone } = STATE[state];
   const rideGone =
     request.status === "scheduled" &&
@@ -189,7 +195,7 @@ async function OwnRequest({ id }: { id: string }) {
             errors={{ ...dict.common.errors, ...strings.errors }}
           />
         ) : null}
-        {state === "declined" || state === "withdrawn" || state === "lapsed" ? (
+        {state !== "pending" && state !== "scheduled" ? (
           <Button
             asChild
             variant="outline"

@@ -2459,7 +2459,8 @@
           "scheduled": "Booked",
           "declined": "Not this time",
           "withdrawn": "Cancelled",
-          "lapsed": "No answer in time"
+          "lapsed": "No answer in time",
+          "closed": "Closed"
         },
         "bodies": {
           "pending": "{chapter} has your request and confirms the exact time. You'll hear back by message.",
@@ -2467,7 +2468,8 @@
           "scheduledGone": "{chapter} booked a ride for this request, but it has since been cancelled. Ask the chapter about another day.",
           "declined": "{chapter} can't make this ride happen. You're welcome to ask for another day.",
           "withdrawn": "You cancelled this request.",
-          "lapsed": "{chapter} didn't get to your request before the time you asked for. You're welcome to ask again."
+          "lapsed": "{chapter} didn't get to your request before the time you asked for. You're welcome to ask again.",
+          "closed": "This request was closed because a rider it was for is no longer on your list. You're welcome to ask again."
         },
         "decisionNote": "A note from {chapter}",
         "riders": "Riders",

@@ -386,7 +386,10 @@
     "heading": "A ride request was withdrawn",
     "intro": "{requester} no longer needs the ride for {riders} on {date}, {time}. There is nothing left to do.",
     "cta": "Open the request",
-    "footer": "You received this email because you help run a Cycling Without Age chapter."
+    "footer": "You received this email because you help run a Cycling Without Age chapter.",
+    "subjectClosed": "The ride request for {date} was closed",
+    "headingClosed": "A ride request was closed",
+    "introClosed": "The request for {riders} on {date}, {time}, was closed because a rider or the person who asked left. There is nothing left to do."
   },
   "rideRequestDeclined": {
     "subject": "{chapter} can't offer the ride on {date}",

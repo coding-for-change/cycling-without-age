@@ -154,15 +154,21 @@ export const rideRequestSubmitted = defineKind({
   },
 });
 
-/** The requester took the request back: the chapter's list is one shorter. */
+/**
+ * The requester took the request back, or it was closed because its riders
+ * or its requester left: either way the chapter's list is one shorter.
+ */
 export const rideRequestWithdrawn = defineKind({
   event: "rideRequest.withdrawn",
   category: "request",
   policy: { push: true, email: "ifNoPush", optional: true },
-  payload: requestFactsSchema,
+  payload: requestFactsSchema.extend({ closed: z.boolean() }),
   recipients: async (event) =>
     excluding(await chapterAdminIds(event.chapterId), event.actorUserId),
-  params: (event) => factsOfRequest(event.requestId),
+  params: async (event) => {
+    const facts = await factsOfRequest(event.requestId);
+    return { ...facts, closed: facts.requesterId !== event.actorUserId };
+  },
   hydrate: withNames,
   href: (event) => requestLink(event.requestId),
   collapseKey: (event) => `requests:${event.chapterId}`,
@@ -171,10 +177,18 @@ export const rideRequestWithdrawn = defineKind({
     const copy = strings.rideRequestWithdrawn;
     const values = requestWords(params, strings, locale);
     return {
-      subject: formatMessage(copy.subject, values, locale),
+      subject: formatMessage(
+        params.closed ? copy.subjectClosed : copy.subject,
+        values,
+        locale,
+      ),
       preview: formatMessage(copy.preview, values, locale),
-      heading: copy.heading,
-      body: formatMessage(copy.intro, values, locale),
+      heading: params.closed ? copy.headingClosed : copy.heading,
+      body: formatMessage(
+        params.closed ? copy.introClosed : copy.intro,
+        values,
+        locale,
+      ),
       cta: copy.cta,
       footer: copy.footer,
       template: "rideRequestWithdrawn",
