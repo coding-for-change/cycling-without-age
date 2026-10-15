@@ -3099,6 +3099,95 @@ describe("seats, check-in and the closed roster", () => {
     ).toBe("pleasureLimit");
   });
 
+  describe("on a round trip", () => {
+    const legs = (there: unknown[], back: unknown[], backOverrides = {}) => {
+      const rows: Record<string, unknown> = {
+        "ride-there": scheduled({
+          id: "ride-there",
+          model: "functional",
+          returnLeg: { id: "ride-back", status: "scheduled" },
+          roster: there,
+        }),
+        "ride-back": scheduled({
+          id: "ride-back",
+          model: "functional",
+          startsAt: new Date("2026-09-08T15:00:00Z"),
+          endsAt: new Date("2026-09-08T16:00:00Z"),
+          returnLegOf: { id: "ride-there", status: "scheduled" },
+          roster: back,
+          ...backOverrides,
+        }),
+      };
+      db.ride.findUnique.mockImplementation(({ where }) =>
+        Promise.resolve(rows[where.id]),
+      );
+    };
+    const other = (id: string) => entry({ id, passenger: { id: id } });
+    const updated = () =>
+      db.rideRosterEntry.update.mock.calls.map(([args]) => args.where.id);
+
+    it("confirms the way back with the way there", async () => {
+      legs([entry()], [entry({ id: "entry-back" })]);
+      await rides.confirmSeat("ride-there", "passenger-1", "c", BEFORE);
+      expect(updated()).toEqual(["entry-1", "entry-back"]);
+      expect(emitted).toEqual([]);
+    });
+
+    it("takes both seats back as one booking", async () => {
+      legs(
+        [entry({ attendance: "cancelled" })],
+        [entry({ id: "entry-back", attendance: "cancelled" })],
+      );
+      await rides.confirmSeat("ride-there", "passenger-1", "c", BEFORE);
+      expect(emitted).toEqual([
+        expect.objectContaining({
+          type: "ride.riderBooked",
+          rideId: "ride-there",
+          pair: { role: "lead", otherRideId: "ride-back" },
+        }),
+        expect.objectContaining({
+          type: "ride.riderBooked",
+          rideId: "ride-back",
+          pair: { role: "follow", otherRideId: "ride-there" },
+        }),
+      ]);
+    });
+
+    // The way back filled up meanwhile: the way there is still taken back.
+    it("takes back only the leg that still has room", async () => {
+      legs(
+        [entry({ attendance: "cancelled" })],
+        [
+          entry({ id: "entry-back", attendance: "cancelled" }),
+          other("p-2"),
+          other("p-3"),
+        ],
+      );
+      await rides.confirmSeat("ride-there", "passenger-1", "c", BEFORE);
+      expect(updated()).toEqual(["entry-1"]);
+      expect(emitted).toEqual([
+        expect.objectContaining({ rideId: "ride-there", pair: null }),
+      ]);
+    });
+
+    // A seat given up on the way back stays given up when the way there is confirmed.
+    it("never takes back the other leg while only confirming this one", async () => {
+      legs([entry()], [entry({ id: "entry-back", attendance: "cancelled" })]);
+      await rides.confirmSeat("ride-there", "passenger-1", "c", BEFORE);
+      expect(updated()).toEqual(["entry-1"]);
+      expect(emitted).toEqual([]);
+    });
+
+    it("leaves a way back that has already started", async () => {
+      legs([entry()], [entry({ id: "entry-back" })], {
+        startsAt: new Date("2026-09-07T08:00:00Z"),
+      });
+      await rides.cancelSeat("ride-there", "passenger-1", "c", BEFORE);
+      expect(updated()).toEqual(["entry-1"]);
+      expect(emitted).toEqual([expect.objectContaining({ pair: null })]);
+    });
+  });
+
   it("books a rider who gave the seat up on the same row again", async () => {
     db.ride.findUnique.mockResolvedValue(
       scheduled({ roster: [entry({ attendance: "cancelled" })] }),

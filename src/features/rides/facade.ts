@@ -1936,10 +1936,22 @@ async function seatLegs(
   ];
 }
 
+/** Whether one more rider fits, as the ride's model and numbers allow. */
+const hasRoom = (ride: RideDetailRow) => {
+  const limit = modelLimits(
+    ride.model,
+    ride.capacity,
+    ride.requiredPilots,
+  ).passengers;
+  return limit === null || seatedOn(ride).length < limit;
+};
+
 /**
  * Lifecycle 5B-b: the rider's side confirms the seat, or takes back a seat
  * they gave up while there is still room. Taking it back is a booking again,
- * and the ride's chat and the chapter hear about it as one.
+ * and the ride's chat and the chapter hear about it as one. The other leg of
+ * a round trip is confirmed with it when it is booked, and taken back with it
+ * only when this one is being taken back and that one still has room.
  */
 export async function confirmSeat(
   rideId: string,
@@ -1950,15 +1962,20 @@ export async function confirmSeat(
   return rideWrite(async (tx, emit) => {
     const ride = await requireScheduled(rideId, tx);
     if (ride.startsAt <= now) throw new DomainError("rideClosed");
-    const legs = await seatLegs(ride, passengerId, now, tx);
-    if (!legs[0].entry) throw new DomainError("unknownPassenger");
-    const changing = legs.filter(
-      ({ entry }) =>
-        entry?.attendance === "booked" || entry?.attendance === "cancelled",
+    const [here, ...others] = await seatLegs(ride, passengerId, now, tx);
+    if (!here.entry) throw new DomainError("unknownPassenger");
+    const retaking = here.entry.attendance === "cancelled";
+    if (retaking) requireRoom(ride, "passengers", seatedOn(ride).length);
+    const changing = [here, ...others].filter(
+      ({ leg, entry }) =>
+        entry?.attendance === "booked" ||
+        (entry?.attendance === "cancelled" &&
+          (leg === ride || (retaking && hasRoom(leg)))),
     );
+    const retaken = changing
+      .filter(({ entry }) => entry!.attendance === "cancelled")
+      .map(({ leg }) => leg);
     for (const { leg, entry } of changing) {
-      const retaken = entry!.attendance === "cancelled";
-      if (retaken) requireRoom(leg, "passengers", seatedOn(leg).length);
       await updateRosterEntry(
         entry!.id,
         { attendance: "confirmed", confirmedAt: now, cancelledAt: null },
@@ -1971,8 +1988,12 @@ export async function confirmSeat(
         actorUserId,
         "seatConfirmed",
         { passengerId },
-        retaken
-          ? { type: "ride.riderBooked", passengerId, pair: null }
+        retaken.includes(leg)
+          ? {
+              type: "ride.riderBooked",
+              passengerId,
+              pair: pairOfLegs(retaken, leg),
+            }
           : undefined,
       );
     }
