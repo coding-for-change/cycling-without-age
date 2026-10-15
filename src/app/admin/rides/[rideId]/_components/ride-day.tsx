@@ -117,7 +117,7 @@ export function RideDay({
             rideId={ride.id}
             language={language}
             labels={walkUpStrings(dict)}
-            triggerClassName="h-8 min-h-8 w-fit text-2sm"
+            triggerClassName="h-8 min-h-8 w-fit rounded-md text-2sm"
           />
         ) : null}
       </div>
