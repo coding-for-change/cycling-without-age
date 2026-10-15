@@ -2025,7 +2025,7 @@
       },
       "seat": {
         "cancel": {
-          "aria": "Platz für {name} absagen",
+          "aria": "Platz absagen für {name}",
           "body": "Die Ortsgruppe kann den Platz dann jemand anderem anbieten. Solange noch Platz ist, können Sie ihn hier zurücknehmen.",
           "cancel": "Platz behalten",
           "confirm": "Platz freigeben",
@@ -2034,7 +2034,7 @@
           "title": "Den Platz von {name} freigeben?"
         },
         "confirm": "Platz bestätigen",
-        "confirmAria": "Platz für {name} bestätigen",
+        "confirmAria": "Platz bestätigen für {name}",
         "confirmed": "Platz bestätigt. Bis bald!",
         "errors": {
           "pleasureLimit": "Diese Ausfahrt ist inzwischen wieder voll. Ihre Ortsgruppe hilft Ihnen gern.",
@@ -2047,7 +2047,7 @@
         },
         "hint": "Bitte bestätigen Sie jeden Platz – oder geben Sie ihn frei, wenn sich etwas geändert hat, damit jemand anderes mitfahren kann.",
         "retake": "Platz zurücknehmen",
-        "retakeAria": "Platz für {name} zurücknehmen",
+        "retakeAria": "Platz zurücknehmen für {name}",
         "retaken": "Platz zurückgenommen. Bis bald!",
         "states": {
           "booked": "Noch nicht bestätigt",

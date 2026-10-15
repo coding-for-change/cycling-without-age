@@ -2047,7 +2047,7 @@
         },
         "hint": "Bekræft hver plads – eller giv den fri, hvis planerne har ændret sig, så en anden kan køre med.",
         "retake": "Tag pladsen tilbage",
-        "retakeAria": "Tag pladsen til {name} tilbage",
+        "retakeAria": "Tag pladsen tilbage til {name}",
         "retaken": "Pladsen er taget tilbage. Vi ses!",
         "states": {
           "booked": "Ikke bekræftet endnu",
