@@ -277,13 +277,14 @@ PR 6 added three more, in `kinds/reminders.ts`, and widened `rideBookingCancelle
 | `rideRiderReminder` | `ride.riderReminderDue` | the accounts behind the ride's riders still holding a seat, on either leg (5B-b): "Confirm or cancel the seat" | push, mail always, essential | `/passenger/rides/{id}` |
 | `ridePilotReminder` | `ride.volunteerReminderDue` | the ride's pilots still piloting in its chapter (stories 29, 30), with each trishaw and where it waits — never the access code | push, mail if no push, essential | `/pilot/rides/{id}` |
 | `rideNoDemand` | `ride.noDemand` | chapter admins: flag for cancellation (4C) | push, mail if no push | `/admin/rides/{id}` |
-| `rideBookingCancelled` | `ride.riderRemoved` with `self` **or** `rosterNowEmpty` | chapter admins minus the actor; "every rider has cancelled" when nobody is left (5B-b) | push, mail if no push, opt-out-able | `/admin/rides/{id}` |
+| `rideBookingCancelled` | `ride.riderRemoved` with `self` **or** `rosterNowEmpty` | chapter admins minus the actor; "nobody is left to ride" when the roster emptied (5B-b), worded as "was taken off" when an admin removed the last rider | push, mail if no push, opt-out-able | `/admin/rides/{id}` |
 
 **Every reminder is its own event.** A `Notification` is unique per event and reader, so a
 reminder cannot ride on an existing event; the marker (`riderReminderSentAt`,
 `volunteerReminderSentAt`, `demandCheckedAt`) is stamped in the same `transaction()` as the
 emit under the ride's lock, so neither a retried sweep nor a retried dispatch tells anyone
-twice. Moving a ride clears all three, and the reminders go again for its new time.
+twice. Moving a ride's start clears all three and asks confirmed or checked-in seats again,
+so the reminders go again for its new time; a new end clears only the staffing stamp.
 `ride.completed` and `ride.reopened` have no listener: the chat freezes in
 `use-cases/complete-ride.ts` itself.
 
@@ -315,9 +316,12 @@ to everyone on either leg. `pair` defaults to `null`, so events stored before it
 single rides.
 
 **A seat given up is the rider's side's news.** `ride.riderRemoved` carries `self`: true when
-the actor is the rider's own account or the account managing them. Only then do the chapter
-admins hear about it — an admin of the chapter, of its country or a superadmin removing a
-rider is already in the know, and no role lookup in the worker has to guess which.
+the actor is the rider's own account or the account managing them, and `rosterNowEmpty` when
+nobody is left to ride. The chapter admins hear about it when the rider's side gave the seat
+up, or when the roster is left empty — then also when an admin of the chapter, of its country
+or a superadmin took the last rider off, in its own "was taken off" words. Any other removal
+by an admin is already known to the admins, and no role lookup in the worker has to guess
+which.
 
 **People are named when the message is written.** The ride kinds store a rider as `riderId`
 and an admin as `actorUserId`, never their names; a kind's optional `hydrate` looks the names

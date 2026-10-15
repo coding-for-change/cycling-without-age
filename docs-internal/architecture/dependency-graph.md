@@ -245,8 +245,8 @@ photo strip. Nothing a browser uploaded is served unprocessed.
 The notification kinds now reach `fleet` for trishaw and pool names:
 `trishaw.damageReported`, `pool.accessRequested` and `pool.accessDecided`, category `fleet`.
 The pilots' ride reminder (`kinds/reminders.ts`) asks `fleet.listTrishawPlaces` where each
-trishaw waits — the same answer the finish page and the pickup pack read — and carries the
-names only, never the access code.
+trishaw waits — the same answer the finish page and the pickup pack read — and carries each
+trishaw's name and where it waits, never the access code.
 
 The ride kinds (`kinds/rides.ts`, category `ride`) reach `rides` for the ride's time, place and
 participants and `passengers` for a rider's name and the accounts behind them; whether a rider
