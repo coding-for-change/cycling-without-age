@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BellOff } from "lucide-react";
+import { BellOff, Bike } from "lucide-react";
 import { formatBadge } from "@/components/notifications/inbox-row";
 import { formatDate, type Locale } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
@@ -88,6 +88,15 @@ export function ConversationRow({
           <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
             {item.display.name || strings.deletedAccount}
           </span>
+          {item.origin === "ride" ? (
+            <span className="inline-flex shrink-0 items-center gap-1 self-center rounded-full bg-mint-tint px-2 py-0.5 text-xs font-medium text-ink">
+              <Bike
+                aria-hidden
+                className="size-3"
+              />
+              {strings.list.rideBadge}
+            </span>
+          ) : null}
           {item.lastMessageAt ? (
             <RelativeTime
               value={item.lastMessageAt}

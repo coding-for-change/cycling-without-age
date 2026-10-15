@@ -41,6 +41,7 @@ import {
   useReads,
   useTypingUsers,
 } from "./chat-store";
+import { KeepChattingButton } from "./keep-chatting-button";
 import { MessageRow } from "./message-row";
 import { resendChatMessage } from "./send-message";
 import type { ChatStrings } from "./strings";
@@ -383,16 +384,24 @@ export function ConversationThread({
       </MessageScrollerProvider>
 
       {frozenAt ? (
-        <div className="shrink-0 border-t border-line bg-canvas-deep px-4 py-3">
-          <p className="flex items-baseline gap-2 text-sm font-medium text-ink">
-            {strings.thread.frozen.title}
-            <RelativeTime
-              value={frozenAt}
-              words={language}
-              className="text-xs font-normal text-ink-faint"
-            />
-          </p>
-          <p className="text-2sm text-ink-soft">{strings.thread.frozen.body}</p>
+        <div className="flex shrink-0 flex-wrap items-center gap-3 border-t border-line bg-canvas-deep px-4 py-3">
+          <div className="min-w-0 flex-1">
+            <p className="flex items-baseline gap-2 text-sm font-medium text-ink">
+              {strings.thread.frozen.title}
+              <RelativeTime
+                value={frozenAt}
+                words={language}
+                className="text-xs font-normal text-ink-faint"
+              />
+            </p>
+            <p className="text-2sm text-ink-soft">
+              {strings.thread.frozen.body}
+            </p>
+          </div>
+          <KeepChattingButton
+            conversationId={conversationId}
+            strings={strings}
+          />
         </div>
       ) : null}
 
