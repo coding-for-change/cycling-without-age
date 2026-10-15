@@ -17,7 +17,6 @@ export async function deleteAccount(
   actorUserId = userId,
   { removeRiders = false }: { removeRiders?: boolean } = {},
 ) {
-  await passengers.handRidersToTheirOwnAccounts(userId);
   const [managed, own] = await Promise.all([
     passengers.listPassengersManagedBy(userId),
     passengers.getOwnPassenger(userId),
@@ -26,6 +25,7 @@ export async function deleteAccount(
     .filter((rider) => !rider.userId)
     .map((rider) => rider.id);
   if (goneWith.length && !removeRiders) throw new DomainError("managesRiders");
+  await passengers.handRidersToTheirOwnAccounts(userId);
   const photos = await personProfiles.listPhotoFilesOf({
     userIds: [userId],
     passengerIds: goneWith,

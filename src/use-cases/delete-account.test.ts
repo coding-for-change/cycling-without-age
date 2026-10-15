@@ -117,11 +117,14 @@ describe("deleteAccount", () => {
     expect(passengers.removeOwnPassenger).toHaveBeenCalledWith("user-1");
   });
 
-  it("refuses to take riders along that nobody chose to remove", async () => {
+  it("refuses to take riders along that nobody chose to remove, and changes nothing", async () => {
     const run = deleteAccount("daughter-lena");
     expect(await run.catch(domainCode)).toBe("managesRiders");
-    expect(accounts.deleteUser).not.toHaveBeenCalled();
+    expect(passengers.handRidersToTheirOwnAccounts).not.toHaveBeenCalled();
     expect(rides.cancelUpcomingBookings).not.toHaveBeenCalled();
+    expect(rideRequests.withdrawOpenRequests).not.toHaveBeenCalled();
+    expect(passengers.removeRidersWithoutAccount).not.toHaveBeenCalled();
+    expect(accounts.deleteUser).not.toHaveBeenCalled();
   });
 
   it("deletes an account without riders without asking", async () => {
