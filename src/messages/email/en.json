@@ -365,5 +365,66 @@
     "cta": "Sign in",
     "footer": "You received this email because a Cycling Without Age chapter admin entered your address as someone who helps a passenger.",
     "someone": "someone"
+  },
+  "rideRequestCommon": {
+    "someone": "a rider",
+    "someoneAsking": "Someone",
+    "someoneElse": "someone else"
+  },
+  "rideRequestSubmitted": {
+    "subject": "Ride request for {riders} on {date}",
+    "preview": "{date} · {time}",
+    "heading": "A new ride request",
+    "intro": "{requester} asks {chapter} for a ride out for {riders} on {date}, {time}, from {place}. Schedule it, or let them know it can't happen.",
+    "introThere": "{requester} asks {chapter} to take {riders} from {place} to {destination} on {date}, {time}. Schedule it, or let them know it can't happen.",
+    "introThereAndBack": "{requester} asks {chapter} to take {riders} from {place} to {destination} and back again on {date}, {time}. Schedule it, or let them know it can't happen.",
+    "cta": "Open the request",
+    "footer": "You received this email because you help run a Cycling Without Age chapter."
+  },
+  "rideRequestWithdrawn": {
+    "subject": "{requester} withdrew the request for {date}",
+    "preview": "{riders} · {date}",
+    "heading": "A ride request was withdrawn",
+    "intro": "{requester} no longer needs the ride for {riders} on {date}, {time}. There is nothing left to do.",
+    "cta": "Open the request",
+    "footer": "You received this email because you help run a Cycling Without Age chapter."
+  },
+  "rideRequestDeclined": {
+    "subject": "{chapter} can't offer the ride on {date}",
+    "preview": "{date} · {time}",
+    "heading": "Not this time",
+    "intro": "{chapter} looked at your request for {riders} on {date}, {time}, and can't make that ride happen. You're welcome to ask for another day.",
+    "noteHeading": "A note from {chapter}",
+    "cta": "See your request",
+    "footer": "You received this email because you asked a Cycling Without Age chapter for a ride."
+  },
+  "rideRequestScheduled": {
+    "subject": "Your ride on {date} is booked",
+    "preview": "{ride} · {time}",
+    "heading": "Your ride is booked",
+    "intro": "{chapter} has booked the ride for {riders}: {date}, {time}, from {place}. The app shows who pilots it as soon as a pilot is assigned.",
+    "introBoth": "{chapter} has booked the ride for {riders} there and back on {date}: leaving {time} from {place}, and back at {back}. The app shows who pilots it as soon as a pilot is assigned.",
+    "calendarHeading": "In your calendar",
+    "calendarText": "Open the attached calendar file to put the ride in your calendar.",
+    "calendarSummary": "{ride} with {chapter}",
+    "calendarFile": "ride.ics",
+    "cta": "See the ride",
+    "footer": "You received this email because you asked a Cycling Without Age chapter for a ride."
+  },
+  "riderHandedOver": {
+    "subject": "You now book rides for {rider}",
+    "preview": "{chapter} handed {rider} over to you",
+    "heading": "{rider} is in your care now",
+    "intro": "{chapter} handed {rider} over to you. From now on you ask for {rider}'s rides, and every confirmation comes to you.",
+    "cta": "See your riders",
+    "footer": "You received this email because a Cycling Without Age chapter changed who books rides for a rider."
+  },
+  "riderHandedAway": {
+    "subject": "{rider} is now looked after by {next}",
+    "preview": "{chapter} handed {rider} over",
+    "heading": "{rider} has a new contact",
+    "intro": "{chapter} handed {rider} over to {next}. Ride requests and confirmations for {rider} now go to them.",
+    "cta": "Open the app",
+    "footer": "You received this email because a Cycling Without Age chapter changed who books rides for a rider."
   }
 }

@@ -5,6 +5,7 @@ import { membership } from "@/features/membership";
 import { fleet } from "@/features/fleet";
 import { passengers } from "@/features/passengers";
 import { profile } from "@/features/profile";
+import { rideRequests } from "@/features/ride-requests";
 import { rides } from "@/features/rides";
 import da from "@/messages/app/da.json";
 import de from "@/messages/app/de.json";
@@ -43,6 +44,9 @@ jest.mock("@/features/passengers", () => ({
   },
 }));
 jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
+jest.mock("@/features/ride-requests", () => ({
+  rideRequests: { getRequest: jest.fn(), getRequestScope: jest.fn() },
+}));
 jest.mock("@/features/passengers", () => ({
   passengers: {
     getOwnPassenger: jest.fn().mockResolvedValue(null),
@@ -53,6 +57,7 @@ jest.mock("@/features/passengers", () => ({
     getPassenger: jest
       .fn()
       .mockResolvedValue({ firstName: "Inge", lastName: "Holm" }),
+    passengerNames: jest.fn(),
   },
 }));
 
@@ -68,6 +73,9 @@ const getRideFacts = rides.getRideFacts as jest.Mock;
 const listRideParticipants = rides.listRideParticipants as jest.Mock;
 const getPassenger = passengers.getPassenger as jest.Mock;
 const getMemberRoles = membership.getMemberRoles as jest.Mock;
+const getRequest = rideRequests.getRequest as jest.Mock;
+const getRequestScope = rideRequests.getRequestScope as jest.Mock;
+const passengerNames = passengers.passengerNames as jest.Mock;
 
 const DICTIONARIES = { en, da, de } as Record<Locale, typeof en>;
 
@@ -354,6 +362,26 @@ const known = () => {
     managedByUserId: "user-carer",
     userId: null,
   });
+  passengerNames.mockResolvedValue({ "passenger-1": "Erna Huber" });
+  getRequestScope.mockResolvedValue({
+    id: "request-1",
+    chapterId: CHAPTER,
+    status: "pending",
+    requesterUserId: SUBJECT,
+  });
+  getRequest.mockResolvedValue({
+    id: "request-1",
+    model: "functional",
+    requestedStartsAt: new Date("2026-10-27T08:00:00Z"),
+    requestedEndsAt: new Date("2026-10-27T09:00:00Z"),
+    pickupName: "Seniorenheim Sonnenhof",
+    destinationName: "Hausarzt Dr. Weber",
+    roundTrip: true,
+    requesterUserId: SUBJECT,
+    decisionNote: "No pilot is free that morning.",
+    chapter: { name: "München", timeZone: "Europe/Berlin" },
+    passengers: [{ passenger: { id: "passenger-1" } }],
+  });
 };
 
 const unknown = () => {
@@ -364,6 +392,9 @@ const unknown = () => {
   getLocation.mockResolvedValue(null);
   getRideFacts.mockResolvedValue(null);
   getPassenger.mockResolvedValue(null);
+  passengerNames.mockResolvedValue({});
+  getRequestScope.mockResolvedValue(null);
+  getRequest.mockResolvedValue(null);
 };
 
 beforeEach(() => {
@@ -500,7 +531,12 @@ describe("the templates the history feed has to label", () => {
       "rideChanged",
       "rideOpened",
       "ridePilotWithdrew",
+      "rideRequestDeclined",
+      "rideRequestScheduled",
+      "rideRequestSubmitted",
+      "rideRequestWithdrawn",
       "rideUnderstaffed",
+      "riderHandedOver",
       "roleChanged",
       "welcome",
     ]);

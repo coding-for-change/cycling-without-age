@@ -423,7 +423,13 @@
         "welcome": "Velkommen",
         "careRequested": "Anmodning om at passe på",
         "careDecided": "Svar på anmodning",
-        "careInvited": "Invitation til hjælper"
+        "careInvited": "Invitation til hjælper",
+        "rideRequestSubmitted": "Nyt turønske",
+        "rideRequestWithdrawn": "Turønske trukket tilbage",
+        "rideRequestDeclined": "Turønske afvist",
+        "rideRequestScheduled": "Turønske booket",
+        "riderHandedOver": "Passager overtaget",
+        "riderHandedAway": "Passager overdraget"
       },
       "you": "Du",
       "riderHandedOver": "{direction, select, in {{actor} overdrog {rider} fra {previous} til denne konto} other {{actor} overdrog {rider} til {next}}}"
@@ -2100,7 +2106,8 @@
       "invitation": "Invitation",
       "membership": "Medlemskab",
       "ride": "Tur",
-      "welcome": "Velkommen"
+      "welcome": "Velkommen",
+      "request": "Turønske"
     },
     "empty": {
       "body": "I samme øjeblik der sker noget — en afdeling svarer, en tur bliver booket — lander det her.",

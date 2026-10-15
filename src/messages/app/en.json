@@ -423,7 +423,13 @@
         "welcome": "Welcome",
         "careRequested": "Care request",
         "careDecided": "Care answer",
-        "careInvited": "Caretaker invite"
+        "careInvited": "Caretaker invite",
+        "rideRequestSubmitted": "New ride request",
+        "rideRequestWithdrawn": "Ride request withdrawn",
+        "rideRequestDeclined": "Ride request declined",
+        "rideRequestScheduled": "Ride request booked",
+        "riderHandedOver": "Rider handed over",
+        "riderHandedAway": "Rider handed on"
       },
       "you": "You",
       "riderHandedOver": "{direction, select, in {{actor} handed {rider} over to this account, from {previous}} other {{actor} handed {rider} over to {next}}}"
@@ -2100,7 +2106,8 @@
       "invitation": "Invitation",
       "membership": "Membership",
       "ride": "Ride",
-      "welcome": "Welcome"
+      "welcome": "Welcome",
+      "request": "Ride request"
     },
     "empty": {
       "body": "The moment something happens — a chapter answers, a ride is booked — it lands right here.",

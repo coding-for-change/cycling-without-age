@@ -423,7 +423,13 @@
         "welcome": "Willkommen",
         "careRequested": "Betreuungsanfrage",
         "careDecided": "Antwort auf Betreuung",
-        "careInvited": "Einladung Begleitperson"
+        "careInvited": "Einladung Begleitperson",
+        "rideRequestSubmitted": "Neue Fahrtanfrage",
+        "rideRequestWithdrawn": "Fahrtanfrage zurückgezogen",
+        "rideRequestDeclined": "Fahrtanfrage abgelehnt",
+        "rideRequestScheduled": "Fahrtanfrage gebucht",
+        "riderHandedOver": "Fahrgast übernommen",
+        "riderHandedAway": "Fahrgast übergeben"
       },
       "you": "Du",
       "riderHandedOver": "{direction, select, in {{actor} hat {rider} von {previous} an dieses Konto übergeben} other {{actor} hat {rider} an {next} übergeben}}"
@@ -2100,7 +2106,8 @@
       "invitation": "Einladung",
       "membership": "Mitgliedschaft",
       "ride": "Fahrt",
-      "welcome": "Willkommen"
+      "welcome": "Willkommen",
+      "request": "Fahrtanfrage"
     },
     "empty": {
       "body": "Sobald etwas passiert — eine Ortsgruppe antwortet, eine Ausfahrt wird gebucht — landet es genau hier.",

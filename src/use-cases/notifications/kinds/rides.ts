@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { passengers } from "@/features/passengers";
+import { rideRequests } from "@/features/ride-requests";
 import { RIDE_CANCELLATION_REASONS, rides } from "@/features/rides";
 import { formatMessage } from "@/lib/i18n/format";
 import { chapterAdminIds, excluding, nameOfPerson } from "./lookups";
@@ -267,6 +268,15 @@ export const rideRescheduled = defineKind({
   },
 });
 
+/**
+ * A rider booked by scheduling a Ride Request: the request's own message tells
+ * the account that asked, with the calendar file, so this one does not.
+ */
+const requesterOf = async (requestId: string | null) =>
+  requestId
+    ? ((await rideRequests.getRequestScope(requestId))?.requesterUserId ?? null)
+    : null;
+
 export const rideBookingConfirmed = defineKind({
   event: "ride.riderBooked",
   category: "ride",
@@ -278,6 +288,7 @@ export const rideBookingConfirmed = defineKind({
       : excluding(
           (await lookUpRider(event.passengerId)).accounts,
           event.actorUserId,
+          await requesterOf(event.requestId),
         ),
   params: async (event) => ({
     ...(await factsOfRide(event.rideId, event.pair)),
