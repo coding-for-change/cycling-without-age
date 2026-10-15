@@ -34,6 +34,14 @@ jest.mock("@/features/rides", () => ({
   rides: { getRideFacts: jest.fn(), listRideParticipants: jest.fn() },
 }));
 
+beforeAll(() => {
+  jest.useFakeTimers({
+    now: new Date("2026-10-20T08:00:00Z"),
+    doNotFake: ["nextTick", "setImmediate", "queueMicrotask"],
+  });
+});
+afterAll(() => jest.useRealTimers());
+
 const MUNICH = "chapter-muenchen";
 const CARER = "user-carer";
 const ADMIN = "user-admin";
