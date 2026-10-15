@@ -10,6 +10,7 @@ import {
   requestedRoute,
   requestedWhen,
 } from "@/features/ride-requests/components/request-words";
+import { calendarDate } from "@/lib/calendar";
 import { formatDate, resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { first, hrefWith } from "@/lib/search-params";
@@ -107,7 +108,10 @@ async function RequestList({ searchParams }: PageProps) {
         .filter(Boolean)
         .join(" · "),
       where: [route.from, route.to].filter(Boolean).join(" → "),
-      asked: formatDate(request.createdAt, notation),
+      asked: formatDate(
+        calendarDate(request.createdAt, request.chapter.timeZone),
+        notation,
+      ),
       askedIso: request.createdAt.toISOString(),
       requester: request.requester?.name ?? strings.detail.someone,
       status: request.status,

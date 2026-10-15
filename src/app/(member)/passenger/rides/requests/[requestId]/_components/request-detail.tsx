@@ -20,6 +20,7 @@ import {
 } from "@/features/ride-requests/components/request-words";
 import { id as requestId } from "@/features/ride-requests/schemas";
 import { requireAuth } from "@/lib/auth-guards";
+import { calendarDate } from "@/lib/calendar";
 import { formatDate, resolveLocale, wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
@@ -111,7 +112,12 @@ async function OwnRequest({ id }: { id: string }) {
         <p className="text-2sm text-ink-soft">
           {formatMessage(
             page.asked,
-            { date: formatDate(request.createdAt, notation) },
+            {
+              date: formatDate(
+                calendarDate(request.createdAt, request.chapter.timeZone),
+                notation,
+              ),
+            },
             words,
           )}
         </p>
