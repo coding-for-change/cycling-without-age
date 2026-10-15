@@ -14,7 +14,7 @@ type Sweep = {
   marker: RideMarker;
   maxLeadMinutes: number;
   leadOf: (settings: ChapterSettings) => number;
-  run: (rideId: string, now: Date) => Promise<boolean>;
+  run: (rideId: string, leadMinutes: number, now: Date) => Promise<boolean>;
   failure: string;
 };
 
@@ -53,7 +53,7 @@ async function sweepDue(
     for (const ride of due) {
       checked += 1;
       try {
-        if (await run(ride.id, now)) done += 1;
+        if (await run(ride.id, lead, now)) done += 1;
       } catch (error) {
         logger.error({ err: serializeError(error), ride_id: ride.id }, failure);
       }
@@ -69,8 +69,8 @@ export const riderReminders = (now = new Date()) =>
       marker: "riderReminderSentAt",
       maxLeadMinutes: Math.max(...REMINDER_LEAD_MINUTES),
       leadOf: (settings) => settings.riderReminderLeadMinutes,
-      run: (rideId, at) =>
-        rides.sendReminder("riderReminderSentAt", rideId, at),
+      run: (rideId, lead, at) =>
+        rides.sendReminder("riderReminderSentAt", rideId, lead, at),
       failure: "rider reminder failed",
     },
     now,
@@ -83,8 +83,8 @@ export const volunteerReminders = (now = new Date()) =>
       marker: "volunteerReminderSentAt",
       maxLeadMinutes: Math.max(...REMINDER_LEAD_MINUTES),
       leadOf: (settings) => settings.volunteerReminderLeadMinutes,
-      run: (rideId, at) =>
-        rides.sendReminder("volunteerReminderSentAt", rideId, at),
+      run: (rideId, lead, at) =>
+        rides.sendReminder("volunteerReminderSentAt", rideId, lead, at),
       failure: "volunteer reminder failed",
     },
     now,
@@ -97,7 +97,7 @@ export const demandCheck = (now = new Date()) =>
       marker: "demandCheckedAt",
       maxLeadMinutes: Math.max(...DEMAND_CHECK_LEAD_HOURS) * 60,
       leadOf: (settings) => settings.demandCheckLeadHours * 60,
-      run: (rideId, at) => rides.checkDemand(rideId, at),
+      run: (rideId, lead, at) => rides.checkDemand(rideId, lead, at),
       failure: "demand check failed",
     },
     now,

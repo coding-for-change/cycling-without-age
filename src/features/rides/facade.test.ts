@@ -3597,9 +3597,9 @@ describe("the reminders and the demand check", () => {
 
   it("reminds the riders once, stamped in the same transaction", async () => {
     db.ride.findUnique.mockResolvedValue(scheduled({ roster: [booked] }));
-    expect(await rides.sendReminder("riderReminderSentAt", "ride-1", NOW)).toBe(
-      true,
-    );
+    expect(
+      await rides.sendReminder("riderReminderSentAt", "ride-1", 1440, NOW),
+    ).toBe(true);
     expect(db.ride.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: { riderReminderSentAt: NOW } }),
     );
@@ -3617,9 +3617,9 @@ describe("the reminders and the demand check", () => {
     db.ride.findUnique.mockResolvedValue(
       scheduled({ roster: [booked], riderReminderSentAt: NOW }),
     );
-    expect(await rides.sendReminder("riderReminderSentAt", "ride-1", NOW)).toBe(
-      false,
-    );
+    expect(
+      await rides.sendReminder("riderReminderSentAt", "ride-1", 1440, NOW),
+    ).toBe(false);
     expect(db.ride.update).not.toHaveBeenCalled();
     expect(emitted).toEqual([]);
   });
@@ -3628,13 +3628,14 @@ describe("the reminders and the demand check", () => {
     db.ride.findUnique.mockResolvedValue(
       scheduled({ roster: [booked], status: "cancelled" }),
     );
-    expect(await rides.sendReminder("riderReminderSentAt", "ride-1", NOW)).toBe(
-      false,
-    );
+    expect(
+      await rides.sendReminder("riderReminderSentAt", "ride-1", 1440, NOW),
+    ).toBe(false);
     expect(
       await rides.sendReminder(
         "volunteerReminderSentAt",
         "ride-1",
+        1440,
         new Date("2026-09-08T09:00:00Z"),
       ),
     ).toBe(false);
@@ -3645,24 +3646,34 @@ describe("the reminders and the demand check", () => {
     db.ride.findUnique.mockResolvedValue(
       scheduled({ roster: [{ ...booked, attendance: "cancelled" }] }),
     );
-    expect(await rides.sendReminder("riderReminderSentAt", "ride-1", NOW)).toBe(
-      false,
-    );
+    expect(
+      await rides.sendReminder("riderReminderSentAt", "ride-1", 1440, NOW),
+    ).toBe(false);
     expect(db.ride.update).toHaveBeenCalled();
     expect(emitted).toEqual([]);
+  });
+
+  // Moved to next week after the sweep listed it: it waits for its new time.
+  it("leaves a ride that moved out of its lead under the lock", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ roster: [booked] }));
+    expect(
+      await rides.sendReminder("riderReminderSentAt", "ride-1", 120, NOW),
+    ).toBe(false);
+    expect(await rides.checkDemand("ride-1", 120, NOW)).toBe(false);
+    expect(db.ride.update).not.toHaveBeenCalled();
   });
 
   it("reminds the pilots with their own event", async () => {
     db.ride.findUnique.mockResolvedValue(
       scheduled({ assignments: [{ role: "pilot", user: { id: "p" } }] }),
     );
-    await rides.sendReminder("volunteerReminderSentAt", "ride-1", NOW);
+    await rides.sendReminder("volunteerReminderSentAt", "ride-1", 1440, NOW);
     expect(eventTypes()).toEqual(["ride.volunteerReminderDue"]);
   });
 
   it("flags an empty roster once, and a booked one never", async () => {
     db.ride.findUnique.mockResolvedValue(scheduled());
-    expect(await rides.checkDemand("ride-1", NOW)).toBe(true);
+    expect(await rides.checkDemand("ride-1", 1440, NOW)).toBe(true);
     expect(db.ride.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: { demandCheckedAt: NOW } }),
     );
@@ -3670,7 +3681,7 @@ describe("the reminders and the demand check", () => {
 
     emitted.length = 0;
     db.ride.findUnique.mockResolvedValue(scheduled({ roster: [booked] }));
-    expect(await rides.checkDemand("ride-1", NOW)).toBe(false);
+    expect(await rides.checkDemand("ride-1", 1440, NOW)).toBe(false);
     expect(emitted).toEqual([]);
   });
 

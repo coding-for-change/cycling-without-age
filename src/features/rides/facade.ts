@@ -2401,15 +2401,23 @@ export const listRidesDue = async (
 /**
  * The legs a once-per-ride sweep covers in one go, stamped before anything is
  * said: the way there takes its way back along while that one is unstamped.
+ * The lead is read again under the lock, so a ride moved away after the sweep
+ * listed it waits for its new time.
  */
 async function sweepLegs(
   rideId: string,
   marker: RideMarker,
+  leadMinutes: number,
   now: Date,
   tx: Tx,
 ) {
   const ride = await requireRide(rideId, tx);
-  if (ride.status !== "scheduled" || ride.startsAt <= now || ride[marker])
+  if (
+    ride.status !== "scheduled" ||
+    ride.startsAt <= now ||
+    ride.startsAt.getTime() > now.getTime() + leadMinutes * MINUTE_MS ||
+    ride[marker]
+  )
     return [];
   const back =
     ride.returnLeg?.status === "scheduled"
@@ -2442,11 +2450,14 @@ const REMINDED_BY = {
 export async function sendReminder(
   marker: keyof typeof REMINDED_BY,
   rideId: string,
+  leadMinutes: number,
   now = new Date(),
 ) {
   return rideWrite(async (tx, emit) => {
     const { type, reaches } = REMINDED_BY[marker];
-    const reached = (await sweepLegs(rideId, marker, now, tx)).filter(reaches);
+    const reached = (
+      await sweepLegs(rideId, marker, leadMinutes, now, tx)
+    ).filter(reaches);
     for (const leg of reached)
       await emit({
         type,
@@ -2463,11 +2474,15 @@ export async function sendReminder(
  * Lifecycle 4C: at the chapter's interval before the ride, a roster with
  * nobody left on it is flagged to the schedulers for cancellation, once.
  */
-export async function checkDemand(rideId: string, now = new Date()) {
+export async function checkDemand(
+  rideId: string,
+  leadMinutes: number,
+  now = new Date(),
+) {
   return rideWrite(async (tx, emit) => {
-    const empty = (await sweepLegs(rideId, "demandCheckedAt", now, tx)).filter(
-      (leg) => seatedOn(leg).length === 0,
-    );
+    const empty = (
+      await sweepLegs(rideId, "demandCheckedAt", leadMinutes, now, tx)
+    ).filter((leg) => seatedOn(leg).length === 0);
     for (const leg of empty)
       await emit({
         type: "ride.noDemand",

@@ -73,8 +73,8 @@ describe("the rider reminders", () => {
       ["riderReminderSentAt", ["b"], 2880, NOW, 49],
     ]);
     expect(sendReminder.mock.calls).toEqual([
-      ["riderReminderSentAt", "soon", NOW],
-      ["riderReminderSentAt", "later", NOW],
+      ["riderReminderSentAt", "soon", 30, NOW],
+      ["riderReminderSentAt", "later", 2880, NOW],
     ]);
   });
 
@@ -125,6 +125,7 @@ describe("the pilots' reminder and the demand check", () => {
     expect(sendReminder).toHaveBeenCalledWith(
       "volunteerReminderSentAt",
       "ride",
+      120,
       NOW,
     );
   });
@@ -144,7 +145,7 @@ describe("the pilots' reminder and the demand check", () => {
       NOW,
       50,
     );
-    expect(checkDemand).toHaveBeenCalledWith("ride", NOW);
+    expect(checkDemand).toHaveBeenCalledWith("ride", 120, NOW);
   });
 });
 
