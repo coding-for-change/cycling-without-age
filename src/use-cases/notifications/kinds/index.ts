@@ -15,6 +15,12 @@ import {
   ridePilotAssigned,
   rideRescheduled,
 } from "./rides";
+import {
+  rideAnnounced,
+  rideOpened,
+  ridePilotWithdrew,
+  rideUnderstaffed,
+} from "./staffing";
 import { trishawDamageReported } from "./trishaw-damage-reported";
 import { userOnboarded } from "./user-onboarded";
 
@@ -28,11 +34,15 @@ export const kinds: AnyKind[] = [
   pilotApplicationSubmitted,
   poolAccessDecided,
   poolAccessRequested,
+  rideAnnounced,
   rideBookingCancelled,
   rideBookingConfirmed,
   rideCancelled,
+  rideOpened,
   ridePilotAssigned,
+  ridePilotWithdrew,
   rideRescheduled,
+  rideUnderstaffed,
   trishawDamageReported,
   userOnboarded,
 ];

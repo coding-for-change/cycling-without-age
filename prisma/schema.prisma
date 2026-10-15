@@ -272,6 +272,13 @@ model ChapterSettings {
   damageAlertPush      Boolean      @default(true)
   updatedAt            DateTime     @updatedAt
 
+  /// Pilots of the chapter may sign up for open rides themselves.
+  pilotsMaySelfAssign    Boolean @default(true)
+  /// Pilots a newly scheduled ride asks for.
+  requiredPilotsDefault  Int     @default(1)
+  /// How far ahead of a ride an understaffed ride is flagged, and a pilot can no longer withdraw.
+  staffingCheckLeadHours Int     @default(48)
+
   @@map("chapter_settings")
 }
 
@@ -500,6 +507,10 @@ model Conversation {
   frozenAt         DateTime?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
+
+  /// The ride this conversation belongs to, when it is a ride chat.
+  rideId String? @unique
+  ride   Ride?   @relation(fields: [rideId], references: [id], onDelete: SetNull)
 
   members  ConversationMember[]
   messages ChatMessage[]
@@ -892,6 +903,13 @@ model Ride {
   /// Shared by every ride of a recurring series, once recurrence exists.
   seriesId       String?
 
+  /// An event ride the chapter's riders see and can book a seat on themselves.
+  announced         Boolean   @default(false)
+  /// Set the first time the event is announced, so its riders are told once.
+  announcedAt       DateTime?
+  /// Set once the staffing check has flagged the ride, so it is flagged only once.
+  staffingCheckedAt DateTime?
+
   cancelledAt            DateTime?
   cancellationReasonCode RideCancellationReason?
   cancellationNote       String?                 @db.Text
@@ -904,6 +922,8 @@ model Ride {
   damages     TrishawDamage[]
   log         RideLogEntry[]
   photos      RidePhoto[]
+
+  conversation Conversation?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

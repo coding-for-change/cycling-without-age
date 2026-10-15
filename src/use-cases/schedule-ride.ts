@@ -45,7 +45,10 @@ export async function scheduleRideAt(
   actorUserId: string | null,
 ) {
   const { slot, roundTrip, stayMinutes, ...ride } = form;
-  const timeZone = await chapterTimeZone(ride.chapterId);
+  const [timeZone, settings] = await Promise.all([
+    chapterTimeZone(ride.chapterId),
+    chapters.getSettings(ride.chapterId),
+  ]);
   await Promise.all([
     fleet.assertUsable(ride.trishawIds, ride.chapterId),
     assertRiders(ride.passengerIds, ride.chapterId),
@@ -62,6 +65,10 @@ export async function scheduleRideAt(
           : undefined,
     },
     actorUserId,
+    {
+      opensForSignUp: settings.pilotsMaySelfAssign,
+      staffingLeadHours: settings.staffingCheckLeadHours,
+    },
   );
 }
 

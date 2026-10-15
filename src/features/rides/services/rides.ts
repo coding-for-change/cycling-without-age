@@ -141,6 +141,21 @@ const pilotDetailSelect = {
   ...pilotSelect,
   ...memberDetail,
   note: true,
+  roster: {
+    orderBy: { position: "asc" },
+    select: {
+      id: true,
+      passenger: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          user: { select: { phoneNumber: true } },
+          managedBy: { select: { name: true, phoneNumber: true } },
+        },
+      },
+    },
+  },
 } satisfies Prisma.RideSelect;
 
 export type PilotRideDetailRow = Prisma.RideGetPayload<{
@@ -152,6 +167,16 @@ const passengerDetailSelect = (passengerIds: string[]) =>
   ({
     ...passengerSelect,
     ...memberDetail,
+    announced: true,
+    assignments: {
+      ...memberAssignments(),
+      select: {
+        role: true,
+        user: {
+          select: { id: true, name: true, image: true, phoneNumber: true },
+        },
+      },
+    },
     roster: {
       where: { passengerId: { in: passengerIds } },
       orderBy: { position: "asc" },
@@ -283,10 +308,11 @@ export const findPassengerRidesOn = (
 export const findStillPiloting = async (
   chapterIds: string[],
   userIds: string[],
+  db: Prisma.TransactionClient = prisma,
 ) =>
   new Set(
     (
-      await prisma.member.findMany({
+      await db.member.findMany({
         where: {
           organizationId: { in: chapterIds },
           userId: { in: userIds },
@@ -727,6 +753,9 @@ const detailSelect = {
   destinationLongitude: true,
   note: true,
   seriesId: true,
+  announced: true,
+  announcedAt: true,
+  staffingCheckedAt: true,
   cancellationReasonCode: true,
   cancellationNote: true,
   cancelledBy: { select: { id: true, name: true } },
@@ -896,4 +925,200 @@ export const findLatestRideForPilot = (userId: string, now: Date) =>
     },
     orderBy: [{ startsAt: "desc" }, { id: "desc" }],
     select: pilotSelect,
+  });
+
+/**
+ * What a pilot may know about a ride before signing up for it: when, where,
+ * what kind and how many ride along. Nobody's name, nobody's number — the
+ * pilots' ids are only read to count who still pilots, and never leave the
+ * facade.
+ */
+const openSelect = {
+  id: true,
+  chapterId: true,
+  model: true,
+  status: true,
+  startsAt: true,
+  endsAt: true,
+  title: true,
+  locationName: true,
+  locationAddress: true,
+  destinationName: true,
+  requiredPilots: true,
+  chapter: { select: { id: true, name: true, timeZone: true } },
+  _count: { select: { roster: true } },
+  assignments: { where: { role: "pilot" }, select: { userId: true } },
+  returnLeg: otherLeg,
+  returnLegOf: otherLeg,
+} satisfies Prisma.RideSelect;
+
+export type OpenRideQueryRow = Prisma.RideGetPayload<{
+  select: typeof openSelect;
+}>;
+
+const stillAhead = (chapterIds: string[], now: Date) =>
+  ({
+    chapterId: { in: chapterIds },
+    status: "scheduled",
+    startsAt: { gt: now },
+  }) satisfies Prisma.RideWhereInput;
+
+export type RideCursor = { startsAt: Date; id: string };
+
+export const findOpenRidesFor = (
+  userId: string,
+  chapterIds: string[],
+  now: Date,
+  until: Date,
+  take: number,
+  after?: RideCursor,
+) =>
+  prisma.ride.findMany({
+    where: {
+      ...stillAhead(chapterIds, now),
+      startsAt: { gt: now, lt: until },
+      assignments: { none: { userId } },
+      ...(after
+        ? {
+            OR: [
+              { startsAt: { gt: after.startsAt } },
+              { startsAt: after.startsAt, id: { gt: after.id } },
+            ],
+          }
+        : {}),
+    },
+    orderBy: [{ startsAt: "asc" }, { id: "asc" }],
+    select: openSelect,
+    take,
+  });
+
+export const findOpenRide = (rideId: string, chapterIds: string[], now: Date) =>
+  prisma.ride.findFirst({
+    where: { id: rideId, ...stillAhead(chapterIds, now) },
+    select: openSelect,
+  });
+
+/**
+ * The way back of a round trip is checked with its way there, as long as that
+ * one is still ahead and unchecked: one outing, one warning.
+ */
+const uncheckedWithin = (now: Date, until: Date) =>
+  ({
+    status: "scheduled",
+    startsAt: { gt: now, lte: until },
+    staffingCheckedAt: null,
+    NOT: {
+      returnLegOf: {
+        is: {
+          status: "scheduled",
+          startsAt: { gt: now },
+          staffingCheckedAt: null,
+        },
+      },
+    },
+  }) satisfies Prisma.RideWhereInput;
+
+export const findChaptersWithUncheckedRides = async (now: Date, until: Date) =>
+  (
+    await prisma.ride.findMany({
+      where: uncheckedWithin(now, until),
+      distinct: ["chapterId"],
+      select: { chapterId: true },
+    })
+  ).map((ride) => ride.chapterId);
+
+export const findStaffingCandidates = (
+  chapterIds: string[],
+  now: Date,
+  until: Date,
+  take: number,
+) =>
+  prisma.ride.findMany({
+    where: { chapterId: { in: chapterIds }, ...uncheckedWithin(now, until) },
+    orderBy: [{ startsAt: "asc" }, { id: "asc" }],
+    select: { id: true },
+    take,
+  });
+
+export const clearStaffingChecksOfPilot = (
+  userId: string,
+  chapterId: string,
+  now: Date,
+) =>
+  prisma.ride.updateMany({
+    where: {
+      chapterId,
+      status: "scheduled",
+      startsAt: { gt: now },
+      staffingCheckedAt: { not: null },
+      assignments: { some: { userId, role: "pilot" } },
+    },
+    data: { staffingCheckedAt: null },
+  });
+
+/**
+ * An announced event as the chapter's riders see it before they book: the
+ * story, the place and how many seats are taken. Never who took them.
+ */
+const announcedSelect = {
+  id: true,
+  chapterId: true,
+  model: true,
+  status: true,
+  startsAt: true,
+  endsAt: true,
+  title: true,
+  description: true,
+  capacity: true,
+  locationName: true,
+  locationAddress: true,
+  latitude: true,
+  longitude: true,
+  chapter: {
+    select: { id: true, name: true, timeZone: true, address: true },
+  },
+  photos: {
+    orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+    select: { fileId: true },
+  },
+  _count: { select: { roster: true } },
+} satisfies Prisma.RideSelect;
+
+export type AnnouncedEventRow = Prisma.RideGetPayload<{
+  select: typeof announcedSelect;
+}>;
+
+const announcedIn = (chapterIds: string[], now: Date) =>
+  ({
+    ...stillAhead(chapterIds, now),
+    model: "event",
+    announced: true,
+  }) satisfies Prisma.RideWhereInput;
+
+export const findAnnouncedEvents = (
+  chapterIds: string[],
+  now: Date,
+  take: number,
+) =>
+  prisma.ride.findMany({
+    where: announcedIn(chapterIds, now),
+    orderBy: [{ startsAt: "asc" }, { id: "asc" }],
+    select: announcedSelect,
+    take,
+  });
+
+export const findBookingsOn = (rideIds: string[], passengerIds: string[]) =>
+  prisma.rideRosterEntry.findMany({
+    where: { rideId: { in: rideIds }, passengerId: { in: passengerIds } },
+    select: { rideId: true, passengerId: true },
+  });
+
+export const findAnnouncedEvent = (
+  rideId: string,
+  chapterIds: string[],
+  now: Date,
+) =>
+  prisma.ride.findFirst({
+    where: { id: rideId, ...announcedIn(chapterIds, now) },
+    select: announcedSelect,
   });

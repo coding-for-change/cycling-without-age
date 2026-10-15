@@ -13,6 +13,7 @@ export const PILOT_LABELS = [
   "removed",
   "remove",
   "unchanged",
+  "noLongerPilot",
 ] as const satisfies readonly (keyof Detail)[];
 
 export const ROSTER_LABELS = [

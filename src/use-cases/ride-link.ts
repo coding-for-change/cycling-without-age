@@ -8,11 +8,10 @@ import { rides } from "@/features/rides";
  * pilot who also manages a rider on the same ride is there to ride the bike.
  */
 export async function rideLinkFor(rideId: string, userId: string) {
-  if (await rides.getRideForPilot(rideId, userId))
-    return `/pilot/rides/${rideId}`;
+  if (await rides.pilotCanOpen(rideId, userId)) return `/pilot/rides/${rideId}`;
   const managed = await passengers.listRidersOfAccount(userId);
   if (
-    await rides.getRideForPassengers(
+    await rides.passengersCanOpen(
       rideId,
       managed.map((passenger) => passenger.id),
     )

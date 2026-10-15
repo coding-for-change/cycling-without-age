@@ -117,8 +117,9 @@ export async function ScheduleRide({
   const { chapterIds } = await readActiveScope(searchParams, "rides");
   if (!chapterIds.length) return null;
 
-  const [found, dict, language, head] = await Promise.all([
+  const [found, settings, dict, language, head] = await Promise.all([
     chapterFeature.getChapters(chapterIds),
+    chapterFeature.getSettingsOf(chapterIds),
     getDictionary(),
     getLocale(),
     headers(),
@@ -139,6 +140,7 @@ export async function ScheduleRide({
       address: chapter.address,
       latitude: chapter.latitude,
       longitude: chapter.longitude,
+      requiredPilots: settings.get(chapter.id)?.requiredPilotsDefault,
       ...defaultSlot(params, chapter.timeZone, weekStartsOn, now),
     }));
 

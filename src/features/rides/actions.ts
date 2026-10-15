@@ -29,6 +29,7 @@ import {
   type TrishawOption,
 } from "./components/trishaw-options";
 import {
+  announceInput,
   bookRiderInput,
   cancelRideInput,
   noteInput,
@@ -50,6 +51,7 @@ const MAPPED_ERRORS = [
   "capacityBelowRoster",
   "capacityRequired",
   "destinationRequired",
+  "eventsOnly",
   "invalidFile",
   "legsOverlap",
   "notPilot",
@@ -141,9 +143,10 @@ async function onRide<
   if (!parsed.success) return rejected(parsed.error);
   const admin = await adminOfRide(parsed.data.rideId);
   if (!admin) return { ok: false, error: "unknownRide" };
-  return attempt<T>(async () =>
-    reply?.(await run(parsed.data, admin.ride, admin.actorUserId)),
-  );
+  return attempt<T>(async () => {
+    const result = await run(parsed.data, admin.ride, admin.actorUserId);
+    return reply?.(result);
+  });
 }
 
 const changed = (changed: boolean) => ({ changed });
@@ -263,6 +266,17 @@ export async function bookRiderAction(
     input,
     (data, ride, actor) =>
       bookRider(ride, data.passengerId, actor, data.position),
+    changed,
+  );
+}
+
+export async function setRideAnnouncedAction(
+  input: unknown,
+): Promise<RideResult<{ changed: boolean }>> {
+  return onRide(
+    announceInput,
+    input,
+    (data, ride, actor) => rides.setAnnounced(ride.id, data.announced, actor),
     changed,
   );
 }

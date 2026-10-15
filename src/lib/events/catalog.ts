@@ -149,12 +149,29 @@ export const eventSchema = z.discriminatedUnion("type", [
     ...rideScope,
     userId: z.string().min(1),
     self: z.boolean(),
+    pair: ridePair,
   }),
   z.object({
     type: z.literal("ride.riderBooked"),
     ...rideScope,
     passengerId: z.string().min(1),
     pair: ridePair,
+  }),
+  z.object({
+    type: z.literal("ride.opened"),
+    ...rideScope,
+    pair: ridePair,
+  }),
+  z.object({
+    type: z.literal("ride.understaffed"),
+    ...rideScope,
+    assigned: z.number().int().min(0),
+    required: z.number().int().min(1),
+    pair: ridePair,
+  }),
+  z.object({
+    type: z.literal("ride.announced"),
+    ...rideScope,
   }),
   z.object({
     type: z.literal("ride.riderRemoved"),

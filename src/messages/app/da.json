@@ -399,11 +399,17 @@
         "poolAccessDecided": "Puljesvar",
         "poolAccessRequested": "Puljeanmodning",
         "rejection": "Afvist",
+        "rideAnnounced": "Arrangement annonceret",
         "rideAssigned": "Pilot sat på",
         "rideBooked": "Plads booket",
         "rideBookingCancelled": "Plads opgivet",
         "rideCancelled": "Tur aflyst",
         "rideChanged": "Tur ændret",
+        "rideOpened": "Åben tur",
+        "ridePilotFound": "Pilot fundet",
+        "ridePilotWithdrew": "Pilot meldt fra",
+        "rideSignedUp": "Tilmeldt",
+        "rideUnderstaffed": "Tur mangler piloter",
         "roleChanged": "Rolleændring",
         "welcome": "Velkommen"
       },
@@ -866,6 +872,25 @@
         "placeholder": "Sæt laderen i, tør sædet af, og læg nøglen tilbage i boksen.",
         "title": "Efter turen"
       },
+      "staffing": {
+        "body": "Hvordan piloter finder ture, og hvornår du hører om en tur, der stadig mangler piloter.",
+        "lead": {
+          "days": "{count, plural, one {# dag før} other {# dage før}}",
+          "hint": "Så længe før en tur, der stadig mangler piloter, får admins besked. Derefter kan piloter ikke melde fra i appen og ringer i stedet.",
+          "hours": "{count, plural, one {# time før} other {# timer før}}",
+          "label": "Advar om ture uden piloter"
+        },
+        "requiredPilots": {
+          "hint": "Hvad en ny tur beder om. Kan ændres for hver tur.",
+          "label": "Piloter pr. tur",
+          "option": "{count, plural, one {# pilot} other {# piloter}}"
+        },
+        "selfAssign": {
+          "hint": "Piloter ser de ture, der mangler en pilot, og tager en plads uden at spørge.",
+          "label": "Piloter tilmelder sig selv"
+        },
+        "title": "Bemanding"
+      },
       "support": {
         "body": "Driller noget i administrationen? Beskriv det i én sætning, så lander det hos dem, der passer på det.",
         "drawer": {
@@ -919,6 +944,7 @@
     "roles": {
       "pilot": "Pilot"
     },
+    "staffing": "{assigned}/{required, plural, one {# pilot} other {# piloter}}",
     "statuses": {
       "cancelled": "Aflyst",
       "completed": "Kørt",
@@ -1835,10 +1861,12 @@
       "detail": {
         "about": "Om turen",
         "andBack": "og tilbage kl. {time}",
+        "call": "Ring til {name}",
         "cancelled": "Turen er aflyst",
         "cancelledHint": "Vi er kede af, at det ikke bliver til noget denne gang. Din afdeling hjælper gerne med at planlægge den næste.",
         "completed": "Turen er kørt. Vi håber, du nød vinden i håret.",
         "contact": "Spørgsmål til turen? {chapter} hjælper gerne.",
+        "message": "Skriv til alle på turen",
         "openInMaps": "Åbn i kort",
         "pilot": "{count, plural, one {Din pilot} other {Dine piloter}}",
         "pilotPending": "Ikke fundet endnu",
@@ -1855,6 +1883,29 @@
         "askBody": "Skriv et par linjer til holdet: hvornår du gerne vil ud, og hvorhen. Så finder de en dag, et tidspunkt og en pilot til dig.",
         "subject": "En tur med Cycling Without Age",
         "title": "Der er ingen ture planlagt lige nu"
+      },
+      "events": {
+        "badge": "Arrangement",
+        "book": {
+          "done": "{count, plural, one {Plads booket} other {# pladser booket}}. Vi glæder os til at køre med dig!",
+          "hint": "Vælg, hvem der skal med. Afdelingen sørger for resten.",
+          "more": "Tag en mere med",
+          "pick": "Vælg, hvem der kommer",
+          "submit": "{count, plural, one {Book # plads} other {Book # pladser}}",
+          "title": "Book en plads",
+          "tooMany": "{count, plural, one {Kun # plads tilbage, vælg én} other {Kun # pladser tilbage, vælg højst #}}"
+        },
+        "errors": {
+          "rateLimited": "Det var meget på én gang. Vent lidt, og prøv igen.",
+          "rideClosed": "Arrangementet tager ikke imod bookinger længere.",
+          "rideFull": "Arrangementet er blevet fuldt imens. Det er vi kede af.",
+          "riderNotInChapter": "Denne passager kører med en anden afdeling.",
+          "unknownPassenger": "Du booker ikke for denne passager.",
+          "unknownRide": "Arrangementet er ikke tilgængeligt længere."
+        },
+        "open": "Ledige pladser",
+        "seatsLeft": "{count, plural, =0 {Fuldt booket} one {# plads tilbage} other {# pladser tilbage}}",
+        "title": "Kommende arrangementer"
       },
       "past": "Tidligere ture",
       "pastCount": "{count, plural, one {# tur} other {# ture}}",
@@ -1900,8 +1951,11 @@
       "detail": {
         "about": "Om turen",
         "back": "Mine ture",
+        "call": "Ring til {name}",
         "cancelled": "Turen er aflyst.",
         "cancelledBody": "Den bliver på din liste, så du ved besked.",
+        "chat": "Chat om turen",
+        "chatHint": "Alle på turen og din afdeling.",
         "crew": "Kører med dig",
         "destination": "Destination",
         "map": "Kort over turen",
@@ -1910,14 +1964,58 @@
         "noRiders": "Ingen er booket endnu.",
         "note": "Besked til piloterne",
         "noTrishaws": "Ingen rickshaw sat af endnu.",
+        "pickup": {
+          "hint": "Hvor rickshawen står, og hvordan du kommer ind.",
+          "title": "Hent rickshawen"
+        },
         "riders": "Passagerer",
         "roundTrip": "Tur-retur",
         "solo": "Det er bare dig denne gang.",
         "start": "Start",
         "trishaws": "Rickshawer",
-        "where": "Hvor"
+        "via": "via {name}",
+        "where": "Hvor",
+        "withdraw": {
+          "body": "Din afdeling får besked og kan finde en anden.",
+          "bodyBoth": "Du melder fra til begge veje af turen, så vidt der stadig er tid. Din afdeling får besked og kan finde en anden.",
+          "cancel": "Jeg bliver",
+          "confirm": "Meld fra",
+          "done": "Du har meldt fra. Din afdeling ved det.",
+          "label": "Meld fra til turen",
+          "title": "Meld fra til turen?"
+        },
+        "withdrawClosed": "Med mindre end {hours, plural, one {# time} other {# timer}} til turen sker afmelding over telefonen: Ring venligst til {chapter}."
+      },
+      "errors": {
+        "notAssigned": "Du er ikke længere på turen.",
+        "notPilot": "Kun piloter i denne afdeling kan tilmelde sig.",
+        "rateLimited": "Det var meget på én gang. Vent lidt, og prøv igen.",
+        "rideClosed": "Turen er ikke åben længere.",
+        "rideFullyStaffed": "En anden var hurtigere: Turen har alle sine piloter nu.",
+        "selfSignUpOff": "Din afdeling sætter selv piloterne på. Kontakt dem.",
+        "tooLateToWithdraw": "Det er for tæt på turen til at melde fra her. Ring venligst til din afdeling.",
+        "unknownRide": "Turen findes ikke længere."
+      },
+      "open": {
+        "hint": "De her ture mangler stadig en pilot. Tag dem, der passer dig.",
+        "needsMore": "{count, plural, one {Mangler # pilot} other {Mangler # piloter}}",
+        "riders": "{count, plural, =0 {Ingen passagerer endnu} one {# passager} other {# passagerer}}",
+        "title": "Åbne ture i {chapter}",
+        "titleAny": "Åbne ture",
+        "goneTitle": "Turen mangler ikke længere en pilot",
+        "goneBody": "Måske har en anden taget den, eller turen er flyttet eller aflyst. Afdelingens andre åbne ture finder du under Mine ture.",
+        "goneCta": "Se åbne ture"
       },
       "past": "Tidligere ture",
+      "signUp": {
+        "alsoWayBack": "En del af en tur ud og hjem: Du kører også hjemturen, {time}, hvis den stadig mangler en pilot.",
+        "alsoWayThere": "En del af en tur ud og hjem: Du kører også udturen, {time}, hvis den stadig mangler en pilot.",
+        "cta": "Tilmeld dig turen",
+        "done": "Du er med på turen. Tak!",
+        "intro": "{chapter} søger en pilot. Når du tilmelder dig, kan du se, hvem du kører med, hvordan du får fat i dem, og en chat med alle på turen.",
+        "to": "til {destination}",
+        "late": "Turen er om mindre end {hours, plural, one {# time} other {# timer}}, så når du har tilmeldt dig, sker afmelding over telefonen til {chapter}."
+      },
       "upcomingEmpty": "Der er ikke noget på vej lige nu. Når din afdeling sætter dig på en tur, dukker den op her."
     },
     "status": {
@@ -2014,56 +2112,30 @@
       "addPilotEmpty": "Ingen andre piloter i dette chapter.",
       "addRider": "Book en passager",
       "addRiderEmpty": "Ingen flere passagerer i dette chapter at booke.",
-      "back": "Alle ture",
-      "cancelledBy": "Aflyst af {name}",
-      "destination": "Destination",
-      "duration": "Varighed",
-      "history": "Historik",
-      "historyEmpty": "Der er ikke sket noget med turen endnu.",
-      "model": "Turtype",
-      "modelLocked": "Den ene halvdel af en tur frem og tilbage, så den forbliver en ærindetur.",
-      "movedWithReturn": "Turen er flyttet, og hjemturen er flyttet med.",
-      "noPlace": "Intet sted endnu",
-      "noRiders": "Ingen er booket endnu.",
-      "noteForPilots": "Besked til piloterne",
-      "noteForPilotsHint": "Piloterne læser den, inden de kører.",
-      "notePlaceholder": "Alt piloterne bør vide – f.eks. ring på ved sideindgangen",
-      "notReady": "Ikke klar",
-      "noTrishaws": "Ingen rickshaw endnu.",
-      "pickup": "Afhentning",
-      "pilotsCount": "{required, plural, one {{assigned} af # pilot} other {{assigned} af # piloter}}",
-      "pilotsNeeded": "Piloter krævet",
-      "place": {
-        "hint": "Vælg et resultat for at flytte turen dertil."
-      },
-      "properties": "Egenskaber",
-      "readOnlyCancelled": "Aflyste ture beholder deres plads i kalenderen. Kun historikken tager stadig imod kommentarer.",
-      "readOnlyCompleted": "Turen er overstået. Kun historikken tager stadig imod kommentarer.",
-      "reason": "Årsag",
-      "riderAdded": "{name} er booket.",
-      "riders": "Passagerer",
-      "ridersCount": "{count, plural, =0 {Ingen booket endnu} one {# passager, i denne rækkefølge} other {# passagerer, i denne rækkefølge}}",
-      "start": "Start",
-      "status": "Status",
-      "title": "{model} · {date}",
-      "trishaws": "Rickshawer",
-      "unchanged": "Allerede gjort, intet ændret.",
-      "wayBack": "Hjemtur",
-      "wayThere": "Udtur",
-      "where": "Hvor",
-      "zoneHint": "Tider i {zone}",
       "addRiderFirst": "Tilføj en passager",
       "addRiderHere": "Indsæt her",
       "addTrishaw": "Tilføj rickshaw",
       "addTrishawEmpty": "Ingen ledig rickshaw på dette tidspunkt",
+      "added": "{name} er med på turen.",
+      "announce": {
+        "hint": "Afdelingens passagerer ser det på deres startside og booker selv en plads, indtil det er fuldt.",
+        "label": "Vis for afdelingens passagerer",
+        "title": "Passagerer kan booke"
+      },
+      "back": "Alle ture",
+      "cancelledBy": "Aflyst af {name}",
       "capacityPlaceholder": "Ingen grænse",
       "changePlace": "Skift sted",
       "description": "Beskrivelse",
       "descriptionPlaceholder": "Fortæl om turen – ruten, stoppestederne, hvem den er for.",
+      "destination": "Destination",
       "dragRider": "Træk for at flytte {name}",
+      "duration": "Varighed",
       "emptyPilots": "Ingen pilot på turen endnu.",
       "emptyRiders": "Ingen passagerer endnu",
       "eta": "~{duration} med rickshaw · {distance}",
+      "history": "Historik",
+      "historyEmpty": "Der er ikke sket noget med turen endnu.",
       "makeEvent": {
         "heading": "Gør den til en fællestur",
         "hint": "En fællestur skal have en titel og et antal pladser til passagerer.",
@@ -2078,20 +2150,54 @@
         "hint": "En ærindetur skal et sted hen. Vælg hvorhen.",
         "cancel": "Annuller"
       },
+      "model": "Turtype",
+      "modelLocked": "Den ene halvdel af en tur frem og tilbage, så den forbliver en ærindetur.",
+      "movedWithReturn": "Turen er flyttet, og hjemturen er flyttet med.",
+      "noLongerPilot": "Ikke længere pilot",
+      "noPlace": "Intet sted endnu",
+      "noRiders": "Ingen er booket endnu.",
+      "noTrishaws": "Ingen rickshaw endnu.",
+      "notReady": "Ikke klar",
+      "noteForPilots": "Besked til piloterne",
+      "noteForPilotsHint": "Piloterne læser den, inden de kører.",
+      "notePlaceholder": "Alt piloterne bør vide – f.eks. ring på ved sideindgangen",
       "onePilot": "En fornøjelsestur har én pilot.",
       "oneTrishaw": "En fornøjelsestur tager én rickshaw.",
       "photos": "Billeder",
+      "pickup": "Afhentning",
+      "pilotsCount": "{required, plural, one {{assigned} af # pilot} other {{assigned} af # piloter}}",
+      "pilotsNeeded": "Piloter krævet",
+      "place": {
+        "hint": "Vælg et resultat for at flytte turen dertil."
+      },
       "placesTaken": "{count} af {max} pladser optaget",
-      "setPlace": "Vælg et sted",
-      "trishawCount": "{count, plural, one {# rickshaw} other {# rickshawer}}",
+      "properties": "Egenskaber",
+      "readOnlyCancelled": "Aflyste ture beholder deres plads i kalenderen. Kun historikken tager stadig imod kommentarer.",
+      "readOnlyCompleted": "Turen er overstået. Kun historikken tager stadig imod kommentarer.",
+      "reason": "Årsag",
       "remove": "Tag {name} af turen",
       "removed": "{name} er taget af turen.",
-      "added": "{name} er med på turen."
+      "riderAdded": "{name} er booket.",
+      "riders": "Passagerer",
+      "ridersCount": "{count, plural, =0 {Ingen booket endnu} one {# passager, i denne rækkefølge} other {# passagerer, i denne rækkefølge}}",
+      "setPlace": "Vælg et sted",
+      "start": "Start",
+      "status": "Status",
+      "title": "{model} · {date}",
+      "trishawCount": "{count, plural, one {# rickshaw} other {# rickshawer}}",
+      "trishaws": "Rickshawer",
+      "unchanged": "Allerede gjort, intet ændret.",
+      "unstaffed": "Mangler piloter",
+      "wayBack": "Hjemtur",
+      "wayThere": "Udtur",
+      "where": "Hvor",
+      "zoneHint": "Tider i {zone}"
     },
     "errors": {
       "capacityBelowRoster": "Der er allerede booket flere passagerer. Tag nogle af først.",
       "capacityRequired": "Angiv, hvor mange passagerer der kan komme med.",
       "destinationRequired": "Vælg, hvor turen går hen.",
+      "eventsOnly": "Kun et arrangement kan vises for passagererne.",
       "invalidFile": "Billedet kan ikke bruges her. Upload det igen.",
       "legsOverlap": "Turen ud ville løbe ind i turen hjem. Flyt den anden tur først.",
       "notPilot": "Kun en pilot fra denne afdeling kan sættes på turen.",
@@ -2124,6 +2230,7 @@
       },
       "edited": "{who, select, you {Du} other {{actor}}} ændrede {fields}",
       "fields": {
+        "announced": "om passagerer kan booke",
         "capacity": "kapaciteten",
         "destination": "destinationen",
         "location": "afhentningen",
@@ -2162,6 +2269,8 @@
     "schedule": {
       "addNote": "Note til piloterne",
       "addTrishaws": "Tilføj rickshawer",
+      "announce": "Passagerer kan booke",
+      "announceHint": "Vis det for afdelingens passagerer, så de selv kan booke en plads.",
       "capacity": "Pladser",
       "capacityPlaceholder": "Antal pladser",
       "chapter": "Afdeling",

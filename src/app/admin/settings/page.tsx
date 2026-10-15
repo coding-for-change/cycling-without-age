@@ -8,6 +8,7 @@ import { readActiveScope, type AdminSearchParams } from "../active-scope";
 import { JoinLinkCard } from "./_components/join-link-card";
 import { NotificationSettingsCard } from "./_components/notification-settings-card";
 import { PostRideInstructionsCard } from "./_components/post-ride-instructions-card";
+import { StaffingSettingsCard } from "./_components/staffing-settings-card";
 import { PageFallback } from "@/components/page-fallback";
 import { markdownToolLabels } from "@/components/markdown-editor";
 
@@ -64,6 +65,16 @@ async function Settings({
               labels={{
                 markdown: markdownToolLabels(dict),
                 ...strings.postRide,
+                status: strings.notifications.status,
+                field: strings.notifications.field,
+              }}
+            />
+            <StaffingSettingsCard
+              chapterId={chapter.id}
+              settings={settings}
+              language={language}
+              labels={{
+                ...strings.staffing,
                 status: strings.notifications.status,
                 field: strings.notifications.field,
               }}

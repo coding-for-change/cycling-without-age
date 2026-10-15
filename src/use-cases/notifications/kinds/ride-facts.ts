@@ -64,6 +64,15 @@ export async function factsOfRide(
 export const rideStillExists = async (rideId: string) =>
   (await rides.getRideFacts(rideId)) !== null;
 
+/**
+ * A ride already over is history: an admin filling in who rode last Monday
+ * tells nobody they are "piloting on Monday".
+ */
+export const rideNotOver = async (rideId: string, now = new Date()) => {
+  const ride = await rides.getRideFacts(rideId);
+  return ride !== null && ride.endsAt > now;
+};
+
 export function rideWords(
   facts: RideFacts,
   strings: EmailStrings,

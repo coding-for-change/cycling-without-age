@@ -24,7 +24,7 @@ import { DayHeading } from "./day-heading";
 import {
   rideGroundedNote,
   rideHeadline,
-  ridePilots,
+  seatedPilots,
   rideTone,
   rideTrishawNames,
   type CalendarStrings,
@@ -106,13 +106,19 @@ export function RideWeek({
     cancelled: ride.status === "cancelled",
     tone: rideTone(ride),
     where: rideHeadline(ride, strings),
-    detail: `${rideTrishawNames(ride, strings)} · ${
+    detail: [
+      rideTrishawNames(ride, strings),
       ride._count.roster
         ? formatMessage(strings.riders, { count: ride._count.roster }, words)
-        : ridePilots(ride).length
-          ? strings.roles.pilot
-          : strings.pilotNeeded
-    }`,
+        : null,
+      formatMessage(
+        strings.staffing,
+        { assigned: seatedPilots(ride).length, required: ride.requiredPilots },
+        words,
+      ),
+    ]
+      .filter(Boolean)
+      .join(" · "),
     grounded: rideGroundedNote(ride, now, fleet, words),
     href: link.href(ride.id),
     movable: ride.status === "scheduled",

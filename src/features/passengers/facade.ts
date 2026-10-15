@@ -2,6 +2,7 @@ import { ownRiderDetailsPatch, passengerInput } from "./schemas";
 import { DomainError } from "@/lib/domain-error";
 import type { OwnRiderDetailsPatchInput, PassengerInput } from "./schemas";
 import {
+  findBookingAccountsOfChapters,
   countPassengersInChapters,
   countPassengersManagedBy,
   findPassengerById,
@@ -32,6 +33,17 @@ export const listPassengersManagedBy = (userId: string) =>
   findPassengersManagedBy(userId);
 export const listPassengersOfChapters = (chapterIds: string[]) =>
   findPassengersOfChapters(chapterIds);
+
+/**
+ * The accounts that book for these chapters' riders: whoever manages a rider,
+ * which is the rider's own account when it books for itself.
+ */
+export const listBookingAccountsOfChapters = async (chapterIds: string[]) =>
+  chapterIds.length
+    ? (await findBookingAccountsOfChapters(chapterIds)).map(
+        (rider) => rider.managedByUserId,
+      )
+    : [];
 
 export type PassengerRow = Awaited<
   ReturnType<typeof findPassengersOfChapters>

@@ -930,6 +930,80 @@ and deleting is what frees its square on the calendar (`rideNotCancelled` for an
 - **`seriesId`** is on every ride and unused. Recurrence will fill it; adding it now means no
   backfill then.
 
+### Staffing and self-service (COD-262)
+
+Lifecycle phase 3, and the event half of 4B-b. Three chapter settings drive it, each with its
+consumer in the same change: `pilotsMaySelfAssign`, `requiredPilotsDefault` (what the drawer
+starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 168).
+
+- **Open rides.** A pilot sees the scheduled, future rides of the chapters they pilot for that
+  let pilots sign up, still short of `requiredPilots` and without them on it
+  (`rides.listOpenRidesForPilot`, behind `use-cases/open-rides.ts`, which reads the setting).
+  Whether a ride is still short is only known once its pilots are counted, so the 60-day window
+  is read in batches on a `(startsAt, id)` cursor until the page holds 30 open rides.
+  The open shape (`openSelect`) carries time, place, model and counts — no rider names, no
+  phone numbers, no note. `/pilot/rides/[rideId]` shows that shape to a pilot who is not on the
+  ride, and the assigned shape to one who is.
+- **Signing up and stepping back.** `use-cases/sign-up-for-ride.ts` checks the `pilot` role on
+  the membership row of the ride's own chapter (a country admin or superadmin is not a pilot
+  there) and the chapter's setting, then `rides.selfAssign` locks the ride row and recounts the
+  pilots under the lock (`rideFullyStaffed`), so two pilots taking the last seat queue up. A
+  round trip is one outing: `requireRide` locks both legs, signing up for one takes the other
+  while it still needs a pilot, and stepping back leaves both while there is time — one
+  message for both, through the events' `pair`.
+  Every pilot count — signing up, an admin's assignment, the model rules, the admin's
+  "Unstaffed" badge and week grid, the staffing check — counts only pilots still holding the
+  role in the ride's chapter; the admin still sees a demoted one, marked, to take them off.
+  `withdrawFromRide` passes the chapter's lead to `rides.withdraw`, which removes only the
+  pilot's own row and refuses inside the staffing window (`tooLateToWithdraw`: call the
+  chapter). The Actions live in `app/(member)/pilot/rides/actions.ts`, rate-limited, behind
+  `requireAuth` and `hasChapterRole(…, "pilot")` on the ride's chapter read from the database.
+- **Contact exchange on match** (stories 24a/24b). The assigned pilot's select carries each
+  rider's own phone, or the managing account's name and phone; the rider's account's select
+  carries the assigned pilots' phones. Neither carries an email, and the open shape neither.
+- **Pickup pack.** From 24 hours before the ride (or from the close of the chapter's staffing
+  window, when that is later, so a pilot who can still step back never holds the code) until it
+  ends, the assigned pilot's page shows
+  each trishaw's storage location and access code (`use-cases/finish-ride.ts` → `pickupView`,
+  rendered by `features/fleet/components/storage-access-card.tsx`, which the finish page uses
+  too).
+- **Staffing check** (3D). `use-cases/ride-sweep.ts` runs every five minutes in the worker
+  (`MONITORS["ride-sweep"]`). `staffing-check.ts` groups the chapters by their lead and reads,
+  per group, only the unchecked rides already inside that window, and `rides.checkStaffing` stamps
+  `Ride.staffingCheckedAt` and emits `ride.understaffed` in one transaction under the ride's
+  lock — a retried sweep finds the stamp and stays quiet. The way there checks its way back
+  along, so a round trip short both ways is one warning. The sweep runs on the worker that
+  dispatches every outbox event, so one run checks at most 50 rides and the next carries on, and
+  a ride whose check fails is logged and passed over. Moving a ride clears the stamp. A
+  pilot stepping back clears the stamp of the legs they left, and a pilot demoted or removed
+  in the chapter clears it on every upcoming ride they were on (`use-cases/leave-ride-crews.ts`,
+  the `member.roleChanged` listener), so a seat that empties after the check is checked again. A
+  ride scheduled already inside its window is stamped as it is scheduled (the admin sees what it
+  is short of), and `20261013110000_ride_staffing_checked_backfill` stamps the rides already
+  inside their window when this ships, so the first sweep does not flag them all at once.
+- **Ride chat.** A `Conversation` with `origin: ride` and a unique `rideId`, owned by nobody.
+  The `syncRideChat` worker listener (`ride.pilotAssigned`, `ride.pilotUnassigned`,
+  `ride.riderBooked`, `ride.riderRemoved`) runs `use-cases/ride-chat.ts`: once a pilot is on the
+  ride it opens the chat, and from then on keeps its members equal to the ride's pilots, its
+  riders' accounts and the chapter's admins — on an event only the pilots and admins, because
+  the families who booked seats never learn of each other (`chat.syncRideConversation`,
+  idempotent). A demotion or removal in the chapter (`member.roleChanged`) syncs every ride chat
+  the person is in, so a former pilot or admin leaves them at once. Two syncs may read the roster in one order and write it in the other, so a sync
+  that changed the members reads the roster again and writes until a read finds nothing to
+  change; the roster is read outside the conversation's lock, so a waiting sync never needs a
+  second pool connection. A racing creator that loses the unique `rideId` joins that loop.
+  Freezing it is PR 6's.
+- **Announced events** (4B-b). `Ride.announced` is set in the drawer or the detail page's
+  "Riders can book" panel, for event rides only (`eventsOnly`). Announced events show on the
+  passenger start screen and `/passenger/rides` for the chapters of the riders the account
+  manages, until every one of them in the event's chapter is booked on it (it is then among the
+  account's own rides), through `announcedSelect`: photos, story, place and seats left, never another
+  rider. "Book a seat" (`app/(member)/passenger/rides/actions.ts`, rate-limited) goes through
+  `use-cases/book-event-seat.ts` — riders the account manages, in the event's chapter — and
+  `rides.bookSeats` locks the ride, recounts the roster against `capacity` and refuses a booking
+  that would overfill it as a whole (`rideFull`). The photos of an announced event are readable
+  by every member of its chapter (`rides.photoReadRule`).
+
 The admin surfaces are the week grid at `/admin/rides` (`?new=1` opens the scheduling drawer,
 and ⌘K "Schedule a ride" lands there) and the detail page `/admin/rides/[rideId]`, whose
 trishaws panel allocates trishaws in place.

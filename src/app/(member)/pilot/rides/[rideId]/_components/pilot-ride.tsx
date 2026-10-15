@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
@@ -9,10 +8,14 @@ import {
   Bike,
   CalendarClock,
   Flag,
+  MessageCircle,
+  Phone,
   StickyNote,
 } from "lucide-react";
 import { RichText } from "@/components/markdown";
 import { Badge } from "@/components/ui/badge";
+import { chapters } from "@/features/chapters";
+import { chat } from "@/features/chat";
 import { rides, type PilotRideDetailRow } from "@/features/rides";
 import { requirePerspective } from "@/lib/auth-guards";
 import { calendarDate, sameDay } from "@/lib/calendar";
@@ -25,8 +28,14 @@ import {
   type Locale,
 } from "@/lib/format";
 import { getDictionary, getLocale, type Dictionary } from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
 import { cn, fullName } from "@/lib/utils";
+import { pickupView } from "@/use-cases/finish-ride";
+import { pilotChapterIds } from "../../_components/open-rides";
+import { OpenRide } from "./open-ride";
+import { PickupCard } from "./pickup-card";
 import { RideWhere } from "./ride-where";
+import { WithdrawButton } from "./withdraw-button";
 
 type Leg = NonNullable<PilotRideDetailRow["returnLeg"]>;
 
@@ -46,16 +55,32 @@ export async function PilotRide({
     getLocale(),
     headers(),
   ]);
-  if (!ride) notFound();
-
-  const otherLeg = ride.returnLeg ?? ride.returnLegOf;
-  const otherLegOpen = otherLeg
-    ? await rides.pilotCanOpen(otherLeg.id, userId)
-    : false;
-
-  const now = new Date();
   const locale = resolveLocale(head.get("accept-language"));
   const words = wordsLocale(language);
+  if (!ride)
+    return (
+      <OpenRide
+        rideId={rideId}
+        pilotChapterIds={pilotChapterIds(session.access)}
+        dict={dict}
+        locale={locale}
+        words={words}
+      />
+    );
+
+  const now = new Date();
+  const otherLeg = ride.returnLeg ?? ride.returnLegOf;
+  const [otherLegOpen, settings, chatId, pickup] = await Promise.all([
+    otherLeg ? rides.pilotCanOpen(otherLeg.id, userId) : false,
+    chapters.getSettings(ride.chapterId),
+    chat.getRideConversationId(ride.id, userId),
+    pickupView(ride, now),
+  ]);
+  const ahead = ride.status === "scheduled" && ride.startsAt > now;
+  const mayWithdraw =
+    ahead &&
+    now <
+      rides.withdrawalClosesAt(ride.startsAt, settings.staffingCheckLeadHours);
   const strings = dict.pilot.rides.detail;
   const zone = ride.chapter.timeZone;
   const cancelled = ride.status === "cancelled";
@@ -161,6 +186,29 @@ export async function PilotRide({
         </Link>
       ) : null}
 
+      {chatId ? (
+        <Link
+          href={`/pilot/chat/${chatId}`}
+          transitionTypes={["push"]}
+          className="border-line hover:bg-canvas-deep flex items-center gap-4 rounded-2xl border p-4 transition-colors motion-reduce:transition-none"
+        >
+          <MessageCircle
+            aria-hidden
+            className="text-ink size-5 shrink-0"
+          />
+          <span className="min-w-0">
+            <span className="block font-medium">{strings.chat}</span>
+            <span className="text-ink-soft block text-sm">
+              {strings.chatHint}
+            </span>
+          </span>
+          <ArrowRight
+            aria-hidden
+            className="text-ink-soft ml-auto size-4 shrink-0"
+          />
+        </Link>
+      ) : null}
+
       {ride.note?.trim() ? (
         <section
           aria-label={strings.note}
@@ -186,6 +234,14 @@ export async function PilotRide({
         openInMaps={dict.fleet.finish.openInMaps}
       />
 
+      {pickup ? (
+        <PickupCard
+          places={pickup}
+          dict={dict}
+          words={words}
+        />
+      ) : null}
+
       <Section title={strings.riders}>
         {ride.roster.length > 0 ? (
           <ol className="border-line divide-line divide-y rounded-2xl border">
@@ -200,7 +256,20 @@ export async function PilotRide({
                 >
                   {index + 1}
                 </span>
-                <span className="min-w-0 truncate">{fullName(passenger)}</span>
+                <RiderContact
+                  name={fullName(passenger)}
+                  phone={
+                    passenger.user?.phoneNumber ??
+                    passenger.managedBy.phoneNumber
+                  }
+                  via={
+                    passenger.user?.phoneNumber
+                      ? null
+                      : passenger.managedBy.name
+                  }
+                  strings={strings}
+                  words={words}
+                />
               </li>
             ))}
           </ol>
@@ -292,6 +361,74 @@ export async function PilotRide({
             className="text-sm"
           />
         </Section>
+      ) : null}
+
+      {mayWithdraw ? (
+        <div className="mt-auto flex flex-col pt-4">
+          <WithdrawButton
+            rideId={ride.id}
+            labels={{
+              ...strings.withdraw,
+              body:
+                otherLegOpen && otherLeg?.status === "scheduled"
+                  ? strings.withdraw.bodyBoth
+                  : strings.withdraw.body,
+            }}
+            errors={{ ...dict.common.errors, ...dict.pilot.rides.errors }}
+          />
+        </div>
+      ) : ahead ? (
+        <p className="text-2sm text-ink-soft border-line rounded-2xl border p-4">
+          {formatMessage(
+            strings.withdrawClosed,
+            {
+              hours: settings.staffingCheckLeadHours,
+              chapter: ride.chapter.name,
+            },
+            words,
+          )}
+        </p>
+      ) : null}
+    </>
+  );
+}
+
+/** The rider, and the number that reaches them or whoever books for them. */
+function RiderContact({
+  name,
+  phone,
+  via,
+  strings,
+  words,
+}: {
+  name: string;
+  phone: string | null;
+  via: string | null;
+  strings: Dictionary["pilot"]["rides"]["detail"];
+  words: Locale;
+}) {
+  return (
+    <>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate">{name}</span>
+        {phone && via ? (
+          <span className="text-2sm text-ink-soft truncate">
+            {formatMessage(strings.via, { name: via }, words)}
+          </span>
+        ) : null}
+      </span>
+      {phone ? (
+        <a
+          href={`tel:${phone.replace(/[^\d+]/g, "")}`}
+          aria-label={formatMessage(strings.call, { name }, words)}
+          className="text-2sm border-line hover:bg-canvas-deep inline-flex min-h-11 shrink-0 items-center gap-1.25 rounded-full border px-3 tabular-nums transition-colors motion-reduce:transition-none"
+        >
+          <Phone
+            aria-hidden
+            className="size-4"
+          />
+          {phone}
+        </a>
       ) : null}
     </>
   );

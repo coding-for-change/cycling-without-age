@@ -26,14 +26,21 @@ jest.mock("@/features/fleet", () => ({
   fleet: { getTrishaw: jest.fn(), getLocation: jest.fn() },
 }));
 jest.mock("@/features/membership", () => ({
-  membership: { listChapterAdmins: jest.fn(), getMemberRoles: jest.fn() },
+  membership: {
+    listChapterAdmins: jest.fn(),
+    getMemberRoles: jest.fn(),
+    listPilotMembers: jest.fn(),
+  },
 }));
 jest.mock("@/features/rides", () => ({
   ...jest.requireActual("@/features/rides/schemas"),
   rides: { getRideFacts: jest.fn(), listRideParticipants: jest.fn() },
 }));
 jest.mock("@/features/passengers", () => ({
-  passengers: { getPassenger: jest.fn() },
+  passengers: {
+    getPassenger: jest.fn(),
+    listBookingAccountsOfChapters: jest.fn(),
+  },
 }));
 jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
 
@@ -194,6 +201,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     actorUserId: SUBJECT,
     userId: SUBJECT,
     self: true,
+    pair: null,
   },
   "ride.riderBooked": {
     type: "ride.riderBooked",
@@ -210,6 +218,28 @@ const EVENTS: Record<EventType, DomainEvent> = {
     actorUserId: ACTOR,
     passengerId: "passenger-1",
     self: true,
+  },
+  "ride.opened": {
+    type: "ride.opened",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+    pair: null,
+  },
+  "ride.understaffed": {
+    type: "ride.understaffed",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: null,
+    assigned: 1,
+    required: 2,
+    pair: null,
+  },
+  "ride.announced": {
+    type: "ride.announced",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
   },
 };
 
@@ -323,7 +353,16 @@ describe("a message for both legs of a round trip", () => {
     { ...EVENTS["ride.cancelled"], pair: lead },
     { ...EVENTS["ride.rescheduled"], changes: ["time"], pair: lead },
     { ...EVENTS["ride.pilotAssigned"], pair: lead },
+    {
+      ...EVENTS["ride.pilotAssigned"],
+      actorUserId: SUBJECT,
+      self: true,
+      pair: lead,
+    },
+    { ...EVENTS["ride.pilotUnassigned"], pair: lead },
+    { ...EVENTS["ride.understaffed"], pair: lead },
     { ...EVENTS["ride.riderBooked"], pair: lead },
+    { ...EVENTS["ride.opened"], pair: lead },
   ] as DomainEvent[];
 
   it.each(locales)("reads as finished prose in %s", async (locale) => {
@@ -379,11 +418,15 @@ describe("the templates the history feed has to label", () => {
       "poolAccessDecided",
       "poolAccessRequested",
       "rejection",
+      "rideAnnounced",
       "rideAssigned",
       "rideBooked",
       "rideBookingCancelled",
       "rideCancelled",
       "rideChanged",
+      "rideOpened",
+      "ridePilotWithdrew",
+      "rideUnderstaffed",
       "roleChanged",
       "welcome",
     ]);

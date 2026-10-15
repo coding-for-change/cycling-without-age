@@ -1,24 +1,19 @@
 import type { ReactNode } from "react";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import {
-  Accessibility,
-  CalendarClock,
-  DoorOpen,
-  ExternalLink,
-  KeyRound,
-  MapPin,
-  TriangleAlert,
-} from "lucide-react";
+import { Accessibility, CalendarClock, TriangleAlert } from "lucide-react";
 import { RichText } from "@/components/markdown";
 import { Badge } from "@/components/ui/badge";
 import type { DamageFormLabels } from "@/features/fleet/components/damage-form";
 import { DamageReportDrawer } from "@/features/fleet/components/damage-report-drawer";
-import { FileImage, FileThumb } from "@/features/fleet/components/file-image";
-import { fleetCommon } from "@/features/fleet/components/strings";
+import { FileThumb } from "@/features/fleet/components/file-image";
+import { StorageAccessCard } from "@/features/fleet/components/storage-access-card";
+import {
+  fleetCommon,
+  storageAccessLabels,
+} from "@/features/fleet/components/strings";
 import { requirePerspective } from "@/lib/auth-guards";
 import { calendarDate } from "@/lib/calendar";
-import { googleMapsUrl } from "@/lib/geo";
 import {
   formatShortDateWithWeekday,
   formatTime,
@@ -178,7 +173,6 @@ function TrishawReturn({
   const { trishaw, location, reported } = entry;
   const { finish, common } = dict.fleet;
   const summary = trishawSummary(trishaw, dict, words);
-  const maps = location ? googleMapsUrl(location) : null;
   const grounded = trishaw.damages.some((damage) => damage.grounding);
 
   return (
@@ -219,101 +213,13 @@ function TrishawReturn({
       <div className="border-line flex flex-col gap-4 border-t p-4">
         <h3 className="text-sm font-semibold">{finish.returnTitle}</h3>
         {location ? (
-          <>
-            <div className="flex items-start gap-3">
-              <MapPin
-                aria-hidden
-                className="text-mint-deep mt-0.5 size-4 shrink-0"
-              />
-              <div className="flex min-w-0 flex-col gap-1">
-                <p className="font-medium">
-                  {location.name}
-                  {summary.isPool ? (
-                    <Badge
-                      variant="outline"
-                      className="border-line text-ink-soft ml-2 align-middle"
-                    >
-                      {common.pool}
-                    </Badge>
-                  ) : null}
-                </p>
-                {location.address ? (
-                  <p className="text-2sm text-ink-soft">{location.address}</p>
-                ) : null}
-                {maps ? (
-                  <a
-                    href={maps}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-2sm inline-flex min-h-11 w-fit items-center gap-1.25 font-medium underline underline-offset-2"
-                  >
-                    <ExternalLink
-                      aria-hidden
-                      className="size-3.5"
-                    />
-                    {finish.openInMaps}
-                  </a>
-                ) : null}
-              </div>
-            </div>
-
-            {location.accessCode ? (
-              <div className="bg-mint-tint flex items-center gap-3 rounded-xl p-4">
-                <KeyRound
-                  aria-hidden
-                  className="text-ink size-5 shrink-0"
-                />
-                <div className="flex flex-col gap-0.5">
-                  <p className="text-2sm text-ink-soft">{finish.accessCode}</p>
-                  <p className="font-display text-3xl font-bold tracking-widest tabular-nums select-all">
-                    {location.accessCode}
-                  </p>
-                </div>
-              </div>
-            ) : null}
-
-            {location.entrance || location.entrancePhotoFileId ? (
-              <div className="flex flex-col gap-3">
-                <p className="flex items-center gap-1.25 text-sm font-medium">
-                  <DoorOpen
-                    aria-hidden
-                    className="size-4"
-                  />
-                  {finish.entrance}
-                </p>
-                {location.entrance ? (
-                  <p className="text-2sm">{location.entrance}</p>
-                ) : null}
-                {location.entrancePhotoFileId ? (
-                  <FileImage
-                    fileId={location.entrancePhotoFileId}
-                    alt={formatMessage(
-                      finish.entrancePhoto,
-                      { location: location.name },
-                      words,
-                    )}
-                    className="aspect-video w-full rounded-xl"
-                  />
-                ) : null}
-              </div>
-            ) : null}
-
-            {location.accessNotes?.trim() ? (
-              <div className="flex flex-col gap-1.25">
-                <p className="text-sm font-medium">{finish.accessNotes}</p>
-                <RichText text={location.accessNotes} />
-              </div>
-            ) : null}
-
-            {location.returnInstructions?.trim() ? (
-              <div className="flex flex-col gap-1.25">
-                <p className="text-sm font-medium">
-                  {finish.returnInstructions}
-                </p>
-                <RichText text={location.returnInstructions} />
-              </div>
-            ) : null}
-          </>
+          <StorageAccessCard
+            location={location}
+            pool={summary.isPool}
+            withReturn
+            labels={{ ...storageAccessLabels(dict), pool: common.pool }}
+            words={words}
+          />
         ) : (
           <p className="text-2sm text-ink-soft">{finish.noLocation}</p>
         )}
