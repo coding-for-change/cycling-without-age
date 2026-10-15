@@ -32,5 +32,5 @@ export async function inviteChapterUser({
     roles,
   });
 
-  return { created };
+  return { userId, created };
 }

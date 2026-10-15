@@ -9,10 +9,10 @@ export async function appointCountryAdminByEmail({
   email: string;
   countryId: string;
   actorUserId: string;
-}): Promise<"ok" | "noAccount"> {
+}): Promise<{ userId: string } | null> {
   const userId = await profile.getUserIdByEmail(email);
-  if (!userId) return "noAccount";
+  if (!userId) return null;
 
   await chapters.appointCountryAdmin(userId, countryId, actorUserId);
-  return "ok";
+  return { userId };
 }

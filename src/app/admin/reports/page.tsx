@@ -1,4 +1,5 @@
 import { Suspense, ViewTransition } from "react";
+import { cacheLife } from "next/cache";
 import { headers } from "next/headers";
 import { reportRangeParams } from "@/features/rides";
 import { activityReport } from "@/use-cases/activity-report";
@@ -8,6 +9,7 @@ import { formatDateMedium, formatPeriod, resolveLocale } from "@/lib/format";
 import { first } from "@/lib/search-params";
 import { readActiveScope, type AdminSearchParams } from "../active-scope";
 import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
+import { ADMIN_LIFE } from "../admin-viewer";
 import { PageHeaderSkeleton } from "../_components/admin-skeletons";
 import { kpiTiles } from "../_components/kpi-data";
 import { KpiTiles } from "../_components/kpi-tiles";
@@ -44,6 +46,9 @@ export default function ReportsPage({
 }
 
 async function ReportsHeader() {
+  "use cache: private";
+  cacheLife(ADMIN_LIFE);
+
   const dict = await getDictionary();
   return <AdminPageHeader title={dict.admin.pages.reports.title} />;
 }

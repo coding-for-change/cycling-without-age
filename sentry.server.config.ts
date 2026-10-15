@@ -14,7 +14,7 @@ Sentry.init({
     }),
     nodeProfilingIntegration(),
   ],
-  profileSessionSampleRate: 0.1,
+  profileSessionSampleRate: 1,
   profileLifecycle: "trace",
   includeLocalVariables: false,
   enableLogs: true,

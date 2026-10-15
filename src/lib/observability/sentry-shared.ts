@@ -44,8 +44,11 @@ const pathOf = (value: string): string => {
   }
 };
 
-export const isUntraced = (target: string | undefined): boolean =>
-  typeof target === "string" && UNTRACED.some((rx) => rx.test(pathOf(target)));
+export const isUntraced = (target: string | undefined): boolean => {
+  if (typeof target !== "string") return false;
+  const path = pathOf(target);
+  return UNTRACED.some((rx) => rx.test(path));
+};
 
 export const isReplayForbidden = (pathname: string): boolean =>
   REPLAY_FORBIDDEN.some((rx) => rx.test(pathname));
@@ -62,9 +65,17 @@ const targetOf = (context: SamplingContext): string | undefined => {
 };
 
 export function tracesSampler(context: SamplingContext): number {
-  if (isUntraced(targetOf(context)) || isUntraced(context.name)) return 0;
-  if (context.attributes?.["sentry.op"] === "function.server_action")
-    return SERVER_ACTION_TRACE_RATE;
+  const op = context.attributes?.["sentry.op"];
+  if (
+    context.parentSampled === undefined &&
+    typeof op === "string" &&
+    op.startsWith("db.")
+  )
+    return 0;
+  const target = targetOf(context);
+  if (isUntraced(target)) return 0;
+  if (target !== context.name && isUntraced(context.name)) return 0;
+  if (op === "function.server_action") return SERVER_ACTION_TRACE_RATE;
   return context.inheritOrSampleWith(DEFAULT_TRACE_RATE);
 }
 

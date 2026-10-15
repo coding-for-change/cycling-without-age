@@ -5,8 +5,7 @@ import { useEffect, useTransition } from "react";
 import { CalendarDays, List } from "lucide-react";
 import { haptics } from "@/lib/native/haptics";
 import { Segmented } from "../../_components/segmented";
-
-export type RidesView = "calendar" | "list";
+import type { RidesView } from "../rides-view";
 
 export function RidesViewSwitch({
   value,

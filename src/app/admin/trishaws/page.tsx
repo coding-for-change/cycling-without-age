@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, cache } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { ICONS } from "@/components/icons";
 import { fleet } from "@/features/fleet";
@@ -10,12 +10,11 @@ import { TrishawCreateDrawer } from "@/features/fleet/components/trishaw-create-
 import { collator, wordsLocale } from "@/lib/format";
 import { trishawSummary } from "@/components/trishaw-summary";
 import { getDictionary, getLocale } from "@/lib/i18n";
-import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
-import { AdminTabs } from "../_components/admin-tabs";
+import { AdminPageShell } from "../_components/admin-page";
 import { readActiveScope, type AdminSearchParams } from "../active-scope";
 import { scopeCountries } from "../scope-countries";
+import { FleetHeader } from "./_components/fleet-header";
 import {
-  fleetTabs,
   locationOption,
   manageableLocations,
   typeOptions,
@@ -24,28 +23,36 @@ import {
   TrishawsTable,
   type TrishawListRow,
 } from "./_components/trishaws-table";
-import { TrishawsSkeleton } from "./_components/trishaws-skeleton";
+import {
+  FleetActionSkeleton,
+  FleetHeaderSkeleton,
+  TrishawRowsSkeleton,
+} from "./_components/trishaws-skeleton";
 import { fleetCommon } from "@/features/fleet/components/strings";
 
-export default function TrishawsPage({
-  searchParams,
-}: {
-  searchParams: Promise<AdminSearchParams>;
-}) {
+type PageProps = { searchParams: Promise<AdminSearchParams> };
+
+export default function TrishawsPage({ searchParams }: PageProps) {
   return (
     <AdminPageShell>
-      <Suspense fallback={<TrishawsSkeleton />}>
-        <Trishaws searchParams={searchParams} />
+      <Suspense fallback={<FleetHeaderSkeleton />}>
+        <FleetHeader
+          current="trishaws"
+          action={
+            <Suspense fallback={<FleetActionSkeleton />}>
+              <CreateTrishaw searchParams={searchParams} />
+            </Suspense>
+          }
+        />
+      </Suspense>
+      <Suspense fallback={<TrishawRowsSkeleton />}>
+        <TrishawList searchParams={searchParams} />
       </Suspense>
     </AdminPageShell>
   );
 }
 
-async function Trishaws({
-  searchParams,
-}: {
-  searchParams: Promise<AdminSearchParams>;
-}) {
+const loadTrishaws = cache(async (searchParams: Promise<AdminSearchParams>) => {
   const { session, scope, active, scopeQuery, chapters, chapterIds } =
     await readActiveScope(searchParams, "bikes");
   const countryIds = [...new Set(chapters.map((chapter) => chapter.countryId))];
@@ -61,6 +68,56 @@ async function Trishaws({
     getLocale(),
   ]);
   const manageable = await manageableLocations(session.access, locations);
+
+  return { active, scopeQuery, list, types, dict, language, manageable };
+});
+
+async function CreateTrishaw({ searchParams }: PageProps) {
+  const { active, scopeQuery, types, dict, language, manageable } =
+    await loadTrishaws(searchParams);
+  if (manageable.length === 0) return null;
+
+  const common = fleetCommon(dict);
+  const strings = dict.fleet.trishaws;
+  const defaultLocation =
+    (active.kind === "chapter"
+      ? manageable.find(
+          (location) =>
+            location.isDefault && location.ownerChapterId === active.chapter.id,
+        )
+      : manageable.find((location) => location.isDefault)) ?? manageable[0];
+
+  return (
+    <TrishawCreateDrawer
+      types={typeOptions(types, dict, language)}
+      locations={manageable.map(locationOption)}
+      defaultLocationId={defaultLocation.id}
+      scopeQuery={scopeQuery}
+      locale={language}
+      labels={{
+        ...strings.create,
+        open: strings.new,
+        typePicker: {
+          placeholder: strings.picker.modelPlaceholder,
+          empty: strings.picker.modelEmpty,
+          wheelchair: common.wheelchair,
+        },
+        locationPicker: {
+          placeholder: strings.picker.locationPlaceholder,
+          empty: strings.picker.locationEmpty,
+          pool: common.pool,
+        },
+        gallery: { ...common.gallery, errors: common.errors },
+        photoHint: strings.detail.photoHint,
+        errors: common.errors,
+      }}
+    />
+  );
+}
+
+async function TrishawList({ searchParams }: PageProps) {
+  const { scopeQuery, list, dict, language, manageable } =
+    await loadTrishaws(searchParams);
 
   const common = fleetCommon(dict);
   const strings = dict.fleet.trishaws;
@@ -95,121 +152,71 @@ async function Trishaws({
   const models = unique(rows.flatMap((row) => (row.model ? [row.model] : [])));
   const places = unique(rows.map((row) => row.location));
 
-  const defaultLocation =
-    (active.kind === "chapter"
-      ? manageable.find(
-          (location) =>
-            location.isDefault && location.ownerChapterId === active.chapter.id,
-        )
-      : manageable.find((location) => location.isDefault)) ?? manageable[0];
-
-  return (
-    <>
-      <AdminPageHeader title={dict.admin.pages.bikes.title}>
-        {manageable.length > 0 ? (
-          <TrishawCreateDrawer
-            types={typeOptions(types, dict, language)}
-            locations={manageable.map(locationOption)}
-            defaultLocationId={defaultLocation.id}
-            scopeQuery={scopeQuery}
-            locale={language}
-            labels={{
-              ...strings.create,
-              open: strings.new,
-              typePicker: {
-                placeholder: strings.picker.modelPlaceholder,
-                empty: strings.picker.modelEmpty,
-                wheelchair: common.wheelchair,
+  return rows.length > 0 ? (
+    <TrishawsTable
+      rows={rows}
+      scopeQuery={scopeQuery}
+      table={dict.admin.table}
+      locale={language}
+      labels={{
+        columns: strings.columns,
+        noModel: strings.noModel,
+        pool: common.pool,
+        wheelchair: common.wheelchair,
+      }}
+      filters={[
+        ...(models.length > 1
+          ? [
+              {
+                columnId: "model",
+                label: strings.columns.model,
+                options: models.map((model) => ({
+                  value: model,
+                  label: model,
+                })),
               },
-              locationPicker: {
-                placeholder: strings.picker.locationPlaceholder,
-                empty: strings.picker.locationEmpty,
-                pool: common.pool,
+            ]
+          : []),
+        {
+          columnId: "wheelchair",
+          label: strings.columns.wheelchair,
+          options: [
+            { value: "yes", label: strings.wheelchairFilter.yes },
+            { value: "no", label: strings.wheelchairFilter.no },
+          ],
+        },
+        ...(places.length > 1
+          ? [
+              {
+                columnId: "location",
+                label: strings.columns.location,
+                options: places.map((place) => ({
+                  value: place,
+                  label: place,
+                })),
               },
-              gallery: { ...common.gallery, errors: common.errors },
-              photoHint: strings.detail.photoHint,
-              errors: common.errors,
-            }}
-          />
-        ) : null}
-      </AdminPageHeader>
-
-      <AdminTabs
-        tabs={fleetTabs(strings.tabs)}
-        current="trishaws"
-        scopeQuery={scopeQuery}
-        label={strings.tabs.label}
-      />
-
-      {rows.length > 0 ? (
-        <TrishawsTable
-          rows={rows}
-          scopeQuery={scopeQuery}
-          table={dict.admin.table}
-          locale={language}
-          labels={{
-            columns: strings.columns,
-            noModel: strings.noModel,
-            pool: common.pool,
-            wheelchair: common.wheelchair,
-          }}
-          filters={[
-            ...(models.length > 1
-              ? [
-                  {
-                    columnId: "model",
-                    label: strings.columns.model,
-                    options: models.map((model) => ({
-                      value: model,
-                      label: model,
-                    })),
-                  },
-                ]
-              : []),
-            {
-              columnId: "wheelchair",
-              label: strings.columns.wheelchair,
-              options: [
-                { value: "yes", label: strings.wheelchairFilter.yes },
-                { value: "no", label: strings.wheelchairFilter.no },
-              ],
-            },
-            ...(places.length > 1
-              ? [
-                  {
-                    columnId: "location",
-                    label: strings.columns.location,
-                    options: places.map((place) => ({
-                      value: place,
-                      label: place,
-                    })),
-                  },
-                ]
-              : []),
-            {
-              columnId: "status",
-              label: strings.columns.status,
-              options: (["active", "maintenance", "retired"] as const).map(
-                (status) => ({ value: status, label: common.statuses[status] }),
-              ),
-            },
-            {
-              columnId: "damage",
-              label: strings.columns.damage,
-              options: (["grounded", "damaged", "none"] as const).map(
-                (state) => ({
-                  value: state,
-                  label: strings.damageFilter[state],
-                }),
-              ),
-            },
-          ]}
-        />
-      ) : (
-        <EmptyState icon={ICONS.bikes}>
-          {manageable.length > 0 ? strings.empty : strings.noLocations}
-        </EmptyState>
-      )}
-    </>
+            ]
+          : []),
+        {
+          columnId: "status",
+          label: strings.columns.status,
+          options: (["active", "maintenance", "retired"] as const).map(
+            (status) => ({ value: status, label: common.statuses[status] }),
+          ),
+        },
+        {
+          columnId: "damage",
+          label: strings.columns.damage,
+          options: (["grounded", "damaged", "none"] as const).map((state) => ({
+            value: state,
+            label: strings.damageFilter[state],
+          })),
+        },
+      ]}
+    />
+  ) : (
+    <EmptyState icon={ICONS.bikes}>
+      {manageable.length > 0 ? strings.empty : strings.noLocations}
+    </EmptyState>
   );
 }

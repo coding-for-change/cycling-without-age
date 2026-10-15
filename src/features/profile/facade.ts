@@ -18,6 +18,7 @@ import type {
   Residence,
 } from "./schemas";
 import {
+  countPasskeysOf,
   fillHelperRelationship,
   findAccessAccounts,
   findProfile,
@@ -34,6 +35,8 @@ export type Profile = NonNullable<Awaited<ReturnType<typeof findProfile>>>;
 export type ProfileSummary = Awaited<ReturnType<typeof findProfiles>>[number];
 
 export const getProfile = (userId: string) => findProfile(userId);
+
+export const countPasskeys = (userId: string) => countPasskeysOf(userId);
 
 export const getProfiles = async (
   userIds: string[],

@@ -23,6 +23,7 @@ import type { Locale } from "@/lib/i18n/locales";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
 import { notify, type NotifyLabels } from "@/components/action-feedback";
 import { TextField } from "../../_components/text-field";
+import { useDrawerParam } from "../../_components/use-drawer-param";
 
 const schema = inviteInput.omit({ chapterId: true });
 type FormValues = z.infer<typeof schema>;
@@ -47,7 +48,7 @@ export type InviteLabels = {
   errors: NotifyLabels["errors"];
 };
 
-export function InviteDialog({
+export function InviteDrawer({
   chapterId,
   chapterName,
   roleLabel,
@@ -61,7 +62,7 @@ export function InviteDialog({
   locale: Locale;
 }) {
   const formId = useId();
-  const [open, setOpen] = useState(false);
+  const { creating: open, close: clearParam } = useDrawerParam();
   const [pending, startTransition] = useTransition();
 
   const form = useForm<FormValues>({
@@ -79,139 +80,131 @@ export function InviteDialog({
         errors: labels.errors,
       });
       if (!result.ok) return;
-      form.reset();
-      setOpen(false);
+      close();
     });
   });
 
+  const close = () => {
+    form.reset();
+    clearParam();
+  };
+
   return (
-    <>
-      <Button
-        variant="outline"
-        className="min-h-11"
-        onClick={() => setOpen(true)}
-      >
-        <Send aria-hidden />
-        {labels.open}
-      </Button>
-
-      <AdminDrawer
-        open={open}
-        onOpenChange={(next) => {
-          setOpen(next);
-          if (!next) form.reset();
-        }}
-        title={labels.title}
-        description={formatMessage(
-          labels.description,
-          { chapter: chapterName },
-          locale,
-        )}
-        footer={
-          <>
-            <Button
-              type="button"
-              variant="outline"
-              className="min-h-11"
-              onClick={() => setOpen(false)}
-            >
-              {labels.cancel}
-            </Button>
-            <Button
-              type="submit"
-              form={formId}
-              disabled={pending || roles.length === 0}
-              variant="brand"
-              className="min-h-11"
-            >
-              {pending ? (
-                <LoaderCircle
-                  aria-hidden
-                  className="animate-spin"
-                />
-              ) : (
-                <Send aria-hidden />
-              )}
-              {pending ? labels.sending : labels.submit}
-            </Button>
-          </>
-        }
-      >
-        <Form {...form}>
-          <form
-            id={formId}
-            onSubmit={submit}
-            onKeyDown={submitOnCmdEnter}
-            aria-busy={pending}
-            className="grid gap-5"
+    <AdminDrawer
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) close();
+      }}
+      title={labels.title}
+      description={formatMessage(
+        labels.description,
+        { chapter: chapterName },
+        locale,
+      )}
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11"
+            onClick={close}
           >
-            <div className="grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-4">
-              <AvatarPreview email={email} />
-              <div className="grid gap-3.5">
-                <TextField
-                  control={form.control}
-                  name="name"
-                  label={labels.name}
-                  autoFocus
-                  autoComplete="off"
-                  placeholder={labels.namePlaceholder}
-                />
-                <TextField
-                  control={form.control}
-                  name="email"
-                  label={labels.email}
-                  type="email"
-                  inputMode="email"
-                  autoComplete="off"
-                  autoCapitalize="none"
-                  spellCheck={false}
-                  placeholder={labels.emailPlaceholder}
-                />
-              </div>
+            {labels.cancel}
+          </Button>
+          <Button
+            type="submit"
+            form={formId}
+            disabled={pending || roles.length === 0}
+            variant="brand"
+            className="min-h-11"
+          >
+            {pending ? (
+              <LoaderCircle
+                aria-hidden
+                className="animate-spin"
+              />
+            ) : (
+              <Send aria-hidden />
+            )}
+            {pending ? labels.sending : labels.submit}
+          </Button>
+        </>
+      }
+    >
+      <Form {...form}>
+        <form
+          id={formId}
+          onSubmit={submit}
+          onKeyDown={submitOnCmdEnter}
+          aria-busy={pending}
+          className="grid gap-5"
+        >
+          <div className="grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-4">
+            <AvatarPreview email={email} />
+            <div className="grid gap-3.5">
+              <TextField
+                control={form.control}
+                name="name"
+                label={labels.name}
+                autoFocus
+                autoComplete="off"
+                placeholder={labels.namePlaceholder}
+              />
+              <TextField
+                control={form.control}
+                name="email"
+                label={labels.email}
+                type="email"
+                inputMode="email"
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                placeholder={labels.emailPlaceholder}
+              />
             </div>
+          </div>
 
-            <FormField
-              control={form.control}
-              name="roles"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{roleLabel}</FormLabel>
-                  <div className="grid gap-3">
-                    {ROLES.map((role) => (
-                      <label
-                        key={role}
-                        className="flex cursor-pointer items-start gap-3 rounded-(--r-card) border border-line p-3.5 transition-colors hover:bg-canvas-deep has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50 has-data-[state=checked]:border-ink has-data-[state=checked]:bg-mint-tint has-data-[state=checked]:hover:bg-mint-tint"
-                      >
-                        <Checkbox
-                          checked={field.value.includes(role)}
-                          onCheckedChange={(checked) =>
-                            field.onChange(
-                              checked
-                                ? [...field.value, role]
-                                : field.value.filter((r) => r !== role),
-                            )
-                          }
-                          className="mt-px border-ink-faint"
-                        />
-                        <span className="grid gap-1.25">
-                          <span className="text-sm leading-none font-medium">
-                            {labels.role[role]}
-                          </span>
-                          <span className="text-xs text-ink-soft">
-                            {labels.roleHint[role]}
-                          </span>
+          <FormField
+            control={form.control}
+            name="roles"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{roleLabel}</FormLabel>
+                <div className="grid gap-3">
+                  {ROLES.map((role) => (
+                    <label
+                      key={role}
+                      className="flex cursor-pointer items-start gap-3 rounded-(--r-card) border border-line p-3.5 transition-colors hover:bg-canvas-deep has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50 has-data-[state=checked]:border-ink has-data-[state=checked]:bg-mint-tint has-data-[state=checked]:hover:bg-mint-tint"
+                    >
+                      <Checkbox
+                        checked={field.value.includes(role)}
+                        onCheckedChange={(checked) =>
+                          field.onChange(
+                            checked
+                              ? [...field.value, role]
+                              : field.value.filter((r) => r !== role),
+                          )
+                        }
+                        className="mt-px border-ink-faint"
+                      />
+                      <span className="grid gap-1.25">
+                        <span className="text-sm leading-none font-medium">
+                          {labels.role[role]}
                         </span>
-                      </label>
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </form>
-        </Form>
-      </AdminDrawer>
-    </>
+                        <span className="text-xs text-ink-soft">
+                          {labels.roleHint[role]}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </form>
+      </Form>
+    </AdminDrawer>
   );
 }
 

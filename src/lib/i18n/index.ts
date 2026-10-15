@@ -9,7 +9,7 @@ import {
   locales,
   type Locale,
 } from "./locales";
-import { loadMessages, type Dictionary } from "./messages";
+import { loadBundledMessages, loadMessages, type Dictionary } from "./messages";
 
 export { defaultLocale, hasLocale, LOCALE_COOKIE, locales };
 export type { Locale };
@@ -35,4 +35,8 @@ export const getLocale = cache(async (): Promise<Locale> => {
 
 export const getDictionary = cache(async (): Promise<Dictionary> =>
   loadMessages(await getLocale()),
+);
+
+export const getBundledDictionary = cache(async (): Promise<Dictionary> =>
+  loadBundledMessages(await getLocale()),
 );

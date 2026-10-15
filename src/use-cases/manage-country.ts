@@ -29,4 +29,5 @@ export async function deleteCountry({
       payload: { name: chapter.name, slug: chapter.slug },
     });
   }
+  return { chapterIds: inCountry.map((chapter) => chapter.id) };
 }
