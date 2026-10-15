@@ -2394,7 +2394,7 @@
         "placeholder": "Tilføj en kommentar til historikken – f.eks. passageren ønskede et tæppe",
         "submit": "Kommentér"
       },
-      "debriefed": "{who, select, you {Du} other {{actor}}} skrev en opsamling",
+      "debriefed": "{who, select, you {Du} other {{actor}}} skrev en turrapport",
       "edited": "{who, select, you {Du} other {{actor}}} ændrede {fields}",
       "fields": {
         "announced": "om passagerer kan booke",
@@ -2573,7 +2573,7 @@
       "debrief": {
         "bikeCondition": "Rickshawens stand",
         "bikePoor": "Er noget gået i stykker? Meld det ved rickshawen ovenfor, så det bliver lavet før næste tur.",
-        "by": "Opsamling fra {name}",
+        "by": "Turrapport fra {name}",
         "cooperation": "Samarbejdet med plejehjemmet",
         "cooperationHint": "Kun for en tur med et plejehjem eller en anden institution.",
         "distance": "Kørt distance",
@@ -2584,7 +2584,7 @@
         "hint": "Et par linjer til afdelingen. Du kan ændre dem senere.",
         "invalidNumber": "Skriv et tal, fx 12,5.",
         "kilometres": "{km} km",
-        "none": "Ingen opsamling endnu.",
+        "none": "Ingen turrapport endnu.",
         "note": "Andet",
         "notePlaceholder": "Hvordan gik det? Er der noget, afdelingen skal vide?",
         "ratings": {
@@ -2592,12 +2592,12 @@
           "good": "God",
           "poor": "Dårlig"
         },
-        "save": "Gem opsamling",
-        "saved": "Opsamlingen er gemt. Tak!",
+        "save": "Gem turrapport",
+        "saved": "Turrapporten er gemt. Tak!",
         "saving": "Gemmer…",
         "someone": "en tidligere pilot",
-        "title": "Opsamling",
-        "titleMany": "Opsamlinger",
+        "title": "Turrapport",
+        "titleMany": "Turrapporter",
         "unset": "Ikke angivet"
       },
       "errors": {

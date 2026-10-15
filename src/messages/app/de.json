@@ -2394,7 +2394,7 @@
         "placeholder": "Kommentar zum Verlauf – z. B. Fahrgast wünscht sich eine Decke",
         "submit": "Kommentieren"
       },
-      "debriefed": "{who, select, you {Du hast} other {{actor} hat}} eine Nachbesprechung geschrieben",
+      "debriefed": "{who, select, you {Du hast} other {{actor} hat}} einen Fahrtbericht geschrieben",
       "edited": "{who, select, you {Du hast} other {{actor} hat}} {fields} geändert",
       "fields": {
         "announced": "ob Fahrgäste buchen können",
@@ -2573,7 +2573,7 @@
       "debrief": {
         "bikeCondition": "Zustand der Rikscha",
         "bikePoor": "Ist etwas kaputt? Melde es oben bei der Rikscha, damit es vor der nächsten Fahrt repariert wird.",
-        "by": "Nachbesprechung von {name}",
+        "by": "Fahrtbericht von {name}",
         "cooperation": "Zusammenarbeit mit dem Pflegeheim",
         "cooperationHint": "Nur bei einer Fahrt mit einem Pflegeheim oder einer anderen Einrichtung.",
         "distance": "Gefahrene Strecke",
@@ -2584,7 +2584,7 @@
         "hint": "Ein paar Zeilen für die Ortsgruppe. Du kannst sie später noch ändern.",
         "invalidNumber": "Bitte gib eine Zahl ein, etwa 12,5.",
         "kilometres": "{km} km",
-        "none": "Noch keine Nachbesprechung.",
+        "none": "Noch kein Fahrtbericht.",
         "note": "Sonst noch etwas",
         "notePlaceholder": "Wie lief es? Sollte die Ortsgruppe etwas wissen?",
         "ratings": {
@@ -2592,12 +2592,12 @@
           "good": "Gut",
           "poor": "Schlecht"
         },
-        "save": "Nachbesprechung speichern",
-        "saved": "Nachbesprechung gespeichert. Danke dir!",
+        "save": "Fahrtbericht speichern",
+        "saved": "Fahrtbericht gespeichert. Danke dir!",
         "saving": "Speichert…",
         "someone": "einem ehemaligen Piloten",
-        "title": "Nachbesprechung",
-        "titleMany": "Nachbesprechungen",
+        "title": "Fahrtbericht",
+        "titleMany": "Fahrtberichte",
         "unset": "Keine Angabe"
       },
       "errors": {
