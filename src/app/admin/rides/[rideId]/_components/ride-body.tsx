@@ -479,8 +479,6 @@ export async function RideBody({
             ) : null}
             <p className="text-ink-soft">{detail.readOnlyCancelled}</p>
           </DetailNotice>
-        ) : ride.status === "completed" ? (
-          <DetailNotice>{detail.readOnlyCompleted}</DetailNotice>
         ) : null}
 
         {ride.model === "event" ? (

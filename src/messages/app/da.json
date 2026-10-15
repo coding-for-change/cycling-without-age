@@ -2338,7 +2338,6 @@
       "placesTaken": "{count} af {max} pladser optaget",
       "properties": "Egenskaber",
       "readOnlyCancelled": "Aflyste ture beholder deres plads i kalenderen. Kun historikken tager stadig imod kommentarer.",
-      "readOnlyCompleted": "Turen er overstået. Kun historikken tager stadig imod kommentarer.",
       "reason": "Årsag",
       "remove": "Tag {name} af turen",
       "removed": "{name} er taget af turen.",

@@ -2338,7 +2338,6 @@
       "placesTaken": "{count} von {max} Plätzen belegt",
       "properties": "Eigenschaften",
       "readOnlyCancelled": "Abgesagte Fahrten behalten ihren Platz im Kalender. Nur der Verlauf nimmt noch Kommentare an.",
-      "readOnlyCompleted": "Diese Fahrt ist vorbei. Nur der Verlauf nimmt noch Kommentare an.",
       "reason": "Grund",
       "remove": "{name} von der Fahrt nehmen",
       "removed": "{name} ist nicht mehr dabei.",

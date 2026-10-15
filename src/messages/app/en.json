@@ -2338,7 +2338,6 @@
       "placesTaken": "{count} of {max} places taken",
       "properties": "Properties",
       "readOnlyCancelled": "Cancelled rides keep their slot on the calendar. Only the history still takes comments.",
-      "readOnlyCompleted": "This ride is done. Only the history still takes comments.",
       "reason": "Reason",
       "remove": "Take {name} off the ride",
       "removed": "{name} is off the ride.",
