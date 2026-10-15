@@ -95,8 +95,10 @@ async function audienceOf(userId: string): Promise<Audience> {
 function ridersOn(ride: rides.RideFeedRow, named: Audience["named"]) {
   if (!named) return [];
   return ride.roster.flatMap(({ passenger }) => {
-    const rider = named.get(passenger.id);
-    return rider ? [{ ...rider, pickup: pickupOf(passenger) }] : [];
+    const rider = passenger ? named.get(passenger.id) : undefined;
+    return rider && passenger
+      ? [{ ...rider, pickup: pickupOf(passenger) }]
+      : [];
   });
 }
 

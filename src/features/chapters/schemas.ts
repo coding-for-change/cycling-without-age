@@ -98,6 +98,8 @@ export const CHAPTER_WELCOME_NOTE_MAX = 600;
 export const CHAPTER_POST_RIDE_MAX = 5_000;
 export const STAFFING_LEAD_HOURS = [12, 24, 48, 72, 168] as const;
 export const REQUIRED_PILOTS_MAX = 10;
+export const REMINDER_LEAD_MINUTES = [30, 120, 1440, 2880] as const;
+export const DEMAND_CHECK_LEAD_HOURS = [2, 12, 24, 48] as const;
 
 export type ChapterSettings = {
   notifyOnMemberJoined: boolean;
@@ -109,6 +111,9 @@ export type ChapterSettings = {
   pilotsMaySelfAssign: boolean;
   requiredPilotsDefault: number;
   staffingCheckLeadHours: number;
+  riderReminderLeadMinutes: number;
+  volunteerReminderLeadMinutes: number;
+  demandCheckLeadHours: number;
 };
 
 export const DEFAULT_CHAPTER_SETTINGS: ChapterSettings = {
@@ -121,7 +126,16 @@ export const DEFAULT_CHAPTER_SETTINGS: ChapterSettings = {
   pilotsMaySelfAssign: true,
   requiredPilotsDefault: 1,
   staffingCheckLeadHours: 48,
+  riderReminderLeadMinutes: 1440,
+  volunteerReminderLeadMinutes: 1440,
+  demandCheckLeadHours: 24,
 };
+
+const oneOf = (values: readonly number[]) =>
+  z
+    .number()
+    .int()
+    .refine((value) => values.includes(value));
 
 export const chapterSettingsInput = z
   .object({
@@ -152,12 +166,10 @@ export const chapterSettingsInput = z
     damageAlertPush: z.boolean(),
     pilotsMaySelfAssign: z.boolean(),
     requiredPilotsDefault: z.number().int().min(1).max(REQUIRED_PILOTS_MAX),
-    staffingCheckLeadHours: z
-      .number()
-      .int()
-      .refine((hours) =>
-        (STAFFING_LEAD_HOURS as readonly number[]).includes(hours),
-      ),
+    staffingCheckLeadHours: oneOf(STAFFING_LEAD_HOURS),
+    riderReminderLeadMinutes: oneOf(REMINDER_LEAD_MINUTES),
+    volunteerReminderLeadMinutes: oneOf(REMINDER_LEAD_MINUTES),
+    demandCheckLeadHours: oneOf(DEMAND_CHECK_LEAD_HOURS),
   })
   .partial();
 export type ChapterSettingsInput = z.infer<typeof chapterSettingsInput>;
