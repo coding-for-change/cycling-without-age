@@ -7,7 +7,8 @@ import { logger } from "@/lib/observability/logger";
  * Lifecycle 6D: closing the roster is the statistics moment, and the ride's
  * chat wraps up with it — frozen, until someone in it keeps chatting. The
  * roster closes in its own transaction first, so a chat that fails to freeze
- * is logged and never takes the closed roster back.
+ * is logged and never takes the closed roster back. A second tap on a closed
+ * roster leaves alone a chat its people chose to keep going.
  */
 export async function completeRide(
   rideId: string,
@@ -16,6 +17,7 @@ export async function completeRide(
   now = new Date(),
 ) {
   const tally = await rides.closeRoster(rideId, actorUserId, as, now);
+  if (!tally) return tally;
   try {
     await chat.freezeRideConversation(rideId);
   } catch (error) {

@@ -57,9 +57,10 @@ describe("completeRide", () => {
     );
   });
 
-  it("freezes a chat left open by an earlier tap", async () => {
+  // Its people may have kept chatting since the roster closed.
+  it("leaves the chat alone on a second tap", async () => {
     closeRoster.mockResolvedValue(null);
     expect(await completeRide("ride-1", "pilot-1", "pilot", NOW)).toBeNull();
-    expect(freeze).toHaveBeenCalledWith("ride-1");
+    expect(freeze).not.toHaveBeenCalled();
   });
 });
