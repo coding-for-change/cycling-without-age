@@ -18,6 +18,9 @@ jest.mock("@/features/person-profiles", () => ({
 jest.mock("@/features/rides", () => ({
   rides: { cancelUpcomingBookings: jest.fn() },
 }));
+jest.mock("@/features/ride-requests", () => ({
+  rideRequests: { withdrawOpenRequests: jest.fn() },
+}));
 jest.mock("@/lib/observability/logger", () => ({ logDomainEvent: jest.fn() }));
 
 const access = accessPerson as jest.Mock;

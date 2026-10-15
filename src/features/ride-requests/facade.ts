@@ -7,6 +7,7 @@ import {
   closePendingRequest,
   countRideRequests,
   findDestinationsOfRequester,
+  findOpenRequestsOf,
   findRideRequest,
   findRideRequestScope,
   findRideRequests,
@@ -170,6 +171,47 @@ export async function withdraw(id: string, userId: string, now = new Date()) {
       actorUserId: userId,
     });
   });
+}
+
+/**
+ * Closes the open requests nobody can follow up any more: every request an
+ * account sent, when the account goes, and every request whose riders are
+ * all being removed. A request that still has another rider stays open.
+ */
+export async function withdrawOpenRequests(
+  {
+    requesterUserId,
+    passengerIds = [],
+  }: { requesterUserId?: string; passengerIds?: string[] },
+  actorUserId: string,
+  now = new Date(),
+) {
+  if (!requesterUserId && !passengerIds.length) return 0;
+  const leaving = new Set(passengerIds);
+  const open = (
+    await findOpenRequestsOf({ requesterUserId, passengerIds })
+  ).filter(
+    (request) =>
+      (requesterUserId && request.requesterUserId === requesterUserId) ||
+      request.passengers.every(({ passengerId }) => leaving.has(passengerId)),
+  );
+  for (const request of open)
+    await transaction(async (tx, emit) => {
+      const { count } = await closePendingRequest(
+        request.id,
+        { status: "withdrawn", decidedByUserId: actorUserId, decidedAt: now },
+        null,
+        tx,
+      );
+      if (count !== 1) return;
+      await emit({
+        type: "rideRequest.withdrawn",
+        requestId: request.id,
+        chapterId: request.chapterId,
+        actorUserId,
+      });
+    });
+  return open.length;
 }
 
 /** The Ride Request List: soonest first. */

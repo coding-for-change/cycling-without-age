@@ -1,7 +1,9 @@
 import { accounts } from "@/features/accounts";
 import { passengers } from "@/features/passengers";
 import { personProfiles } from "@/features/person-profiles";
+import { rideRequests } from "@/features/ride-requests";
 import { rides } from "@/features/rides";
+import { domainCode } from "@/lib/domain-error";
 import { deleteAccount } from "./delete-account";
 
 jest.mock("@/features/accounts", () => ({
@@ -11,6 +13,7 @@ jest.mock("@/features/passengers", () => ({
   passengers: {
     handRidersToTheirOwnAccounts: jest.fn(),
     removeOwnPassenger: jest.fn(),
+    removeRidersWithoutAccount: jest.fn(),
     listPassengersManagedBy: jest.fn(),
     getOwnPassenger: jest.fn(),
   },
@@ -18,11 +21,15 @@ jest.mock("@/features/passengers", () => ({
 jest.mock("@/features/rides", () => ({
   rides: { cancelUpcomingBookings: jest.fn() },
 }));
+jest.mock("@/features/ride-requests", () => ({
+  rideRequests: { withdrawOpenRequests: jest.fn() },
+}));
 jest.mock("@/features/person-profiles", () => ({
   personProfiles: { listPhotoFilesOf: jest.fn(), purgePhotoFiles: jest.fn() },
 }));
 
 const order: string[] = [];
+const REMOVE = { removeRiders: true };
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -45,6 +52,11 @@ beforeEach(() => {
   (personProfiles.listPhotoFilesOf as jest.Mock).mockResolvedValue([
     { id: "file-1", key: "files/1.webp" },
   ]);
+  (passengers.removeRidersWithoutAccount as jest.Mock).mockImplementation(
+    async () => {
+      order.push("removeRiders");
+    },
+  );
   (accounts.deleteUser as jest.Mock).mockImplementation(async () => {
     order.push("deleteUser");
   });
@@ -55,7 +67,7 @@ beforeEach(() => {
 
 describe("deleteAccount", () => {
   it("removes the photos of the account and the riders it looked after", async () => {
-    await deleteAccount("daughter-lena");
+    await deleteAccount("daughter-lena", "daughter-lena", REMOVE);
 
     expect(personProfiles.listPhotoFilesOf).toHaveBeenCalledWith({
       userIds: ["daughter-lena"],
@@ -64,11 +76,17 @@ describe("deleteAccount", () => {
     expect(personProfiles.purgePhotoFiles).toHaveBeenCalledWith([
       { id: "file-1", key: "files/1.webp" },
     ]);
-    expect(order).toEqual(["handOver", "cancel", "deleteUser", "purge"]);
+    expect(order).toEqual([
+      "handOver",
+      "cancel",
+      "removeRiders",
+      "deleteUser",
+      "purge",
+    ]);
   });
 
   it("gives up the seats still ahead of every rider that goes with the account", async () => {
-    await deleteAccount("daughter-lena", "admin-1");
+    await deleteAccount("daughter-lena", "admin-1", REMOVE);
 
     expect(rides.cancelUpcomingBookings).toHaveBeenCalledWith(
       ["managed-greta", "own-lena"],
@@ -77,7 +95,7 @@ describe("deleteAccount", () => {
   });
 
   it("gives them up as the account itself when it leaves on its own", async () => {
-    await deleteAccount("daughter-lena");
+    await deleteAccount("daughter-lena", "daughter-lena", REMOVE);
 
     expect(rides.cancelUpcomingBookings).toHaveBeenCalledWith(
       ["managed-greta", "own-lena"],
@@ -86,7 +104,7 @@ describe("deleteAccount", () => {
   });
 
   it("hands riders with their own account back to themselves before deleting", async () => {
-    await deleteAccount("daughter-lena");
+    await deleteAccount("daughter-lena", "daughter-lena", REMOVE);
 
     expect(passengers.handRidersToTheirOwnAccounts).toHaveBeenCalledWith(
       "daughter-lena",
@@ -94,8 +112,33 @@ describe("deleteAccount", () => {
   });
 
   it("erases the account's own rider row instead of handing it to a helper", async () => {
-    await deleteAccount("user-1");
+    await deleteAccount("user-1", "user-1", REMOVE);
 
     expect(passengers.removeOwnPassenger).toHaveBeenCalledWith("user-1");
+  });
+
+  it("refuses to take riders along that nobody chose to remove", async () => {
+    const run = deleteAccount("daughter-lena");
+    expect(await run.catch(domainCode)).toBe("managesRiders");
+    expect(accounts.deleteUser).not.toHaveBeenCalled();
+    expect(rides.cancelUpcomingBookings).not.toHaveBeenCalled();
+  });
+
+  it("deletes an account without riders without asking", async () => {
+    (passengers.listPassengersManagedBy as jest.Mock).mockResolvedValue([]);
+    await deleteAccount("user-1");
+    expect(passengers.removeRidersWithoutAccount).not.toHaveBeenCalled();
+    expect(accounts.deleteUser).toHaveBeenCalledWith("user-1");
+  });
+
+  it("closes the account's open ride requests and those of riders going with it", async () => {
+    await deleteAccount("daughter-lena", "admin-1", REMOVE);
+    expect(rideRequests.withdrawOpenRequests).toHaveBeenCalledWith(
+      {
+        requesterUserId: "daughter-lena",
+        passengerIds: ["managed-greta", "own-lena"],
+      },
+      "admin-1",
+    );
   });
 });

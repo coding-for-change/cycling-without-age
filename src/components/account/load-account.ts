@@ -25,13 +25,16 @@ export const loadAccount = cache(async (): Promise<AccountData | null> => {
     getLocale(),
     headers(),
     calendarFeeds.getFeed(session.user.id),
-    passengers.countRidersRemovedWith(session.user.id),
+    passengers.listPassengersManagedBy(session.user.id),
   ]);
+  const goneWith = passengers
+    .othersOf(riders)
+    .map((rider) => `${rider.firstName} ${rider.lastName}`.trim());
   const perspectives = availablePerspectives(session.access);
 
   const email = person?.email ?? session.user.email;
   const caretaker =
-    (person?.managesOthers === true || riders > 0) &&
+    (person?.managesOthers === true || goneWith.length > 0) &&
     availablePerspectives(session.access).includes("passenger");
   const seed = avatarSeed(email);
 
@@ -65,7 +68,7 @@ export const loadAccount = cache(async (): Promise<AccountData | null> => {
     },
     perspectives: perspectiveChoices(session.access, dict),
     canDeleteAccount: canDeleteOwnAccount(session.access),
-    ridersRemovedWithAccount: riders,
+    ridersRemovedWithAccount: goneWith,
     notifications: {
       push: person?.notifyPush ?? false,
       email: person?.notifyEmail ?? false,

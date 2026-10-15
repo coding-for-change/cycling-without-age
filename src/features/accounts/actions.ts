@@ -30,7 +30,14 @@ export type InviteActionResult =
 
 export type DeleteOwnAccountResult =
   | { ok: true }
-  | { ok: false; error: "handOverAdmin" | "rateLimited" | "generic" };
+  | {
+      ok: false;
+      error: "handOverAdmin" | "managesRiders" | "rateLimited" | "generic";
+    };
+
+const deleteOwnInput = z
+  .object({ removeRiders: z.boolean().default(false) })
+  .default({ removeRiders: false });
 
 const ADD_LIMIT = { max: 60, windowMs: 60 * 60_000 };
 
@@ -104,7 +111,16 @@ export async function previewAvatar(email: unknown): Promise<string | null> {
   return avatarSvg(avatarSeed(parsed.data));
 }
 
-export async function deleteOwnAccountAction(): Promise<DeleteOwnAccountResult> {
+/**
+ * `removeRiders` is the account holder saying yes to the riders they were
+ * shown by name; without it an account that still looks after someone is
+ * not deleted.
+ */
+export async function deleteOwnAccountAction(
+  input?: unknown,
+): Promise<DeleteOwnAccountResult> {
+  const parsed = deleteOwnInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "generic" };
   const session = await requireAuth();
 
   if (!canDeleteOwnAccount(session.access))
@@ -117,12 +133,12 @@ export async function deleteOwnAccountAction(): Promise<DeleteOwnAccountResult> 
   if (!allowed) return { ok: false, error: "rateLimited" };
 
   try {
-    await deleteAccount(session.user.id);
+    await deleteAccount(session.user.id, session.user.id, parsed.data);
     revalidatePath("/admin", "layout");
     invalidateReports();
     return { ok: true };
   } catch (error) {
-    return actionFailure(error, {});
+    return actionFailure(error, { managesRiders: "managesRiders" } as const);
   } finally {
     invalidateAccess({ userIds: [session.user.id] });
     expirePasskeys(session.user.id);

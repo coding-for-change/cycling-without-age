@@ -188,3 +188,28 @@ export const closePendingRequest = (
     },
     data,
   });
+
+export const findOpenRequestsOf = ({
+  requesterUserId,
+  passengerIds,
+}: {
+  requesterUserId?: string;
+  passengerIds?: string[];
+}) =>
+  prisma.rideRequest.findMany({
+    where: {
+      status: "pending",
+      OR: [
+        ...(requesterUserId ? [{ requesterUserId }] : []),
+        ...(passengerIds?.length
+          ? [{ passengers: { some: { passengerId: { in: passengerIds } } } }]
+          : []),
+      ],
+    },
+    select: {
+      id: true,
+      chapterId: true,
+      requesterUserId: true,
+      passengers: { select: { passengerId: true } },
+    },
+  });

@@ -15,6 +15,7 @@ import {
   DetailList,
   DetailListRow,
   DetailMeta,
+  DetailNotice,
   DetailSection,
   MetaBadge,
 } from "../../../_components/detail-page";
@@ -170,7 +171,10 @@ export async function PersonBody({
                     locale={words}
                     cancel={dict.admin.chapters.cancel}
                     action={deleteUserAction}
-                    input={{ userId }}
+                    input={{
+                      userId,
+                      removeRiders: lookedAfter.some((rider) => !rider.userId),
+                    }}
                     redirectTo={backHref}
                   />
                 </DetailHeaderActions>
@@ -319,6 +323,13 @@ export async function PersonBody({
             }
             meta={visibleRiders.length > 0 ? visibleRiders.length : undefined}
           >
+            {scope.canDeleteAccounts &&
+            !isSelf &&
+            visibleRiders.some((rider) => !rider.userId) ? (
+              <DetailNotice>
+                {dict.admin.person.caretaker.handOverHint}
+              </DetailNotice>
+            ) : null}
             <DetailList>
               {visibleRiders.map((rider) => {
                 const pickup = pickupLabel(rider, dict.riders.pickup.careHome);

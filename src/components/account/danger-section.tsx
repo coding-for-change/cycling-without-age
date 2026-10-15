@@ -14,6 +14,7 @@ import {
   useSignOut,
 } from "@/components/sign-out-button";
 import { deleteOwnAccountAction } from "@/features/accounts/actions";
+import { formatList, wordsLocale } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
 import type { AccountData } from "./types";
 
@@ -25,11 +26,15 @@ export function DangerSection({
   label?: string;
 }) {
   const { signOut, pending } = useSignOut();
-  const labels = data.strings.danger.delete;
+  const strings = data.strings.danger.delete;
+  const riders = data.ridersRemovedWithAccount;
+  const labels = riders.length
+    ? { ...strings, body: `${strings.body} ${strings.ridersHint}` }
+    : strings;
 
   const remove = async () => {
     await forgetDevice();
-    return deleteOwnAccountAction();
+    return deleteOwnAccountAction({ removeRiders: riders.length > 0 });
   };
 
   return (
@@ -53,11 +58,13 @@ export function DangerSection({
             <ConfirmDeleteDialog
               name={data.profile.name}
               consequences={
-                data.ridersRemovedWithAccount > 0
+                riders.length
                   ? [
                       formatMessage(
-                        labels.riders,
-                        { count: data.ridersRemovedWithAccount },
+                        strings.riders,
+                        {
+                          names: formatList(riders, wordsLocale(data.language)),
+                        },
                         data.language,
                       ),
                     ]

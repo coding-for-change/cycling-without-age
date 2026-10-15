@@ -1,6 +1,7 @@
 import { passengers } from "@/features/passengers";
 import type { ManagedRiderPatchInput } from "@/features/passengers";
 import { personProfiles } from "@/features/person-profiles";
+import { rideRequests } from "@/features/ride-requests";
 import { rides } from "@/features/rides";
 import { DomainError } from "@/lib/domain-error";
 import { logDomainEvent } from "@/lib/observability/logger";
@@ -63,6 +64,10 @@ export async function removeManagedRider({
   });
 
   await rides.cancelUpcomingBookings([passengerId], viewer.user.id);
+  await rideRequests.withdrawOpenRequests(
+    { passengerIds: [passengerId] },
+    viewer.user.id,
+  );
   await passengers.removeManagedRider(passengerId);
   await personProfiles.purgePhotoFiles(photos);
   logDomainEvent(
