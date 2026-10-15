@@ -14,12 +14,15 @@ import { cancelSeatAction, confirmSeatAction } from "../../actions";
 export type SeatAnswerLabels = {
   hint: string;
   confirm: string;
+  confirmAria: string;
   confirmed: string;
   retake: string;
+  retakeAria: string;
   retaken: string;
   states: Record<RosterAttendanceName, string>;
   cancel: {
     label: string;
+    aria: string;
     title: string;
     body: string;
     confirm: string;
@@ -56,6 +59,8 @@ export function SeatAnswers({
   const [pending, startTransition] = useTransition();
   const asking =
     answerable && riders.some((rider) => rider.attendance === "booked");
+  const named = (template: string, rider: SeatRider) =>
+    formatMessage(template, { name: rider.name }, language);
 
   const confirm = (rider: SeatRider, done: string) =>
     startTransition(async () => {
@@ -91,20 +96,22 @@ export function SeatAnswers({
                 <span className="min-w-0 flex-1 truncate font-medium">
                   {rider.name}
                 </span>
-                <AttendanceBadge
-                  attendance={rider.attendance}
-                  label={labels.states[rider.attendance]}
-                />
+                {answerable || rider.attendance !== "booked" ? (
+                  <AttendanceBadge
+                    attendance={rider.attendance}
+                    label={labels.states[rider.attendance]}
+                  />
+                ) : null}
               </div>
               {open ? (
                 <div className="flex flex-wrap gap-3 pl-12">
                   {rider.attendance === "booked" ? (
                     <Button
                       type="button"
-                      variant="brand"
                       disabled={pending}
+                      aria-label={named(labels.confirmAria, rider)}
                       onClick={() => confirm(rider, labels.confirmed)}
-                      className="min-h-11 flex-1 rounded-full sm:flex-none"
+                      className="min-h-11 flex-1 rounded-full bg-mint-deep text-white hover:bg-mint-deep/90 sm:flex-none"
                     >
                       <Check aria-hidden />
                       {labels.confirm}
@@ -115,6 +122,7 @@ export function SeatAnswers({
                       type="button"
                       variant="outline"
                       disabled={pending}
+                      aria-label={named(labels.retakeAria, rider)}
                       onClick={() => confirm(rider, labels.retaken)}
                       className="min-h-11 flex-1 rounded-full border-line sm:flex-none"
                     >
@@ -124,17 +132,14 @@ export function SeatAnswers({
                   ) : (
                     <ConfirmButton
                       {...labels.cancel}
-                      title={formatMessage(
-                        labels.cancel.title,
-                        { name: rider.name },
-                        language,
-                      )}
+                      title={named(labels.cancel.title, rider)}
+                      ariaLabel={named(labels.cancel.aria, rider)}
                       destructive
                       size="default"
                       variant={
                         rider.attendance === "confirmed" ? "ghost" : "outline"
                       }
-                      className="min-h-11 flex-1 rounded-full sm:flex-none"
+                      className="min-h-11 flex-1 rounded-full border-line text-ink-soft hover:bg-canvas-deep hover:text-ink sm:flex-none"
                       errors={labels.errors}
                       action={() =>
                         cancelSeatAction({

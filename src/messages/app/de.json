@@ -2025,26 +2025,29 @@
       },
       "seat": {
         "cancel": {
+          "aria": "Platz für {name} absagen",
           "body": "Die Ortsgruppe kann den Platz dann jemand anderem anbieten. Solange noch Platz ist, können Sie ihn hier zurücknehmen.",
           "cancel": "Platz behalten",
           "confirm": "Platz freigeben",
           "done": "Platz freigegeben. Die Ortsgruppe weiß Bescheid.",
-          "label": "Meinen Platz absagen",
+          "label": "Platz absagen",
           "title": "Den Platz von {name} freigeben?"
         },
         "confirm": "Platz bestätigen",
+        "confirmAria": "Platz für {name} bestätigen",
         "confirmed": "Platz bestätigt. Bis bald!",
         "errors": {
-          "pleasureLimit": "Diese Fahrt ist inzwischen wieder voll. Ihre Ortsgruppe hilft Ihnen gern.",
+          "pleasureLimit": "Diese Ausfahrt ist inzwischen wieder voll. Ihre Ortsgruppe hilft Ihnen gern.",
           "rateLimited": "Das war viel auf einmal. Bitte warten Sie kurz und versuchen Sie es noch einmal.",
-          "rideClosed": "Die Fahrt hat begonnen, daher lässt sich der Platz nicht mehr ändern.",
-          "rideFull": "Diese Fahrt ist inzwischen wieder voll. Ihre Ortsgruppe hilft Ihnen gern.",
+          "rideClosed": "Der Platz lässt sich nicht mehr ändern: Die Ausfahrt hat begonnen oder wurde abgesagt.",
+          "rideFull": "Diese Ausfahrt ist inzwischen wieder voll. Ihre Ortsgruppe hilft Ihnen gern.",
           "riderNotInChapter": "Dieser Fahrgast fährt bei einer anderen Ortsgruppe.",
           "unknownPassenger": "Für diesen Fahrgast buchen Sie nicht.",
-          "unknownRide": "Diese Fahrt gibt es nicht mehr."
+          "unknownRide": "Diese Ausfahrt ist nicht mehr verfügbar."
         },
         "hint": "Bitte bestätigen Sie jeden Platz – oder geben Sie ihn frei, wenn sich etwas geändert hat, damit jemand anderes mitfahren kann.",
         "retake": "Platz zurücknehmen",
+        "retakeAria": "Platz für {name} zurücknehmen",
         "retaken": "Platz zurückgenommen. Bis bald!",
         "states": {
           "booked": "Noch nicht bestätigt",

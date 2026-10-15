@@ -2025,19 +2025,21 @@
       },
       "seat": {
         "cancel": {
+          "aria": "Cancel {name}'s seat",
           "body": "The chapter can offer the seat to someone else. You can take it back here as long as there is room.",
           "cancel": "Keep the seat",
           "confirm": "Give up the seat",
           "done": "Seat given up. The chapter knows.",
-          "label": "Cancel my seat",
+          "label": "Cancel seat",
           "title": "Give up {name}'s seat?"
         },
         "confirm": "Confirm seat",
+        "confirmAria": "Confirm {name}'s seat",
         "confirmed": "Seat confirmed. See you there!",
         "errors": {
           "pleasureLimit": "This ride is full again. Your chapter is happy to help.",
           "rateLimited": "That was a lot at once. Please wait a moment and try again.",
-          "rideClosed": "The ride has started, so the seat can't change anymore.",
+          "rideClosed": "The seat can't change anymore: the ride has started or was called off.",
           "rideFull": "This ride is full again. Your chapter is happy to help.",
           "riderNotInChapter": "This rider rides with another chapter.",
           "unknownPassenger": "That rider isn't one you book for.",
@@ -2045,6 +2047,7 @@
         },
         "hint": "Please confirm each seat — or give it up if plans have changed, so someone else can ride.",
         "retake": "Take the seat back",
+        "retakeAria": "Take {name}'s seat back",
         "retaken": "Seat taken back. See you there!",
         "states": {
           "booked": "Not confirmed yet",

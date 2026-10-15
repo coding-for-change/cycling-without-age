@@ -37,6 +37,7 @@ export function ConfirmButton({
   size = "sm",
   variant = "outline",
   iconOnly = false,
+  ariaLabel,
 }: {
   icon?: ReactNode;
   label: string;
@@ -53,6 +54,7 @@ export function ConfirmButton({
   size?: "sm" | "default" | "hero";
   variant?: "outline" | "ghost" | "brand";
   iconOnly?: boolean;
+  ariaLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -79,7 +81,7 @@ export function ConfirmButton({
         <Button
           variant={variant}
           size={iconOnly ? "icon" : size}
-          aria-label={iconOnly ? label : undefined}
+          aria-label={iconOnly ? label : ariaLabel}
           title={iconOnly ? label : undefined}
           className={cn(
             destructive && "text-red-ink hover:bg-red-tint hover:text-red-ink",

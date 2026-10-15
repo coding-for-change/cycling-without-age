@@ -2025,19 +2025,21 @@
       },
       "seat": {
         "cancel": {
+          "aria": "Aflys pladsen til {name}",
           "body": "Afdelingen kan så tilbyde pladsen til en anden. Du kan tage den tilbage her, så længe der er plads.",
           "cancel": "Behold pladsen",
           "confirm": "Giv pladsen fri",
           "done": "Pladsen er givet fri. Afdelingen ved besked.",
-          "label": "Aflys min plads",
+          "label": "Aflys pladsen",
           "title": "Meld {name} fra turen?"
         },
         "confirm": "Bekræft pladsen",
+        "confirmAria": "Bekræft pladsen til {name}",
         "confirmed": "Pladsen er bekræftet. Vi ses!",
         "errors": {
           "pleasureLimit": "Turen er fuld igen. Din afdeling hjælper gerne.",
           "rateLimited": "Det var meget på én gang. Vent et øjeblik, og prøv igen.",
-          "rideClosed": "Turen er begyndt, så pladsen kan ikke ændres længere.",
+          "rideClosed": "Pladsen kan ikke ændres længere: Turen er begyndt eller aflyst.",
           "rideFull": "Turen er fuld igen. Din afdeling hjælper gerne.",
           "riderNotInChapter": "Denne passager kører med en anden afdeling.",
           "unknownPassenger": "Det er ikke en passager, du booker for.",
@@ -2045,6 +2047,7 @@
         },
         "hint": "Bekræft hver plads – eller giv den fri, hvis planerne har ændret sig, så en anden kan køre med.",
         "retake": "Tag pladsen tilbage",
+        "retakeAria": "Tag pladsen til {name} tilbage",
         "retaken": "Pladsen er taget tilbage. Vi ses!",
         "states": {
           "booked": "Ikke bekræftet endnu",
