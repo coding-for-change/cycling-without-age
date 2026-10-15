@@ -25,3 +25,9 @@ ios
 docs-internal
 *.log
 tsconfig.tsbuildinfo
+docs
+src/generated
+coverage
+test-results
+playwright-report
+*.png

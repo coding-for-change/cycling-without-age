@@ -27,8 +27,8 @@ services:
     ports:
       - "127.0.0.1:${APP_PORT}:3000"
     command: >
-      sh -c "npx prisma migrate deploy &&
-             node server.js"
+      sh -c "prisma migrate deploy &&
+             exec node server.js"
     healthcheck:
       test:
         [
