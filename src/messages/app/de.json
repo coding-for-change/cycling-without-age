@@ -1239,7 +1239,8 @@
         "pending": "Wartet",
         "scheduled": "Geplant",
         "declined": "Abgelehnt",
-        "withdrawn": "Zurückgezogen"
+        "withdrawn": "Zurückgezogen",
+        "lapsed": "Verstrichen"
       },
       "filter": {
         "label": "Anfragen anzeigen",
@@ -1306,7 +1307,8 @@
           "shortNotice": "Kurzfristig: {hours, plural, one {1 Stunde} other {# Stunden}} vorher",
           "beyondHorizon": "Weiter im Voraus, als ihr bucht",
           "ridesThen": "{count, plural, one {1 weitere Fahrt} other {# weitere Fahrten}} in diesem Zeitfenster"
-        }
+        },
+        "lapsed": "Die angefragte Zeit ist vorbei. Du kannst die Fahrt trotzdem zu einer anderen Zeit einplanen oder die Anfrage ablehnen."
       },
       "decline": {
         "title": "Anfrage ablehnen",
@@ -2455,14 +2457,16 @@
           "pending": "Wartet auf {chapter}",
           "scheduled": "Gebucht",
           "declined": "Diesmal leider nicht",
-          "withdrawn": "Zurückgezogen"
+          "withdrawn": "Zurückgezogen",
+          "lapsed": "Keine Antwort rechtzeitig"
         },
         "bodies": {
           "pending": "{chapter} hat Ihre Anfrage und bestätigt die genaue Uhrzeit. Sie bekommen eine Nachricht.",
           "scheduled": "{chapter} hat die Fahrt gebucht. Sie steht bei Ihren Fahrten – und in der Kalenderdatei, die wir Ihnen gemailt haben.",
           "scheduledGone": "{chapter} hatte für diese Anfrage eine Fahrt gebucht, die inzwischen entfernt wurde. Fragen Sie bei der Ortsgruppe nach, ob sie noch stattfindet.",
           "declined": "{chapter} kann diese Fahrt leider nicht möglich machen. Fragen Sie gern einen anderen Tag an.",
-          "withdrawn": "Sie haben diese Anfrage zurückgezogen."
+          "withdrawn": "Sie haben diese Anfrage zurückgezogen.",
+          "lapsed": "{chapter} ist vor dem gewünschten Termin nicht mehr dazu gekommen, Ihre Anfrage zu beantworten. Fragen Sie gern noch einmal an."
         },
         "decisionNote": "Eine Nachricht von {chapter}",
         "riders": "Fahrgäste",

@@ -39,9 +39,10 @@ export async function RequestDetail({
 }
 
 const STATE: Record<
-  RideRequestRow["status"],
+  RideRequestRow["status"] | "lapsed",
   { icon: LucideIcon; tone: string }
 > = {
+  lapsed: { icon: CalendarX2, tone: "bg-canvas-deep" },
   pending: { icon: Hourglass, tone: "bg-mint-tint" },
   scheduled: { icon: CalendarCheck2, tone: "bg-mint-tint" },
   declined: { icon: CalendarX2, tone: "bg-canvas-deep" },
@@ -68,7 +69,8 @@ async function OwnRequest({ id }: { id: string }) {
   const chapter = request.chapter.name;
   const when = requestedWhen(request, notation);
   const route = requestedRoute(request);
-  const { icon: Icon, tone } = STATE[request.status];
+  const state = rideRequests.lapsed(request) ? "lapsed" : request.status;
+  const { icon: Icon, tone } = STATE[state];
   const rideGone = request.status === "scheduled" && !request.rideId;
 
   const rows = [
@@ -107,7 +109,7 @@ async function OwnRequest({ id }: { id: string }) {
           {page.title}
         </p>
         <h1 className="text-2xl tracking-tight md:text-3xl">
-          {formatMessage(page.statuses[request.status], { chapter }, words)}
+          {formatMessage(page.statuses[state], { chapter }, words)}
         </h1>
         <p className="text-2sm text-ink-soft">
           {formatMessage(
@@ -133,7 +135,7 @@ async function OwnRequest({ id }: { id: string }) {
         />
         <p className="text-sm text-pretty">
           {formatMessage(
-            rideGone ? page.bodies.scheduledGone : page.bodies[request.status],
+            rideGone ? page.bodies.scheduledGone : page.bodies[state],
             { chapter },
             words,
           )}
@@ -164,7 +166,7 @@ async function OwnRequest({ id }: { id: string }) {
       </dl>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        {request.status === "scheduled" && request.rideId ? (
+        {request.status === "scheduled" && !rideGone && request.rideId ? (
           <Button
             asChild
             variant="brand"
@@ -178,14 +180,14 @@ async function OwnRequest({ id }: { id: string }) {
             </Link>
           </Button>
         ) : null}
-        {request.status === "pending" ? (
+        {state === "pending" ? (
           <WithdrawRequest
             requestId={request.id}
             labels={page.cancel}
             errors={{ ...dict.common.errors, ...strings.errors }}
           />
         ) : null}
-        {request.status === "declined" || request.status === "withdrawn" ? (
+        {state === "declined" || state === "withdrawn" || state === "lapsed" ? (
           <Button
             asChild
             variant="outline"

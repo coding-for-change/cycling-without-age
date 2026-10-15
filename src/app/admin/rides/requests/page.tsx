@@ -114,7 +114,7 @@ async function RequestList({ searchParams }: PageProps) {
       ),
       askedIso: request.createdAt.toISOString(),
       requester: request.requester?.name ?? strings.detail.someone,
-      status: request.status,
+      status: rideRequests.lapsed(request) ? "lapsed" : request.status,
       chapterName: request.chapter.name,
     };
   });

@@ -147,6 +147,7 @@ export async function RequestBody({
   const now = new Date();
   const outcome = request.status === "pending" ? null : request.status;
   const pending = outcome === null;
+  const isLapsed = rideRequests.lapsed(request, now);
   const [dict, language, head] = await Promise.all([
     getDictionary(),
     getLocale(),
@@ -155,9 +156,8 @@ export async function RequestBody({
   const strings = dict.admin.rideRequests;
   const detail = strings.detail;
   const words = wordsLocale(language);
-  const conflicts = pending
-    ? await conflictsOf(request, strings, words, now)
-    : [];
+  const conflicts =
+    pending && !isLapsed ? await conflictsOf(request, strings, words, now) : [];
   const notation = resolveLocale(head.get("accept-language"));
   const when = requestedWhen(request, notation);
   const route = requestedRoute(request);
@@ -206,7 +206,9 @@ export async function RequestBody({
             title={<span className={DETAIL_TITLE}>{riders.join(", ")}</span>}
           >
             <DetailMeta>
-              <MetaBadge>{strings.statuses[request.status]}</MetaBadge>
+              <MetaBadge>
+                {strings.statuses[isLapsed ? "lapsed" : request.status]}
+              </MetaBadge>
               <span>{`${when.date}, ${when.time}`}</span>
               <span>
                 {formatMessage(
@@ -241,7 +243,7 @@ export async function RequestBody({
                     errors={{ ...dict.common.errors, ...strings.errors }}
                   />
                   <p className="text-xs text-pretty text-ink-soft">
-                    {detail.pendingHint}
+                    {isLapsed ? detail.lapsed : detail.pendingHint}
                   </p>
                 </div>
               ) : (
@@ -273,7 +275,7 @@ export async function RequestBody({
                 </div>
               )}
             </SidePanel>
-            {pending ? (
+            {pending && !isLapsed ? (
               <SidePanel title={detail.conflicts}>
                 {conflicts.length ? (
                   <ul className="grid gap-2 text-2sm">

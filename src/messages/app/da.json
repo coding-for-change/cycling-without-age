@@ -1239,7 +1239,8 @@
         "pending": "Venter",
         "scheduled": "Planlagt",
         "declined": "Afvist",
-        "withdrawn": "Trukket tilbage"
+        "withdrawn": "Trukket tilbage",
+        "lapsed": "Udløbet"
       },
       "filter": {
         "label": "Vis ønsker",
@@ -1306,7 +1307,8 @@
           "shortNotice": "Kort varsel: {hours, plural, one {1 time} other {# timer}} før",
           "beyondHorizon": "Længere ude, end I booker",
           "ridesThen": "{count, plural, one {1 anden tur} other {# andre ture}} i det tidsrum"
-        }
+        },
+        "lapsed": "Det ønskede tidspunkt er gået. Du kan stadig planlægge turen til et andet tidspunkt eller afvise ønsket."
       },
       "decline": {
         "title": "Afvis ønsket",
@@ -2455,14 +2457,16 @@
           "pending": "Venter på {chapter}",
           "scheduled": "Booket",
           "declined": "Ikke denne gang",
-          "withdrawn": "Trukket tilbage"
+          "withdrawn": "Trukket tilbage",
+          "lapsed": "Intet svar i tide"
         },
         "bodies": {
           "pending": "{chapter} har dit ønske og bekræfter det præcise tidspunkt. Du får besked.",
           "scheduled": "{chapter} har booket turen. Den står under dine ture – og i den kalenderfil, vi har mailet dig.",
           "scheduledGone": "{chapter} bookede en tur til dette ønske, men den er siden fjernet. Spørg afdelingen, om den stadig bliver til noget.",
           "declined": "{chapter} kan desværre ikke få denne tur til at lykkes. Du er velkommen til at ønske en anden dag.",
-          "withdrawn": "Du har trukket dette ønske tilbage."
+          "withdrawn": "Du har trukket dette ønske tilbage.",
+          "lapsed": "{chapter} nåede ikke at svare på dit ønske før det tidspunkt, du bad om. Du er velkommen til at ønske igen."
         },
         "decisionNote": "En besked fra {chapter}",
         "riders": "Passagerer",

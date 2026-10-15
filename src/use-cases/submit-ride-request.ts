@@ -159,7 +159,7 @@ export async function submitRideRequest(
 
   const window = { startsAt: requestedStartsAt, endsAt: requestedEndsAt };
   const riderIds = picked.map((rider) => rider.id);
-  await rideRequests.assertCanAsk(userId, riderIds, window);
+  await rideRequests.assertCanAsk(userId, riderIds, window, now);
   if (await rides.ridersBookedBetween(riderIds, window))
     throw new DomainError("riderBooked");
 

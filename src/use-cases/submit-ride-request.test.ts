@@ -261,10 +261,15 @@ describe("submitRideRequest", () => {
     expect(await codeOf(submitRideRequest(request(), CARER, NOW))).toBe(
       "alreadyRequested",
     );
-    expect(rideRequests.assertCanAsk).toHaveBeenCalledWith(CARER, ["mother"], {
-      startsAt: new Date("2026-10-08T08:00:00Z"),
-      endsAt: new Date("2026-10-08T09:00:00Z"),
-    });
+    expect(rideRequests.assertCanAsk).toHaveBeenCalledWith(
+      CARER,
+      ["mother"],
+      {
+        startsAt: new Date("2026-10-08T08:00:00Z"),
+        endsAt: new Date("2026-10-08T09:00:00Z"),
+      },
+      NOW,
+    );
     expect(submit).not.toHaveBeenCalled();
   });
 

@@ -16,8 +16,8 @@ import { formatMessage } from "@/lib/i18n/format";
 export async function loadRideRequests(userId: string, now = new Date()) {
   return (await rideRequests.listOfUser(userId, now)).filter(
     (request) =>
-      request.status === "pending" ||
-      (request.status === "declined" && request.requestedEndsAt > now),
+      (request.status === "pending" || request.status === "declined") &&
+      request.requestedEndsAt > now,
   );
 }
 

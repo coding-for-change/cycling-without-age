@@ -103,11 +103,13 @@ export const findRideRequests = (
   chapterIds: string[],
   status: $Enums.RideRequestStatus | null,
   take: number,
+  endingAfter: Date | null = null,
 ) =>
   prisma.rideRequest.findMany({
     where: {
       chapterId: { in: chapterIds },
       ...(status ? { status } : {}),
+      ...(endingAfter ? { requestedEndsAt: { gt: endingAfter } } : {}),
     },
     orderBy: [{ requestedStartsAt: "asc" }, { createdAt: "asc" }],
     take,
@@ -117,9 +119,14 @@ export const findRideRequests = (
 export const countRideRequests = (
   chapterIds: string[],
   status: $Enums.RideRequestStatus,
+  endingAfter: Date | null = null,
 ) =>
   prisma.rideRequest.count({
-    where: { chapterId: { in: chapterIds }, status },
+    where: {
+      chapterId: { in: chapterIds },
+      status,
+      ...(endingAfter ? { requestedEndsAt: { gt: endingAfter } } : {}),
+    },
   });
 
 export const findRideRequestsOfRequester = (
@@ -255,5 +262,14 @@ export const countOpenRequestsOverlapping = (
     },
   });
 
-export const countOpenRequestsOfRequester = (requesterUserId: string) =>
-  prisma.rideRequest.count({ where: { requesterUserId, status: "pending" } });
+export const countOpenRequestsOfRequester = (
+  requesterUserId: string,
+  endingAfter: Date,
+) =>
+  prisma.rideRequest.count({
+    where: {
+      requesterUserId,
+      status: "pending",
+      requestedEndsAt: { gt: endingAfter },
+    },
+  });

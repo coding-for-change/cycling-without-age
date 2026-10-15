@@ -49,10 +49,11 @@ export async function assertCanAsk(
   requesterUserId: string,
   passengerIds: string[],
   window: { startsAt: Date; endsAt: Date },
+  now = new Date(),
 ) {
   const [overlapping, open] = await Promise.all([
     countOpenRequestsOverlapping(passengerIds, window),
-    countOpenRequestsOfRequester(requesterUserId),
+    countOpenRequestsOfRequester(requesterUserId, now),
   ]);
   if (overlapping > 0) throw new DomainError("alreadyRequested");
   if (open >= OPEN_REQUESTS_MAX) throw new DomainError("tooManyRequests");
@@ -265,17 +266,36 @@ export async function handOverOpenRequests(
   return open.length;
 }
 
-/** The Ride Request List: soonest first. */
+/**
+ * A request still pending once the window it asked for has passed lapsed:
+ * nobody answered in time. It drops off the open list and the counts, but
+ * stays readable, and an admin may still schedule it for another time.
+ */
+export const lapsed = (
+  request: { status: string; requestedEndsAt: Date },
+  now = new Date(),
+) => request.status === "pending" && request.requestedEndsAt <= now;
+
+/** The Ride Request List: the open ones soonest first, without lapsed ones. */
 export const listRequests = async (
   chapterIds: string[],
   status: $Enums.RideRequestStatus | null = "pending",
-) => (chapterIds.length ? findRideRequests(chapterIds, status, LIST_MAX) : []);
+  now = new Date(),
+) =>
+  chapterIds.length
+    ? findRideRequests(
+        chapterIds,
+        status,
+        LIST_MAX,
+        status === "pending" ? now : null,
+      )
+    : [];
 
-export const listPending = (chapterIds: string[]) =>
-  listRequests(chapterIds, "pending");
+export const listPending = (chapterIds: string[], now = new Date()) =>
+  listRequests(chapterIds, "pending", now);
 
-export const countPending = async (chapterIds: string[]) =>
-  chapterIds.length ? countRideRequests(chapterIds, "pending") : 0;
+export const countPending = async (chapterIds: string[], now = new Date()) =>
+  chapterIds.length ? countRideRequests(chapterIds, "pending", now) : 0;
 
 /** An account's own requests: every open one, and those decided in the last month. */
 export const listOfUser = (userId: string, now = new Date()) =>

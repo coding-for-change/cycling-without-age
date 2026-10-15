@@ -10,7 +10,7 @@ import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
 import type { IcsEvent } from "@/lib/ics";
 import { chapterAdminIds, excluding, nameOfPerson } from "./lookups";
-import { factsOfRide, rideFacts, rideWords } from "./ride-facts";
+import { factsOfRide, rideFacts, rideNotOver, rideWords } from "./ride-facts";
 import { defineKind } from "./types";
 
 const requestLink = (requestId: string) => `/admin/rides/requests/${requestId}`;
@@ -228,7 +228,8 @@ const placeLine = (name: string | null, destination: string | null) =>
 
 /**
  * Lifecycle 1E and COD-182: the requester learns the ride exists, with the
- * ride in their calendar — one event per leg, no one's name in it, and the
+ * ride in their calendar — unless the ride is already over, as when an admin
+ * records a lapsed request after the fact — one event per leg, no one's name in it, and the
  * same UID the subscribed feed uses, so importing both never doubles it.
  */
 export const rideRequestScheduled = defineKind({
@@ -246,7 +247,9 @@ export const rideRequestScheduled = defineKind({
     riderNames: z.string().nullable().optional(),
   }),
   recipients: async (event) =>
-    event.requesterUserId ? [event.requesterUserId] : [],
+    event.requesterUserId && (await rideNotOver(event.rideId))
+      ? [event.requesterUserId]
+      : [],
   params: async (event) => {
     const pair = event.returnLegId
       ? { role: "lead" as const, otherRideId: event.returnLegId }
