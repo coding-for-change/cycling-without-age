@@ -314,10 +314,11 @@ export const countPending = async (chapterIds: string[], now = new Date()) =>
   chapterIds.length ? countRideRequests(chapterIds, "pending", now) : 0;
 
 /** An account's own requests: every open one, and those decided in the last month. */
+/** The account's requests still waiting, and those decided lately. */
 export const listOfUser = (userId: string, now = new Date()) =>
   findRideRequestsOfRequester(
     userId,
-    new Date(now.getTime() - RECENT_DAYS * DAY_MS),
+    { since: new Date(now.getTime() - RECENT_DAYS * DAY_MS), now },
     OWN_MAX,
   );
 

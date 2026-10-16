@@ -134,13 +134,16 @@ export const countRideRequests = (
 
 export const findRideRequestsOfRequester = (
   requesterUserId: string,
-  since: Date,
+  { since, now }: { since: Date; now: Date },
   take: number,
 ) =>
   prisma.rideRequest.findMany({
     where: {
       requesterUserId,
-      OR: [{ status: "pending" }, { updatedAt: { gte: since } }],
+      OR: [
+        { status: "pending", requestedEndsAt: { gt: now } },
+        { updatedAt: { gte: since } },
+      ],
     },
     orderBy: [{ requestedStartsAt: "asc" }, { createdAt: "asc" }],
     take,

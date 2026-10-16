@@ -6,6 +6,7 @@ import {
   countOpenRequestsOverlapping,
   findDestinationsOfRequester,
   findOpenRequestsOf,
+  findRideRequestsOfRequester,
   findOpenRequestsOfRequesterWith,
   removeRequestRider,
   setRequester,
@@ -545,5 +546,18 @@ describe("closed", () => {
         decidedByUserId: "b",
       }),
     ).toBe(false);
+  });
+});
+
+describe("listOfUser", () => {
+  it("asks only for waiting requests still ahead and those decided in the last 30 days", async () => {
+    const now = new Date("2026-10-16T08:00:00Z");
+    (findRideRequestsOfRequester as jest.Mock).mockResolvedValue([]);
+    await rideRequests.listOfUser("user-carer", now);
+    expect(findRideRequestsOfRequester).toHaveBeenCalledWith(
+      "user-carer",
+      { since: new Date("2026-09-16T08:00:00Z"), now },
+      50,
+    );
   });
 });
