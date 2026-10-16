@@ -382,7 +382,7 @@
   },
   "rideRequestWithdrawn": {
     "subject": "{requester} withdrew the request for {date}",
-    "preview": "{riders} · {date}",
+    "preview": "{date} · {time}",
     "heading": "A ride request was withdrawn",
     "intro": "{requester} no longer needs the ride for {riders} on {date}, {time}. There is nothing left to do.",
     "cta": "Open the request",

@@ -382,7 +382,7 @@
   },
   "rideRequestWithdrawn": {
     "subject": "{requester} hat die Anfrage für {date} zurückgezogen",
-    "preview": "{riders} · {date}",
+    "preview": "{date} · {time}",
     "heading": "Eine Fahrtanfrage wurde zurückgezogen",
     "intro": "{requester} braucht die Fahrt für {riders} am {date}, {time}, nicht mehr. Es gibt nichts mehr zu tun.",
     "cta": "Anfrage öffnen",

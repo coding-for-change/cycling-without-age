@@ -382,7 +382,7 @@
   },
   "rideRequestWithdrawn": {
     "subject": "{requester} trak ønsket for {date} tilbage",
-    "preview": "{riders} · {date}",
+    "preview": "{date} · {time}",
     "heading": "Et turønske er trukket tilbage",
     "intro": "{requester} har ikke længere brug for turen for {riders} {date}, {time}. Der er ikke mere at gøre.",
     "cta": "Åbn ønsket",
