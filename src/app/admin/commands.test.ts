@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { resolveAdminScope } from "@/lib/access";
 import type {
   Access,
@@ -59,9 +61,10 @@ const navigateHrefs = (commands: ResolvedCommand[]) =>
     c.run.kind === "navigate" ? [c.run.href] : [],
   );
 
-const NESTED = /^\/admin\/[^/?]+\/[^?]+/;
+const NESTED_VIEWS = ["/admin/rides/requests"];
 
-const isView = (href: string) => href.includes("?") || NESTED.test(href);
+const isView = (href: string) =>
+  href.includes("?") || NESTED_VIEWS.includes(href);
 
 const pageOf = (href: string) =>
   href.split("?")[0].split("/").slice(0, 3).join("/");
@@ -125,6 +128,10 @@ describe("views of a destination", () => {
 
   it("offers the Ride Request List as a view of Rides", () => {
     expect(views(run(berlinAdmin))).toContain("/admin/rides/requests");
+  });
+
+  it.each(NESTED_VIEWS)("opens %s, a page that exists", (href) => {
+    expect(existsSync(path.join(__dirname, "..", href, "page.tsx"))).toBe(true);
   });
 });
 
