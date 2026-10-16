@@ -442,6 +442,92 @@ describe("scheduleRide", () => {
         ),
       ).rejects.toThrow();
     });
+
+    describe("picking its own trishaws for a request", () => {
+      const CANDIDATES = ["t-1", "t-2", "t-3"];
+      const fromRequest = (overrides: Partial<RideInput> = {}) =>
+        rides.scheduleRide(
+          rideInput.parse({ ...trip, trishawIds: [], ...overrides }),
+          null,
+          {
+            requestId: "request-1",
+            pickTrishaws: { candidates: CANDIDATES, count: 1 },
+          },
+        );
+
+      it("picks the first free candidate under the lock, on both legs", async () => {
+        db.rideTrishaw.findMany.mockResolvedValue([
+          { trishawId: "t-1", rideId: "ride-existing" },
+        ]);
+        await fromRequest();
+        expect(
+          db.ride.create.mock.calls.map(([args]) => args.data.trishaws),
+        ).toEqual([
+          { create: [{ trishawId: "t-2" }] },
+          { create: [{ trishawId: "t-2" }] },
+        ]);
+        expect(db.$queryRaw).toHaveBeenCalledTimes(1);
+        expect(lockedSql()[0]).toContain("FOR UPDATE");
+        expect(db.$queryRaw.mock.calls[0][0].values).toEqual(CANDIDATES);
+        expect(db.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+          db.ride.create.mock.invocationCallOrder[0],
+        );
+        const { where } = db.rideTrishaw.findMany.mock.calls[0][0];
+        expect(where.trishawId).toEqual({ in: CANDIDATES });
+        expect(where.ride.OR).toEqual([
+          { startsAt: { lt: base.endsAt }, endsAt: { gt: base.startsAt } },
+          { startsAt: { lt: back.endsAt }, endsAt: { gt: back.startsAt } },
+        ]);
+        expect(
+          db.rideLogEntry.create.mock.calls.map(
+            ([args]) => args.data.payload.trishawIds,
+          ),
+        ).toEqual([["t-2"], ["t-2"]]);
+      });
+
+      it("refuses with noTrishawFree and writes nothing when every candidate is taken", async () => {
+        db.rideTrishaw.findMany.mockResolvedValue(
+          CANDIDATES.map((trishawId) => ({
+            trishawId,
+            rideId: `ride-of-${trishawId}`,
+          })),
+        );
+        expect(await codeOf(fromRequest({ passengerIds: ["mother"] }))).toBe(
+          "noTrishawFree",
+        );
+        expect(db.ride.create).not.toHaveBeenCalled();
+        expect(db.rideLogEntry.create).not.toHaveBeenCalled();
+        expect(db.rideRosterEntry.createMany).not.toHaveBeenCalled();
+        expect(emitted).toEqual([]);
+      });
+
+      it("tags both legs' booked riders with the request", async () => {
+        await fromRequest({ passengerIds: ["mother"] });
+        expect(emitted[0]).toEqual(
+          expect.objectContaining({
+            type: "ride.scheduled",
+            returnLegId: "ride-new-2",
+            requestId: "request-1",
+          }),
+        );
+        expect(
+          emitted.filter((event) => event.type === "ride.riderBooked"),
+        ).toEqual([
+          expect.objectContaining({
+            rideId: "ride-new-1",
+            passengerId: "mother",
+            pair: { role: "lead", otherRideId: "ride-new-2" },
+            requestId: "request-1",
+          }),
+          expect.objectContaining({
+            rideId: "ride-new-2",
+            passengerId: "mother",
+            pair: { role: "follow", otherRideId: "ride-new-1" },
+            requestId: "request-1",
+          }),
+        ]);
+      });
+    });
   });
 });
 
@@ -1217,6 +1303,7 @@ describe("roster and staffing", () => {
       expect.objectContaining({
         type: "ride.riderBooked",
         passengerId: "passenger-1",
+        requestId: null,
       }),
     ]);
   });
@@ -2862,6 +2949,10 @@ describe("booking seats on an announced event", () => {
       db.rideRosterEntry.create.mock.calls.map(([args]) => args.data.position),
     ).toEqual([1, 2]);
     expect(eventTypes()).toEqual(["ride.riderBooked", "ride.riderBooked"]);
+    expect(emitted).toEqual([
+      expect.objectContaining({ passengerId: "p-1", requestId: null }),
+      expect.objectContaining({ passengerId: "p-2", requestId: null }),
+    ]);
   });
 
   // The last two seats, wanted by a family of three: nobody is half seated.
