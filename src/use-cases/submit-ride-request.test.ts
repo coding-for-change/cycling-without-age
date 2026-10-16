@@ -344,6 +344,46 @@ describe("submitRideRequest", () => {
     expect(submit).not.toHaveBeenCalled();
   });
 
+  it("looks for a ride booked in the window for every rider asked for", async () => {
+    await submitRideRequest(
+      request({ passengerIds: ["mother", "father"] }),
+      CARER,
+      NOW,
+    );
+    expect(rides.ridersBookedBetween).toHaveBeenCalledWith(
+      ["mother", "father"],
+      {
+        startsAt: new Date("2026-10-08T08:00:00Z"),
+        endsAt: new Date("2026-10-08T09:00:00Z"),
+      },
+    );
+  });
+
+  it("passes the requester's note on with the request", async () => {
+    await submitRideRequest(
+      request({ note: "Please ring twice." }),
+      CARER,
+      NOW,
+    );
+    expect(submit).toHaveBeenCalledWith(
+      expect.objectContaining({ note: "Please ring twice." }),
+      expect.anything(),
+    );
+  });
+
+  it("reads the booking policy of the riders' chapter as of now", async () => {
+    await submitRideRequest(request(), CARER, NOW);
+    expect(chapters.getBookingPolicy).toHaveBeenCalledWith(MUNICH, NOW);
+  });
+
+  it("refuses when the riders' chapter is gone", async () => {
+    (chapters.getChapter as jest.Mock).mockResolvedValue(null);
+    expect(await codeOf(submitRideRequest(request(), CARER, NOW))).toBe(
+      "unknownChapter",
+    );
+    expect(submit).not.toHaveBeenCalled();
+  });
+
   describe("lifecycle 1D", () => {
     it("refuses a window inside the lead time", async () => {
       expect(
