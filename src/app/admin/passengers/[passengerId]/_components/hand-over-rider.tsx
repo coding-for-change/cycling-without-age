@@ -7,7 +7,12 @@ import { notify } from "@/components/action-feedback";
 import { AppDrawer, submitOnCmdEnter } from "@/components/app-drawer";
 import { PeoplePicker, type PersonOption } from "@/components/people-picker";
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { handOverRiderAction } from "@/features/passengers/actions";
 import { useDrawerParam } from "@/hooks/use-drawer-param";
@@ -48,6 +53,8 @@ export function HandOverRider({
   const formId = useId();
   const nameId = useId();
   const contactId = useId();
+  const hintId = useId();
+  const errorId = useId();
   const { go, withParam } = useDrawerParam();
   const open = useSearchParams().get("handover") === "1";
   const [mode, setMode] = useState<Mode>(members.length ? "member" : "invite");
@@ -56,6 +63,9 @@ export function HandOverRider({
   const [contact, setContact] = useState("");
   const [invalid, setInvalid] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  const nameMissing = invalid && !name.trim();
+  const contactWrong = invalid && !parseIdentity(contact, country).ok;
 
   const close = () =>
     go((params) => {
@@ -175,36 +185,41 @@ export function HandOverRider({
             )
           ) : (
             <>
-              <Field>
+              <Field data-invalid={nameMissing || undefined}>
                 <FieldLabel htmlFor={nameId}>{strings.name}</FieldLabel>
                 <Input
                   id={nameId}
                   autoComplete="off"
                   maxLength={120}
                   value={name}
+                  aria-invalid={nameMissing || undefined}
+                  aria-describedby={invalid ? errorId : undefined}
                   onChange={(event) => {
                     setInvalid(false);
                     setName(event.target.value);
                   }}
                 />
               </Field>
-              <Field>
+              <Field data-invalid={contactWrong || undefined}>
                 <FieldLabel htmlFor={contactId}>{strings.contact}</FieldLabel>
                 <Input
                   id={contactId}
                   autoComplete="off"
-                  inputMode="email"
                   value={contact}
-                  aria-invalid={invalid || undefined}
+                  aria-invalid={contactWrong || undefined}
+                  aria-describedby={invalid ? `${hintId} ${errorId}` : hintId}
                   onChange={(event) => {
                     setInvalid(false);
                     setContact(event.target.value);
                   }}
                 />
-                <FieldDescription>
-                  {invalid ? strings.invalid : strings.contactHint}
+                <FieldDescription id={hintId}>
+                  {strings.contactHint}
                 </FieldDescription>
               </Field>
+              {invalid ? (
+                <FieldError id={errorId}>{strings.invalid}</FieldError>
+              ) : null}
             </>
           )}
         </form>
