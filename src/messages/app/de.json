@@ -434,7 +434,7 @@
         "riderHandedAway": "Fahrgast übergeben"
       },
       "you": "Du",
-      "riderHandedOver": "{direction, select, in {{actor} hat {rider} von {previous} an dieses Konto übergeben} other {{actor} hat {rider} an {next} übergeben}}"
+      "riderHandedOver": "{direction, select, in {{self, select, yes {Du hast} other {{actor} hat}} {rider} von {previous} an dieses Konto übergeben} other {{self, select, yes {Du hast} other {{actor} hat}} {rider} an {next} übergeben}}"
     },
     "members": {
       "actions": "Aktionen für {name}",
@@ -624,7 +624,7 @@
         },
         "history": "Verlauf",
         "historyEmpty": "Noch nichts. Eine Übergabe an jemand anderen erscheint hier.",
-        "handedOver": "{actor} hat {rider} von {previous} an {next} übergeben"
+        "handedOver": "{self, select, yes {Du hast} other {{actor} hat}} {rider} von {previous} an {next} übergeben"
       },
       "waiting": {
         "title": "Warten auf Antwort",
@@ -1282,11 +1282,11 @@
         "noPhone": "Keine Telefonnummer am Konto",
         "history": "Verlauf",
         "lines": {
-          "submitted": "{name} hat die Fahrt angefragt",
-          "scheduled": "{name} hat sie eingeplant",
+          "submitted": "{self, select, yes {Du hast die Fahrt angefragt} other {{name} hat die Fahrt angefragt}}",
+          "scheduled": "{self, select, yes {Du hast sie eingeplant} other {{name} hat sie eingeplant}}",
           "scheduledAuto": "Automatisch eingeplant",
-          "declined": "{name} hat sie abgelehnt",
-          "withdrawn": "{name} hat die Anfrage zurückgezogen"
+          "declined": "{self, select, yes {Du hast sie abgelehnt} other {{name} hat sie abgelehnt}}",
+          "withdrawn": "{self, select, yes {Du hast die Anfrage zurückgezogen} other {{name} hat die Anfrage zurückgezogen}}"
         },
         "seeRide": "Fahrt öffnen",
         "rideGone": "Die Fahrt wurde inzwischen gelöscht.",

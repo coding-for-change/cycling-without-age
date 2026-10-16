@@ -175,10 +175,10 @@ export async function RequestBody({
   const rideHref = request.rideId
     ? hrefWith(`/admin/rides/${request.rideId}`, scopeQuery, {})
     : null;
-  const nameOf = (person: { id: string; name: string } | null) =>
-    person?.id === session.user.id
-      ? dict.admin.history.you
-      : (person?.name ?? detail.someone);
+  const nameOf = (person: { id: string; name: string } | null) => ({
+    self: person?.id === session.user.id ? "yes" : "no",
+    name: person?.name ?? detail.someone,
+  });
 
   const model =
     strings.models[request.model === "functional" ? "functional" : "pleasure"];
@@ -417,7 +417,7 @@ export async function RequestBody({
               <TimelineHeadline
                 sentence={formatMessage(
                   detail.lines.submitted,
-                  { name: nameOf(requester) },
+                  nameOf(requester),
                   words,
                 )}
                 at={request.createdAt}
@@ -434,13 +434,11 @@ export async function RequestBody({
                       ? detail.lines.scheduledAuto
                       : formatMessage(
                           detail.lines[outcome],
-                          {
-                            name: nameOf(
-                              request.status === "withdrawn"
-                                ? requester
-                                : request.decidedBy,
-                            ),
-                          },
+                          nameOf(
+                            request.status === "withdrawn"
+                              ? requester
+                              : request.decidedBy,
+                          ),
                           words,
                         )
                   }

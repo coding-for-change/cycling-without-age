@@ -434,7 +434,7 @@
         "riderHandedAway": "Rider handed on"
       },
       "you": "You",
-      "riderHandedOver": "{direction, select, in {{actor} handed {rider} over to this account, from {previous}} other {{actor} handed {rider} over to {next}}}"
+      "riderHandedOver": "{direction, select, in {{self, select, yes {You} other {{actor}}} handed {rider} over to this account, from {previous}} other {{self, select, yes {You} other {{actor}}} handed {rider} over to {next}}}"
     },
     "members": {
       "actions": "Actions for {name}",
@@ -624,7 +624,7 @@
         },
         "history": "History",
         "historyEmpty": "Nothing yet. A hand-over to someone else shows up here.",
-        "handedOver": "{actor} handed {rider} over from {previous} to {next}"
+        "handedOver": "{self, select, yes {You} other {{actor}}} handed {rider} over from {previous} to {next}"
       },
       "waiting": {
         "title": "Waiting for an answer",
@@ -1282,11 +1282,11 @@
         "noPhone": "No phone number on the account",
         "history": "History",
         "lines": {
-          "submitted": "{name} asked for the ride",
-          "scheduled": "{name} scheduled it",
+          "submitted": "{self, select, yes {You asked for the ride} other {{name} asked for the ride}}",
+          "scheduled": "{self, select, yes {You scheduled it} other {{name} scheduled it}}",
           "scheduledAuto": "Scheduled automatically",
-          "declined": "{name} declined it",
-          "withdrawn": "{name} took the request back"
+          "declined": "{self, select, yes {You declined it} other {{name} declined it}}",
+          "withdrawn": "{self, select, yes {You took the request back} other {{name} took the request back}}"
         },
         "seeRide": "Open the ride",
         "rideGone": "The ride has been deleted since.",

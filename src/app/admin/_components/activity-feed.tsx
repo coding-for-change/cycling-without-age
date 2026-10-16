@@ -88,10 +88,10 @@ export function ActivityFeed({
     <TimelineList empty={empty}>
       {events.map((event) => {
         const payload = payloadStrings(event.payload);
-        const actor =
-          event.actorUserId && event.actorUserId === viewerId
-            ? labels.you
-            : (event.actor?.name ?? labels.someone);
+        const self = Boolean(
+          event.actorUserId && event.actorUserId === viewerId,
+        );
+        const actor = self ? labels.you : (event.actor?.name ?? labels.someone);
         const template =
           labels.templates[payload.template] ?? labels.templates.approval;
         const field = labels.fields[payload.field] ?? payload.field ?? "";
@@ -117,7 +117,14 @@ export function ActivityFeed({
             <TimelineHeadline
               sentence={formatMessage(
                 labels[event.type],
-                { name: "", ...payload, actor, template, field },
+                {
+                  name: "",
+                  ...payload,
+                  actor,
+                  template,
+                  field,
+                  self: self ? "yes" : "no",
+                },
                 words,
               )}
               at={event.createdAt}

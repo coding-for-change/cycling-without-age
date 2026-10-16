@@ -434,7 +434,7 @@
         "riderHandedAway": "Passager overdraget"
       },
       "you": "Du",
-      "riderHandedOver": "{direction, select, in {{actor} overdrog {rider} fra {previous} til denne konto} other {{actor} overdrog {rider} til {next}}}"
+      "riderHandedOver": "{direction, select, in {{self, select, yes {Du} other {{actor}}} overdrog {rider} fra {previous} til denne konto} other {{self, select, yes {Du} other {{actor}}} overdrog {rider} til {next}}}"
     },
     "members": {
       "actions": "Handlinger for {name}",
@@ -624,7 +624,7 @@
         },
         "history": "Historik",
         "historyEmpty": "Intet endnu. En overdragelse til en anden vises her.",
-        "handedOver": "{actor} overdrog {rider} fra {previous} til {next}"
+        "handedOver": "{self, select, yes {Du} other {{actor}}} overdrog {rider} fra {previous} til {next}"
       },
       "waiting": {
         "title": "Venter på svar",
@@ -1282,11 +1282,11 @@
         "noPhone": "Intet telefonnummer på kontoen",
         "history": "Historik",
         "lines": {
-          "submitted": "{name} ønskede turen",
-          "scheduled": "{name} planlagde den",
+          "submitted": "{self, select, yes {Du ønskede turen} other {{name} ønskede turen}}",
+          "scheduled": "{self, select, yes {Du planlagde den} other {{name} planlagde den}}",
           "scheduledAuto": "Planlagt automatisk",
-          "declined": "{name} afviste den",
-          "withdrawn": "{name} trak ønsket tilbage"
+          "declined": "{self, select, yes {Du afviste den} other {{name} afviste den}}",
+          "withdrawn": "{self, select, yes {Du trak ønsket tilbage} other {{name} trak ønsket tilbage}}"
         },
         "seeRide": "Åbn turen",
         "rideGone": "Turen er siden blevet slettet.",
