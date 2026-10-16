@@ -7,7 +7,7 @@ import {
   acceptCareRequest,
   declineCareRequest,
 } from "@/use-cases/respond-care-request";
-import { invalidateReports } from "@/lib/cache-tags";
+import { invalidateAccess, invalidateReports } from "@/lib/cache-tags";
 import { actionFailure } from "@/lib/domain-error";
 import { withinRateLimit } from "@/lib/rate-limit";
 import { addManagedRider as addRider } from "@/use-cases/add-managed-rider";
@@ -153,7 +153,10 @@ async function answer(
 }
 
 export const acceptCareRequestAction = async (input: unknown) =>
-  answer(input, acceptCareRequest);
+  answer(input, async (args) => {
+    await acceptCareRequest(args);
+    invalidateAccess({ userIds: [args.userId] });
+  });
 
 export const declineCareRequestAction = async (input: unknown) =>
   answer(input, declineCareRequest);

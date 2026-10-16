@@ -8,6 +8,7 @@ import { profile } from "@/features/profile";
 import { personalDetailsInput } from "@/features/profile";
 import { MAX_MANAGED_RIDERS, managedRiderInput } from "@/features/passengers";
 import { readNextPath, requireAuth } from "@/lib/auth-guards";
+import { invalidateAccess } from "@/lib/cache-tags";
 import { actionFailure } from "@/lib/domain-error";
 import { readJoinPreset } from "@/lib/join-preset";
 import { getLocale } from "@/lib/i18n";
@@ -86,6 +87,7 @@ export async function submitConsent(input: unknown): Promise<StepResult> {
     await accounts.claimAccount(at.userId);
 
     revalidatePath(ONBOARDING);
+    invalidateAccess({ userIds: [at.userId] });
 
     return onward(at.session);
   } catch (error) {

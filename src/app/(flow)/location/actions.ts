@@ -6,6 +6,7 @@ import { z } from "zod";
 import { chapters } from "@/features/chapters";
 import { homeInput } from "@/features/profile";
 import { readNextPath, requireAuth } from "@/lib/auth-guards";
+import { invalidateAccess } from "@/lib/cache-tags";
 import { actionFailure } from "@/lib/domain-error";
 import {
   GUEST_CHAPTER_COOKIE,
@@ -140,6 +141,7 @@ export async function settlePassengerAt(
       home: parsed.data.residence === "home" ? parsed.data.home : undefined,
     });
     revalidatePath("/onboarding");
+    invalidateAccess({ userIds: [session.user.id] });
     // Named outright rather than left to `/onboarding` to redirect: a cached
     // redirect replays. See `resolveDestination`.
     return {
@@ -172,6 +174,7 @@ export async function settleCaretakerAt(
       chapterId: parsed.data,
     });
     revalidatePath("/onboarding");
+    invalidateAccess({ userIds: [session.user.id] });
     return {
       ok: true,
       next: await resolveDestination(

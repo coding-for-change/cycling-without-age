@@ -1,3 +1,4 @@
+import { cacheTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { buildSessionAccess } from "@/use-cases/build-session-access";
@@ -15,6 +16,12 @@ jest.mock("react", () => ({
   cache: (fn: unknown) => fn,
 }));
 jest.mock("next/headers", () => ({ headers: async () => new Headers() }));
+jest.mock("next/cache", () => ({
+  cacheLife: jest.fn(),
+  cacheTag: jest.fn(),
+  revalidateTag: jest.fn(),
+  updateTag: jest.fn(),
+}));
 jest.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT:${url}`);
@@ -31,7 +38,7 @@ jest.mock("@/lib/prisma", () => ({
     organization: { findUnique: jest.fn() },
     // The admin passkey gate in auth-guards reads the enrolled count. Not a
     // jest.fn() so `clearAllMocks` cannot strip the return value.
-    user: { findUnique: async () => ({ _count: { passkeys: 1 } }) },
+    passkey: { count: async () => 1 },
   },
 }));
 
@@ -104,6 +111,15 @@ describe("buildSessionAccess", () => {
       countryAdminOf: [DE],
       memberships: [{ chapterId: AARHUS, roles: ["passenger"] }],
     });
+  });
+
+  it("tags the cached entry with the user and every scope it rests on", async () => {
+    await signIn("dana");
+    expect(cacheTag).toHaveBeenCalledWith(
+      "access:dana",
+      `access:chapter:${AARHUS}`,
+      `access:country:${DE}`,
+    );
   });
 
   it("splits a stacked member row into roles", async () => {

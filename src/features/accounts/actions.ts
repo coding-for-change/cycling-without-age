@@ -1,7 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { invalidateReports } from "@/lib/cache-tags";
+import {
+  expirePasskeys,
+  invalidateAccess,
+  invalidateReports,
+} from "@/lib/cache-tags";
 import { actionFailure } from "@/lib/domain-error";
 import { z } from "zod";
 import { requireAuth, requireChapterAdmin } from "@/lib/auth-guards";
@@ -41,12 +45,13 @@ export async function addAssistedPassenger(
     return { ok: false, error: "generic" };
 
   try {
-    const { outcome } = await provisionAssistedPassenger({
+    const { userId, outcome } = await provisionAssistedPassenger({
       adminUserId: session.user.id,
       input: parsed.data,
     });
     revalidatePath("/admin", "layout");
     invalidateReports(parsed.data.chapterId);
+    invalidateAccess({ userIds: [userId] });
     return { ok: true, outcome };
   } catch (error) {
     return actionFailure(error, {
@@ -66,13 +71,14 @@ export async function inviteChapterUser(
   const session = await requireChapterAdmin(parsed.data.chapterId);
 
   try {
-    await invite({
+    const { userId } = await invite({
       inviterUserId: session.user.id,
       locale: await getLocale(),
       input: parsed.data,
     });
     revalidatePath("/admin", "layout");
     invalidateReports(parsed.data.chapterId);
+    invalidateAccess({ userIds: [userId] });
     return { ok: true };
   } catch (error) {
     return actionFailure(error, {});
@@ -114,5 +120,8 @@ export async function deleteOwnAccountAction(): Promise<DeleteOwnAccountResult> 
     return { ok: true };
   } catch (error) {
     return actionFailure(error, {});
+  } finally {
+    invalidateAccess({ userIds: [session.user.id] });
+    expirePasskeys(session.user.id);
   }
 }

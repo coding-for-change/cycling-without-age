@@ -39,27 +39,30 @@ jobs:
           if ! command -v ansible-playbook &> /dev/null; then
             pipx install ansible-core
           fi
-          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > .vault_pass
+          SECRETS_DIR="$RUNNER_TEMP/secrets"
+          mkdir -p "$SECRETS_DIR" && chmod 700 "$SECRETS_DIR"
+          echo "SECRETS_DIR=$SECRETS_DIR" >> "$GITHUB_ENV"
+          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > "$SECRETS_DIR/.vault_pass"
 
           # Since the file uses inline !vault tags rather than full-file encryption, we use a simple playbook to parse it.
-          cat << 'EOF' > dump.yml
+          cat << EOF > "$SECRETS_DIR/dump.yml"
           - hosts: localhost
             gather_facts: false
             vars_files:
-              - .config/secrets.yml
+              - $GITHUB_WORKSPACE/.config/secrets.yml
             tasks:
               - copy:
                   content: "{{ vars | to_nice_json }}"
-                  dest: decrypted.json
+                  dest: $SECRETS_DIR/decrypted.json
           EOF
-          ansible-playbook dump.yml --vault-password-file .vault_pass
+          ansible-playbook "$SECRETS_DIR/dump.yml" --vault-password-file "$SECRETS_DIR/.vault_pass"
 
           # Register secrets with GitHub Actions to dynamically mask them in the logs
           for key in $BUILD_KEYS $RUNTIME_KEYS; do
-            value=$(jq -r --arg k "$key" '.[$k] // empty' decrypted.json)
+            value=$(jq -r --arg k "$key" '.[$k] // empty' "$SECRETS_DIR/decrypted.json")
             if [ -n "$value" ]; then echo "::add-mask::$value"; fi
           done
-          if [ -n "$(jq -r '.SENTRY_AUTH_TOKEN // empty' decrypted.json)" ]; then
+          if [ -n "$(jq -r '.SENTRY_AUTH_TOKEN // empty' "$SECRETS_DIR/decrypted.json")" ]; then
             echo "has_sentry_token=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_sentry_token=false" >> "$GITHUB_OUTPUT"
@@ -75,23 +78,35 @@ jobs:
         if: steps.secrets.outputs.has_sentry_token == 'true'
         continue-on-error: true
         run: |
-          SENTRY_AUTH_TOKEN="$(jq -r '.SENTRY_AUTH_TOKEN // empty' decrypted.json)"
+          SENTRY_AUTH_TOKEN="$(jq -r '.SENTRY_AUTH_TOKEN // empty' "$SECRETS_DIR/decrypted.json")"
           export SENTRY_AUTH_TOKEN
           sentry release create "$SENTRY_ORG/${{ github.sha }}" --project cycling-without-age,cwa-worker
           sentry release set-commits "$SENTRY_ORG/${{ github.sha }}" --auto
 
-      # 2. Build Docker image
-      - name: Build Docker image
-        env:
-          DOCKER_BUILDKIT: "1"
+      # 2. Build and push the Docker image, reusing layers from earlier runs
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - name: Expose the Actions cache to Buildx
+        uses: crazy-max/ghaction-github-runtime@3cb05d89e1f492524af3d41a1c98c83bc3025124 # v3.1.0
+
+      - name: Login to registry
         run: |
-          SENTRY_AUTH_TOKEN="$(jq -r '.SENTRY_AUTH_TOKEN // empty' decrypted.json)"
+          jq -r '.REGISTRY_PASSWORD // empty' "$SECRETS_DIR/decrypted.json" | docker login registry.infra.codingforchange.com \
+            -u "$(jq -r '.REGISTRY_USERNAME // empty' "$SECRETS_DIR/decrypted.json")" \
+            --password-stdin
+
+      - name: Build and push Docker image
+        run: |
+          SENTRY_AUTH_TOKEN="$(jq -r '.SENTRY_AUTH_TOKEN // empty' "$SECRETS_DIR/decrypted.json")"
           export SENTRY_AUTH_TOKEN
 
-          docker build \
+          docker buildx build \
+            --cache-from type=gha,scope=cwa-main \
+            --cache-to type=gha,scope=cwa-main,mode=max \
             --build-arg NEXT_PUBLIC_APP_URL=https://cwa.codingforchange.com \
-            --build-arg NEXT_PUBLIC_MAPBOX_TOKEN="$(jq -r '.NEXT_PUBLIC_MAPBOX_TOKEN // empty' decrypted.json)" \
-            --build-arg NEXT_PUBLIC_SENTRY_DSN="$(jq -r '.NEXT_PUBLIC_SENTRY_DSN // empty' decrypted.json)" \
+            --build-arg NEXT_PUBLIC_MAPBOX_TOKEN="$(jq -r '.NEXT_PUBLIC_MAPBOX_TOKEN // empty' "$SECRETS_DIR/decrypted.json")" \
+            --build-arg NEXT_PUBLIC_SENTRY_DSN="$(jq -r '.NEXT_PUBLIC_SENTRY_DSN // empty' "$SECRETS_DIR/decrypted.json")" \
             --build-arg NEXT_PUBLIC_SENTRY_ENVIRONMENT=production \
             --build-arg SENTRY_RELEASE=${{ github.sha }} \
             --build-arg SENTRY_ORG="$SENTRY_ORG" \
@@ -99,25 +114,14 @@ jobs:
             --secret id=sentry_token,env=SENTRY_AUTH_TOKEN \
             -t registry.infra.codingforchange.com/cwa:${{ github.sha }} \
             -t registry.infra.codingforchange.com/cwa:latest \
+            --push \
             .
-
-      # 3. Push to private registry
-      - name: Login to registry
-        run: |
-          jq -r '.REGISTRY_PASSWORD // empty' decrypted.json | docker login registry.infra.codingforchange.com \
-            -u "$(jq -r '.REGISTRY_USERNAME // empty' decrypted.json)" \
-            --password-stdin
-
-      - name: Push Docker image
-        run: |
-          docker push registry.infra.codingforchange.com/cwa:${{ github.sha }}
-          docker push registry.infra.codingforchange.com/cwa:latest
 
       # 4. Deploy to VPS via SSH
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          jq -r '.VPS_DEPLOY_KEY // empty' decrypted.json > ~/.ssh/deploy_key
+          jq -r '.VPS_DEPLOY_KEY // empty' "$SECRETS_DIR/decrypted.json" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H codingforchange.com >> ~/.ssh/known_hosts
 
@@ -148,10 +152,10 @@ jobs:
             echo "METRICS_PORT=9464"
             echo "S3_REGION=auto"
           } > /tmp/.env
-          S3_ENDPOINT=$(jq -r '.S3_ENDPOINT // empty' decrypted.json | sed -E 's#^(https://[^/]+).*#\1#')
+          S3_ENDPOINT=$(jq -r '.S3_ENDPOINT // empty' "$SECRETS_DIR/decrypted.json" | sed -E 's#^(https://[^/]+).*#\1#')
           if [ -n "$S3_ENDPOINT" ]; then echo "S3_ENDPOINT=$S3_ENDPOINT" >> /tmp/.env; fi
           for key in $RUNTIME_KEYS; do
-            value=$(jq -r --arg k "$key" '.[$k] // empty' decrypted.json)
+            value=$(jq -r --arg k "$key" '.[$k] // empty' "$SECRETS_DIR/decrypted.json")
             if [ -n "$value" ]; then echo "$key=$value" >> /tmp/.env; fi
           done
           $SCP /tmp/.env ${SSH_TARGET}:/var/www/cwa/.env
@@ -193,7 +197,7 @@ jobs:
         if: steps.secrets.outputs.has_sentry_token == 'true'
         continue-on-error: true
         run: |
-          SENTRY_AUTH_TOKEN="$(jq -r '.SENTRY_AUTH_TOKEN // empty' decrypted.json)"
+          SENTRY_AUTH_TOKEN="$(jq -r '.SENTRY_AUTH_TOKEN // empty' "$SECRETS_DIR/decrypted.json")"
           export SENTRY_AUTH_TOKEN
           sentry release finalize "$SENTRY_ORG/${{ github.sha }}"
           sentry release deploy "$SENTRY_ORG/${{ github.sha }}" production --url https://cwa.codingforchange.com
@@ -201,4 +205,4 @@ jobs:
       - name: Clean up Secrets
         if: always()
         run: |
-          rm -f .vault_pass dump.yml decrypted.json
+          rm -rf "$RUNNER_TEMP/secrets"

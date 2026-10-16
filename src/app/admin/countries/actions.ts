@@ -1,7 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { invalidateReports } from "@/lib/cache-tags";
+import {
+  invalidateAccess,
+  invalidateAdminScopes,
+  invalidateReports,
+} from "@/lib/cache-tags";
 import { actionFailure, isUniqueViolation } from "@/lib/domain-error";
 import { z } from "zod";
 import {
@@ -37,6 +41,8 @@ export async function createCountryAction(
     return { ok: true, id: country.id };
   } catch (error) {
     return failed(error);
+  } finally {
+    invalidateAdminScopes();
   }
 }
 
@@ -57,6 +63,8 @@ export async function updateCountryAction(
     return { ok: true };
   } catch (error) {
     return failed(error);
+  } finally {
+    invalidateAdminScopes();
   }
 }
 
@@ -68,15 +76,19 @@ export async function deleteCountryAction(
   const session = await requireSuperAdmin();
 
   try {
-    await deleteCountry({
+    const { chapterIds } = await deleteCountry({
       countryId: parsedId.data,
       actorUserId: session.user.id,
     });
     revalidatePath("/admin", "layout");
     invalidateReports();
+    invalidateAccess({ chapterIds });
     return { ok: true };
   } catch (error) {
     return failed(error);
+  } finally {
+    invalidateAdminScopes();
+    invalidateAccess({ countryIds: [parsedId.data] });
   }
 }
 
@@ -88,13 +100,14 @@ export async function appointCountryAdminAction(
   const session = await requireSuperAdmin();
 
   try {
-    const outcome = await appointCountryAdminByEmail({
+    const appointed = await appointCountryAdminByEmail({
       email: parsed.data.email,
       countryId: parsed.data.countryId,
       actorUserId: session.user.id,
     });
-    if (outcome === "noAccount") return { ok: false, error: "noAccount" };
+    if (!appointed) return { ok: false, error: "noAccount" };
     revalidatePath("/admin", "layout");
+    invalidateAccess({ userIds: [appointed.userId] });
     return { ok: true };
   } catch (error) {
     if (isUniqueViolation(error)) return { ok: true };
@@ -116,6 +129,7 @@ export async function removeCountryAdminAction(
       session.user.id,
     );
     revalidatePath("/admin", "layout");
+    invalidateAccess({ userIds: [parsed.data.userId] });
     return { ok: true };
   } catch (error) {
     return failed(error);
