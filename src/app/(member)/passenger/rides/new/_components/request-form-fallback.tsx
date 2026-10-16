@@ -3,7 +3,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function RequestFormFallback() {
   return (
     <>
-      <Skeleton className="mx-auto h-1.5 w-20 rounded-full" />
+      <div className="relative flex min-h-11 items-center justify-center">
+        <Skeleton className="absolute left-0 size-9 rounded-full" />
+        <Skeleton className="h-1.5 w-20 rounded-full" />
+      </div>
       <div className="flex flex-col gap-3">
         <Skeleton className="h-3.5 w-24" />
         <Skeleton className="h-8 w-56" />
