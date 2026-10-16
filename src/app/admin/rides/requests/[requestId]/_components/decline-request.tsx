@@ -96,6 +96,7 @@ export function DeclineRequest({
           <Button
             type="submit"
             form={formId}
+            variant="outline"
             disabled={pending}
             className="min-h-11"
           >
