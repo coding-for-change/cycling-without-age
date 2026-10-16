@@ -1257,8 +1257,7 @@
         "where": "Wo",
         "asked": "Angefragt",
         "status": "Status",
-        "chapter": "Ortsgruppe",
-        "requester": "Angefragt von"
+        "chapter": "Ortsgruppe"
       },
       "detail": {
         "back": "Fahrtanfragen",
@@ -1272,8 +1271,6 @@
         "note": "{name} schreibt",
         "riders": "Fahrgäste",
         "requester": "Angefragt von",
-        "phone": "Telefon",
-        "email": "E-Mail",
         "noPhone": "Keine Telefonnummer am Konto",
         "history": "Verlauf",
         "lines": {
@@ -2198,10 +2195,6 @@
         "title": "Kalender"
       },
       "rides": {
-        "passenger": {
-          "body": "Noch nichts gebucht. Sobald Ihre Ortsgruppe die Buchung öffnet, warten Ihre Ausfahrten hier — der Tag, die Uhrzeit und der Pilot, der klingelt.",
-          "caretakerBody": "{who, select, one {Für {name} ist noch nichts gebucht. Sobald Ihre Ortsgruppe die Buchung öffnet, warten die Ausfahrten hier — der Tag, die Uhrzeit und der Pilot, der klingelt.} withOne {Für Sie und {name} ist noch nichts gebucht. Sobald Ihre Ortsgruppe die Buchung öffnet, warten die Ausfahrten hier — der Tag, die Uhrzeit und der Pilot, der klingelt.} withMany {Für Sie und die Menschen, um die Sie sich kümmern, ist noch nichts gebucht. Sobald Ihre Ortsgruppe die Buchung öffnet, warten die Ausfahrten hier — der Tag, die Uhrzeit und der Pilot, der klingelt.} other {Für die Menschen, um die Sie sich kümmern, ist noch nichts gebucht. Sobald Ihre Ortsgruppe die Buchung öffnet, warten die Ausfahrten hier — der Tag, die Uhrzeit und der Pilot, der klingelt.}}"
-        },
         "pilot": {
           "body": "Deine erste Ausfahrt steht noch nicht auf der Liste. Sobald deine Ortsgruppe offene Ausfahrten ausschreibt, tauchen hier die auf, die einen Piloten brauchen — such dir eine aus, und die Rikscha gehört dir für den Nachmittag."
         },

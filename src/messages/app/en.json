@@ -1257,8 +1257,7 @@
         "where": "Where",
         "asked": "Asked",
         "status": "Status",
-        "chapter": "Chapter",
-        "requester": "Asked by"
+        "chapter": "Chapter"
       },
       "detail": {
         "back": "Ride requests",
@@ -1272,8 +1271,6 @@
         "note": "{name} wrote",
         "riders": "Riders",
         "requester": "Asked by",
-        "phone": "Phone",
-        "email": "Email",
         "noPhone": "No phone number on the account",
         "history": "History",
         "lines": {
@@ -2198,10 +2195,6 @@
         "title": "Calendar"
       },
       "rides": {
-        "passenger": {
-          "body": "Nothing booked yet. Once your chapter opens booking, this is where your rides wait — the day, the time, and the pilot who rings the bell.",
-          "caretakerBody": "{who, select, one {Nothing booked for {name} yet. Once your chapter opens booking, this is where the rides wait — the day, the time, and the pilot who rings the bell.} withOne {Nothing booked for you or {name} yet. Once your chapter opens booking, this is where the rides wait — the day, the time, and the pilot who rings the bell.} withMany {Nothing booked for you or the people you look after yet. Once your chapter opens booking, this is where the rides wait — the day, the time, and the pilot who rings the bell.} other {Nothing booked for the people you look after yet. Once your chapter opens booking, this is where the rides wait — the day, the time, and the pilot who rings the bell.}}"
-        },
         "pilot": {
           "body": "Your first ride isn't on the list yet. When your chapter posts open rides, the ones that need a pilot appear here — pick one, and the trishaw is yours for the afternoon."
         },

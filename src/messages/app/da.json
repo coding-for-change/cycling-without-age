@@ -1257,8 +1257,7 @@
         "where": "Hvor",
         "asked": "Ønsket",
         "status": "Status",
-        "chapter": "Afdeling",
-        "requester": "Ønsket af"
+        "chapter": "Afdeling"
       },
       "detail": {
         "back": "Turønsker",
@@ -1272,8 +1271,6 @@
         "note": "{name} skriver",
         "riders": "Passagerer",
         "requester": "Ønsket af",
-        "phone": "Telefon",
-        "email": "E-mail",
         "noPhone": "Intet telefonnummer på kontoen",
         "history": "Historik",
         "lines": {
@@ -2198,10 +2195,6 @@
         "title": "Kalender"
       },
       "rides": {
-        "passenger": {
-          "body": "Der er ikke booket noget endnu. Når din afdeling åbner for booking, venter dine ture her — dagen, tidspunktet og piloten, der ringer på.",
-          "caretakerBody": "{who, select, one {Der er ikke booket noget til {name} endnu. Når din afdeling åbner for booking, venter turene her — dagen, tidspunktet og piloten, der ringer på.} withOne {Der er ikke booket noget til dig eller {name} endnu. Når din afdeling åbner for booking, venter turene her — dagen, tidspunktet og piloten, der ringer på.} withMany {Der er ikke booket noget til dig eller dem, du passer på, endnu. Når din afdeling åbner for booking, venter turene her — dagen, tidspunktet og piloten, der ringer på.} other {Der er ikke booket noget til dem, du passer på, endnu. Når din afdeling åbner for booking, venter turene her — dagen, tidspunktet og piloten, der ringer på.}}"
-        },
         "pilot": {
           "body": "Din første tur står ikke på listen endnu. Når din afdeling lægger ture op, kommer dem, der mangler en pilot, frem her — vælg en, så er rickshawen din hele eftermiddagen."
         },
