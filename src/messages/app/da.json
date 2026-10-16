@@ -1521,7 +1521,8 @@
     "route": {
       "to": "Fra {from} til {to}",
       "toAndBack": "Fra {from} til {to} og hjem igen"
-    }
+    },
+    "dateTime": "{date} kl. {time}"
   },
   "consent": {
     "data": "Jeg accepterer, at mine data opbevares og behandles.",

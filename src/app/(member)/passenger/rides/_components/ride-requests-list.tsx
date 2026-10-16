@@ -67,7 +67,7 @@ export function RideRequestsList({
                   </span>
                   <span className="truncate text-2sm text-ink-soft">
                     {[
-                      `${when.date}, ${when.time}`,
+                      formatMessage(dict.common.dateTime, when, words),
                       formatList(requestedRiders(request), words),
                     ].join(" · ")}
                   </span>

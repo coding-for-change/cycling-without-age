@@ -211,7 +211,7 @@ export async function RequestBody({
               <MetaBadge>
                 {strings.statuses[isLapsed ? "lapsed" : (outcome ?? "pending")]}
               </MetaBadge>
-              <span>{`${when.date}, ${when.time}`}</span>
+              <span>{formatMessage(dict.common.dateTime, when, words)}</span>
               <span>
                 {formatMessage(
                   detail.asked,
@@ -361,7 +361,7 @@ export async function RequestBody({
             <Fact
               icon={Clock}
               label={detail.when}
-              value={`${when.date}, ${when.time}`}
+              value={formatMessage(dict.common.dateTime, when, words)}
             />
             <Fact
               icon={Inbox}

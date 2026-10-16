@@ -136,6 +136,7 @@ export function RideRequestForm({
   strings,
   address,
   route,
+  dateTime,
   errors,
   stepTemplate,
   language,
@@ -145,6 +146,7 @@ export function RideRequestForm({
   strings: Strings;
   address: Dictionary["common"]["address"];
   route: Dictionary["common"]["route"];
+  dateTime: string;
   errors: Record<string, string>;
   stepTemplate: string;
   language: Locale;
@@ -460,18 +462,21 @@ export function RideRequestForm({
             },
             {
               label: strings.review.when,
-              value: [
-                data.days.find((day) => day.date === date)?.label,
-                data.days
-                  .find((day) => day.date === date)
-                  ?.windows.find(
-                    (candidate) =>
-                      candidate.startMinute === slot.startMinute &&
-                      candidate.endMinute === slot.endMinute,
-                  )?.label,
-              ]
-                .filter(Boolean)
-                .join(", "),
+              value: formatMessage(
+                dateTime,
+                {
+                  date: data.days.find((day) => day.date === date)?.label ?? "",
+                  time:
+                    data.days
+                      .find((day) => day.date === date)
+                      ?.windows.find(
+                        (candidate) =>
+                          candidate.startMinute === slot.startMinute &&
+                          candidate.endMinute === slot.endMinute,
+                      )?.label ?? "",
+                },
+                language,
+              ),
               step: "when" as const,
             },
             {

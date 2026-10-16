@@ -1521,7 +1521,8 @@
     "route": {
       "to": "{from} to {to}",
       "toAndBack": "{from} to {to} and back"
-    }
+    },
+    "dateTime": "{date}, {time}"
   },
   "consent": {
     "data": "I agree to the storage and processing of my data.",

@@ -98,7 +98,10 @@ async function OwnRequest({ id }: { id: string }) {
         language,
       ),
     },
-    { label: page.when, value: `${when.date}, ${when.time}` },
+    {
+      label: page.when,
+      value: formatMessage(dict.common.dateTime, when, words),
+    },
     ...(request.note ? [{ label: page.note, value: request.note }] : []),
   ];
 
