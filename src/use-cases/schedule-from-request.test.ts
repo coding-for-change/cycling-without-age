@@ -365,6 +365,35 @@ describe("scheduleAutomatically", () => {
     );
   });
 
+  it("staffs a ride out with one pilot, whatever the chapter's default", async () => {
+    (chapters.getSettings as jest.Mock).mockResolvedValue({
+      ...DEFAULT_CHAPTER_SETTINGS,
+      requiredPilotsDefault: 3,
+    });
+    await scheduleAutomatically("request-1");
+    expect(scheduledRide().requiredPilots).toBe(1);
+  });
+
+  it("starts the ride at the request's Ride Location and its coordinates", async () => {
+    asking(
+      pending({
+        rideLocationId: "location-1",
+        pickupLatitude: 48.15,
+        pickupLongitude: 11.58,
+      }),
+    );
+    await scheduleAutomatically("request-1");
+    expect(scheduledRide()).toEqual(
+      expect.objectContaining({
+        rideLocationId: "location-1",
+        locationName: "Sonnenhof",
+        locationAddress: "Am Hof 1",
+        latitude: 48.15,
+        longitude: 11.58,
+      }),
+    );
+  });
+
   it("offers every candidate, not only the ones free when it looked", async () => {
     bookedTrishawIds.mockResolvedValue(new Set(["trishaw-1"]));
     await scheduleAutomatically("request-1");
