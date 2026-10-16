@@ -179,6 +179,39 @@ export const eventSchema = z.discriminatedUnion("type", [
     passengerId: z.string().min(1),
     /** The rider's own account gave the seat up, rather than the chapter. */
     self: z.boolean().default(false),
+    /** Nobody is left to ride: the chapter may want to cancel (5B-b). */
+    rosterNowEmpty: z.boolean().default(false),
+    pair: ridePair,
+  }),
+  z.object({
+    type: z.literal("ride.rosterRefilled"),
+    ...rideScope,
+    passengerId: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal("ride.riderReminderDue"),
+    ...rideScope,
+    pair: ridePair,
+  }),
+  z.object({
+    type: z.literal("ride.volunteerReminderDue"),
+    ...rideScope,
+    pair: ridePair,
+  }),
+  z.object({
+    type: z.literal("ride.noDemand"),
+    ...rideScope,
+    pair: ridePair,
+  }),
+  z.object({
+    type: z.literal("ride.completed"),
+    ...rideScope,
+    riders: z.number().int().min(0),
+    noShows: z.number().int().min(0),
+  }),
+  z.object({
+    type: z.literal("ride.reopened"),
+    ...rideScope,
   }),
   z.object({
     type: z.literal("care.requested"),

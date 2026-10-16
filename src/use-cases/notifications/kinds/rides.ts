@@ -310,20 +310,30 @@ export const rideBookingConfirmed = defineKind({
 /**
  * A rider's own account giving the seat up is news for the chapter: the ride
  * may now be empty, or have room for someone else. When an admin — of the
- * chapter, of its country, or anywhere — took them off, the admins know.
+ * chapter, of its country, or anywhere — took them off, the admins know,
+ * except that nobody is left to ride (5B-b): then the other admins hear it.
  */
 export const rideBookingCancelled = defineKind({
   event: "ride.riderRemoved",
   category: "ride",
   policy: { push: true, email: "ifNoPush", optional: true },
-  payload: z.object({ ...rideFacts, ...rider }),
+  payload: z.object({
+    ...rideFacts,
+    ...rider,
+    rosterNowEmpty: z.boolean().optional(),
+    self: z.boolean().optional(),
+  }),
   recipients: async (event) =>
-    event.self && (await rideNotOver(event.rideId))
+    (event.self || event.rosterNowEmpty) &&
+    !followsItsPair(event.pair) &&
+    (await rideNotOver(event.rideId))
       ? excluding(await chapterAdminIds(event.chapterId), event.actorUserId)
       : [],
   params: async (event) => ({
-    ...(await factsOfRide(event.rideId)),
+    ...(await factsOfRide(event.rideId, event.pair)),
     riderId: event.passengerId,
+    rosterNowEmpty: event.rosterNowEmpty,
+    self: event.self,
   }),
   hydrate: withRiderName,
   href: (event) => `/admin/rides/${event.rideId}`,
@@ -334,11 +344,32 @@ export const rideBookingCancelled = defineKind({
       ...rideWords(params, strings, locale),
       rider: params.riderName ?? copy.someone,
     };
+    const empty = params.rosterNowEmpty === true;
     return {
-      subject: formatMessage(copy.subject, values, locale),
+      subject: formatMessage(
+        empty ? copy.subjectEmpty : copy.subject,
+        values,
+        locale,
+      ),
       preview: formatMessage(copy.preview, values, locale),
-      heading: formatMessage(copy.heading, values, locale),
-      body: formatMessage(copy.intro, values, locale),
+      heading: formatMessage(
+        empty ? copy.headingEmpty : copy.heading,
+        values,
+        locale,
+      ),
+      body: formatMessage(
+        empty
+          ? params.self === false
+            ? copy.introEmptyRemoved
+            : params.bothWays
+              ? copy.introEmptyBoth
+              : copy.introEmpty
+          : params.bothWays
+            ? copy.introBoth
+            : copy.intro,
+        values,
+        locale,
+      ),
       cta: copy.cta,
       footer: copy.footer,
       template: "rideBookingCancelled",

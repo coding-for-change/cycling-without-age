@@ -1,5 +1,8 @@
 export * as rides from "./facade";
 export type {
+  Executor,
+  RideDebriefView,
+  RideMarker,
   AnnouncedEventRow,
   FeedAudience,
   OpenRideRow,

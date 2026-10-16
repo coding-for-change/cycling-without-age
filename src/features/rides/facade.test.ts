@@ -22,14 +22,22 @@ jest.mock("@/lib/prisma", () => {
       findMany: jest.fn(),
       create: jest.fn(),
       createMany: jest.fn(),
+      updateMany: jest.fn(),
       deleteMany: jest.fn(),
     },
     rideRosterEntry: {
       findMany: jest.fn(),
       create: jest.fn(),
       createMany: jest.fn(),
+      update: jest.fn(),
       updateMany: jest.fn(),
+      delete: jest.fn(),
       deleteMany: jest.fn(),
+    },
+    rideDebrief: {
+      upsert: jest.fn(),
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
     },
     storedFile: {
       findMany: jest.fn(),
@@ -81,14 +89,22 @@ const db = prisma as unknown as {
     findMany: jest.Mock;
     create: jest.Mock;
     createMany: jest.Mock;
+    updateMany: jest.Mock;
     deleteMany: jest.Mock;
   };
   rideRosterEntry: {
     findMany: jest.Mock;
     create: jest.Mock;
     createMany: jest.Mock;
+    update: jest.Mock;
     updateMany: jest.Mock;
+    delete: jest.Mock;
     deleteMany: jest.Mock;
+  };
+  rideDebrief: {
+    upsert: jest.Mock;
+    findMany: jest.Mock;
+    findUnique: jest.Mock;
   };
   storedFile: {
     findMany: jest.Mock;
@@ -111,6 +127,12 @@ const db = prisma as unknown as {
 };
 
 const CHAPTER = "chapter-muenchen";
+const UNSWEPT = {
+  staffingCheckedAt: null,
+  riderReminderSentAt: null,
+  volunteerReminderSentAt: null,
+  demandCheckedAt: null,
+};
 const TRISHAW = "trishaw-1";
 const ADMIN = "user-admin";
 
@@ -172,6 +194,8 @@ const schedule = async (input: RideInput, actorUserId: string | null) =>
 const eventTypes = () => emitted.map((event) => event.type);
 const lockedSql = () =>
   db.$queryRaw.mock.calls.map(([sql]) => String(sql.strings.join("?")));
+
+afterEach(() => jest.useRealTimers());
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -261,6 +285,27 @@ describe("scheduleRide", () => {
       lead,
     );
     expect(db.ride.create.mock.calls[1][0].data.staffingCheckedAt).toBeNull();
+  });
+
+  // The admin adding riders right after scheduling is not told it is empty.
+  it("counts a ride scheduled inside its demand window as checked", async () => {
+    await rides.scheduleRide(
+      rideInput.parse({
+        ...ahead,
+        startsAt: new Date(Date.now() + 12 * 3_600_000),
+        endsAt: new Date(Date.now() + 13 * 3_600_000),
+      }),
+      ADMIN,
+      { demandLeadHours: 24 },
+    );
+    expect(db.ride.create.mock.calls[0][0].data).toMatchObject({
+      demandCheckedAt: expect.any(Date),
+      staffingCheckedAt: null,
+    });
+    await rides.scheduleRide(rideInput.parse(ahead), ADMIN, {
+      demandLeadHours: 2,
+    });
+    expect(db.ride.create.mock.calls[1][0].data.demandCheckedAt).toBeNull();
   });
 
   // An admin writing yesterday's ride into the calendar tells nobody about it.
@@ -457,7 +502,7 @@ describe("rescheduleRide", () => {
       ADMIN,
     );
     expect(db.ride.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { ...later, staffingCheckedAt: null } }),
+      expect.objectContaining({ data: { ...later, ...UNSWEPT } }),
     );
   });
 
@@ -488,7 +533,7 @@ describe("rescheduleRide", () => {
     expect(db.ride.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: "ride-1" },
-        data: { ...later, staffingCheckedAt: null },
+        data: { ...later, ...UNSWEPT },
       }),
     );
   });
@@ -580,13 +625,13 @@ describe("moving a round trip", () => {
     expect(
       db.ride.update.mock.calls.map(([args]) => [args.where.id, args.data]),
     ).toEqual([
-      ["ride-there", { ...nextDay, staffingCheckedAt: null }],
+      ["ride-there", { ...nextDay, ...UNSWEPT }],
       [
         "ride-back",
         {
           startsAt: new Date("2026-09-09T09:30:00Z"),
           endsAt: new Date("2026-09-09T10:00:00Z"),
-          staffingCheckedAt: null,
+          ...UNSWEPT,
         },
       ],
     ]);
@@ -603,6 +648,10 @@ describe("moving a round trip", () => {
   });
 
   it("keeps the time at the destination when the way there gets longer", async () => {
+    jest.useFakeTimers({
+      now: new Date("2026-09-01T08:00:00Z"),
+      doNotFake: ["nextTick", "setImmediate", "queueMicrotask"],
+    });
     rows([there(), back()]);
     await rides.rescheduleRide(
       "ride-there",
@@ -615,8 +664,19 @@ describe("moving a round trip", () => {
     expect(db.ride.update.mock.calls[1][0].data).toEqual({
       startsAt: new Date("2026-09-08T09:45:00Z"),
       endsAt: new Date("2026-09-08T10:15:00Z"),
+      ...UNSWEPT,
+    });
+    // Only the way back's start moved: only it is reminded and asked again.
+    expect(db.ride.update.mock.calls[0][0].data).toEqual({
+      startsAt: new Date("2026-09-08T08:00:00Z"),
+      endsAt: new Date("2026-09-08T08:45:00Z"),
       staffingCheckedAt: null,
     });
+    expect(
+      db.rideRosterEntry.updateMany.mock.calls.map(
+        ([args]) => args.where.rideId,
+      ),
+    ).toEqual(["ride-back"]);
   });
 
   it("checks the trishaws for both new windows, ignoring both legs' old ones", async () => {
@@ -747,6 +807,48 @@ describe("rescheduling a wall-clock patch", () => {
       startsAt: new Date("2026-09-08T09:00:00Z"),
       endsAt: new Date("2026-09-08T10:30:00Z"),
       staffingCheckedAt: null,
+    });
+  });
+
+  // The rain pushed the start back half an hour: who already came stands.
+  it("asks nobody again once the door has opened", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        startsAt: new Date(Date.now() + 30 * 60_000),
+        endsAt: new Date(Date.now() + 150 * 60_000),
+      }),
+    );
+    await rides.rescheduleRide(
+      "ride-1",
+      {
+        startsAt: new Date(Date.now() + 60 * 60_000),
+        endsAt: new Date(Date.now() + 180 * 60_000),
+      },
+      ADMIN,
+    );
+    expect(db.ride.update).toHaveBeenCalled();
+    expect(db.rideRosterEntry.updateMany).not.toHaveBeenCalled();
+  });
+
+  // A new end is no news: nobody is reminded again and no answer is undone.
+  it("reminds again and asks again only when the start moves", async () => {
+    jest.useFakeTimers({
+      now: new Date("2026-09-01T08:00:00Z"),
+      doNotFake: ["nextTick", "setImmediate", "queueMicrotask"],
+    });
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    await rides.rescheduleRide("ride-1", { durationMinutes: 60 }, ADMIN);
+    expect(db.rideRosterEntry.updateMany).not.toHaveBeenCalled();
+
+    await rides.rescheduleRide("ride-1", { start: "11:00" }, ADMIN);
+    expect(db.ride.update.mock.calls[1][0].data).toMatchObject(UNSWEPT);
+    expect(db.rideRosterEntry.updateMany).toHaveBeenCalledWith({
+      where: {
+        passengerId: { not: null },
+        rideId: "ride-1",
+        attendance: { in: ["confirmed", "checkedIn"] },
+      },
+      data: { attendance: "booked", confirmedAt: null, checkedInAt: null },
     });
   });
 
@@ -1261,6 +1363,7 @@ describe("roster and staffing", () => {
     expect(db.rideRosterEntry.findMany).toHaveBeenCalledWith({
       where: {
         passengerId: { in: ["passenger-1"] },
+        attendance: { not: "cancelled" },
         ride: { status: "scheduled", endsAt: { gt: now } },
       },
       select: { rideId: true, passengerId: true },
@@ -1462,11 +1565,26 @@ describe("what a member may read", () => {
 
   // A care home's carer manages several residents; the ride may carry others.
   it("shows a rider's account only its own riders, and not the pilots' note", async () => {
-    await rides.getRideForPassengers("ride-1", ["passenger-1"]);
+    const now = new Date("2026-09-07T09:00:00Z");
+    await rides.getRideForPassengers("ride-1", ["passenger-1"], now);
     const args = db.ride.findFirst.mock.calls[0][0];
     expect(args.where).toEqual({
       id: "ride-1",
-      roster: { some: { passengerId: { in: ["passenger-1"] } } },
+      OR: [
+        {
+          roster: {
+            some: {
+              passengerId: { in: ["passenger-1"] },
+              attendance: { not: "cancelled" },
+            },
+          },
+        },
+        {
+          status: "scheduled",
+          startsAt: { gt: now },
+          roster: { some: { passengerId: { in: ["passenger-1"] } } },
+        },
+      ],
     });
     expect(args.select.roster.where).toEqual({
       passengerId: { in: ["passenger-1"] },
@@ -1475,6 +1593,20 @@ describe("what a member may read", () => {
     expect(args.select.cancellationNote).toBeUndefined();
     expect(userOf(args.select)).toEqual({
       select: { ...noEmail.select, phoneNumber: true },
+    });
+  });
+
+  // A seat given up opens the ride's page only while the seat can be taken back.
+  it("opens a ride whose seat was given up only while it is ahead", async () => {
+    const now = new Date("2026-09-07T09:00:00Z");
+    db.ride.findFirst.mockResolvedValue(null);
+    expect(await rides.passengersCanOpen("ride-1", ["passenger-1"], now)).toBe(
+      false,
+    );
+    expect(db.ride.findFirst.mock.calls[0][0].where.OR[1]).toEqual({
+      status: "scheduled",
+      startsAt: { gt: now },
+      roster: { some: { passengerId: { in: ["passenger-1"] } } },
     });
   });
 
@@ -1492,6 +1624,7 @@ describe("what a member may read", () => {
       pilotUserIds: ["pilot-1"],
       riderCount: 2,
       riderAccountUserIds: ["carer-1", "rider-2"],
+      household: { riders: 2, accountUserIds: ["carer-1", "rider-2"] },
     });
   });
 
@@ -1582,7 +1715,9 @@ describe("who may read a rider's name", () => {
   it("gives the passenger agenda a count and no names", async () => {
     await rides.listRidesForPassengers(["passenger-1"], FROM, TO);
     expect(selectOf().roster).toBeUndefined();
-    expect(selectOf()._count).toEqual({ select: { roster: true } });
+    expect(selectOf()._count).toEqual({
+      select: { roster: { where: { attendance: { not: "cancelled" } } } },
+    });
   });
 
   it("gives the admin calendar a count and no names", async () => {
@@ -1602,6 +1737,7 @@ describe("who may read a rider's name", () => {
     const select = selectOf();
     expect(select.roster.where).toEqual({
       passengerId: { in: ["passenger-1"] },
+      attendance: { not: "cancelled" },
     });
     expect(Object.keys(select.roster.select.passenger.select)).not.toContain(
       "lastName",
@@ -1624,7 +1760,14 @@ describe("what a calendar feed may read", () => {
     assignments: { some: { userId: "user-1" } },
     chapterId: { in: [CHAPTER] },
   };
-  const riding = { roster: { some: { passengerId: { in: ["passenger-1"] } } } };
+  const riding = {
+    roster: {
+      some: {
+        passengerId: { in: ["passenger-1"] },
+        attendance: { not: "cancelled" },
+      },
+    },
+  };
   const both = { pilotChapterIds: [CHAPTER], passengerIds: ["passenger-1"] };
   const rows = (prefix: string, count: number) =>
     Array.from({ length: count }, (_, i) => ({ id: `${prefix}-${i}` }));
@@ -2921,5 +3064,1372 @@ describe("booking seats on an announced event", () => {
     );
     expect(args.select.roster).toBeUndefined();
     expect(args.select.assignments).toBeUndefined();
+  });
+});
+
+describe("seats, check-in and the closed roster", () => {
+  const BEFORE = new Date("2026-09-07T09:00:00Z");
+  const DOOR_OPEN = new Date("2026-09-08T06:30:00Z");
+  const RIDING = new Date("2026-09-08T09:00:00Z");
+  const NEXT_WEEK = new Date("2026-09-15T09:00:00Z");
+
+  const entry = (overrides: Record<string, unknown> = {}) => ({
+    id: "entry-1",
+    position: 0,
+    attendance: "booked",
+    confirmedAt: null,
+    checkedInAt: null,
+    guestName: null,
+    passenger: {
+      id: "passenger-1",
+      managedByUserId: "carer-1",
+      userId: null,
+    },
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    db.rideRosterEntry.update.mockResolvedValue({ id: "entry-1" });
+    db.rideRosterEntry.create.mockResolvedValue({ id: "walk-up-1" });
+    db.rideRosterEntry.updateMany.mockResolvedValue({ count: 1 });
+    db.rideAssignment.updateMany.mockResolvedValue({ count: 1 });
+  });
+
+  // A walk-up rides, so they take a seat everyone counts.
+  it("counts every seat still taken, walk-ups included, in a ride's count", async () => {
+    await rides.listRidesInRange([CHAPTER], BEFORE, NEXT_WEEK);
+    expect(db.ride.findMany.mock.calls[0][0].select._count).toEqual({
+      select: { roster: { where: { attendance: { not: "cancelled" } } } },
+    });
+  });
+
+  it("never shows a walk-up to a rider's account", async () => {
+    db.ride.findFirst.mockResolvedValue(null);
+    await rides.getRideForPassengers("ride-1", ["passenger-1"]);
+    const { where } = db.ride.findFirst.mock.calls[0][0].select.roster;
+    expect(where).toEqual({ passengerId: { in: ["passenger-1"] } });
+  });
+
+  it("keeps a seat given up on the roster and frees it", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        roster: [entry(), entry({ id: "entry-2", passenger: { id: "p-2" } })],
+      }),
+    );
+    expect(
+      await rides.cancelSeat("ride-1", "passenger-1", "carer-1", BEFORE),
+    ).toBe(true);
+    expect(db.rideRosterEntry.deleteMany).not.toHaveBeenCalled();
+    expect(db.rideRosterEntry.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "entry-1" },
+        data: {
+          attendance: "cancelled",
+          cancelledAt: BEFORE,
+          confirmedAt: null,
+        },
+      }),
+    );
+    expect(emitted).toEqual([
+      expect.objectContaining({
+        type: "ride.riderRemoved",
+        self: true,
+        rosterNowEmpty: false,
+      }),
+    ]);
+  });
+
+  it("tells the chapter when the last rider gives the seat up", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ roster: [entry()] }));
+    await rides.cancelSeat("ride-1", "passenger-1", "carer-1", BEFORE);
+    expect(emitted).toEqual([
+      expect.objectContaining({ rosterNowEmpty: true }),
+    ]);
+  });
+
+  it("gives a seat up on both legs of a round trip, as one message", async () => {
+    const legs: Record<string, unknown> = {
+      "ride-there": scheduled({
+        id: "ride-there",
+        model: "functional",
+        returnLeg: { id: "ride-back", status: "scheduled" },
+        roster: [entry()],
+      }),
+      "ride-back": scheduled({
+        id: "ride-back",
+        model: "functional",
+        startsAt: new Date("2026-09-08T15:00:00Z"),
+        endsAt: new Date("2026-09-08T16:00:00Z"),
+        returnLegOf: { id: "ride-there", status: "scheduled" },
+        roster: [entry({ id: "entry-back" })],
+      }),
+    };
+    db.ride.findUnique.mockImplementation(({ where }) =>
+      Promise.resolve(legs[where.id]),
+    );
+    await rides.cancelSeat("ride-there", "passenger-1", "carer-1", BEFORE);
+    expect(emitted).toEqual([
+      expect.objectContaining({
+        rideId: "ride-there",
+        pair: { role: "lead", otherRideId: "ride-back" },
+      }),
+      expect.objectContaining({
+        rideId: "ride-back",
+        pair: { role: "follow", otherRideId: "ride-there" },
+      }),
+    ]);
+  });
+
+  // The way there empties, the way back still has someone: two messages.
+  it("pairs the two legs only when both are left alike", async () => {
+    const rows: Record<string, unknown> = {
+      "ride-there": scheduled({
+        id: "ride-there",
+        model: "functional",
+        returnLeg: { id: "ride-back", status: "scheduled" },
+        roster: [entry()],
+      }),
+      "ride-back": scheduled({
+        id: "ride-back",
+        model: "functional",
+        startsAt: new Date("2026-09-08T15:00:00Z"),
+        endsAt: new Date("2026-09-08T16:00:00Z"),
+        returnLegOf: { id: "ride-there", status: "scheduled" },
+        roster: [
+          entry({ id: "entry-back" }),
+          entry({ id: "e2", passenger: { id: "p-2" } }),
+        ],
+      }),
+    };
+    db.ride.findUnique.mockImplementation(({ where }) =>
+      Promise.resolve(rows[where.id]),
+    );
+    await rides.cancelSeat("ride-there", "passenger-1", "carer-1", BEFORE);
+    expect(emitted).toEqual([
+      expect.objectContaining({
+        rideId: "ride-there",
+        rosterNowEmpty: true,
+        pair: null,
+      }),
+      expect.objectContaining({
+        rideId: "ride-back",
+        rosterNowEmpty: false,
+        pair: null,
+      }),
+    ]);
+  });
+
+  it("pairs the two legs when someone is left on both", async () => {
+    const rows: Record<string, unknown> = {
+      "ride-there": scheduled({
+        id: "ride-there",
+        model: "functional",
+        returnLeg: { id: "ride-back", status: "scheduled" },
+        roster: [entry(), entry({ id: "e2", passenger: { id: "p-2" } })],
+      }),
+      "ride-back": scheduled({
+        id: "ride-back",
+        model: "functional",
+        startsAt: new Date("2026-09-08T15:00:00Z"),
+        endsAt: new Date("2026-09-08T16:00:00Z"),
+        returnLegOf: { id: "ride-there", status: "scheduled" },
+        roster: [
+          entry({ id: "entry-back" }),
+          entry({ id: "e3", passenger: { id: "p-2" } }),
+        ],
+      }),
+    };
+    db.ride.findUnique.mockImplementation(({ where }) =>
+      Promise.resolve(rows[where.id]),
+    );
+    await rides.cancelSeat("ride-there", "passenger-1", "carer-1", BEFORE);
+    expect(emitted).toEqual([
+      expect.objectContaining({
+        rosterNowEmpty: false,
+        pair: { role: "lead", otherRideId: "ride-back" },
+      }),
+      expect.objectContaining({
+        rosterNowEmpty: false,
+        pair: { role: "follow", otherRideId: "ride-there" },
+      }),
+    ]);
+  });
+
+  it("closes seat changes once the ride has started", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ roster: [entry()] }));
+    expect(
+      await codeOf(rides.cancelSeat("ride-1", "passenger-1", "c", RIDING)),
+    ).toBe("rideClosed");
+    expect(
+      await codeOf(rides.confirmSeat("ride-1", "passenger-1", "c", RIDING)),
+    ).toBe("rideClosed");
+  });
+
+  it("refuses a rider who is not on the ride", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    expect(
+      await codeOf(rides.confirmSeat("ride-1", "passenger-9", "c", BEFORE)),
+    ).toBe("unknownPassenger");
+  });
+
+  it("confirms a booked seat quietly", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ roster: [entry()] }));
+    expect(
+      await rides.confirmSeat("ride-1", "passenger-1", "carer-1", BEFORE),
+    ).toBe(true);
+    expect(db.rideRosterEntry.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          attendance: "confirmed",
+          confirmedAt: BEFORE,
+          cancelledAt: null,
+        },
+      }),
+    );
+    expect(logTypes()).toEqual(["seatConfirmed"]);
+    expect(emitted).toEqual([]);
+  });
+
+  it("takes a seat given up back as a new booking, while there is room", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ roster: [entry({ attendance: "cancelled" })] }),
+    );
+    await rides.confirmSeat("ride-1", "passenger-1", "carer-1", BEFORE);
+    // The admins were told nobody was left: they hear the ride filled again.
+    expect(eventTypes()).toEqual(["ride.riderBooked", "ride.rosterRefilled"]);
+
+    emitted.length = 0;
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        roster: [
+          entry({ attendance: "cancelled" }),
+          entry({ id: "e2", passenger: { id: "p-2" } }),
+        ],
+      }),
+    );
+    await rides.confirmSeat("ride-1", "passenger-1", "carer-1", BEFORE);
+    expect(eventTypes()).toEqual(["ride.riderBooked"]);
+
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        model: "pleasure",
+        roster: [
+          entry({ attendance: "cancelled" }),
+          entry({ id: "e2", passenger: { id: "p-2" } }),
+          entry({ id: "e3", passenger: { id: "p-3" } }),
+        ],
+      }),
+    );
+    expect(
+      await codeOf(rides.confirmSeat("ride-1", "passenger-1", "c", BEFORE)),
+    ).toBe("pleasureLimit");
+  });
+
+  describe("on a round trip", () => {
+    const legs = (there: unknown[], back: unknown[], backOverrides = {}) => {
+      const rows: Record<string, unknown> = {
+        "ride-there": scheduled({
+          id: "ride-there",
+          model: "functional",
+          returnLeg: { id: "ride-back", status: "scheduled" },
+          roster: there,
+        }),
+        "ride-back": scheduled({
+          id: "ride-back",
+          model: "functional",
+          startsAt: new Date("2026-09-08T15:00:00Z"),
+          endsAt: new Date("2026-09-08T16:00:00Z"),
+          returnLegOf: { id: "ride-there", status: "scheduled" },
+          roster: back,
+          ...backOverrides,
+        }),
+      };
+      db.ride.findUnique.mockImplementation(({ where }) =>
+        Promise.resolve(rows[where.id]),
+      );
+    };
+    const other = (id: string) => entry({ id, passenger: { id: id } });
+    const updated = () =>
+      db.rideRosterEntry.update.mock.calls.map(([args]) => args.where.id);
+
+    it("confirms the way back with the way there", async () => {
+      legs([entry()], [entry({ id: "entry-back" })]);
+      await rides.confirmSeat("ride-there", "passenger-1", "c", BEFORE);
+      expect(updated()).toEqual(["entry-1", "entry-back"]);
+      expect(emitted).toEqual([]);
+    });
+
+    it("takes both seats back as one booking", async () => {
+      legs(
+        [entry({ attendance: "cancelled" })],
+        [entry({ id: "entry-back", attendance: "cancelled" })],
+      );
+      await rides.confirmSeat("ride-there", "passenger-1", "c", BEFORE);
+      expect(emitted).toEqual([
+        expect.objectContaining({
+          type: "ride.riderBooked",
+          rideId: "ride-there",
+          pair: { role: "lead", otherRideId: "ride-back" },
+        }),
+        expect.objectContaining({
+          type: "ride.rosterRefilled",
+          rideId: "ride-there",
+        }),
+        expect.objectContaining({
+          type: "ride.riderBooked",
+          rideId: "ride-back",
+          pair: { role: "follow", otherRideId: "ride-there" },
+        }),
+      ]);
+    });
+
+    // The way back filled up meanwhile: the way there is still taken back.
+    it("takes back only the leg that still has room", async () => {
+      legs(
+        [entry({ attendance: "cancelled" })],
+        [
+          entry({ id: "entry-back", attendance: "cancelled" }),
+          other("p-2"),
+          other("p-3"),
+        ],
+      );
+      await rides.confirmSeat("ride-there", "passenger-1", "c", BEFORE);
+      expect(updated()).toEqual(["entry-1"]);
+      expect(emitted).toEqual([
+        expect.objectContaining({
+          type: "ride.riderBooked",
+          rideId: "ride-there",
+          pair: null,
+        }),
+        expect.objectContaining({ type: "ride.rosterRefilled" }),
+      ]);
+    });
+
+    // A seat given up on the way back stays given up when the way there is confirmed.
+    it("never takes back the other leg while only confirming this one", async () => {
+      legs([entry()], [entry({ id: "entry-back", attendance: "cancelled" })]);
+      await rides.confirmSeat("ride-there", "passenger-1", "c", BEFORE);
+      expect(updated()).toEqual(["entry-1"]);
+      expect(emitted).toEqual([]);
+    });
+
+    it("leaves a way back that has already started", async () => {
+      legs([entry()], [entry({ id: "entry-back" })], {
+        startsAt: new Date("2026-09-07T08:00:00Z"),
+      });
+      await rides.cancelSeat("ride-there", "passenger-1", "c", BEFORE);
+      expect(updated()).toEqual(["entry-1"]);
+      expect(emitted).toEqual([expect.objectContaining({ pair: null })]);
+    });
+  });
+
+  it("books a rider who gave the seat up on the same row again", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ roster: [entry({ attendance: "cancelled" })] }),
+    );
+    expect(await rides.bookRider("ride-1", "passenger-1", ADMIN)).toBe(true);
+    expect(db.rideRosterEntry.create).not.toHaveBeenCalled();
+    expect(db.rideRosterEntry.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "entry-1" },
+        data: expect.objectContaining({ attendance: "booked" }),
+      }),
+    );
+  });
+
+  it("opens the door two hours before the start", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ roster: [entry()] }));
+    expect(
+      await codeOf(
+        rides.setCheckedIn("ride-1", "entry-1", true, "p", "pilot", BEFORE),
+      ),
+    ).toBe("checkInClosed");
+    expect(
+      await rides.setCheckedIn(
+        "ride-1",
+        "entry-1",
+        true,
+        "p",
+        "pilot",
+        DOOR_OPEN,
+      ),
+    ).toBe(true);
+    expect(db.rideRosterEntry.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { attendance: "checkedIn", checkedInAt: DOOR_OPEN },
+      }),
+    );
+  });
+
+  it("lets an admin record a ride after the pilot's day has passed", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ roster: [entry()] }));
+    expect(
+      await codeOf(
+        rides.setCheckedIn("ride-1", "entry-1", true, "p", "pilot", NEXT_WEEK),
+      ),
+    ).toBe("checkInClosed");
+    expect(
+      await rides.setCheckedIn(
+        "ride-1",
+        "entry-1",
+        true,
+        ADMIN,
+        "admin",
+        NEXT_WEEK,
+      ),
+    ).toBe(true);
+  });
+
+  it("undoes a check-in back to where the rider stood", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        roster: [entry({ attendance: "checkedIn", confirmedAt: BEFORE })],
+      }),
+    );
+    await rides.setCheckedIn("ride-1", "entry-1", false, "p", "pilot", RIDING);
+    expect(db.rideRosterEntry.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { attendance: "confirmed", checkedInAt: null },
+      }),
+    );
+    expect(logTypes()).toEqual(["checkInUndone"]);
+  });
+
+  it("never checks in a seat given up", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ roster: [entry({ attendance: "cancelled" })] }),
+    );
+    expect(
+      await codeOf(
+        rides.setCheckedIn("ride-1", "entry-1", true, "p", "pilot", RIDING),
+      ),
+    ).toBe("unknownPassenger");
+  });
+
+  it("enrols a walk-up checked in, by name only", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ roster: [entry()] }));
+    expect(
+      await rides.addWalkUp(
+        { rideId: "ride-1", firstName: " Inge ", lastName: "Holm" },
+        "pilot-1",
+        "pilot",
+        RIDING,
+      ),
+    ).toBe("walk-up-1");
+    expect(db.rideRosterEntry.create).toHaveBeenCalledWith({
+      data: {
+        rideId: "ride-1",
+        guestName: "Inge Holm",
+        position: 1,
+        bookedByUserId: "pilot-1",
+        checkedInAt: RIDING,
+        attendance: "checkedIn",
+      },
+      select: { id: true },
+    });
+    expect(emitted).toEqual([]);
+  });
+
+  it("seats no walk-up on a ride that is full", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        model: "pleasure",
+        roster: [entry(), entry({ id: "e2", passenger: { id: "p-2" } })],
+      }),
+    );
+    expect(
+      await codeOf(
+        rides.addWalkUp(
+          { rideId: "ride-1", firstName: "Inge" },
+          "p",
+          "pilot",
+          RIDING,
+        ),
+      ),
+    ).toBe("pleasureLimit");
+  });
+
+  it("removes only a walk-up, never a booked rider", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ roster: [entry()] }));
+    expect(
+      await codeOf(
+        rides.removeWalkUp("ride-1", "entry-1", "p", "pilot", RIDING),
+      ),
+    ).toBe("unknownPassenger");
+  });
+
+  it("closes the roster: who came rode, who did not is a no-show", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        roster: [
+          entry({ attendance: "checkedIn" }),
+          entry({ id: "e2", attendance: "confirmed" }),
+          entry({ id: "e3", attendance: "cancelled" }),
+        ],
+      }),
+    );
+    expect(
+      await rides.closeRoster("ride-1", "pilot-1", "pilot", RIDING),
+    ).toEqual({ riders: 1, noShows: 1 });
+    expect(
+      db.rideRosterEntry.updateMany.mock.calls.map(([args]) => [
+        args.where.attendance.in,
+        args.data.attendance,
+      ]),
+    ).toEqual([
+      [["checkedIn"], "completed"],
+      [["booked", "confirmed"], "noShow"],
+    ]);
+    expect(db.rideAssignment.updateMany).toHaveBeenCalledWith({
+      where: {
+        rideId: "ride-1",
+        role: "pilot",
+        attendance: { in: ["signedUp"] },
+      },
+      data: { attendance: "completed" },
+    });
+    expect(db.ride.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          status: "completed",
+          completedAt: RIDING,
+          completedByUserId: "pilot-1",
+        },
+      }),
+    );
+    expect(emitted).toEqual([
+      expect.objectContaining({
+        type: "ride.completed",
+        riders: 1,
+        noShows: 1,
+      }),
+    ]);
+  });
+
+  it("changes nothing on a second tap", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ status: "completed" }));
+    expect(await rides.closeRoster("ride-1", "p", "pilot", RIDING)).toBeNull();
+    expect(db.ride.update).not.toHaveBeenCalled();
+    expect(emitted).toEqual([]);
+  });
+
+  it("closes no roster before the ride starts, nor a cancelled one", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    expect(
+      await codeOf(rides.closeRoster("ride-1", "p", "pilot", DOOR_OPEN)),
+    ).toBe("rideNotStarted");
+    db.ride.findUnique.mockResolvedValue(scheduled({ status: "cancelled" }));
+    expect(
+      await codeOf(rides.closeRoster("ride-1", "p", "admin", RIDING)),
+    ).toBe("rideClosed");
+  });
+
+  it("leaves a pilot a day to close the roster, and an admin longer", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    expect(
+      await codeOf(rides.closeRoster("ride-1", "p", "pilot", NEXT_WEEK)),
+    ).toBe("rideClosed");
+    expect(
+      await rides.closeRoster("ride-1", ADMIN, "admin", NEXT_WEEK),
+    ).toEqual({ riders: 0, noShows: 0 });
+  });
+
+  it("reopens a closed roster where everyone stood on the day", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ status: "completed" }));
+    expect(await rides.reopenRide("ride-1", ADMIN)).toBe(true);
+    expect(
+      db.rideRosterEntry.updateMany.mock.calls.map(([args]) => args),
+    ).toEqual([
+      {
+        where: { rideId: "ride-1", attendance: { in: ["completed"] } },
+        data: { attendance: "checkedIn" },
+      },
+      {
+        where: {
+          confirmedAt: { not: null },
+          rideId: "ride-1",
+          attendance: { in: ["noShow"] },
+        },
+        data: { attendance: "confirmed" },
+      },
+      {
+        where: { rideId: "ride-1", attendance: { in: ["noShow"] } },
+        data: { attendance: "booked" },
+      },
+    ]);
+    expect(eventTypes()).toEqual(["ride.reopened"]);
+    expect(logTypes()).toEqual(["reopened"]);
+  });
+
+  it("reopens only a closed roster", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    expect(await codeOf(rides.reopenRide("ride-1", ADMIN))).toBe(
+      "rideNotCompleted",
+    );
+  });
+
+  it("marks a pilot who never came", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({
+        status: "completed",
+        assignments: [
+          { role: "pilot", attendance: "completed", user: { id: "pilot-1" } },
+        ],
+      }),
+    );
+    expect(
+      await rides.setPilotNoShow("ride-1", "pilot-1", true, ADMIN, RIDING),
+    ).toBe(true);
+    expect(db.rideAssignment.updateMany).toHaveBeenCalledWith({
+      where: {
+        rideId: "ride-1",
+        userId: "pilot-1",
+        role: "pilot",
+        attendance: { in: ["completed"] },
+      },
+      data: { attendance: "noShow" },
+    });
+  });
+});
+
+describe("the debrief", () => {
+  const AFTER = new Date("2026-09-08T11:00:00Z");
+
+  beforeEach(() => {
+    db.rideDebrief.upsert.mockImplementation(({ create }) =>
+      Promise.resolve({
+        ...create,
+        id: "debrief-1",
+        distanceKm:
+          create.distanceKm === null
+            ? null
+            : new Prisma.Decimal(create.distanceKm),
+      }),
+    );
+  });
+
+  const ride = (overrides: Record<string, unknown> = {}) => {
+    db.ride.findUnique.mockImplementation(({ select }) =>
+      Promise.resolve(
+        select.chapter?.select?.country
+          ? { chapter: { country: { code: "DK" } } }
+          : scheduled(overrides),
+      ),
+    );
+  };
+
+  it("measures distance only on a functional ride, and counts money in the chapter's currency", async () => {
+    ride({ model: "functional" });
+    const debrief = await rides.submitDebrief(
+      {
+        rideId: "ride-1",
+        distanceKm: 7.456,
+        donationCents: 5000,
+        bikeCondition: "good",
+        note: "  ",
+      },
+      "pilot-1",
+      "pilot",
+      AFTER,
+    );
+    expect(db.rideDebrief.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { rideId_userId: { rideId: "ride-1", userId: "pilot-1" } },
+        update: {
+          distanceKm: 7.46,
+          donationCents: 5000,
+          currency: "DKK",
+          bikeCondition: "good",
+          cooperation: null,
+          note: null,
+        },
+      }),
+    );
+    expect(debrief.distanceKm).toBe(7.46);
+
+    jest.clearAllMocks();
+    ride({ model: "event" });
+    await rides.submitDebrief(
+      { rideId: "ride-1", distanceKm: 3 },
+      "pilot-1",
+      "pilot",
+      AFTER,
+    );
+    expect(db.rideDebrief.upsert.mock.calls[0][0].update).toMatchObject({
+      distanceKm: null,
+      currency: null,
+    });
+  });
+
+  // The form saves as the pilot types: the history says it once.
+  it("notes a debrief in the history only the first time", async () => {
+    ride({ model: "event" });
+    await rides.submitDebrief({ rideId: "ride-1" }, "pilot-1", "pilot", AFTER);
+    expect(logTypes()).toEqual(["debriefed"]);
+    jest.clearAllMocks();
+    db.rideDebrief.findUnique.mockResolvedValueOnce({ id: "debrief-1" });
+    await rides.submitDebrief({ rideId: "ride-1" }, "pilot-1", "pilot", AFTER);
+    expect(db.rideDebrief.upsert).toHaveBeenCalled();
+    expect(logTypes()).toEqual([]);
+  });
+
+  it("waits for the ride to start, and never debriefs a cancelled one", async () => {
+    ride();
+    expect(
+      await codeOf(
+        rides.submitDebrief(
+          { rideId: "ride-1" },
+          "p",
+          "pilot",
+          new Date("2026-09-08T07:00:00Z"),
+        ),
+      ),
+    ).toBe("rideNotStarted");
+    ride({ status: "cancelled" });
+    expect(
+      await codeOf(
+        rides.submitDebrief({ rideId: "ride-1" }, "p", "pilot", AFTER),
+      ),
+    ).toBe("rideClosed");
+  });
+
+  // The finish page closes a day after the ride; the debrief closes with it.
+  it("takes a pilot's debrief only while the finish page is open", async () => {
+    ride();
+    const later = new Date("2026-09-15T09:00:00Z");
+    expect(
+      await codeOf(
+        rides.submitDebrief({ rideId: "ride-1" }, "p", "pilot", later),
+      ),
+    ).toBe("rideClosed");
+    await rides.submitDebrief({ rideId: "ride-1" }, ADMIN, "admin", later);
+    expect(db.rideDebrief.upsert).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("the reminders and the demand check", () => {
+  const NOW = new Date("2026-09-07T09:00:00Z");
+  const booked = {
+    id: "entry-1",
+    position: 0,
+    attendance: "booked",
+    passenger: { id: "passenger-1" },
+  };
+
+  it("reminds the riders once, stamped in the same transaction", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ roster: [booked] }));
+    expect(
+      await rides.sendReminder("riderReminderSentAt", "ride-1", 1440, NOW),
+    ).toBe(true);
+    expect(db.ride.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { riderReminderSentAt: NOW } }),
+    );
+    expect(emitted).toEqual([
+      expect.objectContaining({
+        type: "ride.riderReminderDue",
+        actorUserId: null,
+        pair: null,
+      }),
+    ]);
+    expect((transaction as jest.Mock).mock.calls).toHaveLength(1);
+  });
+
+  it("sends nothing twice", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ roster: [booked], riderReminderSentAt: NOW }),
+    );
+    expect(
+      await rides.sendReminder("riderReminderSentAt", "ride-1", 1440, NOW),
+    ).toBe(false);
+    expect(db.ride.update).not.toHaveBeenCalled();
+    expect(emitted).toEqual([]);
+  });
+
+  it("reminds nobody about a cancelled ride or one already under way", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ roster: [booked], status: "cancelled" }),
+    );
+    expect(
+      await rides.sendReminder("riderReminderSentAt", "ride-1", 1440, NOW),
+    ).toBe(false);
+    expect(
+      await rides.sendReminder(
+        "volunteerReminderSentAt",
+        "ride-1",
+        1440,
+        new Date("2026-09-08T09:00:00Z"),
+      ),
+    ).toBe(false);
+    expect(emitted).toEqual([]);
+  });
+
+  it("stamps a ride nobody is left to remind, and says nothing", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ roster: [{ ...booked, attendance: "cancelled" }] }),
+    );
+    expect(
+      await rides.sendReminder("riderReminderSentAt", "ride-1", 1440, NOW),
+    ).toBe(false);
+    expect(db.ride.update).toHaveBeenCalled();
+    expect(emitted).toEqual([]);
+  });
+
+  // Moved to next week after the sweep listed it: it waits for its new time.
+  it("leaves a ride that moved out of its lead under the lock", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled({ roster: [booked] }));
+    expect(
+      await rides.sendReminder("riderReminderSentAt", "ride-1", 120, NOW),
+    ).toBe(false);
+    expect(await rides.checkDemand("ride-1", 120, NOW)).toBe(false);
+    expect(db.ride.update).not.toHaveBeenCalled();
+  });
+
+  it("reminds the pilots with their own event", async () => {
+    db.ride.findUnique.mockResolvedValue(
+      scheduled({ assignments: [{ role: "pilot", user: { id: "p" } }] }),
+    );
+    await rides.sendReminder("volunteerReminderSentAt", "ride-1", 1440, NOW);
+    expect(eventTypes()).toEqual(["ride.volunteerReminderDue"]);
+  });
+
+  it("flags an empty roster once, and a booked one never", async () => {
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    expect(await rides.checkDemand("ride-1", 1440, NOW)).toBe(true);
+    expect(db.ride.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { demandCheckedAt: NOW } }),
+    );
+    expect(eventTypes()).toEqual(["ride.noDemand"]);
+
+    emitted.length = 0;
+    db.ride.findUnique.mockResolvedValue(scheduled({ roster: [booked] }));
+    expect(await rides.checkDemand("ride-1", 1440, NOW)).toBe(false);
+    expect(emitted).toEqual([]);
+  });
+
+  it("reads the rides due inside each lead, unstamped and still ahead", async () => {
+    await rides.listRidesDue("demandCheckedAt", [CHAPTER], 120, NOW, 10);
+    expect(db.ride.findMany.mock.calls[0][0].where).toEqual({
+      chapterId: { in: [CHAPTER] },
+      status: "scheduled",
+      startsAt: { gt: NOW, lte: new Date("2026-09-07T11:00:00Z") },
+      demandCheckedAt: null,
+      NOT: {
+        returnLegOf: {
+          is: {
+            status: "scheduled",
+            startsAt: { gt: NOW },
+            demandCheckedAt: null,
+          },
+        },
+      },
+    });
+  });
+
+  // A way there with nobody to remind must not hold back its way back's reminder.
+  it("leaves a way back waiting only for a way there that is due itself", async () => {
+    const seated = {
+      roster: {
+        some: { attendance: { not: "cancelled" }, passengerId: { not: null } },
+      },
+    };
+    await rides.listRidesDue("riderReminderSentAt", [CHAPTER], 1440, NOW, 10);
+    expect(db.ride.findMany.mock.calls[0][0].where).toEqual({
+      chapterId: { in: [CHAPTER] },
+      status: "scheduled",
+      startsAt: { gt: NOW, lte: new Date("2026-09-08T09:00:00Z") },
+      riderReminderSentAt: null,
+      ...seated,
+      NOT: {
+        returnLegOf: {
+          is: {
+            status: "scheduled",
+            startsAt: { gt: NOW },
+            riderReminderSentAt: null,
+            ...seated,
+          },
+        },
+      },
+    });
+
+    await rides.listChaptersDue("volunteerReminderSentAt", 2880, NOW);
+    expect(db.ride.findMany.mock.calls[1][0]).toMatchObject({
+      where: {
+        assignments: { some: {} },
+        NOT: { returnLegOf: { is: { assignments: { some: {} } } } },
+      },
+      distinct: ["chapterId"],
+    });
+  });
+});
+
+describe("who runs a ride on the day as its pilot", () => {
+  // The finish page carries the access code: never for a pilot who never came.
+  it("opens the finish page only to a pilot not marked as a no-show", async () => {
+    db.ride.findFirst.mockResolvedValue(null);
+    const now = new Date("2026-09-08T11:00:00Z");
+    await rides.getFinishableRideForPilot("ride-1", "pilot-1", now);
+    expect(db.ride.findFirst.mock.calls[0][0].where).toMatchObject({
+      id: "ride-1",
+      assignments: {
+        some: {
+          userId: "pilot-1",
+          role: "pilot",
+          attendance: { not: "noShow" },
+        },
+      },
+    });
+  });
+
+  it("asks for an assignment not marked as a no-show, in a chapter still piloted", async () => {
+    db.ride.findFirst.mockResolvedValue(null);
+    expect(await rides.pilotCanRun("ride-1", "pilot-1")).toBe(false);
+    expect(db.ride.findFirst.mock.calls[0][0].where).toEqual({
+      id: "ride-1",
+      assignments: {
+        some: {
+          userId: "pilot-1",
+          role: "pilot",
+          attendance: { not: "noShow" },
+        },
+      },
+      chapter: {
+        members: {
+          some: { userId: "pilot-1", role: { contains: "pilot" } },
+        },
+      },
+    });
+  });
+});
+
+describe("the ride day, edge by edge", () => {
+  const BEFORE = new Date("2026-09-07T09:00:00Z");
+  const RIDING = new Date("2026-09-08T09:00:00Z");
+  const seat = (overrides: Record<string, unknown> = {}) => ({
+    id: "entry-1",
+    position: 0,
+    attendance: "booked",
+    confirmedAt: null,
+    checkedInAt: null,
+    guestName: null,
+    passenger: { id: "passenger-1", managedByUserId: "carer-1", userId: null },
+    ...overrides,
+  });
+  const walkUp = seat({
+    id: "walk-up-1",
+    attendance: "checkedIn",
+    guestName: "Inge Holm",
+    passenger: null,
+  });
+
+  beforeEach(() => {
+    db.rideRosterEntry.update.mockResolvedValue({ id: "entry-1" });
+    db.rideRosterEntry.updateMany.mockResolvedValue({ count: 1 });
+    db.rideRosterEntry.delete.mockResolvedValue({ id: "walk-up-1" });
+    db.rideRosterEntry.deleteMany.mockResolvedValue({ count: 1 });
+    db.rideAssignment.updateMany.mockResolvedValue({ count: 1 });
+  });
+
+  describe("check-in", () => {
+    it("opens exactly two hours before the start", () => {
+      const ride = { status: "scheduled", ...base };
+      const at = (ms: number) => new Date(base.startsAt.getTime() + ms);
+      expect(rides.checkInOpen(ride, "pilot", at(-120 * 60_000 - 1))).toBe(
+        false,
+      );
+      expect(rides.checkInOpen(ride, "pilot", at(-120 * 60_000))).toBe(true);
+    });
+
+    it("closes for a pilot a day after the ride ends, and never for an admin", () => {
+      const ride = { status: "scheduled", ...base };
+      const after = (ms: number) => new Date(base.endsAt.getTime() + ms);
+      const day = 24 * 3_600_000;
+      expect(rides.checkInOpen(ride, "pilot", after(day))).toBe(true);
+      expect(rides.checkInOpen(ride, "pilot", after(day + 1))).toBe(false);
+      expect(rides.canComplete(ride, "pilot", after(day + 1))).toBe(false);
+      expect(rides.checkInOpen(ride, "admin", after(30 * day))).toBe(true);
+      expect(rides.canComplete(ride, "admin", after(30 * day))).toBe(true);
+      expect(
+        rides.checkInOpen({ ...ride, status: "completed" }, "admin", RIDING),
+      ).toBe(false);
+    });
+
+    it("keeps an admin out before the door opens too", async () => {
+      db.ride.findUnique.mockResolvedValue(scheduled({ roster: [seat()] }));
+      expect(
+        await codeOf(
+          rides.setCheckedIn("ride-1", "entry-1", true, ADMIN, "admin", BEFORE),
+        ),
+      ).toBe("checkInClosed");
+    });
+
+    it("changes nothing, and logs nothing, when the rider already stands there", async () => {
+      db.ride.findUnique.mockResolvedValue(
+        scheduled({ roster: [seat({ attendance: "checkedIn" })] }),
+      );
+      expect(
+        await rides.setCheckedIn(
+          "ride-1",
+          "entry-1",
+          true,
+          "p",
+          "pilot",
+          RIDING,
+        ),
+      ).toBe(false);
+      expect(db.rideRosterEntry.update).not.toHaveBeenCalled();
+      expect(logTypes()).toEqual([]);
+    });
+
+    it("undoes an unconfirmed rider's check-in back to booked", async () => {
+      db.ride.findUnique.mockResolvedValue(
+        scheduled({ roster: [seat({ attendance: "checkedIn" })] }),
+      );
+      await rides.setCheckedIn(
+        "ride-1",
+        "entry-1",
+        false,
+        "p",
+        "pilot",
+        RIDING,
+      );
+      expect(db.rideRosterEntry.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { attendance: "booked", checkedInAt: null },
+        }),
+      );
+    });
+
+    it("removes a walk-up by their row, and logs it", async () => {
+      db.ride.findUnique.mockResolvedValue(scheduled({ roster: [walkUp] }));
+      expect(
+        await rides.removeWalkUp("ride-1", "walk-up-1", "p", "pilot", RIDING),
+      ).toBe(true);
+      expect(db.rideRosterEntry.delete).toHaveBeenCalledWith({
+        where: { id: "walk-up-1" },
+        select: { id: true },
+      });
+      expect(logTypes()).toEqual(["walkUpRemoved"]);
+      expect(
+        await codeOf(
+          rides.removeWalkUp("ride-1", "walk-up-1", "p", "pilot", BEFORE),
+        ),
+      ).toBe("checkInClosed");
+    });
+
+    it("names a walk-up in the history by the name typed at the door", async () => {
+      db.rideLogEntry.findMany.mockResolvedValue([
+        { id: "1", type: "walkUpAdded", payload: { entryId: "walk-up-1" } },
+        { id: "2", type: "checkedIn", payload: { entryId: "entry-1" } },
+      ]);
+      db.rideRosterEntry.findMany.mockResolvedValue([
+        { id: "walk-up-1", guestName: "Inge Holm", passenger: null },
+        {
+          id: "entry-1",
+          guestName: null,
+          passenger: { firstName: "Erna", lastName: "Huber" },
+        },
+      ]);
+      const log = await rides.listRideLog("ride-1");
+      expect(
+        log.map((entry) => (entry.payload as { name: string }).name),
+      ).toEqual(["Inge Holm", "Erna Huber"]);
+    });
+  });
+
+  describe("seats", () => {
+    it("tells the admins the roster emptied only when the last seated rider goes", async () => {
+      const removed = async (roster: unknown[]) => {
+        emitted.length = 0;
+        db.ride.findUnique.mockResolvedValue(scheduled({ roster }));
+        await rides.cancelBooking("ride-1", "passenger-1", ADMIN);
+        return (emitted[0] as unknown as { rosterNowEmpty: boolean })
+          .rosterNowEmpty;
+      };
+      expect(await removed([seat()])).toBe(true);
+      expect(
+        await removed([seat(), seat({ id: "e2", passenger: { id: "p-2" } })]),
+      ).toBe(false);
+      expect(
+        await removed([
+          seat({ attendance: "cancelled" }),
+          seat({ id: "e2", passenger: { id: "p-2" } }),
+        ]),
+      ).toBe(false);
+    });
+
+    it("lets a family take back a given-up event seat, counting only seats taken", async () => {
+      db.ride.findUnique.mockResolvedValue(
+        scheduled({
+          announced: true,
+          capacity: 2,
+          startsAt: new Date("2026-09-08T08:00:00Z"),
+          roster: [
+            seat({ attendance: "cancelled" }),
+            seat({ id: "e2", passenger: { id: "p-2" } }),
+          ],
+        }),
+      );
+      expect(
+        await rides.bookSeats("ride-1", ["passenger-1"], "carer-1", BEFORE),
+      ).toBe(1);
+      expect(db.rideRosterEntry.create).not.toHaveBeenCalled();
+      expect(db.rideRosterEntry.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "entry-1" },
+          data: expect.objectContaining({ attendance: "booked" }),
+        }),
+      );
+    });
+  });
+
+  describe("on a round trip, the sweep", () => {
+    const legs = (
+      there: Record<string, unknown>,
+      back: Record<string, unknown>,
+    ) => {
+      const rows: Record<string, unknown> = {
+        "ride-there": scheduled({
+          id: "ride-there",
+          model: "functional",
+          returnLeg: { id: "ride-back", status: "scheduled" },
+          ...there,
+        }),
+        "ride-back": scheduled({
+          id: "ride-back",
+          model: "functional",
+          startsAt: new Date("2026-09-08T15:00:00Z"),
+          endsAt: new Date("2026-09-08T16:00:00Z"),
+          returnLegOf: { id: "ride-there", status: "scheduled" },
+          ...back,
+        }),
+      };
+      db.ride.findUnique.mockImplementation(({ where }) =>
+        Promise.resolve(rows[where.id]),
+      );
+    };
+    const stamped = () =>
+      db.ride.update.mock.calls.map(([args]) => args.where.id);
+
+    it("reminds both legs as one message", async () => {
+      legs({ roster: [seat()] }, { roster: [seat({ id: "b" })] });
+      await rides.sendReminder(
+        "riderReminderSentAt",
+        "ride-there",
+        1440,
+        BEFORE,
+      );
+      expect(stamped()).toEqual(["ride-there", "ride-back"]);
+      expect(
+        emitted.map((event) => (event as unknown as { pair: unknown }).pair),
+      ).toEqual([
+        { role: "lead", otherRideId: "ride-back" },
+        { role: "follow", otherRideId: "ride-there" },
+      ]);
+    });
+
+    it("leaves a way back already reminded, and speaks for this leg alone", async () => {
+      legs(
+        { roster: [seat()] },
+        { roster: [seat({ id: "b" })], riderReminderSentAt: BEFORE },
+      );
+      await rides.sendReminder(
+        "riderReminderSentAt",
+        "ride-there",
+        1440,
+        BEFORE,
+      );
+      expect(stamped()).toEqual(["ride-there"]);
+      expect(emitted).toEqual([expect.objectContaining({ pair: null })]);
+    });
+
+    it("flags only the empty leg, on its own", async () => {
+      legs({ roster: [seat()] }, { roster: [] });
+      await rides.checkDemand("ride-there", 1440, BEFORE);
+      expect(stamped()).toEqual(["ride-there", "ride-back"]);
+      expect(emitted).toEqual([
+        expect.objectContaining({ rideId: "ride-back", pair: null }),
+      ]);
+    });
+  });
+
+  describe("a closed roster", () => {
+    it("is reopened with its pilots signed up again and its ride open", async () => {
+      db.ride.findUnique.mockResolvedValue(scheduled({ status: "completed" }));
+      await rides.reopenRide("ride-1", ADMIN);
+      expect(db.rideAssignment.updateMany).toHaveBeenCalledWith({
+        where: {
+          rideId: "ride-1",
+          role: "pilot",
+          attendance: { in: ["completed"] },
+        },
+        data: { attendance: "signedUp" },
+      });
+      expect(db.ride.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: {
+            status: "scheduled",
+            completedAt: null,
+            completedByUserId: null,
+          },
+        }),
+      );
+    });
+
+    const crew = (
+      attendance: string,
+      overrides: Record<string, unknown> = {},
+    ) =>
+      scheduled({
+        assignments: [{ role: "pilot", attendance, user: { id: "pilot-1" } }],
+        ...overrides,
+      });
+    const marked = () =>
+      db.rideAssignment.updateMany.mock.calls.map(
+        ([args]) => args.data.attendance,
+      );
+
+    it("takes a no-show back to what the pilot did on the day", async () => {
+      db.ride.findUnique.mockResolvedValue(
+        crew("noShow", { status: "completed" }),
+      );
+      await rides.setPilotNoShow("ride-1", "pilot-1", false, ADMIN, RIDING);
+      db.ride.findUnique.mockResolvedValue(crew("noShow"));
+      await rides.setPilotNoShow("ride-1", "pilot-1", false, ADMIN, RIDING);
+      expect(marked()).toEqual(["completed", "signedUp"]);
+    });
+
+    it("refuses a no-show for someone not piloting, before the start, or on a cancelled ride", async () => {
+      db.ride.findUnique.mockResolvedValue(crew("signedUp"));
+      expect(
+        await codeOf(
+          rides.setPilotNoShow("ride-1", "pilot-9", true, ADMIN, RIDING),
+        ),
+      ).toBe("notAssigned");
+      expect(
+        await codeOf(
+          rides.setPilotNoShow("ride-1", "pilot-1", true, ADMIN, BEFORE),
+        ),
+      ).toBe("rideNotStarted");
+      db.ride.findUnique.mockResolvedValue(
+        crew("signedUp", { status: "cancelled" }),
+      );
+      expect(
+        await codeOf(
+          rides.setPilotNoShow("ride-1", "pilot-1", true, ADMIN, RIDING),
+        ),
+      ).toBe("rideClosed");
+    });
+
+    it("changes nothing for a pilot already marked", async () => {
+      db.ride.findUnique.mockResolvedValue(crew("noShow"));
+      expect(
+        await rides.setPilotNoShow("ride-1", "pilot-1", true, ADMIN, RIDING),
+      ).toBe(false);
+      expect(db.rideAssignment.updateMany).not.toHaveBeenCalled();
+      expect(logTypes()).toEqual([]);
+    });
+
+    // closeRoster only turns signedUp into completed, so a marked pilot stays marked.
+    it("keeps a pilot marked before closing marked after it", async () => {
+      db.ride.findUnique.mockResolvedValue(crew("noShow"));
+      await rides.closeRoster("ride-1", ADMIN, "admin", RIDING);
+      expect(db.rideAssignment.updateMany).toHaveBeenCalledWith({
+        where: {
+          rideId: "ride-1",
+          role: "pilot",
+          attendance: { in: ["signedUp"] },
+        },
+        data: { attendance: "completed" },
+      });
+    });
+  });
+
+  describe("what a walk-up guest and a given-up seat show", () => {
+    it("never reads a guest's name for a rider's account", async () => {
+      db.ride.findMany.mockResolvedValue([]);
+      db.ride.findFirst.mockResolvedValue(null);
+      await rides.getRideForPassengers("ride-1", ["passenger-1"]);
+      await rides.listPassengerRides(["passenger-1"]);
+      const detail = db.ride.findFirst.mock.calls[0][0].select;
+      expect(Object.keys(detail.roster.select)).not.toContain("guestName");
+      for (const [args] of db.ride.findMany.mock.calls) {
+        expect(args.select.roster).toBeUndefined();
+        expect(args.where.roster.some.attendance).toEqual({ not: "cancelled" });
+      }
+    });
+
+    it("counts seats taken the same way where pilots and families look", async () => {
+      db.ride.findMany.mockResolvedValue([]);
+      db.member.findMany.mockResolvedValue([]);
+      await rides.listOpenRidesForPilot("pilot-1", [CHAPTER], BEFORE);
+      await rides.listAnnouncedEvents(
+        [{ id: "passenger-1", chapterId: CHAPTER }],
+        BEFORE,
+      );
+      for (const [args] of db.ride.findMany.mock.calls)
+        expect(args.select._count).toEqual({
+          select: { roster: { where: { attendance: { not: "cancelled" } } } },
+        });
+    });
+
+    it("tells the ride's chat and notices only about seats still taken", async () => {
+      db.ride.findUnique.mockResolvedValue({
+        chapterId: CHAPTER,
+        assignments: [],
+        roster: [
+          {
+            attendance: "cancelled",
+            passenger: { managedByUserId: "carer-2", userId: null },
+          },
+          {
+            attendance: "booked",
+            passenger: { managedByUserId: "carer-1", userId: null },
+          },
+        ],
+      });
+      expect(await rides.listRideParticipants("ride-1")).toMatchObject({
+        riderCount: 1,
+        riderAccountUserIds: ["carer-1"],
+        household: { riders: 2, accountUserIds: ["carer-2", "carer-1"] },
+      });
+      expect(db.ride.findUnique.mock.calls[0][0].select.roster.where).toEqual({
+        passengerId: { not: null },
+      });
+    });
+  });
+});
+
+describe("a rider's account that gave every seat up", () => {
+  const ride = (attendance: string) => ({
+    id: "ride-1",
+    chapterId: CHAPTER,
+    assignments: [
+      {
+        role: "pilot",
+        user: { id: "pilot-1", name: "Piet", phoneNumber: "+49 1" },
+      },
+    ],
+    roster: [{ id: "e1", attendance, passenger: { id: "passenger-1" } }],
+  });
+
+  beforeEach(() =>
+    db.member.findMany.mockResolvedValue([
+      { organizationId: CHAPTER, userId: "pilot-1" },
+    ]),
+  );
+
+  it("still sees who pilots, but not how to reach them", async () => {
+    db.ride.findFirst.mockResolvedValue(ride("cancelled"));
+    const seen = await rides.getRideForPassengers("ride-1", ["passenger-1"]);
+    expect(seen?.assignments[0].user).toMatchObject({
+      name: "Piet",
+      phoneNumber: null,
+    });
+  });
+
+  it("keeps the number while a seat is held", async () => {
+    db.ride.findFirst.mockResolvedValue(ride("booked"));
+    const seen = await rides.getRideForPassengers("ride-1", ["passenger-1"]);
+    expect(seen?.assignments[0].user.phoneNumber).toBe("+49 1");
   });
 });

@@ -1,15 +1,32 @@
 import { rides } from "@/features/rides/index";
 import {
   addRideNoteAction,
+  addWalkUpAction,
+  completeRideAction,
   deleteRideAction,
+  reopenRideAction,
+  removeWalkUpAction,
   rescheduleRideAction,
+  setCheckedInAction,
+  setPilotNoShowAction,
+  submitDebriefAction,
   updateRideAction,
 } from "@/features/rides/actions";
+import { isChapterAdmin } from "@/lib/access";
+import { requireChapterAdmin } from "@/lib/auth-guards";
+import { withinRateLimit } from "@/lib/rate-limit";
+import { completeRide } from "@/use-cases/complete-ride";
 
 jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }));
 jest.mock("@/lib/auth-guards", () => ({
   requireAdminScope: jest.fn(async () => undefined),
+  requireAuth: jest.fn(async () => ({ user: { id: "user-1" }, access: {} })),
   requireChapterAdmin: jest.fn(async () => ({ user: { id: "admin-1" } })),
+}));
+jest.mock("@/lib/access", () => ({ isChapterAdmin: jest.fn(() => false) }));
+jest.mock("@/lib/rate-limit", () => ({ withinRateLimit: jest.fn(() => true) }));
+jest.mock("@/use-cases/complete-ride", () => ({
+  completeRide: jest.fn(async () => ({ riders: 2, noShows: 0 })),
 }));
 jest.mock("@/lib/avatar", () => ({
   avatarSeed: (email: string) => email,
@@ -39,6 +56,18 @@ jest.mock("@/features/rides/index", () => ({
     updateRideDetails: jest.fn(async () => ({})),
     deleteRide: jest.fn(async () => undefined),
     addRideNote: jest.fn(async () => ({})),
+    getRide: jest.fn(async (id: string) => ({
+      id,
+      chapterId: "chapter-muenchen",
+      chapter: { countryId: "country-de" },
+    })),
+    pilotCanRun: jest.fn(async () => false),
+    setCheckedIn: jest.fn(async () => true),
+    submitDebrief: jest.fn(async () => ({})),
+    reopenRide: jest.fn(async () => true),
+    addWalkUp: jest.fn(async () => "walk-up-1"),
+    removeWalkUp: jest.fn(async () => true),
+    setPilotNoShow: jest.fn(async () => true),
     rescheduleRide: jest.fn(async () => ({ changed: true })),
   },
 }));
@@ -77,5 +106,165 @@ describe("ride actions that answer with nothing but ok", () => {
       }),
     ).resolves.toEqual({ ok: true });
     expect(rides.rescheduleRide).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("who runs a ride on the day", () => {
+  beforeEach(() => {
+    (rides.pilotCanRun as jest.Mock).mockResolvedValue(false);
+    (isChapterAdmin as jest.Mock).mockReturnValue(false);
+  });
+
+  const day = [
+    {
+      name: "check-in",
+      run: () =>
+        setCheckedInAction({
+          rideId: "ride-1",
+          entryId: "entry-1",
+          checkedIn: true,
+        }),
+      facade: () => rides.setCheckedIn as jest.Mock,
+      as: (call: unknown[]) => call[4],
+    },
+    {
+      name: "walk-up",
+      run: () => addWalkUpAction({ rideId: "ride-1", firstName: "Inge" }),
+      facade: () => rides.addWalkUp as jest.Mock,
+      as: (call: unknown[]) => call[2],
+    },
+    {
+      name: "walk-up removal",
+      run: () => removeWalkUpAction({ rideId: "ride-1", entryId: "entry-1" }),
+      facade: () => rides.removeWalkUp as jest.Mock,
+      as: (call: unknown[]) => call[3],
+    },
+    {
+      name: "completion",
+      run: () => completeRideAction("ride-1"),
+      facade: () => completeRide as jest.Mock,
+      as: (call: unknown[]) => call[2],
+    },
+    {
+      name: "debrief",
+      run: () => submitDebriefAction({ rideId: "ride-1", donationCents: 500 }),
+      facade: () => rides.submitDebrief as jest.Mock,
+      as: (call: unknown[]) => call[2],
+    },
+  ];
+
+  describe.each(day)("$name", ({ run, facade, as }) => {
+    it("lets the ride's own pilot act, as its pilot", async () => {
+      (rides.pilotCanRun as jest.Mock).mockResolvedValue(true);
+      await expect(run()).resolves.toMatchObject({ ok: true });
+      expect(rides.pilotCanRun).toHaveBeenCalledWith("ride-1", "user-1");
+      expect(requireChapterAdmin).not.toHaveBeenCalled();
+      expect(as(facade().mock.calls[0])).toBe("pilot");
+    });
+
+    it("asks anyone else to be an admin of the ride's own chapter", async () => {
+      await run();
+      expect(isChapterAdmin).toHaveBeenCalledWith(
+        {},
+        "chapter-muenchen",
+        "country-de",
+      );
+      expect(requireChapterAdmin).toHaveBeenCalledWith("chapter-muenchen");
+      expect(as(facade().mock.calls[0])).toBe("admin");
+    });
+
+    it("stops at the admin guard for someone who is neither", async () => {
+      (requireChapterAdmin as jest.Mock).mockRejectedValueOnce(
+        new Error("NEXT_HTTP_ERROR_FALLBACK;403"),
+      );
+      await expect(run()).rejects.toThrow("403");
+      expect(facade()).not.toHaveBeenCalled();
+    });
+
+    it("treats an admin who also pilots the ride as its admin", async () => {
+      (isChapterAdmin as jest.Mock).mockReturnValue(true);
+      (rides.pilotCanRun as jest.Mock).mockResolvedValue(true);
+      await run();
+      expect(requireChapterAdmin).toHaveBeenCalledWith("chapter-muenchen");
+      expect(as(facade().mock.calls[0])).toBe("admin");
+    });
+
+    it("knows no ride that is not there", async () => {
+      (rides.getRide as jest.Mock).mockResolvedValueOnce(null);
+      await expect(run()).resolves.toEqual({
+        ok: false,
+        error: "unknownRide",
+      });
+      expect(facade()).not.toHaveBeenCalled();
+    });
+  });
+
+  it("files the debrief under whoever wrote it", async () => {
+    (rides.pilotCanRun as jest.Mock).mockResolvedValue(true);
+    await submitDebriefAction({ rideId: "ride-1", donationCents: 500 });
+    expect(rides.submitDebrief).toHaveBeenCalledWith(
+      expect.objectContaining({ rideId: "ride-1", donationCents: 500 }),
+      "user-1",
+      "pilot",
+    );
+  });
+
+  // Reopening and marking a no-show are the chapter's, never a pilot's.
+  it.each([
+    ["reopen", () => reopenRideAction("ride-1"), () => rides.reopenRide],
+    [
+      "no-show",
+      () =>
+        setPilotNoShowAction({
+          rideId: "ride-1",
+          userId: "pilot-2",
+          noShow: true,
+        }),
+      () => rides.setPilotNoShow,
+    ],
+  ])("lets only an admin %s", async (_, run, facade) => {
+    (rides.pilotCanRun as jest.Mock).mockResolvedValue(true);
+    (requireChapterAdmin as jest.Mock).mockRejectedValueOnce(
+      new Error("NEXT_HTTP_ERROR_FALLBACK;403"),
+    );
+    await expect(run()).rejects.toThrow("403");
+    expect(facade()).not.toHaveBeenCalled();
+    expect(rides.pilotCanRun).not.toHaveBeenCalled();
+  });
+});
+
+describe("how often a ride day may be written", () => {
+  const HOUR = 3_600_000;
+  it.each([
+    [
+      "check-in",
+      () =>
+        setCheckedInAction({ rideId: "ride-1", entryId: "e", checkedIn: true }),
+      () => rides.setCheckedIn,
+      { max: 600, windowMs: HOUR },
+    ],
+    [
+      "walk-up",
+      () => addWalkUpAction({ rideId: "ride-1", firstName: "Inge" }),
+      () => rides.addWalkUp,
+      { max: 120, windowMs: HOUR },
+    ],
+    [
+      "walk-up",
+      () => removeWalkUpAction({ rideId: "ride-1", entryId: "e" }),
+      () => rides.removeWalkUp,
+      { max: 120, windowMs: HOUR },
+    ],
+    [
+      "debrief",
+      () => submitDebriefAction({ rideId: "ride-1" }),
+      () => rides.submitDebrief,
+      { max: 120, windowMs: HOUR },
+    ],
+  ])("slows %s down per person", async (scope, run, facade, limit) => {
+    (withinRateLimit as jest.Mock).mockReturnValueOnce(false);
+    await expect(run()).resolves.toEqual({ ok: false, error: "rateLimited" });
+    expect(withinRateLimit).toHaveBeenCalledWith(`${scope}:user-1`, limit);
+    expect(facade()).not.toHaveBeenCalled();
   });
 });

@@ -18,6 +18,12 @@ import { chapters } from "@/features/chapters";
 import { chat } from "@/features/chat";
 import { pickupLabel, pickupOf } from "@/features/passengers";
 import { rides, type PilotRideDetailRow } from "@/features/rides";
+import { CheckInList } from "@/features/rides/components/check-in-list";
+import {
+  checkInStrings,
+  walkUpStrings,
+} from "@/features/rides/components/strings";
+import { WalkUpDrawer } from "@/features/rides/components/walk-up-drawer";
 import { requirePerspective } from "@/lib/auth-guards";
 import { calendarDate, sameDay } from "@/lib/calendar";
 import {
@@ -71,10 +77,11 @@ export async function PilotRide({
 
   const now = new Date();
   const otherLeg = ride.returnLeg ?? ride.returnLegOf;
-  const [otherLegOpen, settings, chatId, pickup] = await Promise.all([
+  const [otherLegOpen, settings, chatId, running, pickup] = await Promise.all([
     otherLeg ? rides.pilotCanOpen(otherLeg.id, userId) : false,
     chapters.getSettings(ride.chapterId),
     chat.getRideConversationId(ride.id, userId),
+    rides.pilotCanRun(ride.id, userId),
     pickupView(ride, now),
   ]);
   const ahead = ride.status === "scheduled" && ride.startsAt > now;
@@ -85,7 +92,9 @@ export async function PilotRide({
   const strings = dict.pilot.rides.detail;
   const zone = ride.chapter.timeZone;
   const cancelled = ride.status === "cancelled";
-  const canFinish = rides.isFinishable(ride, now);
+  const canFinish = running && rides.isFinishable(ride, now);
+  const doorOpen = running && rides.checkInOpen(ride, "pilot", now);
+  const completed = ride.status === "completed";
   const crew = ride.assignments.filter(
     (assignment) => assignment.user.id !== userId,
   );
@@ -235,7 +244,7 @@ export async function PilotRide({
         openInMaps={dict.fleet.finish.openInMaps}
       />
 
-      {pickup ? (
+      {pickup && running ? (
         <PickupCard
           places={pickup}
           dict={dict}
@@ -243,42 +252,94 @@ export async function PilotRide({
         />
       ) : null}
 
-      <Section title={strings.riders}>
-        {ride.roster.length > 0 ? (
-          <ol className="border-line divide-line divide-y rounded-2xl border">
-            {ride.roster.map(({ id, passenger }, index) => (
-              <li
-                key={id}
-                className="flex min-h-12 items-center gap-3 px-4 py-3"
-              >
-                <span
-                  aria-hidden
-                  className="bg-mint-tint text-ink flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums"
+      {doorOpen || completed ? (
+        <Section
+          title={doorOpen ? dict.rides.execution.checkIn : strings.riders}
+        >
+          {doorOpen ? (
+            <p className="text-2sm text-ink-soft">
+              {dict.rides.execution.checkInHint}
+            </p>
+          ) : null}
+          <CheckInList
+            rideId={ride.id}
+            entries={ride.roster.map((entry) => ({
+              id: entry.id,
+              name: entry.passenger
+                ? fullName(entry.passenger)
+                : (entry.guestName ?? ""),
+              walkUp: !entry.passenger,
+              attendance: entry.attendance,
+              pickup: entry.passenger
+                ? pickupLine(entry.passenger, dict, words)
+                : null,
+              phone: entry.passenger
+                ? (entry.passenger.user?.phoneNumber ??
+                  entry.passenger.managedBy.phoneNumber)
+                : null,
+              via:
+                entry.passenger && !entry.passenger.user?.phoneNumber
+                  ? entry.passenger.managedBy.name
+                  : null,
+            }))}
+            open={doorOpen}
+            language={language}
+            labels={checkInStrings(dict, {
+              call: strings.call,
+              via: strings.via,
+            })}
+          />
+          {doorOpen ? (
+            <WalkUpDrawer
+              rideId={ride.id}
+              language={language}
+              labels={walkUpStrings(dict)}
+              triggerClassName="w-full sm:w-fit"
+            />
+          ) : null}
+        </Section>
+      ) : (
+        <Section title={strings.riders}>
+          {ride.roster.length > 0 ? (
+            <ol className="border-line divide-line divide-y rounded-2xl border">
+              {ride.roster.map(({ id, passenger, guestName }, index) => (
+                <li
+                  key={id}
+                  className="flex min-h-12 items-center gap-3 px-4 py-3"
                 >
-                  {index + 1}
-                </span>
-                <RiderContact
-                  name={fullName(passenger)}
-                  pickup={pickupLine(passenger, dict, words)}
-                  phone={
-                    passenger.user?.phoneNumber ??
-                    passenger.managedBy.phoneNumber
-                  }
-                  via={
-                    passenger.user?.phoneNumber
-                      ? null
-                      : passenger.managedBy.name
-                  }
-                  strings={strings}
-                  words={words}
-                />
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <Muted>{strings.noRiders}</Muted>
-        )}
-      </Section>
+                  <span
+                    aria-hidden
+                    className="bg-mint-tint text-ink flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums"
+                  >
+                    {index + 1}
+                  </span>
+                  {passenger ? (
+                    <RiderContact
+                      name={fullName(passenger)}
+                      pickup={pickupLine(passenger, dict, words)}
+                      phone={
+                        passenger.user?.phoneNumber ??
+                        passenger.managedBy.phoneNumber
+                      }
+                      via={
+                        passenger.user?.phoneNumber
+                          ? null
+                          : passenger.managedBy.name
+                      }
+                      strings={strings}
+                      words={words}
+                    />
+                  ) : (
+                    <span className="min-w-0 flex-1 truncate">{guestName}</span>
+                  )}
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <Muted>{strings.noRiders}</Muted>
+          )}
+        </Section>
+      )}
 
       <Section title={strings.trishaws}>
         {ride.trishaws.length > 0 ? (

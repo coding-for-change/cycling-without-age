@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { publish } from "@/lib/realtime";
+import { publish, publishToUsers } from "@/lib/realtime";
 import { chat, MAX_MESSAGE_CHARS } from "@/features/chat";
 import {
   encryptText,
@@ -625,5 +625,46 @@ describe("syncRideConversation", () => {
     });
     expect(db.conversationMember.createMany).not.toHaveBeenCalled();
     expect(db.conversationMember.deleteMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("freezeRideConversation", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("freezes the ride's chat and tells its members", async () => {
+    db.conversation.findUnique
+      .mockResolvedValueOnce({ id: CONVERSATION, frozenAt: null })
+      .mockResolvedValueOnce(conversation({ origin: "ride" }));
+    db.conversation.update.mockResolvedValue({ id: CONVERSATION });
+    db.conversationMember.findMany.mockResolvedValue([
+      { userId: ME },
+      { userId: OTHER },
+    ]);
+    expect(await chat.freezeRideConversation("ride-1")).toBe(CONVERSATION);
+    expect(db.conversation.findUnique.mock.calls[0][0].where).toEqual({
+      rideId: "ride-1",
+    });
+    expect(db.conversation.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: CONVERSATION },
+        data: { frozenAt: expect.any(Date) },
+      }),
+    );
+    expect(publishToUsers).toHaveBeenCalledWith([ME, OTHER], {
+      type: "conversation.updated",
+      conversationId: CONVERSATION,
+      patch: { frozenAt: expect.any(String) },
+    });
+  });
+
+  it("leaves a ride without a chat, or one already frozen, alone", async () => {
+    db.conversation.findUnique.mockResolvedValueOnce(null);
+    expect(await chat.freezeRideConversation("ride-1")).toBeNull();
+    db.conversation.findUnique.mockResolvedValueOnce({
+      id: CONVERSATION,
+      frozenAt: new Date(),
+    });
+    expect(await chat.freezeRideConversation("ride-1")).toBeNull();
+    expect(db.conversation.update).not.toHaveBeenCalled();
   });
 });

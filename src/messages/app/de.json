@@ -422,7 +422,11 @@
         "welcome": "Willkommen",
         "careRequested": "Betreuungsanfrage",
         "careDecided": "Antwort auf Betreuung",
-        "careInvited": "Einladung Begleitperson"
+        "careInvited": "Einladung Begleitperson",
+        "rideReminder": "Fahrgasterinnerung",
+        "pilotReminder": "Pilotenerinnerung",
+        "rideNoDemand": "Niemand gebucht",
+        "rideRosterRefilled": "Fahrgast wieder dabei"
       },
       "you": "Du"
     },
@@ -937,6 +941,25 @@
         "placeholder": "Ladegerät einstecken, Sitz abwischen und den Schlüssel zurück in den Tresor legen.",
         "title": "Nach der Fahrt"
       },
+      "reminders": {
+        "body": "Wann Fahrgäste und Piloten an eine Fahrt erinnert werden und wann eine Fahrt ohne Buchung gemeldet wird.",
+        "demand": {
+          "hint": "Admins erfahren von einer Fahrt ohne Fahrgäste, damit sie rechtzeitig abgesagt werden kann.",
+          "label": "Vor leeren Fahrten warnen"
+        },
+        "hours": "{count, plural, one {# Stunde vorher} other {# Stunden vorher}}",
+        "minutes": "{count, plural, one {# Minute vorher} other {# Minuten vorher}}",
+        "days": "{count, plural, one {# Tag vorher} other {# Tage vorher}}",
+        "rider": {
+          "hint": "Fahrgäste oder ihre Begleitpersonen werden gebeten, den Platz zu bestätigen oder freizugeben.",
+          "label": "Fahrgäste erinnern"
+        },
+        "title": "Erinnerungen",
+        "volunteer": {
+          "hint": "Piloten bekommen die Fahrt noch einmal, mit dem Abholort der Rikscha.",
+          "label": "Piloten erinnern"
+        }
+      },
       "staffing": {
         "body": "Wie Piloten Fahrten finden und wann du von einer Fahrt erfährst, der noch Piloten fehlen.",
         "lead": {
@@ -1063,6 +1086,7 @@
         "body": "Deine Chats stehen links. Öffne eins — oder starte ein neues mit jemandem aus deiner Ortsgruppe.",
         "title": "Wähl ein Gespräch"
       },
+      "rideBadge": "Fahrt",
       "search": "Namen und Gruppen durchsuchen",
       "title": "Chat",
       "unreads": "Ungelesen",
@@ -1104,7 +1128,9 @@
       "deleted": "Nachricht gelöscht",
       "edited": "bearbeitet",
       "frozen": {
-        "body": "Er wurde mit dem Ende der Fahrt geschlossen. Ihr beide könnt ihn jederzeit wieder aufnehmen.",
+        "body": "Er endete mit dem Abschluss der Fahrt. Alle hier können ihn wieder aufnehmen.",
+        "continued": "Der Chat ist wieder offen.",
+        "keepChatting": "Weiterschreiben",
         "title": "Dieser Chat ist abgeschlossen"
       },
       "jumpToLatest": "Zur neuesten Nachricht",
@@ -1998,6 +2024,41 @@
         "volunteers": "Für diese Ausfahrt hat sich leider kein Pilot gefunden. Das tut uns leid.",
         "weather": "Das Wetter spielt diesmal nicht mit, und wir möchten, dass Sie warm und trocken bleiben."
       },
+      "seat": {
+        "cancel": {
+          "aria": "Platz absagen für {name}",
+          "body": "Die Ortsgruppe kann den Platz dann jemand anderem anbieten. Solange noch Platz ist, können Sie ihn hier zurücknehmen.",
+          "cancel": "Platz behalten",
+          "confirm": "Platz freigeben",
+          "done": "Platz freigegeben. Die Ortsgruppe weiß Bescheid.",
+          "label": "Platz absagen",
+          "title": "Den Platz von {name} freigeben?"
+        },
+        "confirm": "Platz bestätigen",
+        "confirmAria": "Platz bestätigen für {name}",
+        "confirmed": "Platz bestätigt. Bis bald!",
+        "errors": {
+          "pleasureLimit": "Diese Ausfahrt ist inzwischen wieder voll. Ihre Ortsgruppe hilft Ihnen gern.",
+          "rateLimited": "Das war viel auf einmal. Bitte warten Sie kurz und versuchen Sie es noch einmal.",
+          "rideClosed": "Der Platz lässt sich nicht mehr ändern: Die Ausfahrt hat begonnen oder wurde abgesagt.",
+          "rideFull": "Diese Ausfahrt ist inzwischen wieder voll. Ihre Ortsgruppe hilft Ihnen gern.",
+          "riderNotInChapter": "Dieser Fahrgast fährt bei einer anderen Ortsgruppe.",
+          "unknownPassenger": "Für diesen Fahrgast können Sie nicht buchen.",
+          "unknownRide": "Diese Ausfahrt ist nicht mehr verfügbar."
+        },
+        "hint": "Bitte bestätigen Sie jeden Platz – oder geben Sie ihn frei, wenn sich etwas geändert hat, damit jemand anderes mitfahren kann.",
+        "retake": "Platz zurücknehmen",
+        "retakeAria": "Platz zurücknehmen für {name}",
+        "retaken": "Platz zurückgenommen. Bis bald!",
+        "states": {
+          "booked": "Noch nicht bestätigt",
+          "cancelled": "Platz freigegeben",
+          "checkedIn": "Eingecheckt",
+          "completed": "Mitgefahren",
+          "confirmed": "Bestätigt",
+          "noShow": "Nicht mitgefahren"
+        }
+      },
       "write": "E-Mail schreiben"
     }
   },
@@ -2278,7 +2339,6 @@
       "placesTaken": "{count} von {max} Plätzen belegt",
       "properties": "Eigenschaften",
       "readOnlyCancelled": "Abgesagte Fahrten behalten ihren Platz im Kalender. Nur der Verlauf nimmt noch Kommentare an.",
-      "readOnlyCompleted": "Diese Fahrt ist vorbei. Nur der Verlauf nimmt noch Kommentare an.",
       "reason": "Grund",
       "remove": "{name} von der Fahrt nehmen",
       "removed": "{name} ist nicht mehr dabei.",
@@ -2327,12 +2387,17 @@
     },
     "history": {
       "cancelled": "{who, select, you {Du hast} other {{actor} hat}} die Fahrt abgesagt",
+      "checkInUndone": "{who, select, you {Du hast} other {{actor} hat}} den Check-in für {name} zurückgenommen",
+      "checkedIn": "{who, select, you {Du hast} other {{actor} hat}} {name} eingecheckt",
+      "completed": "{who, select, you {Du hast} other {{actor} hat}} die Fahrt abgeschlossen",
+      "completedTally": "{riders, plural, one {# Fahrgast} other {# Fahrgäste}} mitgefahren, {noShows, plural, =0 {niemand hat gefehlt} one {# nicht erschienen} other {# nicht erschienen}}",
       "composer": {
         "added": "Kommentar hinzugefügt.",
         "label": "Kommentar",
         "placeholder": "Kommentar zum Verlauf – z. B. Fahrgast wünscht sich eine Decke",
         "submit": "Kommentieren"
       },
+      "debriefed": "{who, select, you {Du hast} other {{actor} hat}} einen Fahrtbericht geschrieben",
       "edited": "{who, select, you {Du hast} other {{actor} hat}} {fields} geändert",
       "fields": {
         "announced": "ob Fahrgäste buchen können",
@@ -2346,11 +2411,15 @@
         "title": "den Titel"
       },
       "formerMember": "ein ehemaliges Mitglied",
+      "formerRider": "einen ehemaligen Fahrgast",
       "note": "{who, select, you {Du hast} other {{actor} hat}} kommentiert",
       "pilotAssigned": "{who, select, you {Du hast} other {{actor} hat}} {name} als Pilot:in eingeteilt",
+      "pilotNoShow": "{who, select, you {Du hast} other {{actor} hat}} {name} als nicht erschienen markiert",
+      "pilotShowed": "{who, select, you {Du hast} other {{actor} hat}} {name} als gefahren markiert",
       "pilotSignedUp": "{name} hat sich als Pilot:in eingetragen",
       "pilotSteppedBack": "{name} hat sich als Pilot:in ausgetragen",
       "pilotUnassigned": "{who, select, you {Du hast} other {{actor} hat}} {name} als Pilot:in ausgetragen",
+      "reopened": "{who, select, you {Du hast} other {{actor} hat}} die Fahrt wieder geöffnet",
       "rescheduled": "{who, select, you {Du hast} other {{actor} hat}} die Fahrt verschoben",
       "rescheduledWithLeg": "{who, select, you {Du hast} other {{actor} hat}} die Fahrt mit der Hinfahrt verschoben",
       "riderBooked": "{who, select, you {Du hast} other {{actor} hat}} {name} gebucht",
@@ -2358,9 +2427,13 @@
       "rosterReordered": "{who, select, you {Du hast} other {{actor} hat}} die Reihenfolge der Fahrgäste geändert",
       "scheduled": "{who, select, you {Du hast} other {{actor} hat}} die Fahrt geplant",
       "scheduledReturn": "{who, select, you {Du hast} other {{actor} hat}} die Fahrt als Rückweg geplant",
+      "seatCancelled": "{who, select, you {Du hast} other {{actor} hat}} den Platz für {name} abgesagt",
+      "seatConfirmed": "{who, select, you {Du hast} other {{actor} hat}} den Platz für {name} bestätigt",
       "trishawsAdded": "Dazu: {names}",
       "trishawsChanged": "{who, select, you {Du hast} other {{actor} hat}} die Rikschas geändert",
-      "trishawsRemoved": "Entfernt: {names}"
+      "trishawsRemoved": "Entfernt: {names}",
+      "walkUpAdded": "{who, select, you {Du hast} other {{actor} hat}} {name} vor Ort hinzugefügt",
+      "walkUpRemoved": "{who, select, you {Du hast} other {{actor} hat}} jemanden, der vor Ort hinzugefügt wurde, wieder entfernt"
     },
     "reasons": {
       "equipment": "Problem mit der Rikscha",
@@ -2474,6 +2547,121 @@
       "retry": "Erneut versuchen",
       "end": "Das ist alles, was bisher gebucht ist.",
       "ridersOf": "{count} von {capacity} Plätzen belegt"
+    },
+    "execution": {
+      "addWalkUp": "Jemanden vor Ort hinzufügen",
+      "attendance": {
+        "booked": "Gebucht",
+        "cancelled": "Platz abgesagt",
+        "checkedIn": "Eingecheckt",
+        "completed": "Mitgefahren",
+        "confirmed": "Bestätigt",
+        "noShow": "Nicht erschienen"
+      },
+      "checkIn": "Check-in",
+      "checkInHint": "Tippe auf jeden Fahrgast, sobald er da ist. Wer beim Abschließen der Fahrt nicht eingecheckt ist, zählt als nicht erschienen.",
+      "checkInLabel": "{name} einchecken",
+      "checkedIn": "{name} ist eingecheckt",
+      "checkedInCount": "{count} von {total} eingecheckt",
+      "complete": {
+        "body": "Damit schließt du die Liste und die Fahrt wird gezählt: {tally}. Wer nicht eingecheckt ist, zählt als nicht erschienen, und der Chat zur Fahrt wird abgeschlossen.",
+        "cancel": "Noch nicht",
+        "confirm": "Fahrt abschließen",
+        "done": "Fahrt abgeschlossen. Danke dir!",
+        "label": "Fahrt abschließen",
+        "title": "Fahrt abschließen?"
+      },
+      "completedBy": "Abgeschlossen von {name}",
+      "debrief": {
+        "autosaves": "Wird beim Schreiben von selbst gespeichert.",
+        "bikeCondition": "Zustand der Rikscha",
+        "bikePoor": "Ist etwas kaputt? Melde es oben bei der Rikscha, damit es vor der nächsten Fahrt repariert wird.",
+        "by": "Fahrtbericht von {name}",
+        "cooperation": "Zusammenarbeit mit dem Pflegeheim",
+        "cooperationHint": "Nur bei einer Fahrt mit einem Pflegeheim oder einer anderen Einrichtung.",
+        "distance": "Gefahrene Strecke",
+        "distanceHint": "In Kilometern, wie unterwegs gemessen.",
+        "donation": "Erhaltene Spenden",
+        "donationHint": "Gib sie der Ortsgruppe. Währung: {currency}.",
+        "donationHintNoCurrency": "Gib sie der Ortsgruppe.",
+        "hint": "Ein paar Zeilen für die Ortsgruppe. Du kannst sie später noch ändern.",
+        "invalidNumber": "Bitte gib eine Zahl ein, etwa 12,5.",
+        "kilometres": "{km} km",
+        "none": "Noch kein Fahrtbericht.",
+        "note": "Sonst noch etwas",
+        "notePlaceholder": "Wie lief es? Sollte die Ortsgruppe etwas wissen?",
+        "ratings": {
+          "fair": "Geht so",
+          "good": "Gut",
+          "poor": "Schlecht"
+        },
+        "savedStatus": "Gespeichert",
+        "saving": "Speichert …",
+        "someone": "einer ehemaligen Pilot:in",
+        "title": "Fahrtbericht",
+        "titleMany": "Fahrtberichte",
+        "unit": "km",
+        "unset": "Keine Angabe"
+      },
+      "errors": {
+        "checkInClosed": "Der Check-in ist ab zwei Stunden vor der Fahrt bis einen Tag danach offen.",
+        "notAssigned": "Diese Person ist nicht als Pilot:in für diese Fahrt eingeteilt.",
+        "pleasureLimit": "Diese Fahrt ist voll.",
+        "rateLimited": "Das war viel auf einmal. Warte bitte kurz und versuch es noch einmal.",
+        "rideClosed": "An dieser Fahrt lässt sich nichts mehr ändern.",
+        "rideFull": "Diese Fahrt ist voll.",
+        "rideNotCompleted": "Diese Fahrt ist nicht abgeschlossen.",
+        "rideNotStarted": "Die Fahrt hat noch nicht begonnen.",
+        "unknownPassenger": "Dieser Fahrgast fährt nicht mehr mit.",
+        "unknownRide": "Diese Fahrt gibt es nicht mehr."
+      },
+      "noRiders": "Noch niemand auf der Liste. Füge hinzu, wer vor Ort dazukommt.",
+      "onTheDay": "Am Tag der Fahrt",
+      "onTheDayHint": "Wer da war, wer gefahren ist, und der Abschluss der Liste.",
+      "pilotAttendance": {
+        "completed": "Gefahren",
+        "noShow": "Nicht erschienen",
+        "signedUp": "Eingetragen"
+      },
+      "pilotNoShow": "Nicht gekommen",
+      "pilotNoShowLabel": "{name} ist nicht gekommen",
+      "pilotNoShowMarked": "{name} ist als nicht erschienen markiert",
+      "pilotNoShowCleared": "{name} ist doch gefahren",
+      "pilots": "Pilot:innen",
+      "removeWalkUp": "{name} entfernen",
+      "reopen": {
+        "body": "Die Liste öffnet sich wieder, damit du korrigieren kannst, wer mitgefahren ist. Bis du die Fahrt wieder abschließt, zählt sie nicht.",
+        "cancel": "Abgeschlossen lassen",
+        "confirm": "Wieder öffnen",
+        "done": "Fahrt wieder geöffnet",
+        "label": "Fahrt wieder öffnen",
+        "title": "Diese Fahrt wieder öffnen?"
+      },
+      "riders": "Fahrgäste",
+      "tally": "{riders, plural, one {# Fahrgast eingecheckt} other {# Fahrgäste eingecheckt}}, {trishaws, plural, =0 {keine Rikscha} one {# Rikscha} other {# Rikschas}}, {duration}",
+      "undo": "Rückgängig",
+      "undone": "Check-in zurückgenommen",
+      "walkUp": {
+        "added": "{name} fährt mit",
+        "body": "Trag jemanden ein, der ohne Buchung gekommen ist. Er ist sofort eingecheckt.",
+        "badge": "Vor Ort",
+        "firstName": "Vorname",
+        "lastName": "Nachname",
+        "removed": "{name} fährt nicht mit",
+        "submit": "Hinzufügen und einchecken",
+        "submitting": "Wird hinzugefügt …",
+        "title": "Jemand ist vor Ort dazugekommen",
+        "removeTitle": "{name} von der Fahrt entfernen?",
+        "removeBody": "Nur für jemanden, der versehentlich eingetragen wurde. Wer mitgefahren ist, bleibt auf der Liste.",
+        "removeConfirm": "Entfernen",
+        "keep": "Behalten"
+      },
+      "completedNotice": "Diese Fahrt ist abgeschlossen und zählt in der Statistik.",
+      "finishHint": "Checke alle ein, die mitgefahren sind, und schließ dann die Fahrt ab. Wer nicht eingecheckt ist, zählt als nicht erschienen.",
+      "danger": "Gefahrenzone",
+      "givenUp": "Platz abgesagt",
+      "nobodyRode": "Niemand stand auf der Liste.",
+      "completedByFormer": "Von einem ehemaligen Mitglied abgeschlossen"
     }
   },
   "signIn": {
