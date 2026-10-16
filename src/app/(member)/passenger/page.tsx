@@ -17,11 +17,11 @@ export default function PassengerHomePage() {
       <Suspense fallback={<GreetingFallback />}>
         <Greeting perspective="passenger" />
       </Suspense>
-      <Suspense fallback={null}>
-        <RideRequestsCard />
-      </Suspense>
       <Suspense fallback={<SectionFallback />}>
         <NextRideCard perspective="passenger" />
+      </Suspense>
+      <Suspense fallback={null}>
+        <RideRequestsCard />
       </Suspense>
       <Suspense fallback={<SectionFallback />}>
         <UpcomingEventsCard />
