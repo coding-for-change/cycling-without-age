@@ -1440,6 +1440,16 @@ export async function cancelBooking(
  * a cancelled booking, so the ride's history, its chat and — when their own
  * side let go — its admins hear of it instead of the row just vanishing.
  */
+/** The rides still ahead that any of these riders is booked on. */
+export async function upcomingRideIdsOf(
+  passengerIds: string[],
+  now = new Date(),
+) {
+  if (!passengerIds.length) return [];
+  const bookings = await findUpcomingBookingsOf(passengerIds, now);
+  return [...new Set(bookings.map((booking) => booking.rideId))];
+}
+
 export async function cancelUpcomingBookings(
   passengerIds: string[],
   actorUserId: Actor,

@@ -1134,7 +1134,8 @@ starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 1
   inside their window when this ships, so the first sweep does not flag them all at once.
 - **Ride chat.** A `Conversation` with `origin: ride` and a unique `rideId`, owned by nobody.
   The `syncRideChat` worker listener (`ride.pilotAssigned`, `ride.pilotUnassigned`,
-  `ride.riderBooked`, `ride.riderRemoved`) runs `use-cases/ride-chat.ts`: once a pilot is on the
+  `ride.riderBooked`, `ride.riderRemoved`, and `rider.handedOver` for each ride still ahead of the
+  rider) runs `use-cases/ride-chat.ts`: once a pilot is on the
   ride it opens the chat, and from then on keeps its members equal to the ride's pilots, its
   riders' accounts and the chapter's admins. Riders never learn of each other, so the riders'
   accounts join only when they are one household — a single rider, or one account booking every

@@ -1379,6 +1379,18 @@ describe("roster and staffing", () => {
     expect(db.rideRosterEntry.findMany).not.toHaveBeenCalled();
   });
 
+  it("names each ride still ahead once for riders booked on it together", async () => {
+    db.rideRosterEntry.findMany.mockResolvedValue([
+      { rideId: "ride-1", passengerId: "passenger-1" },
+      { rideId: "ride-1", passengerId: "passenger-2" },
+      { rideId: "ride-2", passengerId: "passenger-1" },
+    ]);
+    expect(
+      await rides.upcomingRideIdsOf(["passenger-1", "passenger-2"]),
+    ).toEqual(["ride-1", "ride-2"]);
+    expect(await rides.upcomingRideIdsOf([])).toEqual([]);
+  });
+
   it("records who assigned a pilot, and that it was not self sign-up", async () => {
     db.rideAssignment.create.mockResolvedValue({
       id: "assignment-1",

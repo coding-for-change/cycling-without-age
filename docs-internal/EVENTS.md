@@ -276,7 +276,9 @@ or `"rider"` per row and the bell, the push and the mail read it back.
 links that request if the scheduling use case stopped between writing the ride and linking
 it; `rideRequests.markScheduled` does nothing when the link is already there. The four roster events (`ride.pilotAssigned`, `ride.pilotUnassigned`,
 `ride.riderBooked`, `ride.riderRemoved`) also have a `syncRideChat` listener that keeps the
-ride's chat members in step (`use-cases/ride-chat.ts`), and `member.roleChanged` has a
+ride's chat members in step (`use-cases/ride-chat.ts`); `rider.handedOver` has it too and
+syncs the chat of every ride still ahead that the rider is booked on (`syncRiderChats`), so the
+old manager leaves those chats and the new one joins. `member.roleChanged` has a
 `leaveRideCrews` listener: a demotion or removal checks the person's upcoming rides for pilots
 again and syncs every ride chat of the chapter they are in (`use-cases/leave-ride-crews.ts`).
 
