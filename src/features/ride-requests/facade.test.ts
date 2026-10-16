@@ -4,8 +4,10 @@ import {
   closePendingRequest,
   countOpenRequestsOfRequester,
   countOpenRequestsOverlapping,
+  countRideRequests,
   findDestinationsOfRequester,
   findOpenRequestsOf,
+  findRideRequests,
   findRideRequestsOfRequester,
   findOpenRequestsOfRequesterWith,
   removeRequestRider,
@@ -575,5 +577,84 @@ describe("listOfUser", () => {
       { since: new Date("2026-09-16T08:00:00Z"), now },
       50,
     );
+  });
+});
+
+describe("lapsed", () => {
+  const now = new Date("2026-10-08T09:00:00Z");
+  const asked = (status: string, requestedEndsAt: Date) => ({
+    status,
+    requestedEndsAt,
+  });
+
+  it("reads a pending request as lapsed the moment its window ends", () => {
+    expect(rideRequests.lapsed(asked("pending", now), now)).toBe(true);
+  });
+
+  it("keeps a pending request open until its window has ended", () => {
+    expect(
+      rideRequests.lapsed(asked("pending", new Date(now.getTime() + 1)), now),
+    ).toBe(false);
+  });
+
+  it.each(["scheduled", "declined", "withdrawn"])(
+    "never reads a %s request as lapsed, however long its window is past",
+    (status) => {
+      expect(
+        rideRequests.lapsed(
+          asked(status, new Date("2026-09-01T09:00:00Z")),
+          now,
+        ),
+      ).toBe(false);
+    },
+  );
+});
+
+describe("listing requests", () => {
+  const list = findRideRequests as jest.Mock;
+  const count = countRideRequests as jest.Mock;
+  const now = new Date("2026-10-08T09:00:00Z");
+
+  beforeEach(() => {
+    list.mockResolvedValue([{ id: "request-1" }]);
+    count.mockResolvedValue(3);
+  });
+
+  it("leaves requests whose window has passed off the open list", async () => {
+    await expect(
+      rideRequests.listRequests([MUNICH], "pending", now),
+    ).resolves.toEqual([{ id: "request-1" }]);
+    expect(list).toHaveBeenCalledWith([MUNICH], "pending", 200, now);
+  });
+
+  it("lists the open ones when no view is named", async () => {
+    await rideRequests.listPending([MUNICH], now);
+    expect(list).toHaveBeenCalledWith([MUNICH], "pending", 200, now);
+  });
+
+  it.each(["scheduled", "declined", "withdrawn", null] as const)(
+    "shows every request of the %s view, its window past or not",
+    async (status) => {
+      await rideRequests.listRequests([MUNICH], status, now);
+      expect(list).toHaveBeenCalledWith([MUNICH], status, 200, null);
+    },
+  );
+
+  it("reads nothing for an admin without chapters", async () => {
+    await expect(
+      rideRequests.listRequests([], "pending", now),
+    ).resolves.toEqual([]);
+    await expect(rideRequests.listPending([], now)).resolves.toEqual([]);
+    expect(list).not.toHaveBeenCalled();
+  });
+
+  it("counts only the open requests whose window is still ahead", async () => {
+    await expect(rideRequests.countPending([MUNICH], now)).resolves.toBe(3);
+    expect(count).toHaveBeenCalledWith([MUNICH], "pending", now);
+  });
+
+  it("counts nothing for an admin without chapters, without asking", async () => {
+    await expect(rideRequests.countPending([], now)).resolves.toBe(0);
+    expect(count).not.toHaveBeenCalled();
   });
 });
