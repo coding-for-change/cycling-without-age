@@ -1,6 +1,7 @@
 import { rideRequests } from "@/features/ride-requests";
 import { DomainError } from "@/lib/domain-error";
 import type { DomainEvent } from "@/lib/events/catalog";
+import { handlers } from "../handlers";
 import { linkRideRequestListener } from "./link-ride-request";
 
 jest.mock("@/features/ride-requests", () => ({
@@ -45,4 +46,11 @@ it("has nothing to do for a request handed back or decided otherwise", async () 
 it("lets anything else fail, so the job is retried", async () => {
   markScheduled.mockRejectedValueOnce(new Error("connection lost"));
   await expect(run(scheduled("request-1"))).rejects.toThrow("connection lost");
+});
+
+it("runs as the backstop of every scheduled ride", () => {
+  expect(handlers["ride.scheduled"].linkRideRequest).toBe(
+    linkRideRequestListener,
+  );
+  expect(handlers["ride.rescheduled"].linkRideRequest).toBeUndefined();
 });
