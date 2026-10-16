@@ -49,6 +49,11 @@ beforeEach(() => {
   (rides.cancelUpcomingBookings as jest.Mock).mockImplementation(async () => {
     order.push("cancel");
   });
+  (rideRequests.withdrawOpenRequests as jest.Mock).mockImplementation(
+    async () => {
+      order.push("withdraw");
+    },
+  );
   (personProfiles.listPhotoFilesOf as jest.Mock).mockResolvedValue([
     { id: "file-1", key: "files/1.webp" },
   ]);
@@ -88,6 +93,7 @@ describe("deleteAccount", () => {
     expect(order).toEqual([
       "handOver",
       "cancel",
+      "withdraw",
       "removeRiders",
       "deleteUser",
       "purge",
