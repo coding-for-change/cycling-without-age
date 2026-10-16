@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
 import { membership } from "@/features/membership";
@@ -178,6 +179,7 @@ export async function submitRideRequest(
   if (!automatic) return { id: request.id, rideId: null };
 
   const ride = await scheduleAutomatically(request.id).catch((error) => {
+    Sentry.captureException(error);
     logger.error(
       { err: serializeError(error), request_id: request.id },
       "automatic scheduling failed",
