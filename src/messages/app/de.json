@@ -977,7 +977,7 @@
           "placeholder": "Wir fahren dienstags um zwei, und Kuchen gibt es immer."
         },
         "requestPush": {
-          "label": "Fahrtanfragen per Push",
+          "label": "Fahrtanfragen brummen aufs Handy",
           "hint": "Schaltest du es aus, warten neue Anfragen trotzdem im Posteingang – mit einer E-Mail zwei Minuten später, falls sie noch niemand in der App gelesen hat."
         }
       },

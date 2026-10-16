@@ -977,7 +977,7 @@
           "placeholder": "Vi kører tirsdage klokken to, og der er altid kage."
         },
         "requestPush": {
-          "label": "Turønsker giver en notifikation",
+          "label": "Turønsker vibrerer i lommen",
           "hint": "Slår du det fra, venter nye ønsker stadig i indbakken – med en e-mail to minutter senere, hvis ingen har læst dem i appen."
         }
       },
