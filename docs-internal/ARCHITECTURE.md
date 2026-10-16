@@ -196,8 +196,11 @@ editing a sentence there would silently change a binding text without a new vers
   "Version … · Last updated …", the draft notice) stay in `messages/app` under `legal`.
 - **`lib/legal`**: the document list, `legalHref` and `legalLinks(titles)`, safe for any layer
   and for Client Components.
-- **Shipping**: the files are read at request time, so `outputFileTracingIncludes` in
-  `next.config.ts` copies them into the standalone server.
+- **Shipping**: the files are read at request time. `outputFileTracingIncludes` in
+  `next.config.ts` puts them into the standalone output, but the Docker image only receives
+  the folders its `RUN` step lists, so the `Dockerfile` moves `src/messages/legal` into
+  `/out/app` itself. Without that line the pages render an error in production, and the
+  `mv` fails the image build if the folder is missing.
 - **Draft guard**: while `draft` is true the page shows a notice. `facade.test.ts` fails
   when a document marked final still contains a `[placeholder]`.
 - **Where the links are**: sign-in, welcome, the account surface ("Legal" group, which also
