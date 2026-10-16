@@ -1308,7 +1308,7 @@
       },
       "decline": {
         "title": "Decline the request",
-        "body": "{name} gets an email. A line on why helps them ask again.",
+        "body": "{name} gets a message. A line on why helps them ask again.",
         "note": "Note for {name}",
         "placeholder": "No pilot is free that morning — would Thursday work?",
         "submit": "Decline request",
@@ -1318,7 +1318,7 @@
       },
       "schedule": {
         "fromRequest": "Request from {name}",
-        "done": "Ride scheduled. {name} gets an email with the calendar file.",
+        "done": "Ride scheduled. {name} gets a confirmation.",
         "note": "The requester wrote this for the chapter. Pilots only see what you put in the note for pilots.",
         "stale": "This request is no longer waiting: someone took it back or decided on it already. Close the drawer to see what happened.",
         "requestedRider": "Asked for in the request"
@@ -2463,7 +2463,7 @@
         },
         "bodies": {
           "pending": "{chapter} has your request and confirms the exact time. You'll hear back by message.",
-          "scheduled": "{chapter} booked the ride. It's in your rides — and in the calendar file we emailed you.",
+          "scheduled": "{chapter} booked the ride. You'll find it in your rides.",
           "scheduledGone": "{chapter} booked a ride for this request, but it has since been cancelled. Ask the chapter about another day.",
           "declined": "{chapter} can't make this ride happen. You're welcome to ask for another day.",
           "withdrawn": "You cancelled this request.",

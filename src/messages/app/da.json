@@ -1308,7 +1308,7 @@
       },
       "decline": {
         "title": "Afvis ønsket",
-        "body": "{name} får en e-mail. Et par ord om hvorfor gør det lettere at ønske igen.",
+        "body": "{name} får besked. Et par ord om hvorfor gør det lettere at sende et nyt ønske.",
         "note": "Besked til {name}",
         "placeholder": "Ingen pilot er ledig den formiddag – passer torsdag?",
         "submit": "Afvis ønsket",
@@ -1318,7 +1318,7 @@
       },
       "schedule": {
         "fromRequest": "Ønske fra {name}",
-        "done": "Turen er planlagt. {name} får en e-mail med kalenderfilen.",
+        "done": "Turen er planlagt. {name} får en bekræftelse.",
         "note": "Det skrev den, der ønskede turen, til afdelingen. Piloterne ser kun det, du skriver i beskeden til piloterne.",
         "stale": "Dette ønske venter ikke længere: Det er trukket tilbage, eller der er allerede taget stilling til det. Luk visningen for at se, hvad der skete.",
         "requestedRider": "Med i ønsket"
@@ -2463,7 +2463,7 @@
         },
         "bodies": {
           "pending": "{chapter} har dit ønske og bekræfter det præcise tidspunkt. Du får besked.",
-          "scheduled": "{chapter} har booket turen. Den står under dine ture – og i den kalenderfil, vi har mailet dig.",
+          "scheduled": "{chapter} har booket turen. Du finder den under dine ture.",
           "scheduledGone": "{chapter} bookede en tur til dette ønske, men den er siden blevet aflyst. Spørg afdelingen om en anden dag.",
           "declined": "{chapter} kan desværre ikke få denne tur til at lykkes. Du er velkommen til at ønske en anden dag.",
           "withdrawn": "Du har trukket dette ønske tilbage.",

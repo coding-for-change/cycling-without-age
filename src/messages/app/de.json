@@ -1308,7 +1308,7 @@
       },
       "decline": {
         "title": "Anfrage ablehnen",
-        "body": "{name} bekommt eine E-Mail. Ein Satz zum Warum hilft, neu anzufragen.",
+        "body": "{name} bekommt eine Nachricht. Ein Satz zum Warum hilft, neu anzufragen.",
         "note": "Nachricht an {name}",
         "placeholder": "An dem Vormittag ist kein Pilot frei – ginge Donnerstag?",
         "submit": "Anfrage ablehnen",
@@ -1318,7 +1318,7 @@
       },
       "schedule": {
         "fromRequest": "Anfrage von {name}",
-        "done": "Fahrt eingeplant. {name} bekommt eine E-Mail mit der Kalenderdatei.",
+        "done": "Fahrt eingeplant. {name} bekommt eine Bestätigung.",
         "note": "Das hat die anfragende Person für die Ortsgruppe geschrieben. Piloten sehen nur, was du in die Nachricht für die Piloten schreibst.",
         "stale": "Diese Anfrage wartet nicht mehr: Sie wurde zurückgezogen oder es wurde schon entschieden. Schließe die Ansicht, um zu sehen, was passiert ist.",
         "requestedRider": "In der Anfrage gewünscht"
@@ -2463,7 +2463,7 @@
         },
         "bodies": {
           "pending": "{chapter} hat Ihre Anfrage und bestätigt die genaue Uhrzeit. Sie bekommen eine Nachricht.",
-          "scheduled": "{chapter} hat die Fahrt gebucht. Sie steht bei Ihren Fahrten – und in der Kalenderdatei, die wir Ihnen gemailt haben.",
+          "scheduled": "{chapter} hat die Fahrt gebucht. Sie finden sie bei Ihren Fahrten.",
           "scheduledGone": "{chapter} hatte für diese Anfrage eine Fahrt gebucht, die inzwischen abgesagt wurde. Fragen Sie bei der Ortsgruppe nach einem anderen Tag.",
           "declined": "{chapter} kann diese Fahrt leider nicht möglich machen. Fragen Sie gern einen anderen Tag an.",
           "withdrawn": "Sie haben diese Anfrage zurückgezogen.",
