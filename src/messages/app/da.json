@@ -63,7 +63,7 @@
         "submit": "Slet konto",
         "title": "Slet din konto for altid?",
         "word": "DELETE",
-        "ridersHint": "Skal dem, du tager dig af, blive ved med at køre, så bed deres afdeling om at overdrage dem til en anden, før du sletter din konto."
+        "bodyWithRiders": "Din konto, dine roller, dine ansøgninger og din historik forsvinder. Ture, der allerede er kørt, bliver stående. Skal dem, du tager dig af, blive ved med at køre, så bed deres afdeling om at overdrage dem til en anden, før du sletter din konto."
       },
       "title": "Log ud eller slet"
     },

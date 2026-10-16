@@ -63,7 +63,7 @@
         "submit": "Delete account",
         "title": "Delete your account for good?",
         "word": "DELETE",
-        "ridersHint": "To keep the people you look after riding, ask their chapter to hand them over to someone else before you delete your account."
+        "bodyWithRiders": "Your account, roles, requests and history go with it. Rides already ridden stay on the record. To keep the people you look after riding, ask their chapter to hand them over to someone else before you delete your account."
       },
       "title": "Sign out or delete"
     },

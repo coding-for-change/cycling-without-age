@@ -29,7 +29,7 @@ export function DangerSection({
   const strings = data.strings.danger.delete;
   const riders = data.ridersRemovedWithAccount;
   const labels = riders.length
-    ? { ...strings, body: `${strings.body} ${strings.ridersHint}` }
+    ? { ...strings, body: strings.bodyWithRiders }
     : strings;
 
   const remove = async () => {

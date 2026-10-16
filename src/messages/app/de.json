@@ -63,7 +63,7 @@
         "submit": "Konto löschen",
         "title": "Konto endgültig löschen?",
         "word": "DELETE",
-        "ridersHint": "Damit die Personen, die du betreust, weiter mitfahren können, bitte ihre Ortsgruppe, sie vorher an jemand anderen zu übergeben."
+        "bodyWithRiders": "Konto, Rollen, Anfragen und Verlauf gehen damit weg. Gefahrene Ausfahrten bleiben im Protokoll. Damit die Personen, die du betreust, weiter mitfahren können, bitte ihre Ortsgruppe, sie vorher an jemand anderen zu übergeben."
       },
       "title": "Abmelden oder löschen"
     },
