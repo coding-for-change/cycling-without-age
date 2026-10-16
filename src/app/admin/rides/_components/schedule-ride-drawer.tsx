@@ -306,11 +306,17 @@ function ScheduleRideSheet({
   const close = () =>
     asked
       ? router.replace(
-          hrefWith(`/admin/rides/requests/${asked}`, searchParams, {
-            new: null,
-            request: null,
-            rideLocation: null,
-          }),
+          hrefWith(
+            request
+              ? `/admin/rides/requests/${request.id}`
+              : "/admin/rides/requests",
+            searchParams,
+            {
+              new: null,
+              request: null,
+              rideLocation: null,
+            },
+          ),
           { scroll: false },
         )
       : go((params) => {
