@@ -1,4 +1,10 @@
-import { placeLine, routeLine, routeWay } from "./request-words";
+import {
+  placeLine,
+  requestedRoute,
+  requestedWhen,
+  routeLine,
+  routeWay,
+} from "./request-words";
 
 const words = { to: "{from} to {to}", toAndBack: "{from} to {to} and back" };
 
@@ -34,5 +40,45 @@ describe("the route of a request", () => {
     expect(placeLine("Sonnenhof", "Sonnenstraße 12")).toBe(
       "Sonnenhof · Sonnenstraße 12",
     );
+  });
+});
+
+describe("when and where a request asks for", () => {
+  const lateNight = {
+    requestedStartsAt: new Date("2026-10-08T23:30:00Z"),
+    requestedEndsAt: new Date("2026-10-09T00:30:00Z"),
+    chapter: { timeZone: "Europe/Berlin" },
+  };
+
+  it("reads the window on the chapter's clock, on the chapter's day", () => {
+    expect(requestedWhen(lateNight, "en-GB")).toEqual({
+      date: "Friday 9 October",
+      time: "01:30 – 02:30",
+    });
+    expect(requestedWhen(lateNight, "en-GB", { short: true }).date).toBe(
+      "Fri 09/10",
+    );
+  });
+
+  it("names the Ride Location rather than the place typed with it", () => {
+    expect(
+      requestedRoute({
+        pickupName: "Lindenweg 3",
+        rideLocation: { name: "Sonnenhof" },
+        destinationName: "Hausarzt Dr. Weber",
+      }),
+    ).toEqual({ from: "Sonnenhof", to: "Hausarzt Dr. Weber" });
+    expect(
+      requestedRoute({
+        pickupName: "Lindenweg 3",
+        rideLocation: null,
+        destinationName: null,
+      }),
+    ).toEqual({ from: "Lindenweg 3", to: null });
+  });
+
+  it("falls back to the address of a place without a name", () => {
+    expect(placeLine(null, "Sonnenstraße 12")).toBe("Sonnenstraße 12");
+    expect(placeLine("Sonnenhof", null)).toBe("Sonnenhof");
   });
 });
