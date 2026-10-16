@@ -416,15 +416,15 @@
   "riderHandedOver": {
     "subject": "Nu booker du ture for {rider}",
     "preview": "{chapter} har overdraget {rider} til dig",
-    "heading": "{rider} er nu hos dig",
+    "heading": "Du tager dig nu af {rider}",
     "intro": "{chapter} har overdraget {rider} til dig. Fra nu af er det dig, der ønsker ture for {rider}, og alle bekræftelser kommer til dig.",
     "cta": "Se dine passagerer",
     "footer": "Du modtager denne e-mail, fordi en Cycling Without Age-afdeling har ændret, hvem der booker ture for en passager."
   },
   "riderHandedAway": {
     "subject": "{chapter} har overdraget {rider}",
-    "preview": "{rider} har fået en ny kontaktperson",
-    "heading": "{rider} har fået en ny kontaktperson",
+    "preview": "Ny kontaktperson for {rider}",
+    "heading": "Ny kontaktperson for {rider}",
     "intro": "{chapter} har overdraget {rider} til en anden. Du booker ikke længere ture for {rider}, og turønsker og bekræftelser kommer ikke længere til dig.",
     "cta": "Åbn appen",
     "footer": "Du modtager denne e-mail, fordi en Cycling Without Age-afdeling har ændret, hvem der booker ture for en passager."

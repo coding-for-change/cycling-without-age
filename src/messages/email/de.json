@@ -367,7 +367,7 @@
     "someone": "jemand"
   },
   "rideRequestCommon": {
-    "someone": "ein Fahrgast",
+    "someone": "einen Fahrgast",
     "someoneAsking": "Jemand"
   },
   "rideRequestSubmitted": {
@@ -416,7 +416,7 @@
   "riderHandedOver": {
     "subject": "Sie buchen jetzt die Fahrten für {rider}",
     "preview": "{chapter} hat {rider} an Sie übergeben",
-    "heading": "{rider} ist jetzt bei Ihnen",
+    "heading": "Sie kümmern sich jetzt um {rider}",
     "intro": "{chapter} hat {rider} an Sie übergeben. Ab jetzt fragen Sie die Fahrten für {rider} an, und alle Bestätigungen kommen zu Ihnen.",
     "cta": "Ihre Fahrgäste ansehen",
     "footer": "Sie erhalten diese E-Mail, weil eine Ortsgruppe von Cycling Without Age geändert hat, wer die Fahrten eines Fahrgasts bucht."

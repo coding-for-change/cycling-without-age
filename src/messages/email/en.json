@@ -416,15 +416,15 @@
   "riderHandedOver": {
     "subject": "You now book rides for {rider}",
     "preview": "{chapter} handed {rider} over to you",
-    "heading": "{rider} is in your care now",
+    "heading": "You now look after {rider}",
     "intro": "{chapter} handed {rider} over to you. From now on you ask for {rider}'s rides, and every confirmation comes to you.",
     "cta": "See your riders",
     "footer": "You received this email because a Cycling Without Age chapter changed who books rides for a rider."
   },
   "riderHandedAway": {
     "subject": "{chapter} handed {rider} over",
-    "preview": "{rider} has a new contact",
-    "heading": "{rider} has a new contact",
+    "preview": "A new contact for {rider}",
+    "heading": "A new contact for {rider}",
     "intro": "{chapter} handed {rider} over to someone else. You no longer book rides for {rider}, and ride requests and confirmations no longer come to you.",
     "cta": "Open the app",
     "footer": "You received this email because a Cycling Without Age chapter changed who books rides for a rider."
