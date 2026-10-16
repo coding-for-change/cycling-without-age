@@ -181,6 +181,19 @@ describe("windowsOnDate", () => {
       expect(windows.map(clock)).not.toContain("2-3");
     });
 
+    it("offers nothing on the spring-forward night that it would then refuse", () => {
+      const nights: OperatingHours = {
+        windows: [{ weekday: 7, startMinute: 0, endMinute: 150 }],
+        closures: [],
+      };
+      const now = new Date("2027-03-20T08:00:00Z");
+      const policy = { ...POLICY, rideMinutes: 30 };
+      const windows = windowsOnDate(nights, "2027-03-28", policy, BERLIN, now);
+      expect(windows.length).toBeGreaterThan(0);
+      for (const window of windows)
+        expect(bookingRefusal(window, nights, policy, BERLIN, now)).toBeNull();
+    });
+
     it("trims a long stretch on the wall clock across the spring-forward night", () => {
       const sundays: OperatingHours = {
         windows: [{ weekday: 7, startMinute: 13 * 60, endMinute: 17 * 60 }],

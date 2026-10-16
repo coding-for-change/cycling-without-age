@@ -178,6 +178,8 @@ export function windowsOnDate(
         CLOCK_STEP_MINUTES * MINUTE_MS
       )
         return [];
+      if (bookingRefusal({ startsAt, endsAt }, hours, policy, timeZone, now))
+        return [];
       return [
         {
           date,
