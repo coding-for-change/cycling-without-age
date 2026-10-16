@@ -25,6 +25,7 @@ import type {
   CountryUpdateInput,
   OperatingHoursInput,
 } from "./schemas";
+import type { BookingPolicy } from "@/lib/booking-windows";
 import { NO_HOURS, type OperatingHours } from "@/lib/operating-hours";
 import {
   deleteClosure,
@@ -504,6 +505,23 @@ export async function getOperatingHours(
   return hours
     ? { windows: hours.windows, closures: hours.closures }
     : NO_HOURS;
+}
+
+/**
+ * What the chapter takes Ride Requests for from `now` on: its riding hours
+ * and closures, and the lead time, horizon and ride length it set.
+ */
+export async function getBookingPolicy(chapterId: string, now: Date) {
+  const [settings, hours] = await Promise.all([
+    getSettings(chapterId),
+    getOperatingHours(chapterId, now),
+  ]);
+  const policy: BookingPolicy = {
+    leadTimeHours: settings.bookingLeadTimeHours,
+    horizonDays: settings.bookingHorizonDays,
+    rideMinutes: settings.defaultRideMinutes,
+  };
+  return { settings, hours, policy };
 }
 
 export const getChapterCountryIds = async (

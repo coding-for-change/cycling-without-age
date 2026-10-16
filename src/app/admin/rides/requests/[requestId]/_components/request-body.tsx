@@ -82,9 +82,8 @@ async function conflictsOf(
   words: Locale,
   now: Date,
 ) {
-  const [settings, hours, around] = await Promise.all([
-    chapters.getSettings(request.chapterId),
-    chapters.getOperatingHours(request.chapterId, now),
+  const [{ hours, policy }, around] = await Promise.all([
+    chapters.getBookingPolicy(request.chapterId, now),
     rides.listRidesInRange(
       [request.chapterId],
       request.requestedStartsAt,
@@ -95,11 +94,7 @@ async function conflictsOf(
   const refusal = bookingRefusal(
     { startsAt: request.requestedStartsAt, endsAt: request.requestedEndsAt },
     hours,
-    {
-      leadTimeHours: settings.bookingLeadTimeHours,
-      horizonDays: settings.bookingHorizonDays,
-      rideMinutes: settings.defaultRideMinutes,
-    },
+    policy,
     request.chapter.timeZone,
     now,
   );

@@ -9,13 +9,29 @@ import { rides } from "@/features/rides";
 import { DomainError, domainCode } from "@/lib/domain-error";
 import { maxRidersFor, submitRideRequest } from "./submit-ride-request";
 
-jest.mock("@/features/chapters", () => ({
-  chapters: {
-    getChapter: jest.fn(),
-    getSettings: jest.fn(),
-    getOperatingHours: jest.fn(),
-  },
-}));
+jest.mock("@/features/chapters", () => {
+  const getSettings = jest.fn();
+  const getOperatingHours = jest.fn();
+  return {
+    chapters: {
+      getChapter: jest.fn(),
+      getSettings,
+      getOperatingHours,
+      getBookingPolicy: jest.fn(async () => {
+        const settings = await getSettings();
+        return {
+          settings,
+          hours: await getOperatingHours(),
+          policy: {
+            leadTimeHours: settings.bookingLeadTimeHours,
+            horizonDays: settings.bookingHorizonDays,
+            rideMinutes: settings.defaultRideMinutes,
+          },
+        };
+      }),
+    },
+  };
+});
 jest.mock("@/features/fleet", () => ({
   fleet: { maxSeats: jest.fn(), suitableTrishawIds: jest.fn() },
 }));

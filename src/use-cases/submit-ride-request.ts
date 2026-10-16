@@ -122,10 +122,9 @@ export async function submitRideRequest(
   if (picked.some((rider) => !rider.bookable))
     throw new DomainError("notChapterMember");
 
-  const [chapter, settings, hours, seats] = await Promise.all([
+  const [chapter, { settings, hours, policy }, seats] = await Promise.all([
     chapters.getChapter(chapterId),
-    chapters.getSettings(chapterId),
-    chapters.getOperatingHours(chapterId, now),
+    chapters.getBookingPolicy(chapterId, now),
     fleet.maxSeats(chapterId),
   ]);
   if (!chapter) throw new DomainError("unknownChapter");
@@ -138,11 +137,7 @@ export async function submitRideRequest(
   const refusal = bookingRefusal(
     { startsAt: requestedStartsAt, endsAt: requestedEndsAt },
     hours,
-    {
-      leadTimeHours: settings.bookingLeadTimeHours,
-      horizonDays: settings.bookingHorizonDays,
-      rideMinutes: settings.defaultRideMinutes,
-    },
+    policy,
     chapter.timeZone,
     now,
   );

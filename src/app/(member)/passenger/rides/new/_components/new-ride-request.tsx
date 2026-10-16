@@ -130,27 +130,17 @@ export async function NewRideRequest({
 
   const chapterId = bookable[0].chapterId;
   const now = new Date();
-  const [chapter, settings, hours, locations, seats, destinations] =
+  const [chapter, { settings, hours, policy }, locations, seats, destinations] =
     await Promise.all([
       chapters.getChapter(chapterId),
-      chapters.getSettings(chapterId),
-      chapters.getOperatingHours(chapterId, now),
+      chapters.getBookingPolicy(chapterId, now),
       rideLocations.listRideLocations([chapterId]),
       fleet.maxSeats(chapterId),
       rideRequests.previousDestinations(session.user.id),
     ]);
   if (!chapter) return null;
 
-  const days = bookableDays(
-    hours,
-    {
-      leadTimeHours: settings.bookingLeadTimeHours,
-      horizonDays: settings.bookingHorizonDays,
-      rideMinutes: settings.defaultRideMinutes,
-    },
-    chapter.timeZone,
-    now,
-  );
+  const days = bookableDays(hours, policy, chapter.timeZone, now);
 
   if (!days.length)
     return (
