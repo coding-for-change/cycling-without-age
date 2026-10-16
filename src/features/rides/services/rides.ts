@@ -630,10 +630,27 @@ const ownRoster = (passengerIds: string[]) =>
     },
   }) satisfies Prisma.Ride$rosterArgs;
 
+/**
+ * A pilot's `RideAssignment` outlives their membership, so each assignee comes
+ * with the chapters they still belong to; the facade drops the ones who left
+ * before a rider is shown their name, let alone their phone number.
+ */
+const currentMembership = {
+  members: { select: { organizationId: true } },
+} satisfies Prisma.UserSelect;
+
 const passengerRideSelect = (passengerIds: string[]) =>
   ({
     ...calendarSelect,
     roster: ownRoster(passengerIds),
+    assignments: {
+      select: {
+        role: true,
+        user: {
+          select: { id: true, name: true, email: true, ...currentMembership },
+        },
+      },
+    },
   }) satisfies Prisma.RideSelect;
 
 export type PassengerRideRow = Prisma.RideGetPayload<{
@@ -724,7 +741,13 @@ const passengerRideDetailSelect = (passengerIds: string[]) =>
       select: {
         role: true,
         user: {
-          select: { id: true, name: true, email: true, phoneNumber: true },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phoneNumber: true,
+            ...currentMembership,
+          },
         },
       },
     },

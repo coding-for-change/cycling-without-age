@@ -366,15 +366,20 @@ export async function listRidesPageAction(
   );
 }
 
+const myRidesPageRequest = passengerRidePageInput.pick({
+  direction: true,
+  cursor: true,
+});
+
 /**
  * The next page of the signed-in member's own rides. Which riders count is
  * read from the account inside the use case; the request only says which way
- * to page and where to start.
+ * to page and where to start — the page size stays the server's.
  */
 export async function listMyRidesPageAction(
   input: unknown,
 ): Promise<RideResult<PassengerListPage>> {
-  const parsed = passengerRidePageInput.safeParse(input);
+  const parsed = myRidesPageRequest.safeParse(input);
   if (!parsed.success) return INVALID;
   const { user } = await requireAuth();
   return attempt(

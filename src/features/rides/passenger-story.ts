@@ -92,6 +92,14 @@ function shownValue(field: StoryField, values: Record<string, unknown>) {
   return text(values[field]);
 }
 
+/**
+ * A ride can be handed from one rider to the next and its pick-up moved to
+ * the new rider's door, so where it used to start or end is somebody else's
+ * address. Places are told by where they are now; the title and the kind of
+ * ride keep their before and after.
+ */
+const PLACES: readonly StoryField[] = ["location", "destination"];
+
 function changesOf(payload: Record<string, unknown>) {
   const fields = Array.isArray(payload.fields) ? payload.fields : [];
   const from = record(payload.from);
@@ -102,7 +110,7 @@ function changesOf(payload: Record<string, unknown>) {
     )
     .map((field) => ({
       field,
-      from: shownValue(field, from),
+      from: PLACES.includes(field) ? null : shownValue(field, from),
       to: shownValue(field, to),
     }));
 }

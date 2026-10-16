@@ -174,7 +174,7 @@ it("keeps only the edits a rider cares about, once per thing", () => {
     createdAt: at,
     type: "edited",
     by: "chapter",
-    changes: [{ field: "location", from: "Sonnenhof", to: "Parkstraße 2" }],
+    changes: [{ field: "location", from: null, to: "Parkstraße 2" }],
   });
 });
 
@@ -230,4 +230,25 @@ it("survives a malformed payload", () => {
   expect(story).toEqual([
     expect.objectContaining({ type: "rescheduled", from: null, to: null }),
   ]);
+});
+
+it("never tells where a ride used to pick up or go", () => {
+  const [edited] = storyForPassengers(
+    [
+      entry("edited", {
+        fields: ["destinationAddress", "title"],
+        from: { destinationAddress: "Karl's home, Hofweg 1", title: "Old" },
+        to: { destinationAddress: "Praxis, Parkstraße 2", title: "New" },
+      }),
+    ],
+    MINE,
+    VIEWER,
+  );
+  expect(edited).toMatchObject({
+    changes: [
+      { field: "destination", from: null, to: "Praxis, Parkstraße 2" },
+      { field: "title", from: "Old", to: "New" },
+    ],
+  });
+  expect(JSON.stringify(edited)).not.toContain("Hofweg");
 });

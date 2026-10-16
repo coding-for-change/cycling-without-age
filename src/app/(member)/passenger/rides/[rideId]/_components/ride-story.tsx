@@ -108,10 +108,12 @@ export function RideStory({
             ),
           }),
           details: entry.changes.map((change) =>
-            say(strings.change, {
-              from: shown(change.field, change.from),
-              to: shown(change.field, change.to),
-            }),
+            change.field === "location" || change.field === "destination"
+              ? shown(change.field, change.to)
+              : say(strings.change, {
+                  from: shown(change.field, change.from),
+                  to: shown(change.field, change.to),
+                }),
           ),
         };
       }

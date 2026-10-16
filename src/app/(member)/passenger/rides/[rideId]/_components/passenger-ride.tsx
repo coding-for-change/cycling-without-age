@@ -34,6 +34,7 @@ import {
   type Locale,
 } from "@/lib/format";
 import { googleMapsUrl } from "@/lib/geo";
+import { isPhoneTempEmail } from "@/lib/identity";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { cn, fullName } from "@/lib/utils";
@@ -271,7 +272,8 @@ export async function PassengerRide({
                   <li key={user.id}>
                     <PilotCard
                       name={user.name}
-                      email={user.email}
+                      avatar={avatarSvg(avatarSeed(user.email), true)}
+                      email={isPhoneTempEmail(user.email) ? null : user.email}
                       phone={user.phoneNumber}
                       call={say(s.call, { name: user.name })}
                       write={say(s.email, { name: user.name })}
@@ -471,13 +473,15 @@ function PlaceRow({
 
 function PilotCard({
   name,
+  avatar,
   email,
   phone,
   call,
   write,
 }: {
   name: string;
-  email: string;
+  avatar: string;
+  email: string | null;
   phone: string | null;
   call: string;
   write: string;
@@ -488,7 +492,7 @@ function PilotCard({
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-3">
         <PersonAvatar
-          svg={avatarSvg(avatarSeed(email), true)}
+          svg={avatar}
           size="lg"
         />
         <span className="font-medium">{name}</span>
@@ -507,17 +511,19 @@ function PilotCard({
             <span className="truncate tabular-nums">{phone}</span>
           </a>
         ) : null}
-        <a
-          href={`mailto:${email}`}
-          aria-label={write}
-          className={action}
-        >
-          <Mail
-            aria-hidden
-            className="size-4 shrink-0 text-ink-soft"
-          />
-          <span className="truncate">{email}</span>
-        </a>
+        {email ? (
+          <a
+            href={`mailto:${email}`}
+            aria-label={write}
+            className={action}
+          >
+            <Mail
+              aria-hidden
+              className="size-4 shrink-0 text-ink-soft"
+            />
+            <span className="truncate">{email}</span>
+          </a>
+        ) : null}
       </div>
     </div>
   );

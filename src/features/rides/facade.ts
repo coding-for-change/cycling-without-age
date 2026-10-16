@@ -1066,6 +1066,27 @@ export async function listRidesForList(
   };
 }
 
+/**
+ * Only pilots who still belong to the ride's chapter are shown to its riders.
+ * An assignment outlives its pilot's membership, and a rider is given their
+ * pilot's phone and email.
+ */
+const withCurrentPilots = <
+  R extends {
+    chapterId: string;
+    assignments: { user: { members: { organizationId: string }[] } }[];
+  },
+>(
+  ride: R,
+): R => ({
+  ...ride,
+  assignments: ride.assignments.filter(({ user }) =>
+    user.members.some(
+      ({ organizationId }) => organizationId === ride.chapterId,
+    ),
+  ),
+});
+
 export type PassengerRidePage = {
   rides: PassengerRideRow[];
   nextCursor: string | null;
@@ -1090,23 +1111,34 @@ export async function listPassengerRidesPage(
   const found = await find(passengerIds, now, decodeCursor(cursor), limit + 1);
   const page = found.slice(0, limit);
   return {
-    rides: page,
+    rides: page.map(withCurrentPilots),
     nextCursor:
       found.length > limit ? encodeCursor(page[page.length - 1]) : null,
   };
 }
 
-/** `null` unless one of these riders is on the ride — a guessed id reads as missing. */
-export const getRideForPassengers = (rideId: string, passengerIds: string[]) =>
-  passengerIds.length
-    ? findRideForPassengers(rideId, passengerIds)
-    : Promise.resolve(null);
-
-export const listRideStoryForPassengers = async (
+/**
+ * One ride and its history as these riders may read them, or `null` unless one
+ * of them is on the ride — a guessed id reads as missing, and the history is
+ * never read for a ride they are not on.
+ */
+export async function getRideWithStoryForPassengers(
   rideId: string,
   passengerIds: string[],
   viewerId: string,
-) => storyForPassengers(await listRideLog(rideId), passengerIds, viewerId);
+) {
+  if (!passengerIds.length) return null;
+  const ride = await findRideForPassengers(rideId, passengerIds);
+  if (!ride) return null;
+  return {
+    ride: withCurrentPilots(ride),
+    story: storyForPassengers(
+      await listRideLog(rideId),
+      passengerIds,
+      viewerId,
+    ),
+  };
+}
 
 export async function cancelBooking(
   rideId: string,

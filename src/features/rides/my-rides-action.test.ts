@@ -52,7 +52,14 @@ it("pages the signed-in member's rides and nobody else's", async () => {
   expect(page).toHaveBeenCalledWith("user-manager", {
     direction: "upcoming",
     cursor: "1.x",
-    limit: 20,
+  });
+});
+
+it("keeps the page size its own, whatever the client asks for", async () => {
+  await listMyRidesPageAction({ direction: "past", limit: 100 });
+  expect(page).toHaveBeenCalledWith("user-manager", {
+    direction: "past",
+    cursor: undefined,
   });
 });
 

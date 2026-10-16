@@ -2,7 +2,6 @@ import "server-only";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { fullName } from "@/lib/utils";
 import type { PassengerRidePage, PassengerRideRow } from "../facade";
-import { ridePilots } from "./ride-presentation";
 
 export type PassengerListRide = {
   id: string;
@@ -35,11 +34,13 @@ export const toPassengerListRide = (
   title: ride.title,
   locationName: ride.locationName,
   destinationName: ride.destinationName,
-  pilots: ridePilots(ride).map(({ user }) => ({
-    id: user.id,
-    name: user.name,
-    avatar: avatarSvg(avatarSeed(user.email)),
-  })),
+  pilots: ride.assignments
+    .filter(({ role }) => role === "pilot")
+    .map(({ user }) => ({
+      id: user.id,
+      name: user.name,
+      avatar: avatarSvg(avatarSeed(user.email)),
+    })),
   riders: ride.roster.map(({ passenger }) => fullName(passenger)),
 });
 

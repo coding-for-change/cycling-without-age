@@ -2,13 +2,13 @@ import { CalendarClock } from "lucide-react";
 import { cacheLife } from "next/cache";
 import { headers } from "next/headers";
 import { EmptyState } from "@/components/empty-state";
-import { passengers } from "@/features/passengers";
 import { rides } from "@/features/rides";
 import { RideAgenda } from "@/features/rides/components/ride-agenda";
 import { perspectiveViewerSession } from "@/lib/auth-guards";
 import { resolveLocale, wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
+import { passengerRiderIds } from "@/use-cases/passenger-rides";
 import type { MemberPerspective } from "../../nav";
 import { getPassengerAudience } from "@/use-cases/passenger-audience";
 import { audienceCopy } from "../audience-copy";
@@ -89,9 +89,8 @@ async function listUpcomingRides(
   const to = new Date(from.getTime() + HORIZON_MS);
   if (perspective === "pilot") return rides.listRidesForPilot(userId, from, to);
 
-  const mine = await passengers.listPassengersManagedBy(userId);
   return rides.listRidesForPassengers(
-    mine.map((passenger) => passenger.id),
+    await passengerRiderIds(userId),
     from,
     to,
   );
