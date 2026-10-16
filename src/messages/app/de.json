@@ -2389,7 +2389,7 @@
       },
       "where": {
         "kind": "Welche Art von Fahrt?",
-        "pleasureBody": "Eine Runde im Schritttempo mit Wind in den Haaren, zurück zum Ausgangspunkt.",
+        "pleasureBody": "Eine Runde im Schritttempo mit Wind im Haar, zurück zum Ausgangspunkt.",
         "functionalBody": "Zum Arzt, ins Café oder zu Freunden – und auf Wunsch wieder zurück.",
         "from": "Start bei",
         "pickup": "Abholen bei",
