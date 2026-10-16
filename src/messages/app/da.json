@@ -1260,11 +1260,6 @@
         "chapter": "Afdeling",
         "requester": "Ønsket af"
       },
-      "models": {
-        "pleasure": "Tur ud",
-        "functional": "Et sted hen",
-        "roundTrip": "Ud og hjem"
-      },
       "detail": {
         "back": "Turønsker",
         "asked": "{name} ønskede {when}",

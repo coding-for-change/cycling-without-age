@@ -99,10 +99,8 @@ async function RequestList({ searchParams }: PageProps) {
       startsIso: request.requestedStartsAt.toISOString(),
       riders: requestedRiders(request).join(", "),
       model: [
-        strings.models[
-          request.model === "functional" ? "functional" : "pleasure"
-        ],
-        request.roundTrip ? strings.models.roundTrip : null,
+        dict.calendar.models[request.model],
+        request.roundTrip ? dict.rides.schedule.roundTrip : null,
       ]
         .filter(Boolean)
         .join(" · "),

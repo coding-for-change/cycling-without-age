@@ -180,8 +180,7 @@ export async function RequestBody({
     name: person?.name ?? detail.someone,
   });
 
-  const model =
-    strings.models[request.model === "functional" ? "functional" : "pleasure"];
+  const model = dict.calendar.models[request.model];
 
   return (
     <>
@@ -361,7 +360,7 @@ export async function RequestBody({
               label={detail.model}
               value={
                 request.roundTrip
-                  ? `${model} · ${strings.models.roundTrip}`
+                  ? `${model} · ${dict.rides.schedule.roundTrip}`
                   : model
               }
             />
