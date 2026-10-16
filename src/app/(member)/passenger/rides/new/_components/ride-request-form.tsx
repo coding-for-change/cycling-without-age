@@ -292,10 +292,17 @@ export function RideRequestForm({
         }
         return;
       }
-      router.replace(`/passenger/rides/requests/${result.id}`, {
-        transitionTypes: ["push"],
-      });
+      leaveFor(`/passenger/rides/requests/${result.id}`);
     });
+
+  const leaveFor = (href: string) => {
+    const steps = pushed.current;
+    const open = () => router.replace(href, { transitionTypes: ["push"] });
+    if (!steps) return open();
+    pushed.current = 0;
+    window.addEventListener("popstate", open, { once: true });
+    window.history.go(-steps);
+  };
 
   useEffect(() => {
     if (shown.current !== null && shown.current !== step)
