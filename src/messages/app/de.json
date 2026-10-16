@@ -1320,7 +1320,8 @@
         "fromRequest": "Anfrage von {name}",
         "done": "Fahrt eingeplant. {name} bekommt eine E-Mail mit der Kalenderdatei.",
         "note": "Das hat die anfragende Person für die Ortsgruppe geschrieben. Piloten sehen nur, was du in die Nachricht für die Piloten schreibst.",
-        "stale": "Diese Anfrage wartet nicht mehr: Sie wurde zurückgezogen oder es wurde schon entschieden. Schließe die Ansicht, um zu sehen, was passiert ist."
+        "stale": "Diese Anfrage wartet nicht mehr: Sie wurde zurückgezogen oder es wurde schon entschieden. Schließe die Ansicht, um zu sehen, was passiert ist.",
+        "requestedRider": "In der Anfrage gewünscht"
       },
       "errors": {
         "requestNotPending": "Über diese Anfrage wurde schon entschieden. Lade neu, um zu sehen, was passiert ist.",

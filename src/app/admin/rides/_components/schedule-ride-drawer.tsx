@@ -1123,6 +1123,10 @@ function ScheduleRideSheet({
               <CrewRows
                 crew={crew}
                 chapterId={chapter.id}
+                requested={{
+                  ids: request?.passengerIds ?? [],
+                  hint: requestStrings.requestedRider,
+                }}
                 passengerIds={passengerIds}
                 onPassengers={setPassengerIds}
                 pilotIds={pilotIds}
@@ -1503,6 +1507,7 @@ function TrishawPicker({
 function CrewRows({
   crew,
   chapterId,
+  requested,
   passengerIds,
   onPassengers,
   pilotIds,
@@ -1515,6 +1520,7 @@ function CrewRows({
 }: {
   crew: Promise<ScheduleCrew>;
   chapterId: string;
+  requested: { ids: string[]; hint: string };
   passengerIds: string[];
   onPassengers: (ids: string[]) => void;
   pilotIds: string[];
@@ -1533,9 +1539,15 @@ function CrewRows({
     <>
       <FieldRow label={passengerStrings.label}>
         <PeoplePicker
-          options={ofChapter(passengers)}
+          options={ofChapter(passengers).map((person) =>
+            requested.ids.includes(person.id)
+              ? { ...person, disabled: true, hint: requested.hint }
+              : person,
+          )}
           value={passengerIds}
-          onChange={onPassengers}
+          onChange={(ids) =>
+            onPassengers([...new Set([...requested.ids, ...ids])])
+          }
           strings={passengerStrings}
           locale={language}
           max={passengerMax}
