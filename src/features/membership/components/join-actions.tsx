@@ -8,6 +8,7 @@ import {
   type MembershipActionResult,
 } from "../actions";
 import { haptics } from "@/lib/native/haptics";
+import { signInHref } from "@/lib/redirects";
 import { Button } from "@/components/ui/button";
 
 type Card = { title: string; body: string; cta: string };
@@ -18,12 +19,14 @@ export function JoinActions({
   strings,
   errors,
   passengerOnly = false,
+  next,
 }: {
   chapterId: string;
   pendingApplication: boolean;
   strings: { passenger: Card; pilot: Card & { pending: string } };
   errors: Record<string, string>;
   passengerOnly?: boolean;
+  next?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -43,7 +46,9 @@ export function JoinActions({
       // redirects, and both actions above revalidate it. Calling
       // `nextOnboardingPath()` here would push straight there, but that import
       // crosses two `src/app` elements and boundaries/dependencies refuses it.
-      router.push("/onboarding", { transitionTypes: ["nav-forward"] });
+      router.push(next ? signInHref(next) : "/onboarding", {
+        transitionTypes: ["nav-forward"],
+      });
     });
 
   return (

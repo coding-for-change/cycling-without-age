@@ -70,6 +70,7 @@ export async function NewRideRequest({
         </header>
         <JoinActions
           passengerOnly
+          next={`/passenger/rides/new?chapter=${encodeURIComponent(asked.slug)}`}
           chapterId={asked.id}
           pendingApplication={pendingApplication}
           strings={{ passenger: dict.join.passenger, pilot: dict.join.pilot }}
