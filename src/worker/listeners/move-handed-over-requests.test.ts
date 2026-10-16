@@ -1,9 +1,9 @@
-import { moveHandedOverRequests } from "@/use-cases/hand-over-rider";
+import { moveHandedOverRequests } from "@/use-cases/move-handed-over-requests";
 import type { DomainEvent } from "@/lib/events/catalog";
 import { handlers } from "../handlers";
 import { moveHandedOverRequestsListener } from "./move-handed-over-requests";
 
-jest.mock("@/use-cases/hand-over-rider", () => ({
+jest.mock("@/use-cases/move-handed-over-requests", () => ({
   moveHandedOverRequests: jest.fn(),
 }));
 
