@@ -2506,7 +2506,12 @@
         "riderBooked": "Passageren er allerede booket på en tur på det tidspunkt.",
         "tooManyRequests": "Du har allerede flere ønsker, der venter. Når afdelingen har svaret, kan du ønske igen."
       },
-      "booked": "Booket hos {chapter}"
+      "booked": "Booket hos {chapter}",
+      "noDays": {
+        "title": "Ingen dage åbne for ønsker",
+        "body": "{chapter} tager ikke imod turønsker de næste uger lige nu. Skriv til dem, så finder de en løsning.",
+        "subject": "En tur med Cycling Without Age"
+      }
     }
   },
   "passkey": {

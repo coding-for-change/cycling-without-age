@@ -22,6 +22,7 @@ import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { first } from "@/lib/search-params";
 import { maxRidersFor, ridersToBook } from "@/use-cases/submit-ride-request";
+import { ChapterMail } from "../../_components/chapter-mail";
 import { RideRequestForm, type RequestFormData } from "./ride-request-form";
 
 const PEOPLE = "/passenger/profile/people";
@@ -149,6 +150,28 @@ export async function NewRideRequest({
     chapter.timeZone,
     now,
   );
+
+  if (!days.length)
+    return (
+      <>
+        <h1 className="text-2xl tracking-tight md:text-3xl">{strings.title}</h1>
+        <EmptyState
+          icon={CalendarX2}
+          title={strings.noDays.title}
+          action={
+            settings.replyToEmail?.trim() ? (
+              <ChapterMail
+                email={settings.replyToEmail.trim()}
+                subject={strings.noDays.subject}
+                label={dict.passenger.rides.write}
+              />
+            ) : undefined
+          }
+        >
+          {formatMessage(strings.noDays.body, { chapter: chapter.name }, words)}
+        </EmptyState>
+      </>
+    );
 
   const data: RequestFormData = {
     chapterName: chapter.name,

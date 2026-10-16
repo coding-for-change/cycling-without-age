@@ -2506,7 +2506,12 @@
         "riderBooked": "Dieser Fahrgast ist zu dieser Zeit schon für eine Fahrt gebucht.",
         "tooManyRequests": "Sie haben schon mehrere offene Anfragen. Sobald die Ortsgruppe geantwortet hat, können Sie neu anfragen."
       },
-      "booked": "Bei {chapter} gebucht"
+      "booked": "Bei {chapter} gebucht",
+      "noDays": {
+        "title": "Gerade keine Tage frei für Anfragen",
+        "body": "{chapter} nimmt für die nächsten Wochen gerade keine Fahrtanfragen an. Schreiben Sie der Ortsgruppe, sie findet einen Weg.",
+        "subject": "Eine Fahrt mit Radeln ohne Alter"
+      }
     }
   },
   "passkey": {

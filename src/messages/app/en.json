@@ -2506,7 +2506,12 @@
         "riderBooked": "This rider is already booked on a ride at that time.",
         "tooManyRequests": "You have several requests waiting already. Once the chapter has answered them, you can ask again."
       },
-      "booked": "Booked with {chapter}"
+      "booked": "Booked with {chapter}",
+      "noDays": {
+        "title": "No days open for requests",
+        "body": "{chapter} isn't taking ride requests for the coming weeks right now. Write to them, and they'll find a way.",
+        "subject": "A ride with Cycling Without Age"
+      }
     }
   },
   "passkey": {
