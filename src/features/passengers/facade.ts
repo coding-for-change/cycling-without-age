@@ -19,7 +19,6 @@ import {
   findBookingAccountsOfChapters,
   countPassengersInChapters,
   countPassengersManagedBy,
-  countPassengersWithoutAccountManagedBy,
   countRosterEntriesOf,
   deletePassengerWithoutAccount,
   findPassengerById,
@@ -42,6 +41,8 @@ import {
   insertCareRequest,
   insertPassengerIn,
   deletePassengerOfUser,
+  deletePassengersWithoutAccountManagedBy,
+  moveRiderToManager,
   setPassengerManagers,
   updatePassengerNeeds,
   updatePassengerOfUser,
@@ -219,9 +220,6 @@ export async function removeManagedRider(passengerId: string) {
 export const countRiderBookings = (passengerId: string) =>
   countRosterEntriesOf(passengerId);
 
-export const countRidersRemovedWith = (userId: string) =>
-  countPassengersWithoutAccountManagedBy(userId);
-
 export const removeOwnPassenger = (userId: string) =>
   deletePassengerOfUser(userId);
 
@@ -233,6 +231,48 @@ export async function handRidersToTheirOwnAccounts(managedByUserId: string) {
   if (changes.length) await setPassengerManagers(changes);
   return changes.length;
 }
+
+/**
+ * Moves a rider without an account of their own to another manager, who must
+ * be able to take them on (same chapter, room for one more). Bookings, the
+ * profile and the ride history stay with the rider.
+ */
+export async function handOverRider(
+  passengerId: string,
+  toUserId: string,
+  actorUserId: string,
+  { invited = false }: { invited?: boolean } = {},
+) {
+  const rider = await findPassengerById(passengerId);
+  if (!rider || rider.userId) throw new DomainError("unknownPassenger");
+  if (rider.managedByUserId === toUserId) throw new DomainError("sameManager");
+  await assertCanTakeOn(toUserId, rider.chapterId, 1);
+  return transaction(async (tx, emit) => {
+    const { count } = await moveRiderToManager(
+      passengerId,
+      rider.managedByUserId,
+      toUserId,
+      tx,
+    );
+    if (count !== 1) throw new DomainError("unknownPassenger");
+    await emit({
+      type: "rider.handedOver",
+      passengerId,
+      chapterId: rider.chapterId,
+      actorUserId,
+      fromUserId: rider.managedByUserId,
+      toUserId,
+      invited,
+    });
+    return { chapterId: rider.chapterId, fromUserId: rider.managedByUserId };
+  });
+}
+
+/** Removes, on purpose, the riders without an account this account looks after. */
+export const removeRidersWithoutAccount = (
+  managedByUserId: string,
+  ids: string[],
+) => deletePassengersWithoutAccountManagedBy(managedByUserId, ids);
 
 export const countPassengersOfChapters = async (chapterIds: string[]) =>
   chapterIds.length ? countPassengersInChapters(chapterIds) : 0;

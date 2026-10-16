@@ -261,6 +261,19 @@
   );
 }
 
+@utility bottom-above-tabbar {
+  bottom: calc(
+    max(
+        var(
+          --cap-native-navigation-bottom,
+          calc(var(--tabbar-h) + max(0.75rem, env(safe-area-inset-bottom)))
+        ),
+        env(safe-area-inset-bottom)
+      ) +
+      0.75rem
+  );
+}
+
 @utility scroll-fade-b {
   &[data-scrollable~="end"] {
     mask-image: linear-gradient(

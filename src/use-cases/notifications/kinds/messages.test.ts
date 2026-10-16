@@ -5,6 +5,7 @@ import { membership } from "@/features/membership";
 import { fleet } from "@/features/fleet";
 import { passengers } from "@/features/passengers";
 import { profile } from "@/features/profile";
+import { rideRequests } from "@/features/ride-requests";
 import { rides } from "@/features/rides";
 import da from "@/messages/app/da.json";
 import de from "@/messages/app/de.json";
@@ -12,7 +13,7 @@ import en from "@/messages/app/en.json";
 import { locales, type Locale } from "@/lib/i18n/locales";
 import type { DomainEvent, EventType } from "@/lib/events/catalog";
 import { kinds } from "@/use-cases/notifications/kinds";
-import type { Message } from "@/use-cases/notifications/kinds/types";
+import type { AnyKind, Message } from "@/use-cases/notifications/kinds/types";
 
 jest.mock("@/features/chapters", () => ({
   chapters: {
@@ -43,6 +44,9 @@ jest.mock("@/features/passengers", () => ({
   },
 }));
 jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
+jest.mock("@/features/ride-requests", () => ({
+  rideRequests: { getRequest: jest.fn(), getRequestScope: jest.fn() },
+}));
 jest.mock("@/features/passengers", () => ({
   passengers: {
     getOwnPassenger: jest.fn().mockResolvedValue(null),
@@ -53,8 +57,17 @@ jest.mock("@/features/passengers", () => ({
     getPassenger: jest
       .fn()
       .mockResolvedValue({ firstName: "Inge", lastName: "Holm" }),
+    passengerNames: jest.fn(),
   },
 }));
+
+beforeAll(() => {
+  jest.useFakeTimers({
+    now: new Date("2026-10-20T08:00:00Z"),
+    doNotFake: ["nextTick", "setImmediate", "queueMicrotask"],
+  });
+});
+afterAll(() => jest.useRealTimers());
 
 const getChapter = chapters.getChapter as jest.Mock;
 const getCountry = chapters.getCountry as jest.Mock;
@@ -68,6 +81,9 @@ const getRideFacts = rides.getRideFacts as jest.Mock;
 const listRideParticipants = rides.listRideParticipants as jest.Mock;
 const getPassenger = passengers.getPassenger as jest.Mock;
 const getMemberRoles = membership.getMemberRoles as jest.Mock;
+const getRequest = rideRequests.getRequest as jest.Mock;
+const getRequestScope = rideRequests.getRequestScope as jest.Mock;
+const passengerNames = passengers.passengerNames as jest.Mock;
 
 const DICTIONARIES = { en, da, de } as Record<Locale, typeof en>;
 
@@ -196,6 +212,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     chapterId: CHAPTER,
     actorUserId: ACTOR,
     returnLegId: "ride-2",
+    requestId: null,
   },
   "ride.rescheduled": {
     type: "ride.rescheduled",
@@ -244,6 +261,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     actorUserId: ACTOR,
     passengerId: "passenger-1",
     pair: null,
+    requestId: null,
   },
   "ride.riderRemoved": {
     type: "ride.riderRemoved",
@@ -275,6 +293,108 @@ const EVENTS: Record<EventType, DomainEvent> = {
     chapterId: CHAPTER,
     actorUserId: ACTOR,
   },
+  "rideRequest.submitted": {
+    type: "rideRequest.submitted",
+    requestId: "request-1",
+    chapterId: CHAPTER,
+    actorUserId: SUBJECT,
+  },
+  "rideRequest.scheduled": {
+    type: "rideRequest.scheduled",
+    requestId: "request-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+    requesterUserId: SUBJECT,
+    rideId: "ride-1",
+    returnLegId: "ride-2",
+  },
+  "rideRequest.declined": {
+    type: "rideRequest.declined",
+    requestId: "request-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+    requesterUserId: SUBJECT,
+  },
+  "rideRequest.withdrawn": {
+    type: "rideRequest.withdrawn",
+    requestId: "request-1",
+    chapterId: CHAPTER,
+    actorUserId: SUBJECT,
+  },
+  "rider.handedOver": {
+    type: "rider.handedOver",
+    passengerId: "passenger-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+    fromUserId: SUBJECT,
+    toUserId: "user-new",
+    invited: false,
+  },
+};
+
+const VARIANTS: Partial<Record<EventType, DomainEvent[]>> = {
+  "pilotApplication.decided": [
+    { ...EVENTS["pilotApplication.decided"], approved: false } as DomainEvent,
+  ],
+  "ride.pilotAssigned": [
+    {
+      ...EVENTS["ride.pilotAssigned"],
+      actorUserId: SUBJECT,
+      self: true,
+    } as DomainEvent,
+  ],
+  "rideRequest.submitted": [
+    { ...EVENTS["rideRequest.submitted"], requestId: "request-pleasure" },
+    { ...EVENTS["rideRequest.submitted"], requestId: "request-one-way" },
+  ] as DomainEvent[],
+  "rideRequest.scheduled": [
+    { ...EVENTS["rideRequest.scheduled"], returnLegId: null } as DomainEvent,
+  ],
+  "rideRequest.declined": [
+    {
+      ...EVENTS["rideRequest.declined"],
+      requestId: "request-no-note",
+    } as DomainEvent,
+  ],
+  "rideRequest.withdrawn": [
+    { ...EVENTS["rideRequest.withdrawn"], actorUserId: ACTOR } as DomainEvent,
+  ],
+};
+
+const REQUEST_VARIANTS: Record<string, object> = {
+  "request-pleasure": {
+    model: "pleasure",
+    destinationName: null,
+    roundTrip: false,
+  },
+  "request-one-way": { roundTrip: false },
+  "request-no-note": { decisionNote: null },
+};
+
+const eventsOf = (kind: AnyKind) => [
+  EVENTS[kind.event],
+  ...(VARIANTS[kind.event] ?? []),
+];
+
+const readings = async (kind: AnyKind, event: DomainEvent) => {
+  const shared = kind.payload.parse(await kind.params(event));
+  const readers = kind.forRecipient
+    ? [...new Set(await kind.recipients(event))]
+    : [];
+  return [
+    shared,
+    ...readers.map((reader) =>
+      kind.payload.parse(kind.forRecipient!(shared, reader)),
+    ),
+  ];
+};
+
+const messagesOf = async (kind: AnyKind, locale: Locale) => {
+  const messages: Message[] = [];
+  for (const event of eventsOf(kind))
+    for (const params of await readings(kind, event))
+      messages.push(kind.message(params, getEmailStrings(locale), locale));
+  return messages;
 };
 
 const APP_RELATIVE = /^\/(?!\/)/;
@@ -317,6 +437,27 @@ const known = () => {
     managedByUserId: "user-carer",
     userId: null,
   });
+  passengerNames.mockResolvedValue({ "passenger-1": "Erna Huber" });
+  getRequestScope.mockResolvedValue({
+    id: "request-1",
+    chapterId: CHAPTER,
+    status: "pending",
+    requesterUserId: SUBJECT,
+  });
+  getRequest.mockImplementation(async (requestId: string) => ({
+    id: requestId,
+    model: "functional",
+    requestedStartsAt: new Date("2026-10-27T08:00:00Z"),
+    requestedEndsAt: new Date("2026-10-27T09:00:00Z"),
+    pickupName: "Seniorenheim Sonnenhof",
+    destinationName: "Hausarzt Dr. Weber",
+    roundTrip: true,
+    requesterUserId: SUBJECT,
+    decisionNote: "No pilot is free that morning.",
+    chapter: { name: "München", timeZone: "Europe/Berlin" },
+    passengers: [{ passenger: { id: "passenger-1" } }],
+    ...REQUEST_VARIANTS[requestId],
+  }));
 };
 
 const unknown = () => {
@@ -327,6 +468,9 @@ const unknown = () => {
   getLocation.mockResolvedValue(null);
   getRideFacts.mockResolvedValue(null);
   getPassenger.mockResolvedValue(null);
+  passengerNames.mockResolvedValue({});
+  getRequestScope.mockResolvedValue(null);
+  getRequest.mockResolvedValue(null);
 };
 
 beforeEach(() => {
@@ -353,28 +497,26 @@ describe.each(kinds.map((kind) => [kind.event, kind] as const))(
     });
 
     it.each(locales)("reads as finished prose in %s", async (locale) => {
-      const params = kind.payload.parse(await kind.params(event));
-      const message = kind.message(params, getEmailStrings(locale), locale);
-
-      expect(lines(message).length).toBeGreaterThan(3);
-      for (const line of lines(message)) {
-        expect(line).not.toMatch(/\{\w+\}/);
-        expect(line).not.toMatch(/\b(null|undefined)\b/);
-        expect(line.trim()).not.toBe("");
+      for (const message of await messagesOf(kind, locale)) {
+        expect(lines(message).length).toBeGreaterThan(3);
+        for (const line of lines(message)) {
+          expect(line).not.toMatch(/\{\w+\}/);
+          expect(line).not.toMatch(/\b(null|undefined)\b/);
+          expect(line.trim()).not.toBe("");
+        }
+        expect(message.template).toEqual(expect.any(String));
       }
-      expect(message.template).toEqual(expect.any(String));
     });
 
     it.each(locales)(
       "still reads as finished prose in %s with nothing named",
       async (locale) => {
         unknown();
-        const params = kind.payload.parse(await kind.params(event));
-        const message = kind.message(params, getEmailStrings(locale), locale);
-
-        for (const line of lines(message)) {
-          expect(line).not.toMatch(/\{\w+\}/);
-          expect(line).not.toMatch(/\b(null|undefined)\b/);
+        for (const message of await messagesOf(kind, locale)) {
+          for (const line of lines(message)) {
+            expect(line).not.toMatch(/\{\w+\}/);
+            expect(line).not.toMatch(/\b(null|undefined)\b/);
+          }
         }
       },
     );
@@ -419,24 +561,37 @@ describe("a message for both legs of a round trip", () => {
   });
 });
 
+describe("the variants of a request message", () => {
+  const kindOf = (event: EventType) =>
+    kinds.find((kind) => kind.event === event)!;
+
+  it.each([
+    "rideRequest.submitted",
+    "rideRequest.scheduled",
+    "rideRequest.withdrawn",
+  ] as EventType[])("each word %s their own way", async (event) => {
+    const bodies = (await messagesOf(kindOf(event), "en")).map(
+      (message) => message.body,
+    );
+    expect(bodies.length).toBeGreaterThan(1);
+    expect(new Set(bodies).size).toBe(bodies.length);
+  });
+
+  it("leave the note out of a decline that gave no reason", async () => {
+    expect(
+      (await messagesOf(kindOf("rideRequest.declined"), "en")).map(
+        (message) => message.note?.text ?? null,
+      ),
+    ).toEqual(["No pilot is free that morning.", null]);
+  });
+});
+
 describe("the templates the history feed has to label", () => {
   const collect = async () => {
     const templates = new Set<string>();
-    const rejected: DomainEvent = {
-      ...EVENTS["pilotApplication.decided"],
-      approved: false,
-    } as DomainEvent;
-
-    for (const kind of kinds) {
-      for (const event of [
-        EVENTS[kind.event],
-        ...(kind.event === "pilotApplication.decided" ? [rejected] : []),
-      ]) {
-        const params = kind.payload.parse(await kind.params(event));
-        const { template } = kind.message(params, getEmailStrings("en"), "en");
+    for (const kind of kinds)
+      for (const { template } of await messagesOf(kind, "en"))
         if (template) templates.add(template);
-      }
-    }
     return [...templates].sort();
   };
 
@@ -462,8 +617,16 @@ describe("the templates the history feed has to label", () => {
       "rideCancelled",
       "rideChanged",
       "rideOpened",
+      "ridePilotFound",
       "ridePilotWithdrew",
+      "rideRequestDeclined",
+      "rideRequestScheduled",
+      "rideRequestSubmitted",
+      "rideRequestWithdrawn",
+      "rideSignedUp",
       "rideUnderstaffed",
+      "riderHandedAway",
+      "riderHandedOver",
       "roleChanged",
       "welcome",
     ]);

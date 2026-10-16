@@ -58,6 +58,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { scheduleRideRequestAction } from "@/features/ride-requests/actions";
 import {
   availableTrishawsAction,
   estimateRouteAction,
@@ -148,6 +149,20 @@ export type ScheduleChapter = {
 
 type CrewMember = PersonOption & { chapterId: string };
 
+export type RequestPrefill = {
+  id: string;
+  chapterId: string;
+  name: string | null;
+  model: "pleasure" | "functional";
+  slot: WallSlot;
+  rideLocationId: string | null;
+  origin: Place | null;
+  destination: Place | null;
+  roundTrip: boolean;
+  passengerIds: string[];
+  note: string | null;
+};
+
 export type ScheduleCrew = {
   passengers: CrewMember[];
   pilots: CrewMember[];
@@ -165,6 +180,8 @@ type FleetLabels = TrishawOptionLabels & {
 
 type Props = {
   chapters: ScheduleChapter[];
+  request?: RequestPrefill | null;
+  requestStrings: Dictionary["admin"]["rideRequests"]["schedule"];
   crew: Promise<ScheduleCrew> | null;
   stays: Choice[];
   locale: NotationLocale;
@@ -260,6 +277,8 @@ export function ScheduleRideDrawer(props: Props) {
 function ScheduleRideSheet({
   open,
   chapters,
+  request: offered = null,
+  requestStrings,
   crew,
   stays,
   locale,
@@ -281,14 +300,35 @@ function ScheduleRideSheet({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { go } = useDrawerParam();
+  const [request] = useState(offered);
+  const asked = searchParams.get("request");
+  const stale = asked !== null && request?.id !== asked;
   const close = () =>
-    go((params) => {
-      params.delete("new");
-      params.delete("rideLocation");
-    });
+    asked
+      ? router.replace(
+          hrefWith(
+            request
+              ? `/admin/rides/requests/${request.id}`
+              : "/admin/rides/requests",
+            searchParams,
+            {
+              new: null,
+              request: null,
+              rideLocation: null,
+            },
+          ),
+          { scroll: false },
+        )
+      : go((params) => {
+          params.delete("new");
+          params.delete("rideLocation");
+        });
   const requestedLocation = locations.find(
-    (candidate) => candidate.id === searchParams.get("rideLocation"),
+    (candidate) =>
+      candidate.id ===
+      (request ? request.rideLocationId : searchParams.get("rideLocation")),
   );
+  const asker = request?.name ?? null;
   const formId = useId();
   const titleId = useId();
   const roundTripId = useId();
@@ -302,36 +342,50 @@ function ScheduleRideSheet({
   );
   const stayEdited = useRef(false);
   const trishawPrefill = useRef<number | null>(
-    requestedLocation?.defaultTrishawCount ?? null,
+    request
+      ? request.model === "pleasure"
+        ? 1
+        : (requestedLocation?.defaultTrishawCount ?? 1)
+      : (requestedLocation?.defaultTrishawCount ?? null),
   );
   const [pending, startTransition] = useTransition();
 
   const [chapterId, setChapterId] = useState(
-    () => requestedLocation?.chapterId ?? rememberedChapter(chapters),
+    () =>
+      request?.chapterId ??
+      requestedLocation?.chapterId ??
+      rememberedChapter(chapters),
   );
   const chapter =
     chapters.find((candidate) => candidate.id === chapterId) ?? chapters[0];
   const home = chapterPlace(chapter);
-  const [model, setModel] = useState<RideModelName>("event");
+  const [model, setModel] = useState<RideModelName>(request?.model ?? "event");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [capacity, setCapacity] = useState<number | null>(null);
   const [photoIds, setPhotoIds] = useState<string[]>([]);
-  const [slot, setSlot] = useState<WallSlot>({
-    date: chapter.date,
-    start: chapter.start,
-    durationMinutes:
-      (!chapter.durationChosen && requestedLocation?.defaultMinutes) ||
-      (chapter.durationMinutes ?? DEFAULT_SLOT_MINUTES),
-  });
+  const [slot, setSlot] = useState<WallSlot>(
+    () =>
+      request?.slot ?? {
+        date: chapter.date,
+        start: chapter.start,
+        durationMinutes:
+          (!chapter.durationChosen && requestedLocation?.defaultMinutes) ||
+          (chapter.durationMinutes ?? DEFAULT_SLOT_MINUTES),
+      },
+  );
   const [rideLocation, setRideLocation] = useState<RideLocationChoice | null>(
     requestedLocation ?? null,
   );
   const [origin, setOrigin] = useState<Place | null>(() =>
-    requestedLocation ? placeOfLocation(requestedLocation) : null,
+    requestedLocation
+      ? placeOfLocation(requestedLocation)
+      : (request?.origin ?? null),
   );
-  const [destination, setDestination] = useState<Place | null>(null);
-  const [roundTrip, setRoundTrip] = useState(true);
+  const [destination, setDestination] = useState<Place | null>(
+    request?.destination ?? null,
+  );
+  const [roundTrip, setRoundTrip] = useState(request?.roundTrip ?? true);
   const [stay, setStay] = useState(chapter.stayMinutes ?? DEFAULT_STAY);
   const [pilotsNeeded, setPilotsNeeded] = useState(
     requestedLocation?.defaultPilotCount ?? chapter.requiredPilots ?? 1,
@@ -349,7 +403,9 @@ function ScheduleRideSheet({
       : null,
   );
   const [announced, setAnnounced] = useState(false);
-  const [passengerIds, setPassengerIds] = useState<string[]>([]);
+  const [passengerIds, setPassengerIds] = useState<string[]>(
+    request?.passengerIds ?? [],
+  );
   const [pilotIds, setPilotIds] = useState<string[]>([]);
   const [noteOpen, setNoteOpen] = useState(false);
   const [note, setNote] = useState("");
@@ -379,7 +435,7 @@ function ScheduleRideSheet({
     roundTrip: twoWay,
     stayMinutes: twoWay ? stay : 0,
   });
-  const request = `${attempt}:${lookup}`;
+  const lookupKey = `${attempt}:${lookup}`;
 
   useEffect(() => {
     if (!open) return;
@@ -390,7 +446,7 @@ function ScheduleRideSheet({
       );
       if (!live) return;
       const options = result?.ok ? result.options : null;
-      setFetched({ key: request, options });
+      setFetched({ key: lookupKey, options });
       if (!options) return;
       setKnown(options);
       const prefill =
@@ -412,7 +468,7 @@ function ScheduleRideSheet({
       live = false;
       clearTimeout(timer);
     };
-  }, [open, lookup, request]);
+  }, [open, lookup, lookupKey]);
 
   const routeKey =
     functional && origin && destination
@@ -443,7 +499,7 @@ function ScheduleRideSheet({
   const route =
     routeKey !== null && routed?.key === routeKey ? routed.route : null;
 
-  const loading = fetched?.key !== request;
+  const loading = fetched?.key !== lookupKey;
   const options = fetched?.options;
   const free = new Set(
     (options ?? [])
@@ -556,7 +612,7 @@ function ScheduleRideSheet({
 
   const submit = (formEvent: FormEvent<HTMLFormElement>) => {
     formEvent.preventDefault();
-    if (pending) return;
+    if (pending || stale) return;
     const trimmedTitle = title.trim();
     if (event && !trimmedTitle) {
       setTitleInvalid(true);
@@ -571,7 +627,11 @@ function ScheduleRideSheet({
     const trimmedNote = note.trim();
     const trimmedDescription = description.trim();
     startTransition(async () => {
-      const result = await scheduleRideAction({
+      const schedule = (form: Parameters<typeof scheduleRideAction>[0]) =>
+        request
+          ? scheduleRideRequestAction(request.id, form)
+          : scheduleRideAction(form);
+      const result = await schedule({
         chapterId: chapter.id,
         model,
         slot,
@@ -605,7 +665,11 @@ function ScheduleRideSheet({
         pilotIds,
       });
       notify(result, {
-        done: twoWay ? strings.scheduledRoundTrip : strings.scheduled,
+        done: asker
+          ? formatMessage(requestStrings.done, { name: asker }, language)
+          : twoWay
+            ? strings.scheduledRoundTrip
+            : strings.scheduled,
         errors,
       });
       if (result.ok)
@@ -613,6 +677,7 @@ function ScheduleRideSheet({
           hrefWith(`/admin/rides/${result.id}`, searchParams, {
             new: null,
             rideLocation: null,
+            request: null,
           }),
         );
     });
@@ -670,7 +735,7 @@ function ScheduleRideSheet({
       dismissible={!pending}
       title={
         <span className="flex min-w-0 items-center gap-1.25 text-base">
-          {chapters.length > 1 ? (
+          {chapters.length > 1 && !request ? (
             <ChapterPicker
               chapters={chapters}
               value={chapter.id}
@@ -690,7 +755,15 @@ function ScheduleRideSheet({
             aria-hidden
             className="size-4 shrink-0 text-ink-faint"
           />
-          <span className="truncate">{strings.newRide}</span>
+          <span className="truncate">
+            {asker
+              ? formatMessage(
+                  requestStrings.fromRequest,
+                  { name: asker },
+                  language,
+                )
+              : strings.newRide}
+          </span>
         </span>
       }
       bodyClassName="px-4 py-4 md:px-5"
@@ -711,7 +784,7 @@ function ScheduleRideSheet({
           <Button
             type="submit"
             form={formId}
-            disabled={pending}
+            disabled={pending || stale}
             variant="brand"
             className="min-h-10"
           >
@@ -731,6 +804,24 @@ function ScheduleRideSheet({
         aria-busy={pending}
         className="grid grid-cols-[minmax(0,1fr)]"
       >
+        {stale ? (
+          <Section className="gap-1.25">
+            <p
+              role="alert"
+              className="rounded-xl bg-canvas-deep px-3 py-2 text-2sm"
+            >
+              {requestStrings.stale}
+            </p>
+          </Section>
+        ) : null}
+        {request?.note ? (
+          <Section className="gap-1.25">
+            <p className="text-2sm text-ink-soft">{requestStrings.note}</p>
+            <p className="rounded-xl bg-mint-tint px-3 py-2 text-2sm break-words whitespace-pre-wrap">
+              {request.note}
+            </p>
+          </Section>
+        ) : null}
         <Section className="gap-3">
           <div className="grid gap-1.25">
             <Segmented
@@ -1032,6 +1123,10 @@ function ScheduleRideSheet({
               <CrewRows
                 crew={crew}
                 chapterId={chapter.id}
+                requested={{
+                  ids: request?.passengerIds ?? [],
+                  hint: requestStrings.requestedRider,
+                }}
                 passengerIds={passengerIds}
                 onPassengers={setPassengerIds}
                 pilotIds={pilotIds}
@@ -1412,6 +1507,7 @@ function TrishawPicker({
 function CrewRows({
   crew,
   chapterId,
+  requested,
   passengerIds,
   onPassengers,
   pilotIds,
@@ -1424,6 +1520,7 @@ function CrewRows({
 }: {
   crew: Promise<ScheduleCrew>;
   chapterId: string;
+  requested: { ids: string[]; hint: string };
   passengerIds: string[];
   onPassengers: (ids: string[]) => void;
   pilotIds: string[];
@@ -1442,9 +1539,15 @@ function CrewRows({
     <>
       <FieldRow label={passengerStrings.label}>
         <PeoplePicker
-          options={ofChapter(passengers)}
+          options={ofChapter(passengers).map((person) =>
+            requested.ids.includes(person.id)
+              ? { ...person, disabled: true, hint: requested.hint }
+              : person,
+          )}
           value={passengerIds}
-          onChange={onPassengers}
+          onChange={(ids) =>
+            onPassengers([...new Set([...requested.ids, ...ids])])
+          }
           strings={passengerStrings}
           locale={language}
           max={passengerMax}

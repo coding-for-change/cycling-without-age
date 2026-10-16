@@ -44,6 +44,7 @@ import {
 } from "./services/at-location";
 import {
   conflictsUnderLock,
+  countBookingsBetween,
   countFutureRidesWithTrishaws,
   deleteAssignment,
   deleteRideById,
@@ -287,6 +288,14 @@ export async function listPassengerRides(
 }
 
 export const getRideFacts = (rideId: string) => findRideFacts(rideId);
+
+/** Whether any of these riders is already on a ride that overlaps the window. */
+export const ridersBookedBetween = async (
+  passengerIds: string[],
+  window: { startsAt: Date; endsAt: Date },
+) =>
+  passengerIds.length > 0 &&
+  (await countBookingsBetween(passengerIds, window)) > 0;
 
 export const pilotCanOpen = async (rideId: string, userId: string) =>
   (await findRideIdForPilot(rideId, userId)) !== null;
@@ -551,6 +560,28 @@ async function requireScheduled(id: string, tx: Tx) {
   return ride;
 }
 
+/** Trishaws a ride may take, and how many of them it needs. */
+export type TrishawPick = { candidates: string[]; count: number };
+
+/**
+ * Picks free trishaws while holding their locks, so a ride scheduled without
+ * an admin choosing the bikes can never take one another write is booking.
+ */
+async function pickFreeUnderLock(
+  tx: Tx,
+  { candidates, count }: TrishawPick,
+  windows: { startsAt: Date; endsAt: Date }[],
+) {
+  const taken = new Set(
+    (await conflictsUnderLock(tx, candidates, windows)).map(
+      ({ trishawId }) => trishawId,
+    ),
+  );
+  const free = candidates.filter((id) => !taken.has(id)).slice(0, count);
+  if (free.length < count) throw new DomainError("noTrishawFree");
+  return free;
+}
+
 async function reserveOrRefuse(
   tx: Tx,
   trishawIds: string[],
@@ -585,7 +616,14 @@ export async function scheduleRide(
   {
     opensForSignUp = false,
     staffingLeadHours = null,
-  }: { opensForSignUp?: boolean; staffingLeadHours?: number | null } = {},
+    requestId = null,
+    pickTrishaws = null,
+  }: {
+    opensForSignUp?: boolean;
+    staffingLeadHours?: number | null;
+    requestId?: string | null;
+    pickTrishaws?: TrishawPick | null;
+  } = {},
 ) {
   const {
     trishawIds,
@@ -607,17 +645,18 @@ export async function scheduleRide(
   };
   return rideWrite(async (tx, emit) => {
     await requireRidePhotos(photoFileIds, actorUserId, null, tx);
-    await reserveOrRefuse(tx, trishawIds, [
-      data,
-      ...(returnLeg ? [returnLeg] : []),
-    ]);
+    const windows = [data, ...(returnLeg ? [returnLeg] : [])];
+    const reserved = pickTrishaws
+      ? await pickFreeUnderLock(tx, pickTrishaws, windows)
+      : trishawIds;
+    if (!pickTrishaws) await reserveOrRefuse(tx, trishawIds, windows);
 
-    const ride = await insertRide(data, trishawIds, tx);
+    const ride = await insertRide(data, reserved, tx);
     await insertRideLogEntry(
       ride.id,
       actorUserId,
       "scheduled",
-      { ...span(ride), trishawIds },
+      { ...span(ride), trishawIds: reserved },
       tx,
     );
     if (photoFileIds.length) await attachPhotos(ride.id, photoFileIds, tx);
@@ -638,7 +677,7 @@ export async function scheduleRide(
             returnLegOfId: ride.id,
             rideLocationId: null,
           },
-          trishawIds,
+          reserved,
           tx,
         )
       : null;
@@ -647,7 +686,7 @@ export async function scheduleRide(
         back.id,
         actorUserId,
         "scheduled",
-        { ...span(back), trishawIds, returnLegOf: ride.id },
+        { ...span(back), trishawIds: reserved, returnLegOf: ride.id },
         tx,
       );
 
@@ -657,6 +696,7 @@ export async function scheduleRide(
       chapterId: ride.chapterId,
       actorUserId,
       returnLegId: back?.id ?? null,
+      requestId,
     });
     await staffAndBook(
       ride,
@@ -666,12 +706,19 @@ export async function scheduleRide(
       tx,
       emit,
       back ? { role: "lead", otherRideId: back.id } : null,
+      requestId,
     );
     if (back)
-      await staffAndBook(back, passengerIds, pilotIds, actorUserId, tx, emit, {
-        role: "follow",
-        otherRideId: ride.id,
-      });
+      await staffAndBook(
+        back,
+        passengerIds,
+        pilotIds,
+        actorUserId,
+        tx,
+        emit,
+        { role: "follow", otherRideId: ride.id },
+        requestId,
+      );
     if (ahead && opensForSignUp && pilotIds.length < data.requiredPilots) {
       await emit({
         type: "ride.opened",
@@ -708,6 +755,7 @@ async function staffAndBook(
   tx: Tx,
   emit: Emit,
   pair: RidePair,
+  requestId: string | null = null,
 ) {
   if (passengerIds.length)
     await insertRosterEntries(ride.id, passengerIds, actorUserId, tx);
@@ -730,7 +778,13 @@ async function staffAndBook(
   );
   const scope = { rideId: ride.id, chapterId: ride.chapterId, actorUserId };
   for (const passengerId of passengerIds)
-    await emit({ type: "ride.riderBooked", ...scope, passengerId, pair });
+    await emit({
+      type: "ride.riderBooked",
+      ...scope,
+      passengerId,
+      pair,
+      requestId,
+    });
   for (const userId of pilotIds)
     await emit({
       type: "ride.pilotAssigned",
@@ -1234,7 +1288,7 @@ export async function bookRider(
       actorUserId,
       "riderBooked",
       { passengerId },
-      { type: "ride.riderBooked", passengerId, pair: null },
+      { type: "ride.riderBooked", passengerId, pair: null, requestId: null },
     );
     return true;
   });
@@ -1386,6 +1440,16 @@ export async function cancelBooking(
  * a cancelled booking, so the ride's history, its chat and — when their own
  * side let go — its admins hear of it instead of the row just vanishing.
  */
+/** The rides still ahead that any of these riders is booked on. */
+export async function upcomingRideIdsOf(
+  passengerIds: string[],
+  now = new Date(),
+) {
+  if (!passengerIds.length) return [];
+  const bookings = await findUpcomingBookingsOf(passengerIds, now);
+  return [...new Set(bookings.map((booking) => booking.rideId))];
+}
+
 export async function cancelUpcomingBookings(
   passengerIds: string[],
   actorUserId: Actor,
@@ -1834,7 +1898,7 @@ export async function bookSeats(
         actorUserId,
         "riderBooked",
         { passengerId },
-        { type: "ride.riderBooked", passengerId, pair: null },
+        { type: "ride.riderBooked", passengerId, pair: null, requestId: null },
       );
     }
     return fresh.length;

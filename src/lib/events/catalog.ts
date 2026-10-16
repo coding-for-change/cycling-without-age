@@ -120,6 +120,8 @@ export const eventSchema = z.discriminatedUnion("type", [
     type: z.literal("ride.scheduled"),
     ...rideScope,
     returnLegId: z.string().min(1).nullable(),
+    /** Scheduled from this Ride Request, which the ride's listener links. */
+    requestId: z.string().min(1).nullable().default(null),
   }),
   z.object({
     type: z.literal("ride.rescheduled"),
@@ -156,6 +158,8 @@ export const eventSchema = z.discriminatedUnion("type", [
     ...rideScope,
     passengerId: z.string().min(1),
     pair: ridePair,
+    /** Booked by scheduling this Ride Request, whose own message tells the requester. */
+    requestId: z.string().min(1).nullable().default(null),
   }),
   z.object({
     type: z.literal("ride.opened"),
@@ -201,6 +205,44 @@ export const eventSchema = z.discriminatedUnion("type", [
     userId: z.string().min(1),
     actorUserId: z.string().min(1),
     passengerId: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal("rideRequest.submitted"),
+    requestId: z.string().min(1),
+    chapterId: z.string().min(1),
+    actorUserId: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal("rideRequest.scheduled"),
+    requestId: z.string().min(1),
+    chapterId: z.string().min(1),
+    actorUserId: z.string().min(1).nullable(),
+    requesterUserId: z.string().min(1).nullable(),
+    rideId: z.string().min(1),
+    returnLegId: z.string().min(1).nullable(),
+  }),
+  z.object({
+    type: z.literal("rideRequest.declined"),
+    requestId: z.string().min(1),
+    chapterId: z.string().min(1),
+    actorUserId: z.string().min(1),
+    requesterUserId: z.string().min(1).nullable(),
+  }),
+  z.object({
+    type: z.literal("rideRequest.withdrawn"),
+    requestId: z.string().min(1),
+    chapterId: z.string().min(1),
+    actorUserId: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal("rider.handedOver"),
+    passengerId: z.string().min(1),
+    chapterId: z.string().min(1),
+    actorUserId: z.string().min(1),
+    fromUserId: z.string().min(1),
+    toUserId: z.string().min(1),
+    /** The account was set up for this, and its invitation tells it already. */
+    invited: z.boolean().default(false),
   }),
 ]);
 

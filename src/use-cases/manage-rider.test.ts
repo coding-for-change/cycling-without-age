@@ -1,5 +1,6 @@
 import { passengers } from "@/features/passengers";
 import { personProfiles } from "@/features/person-profiles";
+import { rideRequests } from "@/features/ride-requests";
 import { rides } from "@/features/rides";
 import type { Access } from "@/lib/access";
 import { accessPerson } from "./person-access";
@@ -18,6 +19,9 @@ jest.mock("@/features/person-profiles", () => ({
 jest.mock("@/features/rides", () => ({
   rides: { cancelUpcomingBookings: jest.fn() },
 }));
+jest.mock("@/features/ride-requests", () => ({
+  rideRequests: { withdrawOpenRequests: jest.fn() },
+}));
 jest.mock("@/lib/observability/logger", () => ({ logDomainEvent: jest.fn() }));
 
 const access = accessPerson as jest.Mock;
@@ -26,6 +30,7 @@ const remove = passengers.removeManagedRider as jest.Mock;
 const listPhotos = personProfiles.listPhotoFilesOf as jest.Mock;
 const purge = personProfiles.purgePhotoFiles as jest.Mock;
 const cancelBookings = rides.cancelUpcomingBookings as jest.Mock;
+const withdrawRequests = rideRequests.withdrawOpenRequests as jest.Mock;
 
 const CHAPTER = "chapter-muenchen";
 const viewer = {
@@ -127,6 +132,18 @@ describe("removeManagedRider", () => {
     );
   });
 
+  it("withdraws the removed rider's open requests before the rider goes", async () => {
+    await removeManagedRider({ viewer, passengerId: "managed-greta" });
+
+    expect(withdrawRequests).toHaveBeenCalledWith(
+      { passengerIds: ["managed-greta"] },
+      "daughter-lena",
+    );
+    expect(withdrawRequests.mock.invocationCallOrder[0]).toBeLessThan(
+      remove.mock.invocationCallOrder[0],
+    );
+  });
+
   it("refuses an admin of another chapter", async () => {
     access.mockResolvedValue(null);
 
@@ -136,5 +153,6 @@ describe("removeManagedRider", () => {
     expect(remove).not.toHaveBeenCalled();
     expect(purge).not.toHaveBeenCalled();
     expect(cancelBookings).not.toHaveBeenCalled();
+    expect(withdrawRequests).not.toHaveBeenCalled();
   });
 });

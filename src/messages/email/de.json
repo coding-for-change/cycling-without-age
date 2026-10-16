@@ -365,5 +365,68 @@
     "cta": "Anmelden",
     "footer": "Sie erhalten diese E-Mail, weil eine Admin einer Cycling-Without-Age-Ortsgruppe Ihre Adresse als Begleitperson eines Fahrgasts eingetragen hat.",
     "someone": "jemand"
+  },
+  "rideRequestCommon": {
+    "someone": "einen Fahrgast",
+    "someoneAsking": "Jemand"
+  },
+  "rideRequestSubmitted": {
+    "subject": "Fahrtanfrage für {riders} am {date}",
+    "preview": "{date} · {time}",
+    "heading": "Eine neue Fahrtanfrage",
+    "intro": "{requester} bittet {chapter} um eine Ausfahrt für {riders} am {date}, {time}, ab {place}. Plane sie ein oder sag Bescheid, wenn es nicht klappt.",
+    "introThere": "{requester} bittet {chapter}, {riders} am {date}, {time}, von {place} zu {destination} zu bringen. Plane die Fahrt ein oder sag Bescheid, wenn es nicht klappt.",
+    "introThereAndBack": "{requester} bittet {chapter}, {riders} am {date}, {time}, von {place} zu {destination} und wieder zurück zu bringen. Plane die Fahrt ein oder sag Bescheid, wenn es nicht klappt.",
+    "cta": "Anfrage öffnen",
+    "footer": "Du erhältst diese E-Mail, weil du eine Cycling-Without-Age-Ortsgruppe mit betreust."
+  },
+  "rideRequestWithdrawn": {
+    "subject": "{requester} hat die Anfrage für {date} zurückgezogen",
+    "preview": "{date} · {time}",
+    "heading": "Eine Fahrtanfrage wurde zurückgezogen",
+    "intro": "{requester} braucht die Fahrt für {riders} am {date}, {time}, nicht mehr. Es gibt nichts mehr zu tun.",
+    "cta": "Anfrage öffnen",
+    "footer": "Du erhältst diese E-Mail, weil du eine Cycling-Without-Age-Ortsgruppe mit betreust.",
+    "subjectClosed": "Die Fahrtanfrage für {date} wurde geschlossen",
+    "headingClosed": "Eine Fahrtanfrage wurde geschlossen",
+    "introClosed": "Die Anfrage für {riders} am {date}, {time}, wurde geschlossen, weil ein Fahrgast oder die anfragende Person nicht mehr dabei ist. Es gibt nichts mehr zu tun."
+  },
+  "rideRequestDeclined": {
+    "subject": "{chapter} kann die Fahrt am {date} nicht anbieten",
+    "preview": "{date} · {time}",
+    "heading": "Diesmal leider nicht",
+    "intro": "{chapter} hat Ihre Anfrage für {riders} am {date}, {time}, angesehen und kann diese Fahrt leider nicht möglich machen. Fragen Sie gern einen anderen Tag an.",
+    "noteHeading": "Eine Nachricht von {chapter}",
+    "cta": "Anfrage ansehen",
+    "footer": "Sie erhalten diese E-Mail, weil Sie bei einer Ortsgruppe von Cycling Without Age eine Fahrt angefragt haben."
+  },
+  "rideRequestScheduled": {
+    "subject": "Ihre Fahrt am {date} ist gebucht",
+    "preview": "{ride} · {time}",
+    "heading": "Ihre Fahrt ist gebucht",
+    "intro": "{chapter} hat die Fahrt für {riders} gebucht: {date}, {time}, ab {place}. Sobald ein Pilot eingeteilt ist, sehen Sie in der App, wer fährt.",
+    "introBoth": "{chapter} hat die Hin- und Rückfahrt für {riders} am {date} gebucht: hin {time} ab {place}, zurück {back}. Sobald ein Pilot eingeteilt ist, sehen Sie in der App, wer fährt.",
+    "calendarHeading": "In Ihrem Kalender",
+    "calendarText": "Öffnen Sie die angehängte Kalenderdatei, um die Fahrt in Ihren Kalender zu übernehmen.",
+    "calendarSummary": "{ride} mit {chapter}",
+    "calendarFile": "fahrt.ics",
+    "cta": "Fahrt ansehen",
+    "footer": "Sie erhalten diese E-Mail, weil Sie bei einer Ortsgruppe von Cycling Without Age eine Fahrt angefragt haben."
+  },
+  "riderHandedOver": {
+    "subject": "Sie buchen jetzt die Fahrten für {rider}",
+    "preview": "{chapter} hat {rider} an Sie übergeben",
+    "heading": "Sie kümmern sich jetzt um {rider}",
+    "intro": "{chapter} hat {rider} an Sie übergeben. Ab jetzt fragen Sie die Fahrten für {rider} an, und alle Bestätigungen kommen zu Ihnen.",
+    "cta": "Ihre Fahrgäste ansehen",
+    "footer": "Sie erhalten diese E-Mail, weil eine Ortsgruppe von Cycling Without Age geändert hat, wer die Fahrten eines Fahrgasts bucht."
+  },
+  "riderHandedAway": {
+    "subject": "{chapter} hat {rider} übergeben",
+    "preview": "Neue Ansprechperson für {rider}",
+    "heading": "Neue Ansprechperson für {rider}",
+    "intro": "{chapter} hat {rider} an eine andere Person übergeben. Sie buchen keine Fahrten mehr für {rider}, und Nachrichten zu Anfragen und Fahrten von {rider} kommen nicht mehr zu Ihnen.",
+    "cta": "App öffnen",
+    "footer": "Sie erhalten diese E-Mail, weil eine Ortsgruppe von Cycling Without Age geändert hat, wer die Fahrten eines Fahrgasts bucht."
   }
 }

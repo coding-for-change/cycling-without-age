@@ -3,8 +3,11 @@ import {
   foldLine,
   icsDateTime,
   renderIcs,
+  rideUid,
   type IcsEvent,
 } from "./ics";
+
+jest.mock("./app-url", () => ({ APP_URL: "https://cwa.example" }));
 
 const octets = (line: string) => new TextEncoder().encode(line).length;
 
@@ -18,6 +21,12 @@ const event = (over: Partial<IcsEvent> = {}): IcsEvent => ({
 });
 
 const unfold = (ics: string) => ics.replace(/\r\n /g, "");
+
+describe("rideUid", () => {
+  it("names a ride by its id at the app's host, wherever it is written", () => {
+    expect(rideUid("ride-1")).toBe("ride-ride-1@cwa.example");
+  });
+});
 
 describe("icsDateTime", () => {
   it("writes UTC basic format", () => {

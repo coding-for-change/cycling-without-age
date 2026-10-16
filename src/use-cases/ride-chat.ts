@@ -17,6 +17,16 @@ export const syncRideChat = (rideId: string) =>
     load: (open) => rideChatOf(rideId, open),
   });
 
+/**
+ * Whoever books for a rider sits in the chats of the rider's rides, so a
+ * rider handed over to someone else moves chats with them: the old manager
+ * leaves every chat of a ride still ahead, the new one joins it.
+ */
+export async function syncRiderChats(passengerId: string) {
+  for (const rideId of await rides.upcomingRideIdsOf([passengerId]))
+    await syncRideChat(rideId);
+}
+
 const oneHousehold = (
   facts: { model: string },
   participants: { riderCount: number; riderAccountUserIds: string[] },

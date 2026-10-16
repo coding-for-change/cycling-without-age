@@ -22,7 +22,8 @@ export type AdminActionResult =
   | { ok: true }
   | {
       ok: false;
-      error: "lastAdmin" | "alreadyDecided" | "self" | "generic";
+      error:
+        "lastAdmin" | "alreadyDecided" | "self" | "managesRiders" | "generic";
     };
 
 const id = z.string().min(1).max(64);
@@ -39,7 +40,10 @@ const roleChangeInput = z.object({
   change: z.enum(["promote", "demote", "remove"]),
 });
 
-const deleteUserInput = z.object({ userId: id });
+const deleteUserInput = z.object({
+  userId: id,
+  removeRiders: z.array(id).max(50).default([]),
+});
 
 const pilotStepConfirmInput = z.object({
   userId: id,
@@ -51,6 +55,7 @@ const failed = (error: unknown): AdminActionResult =>
     lastAdmin: "lastAdmin",
     alreadyDecided: "alreadyDecided",
     selfChange: "self",
+    managesRiders: "managesRiders",
   });
 
 export async function decideApplicationAction(
@@ -115,7 +120,9 @@ export async function deleteUserAction(
     return { ok: false, error: "self" };
 
   try {
-    await deleteAccount(parsed.data.userId, session.user.id);
+    await deleteAccount(parsed.data.userId, session.user.id, {
+      removeRiders: parsed.data.removeRiders,
+    });
     revalidatePath("/admin", "layout");
     invalidateReports();
     return { ok: true };

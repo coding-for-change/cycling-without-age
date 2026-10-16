@@ -365,5 +365,68 @@
     "cta": "Log ind",
     "footer": "Du får denne e-mail, fordi en administrator i en Cycling Without Age-afdeling har skrevet din adresse som hjælper for en passager.",
     "someone": "nogen"
+  },
+  "rideRequestCommon": {
+    "someone": "en passager",
+    "someoneAsking": "Nogen"
+  },
+  "rideRequestSubmitted": {
+    "subject": "Turønske for {riders} {date}",
+    "preview": "{date} · {time}",
+    "heading": "Et nyt turønske",
+    "intro": "{requester} beder {chapter} om en tur for {riders} {date}, {time}, fra {place}. Planlæg den, eller giv besked, hvis det ikke kan lade sig gøre.",
+    "introThere": "{requester} beder {chapter} om at køre {riders} fra {place} til {destination} {date}, {time}. Planlæg turen, eller giv besked, hvis det ikke kan lade sig gøre.",
+    "introThereAndBack": "{requester} beder {chapter} om at køre {riders} fra {place} til {destination} og hjem igen {date}, {time}. Planlæg turen, eller giv besked, hvis det ikke kan lade sig gøre.",
+    "cta": "Åbn ønsket",
+    "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling."
+  },
+  "rideRequestWithdrawn": {
+    "subject": "{requester} har trukket turønsket til {date} tilbage",
+    "preview": "{date} · {time}",
+    "heading": "Et turønske er trukket tilbage",
+    "intro": "{requester} har ikke længere brug for turen for {riders} {date}, {time}. Der er ikke mere at gøre.",
+    "cta": "Åbn ønsket",
+    "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling.",
+    "subjectClosed": "Turønsket til {date} er lukket",
+    "headingClosed": "Et turønske er lukket",
+    "introClosed": "Ønsket for {riders} {date}, {time}, blev lukket, fordi en passager eller den, der bad om turen, ikke længere er med. Der er ikke mere at gøre."
+  },
+  "rideRequestDeclined": {
+    "subject": "{chapter} kan ikke tilbyde turen {date}",
+    "preview": "{date} · {time}",
+    "heading": "Ikke denne gang",
+    "intro": "{chapter} har set på dit ønske for {riders} {date}, {time}, og kan desværre ikke tilbyde turen. Du er velkommen til at ønske en tur en anden dag.",
+    "noteHeading": "En besked fra {chapter}",
+    "cta": "Se dit ønske",
+    "footer": "Du modtager denne e-mail, fordi du har bedt en Cycling Without Age-afdeling om en tur."
+  },
+  "rideRequestScheduled": {
+    "subject": "Din tur {date} er booket",
+    "preview": "{ride} · {time}",
+    "heading": "Din tur er booket",
+    "intro": "{chapter} har booket turen for {riders}: {date}, {time}, fra {place}. Appen viser, hvem der kører, så snart en pilot er sat på.",
+    "introBoth": "{chapter} har booket turen ud og hjem for {riders} {date}: ud {time} fra {place}, hjem {back}. Appen viser, hvem der kører, så snart en pilot er sat på.",
+    "calendarHeading": "I din kalender",
+    "calendarText": "Åbn den vedhæftede kalenderfil for at lægge turen i din kalender.",
+    "calendarSummary": "{ride} med {chapter}",
+    "calendarFile": "tur.ics",
+    "cta": "Se turen",
+    "footer": "Du modtager denne e-mail, fordi du har bedt en Cycling Without Age-afdeling om en tur."
+  },
+  "riderHandedOver": {
+    "subject": "Nu booker du ture for {rider}",
+    "preview": "{chapter} har overdraget {rider} til dig",
+    "heading": "Du tager dig nu af {rider}",
+    "intro": "{chapter} har overdraget {rider} til dig. Fra nu af er det dig, der ønsker ture for {rider}, og alle bekræftelser kommer til dig.",
+    "cta": "Se dine passagerer",
+    "footer": "Du modtager denne e-mail, fordi en Cycling Without Age-afdeling har ændret, hvem der booker ture for en passager."
+  },
+  "riderHandedAway": {
+    "subject": "{chapter} har overdraget {rider}",
+    "preview": "Ny kontaktperson for {rider}",
+    "heading": "Ny kontaktperson for {rider}",
+    "intro": "{chapter} har overdraget {rider} til en anden. Du booker ikke længere ture for {rider}, og beskeder om turønsker og ture for {rider} kommer ikke længere til dig.",
+    "cta": "Åbn appen",
+    "footer": "Du modtager denne e-mail, fordi en Cycling Without Age-afdeling har ændret, hvem der booker ture for en passager."
   }
 }

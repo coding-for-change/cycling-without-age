@@ -62,6 +62,7 @@ async function assertPilots(userIds: string[], chapterId: string) {
 export async function scheduleRideAt(
   form: ScheduleRideData,
   actorUserId: string | null,
+  { requestId = null }: { requestId?: string | null } = {},
 ) {
   const { slot, roundTrip, stayMinutes, ...ride } = form;
   const [timeZone, settings] = await Promise.all([
@@ -89,6 +90,7 @@ export async function scheduleRideAt(
     {
       opensForSignUp: settings.pilotsMaySelfAssign,
       staffingLeadHours: settings.staffingCheckLeadHours,
+      ...(requestId ? { requestId } : {}),
     },
   );
 }

@@ -11,12 +11,19 @@ const mailpitUrl =
     ? null
     : (process.env.MAILPIT_URL ?? "http://localhost:8026");
 
+export type MailAttachment = {
+  filename: string;
+  content: string;
+  contentType: string;
+};
+
 type MailOptions = {
   to: string;
   subject: string;
   text?: string;
   react?: ReactElement;
   replyTo?: string;
+  attachments?: MailAttachment[];
 };
 
 export async function sendMail(options: MailOptions) {
@@ -27,11 +34,20 @@ export async function sendMail(options: MailOptions) {
 
   if (!resend) throw new Error("RESEND_API_KEY is unset — cannot send mail");
 
-  const { react, ...rest } = options;
+  const { react, attachments, ...rest } = options;
   const { error, headers } = await resend.emails.send({
     from: process.env.EMAIL_FROM!,
     ...rest,
     ...(react ? { html: await render(react) } : {}),
+    ...(attachments?.length
+      ? {
+          attachments: attachments.map((attachment) => ({
+            filename: attachment.filename,
+            content: Buffer.from(attachment.content, "utf8"),
+            contentType: attachment.contentType,
+          })),
+        }
+      : {}),
   } as Parameters<typeof resend.emails.send>[0]);
 
   if (!error) return;
@@ -88,6 +104,11 @@ async function sendToMailpit(url: string, options: MailOptions) {
         Subject: options.subject,
         Text: options.text,
         HTML: options.react ? await render(options.react) : undefined,
+        Attachments: options.attachments?.map((attachment) => ({
+          Filename: attachment.filename,
+          ContentType: attachment.contentType,
+          Content: Buffer.from(attachment.content, "utf8").toString("base64"),
+        })),
       }),
     });
     if (!response.ok)
