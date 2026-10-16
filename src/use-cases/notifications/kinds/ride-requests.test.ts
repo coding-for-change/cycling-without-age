@@ -7,7 +7,7 @@ import { profile } from "@/features/profile";
 import { rideRequests } from "@/features/ride-requests";
 import { rides } from "@/features/rides";
 import type { EventOf } from "@/lib/events/catalog";
-import { renderIcs } from "@/lib/ics";
+import { renderIcs, rideUid } from "@/lib/ics";
 import {
   riderHandedOver,
   rideRequestDeclined,
@@ -82,6 +82,12 @@ const legs: Record<string, object> = {
     chapter: { name: "München", timeZone: "Europe/Berlin" },
   },
 };
+
+const legsIn = (ics: string) =>
+  ics.replace(/\r\n /g, "").split("BEGIN:VEVENT").slice(1);
+
+const legOf = (ics: string, rideId: string) =>
+  legsIn(ics).find((leg) => leg.includes(`UID:${rideUid(rideId)}\r\n`));
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -187,10 +193,63 @@ describe("a scheduled request", () => {
     expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(2);
     expect(ics).toContain("DTSTART:20261027T080000Z");
     expect(ics).toContain("DTSTART:20261027T094500Z");
-    expect(ics).toContain("UID:ride-ride-1@");
-    expect(ics).toContain("UID:ride-ride-2@");
+    expect(ics).toContain(`UID:${rideUid("ride-1")}`);
+    expect(ics).toContain(`UID:${rideUid("ride-2")}`);
     expect(ics).not.toContain("Erna");
     expect(ics).not.toContain("Huber");
+  });
+
+  it("carries a single calendar event for a ride one way", async () => {
+    const params = await rideRequestScheduled.hydrate!(
+      await rideRequestScheduled.params({ ...scheduled, returnLegId: null }),
+    );
+    const [file] = rideRequestScheduled.attachments!(
+      params,
+      getEmailStrings("en"),
+      "en",
+    );
+    const ics = renderIcs(file.calendar);
+
+    expect(legsIn(ics)).toHaveLength(1);
+    expect(legOf(ics, "ride-1")).toContain("DTSTART:20261027T080000Z");
+    expect(legOf(ics, "ride-2")).toBeUndefined();
+  });
+
+  it("puts each leg where it is picked up", async () => {
+    (rides.getRideFacts as jest.Mock).mockImplementation(async (id: string) =>
+      id === "ride-2"
+        ? { ...legs["ride-2"], locationName: "Praxis Weber Hintereingang" }
+        : (legs[id] ?? null),
+    );
+    const params = await rideRequestScheduled.hydrate!(
+      await rideRequestScheduled.params(scheduled),
+    );
+    const ics = renderIcs(
+      rideRequestScheduled.attachments!(params, getEmailStrings("en"), "en")[0]
+        .calendar,
+    );
+
+    expect(legOf(ics, "ride-1")).toContain("LOCATION:Lindenweg 3\r\n");
+    expect(legOf(ics, "ride-2")).toContain(
+      "LOCATION:Praxis Weber Hintereingang\r\n",
+    );
+  });
+
+  it("starts the way back where the way there ended when it names no place", async () => {
+    (rides.getRideFacts as jest.Mock).mockImplementation(async (id: string) =>
+      id === "ride-2"
+        ? { ...legs["ride-2"], locationName: null }
+        : (legs[id] ?? null),
+    );
+    const params = await rideRequestScheduled.hydrate!(
+      await rideRequestScheduled.params(scheduled),
+    );
+    const ics = renderIcs(
+      rideRequestScheduled.attachments!(params, getEmailStrings("en"), "en")[0]
+        .calendar,
+    );
+
+    expect(legOf(ics, "ride-2")).toContain("LOCATION:Hausarzt Dr. Weber\r\n");
   });
 
   it("says when the way back leaves", async () => {

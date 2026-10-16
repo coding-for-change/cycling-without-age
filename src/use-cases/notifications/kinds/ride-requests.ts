@@ -8,7 +8,7 @@ import { APP_URL } from "@/lib/app-url";
 import { formatList, wordsLocale } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
-import type { IcsEvent } from "@/lib/ics";
+import { rideUid, type IcsEvent } from "@/lib/ics";
 import { chapterAdminIds, excluding, nameOfPerson } from "./lookups";
 import { factsOfRide, rideFacts, rideNotOver, rideWords } from "./ride-facts";
 import { defineKind } from "./types";
@@ -234,7 +234,6 @@ export const rideRequestDeclined = defineKind({
   },
 });
 
-const UID_HOST = new URL(APP_URL).host;
 const PROD_ID = "-//Coding for Change//CWA GO//EN";
 
 const placeLine = (name: string | null, destination: string | null) =>
@@ -344,7 +343,7 @@ export const rideRequestScheduled = defineKind({
       endsAt: string,
       location: string | null,
     ): IcsEvent => ({
-      uid: `ride-${id}@${UID_HOST}`,
+      uid: rideUid(id),
       start: new Date(startsAt),
       end: new Date(endsAt),
       stamp: new Date(),
