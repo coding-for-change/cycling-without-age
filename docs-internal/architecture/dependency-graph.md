@@ -250,12 +250,15 @@ The ride kinds (`kinds/rides.ts`, category `ride`) reach `rides` for the ride's 
 participants and `passengers` for a rider's name and the accounts behind them; whether a rider
 who left was an admin's doing comes from `membership.getMemberRoles`, and `ride-requests`
 names who asked for a ride booked from a request, so the booking notice skips them.
+`/rides/[rideId]` is a Route Handler in the Boundary layer for the same reason as
+`/chat/[id]`: it is a deep link.
 
 The Ride Request kinds (`kinds/ride-requests.ts`, category `request`, and `rider.handedOver`,
 category `membership`) reach `ride-requests` for the request, `chapters` for the chapter's
-name and whether its admins want request alerts on the phone, `passengers` for the riders' names and managers, and `rides` for the ride a
-scheduled request became — its legs feed the `.ics` attachment. `/rides/[rideId]` is a
-Route Handler in the Boundary layer for the same reason as `/chat/[id]`: it is a deep link.
+name and whether its admins want request alerts on the phone, `passengers` for the riders'
+names, `rides` for the ride a scheduled request became — its legs feed the `.ics` attachment —
+and, through `kinds/lookups.ts`, `membership` for the chapter's admins and `profile` for the
+requester's name.
 
 ### Person profiles
 
