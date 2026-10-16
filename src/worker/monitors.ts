@@ -42,22 +42,23 @@ export function schedulerOptions(name: MaintenanceName) {
     : { every: schedule.value * MINUTE_MS, tz: TIMEZONE };
 }
 
+const reportsCheckIns = () => process.env.SENTRY_ENVIRONMENT === "production";
+
 export function runMaintenance(
   name: MaintenanceName,
   run: () => Promise<void>,
 ) {
-  return withMonitor(
-    name,
-    async () => {
-      try {
-        await run();
-      } catch (error) {
-        workerMetrics.cronRuns.inc({ cron: name, outcome: "failed" });
-        throw error;
-      }
-      workerMetrics.cronRuns.inc({ cron: name, outcome: "ok" });
-      workerMetrics.cronLastSuccess.set({ cron: name }, Date.now() / 1_000);
-    },
-    MONITORS[name],
-  );
+  const measured = async () => {
+    try {
+      await run();
+    } catch (error) {
+      workerMetrics.cronRuns.inc({ cron: name, outcome: "failed" });
+      throw error;
+    }
+    workerMetrics.cronRuns.inc({ cron: name, outcome: "ok" });
+    workerMetrics.cronLastSuccess.set({ cron: name }, Date.now() / 1_000);
+  };
+  return reportsCheckIns()
+    ? withMonitor(name, measured, MONITORS[name])
+    : measured();
 }
