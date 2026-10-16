@@ -8,6 +8,7 @@ import {
   useState,
   useTransition,
   type ReactNode,
+  type Ref,
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { da, de, enGB, enUS } from "react-day-picker/locale";
@@ -651,15 +652,18 @@ function CardBody({
 
 function ChoiceCard({
   value,
+  ref,
   ...body
 }: {
   value: string;
+  ref?: Ref<HTMLButtonElement>;
   icon: LucideIcon;
   title: string;
   body?: string | null;
 }) {
   return (
     <RadioGroupPrimitive.Item
+      ref={ref}
       value={value}
       className={CARD}
     >
@@ -769,14 +773,17 @@ function PickedPlace({
   place,
   change,
   onChange,
+  ref,
 }: {
   icon: LucideIcon;
   place: Place;
   change: string;
   onChange: () => void;
+  ref?: Ref<HTMLButtonElement>;
 }) {
   return (
     <button
+      ref={ref}
       type="button"
       onClick={onChange}
       className={cn(CARD, "border-mint-deep bg-mint-tint")}
@@ -833,6 +840,11 @@ function WhereStep({
   const [custom, setCustom] = useState<Place | null>(
     start?.kind === "place" ? start.place : null,
   );
+  const [changingDestination, setChangingDestination] = useState(false);
+  const customCard = useRef<HTMLButtonElement>(null);
+  const pickedDestination = useRef<HTMLButtonElement>(null);
+  const focusSoon = (target: { current: HTMLButtonElement | null }) =>
+    requestAnimationFrame(() => target.current?.focus());
   const where = strings.where;
   const ordered = [
     ...locations.filter((location) => location.id === careCenterId),
@@ -882,6 +894,7 @@ function WhereStep({
                   setSearching(false);
                   setCustom(place);
                   onStart({ kind: "place", place });
+                  focusSoon(customCard);
                 }}
               />
             ) : (
@@ -922,6 +935,7 @@ function WhereStep({
           ) : null}
           {custom ? (
             <ChoiceCard
+              ref={customCard}
               value="place"
               icon={MapPin}
               title={custom.name}
@@ -938,10 +952,14 @@ function WhereStep({
           </h2>
           {destination ? (
             <PickedPlace
+              ref={pickedDestination}
               icon={Flag}
               place={destination}
               change={where.change}
-              onChange={() => onDestination(null)}
+              onChange={() => {
+                setChangingDestination(true);
+                onDestination(null);
+              }}
             />
           ) : (
             <>
@@ -949,7 +967,11 @@ function WhereStep({
                 strings={strings}
                 address={address}
                 language={language}
-                onPlace={onDestination}
+                autoFocus={changingDestination}
+                onPlace={(place) => {
+                  onDestination(place);
+                  focusSoon(pickedDestination);
+                }}
               />
               {destinations.length ? (
                 <div className="flex flex-col gap-2">
@@ -959,7 +981,10 @@ function WhereStep({
                       <li key={`${place.name}|${place.address ?? ""}`}>
                         <button
                           type="button"
-                          onClick={() => onDestination(place)}
+                          onClick={() => {
+                            onDestination(place);
+                            focusSoon(pickedDestination);
+                          }}
                           className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line px-4 text-sm transition-colors hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none"
                         >
                           <History
