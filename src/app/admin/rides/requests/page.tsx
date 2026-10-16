@@ -22,7 +22,8 @@ import { first, hrefWith } from "@/lib/search-params";
 import { AdminPageHeader, AdminPageShell } from "../../_components/admin-page";
 import { readActiveScope, type AdminSearchParams } from "../../active-scope";
 import { ADMIN_LIFE } from "../../admin-viewer";
-import { RideTabs, RideTabsSkeleton } from "../_components/ride-tabs";
+import { RideTabs } from "../_components/ride-tabs";
+import { RideTabsSkeleton } from "../_components/rides-skeleton";
 import {
   RequestsTable,
   type RequestListRow,

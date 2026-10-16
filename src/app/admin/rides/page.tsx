@@ -36,10 +36,11 @@ import { listRidesPageAction } from "@/features/rides/actions";
 import { rideErrors } from "@/features/rides/components/strings";
 import { RidesBodyFallback, RidesToolbar } from "./_components/rides-header";
 import {
+  RideTabsSkeleton,
   RidesSkeleton,
   WeekSwitcherSkeleton,
 } from "./_components/rides-skeleton";
-import { RideTabs, RideTabsSkeleton } from "./_components/ride-tabs";
+import { RideTabs } from "./_components/ride-tabs";
 import { RequestsWaiting } from "./_components/requests-waiting";
 import { ScheduleRide } from "./_components/schedule-ride";
 import { TRANSIENT, ridesView } from "./rides-view";

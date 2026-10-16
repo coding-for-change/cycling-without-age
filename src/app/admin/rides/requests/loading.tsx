@@ -1,5 +1,5 @@
 import { AdminPageShell } from "../../_components/admin-page";
-import { RideTabsSkeleton } from "../_components/ride-tabs";
+import { RideTabsSkeleton } from "../_components/rides-skeleton";
 import {
   RequestRowsSkeleton,
   RequestsHeaderSkeleton,
