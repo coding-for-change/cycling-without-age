@@ -199,7 +199,7 @@ async function OwnRequest({ id }: { id: string }) {
             errors={{ ...dict.common.errors, ...strings.errors }}
           />
         ) : null}
-        {state !== "pending" && state !== "scheduled" ? (
+        {state !== "pending" && (state !== "scheduled" || rideGone) ? (
           <Button
             asChild
             variant="outline"
