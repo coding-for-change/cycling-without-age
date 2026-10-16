@@ -381,7 +381,7 @@
     "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling."
   },
   "rideRequestWithdrawn": {
-    "subject": "{requester} trak ønsket for {date} tilbage",
+    "subject": "{requester} har trukket turønsket til {date} tilbage",
     "preview": "{date} · {time}",
     "heading": "Et turønske er trukket tilbage",
     "intro": "{requester} har ikke længere brug for turen for {riders} {date}, {time}. Der er ikke mere at gøre.",
@@ -389,13 +389,13 @@
     "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling.",
     "subjectClosed": "Turønsket til {date} er lukket",
     "headingClosed": "Et turønske er lukket",
-    "introClosed": "Ønsket for {riders} {date}, {time}, blev lukket, fordi en passager eller den, der ønskede, ikke længere er med. Der er ikke mere at gøre."
+    "introClosed": "Ønsket for {riders} {date}, {time}, blev lukket, fordi en passager eller den, der bad om turen, ikke længere er med. Der er ikke mere at gøre."
   },
   "rideRequestDeclined": {
     "subject": "{chapter} kan ikke tilbyde turen {date}",
     "preview": "{date} · {time}",
     "heading": "Ikke denne gang",
-    "intro": "{chapter} har set på dit ønske for {riders} {date}, {time}, og kan desværre ikke få turen til at lykkes. Du er velkommen til at ønske en anden dag.",
+    "intro": "{chapter} har set på dit ønske for {riders} {date}, {time}, og kan desværre ikke tilbyde turen. Du er velkommen til at ønske en tur en anden dag.",
     "noteHeading": "En besked fra {chapter}",
     "cta": "Se dit ønske",
     "footer": "Du modtager denne e-mail, fordi du har bedt en Cycling Without Age-afdeling om en tur."
