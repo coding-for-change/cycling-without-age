@@ -343,6 +343,32 @@ const VARIANTS: Partial<Record<EventType, DomainEvent[]>> = {
       self: true,
     } as DomainEvent,
   ],
+  "rideRequest.submitted": [
+    { ...EVENTS["rideRequest.submitted"], requestId: "request-pleasure" },
+    { ...EVENTS["rideRequest.submitted"], requestId: "request-one-way" },
+  ] as DomainEvent[],
+  "rideRequest.scheduled": [
+    { ...EVENTS["rideRequest.scheduled"], returnLegId: null } as DomainEvent,
+  ],
+  "rideRequest.declined": [
+    {
+      ...EVENTS["rideRequest.declined"],
+      requestId: "request-no-note",
+    } as DomainEvent,
+  ],
+  "rideRequest.withdrawn": [
+    { ...EVENTS["rideRequest.withdrawn"], actorUserId: ACTOR } as DomainEvent,
+  ],
+};
+
+const REQUEST_VARIANTS: Record<string, object> = {
+  "request-pleasure": {
+    model: "pleasure",
+    destinationName: null,
+    roundTrip: false,
+  },
+  "request-one-way": { roundTrip: false },
+  "request-no-note": { decisionNote: null },
 };
 
 const eventsOf = (kind: AnyKind) => [
@@ -418,8 +444,8 @@ const known = () => {
     status: "pending",
     requesterUserId: SUBJECT,
   });
-  getRequest.mockResolvedValue({
-    id: "request-1",
+  getRequest.mockImplementation(async (requestId: string) => ({
+    id: requestId,
     model: "functional",
     requestedStartsAt: new Date("2026-10-27T08:00:00Z"),
     requestedEndsAt: new Date("2026-10-27T09:00:00Z"),
@@ -430,7 +456,8 @@ const known = () => {
     decisionNote: "No pilot is free that morning.",
     chapter: { name: "München", timeZone: "Europe/Berlin" },
     passengers: [{ passenger: { id: "passenger-1" } }],
-  });
+    ...REQUEST_VARIANTS[requestId],
+  }));
 };
 
 const unknown = () => {
@@ -531,6 +558,31 @@ describe("a message for both legs of a round trip", () => {
         ).body,
       );
     }
+  });
+});
+
+describe("the variants of a request message", () => {
+  const kindOf = (event: EventType) =>
+    kinds.find((kind) => kind.event === event)!;
+
+  it.each([
+    "rideRequest.submitted",
+    "rideRequest.scheduled",
+    "rideRequest.withdrawn",
+  ] as EventType[])("each word %s their own way", async (event) => {
+    const bodies = (await messagesOf(kindOf(event), "en")).map(
+      (message) => message.body,
+    );
+    expect(bodies.length).toBeGreaterThan(1);
+    expect(new Set(bodies).size).toBe(bodies.length);
+  });
+
+  it("leave the note out of a decline that gave no reason", async () => {
+    expect(
+      (await messagesOf(kindOf("rideRequest.declined"), "en")).map(
+        (message) => message.note?.text ?? null,
+      ),
+    ).toEqual(["No pilot is free that morning.", null]);
   });
 });
 

@@ -180,6 +180,47 @@ describe("a withdrawn request", () => {
       `requests:${MUNICH}`,
     );
   });
+
+  it("reads as closed when anyone but the requester ended it", async () => {
+    expect((await rideRequestWithdrawn.params(withdrawn)).closed).toBe(true);
+    expect(
+      (await rideRequestWithdrawn.params({ ...withdrawn, actorUserId: CARER }))
+        .closed,
+    ).toBe(false);
+  });
+
+  it("words a closed request apart from one the requester took back", async () => {
+    const strings = getEmailStrings("en");
+    const copy = {
+      ...strings,
+      rideRequestWithdrawn: {
+        ...strings.rideRequestWithdrawn,
+        subject: "taken back",
+        subjectClosed: "closed",
+        intro: "taken back",
+        introClosed: "closed",
+      },
+    };
+    const messageBy = async (actorUserId: string) =>
+      rideRequestWithdrawn.message(
+        await rideRequestWithdrawn.hydrate!(
+          await rideRequestWithdrawn.params({ ...withdrawn, actorUserId }),
+        ),
+        copy,
+        "en",
+      );
+
+    expect(await messageBy(ADMIN)).toMatchObject({
+      subject: "closed",
+      heading: strings.rideRequestWithdrawn.headingClosed,
+      body: "closed",
+    });
+    expect(await messageBy(CARER)).toMatchObject({
+      subject: "taken back",
+      heading: strings.rideRequestWithdrawn.heading,
+      body: "taken back",
+    });
+  });
 });
 
 describe("a scheduled request", () => {
@@ -198,6 +239,20 @@ describe("a scheduled request", () => {
     expect(rideRequestScheduled.href(scheduled)).toBe(
       "/passenger/rides/ride-1",
     );
+  });
+
+  it("tells nobody of a ride that is already over, even one ending this moment", async () => {
+    const endingAt = (endsAt: string) =>
+      (rides.getRideFacts as jest.Mock).mockResolvedValue({
+        ...legs["ride-1"],
+        startsAt: new Date("2026-10-19T08:00:00Z"),
+        endsAt: new Date(endsAt),
+      });
+
+    endingAt("2026-10-19T08:45:00Z");
+    expect(await rideRequestScheduled.recipients(scheduled)).toEqual([]);
+    endingAt("2026-10-20T08:00:00Z");
+    expect(await rideRequestScheduled.recipients(scheduled)).toEqual([]);
   });
 
   it("carries one calendar event per leg, and nobody's name", async () => {
@@ -323,6 +378,32 @@ it("hands the decline note to the requester", async () => {
     "de",
   );
   expect(message.note?.text).toBe("No pilot is free that morning.");
+});
+
+describe("a declined request", () => {
+  const declined: EventOf<"rideRequest.declined"> = {
+    type: "rideRequest.declined",
+    requestId: "request-1",
+    chapterId: MUNICH,
+    actorUserId: ADMIN,
+    requesterUserId: CARER,
+  };
+
+  it("leaves the note out when the chapter gave no reason", async () => {
+    (rideRequests.getRequest as jest.Mock).mockResolvedValue({
+      ...REQUEST,
+      decisionNote: null,
+    });
+    const params = await rideRequestDeclined.params(declined);
+    expect(params.note).toBeNull();
+    expect(
+      rideRequestDeclined.message(
+        await rideRequestDeclined.hydrate!(params),
+        getEmailStrings("en"),
+        "en",
+      ).note,
+    ).toBeNull();
+  });
 });
 
 describe("a rider handed over", () => {
