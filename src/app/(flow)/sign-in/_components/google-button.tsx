@@ -5,8 +5,19 @@ import { useTransition } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { clearOfflineCaches } from "@/lib/offline-caches";
+import { setSignUpIntentAction } from "../actions";
 
-export function GoogleButton({ label }: { label: string }) {
+/**
+ * A Google account that has no CWA account yet comes back to "create account"
+ * when the person only meant to sign in — the same rule as the code flow.
+ */
+export function GoogleButton({
+  label,
+  register,
+}: {
+  label: string;
+  register: boolean;
+}) {
   const [pending, startTransition] = useTransition();
 
   return (
@@ -16,9 +27,11 @@ export function GoogleButton({ label }: { label: string }) {
       onClick={() =>
         startTransition(async () => {
           await clearOfflineCaches().catch(() => {});
+          await setSignUpIntentAction(register);
           await authClient.signIn.social({
             provider: "google",
             callbackURL: "/onboarding",
+            errorCallbackURL: "/sign-in",
           });
         })
       }

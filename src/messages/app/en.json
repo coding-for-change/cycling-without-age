@@ -2371,7 +2371,8 @@
       "resent": "New code sent.",
       "sentToEmail": "We emailed a 6-digit code to {identifier}.",
       "sentToPhone": "We texted a 6-digit code to {identifier}.",
-      "title": "Enter your code"
+      "title": "Enter your code",
+      "welcomeBack": "You already had an account — we’ve signed you in."
     },
     "country": {
       "noResults": "No country matches that.",
@@ -2390,11 +2391,19 @@
         "rateLimited": "Too many attempts. Try again in a minute."
       },
       "google": "Continue with Google",
+      "hintRegister": "We'll send you a code — that's all it takes to create your account.",
       "label": "Email or phone number",
+      "noAccount": "There's no account for this address yet. Create one here — we'll send you a fresh code.",
       "passkey": "Use a passkey",
       "placeholder": "you@example.com",
       "separator": "or",
-      "title": "What's your email or phone number?"
+      "title": "What's your email or phone number?",
+      "titleRegister": "Which email or phone number would you like to register with?"
+    },
+    "mode": {
+      "label": "Sign in or create an account",
+      "register": "Create account",
+      "signIn": "Sign in"
     },
     "role": {
       "passenger": {

@@ -2371,7 +2371,8 @@
       "resent": "Neuer Code gesendet.",
       "sentToEmail": "Wir haben einen 6-stelligen Code an {identifier} geschickt.",
       "sentToPhone": "Wir haben eine SMS mit einem 6-stelligen Code an {identifier} geschickt.",
-      "title": "Geben Sie Ihren Code ein"
+      "title": "Geben Sie Ihren Code ein",
+      "welcomeBack": "Sie hatten schon ein Konto – wir haben Sie angemeldet."
     },
     "country": {
       "noResults": "Kein Land passt dazu.",
@@ -2390,11 +2391,19 @@
         "rateLimited": "Zu viele Versuche. Versuchen Sie es in einer Minute erneut."
       },
       "google": "Weiter mit Google",
+      "hintRegister": "Wir schicken Ihnen einen Code – damit ist Ihr Konto angelegt.",
       "label": "E-Mail-Adresse oder Telefonnummer",
+      "noAccount": "Zu dieser Adresse gibt es noch kein Konto. Erstellen Sie hier eins – wir schicken Ihnen dafür einen neuen Code.",
       "passkey": "Passkey verwenden",
       "placeholder": "sie@beispiel.de",
       "separator": "oder",
-      "title": "Wie lautet Ihre E-Mail-Adresse oder Telefonnummer?"
+      "title": "Wie lautet Ihre E-Mail-Adresse oder Telefonnummer?",
+      "titleRegister": "Mit welcher E-Mail-Adresse oder Telefonnummer möchten Sie sich registrieren?"
+    },
+    "mode": {
+      "label": "Anmelden oder Konto erstellen",
+      "register": "Konto erstellen",
+      "signIn": "Anmelden"
     },
     "role": {
       "passenger": {

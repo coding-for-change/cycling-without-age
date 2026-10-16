@@ -2371,7 +2371,8 @@
       "resent": "Ny kode sendt.",
       "sentToEmail": "Vi har sendt en 6-cifret kode til {identifier}.",
       "sentToPhone": "Vi har sendt en sms med en 6-cifret kode til {identifier}.",
-      "title": "Indtast din kode"
+      "title": "Indtast din kode",
+      "welcomeBack": "Du havde allerede en konto – vi har logget dig ind."
     },
     "country": {
       "noResults": "Intet land passer på det.",
@@ -2390,11 +2391,19 @@
         "rateLimited": "For mange forsøg. Prøv igen om et minut."
       },
       "google": "Fortsæt med Google",
+      "hintRegister": "Vi sender dig en kode – så er din konto oprettet.",
       "label": "E-mail eller telefonnummer",
+      "noAccount": "Der er endnu ingen konto til denne adresse. Opret en her – vi sender dig en ny kode.",
       "passkey": "Brug en adgangsnøgle",
       "placeholder": "dig@eksempel.dk",
       "separator": "eller",
-      "title": "Hvad er din e-mail eller dit telefonnummer?"
+      "title": "Hvad er din e-mail eller dit telefonnummer?",
+      "titleRegister": "Hvilken e-mail eller hvilket telefonnummer vil du oprette dig med?"
+    },
+    "mode": {
+      "label": "Log ind eller opret en konto",
+      "register": "Opret konto",
+      "signIn": "Log ind"
     },
     "role": {
       "passenger": {

@@ -7,15 +7,28 @@ import { resolveDestination } from "@/use-cases/onboarding-progress";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { resolveLocale } from "@/lib/format";
 import { defaultCountryFor } from "@/lib/identity";
+import { first } from "@/lib/search-params";
+import { NO_ACCOUNT } from "@/lib/sign-up-intent";
 import { IdentifierStep } from "./_components/identifier-step";
 import { StepSkeleton } from "../_components/step";
 import { StepTransition } from "../_components/step-transition";
 
-export default function SignInPage() {
+type SignInSearch = {
+  mode?: string | string[];
+  notice?: string | string[];
+  /** Set by better-auth when an OAuth sign-in comes back refused. */
+  error?: string | string[];
+};
+
+export default function SignInPage({
+  searchParams,
+}: {
+  searchParams: Promise<SignInSearch>;
+}) {
   return (
     <StepTransition>
       <Suspense fallback={<StepSkeleton />}>
-        <Identifier />
+        <Identifier searchParams={searchParams} />
       </Suspense>
     </StepTransition>
   );
@@ -24,7 +37,11 @@ export default function SignInPage() {
 /* The notation locale carries a region (`de-DE` → DE), which is enough to open
    the phone field on the right country prefix without asking. Resolved here on
    the server; reading navigator.language during render would disagree with it. */
-async function Identifier() {
+async function Identifier({
+  searchParams,
+}: {
+  searchParams: Promise<SignInSearch>;
+}) {
   // Someone already signed in has no business on a sign-in screen — reaching it
   // by back button or a stale bookmark forwards them to wherever they belong.
   // Only this exact route: `/sign-in/code` and `/sign-in/role` are steps of the
@@ -38,15 +55,23 @@ async function Identifier() {
     redirect(await resolveDestination(session, preset, next));
   }
 
-  const [dict, language, head] = await Promise.all([
+  const [dict, language, head, params] = await Promise.all([
     getDictionary(),
     getLocale(),
     headers(),
+    searchParams,
   ]);
   const locale = resolveLocale(head.get("accept-language"));
+  const noAccount =
+    first(params.notice) === "noAccount" || first(params.error) === NO_ACCOUNT;
 
   return (
     <IdentifierStep
+      mode={
+        noAccount || first(params.mode) === "register" ? "register" : "signIn"
+      }
+      noAccount={noAccount}
+      modeStrings={dict.signIn.mode}
       strings={dict.signIn.identifier}
       common={dict.common}
       language={language}
