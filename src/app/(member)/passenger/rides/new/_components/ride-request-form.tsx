@@ -24,6 +24,7 @@ import {
   Wind,
   type LucideIcon,
 } from "lucide-react";
+import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
 import { toast } from "sonner";
 import { notify } from "@/components/action-feedback";
 import { AddressSearch } from "@/components/address-search";
@@ -99,7 +100,14 @@ const WHEN_ERRORS: readonly RideRequestError[] = [
 ];
 
 const CARD =
-  "flex w-full items-start gap-3 rounded-2xl border border-line bg-canvas p-4 text-left transition-colors hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none aria-checked:border-mint-deep aria-checked:bg-mint-tint aria-pressed:border-mint-deep aria-pressed:bg-mint-tint disabled:pointer-events-none disabled:opacity-50";
+  "flex w-full items-start gap-3 rounded-2xl border border-line bg-canvas p-4 text-left transition-colors hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none aria-checked:border-mint-deep aria-checked:bg-mint-tint disabled:pointer-events-none disabled:opacity-50";
+
+const startValue = (start: Start | null) =>
+  start === null
+    ? ""
+    : start.kind === "location"
+      ? `location:${start.id}`
+      : start.kind;
 
 const asLocalDate = (iso: string) => {
   const [year, month, day] = iso.split("-").map(Number);
@@ -234,9 +242,7 @@ export function RideRequestForm({
       current.includes(id)
         ? current.filter((rider) => rider !== id)
         : current.length >= data.maxRiders
-          ? data.maxRiders === 1
-            ? [id]
-            : current
+          ? current
           : [...current, id],
     );
 
@@ -331,6 +337,7 @@ export function RideRequestForm({
           chosen={riderIds}
           max={data.maxRiders}
           onToggle={toggleRider}
+          onPick={(id) => setRiderIds([id])}
           strings={strings}
           chapter={data.chapterName}
           language={language}
@@ -474,12 +481,30 @@ function placeName(
   return locations.find((location) => location.id === start.id)?.name ?? null;
 }
 
+function RiderMark({ on, name }: { on: boolean; name: string }) {
+  return (
+    <>
+      <span
+        aria-hidden
+        className={cn(
+          "flex size-6 shrink-0 items-center justify-center rounded-full border border-line",
+          on && "border-mint-deep bg-mint-deep text-white",
+        )}
+      >
+        {on ? <Check className="size-4" /> : null}
+      </span>
+      <span className="text-base font-medium">{name}</span>
+    </>
+  );
+}
+
 function WhoStep({
   riders,
   stranded,
   chosen,
   max,
   onToggle,
+  onPick,
   strings,
   chapter,
   language,
@@ -489,44 +514,60 @@ function WhoStep({
   chosen: string[];
   max: number;
   onToggle: (id: string) => void;
+  onPick: (id: string) => void;
   strings: Strings;
   chapter: string;
   language: Locale;
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <ul
-        role="group"
-        aria-label={strings.steps.who.title}
-        className="flex flex-col gap-3"
-      >
-        {riders.map((rider) => {
-          const on = chosen.includes(rider.id);
-          return (
-            <li key={rider.id}>
+      {max === 1 ? (
+        <RadioGroupPrimitive.Root
+          aria-label={strings.steps.who.title}
+          value={chosen[0] ?? ""}
+          onValueChange={onPick}
+          className="flex flex-col gap-3"
+        >
+          {riders.map((rider) => (
+            <RadioGroupPrimitive.Item
+              key={rider.id}
+              value={rider.id}
+              className={cn(CARD, "items-center")}
+            >
+              <RiderMark
+                on={chosen.includes(rider.id)}
+                name={rider.name}
+              />
+            </RadioGroupPrimitive.Item>
+          ))}
+        </RadioGroupPrimitive.Root>
+      ) : (
+        <div
+          role="group"
+          aria-label={strings.steps.who.title}
+          className="flex flex-col gap-3"
+        >
+          {riders.map((rider) => {
+            const on = chosen.includes(rider.id);
+            return (
               <button
+                key={rider.id}
                 type="button"
                 role="checkbox"
                 aria-checked={on}
-                disabled={!on && chosen.length >= max && max > 1}
+                disabled={!on && chosen.length >= max}
                 onClick={() => onToggle(rider.id)}
                 className={cn(CARD, "items-center")}
               >
-                <span
-                  aria-hidden
-                  className={cn(
-                    "flex size-6 shrink-0 items-center justify-center rounded-full border border-line",
-                    on && "border-mint-deep bg-mint-deep text-white",
-                  )}
-                >
-                  {on ? <Check className="size-4" /> : null}
-                </span>
-                <span className="text-base font-medium">{rider.name}</span>
+                <RiderMark
+                  on={on}
+                  name={rider.name}
+                />
               </button>
-            </li>
-          );
-        })}
-      </ul>
+            );
+          })}
+        </div>
+      )}
       {stranded.length ? (
         <p className="text-2sm text-ink-soft">
           {formatMessage(
@@ -540,30 +581,17 @@ function WhoStep({
   );
 }
 
-function ChoiceCard({
+function CardBody({
   icon: Icon,
   title,
   body,
-  on,
-  onPick,
-  role = "radio",
 }: {
   icon: LucideIcon;
   title: string;
   body?: string | null;
-  on: boolean;
-  onPick: () => void;
-  role?: "radio" | "button";
 }) {
   return (
-    <button
-      type="button"
-      role={role}
-      aria-checked={role === "radio" ? on : undefined}
-      aria-pressed={role === "button" ? on : undefined}
-      onClick={onPick}
-      className={CARD}
-    >
+    <>
       <Icon
         aria-hidden
         className="mt-0.5 size-5 shrink-0 text-ink-soft"
@@ -574,25 +602,60 @@ function ChoiceCard({
           <span className="text-2sm text-pretty text-ink-soft">{body}</span>
         ) : null}
       </span>
-    </button>
+    </>
   );
 }
 
-function Group({ label, children }: { label: string; children: ReactNode }) {
+function ChoiceCard({
+  value,
+  ...body
+}: {
+  value: string;
+  icon: LucideIcon;
+  title: string;
+  body?: string | null;
+}) {
+  return (
+    <RadioGroupPrimitive.Item
+      value={value}
+      className={CARD}
+    >
+      <CardBody {...body} />
+    </RadioGroupPrimitive.Item>
+  );
+}
+
+function Group({
+  label,
+  value,
+  onValue,
+  children,
+  after,
+}: {
+  label: string;
+  value: string;
+  onValue: (value: string) => void;
+  children: ReactNode;
+  after?: ReactNode;
+}) {
   const id = useId();
   return (
-    <section
-      role="radiogroup"
-      aria-labelledby={id}
-      className="flex flex-col gap-3"
-    >
+    <section className="flex flex-col gap-3">
       <h2
         id={id}
         className="text-xs font-semibold tracking-wide text-ink-soft uppercase"
       >
         {label}
       </h2>
-      {children}
+      <RadioGroupPrimitive.Root
+        aria-labelledby={id}
+        value={value}
+        onValueChange={onValue}
+        className="flex flex-col gap-3"
+      >
+        {children}
+      </RadioGroupPrimitive.Root>
+      {after}
     </section>
   );
 }
@@ -724,6 +787,9 @@ function WhereStep({
 }) {
   const roundTripId = useId();
   const [searching, setSearching] = useState(false);
+  const [custom, setCustom] = useState<Place | null>(
+    start?.kind === "place" ? start.place : null,
+  );
   const where = strings.where;
   const ordered = [
     ...locations.filter((location) => location.id === careCenterId),
@@ -732,28 +798,68 @@ function WhereStep({
 
   return (
     <div className="flex flex-col gap-6">
-      <Group label={where.kind}>
+      <Group
+        label={where.kind}
+        value={model ?? ""}
+        onValue={(next) => onModel(next as RequestModel)}
+      >
         <ChoiceCard
+          value="pleasure"
           icon={Wind}
           title={strings.models.pleasure}
           body={where.pleasureBody}
-          on={model === "pleasure"}
-          onPick={() => onModel("pleasure")}
         />
         <ChoiceCard
+          value="functional"
           icon={Flag}
           title={strings.models.functional}
           body={where.functionalBody}
-          on={model === "functional"}
-          onPick={() => onModel("functional")}
         />
       </Group>
 
       {model ? (
-        <Group label={model === "pleasure" ? where.from : where.pickup}>
+        <Group
+          label={model === "pleasure" ? where.from : where.pickup}
+          value={startValue(start)}
+          onValue={(next) => {
+            setSearching(false);
+            if (next === "home") onStart({ kind: "home" });
+            else if (next === "place" && custom)
+              onStart({ kind: "place", place: custom });
+            else onStart({ kind: "location", id: next.slice(9) });
+          }}
+          after={
+            searching ? (
+              <PlaceSearch
+                strings={strings}
+                address={address}
+                language={language}
+                autoFocus
+                onPlace={(place) => {
+                  setSearching(false);
+                  setCustom(place);
+                  onStart({ kind: "place", place });
+                }}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setSearching(true)}
+                className={CARD}
+              >
+                <CardBody
+                  icon={Search}
+                  title={where.elsewhere}
+                  body={where.elsewhereBody}
+                />
+              </button>
+            )
+          }
+        >
           {ordered.map((location) => (
             <ChoiceCard
               key={location.id}
+              value={`location:${location.id}`}
               icon={location.kind === "publicPlace" ? MapPin : Building2}
               title={location.name}
               body={
@@ -761,53 +867,24 @@ function WhereStep({
                   ? where.careCenter
                   : (location.address ?? where.kinds[location.kind])
               }
-              on={start?.kind === "location" && start.id === location.id}
-              onPick={() => {
-                setSearching(false);
-                onStart({ kind: "location", id: location.id });
-              }}
             />
           ))}
           {home ? (
             <ChoiceCard
+              value="home"
               icon={House}
               title={where.home}
               body={home.address}
-              on={start?.kind === "home"}
-              onPick={() => {
-                setSearching(false);
-                onStart({ kind: "home" });
-              }}
             />
           ) : null}
-          {start?.kind === "place" && !searching ? (
-            <PickedPlace
-              icon={MapPin}
-              place={start.place}
-              change={where.change}
-              onChange={() => setSearching(true)}
-            />
-          ) : searching ? (
-            <PlaceSearch
-              strings={strings}
-              address={address}
-              language={language}
-              autoFocus
-              onPlace={(place) => {
-                setSearching(false);
-                onStart({ kind: "place", place });
-              }}
-            />
-          ) : (
+          {custom ? (
             <ChoiceCard
-              icon={Search}
-              role="button"
-              title={where.elsewhere}
-              body={where.elsewhereBody}
-              on={false}
-              onPick={() => setSearching(true)}
+              value="place"
+              icon={MapPin}
+              title={custom.name}
+              body={custom.address}
             />
-          )}
+          ) : null}
         </Group>
       ) : null}
 
@@ -934,40 +1011,26 @@ function WhenStep({
           <h2 className="text-xs font-semibold tracking-wide text-ink-soft uppercase">
             {formatMessage(strings.when.windows, { date: day.label }, language)}
           </h2>
-          <ul
-            role="radiogroup"
+          <RadioGroupPrimitive.Root
             aria-label={day.label}
+            value={slot ? `${slot.startMinute}-${slot.endMinute}` : ""}
+            onValueChange={(next) => {
+              const [startMinute, endMinute] = next.split("-").map(Number);
+              haptics.selectionChanged();
+              onSlot({ startMinute, endMinute });
+            }}
             className="flex flex-wrap gap-2"
           >
-            {day.windows.map((candidate) => {
-              const on =
-                slot?.startMinute === candidate.startMinute &&
-                slot?.endMinute === candidate.endMinute;
-              return (
-                <li key={`${candidate.startMinute}-${candidate.endMinute}`}>
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={on}
-                    onClick={() => {
-                      haptics.selectionChanged();
-                      onSlot({
-                        startMinute: candidate.startMinute,
-                        endMinute: candidate.endMinute,
-                      });
-                    }}
-                    className={cn(
-                      "inline-flex min-h-11 items-center rounded-full border border-line px-4 text-sm tabular-nums transition-colors hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none",
-                      on &&
-                        "border-mint-deep bg-mint-deep text-white hover:bg-mint-deep",
-                    )}
-                  >
-                    {candidate.label}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+            {day.windows.map((candidate) => (
+              <RadioGroupPrimitive.Item
+                key={`${candidate.startMinute}-${candidate.endMinute}`}
+                value={`${candidate.startMinute}-${candidate.endMinute}`}
+                className="inline-flex min-h-11 items-center rounded-full border border-line px-4 text-sm tabular-nums transition-colors hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none aria-checked:border-mint-deep aria-checked:bg-mint-deep aria-checked:text-white aria-checked:hover:bg-mint-deep"
+              >
+                {candidate.label}
+              </RadioGroupPrimitive.Item>
+            ))}
+          </RadioGroupPrimitive.Root>
           <p className="text-2sm text-ink-soft">{strings.when.confirm}</p>
         </section>
       ) : (
