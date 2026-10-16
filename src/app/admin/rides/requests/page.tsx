@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { cacheLife } from "next/cache";
 import { headers } from "next/headers";
-import Link from "next/link";
 import { Inbox } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { rideRequests, RIDE_REQUEST_STATUSES } from "@/features/ride-requests";
@@ -14,7 +13,6 @@ import { calendarDate } from "@/lib/calendar";
 import { formatDate, resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { first, hrefWith } from "@/lib/search-params";
-import { cn } from "@/lib/utils";
 import { AdminPageHeader, AdminPageShell } from "../../_components/admin-page";
 import { readActiveScope, type AdminSearchParams } from "../../active-scope";
 import { ADMIN_LIFE } from "../../admin-viewer";
@@ -23,6 +21,7 @@ import {
   RequestsTable,
   type RequestListRow,
 } from "./_components/requests-table";
+import { RequestStatusSwitch } from "./_components/request-status-switch";
 import {
   RequestRowsSkeleton,
   RequestsHeaderSkeleton,
@@ -121,25 +120,15 @@ async function RequestList({ searchParams }: PageProps) {
 
   return (
     <section className="flex flex-col gap-3">
-      <nav
-        aria-label={strings.filter.label}
-        className="flex flex-wrap gap-1.25"
-      >
-        {FILTERS.map((value) => (
-          <Link
-            key={value}
-            href={filterHref(value)}
-            aria-current={value === filter ? "page" : undefined}
-            className={cn(
-              "inline-flex h-8 items-center rounded-full border border-line px-3 text-2sm transition-colors hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none",
-              value === filter &&
-                "border-mint-deep bg-mint-deep text-white hover:bg-mint-deep",
-            )}
-          >
-            {value === "all" ? strings.filter.all : strings.statuses[value]}
-          </Link>
-        ))}
-      </nav>
+      <RequestStatusSwitch
+        value={filter}
+        label={strings.filter.label}
+        options={FILTERS.map((value) => ({
+          value,
+          label: value === "all" ? strings.filter.all : strings.statuses[value],
+          href: filterHref(value),
+        }))}
+      />
       {rows.length ? (
         <RequestsTable
           rows={rows}

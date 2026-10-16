@@ -10,14 +10,7 @@ export function RequestsHeaderSkeleton() {
 export function RequestRowsSkeleton() {
   return (
     <section className="flex flex-col gap-3">
-      <div className="flex gap-1.25">
-        {["w-20", "w-24", "w-20", "w-24", "w-12"].map((width, index) => (
-          <Skeleton
-            key={index}
-            className={`h-8 rounded-full ${width}`}
-          />
-        ))}
-      </div>
+      <Skeleton className="h-8 w-80 max-w-full rounded-lg" />
       <div className="overflow-hidden rounded-2xl border border-line">
         <div className="h-11 bg-canvas-deep" />
         {ROWS.map((width, index) => (
