@@ -2358,7 +2358,7 @@
       },
       "notMember": {
         "title": "Buchen ist gerade nicht möglich",
-        "body": "Sie sind nicht mehr Mitglied der Ortsgruppe, mit der {names} fährt. Deshalb können keine Fahrtanfragen für sie gesendet werden. Bitten Sie die Ortsgruppe, sie an jemand anderen zu übergeben, oder treten Sie wieder bei.",
+        "body": "{names} {count, plural, one {fährt} other {fahren}} mit einer Ortsgruppe, in der Sie nicht mehr Mitglied sind. Deshalb können Sie gerade keine Fahrten anfragen. Bitten Sie die Ortsgruppe um eine Übergabe an jemand anderen, oder treten Sie wieder bei.",
         "cta": "Zur Startseite"
       },
       "empty": {
@@ -2389,7 +2389,7 @@
         }
       },
       "who": {
-        "stranded": "Für {names} können Sie gerade keine Fahrten anfragen: Sie sind nicht mehr Mitglied ihrer Ortsgruppe."
+        "stranded": "Für {names} können Sie gerade keine Fahrten anfragen, weil Sie nicht mehr Mitglied der zugehörigen Ortsgruppe sind."
       },
       "models": {
         "pleasure": "Eine Ausfahrt",

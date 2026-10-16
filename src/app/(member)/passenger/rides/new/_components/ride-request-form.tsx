@@ -44,7 +44,12 @@ import {
   type RequestModel,
 } from "@/features/ride-requests/schemas";
 import { routeLine } from "@/features/ride-requests/components/request-words";
-import { toIsoDateLocal, type Locale as Notation } from "@/lib/format";
+import {
+  formatList,
+  toIsoDateLocal,
+  wordsLocale,
+  type Locale as Notation,
+} from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
@@ -594,7 +599,7 @@ function WhoStep({
         <p className="text-2sm text-ink-soft">
           {formatMessage(
             strings.who.stranded,
-            { names: stranded.join(", "), chapter },
+            { names: formatList(stranded, wordsLocale(language)), chapter },
             language,
           )}
         </p>

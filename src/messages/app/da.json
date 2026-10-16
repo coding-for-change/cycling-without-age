@@ -2358,7 +2358,7 @@
       },
       "notMember": {
         "title": "Du kan ikke booke lige nu",
-        "body": "Du er ikke længere medlem af den afdeling, som {names} kører med, så der kan ikke sendes turønsker for dem. Bed afdelingen om at overdrage dem til en anden, eller bliv medlem igen.",
+        "body": "{count, plural, one {Du er ikke længere medlem af den afdeling, som {names} kører med, så der kan ikke sendes turønsker for vedkommende. Bed afdelingen om at overdrage vedkommende til en anden, eller bliv medlem igen.} other {Du er ikke længere medlem af den afdeling, som {names} kører med, så der kan ikke sendes turønsker for dem. Bed afdelingen om at overdrage dem til en anden, eller bliv medlem igen.}}",
         "cta": "Til forsiden"
       },
       "empty": {

@@ -2358,7 +2358,7 @@
       },
       "notMember": {
         "title": "You can't book right now",
-        "body": "You're no longer a member of the chapter {names} rides with, so ride requests can't go out for them. Ask the chapter to hand them over to someone else, or join it again.",
+        "body": "{names} {count, plural, one {rides} other {ride}} with a chapter you're no longer a member of, so you can't ask for rides for them right now. Ask the chapter to hand them over to someone else, or join it again.",
         "cta": "Back to home"
       },
       "empty": {

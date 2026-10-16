@@ -104,6 +104,7 @@ export async function NewRideRequest({
                   riders.map((rider) => rider.firstName),
                   words,
                 ),
+                count: riders.length,
               },
               words,
             )}
