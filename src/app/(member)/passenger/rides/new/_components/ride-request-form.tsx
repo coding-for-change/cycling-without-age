@@ -26,7 +26,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { notify } from "@/components/action-feedback";
-import { z } from "zod";
 import { AddressSearch } from "@/components/address-search";
 import { StepDots, withStepLabel } from "@/components/step-dots";
 import { Button } from "@/components/ui/button";
@@ -44,7 +43,6 @@ import {
   type RequestModel,
 } from "@/features/ride-requests/schemas";
 import { routeLine } from "@/features/ride-requests/components/request-words";
-import { useDraft } from "@/lib/auth-wall";
 import { toIsoDateLocal, type Locale as Notation } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
@@ -100,8 +98,6 @@ const WHEN_ERRORS: readonly RideRequestError[] = [
   "outsideHours",
 ];
 
-const joinDraft = z.object({ chapterSlug: z.string().max(60) });
-
 const CARD =
   "flex w-full items-start gap-3 rounded-2xl border border-line bg-canvas p-4 text-left transition-colors hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none aria-checked:border-mint-deep aria-checked:bg-mint-tint aria-pressed:border-mint-deep aria-pressed:bg-mint-tint disabled:pointer-events-none disabled:opacity-50";
 
@@ -139,7 +135,6 @@ export function RideRequestForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const keyboardOpen = useKeyboardOpen();
-  const draft = useDraft("ride", joinDraft);
   const [pending, startTransition] = useTransition();
   const pushed = useRef(0);
 
@@ -158,13 +153,6 @@ export function RideRequestForm({
   const [date, setDate] = useState<string | null>(null);
   const [slot, setSlot] = useState<Window | null>(null);
   const [note, setNote] = useState("");
-
-  useEffect(() => {
-    if (!draft || searchParams.get("chapter")) return;
-    const params = new URLSearchParams(searchParams);
-    params.set("chapter", draft.chapterSlug);
-    router.replace(`?${params.toString()}`, { scroll: false });
-  }, [draft, router, searchParams]);
 
   const chosen = data.riders.filter((rider) => riderIds.includes(rider.id));
   const lead = chosen[0] ?? data.riders[0];

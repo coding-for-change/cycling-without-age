@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { Bike } from "lucide-react";
-import { saveDraft } from "@/lib/auth-wall";
 import { signInHref } from "@/lib/redirects";
 import { haptics } from "@/lib/native/haptics";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,6 @@ export function BookRideCta({
   const router = useRouter();
 
   const book = () => {
-    saveDraft("ride", { chapterSlug: slug });
     haptics.tap();
     const target = `/passenger/rides/new?chapter=${encodeURIComponent(slug)}`;
     router.push(signedIn ? target : signInHref(target), {

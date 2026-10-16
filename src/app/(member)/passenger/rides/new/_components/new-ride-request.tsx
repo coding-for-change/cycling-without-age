@@ -68,6 +68,7 @@ export async function NewRideRequest({
           <p className="text-ink-soft">{strings.join.body}</p>
         </header>
         <JoinActions
+          passengerOnly
           chapterId={asked.id}
           pendingApplication={pendingApplication}
           strings={{ passenger: dict.join.passenger, pilot: dict.join.pilot }}

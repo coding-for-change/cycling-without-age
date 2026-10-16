@@ -172,11 +172,13 @@ async function Join({ params }: Params) {
         </div>
       )}
 
-      <BookRideCta
-        slug={chapter.slug}
-        signedIn={Boolean(session)}
-        strings={strings.ride}
-      />
+      {session && !isMember ? null : (
+        <BookRideCta
+          slug={chapter.slug}
+          signedIn={Boolean(session)}
+          strings={strings.ride}
+        />
+      )}
 
       <section className="mt-10 border-t border-line pt-8">
         <h2 className="font-display text-lg font-bold">{strings.app.title}</h2>
