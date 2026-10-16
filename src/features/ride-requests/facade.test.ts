@@ -7,6 +7,7 @@ import {
   countRideRequests,
   findDestinationsOfRequester,
   findOpenRequestsOf,
+  findRideRequest,
   findRideRequests,
   findRideRequestsOfRequester,
   findOpenRequestsOfRequesterWith,
@@ -656,5 +657,88 @@ describe("listing requests", () => {
   it("counts nothing for an admin without chapters, without asking", async () => {
     await expect(rideRequests.countPending([], now)).resolves.toBe(0);
     expect(count).not.toHaveBeenCalled();
+  });
+});
+
+describe("asking within the limits", () => {
+  const overlapping = countOpenRequestsOverlapping as jest.Mock;
+  const open = countOpenRequestsOfRequester as jest.Mock;
+  const now = new Date("2026-10-05T08:00:00Z");
+  const window = {
+    startsAt: new Date("2026-10-08T08:00:00Z"),
+    endsAt: new Date("2026-10-08T09:00:00Z"),
+  };
+
+  beforeEach(() => {
+    overlapping.mockResolvedValue(0);
+    open.mockResolvedValue(0);
+  });
+
+  it("counts the requester's waiting requests as of now and the riders' in the window", async () => {
+    await rideRequests.assertCanAsk(
+      REQUESTER,
+      ["mother", "father"],
+      window,
+      now,
+    );
+    expect(open).toHaveBeenCalledWith(REQUESTER, now);
+    expect(overlapping).toHaveBeenCalledWith(["mother", "father"], window);
+  });
+
+  it("lets a fifth request through while four wait", async () => {
+    open.mockResolvedValue(4);
+    await expect(
+      rideRequests.assertCanAsk(REQUESTER, ["mother"], window, now),
+    ).resolves.toBeUndefined();
+  });
+
+  it("refuses a sixth request while five wait", async () => {
+    open.mockResolvedValue(5);
+    expect(
+      await codeOf(
+        rideRequests.assertCanAsk(REQUESTER, ["mother"], window, now),
+      ),
+    ).toBe("tooManyRequests");
+  });
+});
+
+describe("claim", () => {
+  it("claims the request in the name of the deciding admin, as of now", async () => {
+    const now = new Date("2026-10-05T08:00:00Z");
+    (claimPendingRequest as jest.Mock).mockResolvedValue({ count: 1 });
+    await expect(
+      rideRequests.claim("request-1", "user-admin", now),
+    ).resolves.toBeUndefined();
+    expect(claimPendingRequest).toHaveBeenCalledWith(
+      "request-1",
+      "user-admin",
+      now,
+    );
+  });
+});
+
+describe("requirePending", () => {
+  const find = findRideRequest as jest.Mock;
+
+  it("hands back a request still waiting", async () => {
+    find.mockResolvedValue(pending);
+    await expect(rideRequests.requirePending("request-1")).resolves.toBe(
+      pending,
+    );
+    expect(find).toHaveBeenCalledWith("request-1");
+  });
+
+  it("reads a request that is gone as a missing one", async () => {
+    find.mockResolvedValue(null);
+    expect(await codeOf(rideRequests.requirePending("request-1"))).toBe(
+      "unknownRequest",
+    );
+  });
+
+  it("refuses a request the chapter has decided", async () => {
+    find.mockResolvedValue({ ...pending, status: "declined" });
+    expect(await codeOf(rideRequests.requirePending("request-1"))).toBe(
+      "requestNotPending",
+    );
   });
 });
