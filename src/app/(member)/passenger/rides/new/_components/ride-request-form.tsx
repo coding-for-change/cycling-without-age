@@ -147,6 +147,7 @@ export function RideRequestForm({
   const pushed = useRef(0);
   const heading = useRef<HTMLHeadingElement>(null);
   const shown = useRef<Step | null>(null);
+  const [typing, setTyping] = useState(false);
 
   const single = data.riders.length === 1;
   const steps: Step[] = single
@@ -304,7 +305,13 @@ export function RideRequestForm({
   const last = step === "review";
 
   return (
-    <div className="flex flex-1 flex-col gap-6 pb-24 md:pb-0">
+    <div
+      className="flex flex-1 flex-col gap-6 pb-24 md:pb-0"
+      onFocusCapture={(event) =>
+        setTyping(event.target instanceof HTMLInputElement)
+      }
+      onBlurCapture={() => setTyping(false)}
+    >
       <div className="relative flex min-h-11 items-center justify-center">
         <button
           type="button"
@@ -458,6 +465,7 @@ export function RideRequestForm({
       <div
         className={cn(
           "fixed inset-x-0 z-30 flex justify-center px-4 md:static md:mt-auto md:px-0",
+          typing && "max-md:hidden",
           keyboardOpen
             ? "bottom-[calc(var(--keyboard-inset,0px)+0.75rem)]"
             : "bottom-above-tabbar",
