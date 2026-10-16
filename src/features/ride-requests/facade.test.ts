@@ -12,6 +12,7 @@ import {
   findRideRequestScope,
   insertRideRequest,
   linkRequestToRide,
+  releaseClaimedRequest,
 } from "@/features/ride-requests/services/ride-requests";
 import { domainCode } from "@/lib/domain-error";
 
@@ -414,5 +415,101 @@ describe("withdrawOpenRequests", () => {
     expect(openRequests).not.toHaveBeenCalled();
     expect(close).not.toHaveBeenCalled();
     expect(emitted).toEqual([]);
+  });
+});
+
+describe("markScheduled", () => {
+  const link = linkRequestToRide as jest.Mock;
+  const ride = { id: "ride-1", returnLegId: null };
+
+  beforeEach(() => link.mockResolvedValue({ count: 1 }));
+
+  it("links the request to its ride in the transaction that tells the requester", async () => {
+    await rideRequests.markScheduled("request-1", ride, "user-admin");
+
+    expect(link).toHaveBeenCalledWith("request-1", "ride-1", {});
+    expect(emitted).toEqual([
+      expect.objectContaining({
+        type: "rideRequest.scheduled",
+        requestId: "request-1",
+        rideId: "ride-1",
+      }),
+    ]);
+  });
+
+  it("does nothing the second time it is asked to link the same ride", async () => {
+    scope
+      .mockResolvedValueOnce({ ...pending, status: "scheduled", rideId: null })
+      .mockResolvedValueOnce({
+        ...pending,
+        status: "scheduled",
+        rideId: "ride-1",
+      });
+
+    await rideRequests.markScheduled("request-1", ride, "user-admin");
+    await rideRequests.markScheduled("request-1", ride, null);
+
+    expect(link).toHaveBeenCalledTimes(1);
+    expect(emitted).toHaveLength(1);
+  });
+
+  it("refuses once the claim no longer holds, and tells nobody", async () => {
+    link.mockResolvedValue({ count: 0 });
+
+    expect(
+      await codeOf(rideRequests.markScheduled("request-1", ride, "user-admin")),
+    ).toBe("requestNotPending");
+    expect(emitted).toEqual([]);
+  });
+
+  it("reads a request that is gone as a missing one", async () => {
+    scope.mockResolvedValue(null);
+
+    expect(
+      await codeOf(rideRequests.markScheduled("request-1", ride, "user-admin")),
+    ).toBe("unknownRequest");
+    expect(link).not.toHaveBeenCalled();
+    expect(emitted).toEqual([]);
+  });
+});
+
+describe("announce", () => {
+  it("lists a request automatic scheduling could not place for the chapter", async () => {
+    await rideRequests.announce("request-1");
+
+    expect(emitted).toEqual([
+      {
+        type: "rideRequest.submitted",
+        requestId: "request-1",
+        chapterId: MUNICH,
+        actorUserId: REQUESTER,
+      },
+    ]);
+  });
+
+  it.each([
+    [
+      "a request that is no longer pending",
+      { ...pending, status: "scheduled" },
+    ],
+    ["a request without a requester", { ...pending, requesterUserId: null }],
+    ["a request that is gone", null],
+  ])("stays quiet for %s", async (_, request) => {
+    scope.mockResolvedValue(request);
+
+    await rideRequests.announce("request-1");
+
+    expect(emitted).toEqual([]);
+  });
+});
+
+describe("release", () => {
+  it("hands a claimed request back to pending", async () => {
+    (releaseClaimedRequest as jest.Mock).mockResolvedValue({ count: 1 });
+
+    await expect(rideRequests.release("request-1")).resolves.toEqual({
+      count: 1,
+    });
+    expect(releaseClaimedRequest).toHaveBeenCalledWith("request-1");
   });
 });
