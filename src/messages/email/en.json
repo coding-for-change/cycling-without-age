@@ -425,7 +425,7 @@
     "subject": "{chapter} handed {rider} over",
     "preview": "A new contact for {rider}",
     "heading": "A new contact for {rider}",
-    "intro": "{chapter} handed {rider} over to someone else. You no longer book rides for {rider}, and ride requests and confirmations no longer come to you.",
+    "intro": "{chapter} handed {rider} over to someone else. You no longer book rides for {rider}, and news about their requests and rides no longer comes to you.",
     "cta": "Open the app",
     "footer": "You received this email because a Cycling Without Age chapter changed who books rides for a rider."
   }

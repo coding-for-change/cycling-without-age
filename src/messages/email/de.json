@@ -425,7 +425,7 @@
     "subject": "{chapter} hat {rider} übergeben",
     "preview": "Neue Ansprechperson für {rider}",
     "heading": "Neue Ansprechperson für {rider}",
-    "intro": "{chapter} hat {rider} an eine andere Person übergeben. Sie buchen keine Fahrten mehr für {rider}, und Fahrtanfragen und Bestätigungen kommen nicht mehr zu Ihnen.",
+    "intro": "{chapter} hat {rider} an eine andere Person übergeben. Sie buchen keine Fahrten mehr für {rider}, und Nachrichten zu Anfragen und Fahrten von {rider} kommen nicht mehr zu Ihnen.",
     "cta": "App öffnen",
     "footer": "Sie erhalten diese E-Mail, weil eine Ortsgruppe von Cycling Without Age geändert hat, wer die Fahrten eines Fahrgasts bucht."
   }

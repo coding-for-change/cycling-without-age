@@ -425,7 +425,7 @@
     "subject": "{chapter} har overdraget {rider}",
     "preview": "Ny kontaktperson for {rider}",
     "heading": "Ny kontaktperson for {rider}",
-    "intro": "{chapter} har overdraget {rider} til en anden. Du booker ikke længere ture for {rider}, og turønsker og bekræftelser kommer ikke længere til dig.",
+    "intro": "{chapter} har overdraget {rider} til en anden. Du booker ikke længere ture for {rider}, og beskeder om turønsker og ture for {rider} kommer ikke længere til dig.",
     "cta": "Åbn appen",
     "footer": "Du modtager denne e-mail, fordi en Cycling Without Age-afdeling har ændret, hvem der booker ture for en passager."
   }
