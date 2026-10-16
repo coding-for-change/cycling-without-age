@@ -58,7 +58,8 @@ RUN --mount=type=secret,id=sentry_token \
 RUN npm run build:worker && npm run build:seed
 
 RUN node scripts/docker-runtime-deps.mjs .next/standalone worker.js worker-instrument.js seed.js \
-  && mkdir -p /out/app/src/generated \
+  && mkdir -p /out/app/src/generated /out/app/src/app \
+  && cp src/app/sw.ts /out/app/src/app/sw.ts \
   && mv .next/standalone/node_modules /out/node_modules \
   && mv .next/standalone/server.js .next/standalone/package.json .next/standalone/.next /out/app/ \
   && mkdir -p /out/app/.next/cache \

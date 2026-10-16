@@ -5,6 +5,19 @@ import { withSerwist } from "@serwist/turbopack";
 const nextConfig: NextConfig = {
   output: "standalone",
   serverExternalPackages: ["prom-client", "@sentry/core"],
+  // The serwist route compiles src/app/sw.ts with native esbuild at request time.
+  // esbuild is loaded via a dynamic import nft can't follow, so ship it (plus the
+  // packages sw.ts bundles) explicitly or the slim image won't have them.
+  outputFileTracingIncludes: {
+    "/serwist/[path]": [
+      "./src/app/sw.ts",
+      "./node_modules/esbuild/**/*",
+      "./node_modules/@esbuild/linux-*/**/*",
+      "./node_modules/serwist/**/*",
+      "./node_modules/@serwist/utils/**/*",
+      "./node_modules/idb/**/*",
+    ],
+  },
   outputFileTracingExcludes: {
     "*": [
       "decrypted.json",
