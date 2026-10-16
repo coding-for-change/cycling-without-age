@@ -102,7 +102,8 @@ type DeliveryPolicy = {
   `"push delivered"` if the sibling `push` delivery is `sent`. Otherwise the mail goes out.
 - `collapseKey?(event)` is optional and lands on the `Notification` row. It is the handle
   for "five ride requests become one card" later. `trishawDamageReported`, `rideOpened`,
-  `ridePilotWithdrew` and `rideAnnounced` set one, but nothing reads the column yet:
+  `ridePilotWithdrew`, `rideAnnounced`, `rideRequestSubmitted` and `rideRequestWithdrawn`
+  (`requests:{chapterId}`) set one, but nothing reads the column yet:
   `deliverPush` does not pass it to `sendPush` and the bell does not group by it, so no
   notification collapses today. Which kinds should replace each other's banners is COD-267.
 - `chapterAllowsPush?(chapterId)` is optional too: the **chapter's** say on the push
@@ -229,7 +230,7 @@ the worker):
 | `ride.deleted` | — | `deleteRide`, once per leg it deletes (a cancelled other leg of a round trip goes too); the ride's history goes with it, so this row is what records who deleted it |
 | `ride.pilotAssigned` | `userId`, `self` | `assignVolunteer`, `selfAssign` (per leg it takes: signing up for a round trip takes the other leg too while it still needs a pilot) |
 | `ride.pilotUnassigned` | `userId`, `self` | `unassignVolunteer`, `withdraw` (per leg it leaves: stepping back from a round trip leaves the other leg too while it is outside the staffing window) |
-| `ride.riderBooked` | `passengerId` | `bookRider` |
+| `ride.riderBooked` | `passengerId`, `requestId` (null unless booked from a Ride Request) | `bookRider` |
 | `ride.riderRemoved` | `passengerId`, `self` (the rider's own account gave the seat up) | `cancelBooking` |
 | `ride.opened` | — | `scheduleRide`, per leg, when the chapter lets pilots sign up and the ride is still ahead and short of pilots |
 | `ride.understaffed` | `assigned`, `required` | `checkStaffing` (the worker's staffing check), once per ride, with `actorUserId: null`; the way there checks its way back along |
@@ -262,8 +263,9 @@ PR 5 added four more, in `kinds/staffing.ts`, and widened `ridePilotAssigned`:
 | `ridePilotWithdrew` | `ride.pilotUnassigned` with `self` | chapter admins minus the actor | push, mail if no push, opt-out-able | `/admin/rides/{id}` |
 | `rideAnnounced` | `ride.announced` | the accounts behind the chapter's riders, minus the actor | push, mail if no push, opt-out-able | `/passenger/rides/{id}` |
 
-**A ride already over is history.** `ridePilotAssigned`, `rideBookingConfirmed` and
-`rideBookingCancelled` tell nobody when the ride has ended (`rideNotOver`), so an admin
+**A ride already over is history.** `ridePilotAssigned`, `rideBookingConfirmed`,
+`rideBookingCancelled` and `rideRequestScheduled` tell nobody when the ride has ended
+(`rideNotOver`), so an admin
 recording last Monday's crew and riders doesn't send "you're piloting on Monday".
 
 **One event, two readers.** A self sign-up reaches the pilot and the riders' side with
