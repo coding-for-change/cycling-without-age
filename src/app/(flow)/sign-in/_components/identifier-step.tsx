@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 import { AsYouType, type CountryCode } from "libphonenumber-js";
 import { authClient } from "@/lib/auth-client";
@@ -35,12 +41,14 @@ export function IdentifierStep({
   language,
   defaultCountry,
   googleEnabled,
+  legal,
 }: {
   strings: Strings;
   common: { continue: string };
   language: Locale;
   defaultCountry: CountryCode;
   googleEnabled: boolean;
+  legal: ReactNode;
 }) {
   const router = useRouter();
   const { flow, update } = useFlow();
@@ -148,6 +156,7 @@ export function IdentifierStep({
             <PasskeyButton label={strings.passkey} />
             {googleEnabled && <GoogleButton label={strings.google} />}
           </div>
+          {legal}
         </div>
       }
     >

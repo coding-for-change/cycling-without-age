@@ -4,6 +4,7 @@ const context = (overrides: Partial<Parameters<typeof decideBack>[0]> = {}) => (
   overlayOpen: false,
   depth: 0,
   pathname: "/pilot",
+  arrivedFromApp: false,
   ...overrides,
 });
 
@@ -32,4 +33,17 @@ describe("decideBack", () => {
       expect(decideBack(context({ pathname }))).toBe("minimize");
     },
   );
+
+  it("steps back from a legal page reached inside the app", () => {
+    expect(
+      decideBack(context({ pathname: "/legal/privacy", arrivedFromApp: true })),
+    ).toBe("back");
+  });
+
+  it("opens the app's start from a legal page with nothing behind it", () => {
+    expect(decideBack(context({ pathname: "/legal/terms" }))).toEqual({
+      kind: "replace",
+      href: "/",
+    });
+  });
 });

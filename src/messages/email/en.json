@@ -239,5 +239,10 @@
     "cta": "Sign in",
     "footer": "You received this email because a Cycling Without Age chapter admin entered your address as someone who helps a passenger.",
     "someone": "someone"
+  },
+  "legal": {
+    "imprint": "Imprint",
+    "privacy": "Privacy notice",
+    "terms": "Terms of use"
   }
 }

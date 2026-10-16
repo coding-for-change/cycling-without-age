@@ -6,6 +6,7 @@ import {
   Hr,
   Html,
   Img,
+  Link,
   Preview,
   Section,
   Text,
@@ -14,6 +15,9 @@ import type { ReactNode } from "react";
 import { APP_URL } from "@/lib/app-url";
 import { brand } from "@/lib/brand";
 import type { Locale } from "@/lib/i18n";
+import { LOCALE_PARAM } from "@/lib/i18n/locales";
+import { legalLinks } from "@/lib/legal";
+import { getEmailStrings } from "./strings";
 
 export function EmailLayout({
   locale,
@@ -51,6 +55,19 @@ export function EmailLayout({
           <Hr style={styles.hr} />
           <Text style={styles.footer}>{footer}</Text>
           <Text style={styles.footer}>Cycling Without Age</Text>
+          <Text style={styles.footer}>
+            {legalLinks(getEmailStrings(locale).legal).map((link, index) => (
+              <span key={link.href}>
+                {index > 0 ? " · " : null}
+                <Link
+                  href={`${APP_URL}${link.href}?${LOCALE_PARAM}=${locale}`}
+                  style={styles.footerLink}
+                >
+                  {link.label}
+                </Link>
+              </span>
+            ))}
+          </Text>
         </Container>
       </Body>
     </Html>
@@ -81,5 +98,9 @@ const styles = {
     fontSize: "12px",
     lineHeight: "18px",
     margin: "0 0 4px",
+  },
+  footerLink: {
+    color: brand.inkFaint,
+    textDecoration: "underline",
   },
 };

@@ -7,6 +7,7 @@ import {
   KeyRound,
   Languages,
   LifeBuoy,
+  Scale,
   SunMoon,
   TriangleAlert,
   type LucideIcon,
@@ -15,6 +16,7 @@ import { AppearanceSection } from "./appearance-section";
 import { CalendarSection } from "./calendar-section";
 import { DangerSection } from "./danger-section";
 import { LanguageSection } from "./language-section";
+import { LegalSection } from "./legal-section";
 import { NotificationsSection } from "./notifications-section";
 import { PasskeysSection } from "./passkeys-section";
 import { ProfileSection } from "./profile-section";
@@ -29,6 +31,7 @@ export type AccountSectionKey =
   | "calendar"
   | "passkeys"
   | "support"
+  | "legal"
   | "danger";
 
 type AccountSection = {
@@ -49,6 +52,7 @@ const ACCOUNT_SECTIONS: AccountSection[] = [
   },
   { key: "passkeys", icon: KeyRound },
   { key: "support", icon: LifeBuoy },
+  { key: "legal", icon: Scale },
   { key: "danger", icon: TriangleAlert },
 ];
 
@@ -113,6 +117,13 @@ export function AccountSectionBody({
     case "support":
       return (
         <SupportSection
+          data={data}
+          label={label}
+        />
+      );
+    case "legal":
+      return (
+        <LegalSection
           data={data}
           label={label}
         />

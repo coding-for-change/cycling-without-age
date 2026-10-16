@@ -10,16 +10,26 @@ export type BackContext = {
   overlayOpen: boolean;
   depth: number;
   pathname: string;
+  arrivedFromApp: boolean;
 };
+
+const LEGAL_PREFIX = "/legal/";
 
 const MEMBER_HOMES = [PERSPECTIVE_HOME.pilot, PERSPECTIVE_HOME.passenger];
 
 const memberHome = (pathname: string) =>
   MEMBER_HOMES.find((home) => pathname.startsWith(`${home}/`)) ?? null;
 
-export function decideBack({ overlayOpen, depth, pathname }: BackContext): BackDecision {
+export function decideBack({
+  overlayOpen,
+  depth,
+  pathname,
+  arrivedFromApp,
+}: BackContext): BackDecision {
   if (overlayOpen) return "close-overlay";
   if (depth > 0) return "back";
+  if (pathname.startsWith(LEGAL_PREFIX))
+    return arrivedFromApp ? "back" : { kind: "replace", href: "/" };
 
   const home = memberHome(pathname);
   return home ? { kind: "replace", href: home } : "minimize";

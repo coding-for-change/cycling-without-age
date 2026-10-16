@@ -80,6 +80,9 @@
       "body": "E-mails og beskeder kommer også på dette sprog.",
       "title": "Sprog"
     },
+    "legal": {
+      "title": "Juridisk"
+    },
     "notifications": {
       "body": "Det vigtigste — en tur, der er bekræftet, en afdeling, der svarer — når altid frem til dig. Her er resten.",
       "chat": {
@@ -1156,7 +1159,7 @@
     "imprint": "Kolofon",
     "joining": "Du bliver en del af {chapter}.",
     "notifications": "Jeg vil gerne modtage e-mails og push-beskeder om vigtige ting.",
-    "privacy": "Databehandlingsaftale",
+    "privacy": "Privatlivspolitik",
     "required": "Sæt kryds i dem alle for at fortsætte.",
     "safety": "Jeg forstår, at turene køres af oplærte frivillige, og jeg følger afdelingens sikkerhedsretningslinjer.",
     "setUpBy": "{name} har oprettet denne konto til dig. Tjek oplysningerne, og sig ja for at fortsætte.",
@@ -1726,15 +1729,16 @@
     }
   },
   "legal": {
-    "imprint": {
-      "body": "Afdelingens juridiske oplysninger kommer her.",
-      "title": "Kolofon"
+    "documents": {
+      "imprint": "Kolofon",
+      "privacy": "Privatlivspolitik",
+      "terms": "Brugsvilkår"
     },
-    "pending": "Siden er stadig under udarbejdelse. Spørg din afdeling om detaljerne i mellemtiden.",
-    "privacy": {
-      "body": "Hvad vi gemmer, hvorfor vi gemmer det, og hvordan du får det slettet, kommer her.",
-      "title": "Databehandlingsaftale"
-    }
+    "draft": "Dette er et udkast. Den endelige tekst bliver stadig gennemgået.",
+    "edition": "Version {version} · Senest opdateret {date}",
+    "label": "Juridisk",
+    "loadFailed": "Vi kunne ikke hente siden. Tjek din forbindelse, og prøv igen.",
+    "retry": "Prøv igen"
   },
   "location": {
     "distanceAway": "{distance} væk",

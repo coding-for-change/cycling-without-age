@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
 import useEmblaCarousel from "embla-carousel-react";
 import { useCharacter } from "@/components/character";
@@ -30,10 +36,12 @@ export function WelcomeCarousel({
   strings,
   locale,
   chapterCoords,
+  legal,
 }: {
   strings: Strings;
   locale: Locale;
   chapterCoords: [number, number][];
+  legal: ReactNode;
 }) {
   const [emblaRef, embla] = useEmblaCarousel({ loop: false, align: "start" });
   const [current, setCurrent] = useState(0);
@@ -224,6 +232,7 @@ export function WelcomeCarousel({
                 </Link>
               </Button>
             </div>
+            {legal}
           </div>
         </div>
       </div>

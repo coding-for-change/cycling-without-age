@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -27,16 +26,12 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar";
 import { SaveStatus } from "@/components/save-status";
-import type { Perspective } from "@/lib/access";
+import { cn } from "@/lib/utils";
+import { LegalDocumentPane } from "./legal-document-pane";
 import { PerspectiveRow } from "./perspective-row";
 import { ProfileHeader } from "./profile-header";
-import {
-  accountSections,
-  AccountSectionBody,
-  sectionTitle,
-  type AccountSectionKey,
-} from "./sections";
-import { profileHref, type AccountData } from "./types";
+import { accountSections, AccountSectionBody, sectionTitle } from "./sections";
+import { profileHref, type AccountChromeProps } from "./types";
 
 export function AccountDialog({
   data,
@@ -44,14 +39,11 @@ export function AccountDialog({
   open,
   onOpenChange,
   trigger,
-}: {
-  data: AccountData;
-  activePerspective?: Perspective;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  trigger?: ReactNode;
-}) {
-  const [section, setSection] = useState<AccountSectionKey>("profile");
+  section,
+  onSectionChange,
+  legalDocument,
+  onCloseLegalDocument,
+}: AccountChromeProps) {
   const strings = data.strings;
 
   return (
@@ -60,7 +52,14 @@ export function AccountDialog({
       onOpenChange={onOpenChange}
     >
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="overflow-hidden p-0 md:max-h-[560px] md:max-w-[720px] lg:max-w-[800px]">
+      <DialogContent
+        onEscapeKeyDown={(event) => {
+          if (!legalDocument) return;
+          event.preventDefault();
+          onCloseLegalDocument();
+        }}
+        className="overflow-hidden p-0 md:max-h-[560px] md:max-w-[720px] lg:max-w-[800px]"
+      >
         <DialogTitle className="sr-only">{strings.title}</DialogTitle>
         <DialogDescription className="sr-only">
           {strings.description}
@@ -95,7 +94,7 @@ export function AccountDialog({
                       <SidebarMenuItem key={item.key}>
                         <SidebarMenuButton
                           isActive={item.key === section}
-                          onClick={() => setSection(item.key)}
+                          onClick={() => onSectionChange(item.key)}
                           className="min-h-11"
                         >
                           <item.icon aria-hidden />
@@ -108,7 +107,12 @@ export function AccountDialog({
               </SidebarGroup>
             </SidebarContent>
           </Sidebar>
-          <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden bg-canvas-deep">
+          <div
+            className={cn(
+              "flex h-full min-w-0 flex-1 flex-col overflow-hidden",
+              legalDocument ? "bg-canvas" : "bg-canvas-deep",
+            )}
+          >
             <header className="flex h-16 shrink-0 items-center justify-between gap-3 px-4">
               <Breadcrumb>
                 <BreadcrumbList>
@@ -128,11 +132,22 @@ export function AccountDialog({
                 words={data.language}
               />
             </header>
-            <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-4 pt-0">
-              <AccountSectionBody
-                section={section}
-                data={data}
-              />
+            <div
+              key={legalDocument?.name ?? section}
+              className="flex flex-1 flex-col gap-5 overflow-y-auto p-4 pt-0"
+            >
+              {legalDocument ? (
+                <LegalDocumentPane
+                  legalDocument={legalDocument}
+                  data={data}
+                  onBack={onCloseLegalDocument}
+                />
+              ) : (
+                <AccountSectionBody
+                  section={section}
+                  data={data}
+                />
+              )}
             </div>
           </div>
         </SidebarProvider>

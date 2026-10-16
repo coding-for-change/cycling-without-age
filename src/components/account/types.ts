@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { CalendarFeedState } from "@/features/calendar-feeds/actions";
 import type { Locale as Notation } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
@@ -5,6 +6,8 @@ import type { Locale as UiLocale } from "@/lib/i18n/locales";
 import type { Perspective } from "@/lib/access";
 import type { PerspectiveChoice } from "@/lib/perspectives";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
+import type { OpenLegalDocument } from "./account-state";
+import type { AccountSectionKey } from "./sections";
 
 export type AccountStrings = Dictionary["account"];
 
@@ -37,8 +40,21 @@ export type AccountData = {
   hasRides: boolean;
   calendarFeed: CalendarFeedState | null;
   guidesHref: string;
+  legal: Dictionary["legal"];
   signOutLabel: string;
   cancelLabel: string;
+};
+
+export type AccountChromeProps = {
+  data: AccountData;
+  activePerspective?: Perspective;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  trigger?: ReactNode;
+  section: AccountSectionKey;
+  onSectionChange: (section: AccountSectionKey) => void;
+  legalDocument: OpenLegalDocument | null;
+  onCloseLegalDocument: () => void;
 };
 
 export const profileHref = (

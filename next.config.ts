@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["prom-client", "@sentry/core"],
   experimental: { authInterrupts: true },
   cacheComponents: true,
+  outputFileTracingIncludes: {
+    "/legal/*": ["./src/messages/legal/*.md"],
+  },
   partialPrefetching: true,
   // Dev-only: the Capacitor WebView loads the dev server by LAN IP, so its
   // Origin is not localhost and /_next/* would be blocked as cross-site. The
