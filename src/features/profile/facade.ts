@@ -3,6 +3,7 @@ import { transaction } from "@/lib/events";
 import type { OnboardingRole } from "@/lib/onboarding";
 import {
   consentInput,
+  displayPreferences as displayPreferencesSchema,
   homeInput,
   notificationPreferences as notificationPreferencesSchema,
   ownDetailsPatch,
@@ -11,6 +12,7 @@ import {
 } from "./schemas";
 import type {
   ConsentInput,
+  DisplayPreferences,
   HomeInput,
   NotificationPreferences,
   OwnDetailsPatchInput,
@@ -167,3 +169,14 @@ export const getAccessAccounts = async (userIds: string[]) => {
   const unique = [...new Set(userIds)];
   return unique.length === 0 ? [] : findAccessAccounts(unique);
 };
+
+export async function setDisplayPreferences(
+  userId: string,
+  prefs: DisplayPreferences,
+) {
+  const { textSize, reduceMotion } = displayPreferencesSchema.parse(prefs);
+  return updateProfile(userId, {
+    ...(textSize === undefined ? {} : { textSize }),
+    ...(reduceMotion === undefined ? {} : { reduceMotion }),
+  });
+}

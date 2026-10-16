@@ -21,6 +21,8 @@ export const findProfile = (userId: string) =>
       notifyPush: true,
       notifyChatPush: true,
       notifyChatEmail: true,
+      textSize: true,
+      reduceMotion: true,
       consentSafetyAt: true,
       consentDataAt: true,
       passkeyPromptedAt: true,

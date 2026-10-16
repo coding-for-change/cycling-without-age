@@ -212,3 +212,31 @@ describe("getUserIdByPhone", () => {
     ).resolves.toBeNull();
   });
 });
+
+describe("setDisplayPreferences", () => {
+  it("stores the text size and the motion switch", async () => {
+    await profile.setDisplayPreferences(USER, {
+      textSize: "xLarge",
+      reduceMotion: true,
+    });
+    expect(db.user.update).toHaveBeenCalledWith({
+      where: { id: USER },
+      data: { textSize: "xLarge", reduceMotion: true },
+    });
+  });
+
+  it("changes only what it is given", async () => {
+    await profile.setDisplayPreferences(USER, { reduceMotion: false });
+    expect(db.user.update).toHaveBeenCalledWith({
+      where: { id: USER },
+      data: { reduceMotion: false },
+    });
+  });
+
+  it("refuses a size it does not know", async () => {
+    await expect(
+      profile.setDisplayPreferences(USER, { textSize: "huge" as "large" }),
+    ).rejects.toThrow();
+    expect(db.user.update).not.toHaveBeenCalled();
+  });
+});

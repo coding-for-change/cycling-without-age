@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
+import { useReducedMotion } from "@/lib/motion";
 
 const MEDIA_URL = process.env.NEXT_PUBLIC_MEDIA_URL ?? "";
 
@@ -10,14 +11,6 @@ const VIDEO_LOCALE: Record<Locale, "en" | "de"> = {
   en: "en",
   de: "de",
   da: "en",
-};
-
-const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
-
-const subscribeReducedMotion = (onChange: () => void) => {
-  const query = window.matchMedia(REDUCED_MOTION);
-  query.addEventListener("change", onChange);
-  return () => query.removeEventListener("change", onChange);
 };
 
 export function welcomeVideoSrc(locale: Locale) {
@@ -41,11 +34,7 @@ export function WelcomeVideo({
 }) {
   const video = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
-  const still = useSyncExternalStore(
-    subscribeReducedMotion,
-    () => window.matchMedia(REDUCED_MOTION).matches,
-    () => false,
-  );
+  const still = useReducedMotion();
 
   useEffect(() => {
     const el = video.current;

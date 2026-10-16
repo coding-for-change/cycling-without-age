@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { DEMI_VIEWBOX, RAYON } from "./bloub/repere";
 import { CharacterContext } from "./character-provider";
 import { lookAt, RESTING, type Aim } from "./gaze";
+import { prefersReducedMotion } from "@/lib/motion";
 
 /**
  * React rewrite of upstream `src/components/BloubBot.vue`
@@ -27,8 +28,6 @@ const lookTarget = (aim: Aim, tour: number, live: boolean) => ({
   // no target: the head keeps living instead of fixing a dead point
   wander: live ? 0 : 1,
 });
-
-const REDUCED = "(prefers-reduced-motion: reduce)";
 
 type CharacterProps = {
   size?: number;
@@ -72,7 +71,7 @@ export function Character({
   const maskId = `character-mask-${uid}`;
 
   useEffect(() => {
-    if (window.matchMedia(REDUCED).matches) return;
+    if (prefersReducedMotion()) return;
 
     let raf = 0;
     let last = 0;
@@ -185,7 +184,7 @@ export function Character({
     // Dated setter: the engine morphs from the mood it is on at `now`. Never
     // assign to its fields.
     engine.setExpression(EXPRESSION_BY_ID.get(mood) ?? null, clock.current);
-    if (!window.matchMedia(REDUCED).matches) return;
+    if (!prefersReducedMotion()) return;
     // No loop to consume the morph, so land its end state in one frame.
     const raf = requestAnimationFrame(() =>
       setFrame(engine.sample(clock.current + 1)),

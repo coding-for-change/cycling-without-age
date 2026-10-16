@@ -28,8 +28,7 @@ export const FALLBACK_VIEW = {
   zoom: 3.5,
 };
 
-export const prefersReducedMotion = () =>
-  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+export { prefersReducedMotion } from "./motion";
 
 export function createMap(
   container: HTMLElement,

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TEXT_SIZES } from "@/lib/display-preferences";
 
 export const gender = z.enum(["female", "male", "other"]);
 export type Gender = z.infer<typeof gender>;
@@ -55,3 +56,11 @@ export const notificationPreferences = z
   })
   .refine(nonEmpty);
 export type NotificationPreferences = z.infer<typeof notificationPreferences>;
+
+export const displayPreferences = z
+  .object({
+    textSize: z.enum(TEXT_SIZES).optional(),
+    reduceMotion: z.boolean().optional(),
+  })
+  .refine(nonEmpty);
+export type DisplayPreferences = z.infer<typeof displayPreferences>;

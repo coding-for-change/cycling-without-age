@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import createGlobe from "cobe";
 import { brand } from "@/lib/brand";
 import { useResolvedTheme } from "@/lib/theme/client";
+import { prefersReducedMotion } from "@/lib/motion";
 
 const rgb = (hex: string): [number, number, number] => {
   const digits = hex.replace("#", "");
@@ -41,7 +42,7 @@ export function Globe({
     const ground = getComputedStyle(document.documentElement)
       .getPropertyValue("--canvas")
       .trim();
-    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const still = prefersReducedMotion();
 
     let globe: ReturnType<typeof createGlobe>;
     try {

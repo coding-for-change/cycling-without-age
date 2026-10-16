@@ -46,6 +46,10 @@ model User {
   helperName           String?              @db.Text
   helperRelationship   String?              @db.Text
   helperContact        String?              @db.Text
+  /// The DiceBear seed the person picked for their character; null draws it from their email.
+  avatarSeed           String?              @db.VarChar(64)
+  textSize             TextSize             @default(normal)
+  reduceMotion         Boolean              @default(false)
   sessions             Session[]
   accounts             Account[]
   passkeys             Passkey[]
@@ -310,6 +314,13 @@ enum Gender {
   female
   male
   other
+}
+
+/// How large the passenger perspective renders its type.
+enum TextSize {
+  normal
+  large
+  xLarge
 }
 
 enum Residence {

@@ -3,6 +3,25 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* "Less motion" in the profile counts as much as the operating system's
+   setting, so every `motion-reduce:` and `motion-safe:` in the app follows
+   both (src/lib/display-preferences.ts). */
+@custom-variant motion-reduce {
+  @media (prefers-reduced-motion: reduce) {
+    @slot;
+  }
+  &:where([data-motion="reduce"], [data-motion="reduce"] *) {
+    @slot;
+  }
+}
+@custom-variant motion-safe {
+  @media (prefers-reduced-motion: no-preference) {
+    &:not(:where([data-motion="reduce"], [data-motion="reduce"] *)) {
+      @slot;
+    }
+  }
+}
+
 :root {
   color-scheme: light;
   --canvas: #ffffff;
@@ -235,9 +254,16 @@
       rgb(var(--shadow-color) / calc(0.09 * var(--shadow-strength))),
     0 18px 36px -14px
       rgb(var(--shadow-color) / calc(0.16 * var(--shadow-strength)));
+}
 
+/* Compact UI text (13px). Deliberately NOT in the `@theme inline` block above:
+   `inline` burns the value into every utility at build time, and the passenger
+   text size (§ Text size) works by redefining these variables on a subtree.
+   The line height is a ratio so it follows the size up; at 13px it is still
+   20px. */
+@theme {
   --text-2sm: 0.8125rem;
-  --text-2sm--line-height: 1.25rem;
+  --text-2sm--line-height: calc(1.25 / 0.8125);
 }
 
 @utility pt-safe {
@@ -758,4 +784,62 @@ body {
 :root[data-theme-switch]::view-transition-new(*) {
   animation-duration: 220ms;
   animation-timing-function: ease;
+}
+
+/* ==========================================================================
+   Text size — the passenger preference (src/lib/display-preferences.ts).
+
+   Tailwind v4 compiles `text-3xl` to `font-size: var(--text-3xl)`, so the type
+   scale is re-pitched for one subtree by redefining those variables on it. A
+   component written in `text-base` scales without knowing this exists, and the
+   unitless line heights follow on their own.
+
+   `data-text-size` sits on <html>, written before the first paint by the root
+   layout; `data-text-scale` marks the subtree that reacts — the passenger
+   pages. Spacing stays on its 4px grid; the larger type brings its own air.
+   An attribute, not a class: tailwind-merge would read `text-scale` as a
+   colour and drop it.
+   ========================================================================== */
+html[data-text-size="large"] [data-text-scale] {
+  --text-2sm: 0.9375rem; /* 15px */
+  --text-xs: 0.875rem; /* 14px */
+  --text-sm: 1rem; /* 16px */
+  --text-base: 1.125rem; /* 18px */
+  --text-lg: 1.25rem; /* 20px */
+  --text-xl: 1.375rem; /* 22px */
+  --text-2xl: 1.625rem; /* 26px */
+  --text-3xl: 2.125rem; /* 34px */
+}
+
+html[data-text-size="xLarge"] [data-text-scale] {
+  --text-2sm: 1.0625rem; /* 17px */
+  --text-xs: 1rem; /* 16px */
+  --text-sm: 1.125rem; /* 18px */
+  --text-base: 1.25rem; /* 20px */
+  --text-lg: 1.4375rem; /* 23px */
+  --text-xl: 1.5625rem; /* 25px */
+  --text-2xl: 1.875rem; /* 30px */
+  --text-3xl: 2.375rem; /* 38px */
+}
+
+/* ==========================================================================
+   Less motion — the profile switch, for people whose phone was never told.
+   The same effect as `prefers-reduced-motion`, for the whole app.
+   ========================================================================== */
+html[data-motion="reduce"] *,
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
+}
+
+html[data-motion="reduce"]::view-transition-old(*),
+html[data-motion="reduce"]::view-transition-new(*),
+html[data-motion="reduce"]::view-transition-group(*) {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
 }

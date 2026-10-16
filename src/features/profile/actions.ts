@@ -1,7 +1,14 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/auth-guards";
+import {
+  DISPLAY_COOKIE_MAX_AGE,
+  MOTION_COOKIE,
+  REDUCED_MOTION,
+  TEXT_SIZE_COOKIE,
+} from "@/lib/display-preferences";
 import { invalidateReports } from "@/lib/cache-tags";
 import { actionFailure } from "@/lib/domain-error";
 import { withinRateLimit } from "@/lib/rate-limit";
@@ -9,7 +16,12 @@ import { resolvePlaceFor, suggestPlaces } from "@/lib/mapbox";
 import type { PlaceSuggestion } from "@/lib/mapbox";
 import { z } from "zod";
 import { updateOwnDetails } from "@/use-cases/update-own-details";
-import { notificationPreferences, ownDetailsPatch, profile } from "./index";
+import {
+  displayPreferences,
+  notificationPreferences,
+  ownDetailsPatch,
+  profile,
+} from "./index";
 
 export type ProfileActionResult =
   { ok: true } | { ok: false; error: "invalid" | "generic" };
@@ -90,4 +102,38 @@ export async function resolveAddress(
         longitude: place.coords.lng,
       }
     : null;
+}
+
+const displayCookie = {
+  sameSite: "lax",
+  secure: process.env.NODE_ENV === "production",
+  path: "/",
+  maxAge: DISPLAY_COOKIE_MAX_AGE,
+} as const;
+
+/**
+ * The account keeps the choice; the cookies let the root layout draw the next
+ * page at the right size before anything paints.
+ */
+export async function setDisplayPreferencesAction(
+  input: unknown,
+): Promise<ProfileActionResult> {
+  const session = await requireAuth();
+
+  const parsed = displayPreferences.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "invalid" };
+  if (!withinSaveLimit(session.user.id)) return { ok: false, error: "generic" };
+
+  try {
+    await profile.setDisplayPreferences(session.user.id, parsed.data);
+    const jar = await cookies();
+    const { textSize, reduceMotion } = parsed.data;
+    if (textSize !== undefined)
+      jar.set(TEXT_SIZE_COOKIE, textSize, displayCookie);
+    if (reduceMotion !== undefined)
+      jar.set(MOTION_COOKIE, reduceMotion ? REDUCED_MOTION : "", displayCookie);
+    return { ok: true };
+  } catch (error) {
+    return actionFailure(error, {});
+  }
 }

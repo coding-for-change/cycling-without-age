@@ -10,6 +10,12 @@ import { PushRegistrar } from "@/components/push-registrar";
 import { ServiceWorkerRegistrar } from "@/components/service-worker-registrar";
 import { TranslatorTools } from "@/components/translator-tools";
 import { translatorModeBuilt } from "@/lib/i18n/translator-mode";
+import {
+  MOTION_COOKIE,
+  REDUCED_MOTION,
+  TEXT_SIZE_COOKIE,
+  TEXT_SIZES,
+} from "@/lib/display-preferences";
 import { THEME_COLOR, themeScript } from "@/lib/theme";
 import "./globals.css";
 
@@ -40,6 +46,10 @@ const setLangScript = `(function(){try{var s=${JSON.stringify(locales)},m=docume
 
 const setShellScript = `(function(){try{var u=navigator.userAgent;if(u.indexOf(${JSON.stringify(NATIVE_USER_AGENT)})<0)return;var s=/\\b(?:iPhone|iPad)\\b/.test(u)?"ios":/\\bAndroid\\b/.test(u)?"android":"";if(s)document.documentElement.dataset.shell=s}catch(e){}})()`;
 
+// Same reason, same shape: the passenger text size and "less motion" are on
+// <html> before the first paint (globals.css § Text size, § Less motion).
+const setDisplayScript = `(function(){try{var c=document.cookie,d=document.documentElement,t=c.match(/(?:^|; )${TEXT_SIZE_COOKIE}=([^;]*)/),m=c.match(/(?:^|; )${MOTION_COOKIE}=([^;]*)/),s=t&&decodeURIComponent(t[1]);if(s&&s!==${JSON.stringify(TEXT_SIZES[0])}&&${JSON.stringify(TEXT_SIZES)}.indexOf(s)>=0)d.dataset.textSize=s;if(m&&decodeURIComponent(m[1])===${JSON.stringify(REDUCED_MOTION)})d.dataset.motion=${JSON.stringify(REDUCED_MOTION)}}catch(e){}})()`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -55,6 +65,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: setLangScript }} />
         <script dangerouslySetInnerHTML={{ __html: setShellScript }} />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: setDisplayScript }} />
       </head>
       <body className="min-h-full flex flex-col font-sans">
         <NativeBootstrap />

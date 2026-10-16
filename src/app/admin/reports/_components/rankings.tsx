@@ -2,7 +2,7 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { ArrowDown, ArrowUp, ChevronRight, Minus, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { DataTableStrings } from "@/components/ui/data-table";
@@ -42,6 +42,7 @@ import {
   type RankingTab,
   type ScopeKind,
 } from "./ranking-model";
+import { useReducedMotion } from "@/lib/motion";
 
 export type { RankingChapter, RankingCountry, RankingPerson, RankingsStrings };
 
