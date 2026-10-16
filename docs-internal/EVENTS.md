@@ -341,7 +341,10 @@ scheduling that request.
 `rideBookingConfirmed` leaves out the requester of a `ride.riderBooked` that carries a
 `requestId`: `rideRequestScheduled` already told them, with the calendar file. A rider's own
 account, when it is not the requester, still hears it. `rider.handedOver` also has a
-`recordActivity` listener that writes a `riderHandedOver` line into both managers' histories.
+`recordActivity` listener that writes a `riderHandedOver` line into both managers' histories,
+and a `moveRequests` listener (`worker/listeners/move-handed-over-requests`) that moves the
+rider's open requests to the new manager should the hand-over have stopped before it did; a
+second run finds nothing left to move.
 
 ## Watching the queues
 

@@ -9,6 +9,7 @@ import {
 } from "./listeners/record-activity";
 import { leaveRideCrewsListener } from "./listeners/leave-ride-crews";
 import { linkRideRequestListener } from "./listeners/link-ride-request";
+import { moveHandedOverRequestsListener } from "./listeners/move-handed-over-requests";
 import {
   syncRideChatListener,
   syncsRideChat,
@@ -33,6 +34,9 @@ export const handlers = Object.fromEntries(
         : {}),
       ...(type === "ride.scheduled"
         ? { linkRideRequest: linkRideRequestListener }
+        : {}),
+      ...(type === "rider.handedOver"
+        ? { moveRequests: moveHandedOverRequestsListener }
         : {}),
     },
   ]),
