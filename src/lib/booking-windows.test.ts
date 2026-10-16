@@ -4,6 +4,7 @@ import {
   bookingRefusal,
   horizonEnd,
   instantOn,
+  partOfDay,
   windowLabel,
   windowsOnDate,
   type BookingPolicy,
@@ -373,6 +374,92 @@ describe("bookingRefusal", () => {
     expect(
       bookingRefusal(at("2026-10-08", 19, 20), none, POLICY, BERLIN, now),
     ).toBe("outsideHours");
+  });
+});
+
+describe("booking-window boundaries", () => {
+  const now = new Date("2026-10-05T08:00:00Z");
+  const boundary = new Date("2026-10-07T08:00:00Z");
+  const minute = 60_000;
+
+  it("accepts a window starting exactly at the end of the lead time", () => {
+    const span = {
+      startsAt: boundary,
+      endsAt: new Date("2026-10-07T09:00:00Z"),
+    };
+    expect(bookingRefusal(span, MORNINGS, POLICY, BERLIN, now)).toBeNull();
+    expect(
+      bookingRefusal(
+        {
+          startsAt: new Date(boundary.getTime() - minute),
+          endsAt: span.endsAt,
+        },
+        MORNINGS,
+        POLICY,
+        BERLIN,
+        now,
+      ),
+    ).toBe("leadTime");
+  });
+
+  it("offers nothing on a closure of a chapter that never set hours", () => {
+    expect(
+      windowsOnDate(
+        { windows: [], closures: ["2026-10-08"] },
+        "2026-10-08",
+        POLICY,
+        BERLIN,
+        now,
+      ),
+    ).toEqual([]);
+  });
+
+  it("offers a stretch shorter than one ride as a single chip", () => {
+    const short: OperatingHours = {
+      windows: [{ weekday: 4, startMinute: 600, endMinute: 645 }],
+      closures: [],
+    };
+    const windows = windowsOnDate(short, "2026-10-08", POLICY, BERLIN, now);
+    expect(windows).toHaveLength(1);
+    expect(windows[0]).toMatchObject({
+      startMinute: 600,
+      endMinute: 645,
+      part: null,
+    });
+  });
+
+  it("drops a long stretch the lead time leaves too short for one ride", () => {
+    expect(
+      windowsOnDate(
+        LONG_DAYS,
+        "2026-10-08",
+        POLICY,
+        BERLIN,
+        new Date("2026-10-06T14:10:00Z"),
+      ),
+    ).toEqual([]);
+  });
+
+  it("keeps a long stretch the lead time leaves exactly one ride of", () => {
+    const [window] = windowsOnDate(
+      LONG_DAYS,
+      "2026-10-08",
+      POLICY,
+      BERLIN,
+      new Date("2026-10-06T13:55:00Z"),
+    );
+    expect(clock(window)).toBe("16-17");
+    expect(window.part).toBe("afternoon");
+  });
+
+  it.each([
+    [0, "morning"],
+    [719, "morning"],
+    [720, "afternoon"],
+    [1019, "afternoon"],
+    [1020, "evening"],
+  ] as const)("calls a stretch starting at minute %i the %s", (start, part) => {
+    expect(partOfDay(start)).toBe(part);
   });
 });
 
