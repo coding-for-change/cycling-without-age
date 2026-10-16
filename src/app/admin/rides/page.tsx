@@ -200,12 +200,10 @@ async function RidesBody({ searchParams }: PageProps) {
   return (
     <>
       {label ? <p className="text-2sm text-ink-soft">{label}</p> : null}
-      <Suspense fallback={null}>
-        <RequestsWaiting
-          chapterIds={chapterIds}
-          scopeQuery={scopeQuery}
-        />
-      </Suspense>
+      <RequestsWaiting
+        chapterIds={chapterIds}
+        scopeQuery={scopeQuery}
+      />
       <Suspense
         key={view === "list" ? "list" : `calendar:${week}`}
         fallback={view === "list" ? <RideListSkeleton /> : <RideWeekSkeleton />}
