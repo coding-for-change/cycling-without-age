@@ -277,6 +277,19 @@ export const lapsed = (
 ) => request.status === "pending" && request.requestedEndsAt <= now;
 
 /**
+ * A request withdrawn by anyone but the one who asked was closed: a rider
+ * or the requester left, and nobody took it back on purpose.
+ */
+export const closed = (request: {
+  status: string;
+  requesterUserId: string | null;
+  decidedByUserId: string | null;
+}) =>
+  request.status === "withdrawn" &&
+  (request.requesterUserId === null ||
+    request.decidedByUserId !== request.requesterUserId);
+
+/**
  * The Ride Request List: the open ones soonest first, without lapsed ones;
  * any other view latest first, so a long history shows its recent end.
  */

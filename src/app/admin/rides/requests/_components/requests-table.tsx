@@ -26,14 +26,15 @@ export type RequestListRow = {
   asked: string;
   askedIso: string;
   requester: string;
-  status: RideRequestStatus | "lapsed";
+  status: RideRequestStatus | "lapsed" | "closed";
   chapterName: string;
 };
 
 type Strings = Dictionary["admin"]["rideRequests"];
 
-const TONE: Record<RideRequestStatus | "lapsed", string> = {
+const TONE: Record<RideRequestStatus | "lapsed" | "closed", string> = {
   lapsed: "bg-canvas-deep text-ink-soft",
+  closed: "bg-canvas-deep text-ink-soft",
   pending: "bg-mint text-ink",
   scheduled: "bg-mint-tint text-ink",
   declined: "bg-canvas-deep text-ink-soft",

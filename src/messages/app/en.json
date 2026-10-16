@@ -1240,7 +1240,8 @@
         "scheduled": "Scheduled",
         "declined": "Declined",
         "withdrawn": "Withdrawn",
-        "lapsed": "Lapsed"
+        "lapsed": "Lapsed",
+        "closed": "Closed"
       },
       "filter": {
         "label": "Show requests",
@@ -1278,7 +1279,8 @@
           "scheduled": "{self, select, yes {You scheduled it} other {{name} scheduled it}}",
           "scheduledAuto": "Scheduled automatically",
           "declined": "{self, select, yes {You declined it} other {{name} declined it}}",
-          "withdrawn": "{self, select, yes {You took the request back} other {{name} took the request back}}"
+          "withdrawn": "{self, select, yes {You took the request back} other {{name} took the request back}}",
+          "closed": "Closed because a rider or the person who asked left"
         },
         "seeRide": "Open the ride",
         "rideGone": "The ride has since been deleted.",
@@ -1289,7 +1291,8 @@
         "decided": {
           "scheduled": "Scheduled {when}",
           "declined": "Declined {when}",
-          "withdrawn": "Withdrawn {when}"
+          "withdrawn": "Withdrawn {when}",
+          "closed": "Closed {when}"
         },
         "conflicts": "Before you decide",
         "noConflicts": "Inside riding hours, with enough notice, and nothing else on.",

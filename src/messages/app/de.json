@@ -1240,7 +1240,8 @@
         "scheduled": "Eingeplant",
         "declined": "Abgelehnt",
         "withdrawn": "Zurückgezogen",
-        "lapsed": "Verstrichen"
+        "lapsed": "Verstrichen",
+        "closed": "Geschlossen"
       },
       "filter": {
         "label": "Anfragen anzeigen",
@@ -1278,7 +1279,8 @@
           "scheduled": "{self, select, yes {Du hast sie eingeplant} other {{name} hat sie eingeplant}}",
           "scheduledAuto": "Automatisch eingeplant",
           "declined": "{self, select, yes {Du hast sie abgelehnt} other {{name} hat sie abgelehnt}}",
-          "withdrawn": "{self, select, yes {Du hast die Anfrage zurückgezogen} other {{name} hat die Anfrage zurückgezogen}}"
+          "withdrawn": "{self, select, yes {Du hast die Anfrage zurückgezogen} other {{name} hat die Anfrage zurückgezogen}}",
+          "closed": "Geschlossen, weil ein Fahrgast oder die anfragende Person nicht mehr dabei ist"
         },
         "seeRide": "Fahrt öffnen",
         "rideGone": "Die Fahrt wurde inzwischen gelöscht.",
@@ -1289,7 +1291,8 @@
         "decided": {
           "scheduled": "Eingeplant {when}",
           "declined": "Abgelehnt {when}",
-          "withdrawn": "Zurückgezogen {when}"
+          "withdrawn": "Zurückgezogen {when}",
+          "closed": "Geschlossen {when}"
         },
         "conflicts": "Bevor du entscheidest",
         "noConflicts": "In den Fahrzeiten, mit genug Vorlauf und ohne andere Fahrten.",

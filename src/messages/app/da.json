@@ -1240,7 +1240,8 @@
         "scheduled": "Planlagt",
         "declined": "Afvist",
         "withdrawn": "Trukket tilbage",
-        "lapsed": "Udløbet"
+        "lapsed": "Udløbet",
+        "closed": "Lukket"
       },
       "filter": {
         "label": "Vis ønsker",
@@ -1278,7 +1279,8 @@
           "scheduled": "{self, select, yes {Du planlagde den} other {{name} planlagde den}}",
           "scheduledAuto": "Planlagt automatisk",
           "declined": "{self, select, yes {Du afviste den} other {{name} afviste den}}",
-          "withdrawn": "{self, select, yes {Du trak ønsket tilbage} other {{name} trak ønsket tilbage}}"
+          "withdrawn": "{self, select, yes {Du trak ønsket tilbage} other {{name} trak ønsket tilbage}}",
+          "closed": "Lukket, fordi en passager eller den, der bad om turen, ikke længere er med"
         },
         "seeRide": "Åbn turen",
         "rideGone": "Turen er siden blevet slettet.",
@@ -1289,7 +1291,8 @@
         "decided": {
           "scheduled": "Planlagt {when}",
           "declined": "Afvist {when}",
-          "withdrawn": "Trukket tilbage {when}"
+          "withdrawn": "Trukket tilbage {when}",
+          "closed": "Lukket {when}"
         },
         "conflicts": "Før du beslutter",
         "noConflicts": "Inden for køretiderne, med nok varsel og intet andet på programmet.",

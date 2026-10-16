@@ -117,7 +117,11 @@ async function RequestList({ searchParams }: PageProps) {
       ),
       askedIso: request.createdAt.toISOString(),
       requester: request.requester?.name ?? strings.detail.someone,
-      status: rideRequests.lapsed(request) ? "lapsed" : request.status,
+      status: rideRequests.lapsed(request)
+        ? "lapsed"
+        : rideRequests.closed(request)
+          ? "closed"
+          : request.status,
       chapterName: request.chapter.name,
     };
   });

@@ -141,7 +141,12 @@ export async function RequestBody({
   await requireChapterAdmin(request.chapterId);
 
   const now = new Date();
-  const outcome = request.status === "pending" ? null : request.status;
+  const outcome =
+    request.status === "pending"
+      ? null
+      : rideRequests.closed(request)
+        ? "closed"
+        : request.status;
   const pending = outcome === null;
   const isLapsed = rideRequests.lapsed(request, now);
   const [dict, language, head] = await Promise.all([
@@ -204,7 +209,7 @@ export async function RequestBody({
           >
             <DetailMeta>
               <MetaBadge>
-                {strings.statuses[isLapsed ? "lapsed" : request.status]}
+                {strings.statuses[isLapsed ? "lapsed" : (outcome ?? "pending")]}
               </MetaBadge>
               <span>{`${when.date}, ${when.time}`}</span>
               <span>

@@ -77,8 +77,7 @@ async function OwnRequest({ id }: { id: string }) {
   const route = requestedRoute(request);
   const state = rideRequests.lapsed(request)
     ? "lapsed"
-    : request.status === "withdrawn" &&
-        request.decidedByUserId !== request.requesterUserId
+    : rideRequests.closed(request)
       ? "closed"
       : request.status;
   const { icon: Icon, tone } = STATE[state];

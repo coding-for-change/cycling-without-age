@@ -513,3 +513,37 @@ describe("release", () => {
     expect(releaseClaimedRequest).toHaveBeenCalledWith("request-1");
   });
 });
+
+describe("closed", () => {
+  const withdrawn = (
+    requesterUserId: string | null,
+    decidedByUserId: string | null,
+  ) => ({
+    status: "withdrawn",
+    requesterUserId,
+    decidedByUserId,
+  });
+
+  it("reads a request the requester took back as withdrawn, not closed", () => {
+    expect(rideRequests.closed(withdrawn("user-carer", "user-carer"))).toBe(
+      false,
+    );
+  });
+
+  it("reads one an admin or a deletion ended as closed", () => {
+    expect(rideRequests.closed(withdrawn("user-carer", "user-admin"))).toBe(
+      true,
+    );
+    expect(rideRequests.closed(withdrawn(null, null))).toBe(true);
+  });
+
+  it("never calls an open or decided request closed", () => {
+    expect(
+      rideRequests.closed({
+        status: "declined",
+        requesterUserId: "a",
+        decidedByUserId: "b",
+      }),
+    ).toBe(false);
+  });
+});
