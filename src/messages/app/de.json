@@ -429,7 +429,7 @@
         "rideRequestSubmitted": "Neue Fahrtanfrage",
         "rideRequestWithdrawn": "Fahrtanfrage zurückgezogen",
         "rideRequestDeclined": "Fahrtanfrage abgelehnt",
-        "rideRequestScheduled": "Fahrtanfrage gebucht",
+        "rideRequestScheduled": "Fahrtanfrage eingeplant",
         "riderHandedOver": "Fahrgast übernommen",
         "riderHandedAway": "Fahrgast übergeben"
       },
@@ -1237,7 +1237,7 @@
       "waiting": "{count, plural, one {1 Anfrage wartet} other {# Anfragen warten}}",
       "statuses": {
         "pending": "Wartet",
-        "scheduled": "Geplant",
+        "scheduled": "Eingeplant",
         "declined": "Abgelehnt",
         "withdrawn": "Zurückgezogen",
         "lapsed": "Verstrichen"
