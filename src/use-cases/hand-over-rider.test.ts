@@ -152,6 +152,46 @@ describe("handOverRider", () => {
     expect(moved.invited).toBe(true);
   });
 
+  it("sets up nobody and sends no invitation for a member", async () => {
+    await handOverRider({
+      passengerId: "erna",
+      target: { kind: "member", userId: "user-daughter" },
+      actorUserId: ADMIN,
+    });
+    expect(accounts.findUserIdByContact).not.toHaveBeenCalled();
+    expect(accounts.provisionUserStrict).not.toHaveBeenCalled();
+    expect(membership.joinAsPassenger).not.toHaveBeenCalled();
+    expect(passengers.announceCareInvite).not.toHaveBeenCalled();
+  });
+
+  it("hands over to a member of the chapter found by contact, without inviting them", async () => {
+    (accounts.findUserIdByContact as jest.Mock).mockResolvedValue(
+      "user-daughter",
+    );
+    const moved = await handOverRider({
+      passengerId: "erna",
+      target: { kind: "invite", name: "Bea", contact: "bea@example.com" },
+      actorUserId: ADMIN,
+    });
+    expect(accounts.findUserIdByContact).toHaveBeenCalledWith(
+      "bea@example.com",
+    );
+    expect(membership.getMemberRoles).toHaveBeenCalledWith(
+      "user-daughter",
+      MUNICH,
+    );
+    expect(passengers.handOverRider).toHaveBeenCalledWith(
+      "erna",
+      "user-daughter",
+      ADMIN,
+      { invited: false },
+    );
+    expect(accounts.provisionUserStrict).not.toHaveBeenCalled();
+    expect(membership.joinAsPassenger).not.toHaveBeenCalled();
+    expect(passengers.announceCareInvite).not.toHaveBeenCalled();
+    expect(moved).toMatchObject({ toUserId: "user-daughter", invited: false });
+  });
+
   it("leaves a rider with an account of their own alone", async () => {
     (passengers.getPassenger as jest.Mock).mockResolvedValue({
       id: "lena",
