@@ -387,10 +387,13 @@ to a member of the rider's chapter, or to someone new, who gets an account (`acc
 passenger membership (`membership`) and the care invitation. A contact that already has an
 account outside the chapter is refused (`notChapterMember`), so nobody is put in charge of a
 stranger's rider by typing an address. `passengers.handOverRider` moves `managedByUserId`
-under a compare-and-set on the old manager and emits `rider.handedOver`; bookings, profile,
-history and open requests stay with the rider. The managers are told (not the admin who did
-it, and not a new account its invitation already speaks to), and one `createMany` writes the
-hand-over into both their histories (`riderHandedOver`). Those lines carry the rider in
+under a compare-and-set on the old manager and emits `rider.handedOver`; bookings, profile and
+history stay with the rider. The rider's open requests move along
+(`rideRequests.handOverOpenRequests`): one for this rider alone now belongs to the new manager,
+a shared one goes on without this rider. Each manager hears it in their own words — the old one
+is not told who took over — but not the admin who did it, nor a new account its invitation
+already speaks to; one `createMany` writes the hand-over into both their histories
+(`riderHandedOver`). Those lines carry the rider in
 `ActivityEvent.passengerId`, which is how the rider's page reads them back and why deleting
 the rider deletes them; the payload holds ids only and the names are looked up as the
 history is read (`app/admin/_components/hand-over-names.ts`).
@@ -1362,7 +1365,8 @@ needs no migration later; nothing writes the contact columns yet.
   request's riders on both; then `markScheduled` links the way there and emits
   `rideRequest.scheduled`. A ride that cannot be written releases the claim. The admin path is
   the PR 1 drawer opened with `?new=1&request=<id>` and prefilled; its Action re-reads the
-  request and forces the request's chapter and riders, whatever the form says.
+  request and forces the request's chapter; the request's riders are always on the ride, and
+  riders the admin added in the drawer ride along.
 - **Automatic scheduling.** With `schedulingMethod = auto`, a submitted request becomes a ride
   straight away when a trishaw that seats its riders (and takes a wheelchair when one needs it)
   is free: `rides.scheduleRide` takes `pickTrishaws` and picks the free ones **under their
