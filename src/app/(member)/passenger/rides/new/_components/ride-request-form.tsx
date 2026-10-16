@@ -217,7 +217,8 @@ export function RideRequestForm({
       window.history.back();
     } else if (index > 0) {
       window.history.replaceState(null, "", hrefFor(steps[index - 1]));
-    } else router.push("/passenger/rides", { transitionTypes: ["pop"] });
+    } else if (window.history.length > 1) router.back();
+    else router.replace("/passenger/rides", { transitionTypes: ["pop"] });
   };
 
   const pickModel = (next: RequestModel) => {
