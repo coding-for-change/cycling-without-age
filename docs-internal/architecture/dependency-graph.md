@@ -247,7 +247,13 @@ The notification kinds now reach `fleet` for trishaw and pool names:
 
 The ride kinds (`kinds/rides.ts`, category `ride`) reach `rides` for the ride's time, place and
 participants and `passengers` for a rider's name and the accounts behind them; whether a rider
-who left was an admin's doing comes from `membership.getMemberRoles`. `/rides/[rideId]` is a
+who left was an admin's doing comes from `membership.getMemberRoles`, and `ride-requests`
+names who asked for a ride booked from a request, so the booking notice skips them.
+
+The Ride Request kinds (`kinds/ride-requests.ts`, category `request`, and `rider.handedOver`,
+category `membership`) reach `ride-requests` for the request, `chapters` for the chapter's
+name and whether its admins want request alerts on the phone, `passengers` for the riders' names and managers, and `rides` for the ride a
+scheduled request became — its legs feed the `.ics` attachment. `/rides/[rideId]` is a
 Route Handler in the Boundary layer for the same reason as `/chat/[id]`: it is a deep link.
 
 ### Person profiles
