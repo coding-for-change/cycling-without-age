@@ -12,6 +12,10 @@ import {
   PropertyValue,
 } from "../../../_components/properties";
 import { ActivityFeed } from "../../../_components/activity-feed";
+import {
+  oncePerHandOver,
+  withHandOverNames,
+} from "../../../_components/hand-over-names";
 import { fieldLabels } from "../../../_components/field-labels";
 import { historyShown } from "../../../_components/history-more";
 import {
@@ -65,7 +69,9 @@ export async function ChapterBody({
     chapters.getChapterFootprint(chapterId),
     fleet.getChapterFleetFootprint(chapterId),
     rideLocations.countChapterRideLocations(chapterId),
-    activity.listForChapter(chapterId, historyTake(shown)),
+    activity
+      .listForChapter(chapterId, historyTake(shown))
+      .then(oncePerHandOver),
     chapters.listChapters(),
     getDictionary(),
     getLocale(),
@@ -259,9 +265,15 @@ export async function ChapterBody({
           showMoreLabel={dict.admin.history.showMore}
         >
           <ActivityFeed
-            events={events.slice(0, shown)}
+            events={await withHandOverNames(
+              events.slice(0, shown),
+              dict.admin.history.someone,
+            )}
             viewerId={session.user.id}
-            labels={dict.admin.history}
+            labels={{
+              ...dict.admin.history,
+              riderHandedOver: dict.admin.passengers.detail.handedOver,
+            }}
             empty={detail.historyEmpty}
             notation={notation}
             words={language}

@@ -119,6 +119,10 @@ export function ActivityFeed({
                 labels[event.type],
                 {
                   name: "",
+                  rider: labels.someone,
+                  previous: labels.someone,
+                  next: labels.someone,
+                  direction: "out",
                   ...payload,
                   actor,
                   template,
