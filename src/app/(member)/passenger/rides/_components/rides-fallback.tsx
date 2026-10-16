@@ -3,7 +3,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function RidesFallback() {
   return (
     <>
-      <Skeleton className="h-8 w-40" />
+      <div className="flex items-center justify-between gap-3">
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="h-11 w-36 rounded-full md:hidden" />
+      </div>
       <section className="flex flex-col gap-3">
         <Skeleton className="h-3.5 w-24" />
         <Skeleton className="h-4 w-28" />

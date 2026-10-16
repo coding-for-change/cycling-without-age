@@ -1,4 +1,4 @@
-import { CalendarHeart, ChevronDown } from "lucide-react";
+import { CalendarHeart, ChevronDown, Plus } from "lucide-react";
 import { cacheLife } from "next/cache";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -39,11 +39,33 @@ export async function PassengerRides() {
   const words = wordsLocale(language);
   const strings = dict.passenger.rides;
 
+  const empty = !upcoming.length && !requests.length;
+
   return (
     <>
-      <h1 className="text-2xl tracking-tight md:text-3xl">
-        {dict.member.pages.rides.title}
-      </h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl tracking-tight md:text-3xl">
+          {dict.member.pages.rides.title}
+        </h1>
+        {empty ? null : (
+          <Button
+            asChild
+            variant="brand"
+            className="min-h-11 gap-1.25 rounded-full px-5 md:hidden"
+          >
+            <Link
+              href="/passenger/rides/new"
+              transitionTypes={["push"]}
+            >
+              <Plus
+                aria-hidden
+                className="size-4"
+              />
+              {dict.member.action.passenger}
+            </Link>
+          </Button>
+        )}
+      </div>
 
       <RideRequestsList
         requests={requests}
@@ -73,7 +95,7 @@ export async function PassengerRides() {
             profileBase={PROFILE_BASE}
           />
         </section>
-      ) : requests.length ? null : (
+      ) : empty ? (
         <EmptyState
           icon={CalendarHeart}
           className="flex-1 justify-start rounded-none border-none pt-16"
@@ -94,7 +116,7 @@ export async function PassengerRides() {
         >
           {dict.passenger.request.list.empty}
         </EmptyState>
-      )}
+      ) : null}
 
       {past.length ? (
         <details className="group flex flex-col">
