@@ -1116,6 +1116,41 @@ function NoteStep({
   );
 }
 
+function ReviewRow({
+  row,
+  change,
+  onEdit,
+}: {
+  row: { label: string; value: string; step: Step };
+  change: string;
+  onEdit: (step: Step) => void;
+}) {
+  const labelId = useId();
+  return (
+    <div className="flex items-start gap-3 px-4 py-3">
+      <dl className="grid min-w-0 flex-1 gap-0.5">
+        <dt
+          id={labelId}
+          className="text-2sm text-ink-soft"
+        >
+          {row.label}
+        </dt>
+        <dd className="break-words">{row.value}</dd>
+      </dl>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        aria-describedby={labelId}
+        className="min-h-11 shrink-0 text-ink-soft"
+        onClick={() => onEdit(row.step)}
+      >
+        {change}
+      </Button>
+    </div>
+  );
+}
+
 function ReviewStep({
   rows,
   onEdit,
@@ -1131,28 +1166,16 @@ function ReviewStep({
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <dl className="flex flex-col divide-y divide-line rounded-2xl border border-line">
+      <div className="flex flex-col divide-y divide-line rounded-2xl border border-line">
         {rows.map((row) => (
-          <div
+          <ReviewRow
             key={row.label}
-            className="flex items-start gap-3 px-4 py-3"
-          >
-            <div className="grid min-w-0 flex-1 gap-0.5">
-              <dt className="text-2sm text-ink-soft">{row.label}</dt>
-              <dd className="break-words">{row.value}</dd>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="min-h-11 shrink-0 text-ink-soft"
-              onClick={() => onEdit(row.step)}
-            >
-              {strings.review.change}
-            </Button>
-          </div>
+            row={row}
+            change={strings.review.change}
+            onEdit={onEdit}
+          />
         ))}
-      </dl>
+      </div>
       <p className="rounded-2xl bg-mint-tint p-4 text-sm text-pretty">
         {formatMessage(strings.review.waiting, { chapter }, language)}
       </p>
