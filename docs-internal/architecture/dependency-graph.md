@@ -148,10 +148,7 @@ Single-facade work has no use case: `lib/auth-guards` calls `chapters.getChapter
 and `profile.getProfile` (the admin passkey gate) directly, `app/admin/chapters/actions` calls
 the chapters facade directly, `features/membership/actions` calls the membership facade
 directly, and the passkey and pilot-next-steps actions call the profile facade directly.
-`deleteOwnAccountAction` (in `features/accounts/actions`) is the same: `accounts.deleteUser` is one facade call
-behind `requireAuth` plus `canDeleteOwnAccount`, and the schema cascades the rest, so it is an
-Action and not a use case — the mirror of the admin hard delete below, with the session as the only
-subject. `features/notifications/actions` is the same shape: mark seen, mark read, register and
+`features/notifications/actions` is the same shape: mark seen, mark read, register and
 unregister a device are four writes into one facade, called from the bell and from the
 push registrar. `app/admin/settings/actions` likewise: one write of the chapter's
 `ChapterSettings` row behind `requireChapterAdmin`, so it calls `chapters.updateSettings`
@@ -176,9 +173,11 @@ not because two features are involved.
 `features/accounts` has no UI of its own either — its Server Actions are imported
 straight into the admin passengers and members screens, because "provision a user" is not a
 page. Deleting an account — the super admin's `deleteUserAction` and the member's own
-`deleteOwnAccountAction` — goes through `delete-account`: the schema cascades the
-rows, but profile photos are objects in the bucket, so the use case collects their keys from
-`person-profiles` before `accounts.deleteUser` and deletes the objects after. The `accounts` service is the only place outside `prisma/seed.ts` that calls BetterAuth's admin API
+`deleteOwnAccountAction` — goes through `delete-account`: riders without an account go only
+when the caller names them, their seats and open requests are given up first, and profile
+photos are objects in the bucket, so the use case collects their keys from
+`person-profiles` before `accounts.deleteUser` and deletes the objects after (see its row
+above). The `accounts` service is the only place outside `prisma/seed.ts` that calls BetterAuth's admin API
 (`auth.api.createUser`); everything else in that slice is ordinary Prisma.
 `accounts.claimAccount` is called from the onboarding consent action, not from the
 admin shell: the account is claimed by the person who received it, at the one step nobody may
