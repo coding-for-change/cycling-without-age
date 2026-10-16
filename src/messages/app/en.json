@@ -635,7 +635,7 @@
         "title": "Hand {rider} over",
         "body": "Choose who books rides for {rider} from now on. Their bookings, profile and history stay as they are.",
         "modeLabel": "Who takes over",
-        "member": "Someone in {chapter}",
+        "member": "Someone in the chapter",
         "invite": "Someone new",
         "picker": {
           "label": "Member",

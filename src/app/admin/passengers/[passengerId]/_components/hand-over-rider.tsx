@@ -152,7 +152,7 @@ export function HandOverRider({
             options={[
               {
                 value: "member",
-                label: formatMessage(strings.member, { chapter }, language),
+                label: strings.member,
                 icon: Users,
               },
               { value: "invite", label: strings.invite, icon: UserPlus },

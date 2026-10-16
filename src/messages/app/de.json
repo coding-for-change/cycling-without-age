@@ -635,7 +635,7 @@
         "title": "{rider} übergeben",
         "body": "Wähle, wer ab jetzt die Fahrten für {rider} bucht. Buchungen, Profil und Verlauf bleiben, wie sie sind.",
         "modeLabel": "Wer übernimmt",
-        "member": "Jemand aus {chapter}",
+        "member": "Jemand aus der Ortsgruppe",
         "invite": "Jemand Neues",
         "picker": {
           "label": "Mitglied",

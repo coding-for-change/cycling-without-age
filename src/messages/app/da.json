@@ -635,7 +635,7 @@
         "title": "Overdrag {rider}",
         "body": "Vælg, hvem der booker ture for {rider} fremover. Bookinger, profil og historik bliver, som de er.",
         "modeLabel": "Hvem overtager",
-        "member": "En fra {chapter}",
+        "member": "En fra afdelingen",
         "invite": "En ny",
         "picker": {
           "label": "Medlem",
