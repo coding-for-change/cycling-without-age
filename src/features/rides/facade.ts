@@ -9,6 +9,7 @@ import {
   modelLimits,
   reorderRosterInput,
   rescheduleInput,
+  passengerRidePageInput,
   rideListPageInput,
   ridePhotosInput,
   rideDetailsPatch,
@@ -19,6 +20,7 @@ import {
   slotWindow,
   trishawIdList,
   type CancelRideInput,
+  type PassengerRidePageInput,
   type ReorderRosterInput,
   type RescheduleInput,
   type RideData,
@@ -47,11 +49,14 @@ import {
   countPastRidesOfPilot,
   findLatestRideForPilot,
   findPastRidesForList,
+  findPastRidesForPassengers,
   findReservations,
   findUpcomingRidesForList,
+  findUpcomingRidesForPassengers,
   findFinishableRideForPilot,
   findRideById,
   findRideDetail,
+  findRideForPassengers,
   findRideIdsWithTrishawFrom,
   findRideLegIds,
   findRideScope,
@@ -72,6 +77,8 @@ import {
   updateRide,
   updateRosterPositions,
   type FeedAudience,
+  type PassengerRideDetailRow,
+  type PassengerRideRow,
   type PilotRideRow,
   type RideCalendarRow,
   type RideDetailRow,
@@ -97,9 +104,12 @@ import {
   type ReportTally,
 } from "./report";
 import type { ReportScope } from "./report-zones";
+import { storyForPassengers } from "./passenger-story";
 
 export type {
   FeedAudience,
+  PassengerRideDetailRow,
+  PassengerRideRow,
   PilotRideRow,
   RideCalendarRow,
   RideDetailRow,
@@ -1055,6 +1065,48 @@ export async function listRidesForList(
       upcoming.length > limit ? encodeCursor(page[page.length - 1]) : null,
   };
 }
+
+export type PassengerRidePage = {
+  rides: PassengerRideRow[];
+  nextCursor: string | null;
+};
+
+/**
+ * One page of the rides booked for these riders, coming up soonest-first or
+ * gone by latest-first. A ride counts as coming up until it has ended, so the
+ * one running right now is still at the top.
+ */
+export async function listPassengerRidesPage(
+  passengerIds: string[],
+  input: PassengerRidePageInput,
+  now = new Date(),
+): Promise<PassengerRidePage> {
+  const { direction, cursor, limit } = passengerRidePageInput.parse(input);
+  if (!passengerIds.length) return { rides: [], nextCursor: null };
+  const find =
+    direction === "upcoming"
+      ? findUpcomingRidesForPassengers
+      : findPastRidesForPassengers;
+  const found = await find(passengerIds, now, decodeCursor(cursor), limit + 1);
+  const page = found.slice(0, limit);
+  return {
+    rides: page,
+    nextCursor:
+      found.length > limit ? encodeCursor(page[page.length - 1]) : null,
+  };
+}
+
+/** `null` unless one of these riders is on the ride — a guessed id reads as missing. */
+export const getRideForPassengers = (rideId: string, passengerIds: string[]) =>
+  passengerIds.length
+    ? findRideForPassengers(rideId, passengerIds)
+    : Promise.resolve(null);
+
+export const listRideStoryForPassengers = async (
+  rideId: string,
+  passengerIds: string[],
+  viewerId: string,
+) => storyForPassengers(await listRideLog(rideId), passengerIds, viewerId);
 
 export async function cancelBooking(
   rideId: string,

@@ -2,7 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { requireAdminScope, requireChapterAdmin } from "@/lib/auth-guards";
+import {
+  requireAdminScope,
+  requireAuth,
+  requireChapterAdmin,
+} from "@/lib/auth-guards";
 import { createAttempt, type ActionResult } from "@/lib/domain-error";
 import { wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
@@ -16,6 +20,7 @@ import {
   withinUploadLimit,
 } from "@/lib/storage";
 import { bookRider } from "@/use-cases/book-rider";
+import { passengerRidesPage } from "@/use-cases/passenger-rides";
 import {
   allocateTrishaws,
   freeTrishawsInWindow,
@@ -25,6 +30,10 @@ import { staffRide } from "@/use-cases/staff-ride";
 import { rides, type RideScope } from "./index";
 import { toListPage, type ListRidePage } from "./components/ride-list-rows";
 import {
+  toPassengerListPage,
+  type PassengerListPage,
+} from "./components/passenger-ride-rows";
+import {
   trishawOptions,
   type TrishawOption,
 } from "./components/trishaw-options";
@@ -32,6 +41,7 @@ import {
   bookRiderInput,
   cancelRideInput,
   noteInput,
+  passengerRidePageInput,
   pilotInput,
   reorderRosterInput,
   rescheduleInput,
@@ -352,6 +362,24 @@ export async function listRidesPageAction(
           ),
         }),
       ),
+    { revalidate: false },
+  );
+}
+
+/**
+ * The next page of the signed-in member's own rides. Which riders count is
+ * read from the account inside the use case; the request only says which way
+ * to page and where to start.
+ */
+export async function listMyRidesPageAction(
+  input: unknown,
+): Promise<RideResult<PassengerListPage>> {
+  const parsed = passengerRidePageInput.safeParse(input);
+  if (!parsed.success) return INVALID;
+  const { user } = await requireAuth();
+  return attempt(
+    async () =>
+      toPassengerListPage(await passengerRidesPage(user.id, parsed.data)),
     { revalidate: false },
   );
 }

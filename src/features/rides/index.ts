@@ -1,6 +1,9 @@
 export * as rides from "./facade";
 export type {
   FeedAudience,
+  PassengerRideDetailRow,
+  PassengerRidePage,
+  PassengerRideRow,
   PilotRideRow,
   RideCalendarRow,
   RideFeedRow,
@@ -8,6 +11,12 @@ export type {
   TrishawRideRow,
 } from "./facade";
 export * from "./schemas";
+export type {
+  PassengerStoryEntry,
+  StoryActor,
+  StoryField,
+  StoryWindow,
+} from "./passenger-story";
 export * from "./report-range";
 export type {
   ActivityAggregate,

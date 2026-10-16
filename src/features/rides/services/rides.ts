@@ -616,6 +616,130 @@ export const findRideDetail = (
   db: Prisma.TransactionClient = prisma,
 ) => db.ride.findUnique({ where: { id }, select: detailSelect });
 
+/**
+ * What a rider, or whoever books for them, reads. The roster is narrowed to
+ * their own riders in the query itself, so another rider's name never leaves
+ * the database; the rest of the roster is only a count.
+ */
+const ownRoster = (passengerIds: string[]) =>
+  ({
+    where: { passengerId: { in: passengerIds } },
+    orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+    select: {
+      passenger: { select: { id: true, firstName: true, lastName: true } },
+    },
+  }) satisfies Prisma.Ride$rosterArgs;
+
+const passengerRideSelect = (passengerIds: string[]) =>
+  ({
+    ...calendarSelect,
+    roster: ownRoster(passengerIds),
+  }) satisfies Prisma.RideSelect;
+
+export type PassengerRideRow = Prisma.RideGetPayload<{
+  select: ReturnType<typeof passengerRideSelect>;
+}>;
+
+const bookedFor = (passengerIds: string[]) =>
+  ({
+    roster: { some: { passengerId: { in: passengerIds } } },
+  }) satisfies Prisma.RideWhereInput;
+
+const pastCursorWhere = (cursor: { startsAt: Date; id: string } | null) =>
+  cursor
+    ? {
+        OR: [
+          { startsAt: { lt: cursor.startsAt } },
+          { startsAt: cursor.startsAt, id: { lt: cursor.id } },
+        ],
+      }
+    : {};
+
+export const findUpcomingRidesForPassengers = (
+  passengerIds: string[],
+  now: Date,
+  cursor: { startsAt: Date; id: string } | null,
+  take: number,
+) =>
+  prisma.ride.findMany({
+    where: {
+      ...bookedFor(passengerIds),
+      endsAt: { gt: now },
+      ...listCursorWhere(cursor),
+    },
+    orderBy: [{ startsAt: "asc" }, { id: "asc" }],
+    select: passengerRideSelect(passengerIds),
+    take,
+  });
+
+export const findPastRidesForPassengers = (
+  passengerIds: string[],
+  now: Date,
+  cursor: { startsAt: Date; id: string } | null,
+  take: number,
+) =>
+  prisma.ride.findMany({
+    where: {
+      ...bookedFor(passengerIds),
+      endsAt: { lte: now },
+      ...pastCursorWhere(cursor),
+    },
+    orderBy: [{ startsAt: "desc" }, { id: "desc" }],
+    select: passengerRideSelect(passengerIds),
+    take,
+  });
+
+const legSelect = (passengerIds: string[]) =>
+  ({
+    select: {
+      id: true,
+      startsAt: true,
+      endsAt: true,
+      status: true,
+      roster: {
+        where: { passengerId: { in: passengerIds } },
+        select: { id: true },
+      },
+    },
+  }) as const;
+
+/**
+ * The rider's detail view. Pilots are shown with their contact details — the
+ * rider is the one waiting at the door — but never with their address.
+ */
+const passengerRideDetailSelect = (passengerIds: string[]) =>
+  ({
+    ...passengerRideSelect(passengerIds),
+    description: true,
+    latitude: true,
+    longitude: true,
+    destinationLatitude: true,
+    destinationLongitude: true,
+    cancellationReasonCode: true,
+    cancellationNote: true,
+    returnLegOf: legSelect(passengerIds),
+    returnLeg: legSelect(passengerIds),
+    assignments: {
+      orderBy: { createdAt: "asc" },
+      select: {
+        role: true,
+        user: {
+          select: { id: true, name: true, email: true, phoneNumber: true },
+        },
+      },
+    },
+  }) satisfies Prisma.RideSelect;
+
+export type PassengerRideDetailRow = Prisma.RideGetPayload<{
+  select: ReturnType<typeof passengerRideDetailSelect>;
+}>;
+
+export const findRideForPassengers = (rideId: string, passengerIds: string[]) =>
+  prisma.ride.findFirst({
+    where: { id: rideId, ...bookedFor(passengerIds) },
+    select: passengerRideDetailSelect(passengerIds),
+  });
+
 const trishawRideSelect = {
   id: true,
   chapterId: true,
