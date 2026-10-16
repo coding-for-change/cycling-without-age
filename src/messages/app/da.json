@@ -429,7 +429,7 @@
         "rideRequestSubmitted": "Nyt turønske",
         "rideRequestWithdrawn": "Turønske trukket tilbage",
         "rideRequestDeclined": "Turønske afvist",
-        "rideRequestScheduled": "Turønske booket",
+        "rideRequestScheduled": "Turønske planlagt",
         "riderHandedOver": "Passager overtaget",
         "riderHandedAway": "Passager overdraget"
       },
@@ -2085,7 +2085,7 @@
     },
     "ride": {
       "cta": "Book en tur",
-      "body": "Ønsk en tur til dig selv eller til en, du hjælper. Afdelingen bekræfter tidspunktet."
+      "body": "Ønsk en tur til dig selv eller til en, du passer på. Afdelingen bekræfter tidspunktet."
     }
   },
   "legal": {
@@ -2359,7 +2359,7 @@
       },
       "empty": {
         "title": "Hvem vil du booke for?",
-        "body": "Tilføj den, der skal køre med – dig selv eller en, du hjælper – og kom så tilbage og ønsk en tur.",
+        "body": "Tilføj den, der skal køre med – dig selv eller en, du passer på – og kom så tilbage og ønsk en tur.",
         "cta": "Tilføj en passager"
       },
       "steps": {

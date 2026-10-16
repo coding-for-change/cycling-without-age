@@ -2085,7 +2085,7 @@
     },
     "ride": {
       "cta": "Ausfahrt buchen",
-      "body": "Fragen Sie eine Fahrt an – für sich selbst oder für jemanden, den Sie begleiten. Die Ortsgruppe bestätigt die Uhrzeit."
+      "body": "Fragen Sie eine Fahrt an – für sich selbst oder für jemanden, um den Sie sich kümmern. Die Ortsgruppe bestätigt die Uhrzeit."
     }
   },
   "legal": {
@@ -2342,7 +2342,7 @@
       }
     },
     "request": {
-      "title": "Ausfahrt buchen",
+      "title": "Fahrt buchen",
       "back": "Zurück",
       "next": "Weiter",
       "send": "Anfrage senden",
@@ -2359,7 +2359,7 @@
       },
       "empty": {
         "title": "Für wen möchten Sie buchen?",
-        "body": "Fügen Sie die Person hinzu, die mitfährt – sich selbst oder jemanden, den Sie begleiten – und fragen Sie dann eine Fahrt an.",
+        "body": "Fügen Sie die Person hinzu, die mitfährt – sich selbst oder jemanden, um den Sie sich kümmern – und fragen Sie dann eine Fahrt an.",
         "cta": "Fahrgast hinzufügen"
       },
       "steps": {
@@ -2458,7 +2458,7 @@
           "scheduled": "Gebucht",
           "declined": "Diesmal leider nicht",
           "withdrawn": "Zurückgezogen",
-          "lapsed": "Keine Antwort rechtzeitig",
+          "lapsed": "Nicht rechtzeitig beantwortet",
           "closed": "Geschlossen"
         },
         "bodies": {
@@ -2509,7 +2509,7 @@
       "noDays": {
         "title": "Gerade keine Tage frei für Anfragen",
         "body": "{chapter} nimmt für die nächsten Wochen gerade keine Fahrtanfragen an. Schreiben Sie der Ortsgruppe, sie findet einen Weg.",
-        "subject": "Eine Fahrt mit Radeln ohne Alter"
+        "subject": "Eine Fahrt mit Cycling Without Age"
       }
     }
   },

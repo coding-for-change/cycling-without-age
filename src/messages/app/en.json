@@ -429,7 +429,7 @@
         "rideRequestSubmitted": "New ride request",
         "rideRequestWithdrawn": "Ride request withdrawn",
         "rideRequestDeclined": "Ride request declined",
-        "rideRequestScheduled": "Ride request booked",
+        "rideRequestScheduled": "Ride request scheduled",
         "riderHandedOver": "Rider handed over",
         "riderHandedAway": "Rider handed on"
       },
