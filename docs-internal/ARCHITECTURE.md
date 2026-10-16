@@ -875,9 +875,10 @@ schema)` reads it back on the far side and clears it on mount.
 `readDraft` is a pure function so it can be tested without a browser, and it is deliberately
 **silent** about every failure — wrong version, wrong kind, older than an hour, malformed
 JSON, or a payload that fails the caller's Zod schema all return `null` and the screen falls
-back to its no-draft copy. Nothing from `sessionStorage` is ever trusted as input to a write:
-the Book-a-ride confirmation only *displays* the draft. When ride requests become real rows,
-the draft stays a UI convenience and the Server Action re-validates from scratch.
+back to its no-draft copy. Nothing from `sessionStorage` is ever trusted as input to a write;
+a draft is a UI convenience and the Server Action re-validates from scratch. Since COD-261 no
+screen uses it: Book a ride on `/join/[slug]` carries the chapter in the link instead, and the
+Ride Request Form starts empty.
 
 ## Chat
 
