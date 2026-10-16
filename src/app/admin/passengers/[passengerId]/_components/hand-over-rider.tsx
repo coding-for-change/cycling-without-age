@@ -67,10 +67,16 @@ export function HandOverRider({
   const nameMissing = invalid && !name.trim();
   const contactWrong = invalid && !parseIdentity(contact, country).ok;
 
-  const close = () =>
+  const close = () => {
+    setMode(members.length ? "member" : "invite");
+    setPicked([]);
+    setName("");
+    setContact("");
+    setInvalid(false);
     go((params) => {
       params.delete("handover");
     });
+  };
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

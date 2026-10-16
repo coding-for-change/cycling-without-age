@@ -49,10 +49,12 @@ export function DeclineRequest({
   const [note, setNote] = useState("");
   const [pending, startTransition] = useTransition();
 
-  const close = () =>
+  const close = () => {
+    setNote("");
     go((params) => {
       params.delete("decline");
     });
+  };
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -63,9 +65,7 @@ export function DeclineRequest({
         note: note.trim() || null,
       });
       notify(result, { done: labels.done, errors });
-      if (!result.ok) return;
-      setNote("");
-      close();
+      if (result.ok) close();
     });
   };
 
