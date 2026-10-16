@@ -381,13 +381,13 @@
     "footer": "Du erhältst diese E-Mail, weil du eine Cycling-Without-Age-Ortsgruppe mit betreust."
   },
   "rideRequestWithdrawn": {
-    "subject": "{requester} hat die Anfrage für den {date} zurückgezogen",
+    "subject": "{requester} hat die Anfrage für {date} zurückgezogen",
     "preview": "{riders} · {date}",
     "heading": "Eine Fahrtanfrage wurde zurückgezogen",
     "intro": "{requester} braucht die Fahrt für {riders} am {date}, {time}, nicht mehr. Es gibt nichts mehr zu tun.",
     "cta": "Anfrage öffnen",
     "footer": "Du erhältst diese E-Mail, weil du eine Cycling-Without-Age-Ortsgruppe mit betreust.",
-    "subjectClosed": "Die Fahrtanfrage für den {date} wurde geschlossen",
+    "subjectClosed": "Die Fahrtanfrage für {date} wurde geschlossen",
     "headingClosed": "Eine Fahrtanfrage wurde geschlossen",
     "introClosed": "Die Anfrage für {riders} am {date}, {time}, wurde geschlossen, weil ein Fahrgast oder die anfragende Person nicht mehr dabei ist. Es gibt nichts mehr zu tun."
   },

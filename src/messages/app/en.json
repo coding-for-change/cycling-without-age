@@ -1281,7 +1281,7 @@
           "withdrawn": "{self, select, yes {You took the request back} other {{name} took the request back}}"
         },
         "seeRide": "Open the ride",
-        "rideGone": "The ride has been deleted since.",
+        "rideGone": "The ride has since been deleted.",
         "decision": "Decision",
         "schedule": "Schedule…",
         "decline": "Decline…",

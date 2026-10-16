@@ -657,7 +657,7 @@
           "notChapterMember": "Diese Person ist kein Mitglied der Ortsgruppe des Fahrgasts. Sie muss erst beitreten.",
           "sameManager": "Diese Person betreut den Fahrgast bereits.",
           "passengerChapterMismatch": "Diese Person betreut schon Fahrgäste einer anderen Ortsgruppe.",
-          "tooManyRiders": "Diese Person betreut schon so viele Fahrgäste, wie ein Konto kann.",
+          "tooManyRiders": "Diese Person betreut schon so viele Fahrgäste, wie ein Konto betreuen kann.",
           "unknownPassenger": "Dieser Fahrgast kann nicht mehr übergeben werden. Lade die Seite neu.",
           "rateLimited": "Das waren viele Übergaben hintereinander. Warte kurz und versuch es erneut."
         }
