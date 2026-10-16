@@ -1384,8 +1384,9 @@ needs no migration later; nothing writes the contact columns yet.
   `?decline=1`) and what is in the way (outside hours, short notice, other rides in the
   window). The requester has `/passenger/rides/requests/[id]` ("Waiting for {chapter}" until a
   ride exists, never anything that reads like an instant booking) and the open requests on
-  `/passenger` and `/passenger/rides`. `/join/[slug]`'s Book a ride saves the chapter as an
-  auth-wall draft and goes to the form; `/join/[slug]/ride` redirects there.
+  `/passenger` and `/passenger/rides`. `/join/[slug]`'s Book a ride carries the chapter in
+  the link (through sign-in when needed) and is hidden from a signed-in non-member, who joins
+  as a passenger on the form's join card; `/join/[slug]/ride` redirects there.
 - **The calendar file.** The scheduled mail carries `ride.ics`: one VEVENT per leg, the ride's
   model and chapter as the summary, no one's name, and the same `ride-<id>@host` UID the
   subscribed feed uses, so a calendar holding both shows one entry. `MailOptions.attachments`
