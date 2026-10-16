@@ -183,6 +183,49 @@ Production never calls Tolgee.
   builds compile the path away (`translatorModeBuilt` is false) and the server refuses it
   when `SENTRY_ENVIRONMENT=production`.
 
+### Legal texts are versioned documents, not Tolgee messages
+
+The privacy notice, the terms of use and the imprint are long, lawyer-approved texts. They
+live as Markdown in `src/messages/legal/{document}.{locale}.md`, outside Tolgee: a translator
+editing a sentence there would silently change a binding text without a new version.
+
+- **`features/legal`**: the service reads the file, the facade returns it with its edition
+  from `LEGAL_EDITIONS` (`version`, `updatedOn`, `draft`). A text change bumps the edition.
+  Nothing records an accepted version yet; versioned terms acceptance at onboarding (T-14 §4)
+  will store `editionOf(document).version`. Short UI strings around the texts (titles,
+  "Version … · Last updated …", the draft notice) stay in `messages/app` under `legal`.
+- **`lib/legal`**: the document list, `legalHref` and `legalLinks(titles)`, safe for any layer
+  and for Client Components.
+- **Shipping**: the files are read at request time. `outputFileTracingIncludes` in
+  `next.config.ts` puts them into the standalone output, but the Docker image only receives
+  the folders its `RUN` step lists, so the `Dockerfile` moves `src/messages/legal` into
+  `/out/app` itself. Without that line the pages render an error in production, and the
+  `mv` fails the image build if the folder is missing.
+- **Draft guard**: while `draft` is true the page shows a notice. `facade.test.ts` fails
+  when a document marked final still contains a `[placeholder]`.
+- **Where the links are**: sign-in, welcome, the account surface ("Legal" group, which also
+  covers admins through the user menu, and shows the text in place), the onboarding agreements
+  and every email footer (with `?lang=` set to the email's locale). Inside the native shell
+  they navigate in place, never through `target="_blank"`, which Capacitor hands to Safari.
+- **Back**: the legal pages' back button goes back in history only when the visitor arrived
+  from inside the app (`arrivedFromApp`); someone landing from another site or a fresh tab
+  goes to `/` instead.
+
+### The account surface is mounted once and reads legal texts in place
+
+The account sheet (phone) or dialog (desktop) is mounted once per shell by `AccountPanel`, in
+the member shell and the admin layout. What it shows lives in a small client store
+(`account-state.ts`): the open section and, on Legal, the open legal document. Anything may
+change it (`openAccount`, `openLegalDocument`, `closeLegalDocument`, `closeAccount`); only
+`AccountSurfaceHost` reads it and passes it down as `AccountChromeProps`.
+
+A legal document opens inside the surface instead of navigating to `/legal/*`, so the surface
+never unmounts and needs no URL state. The text comes from `readLegalTextAction` on demand
+(`legal-text-request.ts` keeps one request per language and document, and forgets a failed
+one so retrying loads again), rendered by the same `LegalDocumentView` as the public page.
+Escape, and with it the Android back button, closes the document before the surface.
+Ctrl/Cmd-click on a row still opens the public page in a new tab.
+
 ## Roles & Organisation Structure (COD-158)
 
 ### Chapter = BetterAuth organization (decision)

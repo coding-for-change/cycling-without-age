@@ -83,6 +83,7 @@ export const loadAccount = cache(async (): Promise<AccountData | null> => {
         }
       : null,
     guidesHref: docsEntryHref(language),
+    legal: dict.legal,
     signOutLabel: dict.common.signOut,
     cancelLabel: dict.common.back,
   };

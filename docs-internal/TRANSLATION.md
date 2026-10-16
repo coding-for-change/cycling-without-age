@@ -10,6 +10,11 @@ Git holds the source of truth, and people edit in Tolgee Cloud. Architecture is 
 | `email` | Emails, push, the in-app inbox, the calendar feed |
 | `errors` | The root error screen and the "tell us what happened" drawer |
 
+Legal texts (privacy notice, terms of use, imprint) are not in Tolgee. They are Markdown files
+in `src/messages/legal/{document}.{locale}.md`, versioned in `LEGAL_EDITIONS`
+(`src/features/legal/facade.ts`). Replace all three locales of a document together and bump its
+edition. See `ARCHITECTURE.md` → Legal texts.
+
 ## Message format
 
 - Placeholders: `"Joined {date}"`. Every placeholder must be given a value.
@@ -94,5 +99,7 @@ compile the code path away, and the server refuses it when `SENTRY_ENVIRONMENT=p
 3. `npm run i18n:pull`, then import the new files next to the others in
    `src/lib/i18n/messages.ts`, `src/emails/strings/index.ts`, `src/lib/i18n/error-strings.ts` and
    `src/instrumentation-client.ts`.
-4. `npm test`: the message test checks the new plural categories.
-5. Check `src/lib/format.ts` (notation locales) if the market needs a new date or number format.
+4. Add `src/messages/legal/{privacy,terms,imprint}.<tag>.md`. The legal pages read them at
+   request time, and `src/features/legal/facade.test.ts` fails while one is missing.
+5. `npm test`: the message test checks the new plural categories.
+6. Check `src/lib/format.ts` (notation locales) if the market needs a new date or number format.

@@ -6,6 +6,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useCharacter } from "@/components/character";
 import { haptics } from "@/lib/native/haptics";
+import { isNative } from "@/lib/native/platform";
+import { legalHref } from "@/lib/legal";
 import { requestNotificationPermission } from "@/lib/native/push";
 import { cn } from "@/lib/utils";
 import { formatMessage } from "@/lib/i18n/format";
@@ -205,6 +207,7 @@ export function ConsentStep({
 }
 
 function LegalLinks({ strings }: { strings: Strings }) {
+  const router = useRouter();
   const parts = strings.dataSuffix.split(/(\{imprint\}|\{privacy\})/);
   return (
     <>
@@ -212,10 +215,15 @@ function LegalLinks({ strings }: { strings: Strings }) {
         part === "{imprint}" || part === "{privacy}" ? (
           <a
             key={index}
-            href={part === "{imprint}" ? "/legal/imprint" : "/legal/privacy"}
+            href={legalHref(part === "{imprint}" ? "imprint" : "privacy")}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (!isNative()) return;
+              event.preventDefault();
+              router.push(event.currentTarget.pathname);
+            }}
             className="underline underline-offset-2 hover:text-ink"
           >
             {part === "{imprint}" ? strings.imprint : strings.privacy}

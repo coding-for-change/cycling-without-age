@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { chapters } from "@/features/chapters";
 import { getDictionary, getLocale } from "@/lib/i18n";
+import { legalLinks } from "@/lib/legal";
+import { LegalLinks } from "@/components/legal-links";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WelcomeCarousel } from "./_components/welcome-carousel";
 
@@ -36,6 +38,13 @@ async function Welcome() {
       strings={{ ...dict.welcome, language: dict.common.language }}
       locale={locale}
       chapterCoords={chapterCoords}
+      legal={
+        <LegalLinks
+          label={dict.legal.label}
+          links={legalLinks(dict.legal.documents)}
+          className="mt-5"
+        />
+      }
     />
   );
 }

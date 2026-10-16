@@ -7,6 +7,8 @@ import { resolveDestination } from "@/use-cases/onboarding-progress";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { resolveLocale } from "@/lib/format";
 import { defaultCountryFor } from "@/lib/identity";
+import { legalLinks } from "@/lib/legal";
+import { LegalLinks } from "@/components/legal-links";
 import { IdentifierStep } from "./_components/identifier-step";
 import { StepSkeleton } from "../_components/step";
 import { StepTransition } from "../_components/step-transition";
@@ -54,6 +56,13 @@ async function Identifier() {
       googleEnabled={Boolean(
         process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,
       )}
+      legal={
+        <LegalLinks
+          label={dict.legal.label}
+          links={legalLinks(dict.legal.documents)}
+          className="pt-1"
+        />
+      }
     />
   );
 }

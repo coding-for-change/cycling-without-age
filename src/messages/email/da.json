@@ -239,5 +239,10 @@
     "cta": "Log ind",
     "footer": "Du får denne e-mail, fordi en administrator i en Cycling Without Age-afdeling har skrevet din adresse som hjælper for en passager.",
     "someone": "nogen"
+  },
+  "legal": {
+    "imprint": "Kolofon",
+    "privacy": "Privatlivspolitik",
+    "terms": "Brugsvilkår"
   }
 }

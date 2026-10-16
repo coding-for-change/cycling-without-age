@@ -80,6 +80,9 @@
       "body": "E-Mails und Benachrichtigungen kommen ebenfalls in dieser Sprache.",
       "title": "Sprache"
     },
+    "legal": {
+      "title": "Rechtliches"
+    },
     "notifications": {
       "body": "Das Wichtige — eine bestätigte Ausfahrt, eine Antwort der Ortsgruppe — kommt immer an. Hier geht es um den Rest.",
       "chat": {
@@ -1156,7 +1159,7 @@
     "imprint": "Impressum",
     "joining": "Sie treten {chapter} bei.",
     "notifications": "Ich möchte E-Mails und Push-Nachrichten zu wichtigen Dingen erhalten.",
-    "privacy": "Datenverarbeitungsvereinbarung",
+    "privacy": "Datenschutzerklärung",
     "required": "Setzen Sie überall ein Häkchen, um fortzufahren.",
     "safety": "Mir ist klar, dass die Ausfahrten von geschulten Freiwilligen gefahren werden, und ich halte mich an die Sicherheitsregeln der Ortsgruppe.",
     "setUpBy": "{name} hat dieses Konto für Sie eingerichtet. Prüfen Sie die Angaben und stimmen Sie zu, um fortzufahren.",
@@ -1726,15 +1729,16 @@
     }
   },
   "legal": {
-    "imprint": {
-      "body": "Hier stehen die rechtlichen Angaben der Ortsgruppe.",
-      "title": "Impressum"
+    "documents": {
+      "imprint": "Impressum",
+      "privacy": "Datenschutzerklärung",
+      "terms": "Nutzungsbedingungen"
     },
-    "pending": "Diese Seite wird noch geschrieben. Fragen Sie bis dahin Ihre Ortsgruppe nach den Einzelheiten.",
-    "privacy": {
-      "body": "Hier steht, was wir speichern, warum wir es speichern und wie Sie es löschen lassen.",
-      "title": "Datenverarbeitungsvereinbarung"
-    }
+    "draft": "Dies ist ein Entwurf. Der endgültige Text wird noch geprüft.",
+    "edition": "Version {version} · Zuletzt aktualisiert am {date}",
+    "label": "Rechtliches",
+    "loadFailed": "Diese Seite konnte nicht geladen werden. Bitte die Verbindung prüfen und erneut versuchen.",
+    "retry": "Erneut versuchen"
   },
   "location": {
     "distanceAway": "{distance} entfernt",
