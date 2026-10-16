@@ -7,6 +7,7 @@ import { rideLocations } from "@/features/ride-locations";
 import { rideRequests, type RideRequestInput } from "@/features/ride-requests";
 import { rides } from "@/features/rides";
 import { DomainError, domainCode } from "@/lib/domain-error";
+import { logger } from "@/lib/observability/logger";
 import { maxRidersFor, submitRideRequest } from "./submit-ride-request";
 
 jest.mock("@/features/chapters", () => {
@@ -160,10 +161,7 @@ beforeEach(() => {
   submit.mockResolvedValue({ id: "request-1", chapterId: MUNICH });
   (rideRequests.requirePending as jest.Mock).mockResolvedValue(pendingRequest);
   (rides.bookedTrishawIds as jest.Mock).mockResolvedValue(new Set());
-  scheduleRide.mockImplementation(async (_ride, _actor, options) => {
-    expect(options.pickTrishaws.candidates).toEqual(["trishaw-1"]);
-    return { id: "ride-1", returnLegId: null };
-  });
+  scheduleRide.mockResolvedValue({ id: "ride-1", returnLegId: null });
 });
 
 describe("submitRideRequest", () => {
@@ -209,6 +207,64 @@ describe("submitRideRequest", () => {
         pickupName: "Sonnenhof",
         pickupAddress: "Am Hof 1",
       }),
+      expect.anything(),
+    );
+  });
+
+  const DOCTOR = {
+    name: "Hausarzt Dr. Weber",
+    address: "Marienplatz 1",
+    latitude: 48.13,
+    longitude: 11.57,
+  };
+
+  it("keeps a functional request's destination and round trip", async () => {
+    await submitRideRequest(
+      request({ model: "functional", destination: DOCTOR, roundTrip: true }),
+      CARER,
+      NOW,
+    );
+    expect(submit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: "functional",
+        destinationName: "Hausarzt Dr. Weber",
+        destinationAddress: "Marienplatz 1",
+        destinationLatitude: 48.13,
+        destinationLongitude: 11.57,
+        roundTrip: true,
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("drops a destination and round trip a client sends with a pleasure request", async () => {
+    await submitRideRequest(
+      request({ model: "pleasure", destination: DOCTOR, roundTrip: true }),
+      CARER,
+      NOW,
+    );
+    expect(submit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: "pleasure",
+        destinationName: null,
+        destinationAddress: null,
+        destinationLatitude: null,
+        destinationLongitude: null,
+        roundTrip: false,
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("ignores a chapter the client names and files the request in the riders' own", async () => {
+    await submitRideRequest(
+      { ...request(), chapterId: "chapter-hh" } as RideRequestInput,
+      CARER,
+      NOW,
+    );
+    expect(chapters.getChapter).toHaveBeenCalledWith(MUNICH);
+    expect(submit).toHaveBeenCalledWith(
+      expect.objectContaining({ chapterId: MUNICH }),
       expect.anything(),
     );
   });
@@ -301,6 +357,7 @@ describe("submitRideRequest", () => {
           ),
         ),
       ).toBe("leadTime");
+      expect(submit).not.toHaveBeenCalled();
     });
 
     it("refuses a window beyond the horizon", async () => {
@@ -315,6 +372,7 @@ describe("submitRideRequest", () => {
           ),
         ),
       ).toBe("beyondHorizon");
+      expect(submit).not.toHaveBeenCalled();
     });
 
     it("refuses a window outside the riding hours", async () => {
@@ -329,6 +387,7 @@ describe("submitRideRequest", () => {
           ),
         ),
       ).toBe("outsideHours");
+      expect(submit).not.toHaveBeenCalled();
     });
 
     it("refuses a day the chapter is closed", async () => {
@@ -366,7 +425,10 @@ describe("submitRideRequest", () => {
           startsAt: new Date("2026-10-08T08:00:00Z"),
         }),
         null,
-        expect.objectContaining({ requestId: "request-1" }),
+        expect.objectContaining({
+          requestId: "request-1",
+          pickTrishaws: { candidates: ["trishaw-1"], count: 1 },
+        }),
       );
       expect(rideRequests.markScheduled).toHaveBeenCalledWith(
         "request-1",
@@ -396,6 +458,23 @@ describe("submitRideRequest", () => {
       });
       expect(rideRequests.release).toHaveBeenCalledWith("request-1");
       expect(rideRequests.markScheduled).not.toHaveBeenCalled();
+      expect(rideRequests.announce).toHaveBeenCalledWith("request-1");
+    });
+
+    it("logs a failure that is not a refusal and lists the request for an admin", async () => {
+      scheduleRide.mockRejectedValue(new Error("connection lost"));
+      expect(await submitRideRequest(request(), CARER, NOW)).toEqual({
+        id: "request-1",
+        rideId: null,
+      });
+      expect(rideRequests.release).toHaveBeenCalledWith("request-1");
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          err: expect.anything(),
+          request_id: "request-1",
+        }),
+        "automatic scheduling failed",
+      );
       expect(rideRequests.announce).toHaveBeenCalledWith("request-1");
     });
   });
