@@ -145,6 +145,8 @@ export function RideRequestForm({
   const keyboardOpen = useKeyboardOpen();
   const [pending, startTransition] = useTransition();
   const pushed = useRef(0);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const shown = useRef<Step | null>(null);
 
   const single = data.riders.length === 1;
   const steps: Step[] = single
@@ -287,6 +289,12 @@ export function RideRequestForm({
       });
     });
 
+  useEffect(() => {
+    if (shown.current !== null && shown.current !== step)
+      heading.current?.focus({ preventScroll: true });
+    shown.current = step;
+  }, [step]);
+
   const copy = strings.steps[step];
   const progress = withStepLabel(
     { index, total: steps.length },
@@ -316,7 +324,13 @@ export function RideRequestForm({
         <p className="text-xs font-semibold tracking-wide text-ink-soft uppercase">
           {data.chapterName}
         </p>
-        <h1 className="text-2xl tracking-tight md:text-3xl">{copy.title}</h1>
+        <h1
+          ref={heading}
+          tabIndex={-1}
+          className="text-2xl tracking-tight focus:outline-none md:text-3xl"
+        >
+          {copy.title}
+        </h1>
         <p className="text-ink-soft">
           {formatMessage(
             copy.body,
