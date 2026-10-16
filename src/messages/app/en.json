@@ -2381,7 +2381,8 @@
         },
         "review": {
           "title": "Ready to send?",
-          "body": "Check the details. Nothing is booked until {chapter} confirms."
+          "body": "Check the details. Nothing is booked until {chapter} confirms.",
+          "bodyAuto": "Check the details. If a trishaw is free then, the ride is booked straight away."
         }
       },
       "who": {
@@ -2438,7 +2439,8 @@
         "note": "Note",
         "noNote": "No note",
         "change": "Change",
-        "waiting": "Nothing is booked yet. {chapter} looks at your request and confirms the exact time — you'll get a message either way."
+        "waiting": "Nothing is booked yet. {chapter} looks at your request and confirms the exact time — you'll get a message either way.",
+        "waitingAuto": "If a trishaw is free for that time, {chapter} books the ride straight away and you get the confirmation. If not, {chapter} looks at your request and gets back to you."
       },
       "list": {
         "title": "Your requests",

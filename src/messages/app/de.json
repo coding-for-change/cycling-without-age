@@ -2381,7 +2381,8 @@
         },
         "review": {
           "title": "Bereit zum Senden?",
-          "body": "Prüfen Sie die Angaben. Gebucht ist erst, wenn {chapter} bestätigt."
+          "body": "Prüfen Sie die Angaben. Gebucht ist erst, wenn {chapter} bestätigt.",
+          "bodyAuto": "Prüfen Sie die Angaben. Ist zu der Zeit eine Rikscha frei, wird die Fahrt sofort gebucht."
         }
       },
       "who": {
@@ -2438,7 +2439,8 @@
         "note": "Nachricht",
         "noNote": "Keine Nachricht",
         "change": "Ändern",
-        "waiting": "Noch ist nichts gebucht. {chapter} sieht sich Ihre Anfrage an und bestätigt die genaue Uhrzeit – Sie bekommen in jedem Fall Bescheid."
+        "waiting": "Noch ist nichts gebucht. {chapter} sieht sich Ihre Anfrage an und bestätigt die genaue Uhrzeit – Sie bekommen in jedem Fall Bescheid.",
+        "waitingAuto": "Ist zu der Zeit eine Rikscha frei, bucht {chapter} die Fahrt sofort und Sie bekommen die Bestätigung. Sonst sieht sich {chapter} Ihre Anfrage an und meldet sich bei Ihnen."
       },
       "list": {
         "title": "Ihre Anfragen",

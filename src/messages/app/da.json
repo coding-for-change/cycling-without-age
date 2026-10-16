@@ -2381,7 +2381,8 @@
         },
         "review": {
           "title": "Klar til at sende?",
-          "body": "Tjek oplysningerne. Intet er booket, før {chapter} bekræfter."
+          "body": "Tjek oplysningerne. Intet er booket, før {chapter} bekræfter.",
+          "bodyAuto": "Tjek oplysningerne. Er der en ledig rickshaw på det tidspunkt, bliver turen booket med det samme."
         }
       },
       "who": {
@@ -2438,7 +2439,8 @@
         "note": "Besked",
         "noNote": "Ingen besked",
         "change": "Skift",
-        "waiting": "Intet er booket endnu. {chapter} kigger på dit ønske og bekræfter det præcise tidspunkt – du hører fra dem uanset hvad."
+        "waiting": "Intet er booket endnu. {chapter} kigger på dit ønske og bekræfter det præcise tidspunkt – du hører fra dem uanset hvad.",
+        "waitingAuto": "Er der en ledig rickshaw på det tidspunkt, booker {chapter} turen med det samme, og du får en bekræftelse. Ellers kigger {chapter} på dit ønske og vender tilbage."
       },
       "list": {
         "title": "Dine ønsker",

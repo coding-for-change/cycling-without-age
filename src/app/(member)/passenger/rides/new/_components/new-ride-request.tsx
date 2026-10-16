@@ -169,6 +169,7 @@ export async function NewRideRequest({
 
   const data: RequestFormData = {
     chapterName: chapter.name,
+    automatic: settings.schedulingMethod === "auto",
     weekStartsOn: firstDayOfWeek(notation),
     maxRiders: maxRidersFor(seats),
     riders: bookable.map((rider) => ({

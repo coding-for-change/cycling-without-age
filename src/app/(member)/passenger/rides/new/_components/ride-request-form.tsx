@@ -67,6 +67,7 @@ type Place = {
 
 export type RequestFormData = {
   chapterName: string;
+  automatic: boolean;
   weekStartsOn: number;
   maxRiders: number;
   riders: {
@@ -356,7 +357,9 @@ export function RideRequestForm({
         </h1>
         <p className="text-ink-soft">
           {formatMessage(
-            copy.body,
+            step === "review" && data.automatic
+              ? strings.steps.review.bodyAuto
+              : copy.body,
             {
               count: data.maxRiders,
               chapter: data.chapterName,
@@ -479,6 +482,7 @@ export function RideRequestForm({
           ]}
           onEdit={goTo}
           strings={strings}
+          automatic={data.automatic}
           chapter={data.chapterName}
           language={language}
         />
@@ -1180,12 +1184,14 @@ function ReviewStep({
   rows,
   onEdit,
   strings,
+  automatic,
   chapter,
   language,
 }: {
   rows: { label: string; value: string; step: Step }[];
   onEdit: (step: Step) => void;
   strings: Strings;
+  automatic: boolean;
   chapter: string;
   language: Locale;
 }) {
@@ -1202,7 +1208,11 @@ function ReviewStep({
         ))}
       </div>
       <p className="rounded-2xl bg-mint-tint p-4 text-sm text-pretty">
-        {formatMessage(strings.review.waiting, { chapter }, language)}
+        {formatMessage(
+          automatic ? strings.review.waitingAuto : strings.review.waiting,
+          { chapter },
+          language,
+        )}
       </p>
     </div>
   );
