@@ -159,7 +159,9 @@ The worker calls exactly one facade directly: the nightly
 `prune-devices` scheduler calls `notifications.pruneStaleDevices()`. Token hygiene
 coordinates one feature and carries no session, so per AGENTS.md it is not a use case —
 `worker/index` dispatches it next to `sweep` through its `MAINTENANCE` map. See
-[EVENTS.md](../EVENTS.md) → *Maintenance jobs*.
+[EVENTS.md](../EVENTS.md) → *Maintenance jobs*. Event listeners may call one facade directly
+for the same reason: `linkRideRequest` (on `ride.scheduled`) calls
+`rideRequests.markScheduled` to link a request whose scheduling stopped halfway.
 
 The member shell (`src/app/(member)`) and the account surface
 (`src/components/account`). Neither is a feature slice: the shell is routing plus chrome and
