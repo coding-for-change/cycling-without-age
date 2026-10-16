@@ -134,9 +134,9 @@ export async function markScheduled(
   const request = await findRideRequestScope(id);
   if (!request) throw new DomainError("unknownRequest");
   if (request.rideId === ride.id) return;
-  return transaction(async (tx, emit) => {
+  const linked = await transaction(async (tx, emit) => {
     const { count } = await linkRequestToRide(id, ride.id, tx);
-    if (count !== 1) throw new DomainError("requestNotPending");
+    if (count !== 1) return false;
     await emit({
       type: "rideRequest.scheduled",
       requestId: id,
@@ -146,7 +146,10 @@ export async function markScheduled(
       rideId: ride.id,
       returnLegId: ride.returnLegId,
     });
+    return true;
   });
+  if (linked || (await findRideRequestScope(id))?.rideId === ride.id) return;
+  throw new DomainError("requestNotPending");
 }
 
 export async function decline(

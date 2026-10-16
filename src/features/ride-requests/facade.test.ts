@@ -463,6 +463,22 @@ describe("markScheduled", () => {
     expect(emitted).toEqual([]);
   });
 
+  it("lets the second of two links racing for the same ride pass quietly", async () => {
+    link.mockResolvedValue({ count: 0 });
+    scope
+      .mockResolvedValueOnce({ ...pending, status: "scheduled", rideId: null })
+      .mockResolvedValueOnce({
+        ...pending,
+        status: "scheduled",
+        rideId: "ride-1",
+      });
+
+    await expect(
+      rideRequests.markScheduled("request-1", ride, null),
+    ).resolves.toBeUndefined();
+    expect(emitted).toEqual([]);
+  });
+
   it("reads a request that is gone as a missing one", async () => {
     scope.mockResolvedValue(null);
 
