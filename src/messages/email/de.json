@@ -405,7 +405,7 @@
     "preview": "{ride} · {time}",
     "heading": "Ihre Fahrt ist gebucht",
     "intro": "{chapter} hat die Fahrt für {riders} gebucht: {date}, {time}, ab {place}. Sobald ein Pilot eingeteilt ist, sehen Sie in der App, wer fährt.",
-    "introBoth": "{chapter} hat die Hin- und Rückfahrt für {riders} am {date} gebucht: Start {time} bei {place}, zurück {back}. Sobald ein Pilot eingeteilt ist, sehen Sie in der App, wer fährt.",
+    "introBoth": "{chapter} hat die Hin- und Rückfahrt für {riders} am {date} gebucht: hin {time} ab {place}, zurück {back}. Sobald ein Pilot eingeteilt ist, sehen Sie in der App, wer fährt.",
     "calendarHeading": "In Ihrem Kalender",
     "calendarText": "Öffnen Sie die angehängte Kalenderdatei, um die Fahrt in Ihren Kalender zu übernehmen.",
     "calendarSummary": "{ride} mit {chapter}",

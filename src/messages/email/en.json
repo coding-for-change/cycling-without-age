@@ -405,7 +405,7 @@
     "preview": "{ride} · {time}",
     "heading": "Your ride is booked",
     "intro": "{chapter} has booked the ride for {riders}: {date}, {time}, from {place}. The app shows who pilots it as soon as a pilot is assigned.",
-    "introBoth": "{chapter} has booked the ride for {riders} there and back on {date}: leaving {time} from {place}, and back at {back}. The app shows who pilots it as soon as a pilot is assigned.",
+    "introBoth": "{chapter} has booked the ride there and back for {riders} on {date}: the way there {time} from {place}, the way back {back}. The app shows who pilots it as soon as a pilot is assigned.",
     "calendarHeading": "In your calendar",
     "calendarText": "Open the attached calendar file to put the ride in your calendar.",
     "calendarSummary": "{ride} with {chapter}",

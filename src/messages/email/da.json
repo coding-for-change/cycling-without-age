@@ -405,7 +405,7 @@
     "preview": "{ride} · {time}",
     "heading": "Din tur er booket",
     "intro": "{chapter} har booket turen for {riders}: {date}, {time}, fra {place}. Appen viser, hvem der kører, så snart en pilot er sat på.",
-    "introBoth": "{chapter} har booket turen ud og hjem for {riders} {date}: afgang {time} fra {place}, hjem igen {back}. Appen viser, hvem der kører, så snart en pilot er sat på.",
+    "introBoth": "{chapter} har booket turen ud og hjem for {riders} {date}: ud {time} fra {place}, hjem {back}. Appen viser, hvem der kører, så snart en pilot er sat på.",
     "calendarHeading": "I din kalender",
     "calendarText": "Åbn den vedhæftede kalenderfil for at lægge turen i din kalender.",
     "calendarSummary": "{ride} med {chapter}",
