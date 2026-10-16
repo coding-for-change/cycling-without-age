@@ -609,10 +609,12 @@ const DEFAULT_SEATS = 2;
 const seatsOf = (trishaw: { type: { seats: number } | null }) =>
   trishaw.type?.seats ?? DEFAULT_SEATS;
 
-/** The most riders one of the chapter's own trishaws takes. */
+/** The most riders one of the chapter's trishaws still in service takes. */
 export async function maxSeats(chapterId: string) {
-  const trishaws = await listTrishaws([chapterId]);
-  return trishaws.length ? Math.max(...trishaws.map(seatsOf)) : DEFAULT_SEATS;
+  const inService = (await listTrishaws([chapterId])).filter(
+    (trishaw) => trishaw.status !== "retired",
+  );
+  return inService.length ? Math.max(...inService.map(seatsOf)) : DEFAULT_SEATS;
 }
 
 /**

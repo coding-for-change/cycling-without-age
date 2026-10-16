@@ -706,6 +706,14 @@ describe("picking trishaws for riders", () => {
     expect(await fleet.maxSeats(MUENCHEN)).toBe(2);
   });
 
+  it("leaves a retired trishaw's seats out", async () => {
+    mocked(trishaws.findTrishawsOfChapters).mockResolvedValue([
+      trishaw({ type: typed(1) }),
+      trishaw({ id: "trishaw-2", status: "retired", type: typed(4) }),
+    ] as never);
+    expect(await fleet.maxSeats(MUENCHEN)).toBe(1);
+  });
+
   it("takes the largest model of the chapter", async () => {
     mocked(trishaws.findTrishawsOfChapters).mockResolvedValue([
       trishaw({ type: typed(1) }),
