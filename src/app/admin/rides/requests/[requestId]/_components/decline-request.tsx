@@ -49,12 +49,10 @@ export function DeclineRequest({
   const [note, setNote] = useState("");
   const [pending, startTransition] = useTransition();
 
-  const close = () => {
-    setNote("");
+  const close = () =>
     go((params) => {
       params.delete("decline");
     });
-  };
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -80,6 +78,7 @@ export function DeclineRequest({
           href={withParam("decline", "1")}
           onClick={(event) => {
             event.preventDefault();
+            setNote("");
             go((params) => params.set("decline", "1"));
           }}
         >
