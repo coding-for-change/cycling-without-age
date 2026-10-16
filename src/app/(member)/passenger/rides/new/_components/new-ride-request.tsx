@@ -91,7 +91,7 @@ export async function NewRideRequest({
               <Button
                 asChild
                 variant="outline"
-                className="rounded-full"
+                className="min-h-11 rounded-full px-6"
               >
                 <Link href="/passenger">{strings.notMember.cta}</Link>
               </Button>
@@ -116,7 +116,7 @@ export async function NewRideRequest({
               <Button
                 asChild
                 variant="brand"
-                className="rounded-full"
+                className="min-h-11 rounded-full px-6"
               >
                 <Link href={PEOPLE}>{strings.empty.cta}</Link>
               </Button>

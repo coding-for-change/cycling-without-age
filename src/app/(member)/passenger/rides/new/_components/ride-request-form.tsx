@@ -1025,7 +1025,7 @@ function WhenStep({
         locale={pickerLocale(language, notation)}
         weekStartsOn={1}
         showOutsideDays={false}
-        className="self-start rounded-2xl border border-line p-3 [--cell-size:--spacing(10)] [&_button[data-selected-single=true]]:bg-mint-deep [&_button[data-selected-single=true]]:text-white"
+        className="self-start rounded-2xl border border-line p-3 [--cell-size:--spacing(11)] [&_button[data-selected-single=true]]:bg-mint-deep [&_button[data-selected-single=true]]:text-white"
       />
 
       {day ? (
@@ -1122,7 +1122,7 @@ function ReviewStep({
               type="button"
               variant="ghost"
               size="sm"
-              className="shrink-0 text-ink-soft"
+              className="min-h-11 shrink-0 text-ink-soft"
               onClick={() => onEdit(row.step)}
             >
               {strings.review.change}
