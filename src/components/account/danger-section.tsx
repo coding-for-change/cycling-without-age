@@ -69,6 +69,7 @@ export function DangerSection({
                             riders.map((rider) => rider.name),
                             wordsLocale(data.language),
                           ),
+                          count: riders.length,
                         },
                         data.language,
                       ),

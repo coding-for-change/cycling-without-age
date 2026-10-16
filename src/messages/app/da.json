@@ -59,7 +59,7 @@
         },
         "label": "Skriv {word} for at bekræfte",
         "open": "Slet konto",
-        "riders": "Dem, du tager dig af: {names}, med alle deres bookinger",
+        "riders": "{count, plural, one {Den, du tager dig af} other {Dem, du tager dig af}}: {names}, med alle {count, plural, one {sine} other {deres}} bookinger",
         "submit": "Slet konto",
         "title": "Slet din konto for altid?",
         "word": "DELETE",

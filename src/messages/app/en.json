@@ -59,7 +59,7 @@
         },
         "label": "Type {word} to confirm",
         "open": "Delete account",
-        "riders": "The people you look after: {names}, with all their bookings",
+        "riders": "{count, plural, one {The person you look after} other {The people you look after}}: {names}, with all their bookings",
         "submit": "Delete account",
         "title": "Delete your account for good?",
         "word": "DELETE",

@@ -59,7 +59,7 @@
         },
         "label": "Tipp {word} zur Bestätigung",
         "open": "Konto löschen",
-        "riders": "Von dir betreut: {names}, samt allen Buchungen",
+        "riders": "{count, plural, one {Die Person, die du betreust} other {Die Personen, die du betreust}}: {names}, samt allen Buchungen",
         "submit": "Konto löschen",
         "title": "Konto endgültig löschen?",
         "word": "DELETE",
