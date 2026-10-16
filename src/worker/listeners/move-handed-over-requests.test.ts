@@ -1,13 +1,13 @@
-import { rideRequests } from "@/features/ride-requests";
+import { moveHandedOverRequests } from "@/use-cases/hand-over-rider";
 import type { DomainEvent } from "@/lib/events/catalog";
 import { handlers } from "../handlers";
 import { moveHandedOverRequestsListener } from "./move-handed-over-requests";
 
-jest.mock("@/features/ride-requests", () => ({
-  rideRequests: { handOverOpenRequests: jest.fn() },
+jest.mock("@/use-cases/hand-over-rider", () => ({
+  moveHandedOverRequests: jest.fn(),
 }));
 
-const handOverOpenRequests = rideRequests.handOverOpenRequests as jest.Mock;
+const move = moveHandedOverRequests as jest.Mock;
 
 const handedOver: DomainEvent = {
   type: "rider.handedOver",
@@ -26,15 +26,11 @@ beforeEach(() => jest.clearAllMocks());
 
 it("moves the rider's open requests from the old manager to the new one", async () => {
   await run(handedOver);
-  expect(handOverOpenRequests).toHaveBeenCalledWith(
-    "managed-greta",
-    "user-old",
-    "user-new",
-  );
+  expect(move).toHaveBeenCalledWith(handedOver);
 });
 
 it("lets a failure through, so the job is retried", async () => {
-  handOverOpenRequests.mockRejectedValueOnce(new Error("connection lost"));
+  move.mockRejectedValueOnce(new Error("connection lost"));
   await expect(run(handedOver)).rejects.toThrow("connection lost");
 });
 
