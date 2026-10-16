@@ -1267,14 +1267,14 @@
       },
       "detail": {
         "back": "Turønsker",
-        "asked": "Ønsket {when} af {name}",
-        "someone": "et tidligere medlem",
+        "asked": "{name} ønskede {when}",
+        "someone": "Et tidligere medlem",
         "request": "Ønske",
         "when": "Ønsket til",
         "from": "Fra",
         "to": "Til",
         "model": "Tur",
-        "note": "Besked fra {name}",
+        "note": "{name} skriver",
         "riders": "Passagerer",
         "requester": "Ønsket af",
         "phone": "Telefon",
@@ -1317,7 +1317,9 @@
         "note": "Besked til {name}",
         "placeholder": "Ingen pilot er ledig den formiddag – passer torsdag?",
         "submit": "Afvis ønsket",
-        "done": "Ønsket er afvist"
+        "done": "Ønsket er afvist",
+        "bodyNobody": "Ingen får en e-mail: Den, der ønskede turen, er ikke længere med. En note bliver i ønskets historik.",
+        "noteNobody": "Note til historikken"
       },
       "schedule": {
         "fromRequest": "{name}s ønske",

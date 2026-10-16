@@ -1267,14 +1267,14 @@
       },
       "detail": {
         "back": "Fahrtanfragen",
-        "asked": "Angefragt {when} von {name}",
-        "someone": "einem ehemaligen Mitglied",
+        "asked": "{name} hat {when} angefragt",
+        "someone": "Ein ehemaliges Mitglied",
         "request": "Anfrage",
         "when": "Angefragt für",
         "from": "Von",
         "to": "Nach",
         "model": "Fahrt",
-        "note": "Nachricht von {name}",
+        "note": "{name} schreibt",
         "riders": "Fahrgäste",
         "requester": "Angefragt von",
         "phone": "Telefon",
@@ -1317,7 +1317,9 @@
         "note": "Nachricht an {name}",
         "placeholder": "An dem Vormittag ist kein Pilot frei – ginge Donnerstag?",
         "submit": "Anfrage ablehnen",
-        "done": "Anfrage abgelehnt"
+        "done": "Anfrage abgelehnt",
+        "bodyNobody": "Niemand bekommt eine E-Mail: Die anfragende Person ist nicht mehr dabei. Eine Notiz bleibt im Verlauf der Anfrage.",
+        "noteNobody": "Notiz für den Verlauf"
       },
       "schedule": {
         "fromRequest": "Anfrage von {name}",

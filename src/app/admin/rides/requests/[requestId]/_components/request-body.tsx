@@ -232,7 +232,7 @@ export async function RequestBody({
                   </Button>
                   <DeclineRequest
                     requestId={request.id}
-                    name={requesterName}
+                    name={requester?.name ?? null}
                     language={language}
                     labels={{ ...strings.decline, open: detail.decline }}
                     errors={{ ...dict.common.errors, ...strings.errors }}

@@ -1267,14 +1267,14 @@
       },
       "detail": {
         "back": "Ride requests",
-        "asked": "Asked {when} by {name}",
-        "someone": "a former member",
+        "asked": "{name} asked {when}",
+        "someone": "A former member",
         "request": "Request",
         "when": "Requested for",
         "from": "From",
         "to": "To",
         "model": "Ride",
-        "note": "Note from {name}",
+        "note": "{name} wrote",
         "riders": "Riders",
         "requester": "Asked by",
         "phone": "Phone",
@@ -1317,7 +1317,9 @@
         "note": "Note for {name}",
         "placeholder": "No pilot is free that morning — would Thursday work?",
         "submit": "Decline request",
-        "done": "Request declined"
+        "done": "Request declined",
+        "bodyNobody": "Nobody gets an email: the person who asked has left. A note stays in the request's history.",
+        "noteNobody": "Note for the history"
       },
       "schedule": {
         "fromRequest": "{name}'s request",

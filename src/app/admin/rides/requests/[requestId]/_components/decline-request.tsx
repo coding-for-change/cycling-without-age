@@ -17,7 +17,9 @@ export type DeclineLabels = {
   open: string;
   title: string;
   body: string;
+  bodyNobody: string;
   note: string;
+  noteNobody: string;
   placeholder: string;
   submit: string;
   done: string;
@@ -35,7 +37,7 @@ export function DeclineRequest({
   errors,
 }: {
   requestId: string;
-  name: string;
+  name: string | null;
   language: Locale;
   labels: DeclineLabels;
   errors: NotifyLabels["errors"];
@@ -91,7 +93,11 @@ export function DeclineRequest({
         }}
         dismissible={!pending}
         title={labels.title}
-        description={formatMessage(labels.body, { name }, language)}
+        description={
+          name === null
+            ? labels.bodyNobody
+            : formatMessage(labels.body, { name }, language)
+        }
         footer={
           <Button
             type="submit"
@@ -113,7 +119,9 @@ export function DeclineRequest({
         >
           <Field>
             <FieldLabel htmlFor={noteId}>
-              {formatMessage(labels.note, { name }, language)}
+              {name === null
+                ? labels.noteNobody
+                : formatMessage(labels.note, { name }, language)}
             </FieldLabel>
             <Textarea
               id={noteId}
