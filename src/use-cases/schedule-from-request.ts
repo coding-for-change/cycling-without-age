@@ -78,20 +78,13 @@ export async function scheduleAutomatically(requestId: string) {
   const riders = ridersOf(request);
   if (!riders.length) return null;
 
-  const [settings, trishaws] = await Promise.all([
+  const [settings, candidates] = await Promise.all([
     chapters.getSettings(request.chapterId),
-    fleet.listTrishaws([request.chapterId]),
+    fleet.suitableTrishawIds(request.chapterId, {
+      count: riders.length,
+      wheelchair: riders.some((rider) => rider.needsWheelchairBike),
+    }),
   ]);
-  const wheelchair = riders.some((rider) => rider.needsWheelchairBike);
-  const candidates = trishaws
-    .filter(
-      (trishaw) =>
-        trishaw.status === "active" &&
-        !fleet.isGrounded(trishaw) &&
-        (trishaw.type?.seats ?? 2) >= riders.length &&
-        (!wheelchair || trishaw.type?.wheelchairAccessible === true),
-    )
-    .map((trishaw) => trishaw.id);
   if (!candidates.length) return null;
 
   const requested =

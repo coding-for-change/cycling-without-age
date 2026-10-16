@@ -18,8 +18,7 @@ jest.mock("@/features/chapters", () => ({
 jest.mock("@/features/fleet", () => ({
   fleet: {
     assertUsable: jest.fn(),
-    listTrishaws: jest.fn(),
-    isGrounded: jest.fn(),
+    suitableTrishawIds: jest.fn(),
   },
 }));
 jest.mock("@/features/membership", () => ({

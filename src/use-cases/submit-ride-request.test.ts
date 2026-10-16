@@ -17,7 +17,7 @@ jest.mock("@/features/chapters", () => ({
   },
 }));
 jest.mock("@/features/fleet", () => ({
-  fleet: { listTrishaws: jest.fn(), isGrounded: jest.fn(() => false) },
+  fleet: { maxSeats: jest.fn(), suitableTrishawIds: jest.fn() },
 }));
 jest.mock("@/features/membership", () => ({
   membership: { listMembershipsOfUser: jest.fn() },
@@ -139,13 +139,8 @@ beforeEach(() => {
   });
   (chapters.getSettings as jest.Mock).mockResolvedValue(settings());
   (chapters.getOperatingHours as jest.Mock).mockResolvedValue(MORNINGS);
-  (fleet.listTrishaws as jest.Mock).mockResolvedValue([
-    {
-      id: "trishaw-1",
-      status: "active",
-      type: { seats: 2, wheelchairAccessible: false },
-    },
-  ]);
+  (fleet.maxSeats as jest.Mock).mockResolvedValue(2);
+  (fleet.suitableTrishawIds as jest.Mock).mockResolvedValue(["trishaw-1"]);
   submit.mockResolvedValue({ id: "request-1", chapterId: MUNICH });
   (rideRequests.requirePending as jest.Mock).mockResolvedValue(pendingRequest);
   (rides.bookedTrishawIds as jest.Mock).mockResolvedValue(new Set());
@@ -231,9 +226,7 @@ describe("submitRideRequest", () => {
   });
 
   it("refuses more riders than the chapter's largest trishaw seats", async () => {
-    (fleet.listTrishaws as jest.Mock).mockResolvedValue([
-      { id: "solo", status: "active", type: { seats: 1 } },
-    ]);
+    (fleet.maxSeats as jest.Mock).mockResolvedValue(1);
     expect(
       await codeOf(
         submitRideRequest(
@@ -246,12 +239,10 @@ describe("submitRideRequest", () => {
   });
 
   it("caps riders at the seats of the largest trishaw and the model", () => {
-    expect(maxRidersFor([])).toBe(2);
-    expect(maxRidersFor([{ type: null }])).toBe(2);
-    expect(maxRidersFor([{ type: { seats: 1 } }])).toBe(1);
-    expect(maxRidersFor([{ type: { seats: 1 } }, { type: { seats: 4 } }])).toBe(
-      2,
-    );
+    expect(maxRidersFor(1)).toBe(1);
+    expect(maxRidersFor(2)).toBe(2);
+    expect(maxRidersFor(4)).toBe(2);
+    expect(maxRidersFor(0)).toBe(1);
   });
 
   it("refuses a rider already asked for in an overlapping window", async () => {

@@ -17,21 +17,12 @@ import { serializeError } from "@/lib/observability/errors";
 import { logger } from "@/lib/observability/logger";
 import { scheduleAutomatically } from "./schedule-from-request";
 
-const DEFAULT_SEATS = 2;
-
 /**
- * How many riders one request may name: the chapter's largest trishaw, and
- * never more than one ride of the model takes.
+ * How many riders one request may name: the seats of the chapter's largest
+ * trishaw, and never more than one ride of the model takes.
  */
-export function maxRidersFor(
-  trishaws: { type: { seats: number } | null }[],
-): number {
-  const typed = trishaws.flatMap((trishaw) =>
-    trishaw.type ? [trishaw.type.seats] : [],
-  );
-  const seats = typed.length ? Math.max(...typed) : DEFAULT_SEATS;
-  return Math.max(1, Math.min(seats, REQUEST_LIMITS.riders));
-}
+export const maxRidersFor = (seats: number) =>
+  Math.max(1, Math.min(seats, REQUEST_LIMITS.riders));
 
 export type BookableRider = {
   id: string;
@@ -131,14 +122,14 @@ export async function submitRideRequest(
   if (picked.some((rider) => !rider.bookable))
     throw new DomainError("notChapterMember");
 
-  const [chapter, settings, hours, trishaws] = await Promise.all([
+  const [chapter, settings, hours, seats] = await Promise.all([
     chapters.getChapter(chapterId),
     chapters.getSettings(chapterId),
     chapters.getOperatingHours(chapterId, now),
-    fleet.listTrishaws([chapterId]),
+    fleet.maxSeats(chapterId),
   ]);
   if (!chapter) throw new DomainError("unknownChapter");
-  if (picked.length > maxRidersFor(trishaws))
+  if (picked.length > maxRidersFor(seats))
     throw new DomainError("tooManyRiders");
 
   const { date, startMinute, endMinute } = data.window;

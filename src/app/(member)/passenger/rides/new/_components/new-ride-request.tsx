@@ -130,13 +130,13 @@ export async function NewRideRequest({
 
   const chapterId = bookable[0].chapterId;
   const now = new Date();
-  const [chapter, settings, hours, locations, trishaws, destinations] =
+  const [chapter, settings, hours, locations, seats, destinations] =
     await Promise.all([
       chapters.getChapter(chapterId),
       chapters.getSettings(chapterId),
       chapters.getOperatingHours(chapterId, now),
       rideLocations.listRideLocations([chapterId]),
-      fleet.listTrishaws([chapterId]),
+      fleet.maxSeats(chapterId),
       rideRequests.previousDestinations(session.user.id),
     ]);
   if (!chapter) return null;
@@ -176,7 +176,7 @@ export async function NewRideRequest({
 
   const data: RequestFormData = {
     chapterName: chapter.name,
-    maxRiders: maxRidersFor(trishaws),
+    maxRiders: maxRidersFor(seats),
     riders: bookable.map((rider) => ({
       id: rider.id,
       firstName: rider.firstName,

@@ -604,6 +604,38 @@ export const chapterIdsReaching = (trishaw: TrishawRow) =>
 export const isGrounded = (trishaw: TrishawRow) =>
   trishaw.damages.some((damage) => damage.grounding);
 
+const DEFAULT_SEATS = 2;
+
+const seatsOf = (trishaw: { type: { seats: number } | null }) =>
+  trishaw.type?.seats ?? DEFAULT_SEATS;
+
+/** The most riders one of the chapter's own trishaws takes. */
+export async function maxSeats(chapterId: string) {
+  const trishaws = await listTrishaws([chapterId]);
+  return trishaws.length ? Math.max(...trishaws.map(seatsOf)) : DEFAULT_SEATS;
+}
+
+/**
+ * The chapter's trishaws that can take these riders today: on the road, not
+ * grounded by damage, with a seat for each, and wheelchair-ready when one of
+ * them rides in a wheelchair.
+ */
+export async function suitableTrishawIds(
+  chapterId: string,
+  riders: { count: number; wheelchair: boolean },
+) {
+  const trishaws = await listTrishaws([chapterId]);
+  return trishaws
+    .filter(
+      (trishaw) =>
+        trishaw.status === "active" &&
+        !isGrounded(trishaw) &&
+        seatsOf(trishaw) >= riders.count &&
+        (!riders.wheelchair || trishaw.type?.wheelchairAccessible === true),
+    )
+    .map((trishaw) => trishaw.id);
+}
+
 const countryOfLocation = (location: {
   kind: string;
   countryId: string | null;
