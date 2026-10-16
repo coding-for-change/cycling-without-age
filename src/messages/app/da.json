@@ -1081,7 +1081,7 @@
         "days": "{count, plural, one {1 dag} other {# dage}}",
         "method": {
           "label": "Planlægning",
-          "hint": "Hvem der gør et turønske til en tur. Med “Automatisk” bliver et ønske booket, så snart en rickshaw er ledig; alle andre venter stadig på en administrator.",
+          "hint": "Hvem der gør et turønske til en tur. Med “Automatisk” bliver et ønske booket, så snart det kommer ind, hvis der er en ledig rickshaw på det tidspunkt; alle andre venter på en administrator.",
           "options": {
             "scheduler": "En administrator beslutter",
             "auto": "Automatisk, når en rickshaw er ledig"
