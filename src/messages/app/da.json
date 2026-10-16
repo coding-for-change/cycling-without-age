@@ -654,7 +654,7 @@
         "done": "{name} tager sig nu af {rider}",
         "invited": "{name} er inviteret og tager sig nu af {rider}",
         "errors": {
-          "notChapterMember": "Personen er ikke medlem af passagerens afdeling. Personen skal være medlem først.",
+          "notChapterMember": "Personen er ikke medlem af passagerens afdeling. Vedkommende skal melde sig ind først.",
           "sameManager": "Personen tager sig allerede af passageren.",
           "passengerChapterMismatch": "Personen tager sig allerede af passagerer i en anden afdeling.",
           "tooManyRiders": "Personen tager sig allerede af så mange passagerer, som en konto kan.",
@@ -672,7 +672,7 @@
         "errors": {
           "generic": "Det virkede ikke. Prøv igen.",
           "self": "Du kan ikke slette din egen konto her.",
-          "managesRiders": "Kontoen tager sig nu af passagerer, der ikke var listet. Genindlæs og tjek igen."
+          "managesRiders": "Kontoen tager sig nu af passagerer, der ikke stod på listen. Genindlæs og tjek igen."
         },
         "label": "Skriv {word} for at bekræfte",
         "open": "Slet bruger",
@@ -1305,7 +1305,7 @@
       },
       "decline": {
         "title": "Afvis ønsket",
-        "body": "{name} får en e-mail. En linje om hvorfor hjælper dem med at ønske igen.",
+        "body": "{name} får en e-mail. Et par ord om hvorfor gør det lettere at ønske igen.",
         "note": "Besked til {name}",
         "placeholder": "Ingen pilot er ledig den formiddag – passer torsdag?",
         "submit": "Afvis ønsket",
@@ -2493,7 +2493,7 @@
         "unknownChapter": "Den afdeling er ikke tilgængelig.",
         "unknownPassenger": "En af passagererne er ikke længere på din liste. Genindlæs og prøv igen.",
         "unknownRequest": "Dette ønske findes ikke længere.",
-        "requestNotPending": "Afdelingen har allerede besluttet sig om dette ønske.",
+        "requestNotPending": "Afdelingen har allerede taget stilling til dette ønske.",
         "rateLimited": "Det var mange ønsker i træk. Vent lidt, og prøv igen.",
         "alreadyRequested": "Der venter allerede et ønske for denne passager på det tidspunkt. Vent på afdelingens svar, eller træk det ønske tilbage først.",
         "riderBooked": "Passageren er allerede booket på en tur på det tidspunkt.",
