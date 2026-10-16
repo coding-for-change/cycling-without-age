@@ -702,7 +702,7 @@
       "caretaker": {
         "title": "Kümmert sich um",
         "relationship": "Beziehung: {relationship}",
-        "handOverHint": "Wird dieses Konto gelöscht, werden diese Fahrgäste mit gelöscht. Übergib sie vorher auf ihrer eigenen Seite an jemand anderen, damit sie weiter mitfahren können."
+        "handOverHint": "Wird dieses Konto gelöscht, werden die Fahrgäste ohne eigenes Konto mit gelöscht. Übergib sie vorher auf ihrer eigenen Seite an jemand anderen, damit sie weiter mitfahren können."
       }
     },
     "perspectives": {

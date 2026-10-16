@@ -702,7 +702,7 @@
       "caretaker": {
         "title": "Står for",
         "relationship": "Relation: {relationship}",
-        "handOverHint": "Slettes kontoen, bliver disse passagerer slettet med. Overdrag dem til en anden fra deres egen side først, så de kan blive ved med at køre."
+        "handOverHint": "Slettes kontoen, bliver passagererne uden egen konto slettet med. Overdrag dem til en anden fra deres egen side først, så de kan blive ved med at køre."
       }
     },
     "perspectives": {

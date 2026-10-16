@@ -702,7 +702,7 @@
       "caretaker": {
         "title": "Looks after",
         "relationship": "Relationship: {relationship}",
-        "handOverHint": "Deleting this account deletes these riders with it. Hand them over to someone else from their own page first to keep them riding."
+        "handOverHint": "Deleting this account deletes the riders here who have no account of their own. Hand them over to someone else from their own page first to keep them riding."
       }
     },
     "perspectives": {
