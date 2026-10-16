@@ -1904,7 +1904,64 @@
   },
   "passenger": {
     "browsing": "Du kigger på {chapter}",
-    "noChapter": "Du har ikke valgt en lokalafdeling endnu"
+    "noChapter": "Du har ikke valgt en lokalafdeling endnu",
+    "ride": {
+      "about": "Om turen",
+      "back": "Mine ture",
+      "booked": "Booket til",
+      "call": "Ring til {name}",
+      "cancelled": "Turen er aflyst",
+      "cancelledBecause": "Årsag: {reason}",
+      "chapter": "Lokalafdeling",
+      "completed": "Turen er slut. Tak fordi du kørte med!",
+      "destination": "Destination",
+      "email": "Skriv til {name}",
+      "noPilot": "Vi leder stadig efter en pilot. Så snart nogen melder sig, kan du se her, hvem der kører dig.",
+      "noPlace": "Stedet er ikke fastlagt endnu.",
+      "openInMaps": "Åbn i Kort",
+      "openLeg": "Åbn",
+      "pickup": "Afhentning",
+      "pilots": "{count, plural, one {Din pilot} other {Dine piloter}}",
+      "running": "Din tur er i gang lige nu.",
+      "story": {
+        "cancelled": "{who, select, you {Du} other {{chapter}}} aflyste turen",
+        "change": "{from} → {to}",
+        "edited": "{who, select, you {Du} other {{chapter}}} ændrede {fields}",
+        "fields": {
+          "destination": "destinationen",
+          "location": "afhentningsstedet",
+          "model": "turtypen",
+          "title": "titlen"
+        },
+        "nothing": "intet",
+        "pilotAssigned": "{name} kører turen",
+        "pilotUnassigned": "{name} kan alligevel ikke køre",
+        "rescheduled": "{who, select, you {Du} other {{chapter}}} flyttede turen",
+        "rescheduledWithLeg": "{who, select, you {Du} other {{chapter}}} flyttede turen sammen med den anden strækning",
+        "riderBooked": "{who, select, you {Du} other {{chapter}}} bookede {name}",
+        "riderRemoved": "{who, select, you {Du} other {{chapter}}} tog {name} af turen",
+        "scheduled": "{who, select, you {Du} other {{chapter}}} satte turen i kalenderen",
+        "scheduledReturn": "{who, select, you {Du} other {{chapter}}} planlagde hjemturen",
+        "someone": "en, der ikke er med længere"
+      },
+      "storyEmpty": "Der er ikke sket noget med turen endnu.",
+      "storyTitle": "Indtil nu",
+      "trishaws": "{count, plural, one {Rickshaw} other {Rickshawer}}",
+      "when": "Hvornår",
+      "where": "Hvor"
+    },
+    "rides": {
+      "failed": "Det kunne ikke hentes.",
+      "forRiders": "For {names}",
+      "loading": "Henter …",
+      "now": "I gang nu",
+      "past": "Tidligere ture",
+      "pilot": "Med {name}",
+      "pilotNeeded": "Vi mangler stadig en pilot",
+      "retry": "Prøv igen",
+      "showEarlier": "Vis tidligere ture",
+      "upcoming": "Kommende"
+    }
   },
   "passkey": {
     "admin": {
@@ -2025,6 +2082,7 @@
       "doneBoth": "Begge ture er aflyst.",
       "keep": "Behold tur",
       "note": "Note",
+      "noteHint": "Passagerer og dem, der booker for dem, kan se denne note.",
       "notePlaceholder": "Hvad skete der – f.eks. kraftig regn i vejrudsigten",
       "reason": "Hvorfor bliver den aflyst?",
       "returnLeg": "Aflys også hjemturen",

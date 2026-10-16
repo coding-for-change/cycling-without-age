@@ -1904,7 +1904,64 @@
   },
   "passenger": {
     "browsing": "Browsing {chapter}",
-    "noChapter": "No chapter chosen yet"
+    "noChapter": "No chapter chosen yet",
+    "ride": {
+      "about": "About this ride",
+      "back": "My rides",
+      "booked": "Booked for",
+      "call": "Call {name}",
+      "cancelled": "This ride is off",
+      "cancelledBecause": "Reason: {reason}",
+      "chapter": "Chapter",
+      "completed": "This ride is done. Thanks for riding with us!",
+      "destination": "Destination",
+      "email": "Email {name}",
+      "noPilot": "We're still finding a pilot. As soon as someone signs up, you'll see here who is riding with you.",
+      "noPlace": "The place is still being decided.",
+      "openInMaps": "Open in Maps",
+      "openLeg": "Open",
+      "pickup": "Pick-up",
+      "pilots": "{count, plural, one {Your pilot} other {Your pilots}}",
+      "running": "Your ride is on right now.",
+      "story": {
+        "cancelled": "{who, select, you {You} other {{chapter}}} cancelled the ride",
+        "change": "{from} → {to}",
+        "edited": "{who, select, you {You} other {{chapter}}} changed {fields}",
+        "fields": {
+          "destination": "the destination",
+          "location": "the pick-up",
+          "model": "the kind of ride",
+          "title": "the title"
+        },
+        "nothing": "nothing",
+        "pilotAssigned": "{name} is riding this one",
+        "pilotUnassigned": "{name} can't make it after all",
+        "rescheduled": "{who, select, you {You} other {{chapter}}} moved the ride",
+        "rescheduledWithLeg": "{who, select, you {You} other {{chapter}}} moved the ride together with its other leg",
+        "riderBooked": "{who, select, you {You} other {{chapter}}} booked {name}",
+        "riderRemoved": "{who, select, you {You} other {{chapter}}} took {name} off the ride",
+        "scheduled": "{who, select, you {You} other {{chapter}}} put the ride on the calendar",
+        "scheduledReturn": "{who, select, you {You} other {{chapter}}} added the way back",
+        "someone": "someone who has left"
+      },
+      "storyEmpty": "Nothing has happened to this ride yet.",
+      "storyTitle": "So far",
+      "trishaws": "{count, plural, one {Trishaw} other {Trishaws}}",
+      "when": "When",
+      "where": "Where"
+    },
+    "rides": {
+      "failed": "That didn't load.",
+      "forRiders": "For {names}",
+      "loading": "Loading…",
+      "now": "Riding now",
+      "past": "Earlier rides",
+      "pilot": "With {name}",
+      "pilotNeeded": "Pilot still to be found",
+      "retry": "Try again",
+      "showEarlier": "Show earlier rides",
+      "upcoming": "Coming up"
+    }
   },
   "passkey": {
     "admin": {
@@ -2025,6 +2082,7 @@
       "doneBoth": "Both legs cancelled.",
       "keep": "Keep ride",
       "note": "Note",
+      "noteHint": "Riders and whoever books for them see this note.",
       "notePlaceholder": "What happened — e.g. heavy rain forecast",
       "reason": "Why is it off?",
       "returnLeg": "Also cancel the way back",

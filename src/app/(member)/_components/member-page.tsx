@@ -10,6 +10,7 @@ import { audienceCopy } from "./audience-copy";
 import type { MemberPerspective } from "../nav";
 import { MEMBER_LIFE } from "./instant";
 import { EmptyState } from "@/components/empty-state";
+import { cn } from "@/lib/utils";
 
 const MEMBER_ENTER = {
   push: "push-in",
@@ -25,14 +26,25 @@ const MEMBER_EXIT = {
   default: "tab-out",
 } as const;
 
-export function MemberPageShell({ children }: { children: ReactNode }) {
+export function MemberPageShell({
+  wide = false,
+  children,
+}: {
+  wide?: boolean;
+  children: ReactNode;
+}) {
   return (
     <ViewTransition
       enter={MEMBER_ENTER}
       exit={MEMBER_EXIT}
       default="none"
     >
-      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 pt-2 pb-8 lg:px-6">
+      <div
+        className={cn(
+          "mx-auto flex w-full flex-1 flex-col gap-6 px-4 pt-2 pb-8 lg:px-6",
+          wide ? "max-w-5xl" : "max-w-2xl",
+        )}
+      >
         {children}
       </div>
     </ViewTransition>

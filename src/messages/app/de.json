@@ -1904,7 +1904,64 @@
   },
   "passenger": {
     "browsing": "Sie sehen {chapter}",
-    "noChapter": "Sie haben noch keine Ortsgruppe gewählt"
+    "noChapter": "Sie haben noch keine Ortsgruppe gewählt",
+    "ride": {
+      "about": "Über diese Ausfahrt",
+      "back": "Meine Ausfahrten",
+      "booked": "Gebucht für",
+      "call": "{name} anrufen",
+      "cancelled": "Diese Ausfahrt fällt aus",
+      "cancelledBecause": "Grund: {reason}",
+      "chapter": "Ortsgruppe",
+      "completed": "Diese Ausfahrt ist vorbei. Schön, dass Sie dabei waren!",
+      "destination": "Ziel",
+      "email": "E-Mail an {name}",
+      "noPilot": "Wir suchen noch einen Piloten. Sobald sich jemand einträgt, sehen Sie hier, wer Sie fährt.",
+      "noPlace": "Der Ort steht noch nicht fest.",
+      "openInMaps": "In Karten öffnen",
+      "openLeg": "Öffnen",
+      "pickup": "Abholung",
+      "pilots": "{count, plural, one {Ihr Pilot} other {Ihre Piloten}}",
+      "running": "Ihre Ausfahrt läuft gerade.",
+      "story": {
+        "cancelled": "{who, select, you {Sie haben} other {{chapter} hat}} die Ausfahrt abgesagt",
+        "change": "{from} → {to}",
+        "edited": "{who, select, you {Sie haben} other {{chapter} hat}} {fields} geändert",
+        "fields": {
+          "destination": "das Ziel",
+          "location": "den Abholort",
+          "model": "die Art der Ausfahrt",
+          "title": "den Titel"
+        },
+        "nothing": "nichts",
+        "pilotAssigned": "{name} fährt diese Ausfahrt",
+        "pilotUnassigned": "{name} kann nun doch nicht fahren",
+        "rescheduled": "{who, select, you {Sie haben} other {{chapter} hat}} die Ausfahrt verschoben",
+        "rescheduledWithLeg": "{who, select, you {Sie haben} other {{chapter} hat}} die Ausfahrt samt dem anderen Weg verschoben",
+        "riderBooked": "{who, select, you {Sie haben} other {{chapter} hat}} {name} angemeldet",
+        "riderRemoved": "{who, select, you {Sie haben} other {{chapter} hat}} {name} abgemeldet",
+        "scheduled": "{who, select, you {Sie haben} other {{chapter} hat}} die Ausfahrt eingeplant",
+        "scheduledReturn": "{who, select, you {Sie haben} other {{chapter} hat}} den Rückweg eingeplant",
+        "someone": "jemand, der nicht mehr dabei ist"
+      },
+      "storyEmpty": "Bei dieser Ausfahrt ist noch nichts passiert.",
+      "storyTitle": "Bisher",
+      "trishaws": "{count, plural, one {Rikscha} other {Rikschas}}",
+      "when": "Wann",
+      "where": "Wo"
+    },
+    "rides": {
+      "failed": "Das hat nicht geklappt.",
+      "forRiders": "Für {names}",
+      "loading": "Wird geladen …",
+      "now": "Läuft gerade",
+      "past": "Frühere Ausfahrten",
+      "pilot": "Mit {name}",
+      "pilotNeeded": "Pilot wird noch gesucht",
+      "retry": "Erneut versuchen",
+      "showEarlier": "Frühere Ausfahrten anzeigen",
+      "upcoming": "Demnächst"
+    }
   },
   "passkey": {
     "admin": {
@@ -2025,6 +2082,7 @@
       "doneBoth": "Hin- und Rückweg abgesagt.",
       "keep": "Fahrt behalten",
       "note": "Notiz",
+      "noteHint": "Fahrgäste und alle, die für sie buchen, sehen diese Notiz.",
       "notePlaceholder": "Was ist passiert – z. B. Starkregen angesagt",
       "reason": "Warum fällt sie aus?",
       "returnLeg": "Auch den Rückweg absagen",
