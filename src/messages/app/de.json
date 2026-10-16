@@ -59,11 +59,11 @@
         },
         "label": "Tipp {word} zur Bestätigung",
         "open": "Konto löschen",
-        "riders": "{names}, die du betreust, samt ihren Buchungen",
+        "riders": "Von dir betreut: {names}, samt allen Buchungen",
         "submit": "Konto löschen",
         "title": "Konto endgültig löschen?",
         "word": "DELETE",
-        "ridersHint": "Damit sie weiter mitfahren können, bitte ihre Ortsgruppe, sie an jemand anderen zu übergeben, bevor du dein Konto löschst."
+        "ridersHint": "Damit die Personen, die du betreust, weiter mitfahren können, bitte ihre Ortsgruppe, sie vorher an jemand anderen zu übergeben."
       },
       "title": "Abmelden oder löschen"
     },

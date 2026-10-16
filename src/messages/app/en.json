@@ -59,11 +59,11 @@
         },
         "label": "Type {word} to confirm",
         "open": "Delete account",
-        "riders": "{names}, who you look after, with their bookings",
+        "riders": "The people you look after: {names}, with all their bookings",
         "submit": "Delete account",
         "title": "Delete your account for good?",
         "word": "DELETE",
-        "ridersHint": "To keep them riding, ask their chapter to hand them over to someone else before you delete your account."
+        "ridersHint": "To keep the people you look after riding, ask their chapter to hand them over to someone else before you delete your account."
       },
       "title": "Sign out or delete"
     },
