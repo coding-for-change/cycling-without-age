@@ -66,6 +66,7 @@ type Place = {
 
 export type RequestFormData = {
   chapterName: string;
+  weekStartsOn: number;
   maxRiders: number;
   riders: {
     id: string;
@@ -401,6 +402,7 @@ export function RideRequestForm({
       {step === "when" ? (
         <WhenStep
           days={data.days}
+          weekStartsOn={data.weekStartsOn}
           date={date}
           onDate={(next) => {
             setDate(next);
@@ -997,6 +999,7 @@ function WhereStep({
 
 function WhenStep({
   days,
+  weekStartsOn,
   date,
   onDate,
   slot,
@@ -1006,6 +1009,7 @@ function WhenStep({
   notation,
 }: {
   days: RequestFormData["days"];
+  weekStartsOn: number;
   date: string | null;
   onDate: (date: string) => void;
   slot: Window | null;
@@ -1042,7 +1046,7 @@ function WhenStep({
         }}
         disabled={(candidate) => !open.has(toIsoDateLocal(candidate))}
         locale={pickerLocale(language, notation)}
-        weekStartsOn={1}
+        weekStartsOn={weekStartsOn as 0 | 1 | 2 | 3 | 4 | 5 | 6}
         showOutsideDays={false}
         className="self-start rounded-2xl border border-line p-3 [--cell-size:--spacing(11)] [&_button[data-selected-single=true]]:bg-mint-deep [&_button[data-selected-single=true]]:text-white"
       />

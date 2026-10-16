@@ -12,6 +12,7 @@ import { rideLocations } from "@/features/ride-locations";
 import { rideRequests } from "@/features/ride-requests";
 import { requireAuth } from "@/lib/auth-guards";
 import { bookableDays, windowLabel } from "@/lib/booking-windows";
+import { firstDayOfWeek } from "@/lib/calendar";
 import {
   formatList,
   formatLongDateWithWeekday,
@@ -167,6 +168,7 @@ export async function NewRideRequest({
 
   const data: RequestFormData = {
     chapterName: chapter.name,
+    weekStartsOn: firstDayOfWeek(notation),
     maxRiders: maxRidersFor(seats),
     riders: bookable.map((rider) => ({
       id: rider.id,
