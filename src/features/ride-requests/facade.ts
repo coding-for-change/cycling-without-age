@@ -31,12 +31,6 @@ const LIST_MAX = 200;
 const OWN_MAX = 50;
 const DESTINATIONS_MAX = 20;
 
-/**
- * Lifecycle 1C: the request is written with its riders in one transaction.
- * A chapter that schedules automatically announces it only once it is clear
- * that no ride could be made of it (`announce`), so nobody is asked to look
- * at a request that has already become a ride.
- */
 /** Open requests one account may have waiting at once. */
 export const OPEN_REQUESTS_MAX = 5;
 
@@ -59,6 +53,12 @@ export async function assertCanAsk(
   if (open >= OPEN_REQUESTS_MAX) throw new DomainError("tooManyRequests");
 }
 
+/**
+ * Lifecycle 1C: the request is written with its riders in one transaction.
+ * A chapter that schedules automatically announces it only once it is clear
+ * that no ride could be made of it (`announce`), so nobody is asked to look
+ * at a request that has already become a ride.
+ */
 export async function submit(
   input: NewRideRequest,
   { announce = true }: { announce?: boolean } = {},
