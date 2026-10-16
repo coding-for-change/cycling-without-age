@@ -1331,8 +1331,12 @@ export const findDebriefsOfRide = (rideId: string) =>
     select: debriefSelect,
   });
 
-export const findDebrief = (rideId: string, userId: string) =>
-  prisma.rideDebrief.findUnique({
+export const findDebrief = (
+  rideId: string,
+  userId: string,
+  db: Prisma.TransactionClient = prisma,
+) =>
+  db.rideDebrief.findUnique({
     where: { rideId_userId: { rideId, userId } },
     select: debriefSelect,
   });

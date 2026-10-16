@@ -3761,6 +3761,18 @@ describe("the debrief", () => {
     });
   });
 
+  // The form saves as the pilot types: the history says it once.
+  it("notes a debrief in the history only the first time", async () => {
+    ride({ model: "event" });
+    await rides.submitDebrief({ rideId: "ride-1" }, "pilot-1", "pilot", AFTER);
+    expect(logTypes()).toEqual(["debriefed"]);
+    jest.clearAllMocks();
+    db.rideDebrief.findUnique.mockResolvedValueOnce({ id: "debrief-1" });
+    await rides.submitDebrief({ rideId: "ride-1" }, "pilot-1", "pilot", AFTER);
+    expect(db.rideDebrief.upsert).toHaveBeenCalled();
+    expect(logTypes()).toEqual([]);
+  });
+
   it("waits for the ride to start, and never debriefs a cancelled one", async () => {
     ride();
     expect(

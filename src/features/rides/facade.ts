@@ -2393,6 +2393,7 @@ export type RideDebriefView = ReturnType<typeof debriefView>;
 /**
  * Story 31 and lifecycle 7E: one report per pilot and ride, written again as
  * often as they like while the finish page is open; an admin's, any time.
+ * The form saves as it goes, so the history notes the first version only.
  * Distance is measured only on a functional ride (Report 11), and a donation
  * is counted in the chapter's own currency.
  */
@@ -2410,6 +2411,7 @@ export async function submitDebrief(
     if (ride.startsAt > now) throw new DomainError("rideNotStarted");
     if (as === "pilot" && !withinPilotWindow(ride, now))
       throw new DomainError("rideClosed");
+    const written = await findDebrief(ride.id, userId, tx);
     const currency =
       data.donationCents === null
         ? null
@@ -2427,7 +2429,7 @@ export async function submitDebrief(
       },
       tx,
     );
-    await record(tx, emit, ride, userId, "debriefed", {});
+    if (!written) await record(tx, emit, ride, userId, "debriefed", {});
     return debriefView(row);
   });
 }
