@@ -13,7 +13,7 @@ import en from "@/messages/app/en.json";
 import { locales, type Locale } from "@/lib/i18n/locales";
 import type { DomainEvent, EventType } from "@/lib/events/catalog";
 import { kinds } from "@/use-cases/notifications/kinds";
-import type { Message } from "@/use-cases/notifications/kinds/types";
+import type { AnyKind, Message } from "@/use-cases/notifications/kinds/types";
 
 jest.mock("@/features/chapters", () => ({
   chapters: {
@@ -60,6 +60,14 @@ jest.mock("@/features/passengers", () => ({
     passengerNames: jest.fn(),
   },
 }));
+
+beforeAll(() => {
+  jest.useFakeTimers({
+    now: new Date("2026-10-20T08:00:00Z"),
+    doNotFake: ["nextTick", "setImmediate", "queueMicrotask"],
+  });
+});
+afterAll(() => jest.useRealTimers());
 
 const getChapter = chapters.getChapter as jest.Mock;
 const getCountry = chapters.getCountry as jest.Mock;
@@ -324,6 +332,45 @@ const EVENTS: Record<EventType, DomainEvent> = {
   },
 };
 
+const VARIANTS: Partial<Record<EventType, DomainEvent[]>> = {
+  "pilotApplication.decided": [
+    { ...EVENTS["pilotApplication.decided"], approved: false } as DomainEvent,
+  ],
+  "ride.pilotAssigned": [
+    {
+      ...EVENTS["ride.pilotAssigned"],
+      actorUserId: SUBJECT,
+      self: true,
+    } as DomainEvent,
+  ],
+};
+
+const eventsOf = (kind: AnyKind) => [
+  EVENTS[kind.event],
+  ...(VARIANTS[kind.event] ?? []),
+];
+
+const readings = async (kind: AnyKind, event: DomainEvent) => {
+  const shared = kind.payload.parse(await kind.params(event));
+  const readers = kind.forRecipient
+    ? [...new Set(await kind.recipients(event))]
+    : [];
+  return [
+    shared,
+    ...readers.map((reader) =>
+      kind.payload.parse(kind.forRecipient!(shared, reader)),
+    ),
+  ];
+};
+
+const messagesOf = async (kind: AnyKind, locale: Locale) => {
+  const messages: Message[] = [];
+  for (const event of eventsOf(kind))
+    for (const params of await readings(kind, event))
+      messages.push(kind.message(params, getEmailStrings(locale), locale));
+  return messages;
+};
+
 const APP_RELATIVE = /^\/(?!\/)/;
 
 const lines = (message: Message): string[] =>
@@ -423,28 +470,26 @@ describe.each(kinds.map((kind) => [kind.event, kind] as const))(
     });
 
     it.each(locales)("reads as finished prose in %s", async (locale) => {
-      const params = kind.payload.parse(await kind.params(event));
-      const message = kind.message(params, getEmailStrings(locale), locale);
-
-      expect(lines(message).length).toBeGreaterThan(3);
-      for (const line of lines(message)) {
-        expect(line).not.toMatch(/\{\w+\}/);
-        expect(line).not.toMatch(/\b(null|undefined)\b/);
-        expect(line.trim()).not.toBe("");
+      for (const message of await messagesOf(kind, locale)) {
+        expect(lines(message).length).toBeGreaterThan(3);
+        for (const line of lines(message)) {
+          expect(line).not.toMatch(/\{\w+\}/);
+          expect(line).not.toMatch(/\b(null|undefined)\b/);
+          expect(line.trim()).not.toBe("");
+        }
+        expect(message.template).toEqual(expect.any(String));
       }
-      expect(message.template).toEqual(expect.any(String));
     });
 
     it.each(locales)(
       "still reads as finished prose in %s with nothing named",
       async (locale) => {
         unknown();
-        const params = kind.payload.parse(await kind.params(event));
-        const message = kind.message(params, getEmailStrings(locale), locale);
-
-        for (const line of lines(message)) {
-          expect(line).not.toMatch(/\{\w+\}/);
-          expect(line).not.toMatch(/\b(null|undefined)\b/);
+        for (const message of await messagesOf(kind, locale)) {
+          for (const line of lines(message)) {
+            expect(line).not.toMatch(/\{\w+\}/);
+            expect(line).not.toMatch(/\b(null|undefined)\b/);
+          }
         }
       },
     );
@@ -492,21 +537,9 @@ describe("a message for both legs of a round trip", () => {
 describe("the templates the history feed has to label", () => {
   const collect = async () => {
     const templates = new Set<string>();
-    const rejected: DomainEvent = {
-      ...EVENTS["pilotApplication.decided"],
-      approved: false,
-    } as DomainEvent;
-
-    for (const kind of kinds) {
-      for (const event of [
-        EVENTS[kind.event],
-        ...(kind.event === "pilotApplication.decided" ? [rejected] : []),
-      ]) {
-        const params = kind.payload.parse(await kind.params(event));
-        const { template } = kind.message(params, getEmailStrings("en"), "en");
+    for (const kind of kinds)
+      for (const { template } of await messagesOf(kind, "en"))
         if (template) templates.add(template);
-      }
-    }
     return [...templates].sort();
   };
 
@@ -532,12 +565,15 @@ describe("the templates the history feed has to label", () => {
       "rideCancelled",
       "rideChanged",
       "rideOpened",
+      "ridePilotFound",
       "ridePilotWithdrew",
       "rideRequestDeclined",
       "rideRequestScheduled",
       "rideRequestSubmitted",
       "rideRequestWithdrawn",
+      "rideSignedUp",
       "rideUnderstaffed",
+      "riderHandedAway",
       "riderHandedOver",
       "roleChanged",
       "welcome",

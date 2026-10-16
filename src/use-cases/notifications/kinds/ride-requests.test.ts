@@ -13,6 +13,7 @@ import {
   rideRequestDeclined,
   rideRequestScheduled,
   rideRequestSubmitted,
+  rideRequestWithdrawn,
 } from "./ride-requests";
 import { rideBookingConfirmed } from "./rides";
 
@@ -157,6 +158,27 @@ describe("a new request", () => {
     expect(message.body).toContain("Anna Huber");
     expect(message.body).toContain("Erna Huber");
     expect(message.body).toContain("and back again");
+  });
+});
+
+describe("a withdrawn request", () => {
+  const withdrawn: EventOf<"rideRequest.withdrawn"> = {
+    type: "rideRequest.withdrawn",
+    requestId: "request-1",
+    chapterId: MUNICH,
+    actorUserId: ADMIN,
+  };
+
+  it("reaches the chapter's admins, not the one who closed it", async () => {
+    expect(await rideRequestWithdrawn.recipients(withdrawn)).toEqual([
+      "user-admin-2",
+    ]);
+  });
+
+  it("folds into the chapter's one card of requests", () => {
+    expect(rideRequestWithdrawn.collapseKey?.(withdrawn)).toBe(
+      `requests:${MUNICH}`,
+    );
   });
 });
 
@@ -322,6 +344,12 @@ describe("a rider handed over", () => {
     expect(
       await riderHandedOver.recipients({ ...event, actorUserId: CARER }),
     ).toEqual(["user-daughter"]);
+  });
+
+  it("leaves an account set up for the rider to its invitation", async () => {
+    expect(
+      await riderHandedOver.recipients({ ...event, invited: true }),
+    ).toEqual([CARER]);
   });
 
   it("writes each of them their own message", async () => {
