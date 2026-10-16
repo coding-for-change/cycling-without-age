@@ -5,6 +5,7 @@ import {
   countOpenRequestsOfRequester,
   countOpenRequestsOverlapping,
   findDestinationsOfRequester,
+  findOpenRequestsOf,
   findOpenRequestsOfRequesterWith,
   removeRequestRider,
   setRequester,
@@ -300,5 +301,118 @@ describe("assertCanAsk", () => {
     expect(
       await codeOf(rideRequests.assertCanAsk(REQUESTER, ["mother"], window)),
     ).toBe("tooManyRequests");
+  });
+});
+
+describe("withdrawOpenRequests", () => {
+  const openRequests = findOpenRequestsOf as jest.Mock;
+  const now = new Date("2026-10-08T08:00:00Z");
+
+  const open = (id: string, requesterUserId: string, ...riders: string[]) => ({
+    id,
+    chapterId: MUNICH,
+    requesterUserId,
+    passengers: riders.map((passengerId) => ({ passengerId })),
+  });
+
+  const withdrawn = (requestId: string, actorUserId: string) => ({
+    type: "rideRequest.withdrawn",
+    requestId,
+    chapterId: MUNICH,
+    actorUserId,
+  });
+
+  it("closes every open request the leaving account sent", async () => {
+    openRequests.mockResolvedValue([
+      open("request-1", REQUESTER, "mother"),
+      open("request-2", REQUESTER, "mother", "karl"),
+    ]);
+
+    await expect(
+      rideRequests.withdrawOpenRequests(
+        { requesterUserId: REQUESTER },
+        "admin-1",
+        now,
+      ),
+    ).resolves.toBe(2);
+
+    expect(openRequests).toHaveBeenCalledWith({
+      requesterUserId: REQUESTER,
+      passengerIds: [],
+    });
+    for (const id of ["request-1", "request-2"])
+      expect(close).toHaveBeenCalledWith(
+        id,
+        { status: "withdrawn", decidedByUserId: "admin-1", decidedAt: now },
+        null,
+        {},
+      );
+    expect(emitted).toEqual([
+      withdrawn("request-1", "admin-1"),
+      withdrawn("request-2", "admin-1"),
+    ]);
+  });
+
+  it("closes a request only when all its riders leave", async () => {
+    openRequests.mockResolvedValue([
+      open("alone", REQUESTER, "greta"),
+      open("shared", REQUESTER, "greta", "karl"),
+    ]);
+
+    await expect(
+      rideRequests.withdrawOpenRequests(
+        { passengerIds: ["greta"] },
+        "daughter-lena",
+        now,
+      ),
+    ).resolves.toBe(1);
+
+    expect(close).toHaveBeenCalledTimes(1);
+    expect(close).toHaveBeenCalledWith("alone", expect.anything(), null, {});
+    expect(emitted).toEqual([withdrawn("alone", "daughter-lena")]);
+  });
+
+  it("closes a shared request when every rider on it leaves", async () => {
+    openRequests.mockResolvedValue([
+      open("shared", REQUESTER, "greta", "karl"),
+    ]);
+
+    await rideRequests.withdrawOpenRequests(
+      { passengerIds: ["greta", "karl"] },
+      "admin-1",
+      now,
+    );
+
+    expect(emitted).toEqual([withdrawn("shared", "admin-1")]);
+  });
+
+  it("emits nothing for a request decided in between", async () => {
+    openRequests.mockResolvedValue([
+      open("decided", REQUESTER, "mother"),
+      open("request-2", REQUESTER, "father"),
+    ]);
+    close.mockResolvedValueOnce({ count: 0 });
+
+    await rideRequests.withdrawOpenRequests(
+      { requesterUserId: REQUESTER },
+      "admin-1",
+      now,
+    );
+
+    expect(close).toHaveBeenCalledTimes(2);
+    expect(emitted).toEqual([withdrawn("request-2", "admin-1")]);
+  });
+
+  it("returns 0 and queries nothing with neither requester nor riders", async () => {
+    await expect(
+      rideRequests.withdrawOpenRequests({}, "admin-1"),
+    ).resolves.toBe(0);
+    await expect(
+      rideRequests.withdrawOpenRequests({ passengerIds: [] }, "admin-1"),
+    ).resolves.toBe(0);
+
+    expect(openRequests).not.toHaveBeenCalled();
+    expect(close).not.toHaveBeenCalled();
+    expect(emitted).toEqual([]);
   });
 });
