@@ -4,17 +4,6 @@ import type { FeedEvent } from "./activity-feed";
 import { payloadStrings } from "./timeline";
 
 /**
- * A hand-over writes a line into each manager's history. A history that is
- * not one person's — the rider's, the chapter's — tells it once.
- */
-export const oncePerHandOver = <E extends FeedEvent>(events: E[]) =>
-  events.filter(
-    (event) =>
-      event.type !== "riderHandedOver" ||
-      payloadStrings(event.payload).direction !== "in",
-  );
-
-/**
  * A hand-over line keeps ids, never names, so deleting a rider or an account
  * takes their name out of every history. The names are looked up as the
  * history is read; someone who is gone reads as `gone`.

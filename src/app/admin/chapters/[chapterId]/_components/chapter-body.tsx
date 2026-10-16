@@ -12,10 +12,7 @@ import {
   PropertyValue,
 } from "../../../_components/properties";
 import { ActivityFeed } from "../../../_components/activity-feed";
-import {
-  oncePerHandOver,
-  withHandOverNames,
-} from "../../../_components/hand-over-names";
+import { withHandOverNames } from "../../../_components/hand-over-names";
 import { fieldLabels } from "../../../_components/field-labels";
 import { historyShown } from "../../../_components/history-more";
 import {
@@ -69,9 +66,7 @@ export async function ChapterBody({
     chapters.getChapterFootprint(chapterId),
     fleet.getChapterFleetFootprint(chapterId),
     rideLocations.countChapterRideLocations(chapterId),
-    activity
-      .listForChapter(chapterId, historyTake(shown))
-      .then(oncePerHandOver),
+    activity.listForChapter(chapterId, historyTake(shown)),
     chapters.listChapters(),
     getDictionary(),
     getLocale(),

@@ -23,9 +23,17 @@ export const findEventsOfUser = (
     take,
   });
 
+/** A hand-over writes a line for each manager; a shared history shows one. */
+const ONCE_PER_HAND_OVER: Prisma.ActivityEventWhereInput = {
+  NOT: {
+    type: "riderHandedOver",
+    payload: { path: "$.direction", equals: "in" },
+  },
+};
+
 export const findEventsOfChapter = (chapterId: string, take: number) =>
   prisma.activityEvent.findMany({
-    where: { chapterId },
+    where: { chapterId, ...ONCE_PER_HAND_OVER },
     orderBy: { createdAt: "desc" },
     include: { actor: { select: { name: true, email: true } } },
     take,
@@ -36,7 +44,7 @@ export const insertEvents = (data: Prisma.ActivityEventCreateManyInput[]) =>
 
 export const findEventsOfPassenger = (passengerId: string, take: number) =>
   prisma.activityEvent.findMany({
-    where: { passengerId },
+    where: { passengerId, ...ONCE_PER_HAND_OVER },
     orderBy: { createdAt: "desc" },
     include: { actor: { select: { name: true, email: true } } },
     take,
