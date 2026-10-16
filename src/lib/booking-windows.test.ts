@@ -123,6 +123,18 @@ describe("windowsOnDate", () => {
       expect(window.startMinute).toBe(10 * 60 + 15);
       expect(window.endMinute).toBe(17 * 60);
     });
+
+    it("names a trimmed stretch by the part of the day it now starts in", () => {
+      const [window] = windowsOnDate(
+        LONG_DAYS,
+        "2026-10-08",
+        POLICY,
+        BERLIN,
+        new Date("2026-10-06T11:10:00Z"),
+      );
+      expect(window.startMinute).toBe(13 * 60 + 15);
+      expect(window.part).toBe("afternoon");
+    });
   });
 
   describe("across DST", () => {

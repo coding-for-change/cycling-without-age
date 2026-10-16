@@ -183,7 +183,7 @@ export function windowsOnDate(
           date,
           startMinute: from,
           endMinute: to,
-          part: chip.long ? partOfDay(chip.from) : null,
+          part: chip.long ? partOfDay(from) : null,
           startsAt,
           endsAt,
         },
