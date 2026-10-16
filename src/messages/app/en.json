@@ -434,7 +434,7 @@
         "riderHandedAway": "Rider handed on"
       },
       "you": "You",
-      "riderHandedOver": "{direction, select, in {{self, select, yes {You} other {{actor}}} handed {rider} over to this account, from {previous}} other {{self, select, yes {You} other {{actor}}} handed {rider} over to {next}}}"
+      "riderHandedOver": "{direction, select, in {{self, select, yes {You} other {{actor}}} handed {riderGone, select, yes {a former rider} other {{rider}}} over to this account from {previousGone, select, yes {a former member} other {{previous}}}} other {{self, select, yes {You} other {{actor}}} handed {riderGone, select, yes {a former rider} other {{rider}}} over to {nextGone, select, yes {a former member} other {{next}}}}}"
     },
     "members": {
       "actions": "Actions for {name}",
@@ -624,7 +624,7 @@
         },
         "history": "History",
         "historyEmpty": "Nothing yet. A hand-over to someone else shows up here.",
-        "handedOver": "{self, select, yes {You} other {{actor}}} handed {rider} over from {previous} to {next}"
+        "handedOver": "{self, select, yes {You} other {{actor}}} handed {riderGone, select, yes {a former rider} other {{rider}}} over from {previousGone, select, yes {a former member} other {{previous}}} to {nextGone, select, yes {a former member} other {{next}}}"
       },
       "waiting": {
         "title": "Waiting for an answer",

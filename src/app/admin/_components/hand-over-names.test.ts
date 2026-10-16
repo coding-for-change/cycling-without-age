@@ -28,12 +28,14 @@ describe("a hand-over line", () => {
       { id: "user-new", name: "Lena Huber" },
     ]);
 
-    const [named] = await withHandOverNames([line], "Gone");
+    const [named] = await withHandOverNames([line]);
 
     expect(named.payload).toMatchObject({
       rider: "Greta Huber",
-      previous: "Gone",
+      riderGone: "no",
+      previousGone: "yes",
       next: "Lena Huber",
+      nextGone: "no",
     });
   });
 });

@@ -260,10 +260,7 @@ export async function ChapterBody({
           showMoreLabel={dict.admin.history.showMore}
         >
           <ActivityFeed
-            events={await withHandOverNames(
-              events.slice(0, shown),
-              dict.admin.history.someone,
-            )}
+            events={await withHandOverNames(events.slice(0, shown))}
             viewerId={session.user.id}
             labels={{
               ...dict.admin.history,

@@ -220,10 +220,7 @@ export async function PassengerBody({
         {admin ? (
           <DetailSection title={strings.history}>
             <ActivityFeed
-              events={await withHandOverNames(
-                handOvers,
-                dict.admin.history.someone,
-              )}
+              events={await withHandOverNames(handOvers)}
               viewerId={session.user.id}
               labels={{
                 ...dict.admin.history,

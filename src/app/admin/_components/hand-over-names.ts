@@ -6,11 +6,12 @@ import { payloadStrings } from "./timeline";
 /**
  * A hand-over line keeps ids, never names, so deleting a rider or an account
  * takes their name out of every history. The names are looked up as the
- * history is read; someone who is gone reads as `gone`.
+ * history is read; someone who is gone is flagged, and the message names
+ * them as a former rider or member.
  */
 export async function withHandOverNames<
   E extends FeedEvent & { passengerId: string | null },
->(events: E[], gone: string): Promise<E[]> {
+>(events: E[]): Promise<E[]> {
   const handOvers = events.filter((event) => event.type === "riderHandedOver");
   if (!handOvers.length) return events;
   const userIds = handOvers.flatMap((event) => {
@@ -24,17 +25,24 @@ export async function withHandOverNames<
     profile.getProfiles(userIds),
   ]);
   const nameOf = (id: string | undefined) =>
-    people.find((person) => person.id === id)?.name || gone;
+    people.find((person) => person.id === id)?.name || null;
+  const gone = (name: string | null) => (name ? "no" : "yes");
   return events.map((event) => {
     if (event.type !== "riderHandedOver") return event;
     const payload = payloadStrings(event.payload);
+    const rider = (event.passengerId && riders[event.passengerId]) || null;
+    const previous = nameOf(payload.fromUserId);
+    const next = nameOf(payload.toUserId);
     return {
       ...event,
       payload: {
         ...payload,
-        rider: (event.passengerId && riders[event.passengerId]) || gone,
-        previous: nameOf(payload.fromUserId),
-        next: nameOf(payload.toUserId),
+        rider: rider ?? "",
+        previous: previous ?? "",
+        next: next ?? "",
+        riderGone: gone(rider),
+        previousGone: gone(previous),
+        nextGone: gone(next),
       },
     };
   });

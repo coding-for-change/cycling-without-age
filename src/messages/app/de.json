@@ -434,7 +434,7 @@
         "riderHandedAway": "Fahrgast übergeben"
       },
       "you": "Du",
-      "riderHandedOver": "{direction, select, in {{self, select, yes {Du hast} other {{actor} hat}} {rider} von {previous} an dieses Konto übergeben} other {{self, select, yes {Du hast} other {{actor} hat}} {rider} an {next} übergeben}}"
+      "riderHandedOver": "{direction, select, in {{self, select, yes {Du hast} other {{actor} hat}} {riderGone, select, yes {einen ehemaligen Fahrgast} other {{rider}}} von {previousGone, select, yes {einem ehemaligen Mitglied} other {{previous}}} an dieses Konto übergeben} other {{self, select, yes {Du hast} other {{actor} hat}} {riderGone, select, yes {einen ehemaligen Fahrgast} other {{rider}}} an {nextGone, select, yes {ein ehemaliges Mitglied} other {{next}}} übergeben}}"
     },
     "members": {
       "actions": "Aktionen für {name}",
@@ -624,7 +624,7 @@
         },
         "history": "Verlauf",
         "historyEmpty": "Noch nichts. Eine Übergabe an jemand anderen erscheint hier.",
-        "handedOver": "{self, select, yes {Du hast} other {{actor} hat}} {rider} von {previous} an {next} übergeben"
+        "handedOver": "{self, select, yes {Du hast} other {{actor} hat}} {riderGone, select, yes {einen ehemaligen Fahrgast} other {{rider}}} von {previousGone, select, yes {einem ehemaligen Mitglied} other {{previous}}} an {nextGone, select, yes {ein ehemaliges Mitglied} other {{next}}} übergeben"
       },
       "waiting": {
         "title": "Warten auf Antwort",

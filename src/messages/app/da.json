@@ -434,7 +434,7 @@
         "riderHandedAway": "Passager overdraget"
       },
       "you": "Du",
-      "riderHandedOver": "{direction, select, in {{self, select, yes {Du} other {{actor}}} overdrog {rider} fra {previous} til denne konto} other {{self, select, yes {Du} other {{actor}}} overdrog {rider} til {next}}}"
+      "riderHandedOver": "{direction, select, in {{self, select, yes {Du} other {{actor}}} overdrog {riderGone, select, yes {en tidligere passager} other {{rider}}} fra {previousGone, select, yes {et tidligere medlem} other {{previous}}} til denne konto} other {{self, select, yes {Du} other {{actor}}} overdrog {riderGone, select, yes {en tidligere passager} other {{rider}}} til {nextGone, select, yes {et tidligere medlem} other {{next}}}}}"
     },
     "members": {
       "actions": "Handlinger for {name}",
@@ -624,7 +624,7 @@
         },
         "history": "Historik",
         "historyEmpty": "Intet endnu. En overdragelse til en anden vises her.",
-        "handedOver": "{self, select, yes {Du} other {{actor}}} overdrog {rider} fra {previous} til {next}"
+        "handedOver": "{self, select, yes {Du} other {{actor}}} overdrog {riderGone, select, yes {en tidligere passager} other {{rider}}} fra {previousGone, select, yes {et tidligere medlem} other {{previous}}} til {nextGone, select, yes {et tidligere medlem} other {{next}}}"
       },
       "waiting": {
         "title": "Venter på svar",
