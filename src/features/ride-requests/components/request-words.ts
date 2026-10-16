@@ -5,6 +5,7 @@ import {
   formatTimeRange,
   type Locale,
 } from "@/lib/format";
+import { formatMessage } from "@/lib/i18n/format";
 import { fullName } from "@/lib/utils";
 
 type Requested = {
@@ -55,13 +56,26 @@ export const placeLine = (name: string | null, address: string | null) =>
       ? (address ?? name)
       : `${name} · ${address}`;
 
-/** "Get somewhere · Home → Dr. Weber · And back again" */
+export type RouteWords = { to: string; toAndBack: string };
+
+/** "Home to Dr. Weber and back", or the one place a ride out starts from. */
+export const routeWay = (
+  route: { from: string | null; to: string | null; back?: boolean },
+  words: RouteWords,
+  language: string,
+) =>
+  route.from && route.to
+    ? formatMessage(
+        route.back ? words.toAndBack : words.to,
+        { from: route.from, to: route.to },
+        language,
+      )
+    : (route.from ?? route.to);
+
+/** "Get somewhere · Home to Dr. Weber and back" */
 export const routeLine = (
   model: string,
-  from: string | null,
-  to: string | null,
-  roundTrip: string | null,
-) =>
-  [model, from && to ? `${from} → ${to}` : (from ?? to), roundTrip]
-    .filter(Boolean)
-    .join(" · ");
+  route: { from: string | null; to: string | null; back?: boolean },
+  words: RouteWords,
+  language: string,
+) => [model, routeWay(route, words, language)].filter(Boolean).join(" · ");

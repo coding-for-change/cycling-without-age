@@ -1516,6 +1516,10 @@
       "label": "Change appearance",
       "light": "Light",
       "system": "System"
+    },
+    "route": {
+      "to": "{from} to {to}",
+      "toAndBack": "{from} to {to} and back"
     }
   },
   "consent": {

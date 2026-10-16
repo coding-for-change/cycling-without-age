@@ -216,6 +216,7 @@ export async function NewRideRequest({
       data={data}
       strings={strings}
       address={dict.common.address}
+      route={dict.common.route}
       errors={{ ...dict.common.errors, ...strings.errors }}
       stepTemplate={dict.common.stepProgress}
       language={language}

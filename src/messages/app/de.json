@@ -1516,6 +1516,10 @@
       "label": "Darstellung ändern",
       "light": "Hell",
       "system": "System"
+    },
+    "route": {
+      "to": "Von {from} zu {to}",
+      "toAndBack": "Von {from} zu {to} und zurück"
     }
   },
   "consent": {

@@ -21,7 +21,12 @@ import {
 import { id as requestId } from "@/features/ride-requests/schemas";
 import { requireAuth } from "@/lib/auth-guards";
 import { calendarDate } from "@/lib/calendar";
-import { formatDate, resolveLocale, wordsLocale } from "@/lib/format";
+import {
+  formatDate,
+  formatList,
+  resolveLocale,
+  wordsLocale,
+} from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
@@ -82,16 +87,16 @@ async function OwnRequest({ id }: { id: string }) {
     (!request.ride || request.ride.status === "cancelled");
 
   const rows = [
-    { label: page.riders, value: requestedRiders(request).join(", ") },
+    { label: page.riders, value: formatList(requestedRiders(request), words) },
     {
       label: page.ride,
       value: routeLine(
         strings.models[
           request.model === "functional" ? "functional" : "pleasure"
         ],
-        route.from,
-        route.to,
-        route.to && request.roundTrip ? strings.where.roundTrip : null,
+        { ...route, back: request.roundTrip },
+        dict.common.route,
+        language,
       ),
     },
     { label: page.when, value: `${when.date}, ${when.time}` },

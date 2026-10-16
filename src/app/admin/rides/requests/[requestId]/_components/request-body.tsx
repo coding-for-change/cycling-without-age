@@ -29,6 +29,7 @@ import { rides } from "@/features/rides";
 import { requireChapterAdmin } from "@/lib/auth-guards";
 import { bookingRefusal } from "@/lib/booking-windows";
 import {
+  formatList,
   formatRelativeTime,
   resolveLocale,
   wordsLocale,
@@ -197,7 +198,9 @@ export async function RequestBody({
                 tone={pending ? "mint" : "deep"}
               />
             }
-            title={<span className={DETAIL_TITLE}>{riders.join(", ")}</span>}
+            title={
+              <span className={DETAIL_TITLE}>{formatList(riders, words)}</span>
+            }
           >
             <DetailMeta>
               <MetaBadge>

@@ -8,9 +8,15 @@ import {
   requestedRiders,
   requestedRoute,
   requestedWhen,
+  routeWay,
 } from "@/features/ride-requests/components/request-words";
 import { calendarDate } from "@/lib/calendar";
-import { formatDate, resolveLocale } from "@/lib/format";
+import {
+  formatDate,
+  formatList,
+  resolveLocale,
+  wordsLocale,
+} from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { first, hrefWith } from "@/lib/search-params";
 import { AdminPageHeader, AdminPageShell } from "../../_components/admin-page";
@@ -97,14 +103,14 @@ async function RequestList({ searchParams }: PageProps) {
       date: when.date,
       time: when.time,
       startsIso: request.requestedStartsAt.toISOString(),
-      riders: requestedRiders(request).join(", "),
+      riders: formatList(requestedRiders(request), wordsLocale(language)),
       model: [
         dict.calendar.models[request.model],
         request.roundTrip ? dict.rides.schedule.roundTrip : null,
       ]
         .filter(Boolean)
         .join(" · "),
-      where: [route.from, route.to].filter(Boolean).join(" → "),
+      where: routeWay(route, dict.common.route, language) ?? "",
       asked: formatDate(
         calendarDate(request.createdAt, request.chapter.timeZone),
         notation,

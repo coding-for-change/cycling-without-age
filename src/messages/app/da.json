@@ -1516,6 +1516,10 @@
       "label": "Skift udseende",
       "light": "Lys",
       "system": "System"
+    },
+    "route": {
+      "to": "Fra {from} til {to}",
+      "toAndBack": "Fra {from} til {to} og hjem igen"
     }
   },
   "consent": {

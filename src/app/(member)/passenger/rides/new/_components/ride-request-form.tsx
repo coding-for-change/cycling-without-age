@@ -132,6 +132,7 @@ export function RideRequestForm({
   data,
   strings,
   address,
+  route,
   errors,
   stepTemplate,
   language,
@@ -140,6 +141,7 @@ export function RideRequestForm({
   data: RequestFormData;
   strings: Strings;
   address: Dictionary["common"]["address"];
+  route: Dictionary["common"]["route"];
   errors: Record<string, string>;
   stepTemplate: string;
   language: Locale;
@@ -349,7 +351,6 @@ export function RideRequestForm({
             {
               count: data.maxRiders,
               chapter: data.chapterName,
-              riders: chosen.map((rider) => rider.firstName).join(" & "),
             },
             language,
           )}
@@ -422,7 +423,10 @@ export function RideRequestForm({
               : [
                   {
                     label: strings.review.riders,
-                    value: chosen.map((rider) => rider.name).join(", "),
+                    value: formatList(
+                      chosen.map((rider) => rider.name),
+                      wordsLocale(language),
+                    ),
                     step: "who" as const,
                   },
                 ]),
@@ -430,11 +434,14 @@ export function RideRequestForm({
               label: strings.review.ride,
               value: routeLine(
                 strings.models[model],
-                placeName(start, home, data.locations),
-                model === "functional" ? (destination?.name ?? null) : null,
-                model === "functional" && roundTrip
-                  ? strings.where.roundTrip
-                  : null,
+                {
+                  from: placeName(start, home, data.locations),
+                  to:
+                    model === "functional" ? (destination?.name ?? null) : null,
+                  back: model === "functional" && roundTrip,
+                },
+                route,
+                language,
               ),
               step: "where" as const,
             },

@@ -5,7 +5,7 @@ import {
   requestedRiders,
   requestedWhen,
 } from "@/features/ride-requests/components/request-words";
-import type { Locale } from "@/lib/format";
+import { formatList, type Locale } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 
@@ -68,7 +68,7 @@ export function RideRequestsList({
                   <span className="truncate text-2sm text-ink-soft">
                     {[
                       `${when.date}, ${when.time}`,
-                      requestedRiders(request).join(", "),
+                      formatList(requestedRiders(request), words),
                     ].join(" · ")}
                   </span>
                 </span>
