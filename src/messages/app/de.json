@@ -1081,7 +1081,7 @@
         "days": "{count, plural, one {1 Tag} other {# Tage}}",
         "method": {
           "label": "Planung",
-          "hint": "Wer aus einer Fahrtanfrage eine Fahrt macht. Automatisch bucht sie, sobald eine Rikscha frei ist; jede andere Anfrage wartet weiter auf einen Admin.",
+          "hint": "Wer aus einer Fahrtanfrage eine Fahrt macht. Bei „Automatisch“ wird eine Anfrage gebucht, sobald eine Rikscha frei ist; alle anderen warten weiter auf einen Admin.",
           "options": {
             "scheduler": "Ein Admin entscheidet",
             "auto": "Automatisch, wenn eine Rikscha frei ist"

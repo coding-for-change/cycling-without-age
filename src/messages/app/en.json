@@ -1081,7 +1081,7 @@
         "days": "{count, plural, one {1 day} other {# days}}",
         "method": {
           "label": "Scheduling method",
-          "hint": "Who turns a ride request into a ride. Automatically books it the moment a trishaw is free; every other request still waits for an admin.",
+          "hint": "Who turns a ride request into a ride. With “Automatically”, a request is booked the moment a trishaw is free; any other request still waits for an admin.",
           "options": {
             "scheduler": "An admin decides",
             "auto": "Automatically when a trishaw is free"
