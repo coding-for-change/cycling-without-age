@@ -43,7 +43,8 @@ export async function deleteAccount(
     { requesterUserId: userId, passengerIds: leaving },
     actorUserId,
   );
-  if (goneWith.length) await passengers.removeRidersWithoutAccount(userId);
+  if (goneWith.length)
+    await passengers.removeRidersWithoutAccount(userId, goneWith);
   await passengers.removeOwnPassenger(userId);
   await accounts.deleteUser(userId);
   await personProfiles.purgePhotoFiles(photos);

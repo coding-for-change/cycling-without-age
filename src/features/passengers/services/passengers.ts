@@ -272,4 +272,8 @@ export const moveRiderToManager = (
 
 export const deletePassengersWithoutAccountManagedBy = (
   managedByUserId: string,
-) => prisma.passenger.deleteMany({ where: { managedByUserId, userId: null } });
+  ids: string[],
+) =>
+  prisma.passenger.deleteMany({
+    where: { id: { in: ids }, managedByUserId, userId: null },
+  });

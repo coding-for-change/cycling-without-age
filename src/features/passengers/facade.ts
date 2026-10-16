@@ -269,8 +269,10 @@ export async function handOverRider(
 }
 
 /** Removes, on purpose, the riders without an account this account looks after. */
-export const removeRidersWithoutAccount = (managedByUserId: string) =>
-  deletePassengersWithoutAccountManagedBy(managedByUserId);
+export const removeRidersWithoutAccount = (
+  managedByUserId: string,
+  ids: string[],
+) => deletePassengersWithoutAccountManagedBy(managedByUserId, ids);
 
 export const countPassengersOfChapters = async (chapterIds: string[]) =>
   chapterIds.length ? countPassengersInChapters(chapterIds) : 0;

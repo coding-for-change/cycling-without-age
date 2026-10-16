@@ -66,6 +66,15 @@ beforeEach(() => {
 });
 
 describe("deleteAccount", () => {
+  it("deletes only the riders that were confirmed, so one handed over meanwhile makes the delete fail", async () => {
+    await deleteAccount("daughter-lena", "daughter-lena", REMOVE);
+
+    expect(passengers.removeRidersWithoutAccount).toHaveBeenCalledWith(
+      "daughter-lena",
+      ["managed-greta"],
+    );
+  });
+
   it("removes the photos of the account and the riders it looked after", async () => {
     await deleteAccount("daughter-lena", "daughter-lena", REMOVE);
 
