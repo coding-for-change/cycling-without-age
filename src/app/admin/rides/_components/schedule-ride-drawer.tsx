@@ -322,7 +322,7 @@ function ScheduleRideSheet({
       candidate.id ===
       (request ? request.rideLocationId : searchParams.get("rideLocation")),
   );
-  const asker = request?.name ?? requestStrings.someone;
+  const asker = request?.name ?? null;
   const formId = useId();
   const titleId = useId();
   const roundTripId = useId();
@@ -659,7 +659,7 @@ function ScheduleRideSheet({
         pilotIds,
       });
       notify(result, {
-        done: request
+        done: asker
           ? formatMessage(requestStrings.done, { name: asker }, language)
           : twoWay
             ? strings.scheduledRoundTrip
@@ -750,7 +750,7 @@ function ScheduleRideSheet({
             className="size-4 shrink-0 text-ink-faint"
           />
           <span className="truncate">
-            {request
+            {asker
               ? formatMessage(
                   requestStrings.fromRequest,
                   { name: asker },

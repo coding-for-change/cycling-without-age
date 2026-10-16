@@ -1322,9 +1322,8 @@
         "noteNobody": "Note for the history"
       },
       "schedule": {
-        "fromRequest": "{name}'s request",
-        "done": "Ride scheduled. {name} hears about it with the calendar file.",
-        "someone": "the requester",
+        "fromRequest": "Request from {name}",
+        "done": "Ride scheduled. {name} gets an email with the calendar file.",
         "note": "The requester wrote this for the chapter. Pilots only see what you put in the note for pilots.",
         "stale": "This request is no longer waiting: someone took it back or decided on it already. Close the drawer to see what happened."
       },

@@ -1323,8 +1323,7 @@
       },
       "schedule": {
         "fromRequest": "Anfrage von {name}",
-        "done": "Fahrt eingeplant. {name} erfährt es mit der Kalenderdatei.",
-        "someone": "der anfragenden Person",
+        "done": "Fahrt eingeplant. {name} bekommt eine E-Mail mit der Kalenderdatei.",
         "note": "Das hat die anfragende Person für die Ortsgruppe geschrieben. Piloten sehen nur, was du in die Nachricht für die Piloten schreibst.",
         "stale": "Diese Anfrage wartet nicht mehr: Sie wurde zurückgezogen oder es wurde schon entschieden. Schließe die Ansicht, um zu sehen, was passiert ist."
       },
