@@ -99,9 +99,10 @@ the operational rules.
   only syncs tabs, selection, the chat badge and `hidden` (thread, keyboard, wide viewport).
   The plugin writes `--cap-native-navigation-bottom`; `pb-tabbar` and the Toaster fall back to
   the web expression when it is unset. A pre-paint script sets `<html data-shell="ios">`.
-- **Offline shell.** Serwist (`src/app/sw.ts`, served by `src/app/serwist/[path]/route.ts`,
-  prerendered) precaches `/_next/static` and `/~offline` and keeps member and flow documents
-  and RSC payloads NetworkFirst. Non-GET, prefetches, `/api`, `/admin`, `/serwist`,
+- **Offline shell.** Serwist (`src/app/sw.ts`, bundled after `next build` by
+  `scripts/build-service-worker.mjs` into `public/serwist/`, so the server never runs esbuild)
+  precaches `/_next/static` and `/~offline` and keeps member and flow documents and RSC
+  payloads NetworkFirst. Non-GET, prefetches, `/api`, `/admin`, `/serwist`,
   `/.well-known` and `/monitoring` never reach the worker. Runtime caches are wiped on every
   sign-out (`finishSignOut`) and whenever `/sign-in` mounts, so a second person on the device
   never sees the first one's pages. iOS needs `WKAppBoundDomains` +
