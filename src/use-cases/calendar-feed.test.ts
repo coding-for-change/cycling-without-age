@@ -67,15 +67,9 @@ const rider = (id: string, firstName: string, over = {}) => ({
   passenger: { id, firstName, ...noPickup, ...over },
 });
 
-const CHAPTER = { chapterId: "chapter-muenchen" };
-const SELF = {
-  id: "passenger-1",
-  userId: "user-1",
-  firstName: "Jakob",
-  ...CHAPTER,
-};
-const ERNA = { id: "passenger-2", userId: null, firstName: "Erna", ...CHAPTER };
-const HANS = { id: "passenger-3", userId: null, firstName: "Hans", ...CHAPTER };
+const SELF = { id: "passenger-1", userId: "user-1", firstName: "Jakob" };
+const ERNA = { id: "passenger-2", userId: null, firstName: "Erna" };
+const HANS = { id: "passenger-3", userId: null, firstName: "Hans" };
 
 const lines = (ics: string | null) =>
   (ics ?? "").replace(/\r\n /g, "").split("\r\n");
@@ -160,24 +154,6 @@ describe("renderCalendarFeed", () => {
     expect(feedRides).toHaveBeenCalledWith(
       "user-1",
       { pilotChapterIds: [], passengerIds: ["passenger-1"] },
-      expect.any(Date),
-      expect.any(Date),
-      NOW,
-    );
-  });
-
-  it("drops the riders of a chapter the reader has left", async () => {
-    managedBy.mockResolvedValue([
-      SELF,
-      { ...ERNA, chapterId: "chapter-koeln" },
-    ]);
-    await renderCalendarFeed("token", NOW);
-    expect(feedRides).toHaveBeenCalledWith(
-      "user-1",
-      expect.objectContaining({
-        pilotChapterIds: ["chapter-muenchen", "chapter-hamburg"],
-        passengerIds: ["passenger-1"],
-      }),
       expect.any(Date),
       expect.any(Date),
       NOW,

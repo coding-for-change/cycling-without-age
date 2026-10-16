@@ -71,17 +71,12 @@ async function audienceOf(userId: string): Promise<Audience> {
   ]);
   const pilots = memberships.some(({ roles }) => roles.includes("pilot"));
   const others = passengers.othersOf(managed);
-  const chapterIds = memberships.map(({ chapterId }) => chapterId);
   return {
-    pilotChapterIds: pilots ? chapterIds : [],
-    // A rider row and its bookings outlive the account's membership, so only
-    // riders of chapters the reader still belongs to reach the feed.
+    pilotChapterIds: pilots
+      ? memberships.map(({ chapterId }) => chapterId)
+      : [],
     passengerIds: [
-      ...new Set(
-        [...managed, ...(own ? [own] : [])]
-          .filter(({ chapterId }) => chapterIds.includes(chapterId))
-          .map(({ id }) => id),
-      ),
+      ...new Set([...managed, ...(own ? [own] : [])].map(({ id }) => id)),
     ],
     named: others.length
       ? new Map(
