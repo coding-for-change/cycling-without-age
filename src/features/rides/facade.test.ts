@@ -26,6 +26,7 @@ jest.mock("@/lib/prisma", () => {
     },
     rideRosterEntry: {
       findMany: jest.fn(),
+      count: jest.fn(),
       create: jest.fn(),
       createMany: jest.fn(),
       updateMany: jest.fn(),
@@ -85,6 +86,7 @@ const db = prisma as unknown as {
   };
   rideRosterEntry: {
     findMany: jest.Mock;
+    count: jest.Mock;
     create: jest.Mock;
     createMany: jest.Mock;
     updateMany: jest.Mock;
@@ -3069,5 +3071,46 @@ describe("booking seats on an announced event", () => {
     );
     expect(args.select.roster).toBeUndefined();
     expect(args.select.assignments).toBeUndefined();
+  });
+});
+
+describe("ridersBookedBetween", () => {
+  const window = {
+    startsAt: new Date("2026-10-08T08:00:00Z"),
+    endsAt: new Date("2026-10-08T09:00:00Z"),
+  };
+
+  it("finds nobody booked for no riders, without asking", async () => {
+    await expect(rides.ridersBookedBetween([], window)).resolves.toBe(false);
+    expect(db.rideRosterEntry.count).not.toHaveBeenCalled();
+  });
+
+  it("finds a rider booked on a single overlapping ride", async () => {
+    db.rideRosterEntry.count.mockResolvedValue(1);
+    await expect(
+      rides.ridersBookedBetween(["mother", "father"], window),
+    ).resolves.toBe(true);
+  });
+
+  it("finds nobody booked when no ride overlaps", async () => {
+    db.rideRosterEntry.count.mockResolvedValue(0);
+    await expect(rides.ridersBookedBetween(["mother"], window)).resolves.toBe(
+      false,
+    );
+  });
+
+  it("counts only rides that overlap the window and were not cancelled", async () => {
+    db.rideRosterEntry.count.mockResolvedValue(0);
+    await rides.ridersBookedBetween(["mother", "father"], window);
+    expect(db.rideRosterEntry.count).toHaveBeenCalledWith({
+      where: {
+        passengerId: { in: ["mother", "father"] },
+        ride: {
+          status: { not: "cancelled" },
+          startsAt: { lt: window.endsAt },
+          endsAt: { gt: window.startsAt },
+        },
+      },
+    });
   });
 });
