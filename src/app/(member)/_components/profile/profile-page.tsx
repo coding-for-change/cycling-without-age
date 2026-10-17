@@ -21,7 +21,7 @@ import {
   ProfileView,
 } from "@/features/person-profiles/components/profile-view";
 import { requirePerspective, type Session } from "@/lib/auth-guards";
-import { avatarSeed, avatarSvg } from "@/lib/avatar";
+import { avatarSvg, seedOf } from "@/lib/avatar";
 import { resolveLocale, toIsoDateUtc } from "@/lib/format";
 import { getDictionary, getLocale, type Locale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
@@ -283,7 +283,11 @@ async function ManagedRiderDetails({
   );
 }
 
-async function ManagedRiders({
+function BareSection({ children }: { title: string; children: ReactNode }) {
+  return <div className="grid gap-3">{children}</div>;
+}
+
+export async function ManagedRiders({
   session,
   base,
   title,
@@ -291,6 +295,7 @@ async function ManagedRiders({
   language,
   mode,
   add,
+  bare = false,
 }: {
   session: Session;
   base: string;
@@ -299,7 +304,10 @@ async function ManagedRiders({
   language: Locale;
   mode: "link" | "list";
   add: ReactNode;
+  /** Without its own heading, where the surrounding section already has one. */
+  bare?: boolean;
 }) {
+  const Section = bare ? BareSection : ProfileSection;
   const riders = (
     await passengers.listPassengersManagedBy(session.user.id)
   ).filter((rider) => rider.userId !== session.user.id);
@@ -307,7 +315,7 @@ async function ManagedRiders({
 
   if (mode === "link" && riders.length > 0)
     return (
-      <ProfileSection title={title}>
+      <Section title={title}>
         <Link
           href={`${base}/people`}
           className="flex min-h-13 items-center gap-3 rounded-2xl px-3 py-2 outline-none transition-colors hover:bg-canvas-deep focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:transition-none"
@@ -331,7 +339,7 @@ async function ManagedRiders({
             className="size-4 text-ink-soft"
           />
         </Link>
-      </ProfileSection>
+      </Section>
     );
 
   const subjects: SubjectRef[] = riders.map((rider) =>
@@ -343,12 +351,10 @@ async function ManagedRiders({
     personProfiles.photoFileIdsOf(subjects),
     profile.getProfiles(riders.flatMap((rider) => rider.userId ?? [])),
   ]);
-  const emailOf = new Map(
-    accounts.map((account) => [account.id, account.email]),
-  );
+  const accountOf = new Map(accounts.map((account) => [account.id, account]));
 
   return (
-    <ProfileSection
+    <Section
       title={
         mode === "list"
           ? formatMessage(countLabel, { count: riders.length }, language)
@@ -366,8 +372,8 @@ async function ManagedRiders({
               >
                 <PersonAvatar
                   svg={avatarSvg(
-                    rider.userId && emailOf.has(rider.userId)
-                      ? avatarSeed(emailOf.get(rider.userId) as string)
+                    rider.userId && accountOf.has(rider.userId)
+                      ? seedOf(accountOf.get(rider.userId)!)
                       : `passenger:${rider.id}`,
                   )}
                   photoUrl={photoUrl(photos.get(slug) ?? null)}
@@ -386,6 +392,6 @@ async function ManagedRiders({
         })}
       </ul>
       {add}
-    </ProfileSection>
+    </Section>
   );
 }

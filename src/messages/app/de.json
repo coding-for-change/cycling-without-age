@@ -1913,9 +1913,14 @@
       "cancelled": "Diese Ausfahrt fällt aus",
       "cancelledBecause": "Grund: {reason}",
       "chapter": "Ortsgruppe",
-      "completed": "Diese Ausfahrt ist vorbei. Schön, dass Sie dabei waren!",
       "destination": "Ziel",
       "email": "E-Mail an {name}",
+      "memory": {
+        "outside": "{duration} an der frischen Luft",
+        "slogan": "Recht auf Wind im Haar",
+        "title": "Eine schöne Erinnerung",
+        "withPilots": "Gefahren mit {names}"
+      },
       "noPilot": "Wir suchen noch einen Piloten. Sobald sich jemand einträgt, sehen Sie hier, wer Sie fährt.",
       "noPlace": "Der Ort steht noch nicht fest.",
       "openInMaps": "In Karten öffnen",
@@ -1923,6 +1928,18 @@
       "pickup": "Abholung",
       "pilots": "{count, plural, one {Ihr Pilot} other {Ihre Piloten}}",
       "running": "Ihre Ausfahrt läuft gerade.",
+      "speak": {
+        "cancelled": "{title} am {date} fällt aus.",
+        "destination": "Ziel: {place}.",
+        "listen": "Vorlesen",
+        "noPilot": "Ein Pilot wird noch gesucht.",
+        "past": "{title} war am {date}. Sie waren {duration} unterwegs.",
+        "pastPilot": "Gefahren sind Sie mit {names}.",
+        "pickup": "Abholung: {place}.",
+        "pilot": "{count, plural, one {Ihr Pilot ist {names}.} other {Ihre Piloten sind {names}.}}",
+        "stop": "Vorlesen anhalten",
+        "upcoming": "{title}, am {date} um {time}."
+      },
       "story": {
         "cancelled": "{who, select, you {Sie haben} other {{chapter} hat}} die Ausfahrt abgesagt",
         "change": "{from} → {to}",
@@ -1960,7 +1977,72 @@
       "pilotNeeded": "Pilot wird noch gesucht",
       "retry": "Erneut versuchen",
       "showEarlier": "Frühere Ausfahrten anzeigen",
-      "upcoming": "Demnächst"
+      "upcoming": "Demnächst",
+      "year": {
+        "favourite": "Lieblingsort: {place}",
+        "outside": "{duration} an der frischen Luft",
+        "pilots": "{count, plural, one {# Pilot} other {# Piloten}}",
+        "rides": "{count, plural, one {# Ausfahrt} other {# Ausfahrten}}",
+        "title": "Ihr Jahr {year} auf der Rikscha"
+      }
+    },
+    "profile": {
+      "title": "Ihr Profil",
+      "intro": "Machen Sie die App zu Ihrer – und erzählen Sie Ihrem Piloten ein wenig von sich.",
+      "account": {
+        "age": "{age, plural, one {# Jahr} other {# Jahre}}",
+        "contactHint": "Damit melden Sie sich an – geändert werden sie über die Anmeldung.",
+        "email": "E-Mail",
+        "firstName": "Vorname",
+        "firstNamePlaceholder": "Ihr Vorname",
+        "hint": "Wer Sie sind und wie wir Sie erreichen.",
+        "lastName": "Nachname",
+        "lastNamePlaceholder": "Ihr Nachname",
+        "phone": "Telefon",
+        "title": "Ihre Angaben"
+      },
+      "about": {
+        "title": "Über mich",
+        "dictate": {
+          "add": "In meinen Text übernehmen",
+          "allow": "Verstanden – los geht’s",
+          "denied": "Das Mikrofon wurde nicht erlaubt. Sie können es in den Einstellungen Ihres Browsers freigeben.",
+          "discard": "Verwerfen",
+          "failed": "Das hat nicht geklappt. Versuchen Sie es noch einmal oder tippen Sie.",
+          "heard": "Verstanden:",
+          "listening": "Ich höre zu …",
+          "privacy": "Ihr Browser schickt die Aufnahme an Google oder Apple, um sie in Text umzuwandeln. Bei uns wird erst etwas gespeichert, wenn Sie den Text übernehmen.",
+          "start": "Erzählen statt tippen",
+          "stop": "Fertig"
+        }
+      },
+      "avatar": {
+        "current": "Ihre Figur jetzt",
+        "failed": "Das hat nicht geklappt. Bitte noch einmal.",
+        "hint": "So sehen Sie Piloten und Ihre Ortsgruppe. Wählen Sie die Figur, die zu Ihnen passt.",
+        "more": "Andere zeigen",
+        "pick": "Diese Figur wählen",
+        "reset": "Zurück zur ersten",
+        "saved": "Ihre neue Figur ist da.",
+        "title": "Ihre Figur",
+        "photoFirst": "Ihr Foto steht vorn. Die Figur erscheint, wo kein Foto gezeigt wird."
+      },
+      "display": {
+        "motion": "Weniger Bewegung",
+        "motionHint": "Seiten wechseln ohne Gleiten und Überblenden, Figuren bleiben ruhig.",
+        "sample": "Recht auf Wind im Haar",
+        "sizes": {
+          "large": "Groß",
+          "normal": "Normal",
+          "xLarge": "Sehr groß"
+        },
+        "textSize": "Schriftgröße",
+        "textSizeHint": "Größere Buchstaben auf allen Seiten, die Sie als Fahrgast sehen."
+      },
+      "more": {
+        "hint": "Sprache, Benachrichtigungen, Kalender, Passkeys, Hilfe und Abmelden.",
+        "title": "Einstellungen & Hilfe"
+      }
     }
   },
   "passkey": {

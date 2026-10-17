@@ -12,15 +12,21 @@ import { nextPerspective } from "../nav";
 
 const DOUBLE_TAP_MS = 250;
 
+/**
+ * One tap opens the account — a page for passengers (`href`), the sheet for
+ * everyone else; a double tap rotates to the next perspective.
+ */
 export function AvatarButton({
   data,
   activePerspective,
   strings,
+  href = null,
   className,
 }: {
   data: AccountData;
   activePerspective: Perspective;
   strings: { account: string; switchHint: string };
+  href?: string | null;
   className?: string;
 }) {
   const router = useRouter();
@@ -42,9 +48,14 @@ export function AvatarButton({
     [],
   );
 
+  const openAccount = () => {
+    if (href) router.push(href, { transitionTypes: ["tab"] });
+    else setOpen(true);
+  };
+
   const handleClick = () => {
     if (!rotateTo) {
-      setOpen(true);
+      openAccount();
       return;
     }
 
@@ -58,7 +69,7 @@ export function AvatarButton({
 
     timer.current = setTimeout(() => {
       timer.current = null;
-      setOpen(true);
+      openAccount();
     }, DOUBLE_TAP_MS);
   };
 
@@ -83,12 +94,14 @@ export function AvatarButton({
           photoUrl={data.profile.photoUrl}
         />
       </button>
-      <AccountSurface
-        data={data}
-        activePerspective={activePerspective}
-        open={open}
-        onOpenChange={setOpen}
-      />
+      {href ? null : (
+        <AccountSurface
+          data={data}
+          activePerspective={activePerspective}
+          open={open}
+          onOpenChange={setOpen}
+        />
+      )}
     </>
   );
 }

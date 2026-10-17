@@ -1913,9 +1913,14 @@
       "cancelled": "Turen er aflyst",
       "cancelledBecause": "Årsag: {reason}",
       "chapter": "Lokalafdeling",
-      "completed": "Turen er slut. Tak fordi du kørte med!",
       "destination": "Destination",
       "email": "Skriv til {name}",
+      "memory": {
+        "outside": "{duration} i det fri",
+        "slogan": "Ret til vind i håret",
+        "title": "Et dejligt minde",
+        "withPilots": "Kørt med {names}"
+      },
       "noPilot": "Vi leder stadig efter en pilot. Så snart nogen melder sig, kan du se her, hvem der kører dig.",
       "noPlace": "Stedet er ikke fastlagt endnu.",
       "openInMaps": "Åbn i Kort",
@@ -1923,6 +1928,18 @@
       "pickup": "Afhentning",
       "pilots": "{count, plural, one {Din pilot} other {Dine piloter}}",
       "running": "Din tur er i gang lige nu.",
+      "speak": {
+        "cancelled": "{title} {date} er aflyst.",
+        "destination": "Destination: {place}.",
+        "listen": "Læs højt",
+        "noPilot": "Vi leder stadig efter en pilot.",
+        "past": "{title} var {date}. Du var ude i {duration}.",
+        "pastPilot": "Du kørte med {names}.",
+        "pickup": "Afhentning: {place}.",
+        "pilot": "{count, plural, one {Din pilot er {names}.} other {Dine piloter er {names}.}}",
+        "stop": "Stop oplæsning",
+        "upcoming": "{title}, {date} kl. {time}."
+      },
       "story": {
         "cancelled": "{who, select, you {Du} other {{chapter}}} aflyste turen",
         "change": "{from} → {to}",
@@ -1960,7 +1977,72 @@
       "pilotNeeded": "Vi mangler stadig en pilot",
       "retry": "Prøv igen",
       "showEarlier": "Vis tidligere ture",
-      "upcoming": "Kommende"
+      "upcoming": "Kommende",
+      "year": {
+        "favourite": "Yndlingssted: {place}",
+        "outside": "{duration} i det fri",
+        "pilots": "{count, plural, one {# pilot} other {# piloter}}",
+        "rides": "{count, plural, one {# tur} other {# ture}}",
+        "title": "Dit {year} på rickshaw"
+      }
+    },
+    "profile": {
+      "title": "Din profil",
+      "intro": "Gør appen til din, og fortæl din pilot lidt om dig selv.",
+      "account": {
+        "age": "{age, plural, one {# år} other {# år}}",
+        "contactHint": "Du logger ind med dem, så de ændres via login.",
+        "email": "E-mail",
+        "firstName": "Fornavn",
+        "firstNamePlaceholder": "Dit fornavn",
+        "hint": "Hvem du er, og hvordan vi når dig.",
+        "lastName": "Efternavn",
+        "lastNamePlaceholder": "Dit efternavn",
+        "phone": "Telefon",
+        "title": "Dine oplysninger"
+      },
+      "about": {
+        "title": "Om mig",
+        "dictate": {
+          "add": "Tilføj til min tekst",
+          "allow": "Forstået – start",
+          "denied": "Mikrofonen blev ikke tilladt. Du kan give adgang i din browsers indstillinger.",
+          "discard": "Kassér",
+          "failed": "Det virkede ikke. Prøv igen, eller skriv i stedet.",
+          "heard": "Hørt:",
+          "listening": "Jeg lytter …",
+          "privacy": "Din browser sender optagelsen til Google eller Apple for at gøre den til tekst. Vi gemmer først noget, når du tilføjer teksten.",
+          "start": "Fortæl i stedet",
+          "stop": "Færdig"
+        }
+      },
+      "avatar": {
+        "current": "Din figur nu",
+        "failed": "Det virkede ikke. Prøv igen.",
+        "hint": "Sådan ser piloter og din lokalafdeling dig. Vælg den, der ligner dig.",
+        "more": "Vis andre",
+        "pick": "Vælg denne figur",
+        "reset": "Tilbage til den første",
+        "saved": "Din nye figur er på.",
+        "title": "Din figur",
+        "photoFirst": "Dit billede kommer først. Figuren vises, hvor der ikke vises et billede."
+      },
+      "display": {
+        "motion": "Mindre bevægelse",
+        "motionHint": "Sider skifter uden at glide eller tone ind, og figurer står stille.",
+        "sample": "Ret til vind i håret",
+        "sizes": {
+          "large": "Stor",
+          "normal": "Normal",
+          "xLarge": "Ekstra stor"
+        },
+        "textSize": "Tekststørrelse",
+        "textSizeHint": "Større bogstaver på alle sider, du ser som passager."
+      },
+      "more": {
+        "hint": "Sprog, notifikationer, kalender, passkeys, hjælp og log ud.",
+        "title": "Indstillinger & hjælp"
+      }
     }
   },
   "passkey": {

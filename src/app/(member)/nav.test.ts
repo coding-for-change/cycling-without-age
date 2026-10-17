@@ -7,6 +7,7 @@ import {
   isDrillDown,
   memberNav,
   nextPerspective,
+  accountPage,
   primaryAction,
   resolveMemberNav,
 } from "./nav";
@@ -54,9 +55,26 @@ describe("memberNav", () => {
     );
   });
 
-  it("shows both perspectives the same four tabs", () => {
+  it("keeps the profile a tab for passengers and a page under home for pilots", () => {
+    expect(memberNav("pilot").find((i) => i.key === "profile")).toMatchObject({
+      tab: false,
+      parent: "home",
+      href: "/pilot/profile",
+    });
+    expect(
+      memberNav("passenger").find((i) => i.key === "profile"),
+    ).toMatchObject({ tab: true, href: "/passenger/profile" });
+  });
+
+  it("sends passengers to their profile page and everyone else to the sheet", () => {
+    expect(accountPage("passenger")).toBe("/passenger/profile");
+    expect(accountPage("pilot")).toBeNull();
+    expect(accountPage("admin")).toBeNull();
+  });
+
+  it("gives pilots four tabs and passengers their profile as a fifth", () => {
     expect(tabs("pilot")).toEqual(["home", "rides", "calendar", "chat"]);
-    expect(tabs("passenger")).toEqual(tabs("pilot"));
+    expect(tabs("passenger")).toEqual([...tabs("pilot"), "profile"]);
   });
 });
 
@@ -70,6 +88,7 @@ describe("the native tab bar", () => {
       "bicycle",
       "calendar",
       "bubble.left.and.bubble.right.fill",
+      "person.crop.circle.fill",
     ]);
     expect(new Set(symbols).size).toBe(symbols.length);
   });
@@ -80,6 +99,7 @@ describe("the native tab bar", () => {
     expect(activeTabKey("/passenger/chat/abc123", items)).toBe("chat");
     expect(isConversationPath("/passenger/rides/ride-42")).toBe(false);
     expect(activeTabKey("/passenger/rides/ride-42", items)).toBe("rides");
+    expect(activeTabKey("/passenger/profile", items)).toBe("profile");
   });
 });
 

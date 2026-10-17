@@ -154,7 +154,7 @@ export function ProfileEditor({
   );
 }
 
-function AgeToggle({
+export function AgeToggle({
   age,
   hidden,
   save,

@@ -16,6 +16,7 @@ import type { AccountData } from "@/components/account/types";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
+  accountPage,
   activeItem,
   isConversationPath,
   type MemberPerspective,
@@ -75,6 +76,7 @@ export function MemberTopBar({
           data={account}
           activePerspective={activePerspective}
           strings={strings}
+          href={accountPage(activePerspective)}
           className="-ml-1 md:hidden"
         />
       ) : (

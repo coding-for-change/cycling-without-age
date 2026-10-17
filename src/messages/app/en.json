@@ -1913,9 +1913,14 @@
       "cancelled": "This ride is off",
       "cancelledBecause": "Reason: {reason}",
       "chapter": "Chapter",
-      "completed": "This ride is done. Thanks for riding with us!",
       "destination": "Destination",
       "email": "Email {name}",
+      "memory": {
+        "outside": "{duration} outside",
+        "slogan": "The right to wind in your hair",
+        "title": "A lovely memory",
+        "withPilots": "Ridden with {names}"
+      },
       "noPilot": "We're still finding a pilot. As soon as someone signs up, you'll see here who is riding with you.",
       "noPlace": "The place is still being decided.",
       "openInMaps": "Open in Maps",
@@ -1923,6 +1928,18 @@
       "pickup": "Pick-up",
       "pilots": "{count, plural, one {Your pilot} other {Your pilots}}",
       "running": "Your ride is on right now.",
+      "speak": {
+        "cancelled": "{title} on {date} is off.",
+        "destination": "Destination: {place}.",
+        "listen": "Read aloud",
+        "noPilot": "We're still finding a pilot.",
+        "past": "{title} was on {date}. You were out for {duration}.",
+        "pastPilot": "You rode with {names}.",
+        "pickup": "Pick-up: {place}.",
+        "pilot": "{count, plural, one {Your pilot is {names}.} other {Your pilots are {names}.}}",
+        "stop": "Stop reading",
+        "upcoming": "{title}, on {date} at {time}."
+      },
       "story": {
         "cancelled": "{who, select, you {You} other {{chapter}}} cancelled the ride",
         "change": "{from} → {to}",
@@ -1960,7 +1977,72 @@
       "pilotNeeded": "Pilot still to be found",
       "retry": "Try again",
       "showEarlier": "Show earlier rides",
-      "upcoming": "Coming up"
+      "upcoming": "Coming up",
+      "year": {
+        "favourite": "Favourite place: {place}",
+        "outside": "{duration} outside",
+        "pilots": "{count, plural, one {# pilot} other {# pilots}}",
+        "rides": "{count, plural, one {# ride} other {# rides}}",
+        "title": "Your {year} on the trishaw"
+      }
+    },
+    "profile": {
+      "title": "Your profile",
+      "intro": "Make the app yours, and tell your pilot a little about yourself.",
+      "account": {
+        "age": "{age, plural, one {# year} other {# years}}",
+        "contactHint": "You sign in with these, so they change through signing in.",
+        "email": "Email",
+        "firstName": "First name",
+        "firstNamePlaceholder": "Your first name",
+        "hint": "Who you are, and how we reach you.",
+        "lastName": "Last name",
+        "lastNamePlaceholder": "Your last name",
+        "phone": "Phone",
+        "title": "Your details"
+      },
+      "about": {
+        "title": "About me",
+        "dictate": {
+          "add": "Add to my text",
+          "allow": "Understood — start",
+          "denied": "The microphone was not allowed. You can allow it in your browser settings.",
+          "discard": "Discard",
+          "failed": "That didn't work. Please try again, or type instead.",
+          "heard": "Heard:",
+          "listening": "Listening …",
+          "privacy": "Your browser sends the recording to Google or Apple to turn it into text. Nothing is saved here until you add it.",
+          "start": "Tell it instead",
+          "stop": "Done"
+        }
+      },
+      "avatar": {
+        "current": "Your character now",
+        "failed": "That didn't work. Try again.",
+        "hint": "This is how pilots and your chapter see you. Pick the one that feels like you.",
+        "more": "Show others",
+        "pick": "Choose this character",
+        "reset": "Back to the first one",
+        "saved": "Your new character is on.",
+        "title": "Your character",
+        "photoFirst": "Your photo comes first. The character shows wherever no photo is shown."
+      },
+      "display": {
+        "motion": "Less motion",
+        "motionHint": "Pages change without sliding or fading, and characters hold still.",
+        "sample": "The right to wind in your hair",
+        "sizes": {
+          "large": "Large",
+          "normal": "Normal",
+          "xLarge": "Extra large"
+        },
+        "textSize": "Text size",
+        "textSizeHint": "Bigger letters on every page you see as a passenger."
+      },
+      "more": {
+        "hint": "Language, notifications, calendar, passkeys, help and signing out.",
+        "title": "Settings & help"
+      }
     }
   },
   "passkey": {
