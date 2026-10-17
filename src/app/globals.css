@@ -266,6 +266,12 @@
   --text-2sm--line-height: calc(1.25 / 0.8125);
 }
 
+/* The brand's signature shape: a mint block with a sharp diagonal cut
+   (docs-internal/BRAND.md § Motifs). Decorative only. */
+@utility diagonal-edge {
+  clip-path: polygon(0 0, 100% 0, 100% 55%, 0 100%);
+}
+
 @utility pt-safe {
   padding-top: env(safe-area-inset-top);
 }

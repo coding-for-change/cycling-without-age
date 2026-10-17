@@ -11,6 +11,7 @@ export type {
   TrishawRideRow,
 } from "./facade";
 export * from "./schemas";
+export type { YearInReview } from "./year-in-review";
 export type {
   PassengerStoryEntry,
   StoryActor,

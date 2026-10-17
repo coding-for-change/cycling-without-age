@@ -169,6 +169,7 @@ describe("getRideWithStoryForPassengers", () => {
       id: true,
       name: true,
       email: true,
+      avatarSeed: true,
       phoneNumber: true,
       members: { select: { organizationId: true } },
     });
@@ -210,5 +211,36 @@ describe("getRideWithStoryForPassengers", () => {
       rides.getRideWithStoryForPassengers("r-1", [], "user-1"),
     ).resolves.toBeNull();
     expect(findFirst).not.toHaveBeenCalled();
+  });
+});
+
+describe("passengerYearInReview", () => {
+  it("reads only the riders' own rides that took place this year", async () => {
+    findMany.mockResolvedValue([
+      {
+        startsAt: new Date("2026-03-01T10:00:00Z"),
+        endsAt: new Date("2026-03-01T12:00:00Z"),
+        locationName: "Sonnenhof",
+        assignments: [{ userId: "u-max" }],
+      },
+    ]);
+    const review = await rides.passengerYearInReview(MINE, now);
+    const query = findMany.mock.calls[0][0];
+    expect(query.where).toEqual({
+      roster: { some: { passengerId: { in: MINE } } },
+      status: { not: "cancelled" },
+      startsAt: {
+        gte: new Date("2026-01-01T00:00:00Z"),
+        lt: new Date("2027-01-01T00:00:00Z"),
+      },
+      endsAt: { lte: now },
+    });
+    expect(query.select.assignments.select).toEqual({ userId: true });
+    expect(review).toMatchObject({ year: 2026, rides: 1, pilots: 1 });
+  });
+
+  it("asks nothing for someone with no riders", async () => {
+    await expect(rides.passengerYearInReview([], now)).resolves.toBeNull();
+    expect(findMany).not.toHaveBeenCalled();
   });
 });

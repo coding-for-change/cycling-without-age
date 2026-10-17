@@ -21,6 +21,7 @@ jest.mock("@/features/rides", () => ({
   rides: {
     listPassengerRidesPage: jest.fn(),
     getRideWithStoryForPassengers: jest.fn(),
+    passengerYearInReview: jest.fn(async () => null),
   },
 }));
 
@@ -80,7 +81,13 @@ it("opens with both directions and says how many riders there are", async () => 
   expect(listPage).toHaveBeenCalledWith(["p-self", "p-mum"], {
     direction: "past",
   });
-  expect(overview).toEqual({ upcoming: EMPTY, past: EMPTY, riderCount: 2 });
+  expect(overview).toEqual({
+    upcoming: EMPTY,
+    past: EMPTY,
+    year: null,
+    riderCount: 2,
+  });
+  expect(rides.passengerYearInReview).toHaveBeenCalledWith(["p-self", "p-mum"]);
 });
 
 it("shows a ride with its story to someone whose rider is on it", async () => {

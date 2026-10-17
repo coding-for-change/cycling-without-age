@@ -50,6 +50,7 @@ import {
   findLatestRideForPilot,
   findPastRidesForList,
   findPastRidesForPassengers,
+  findRiddenRidesForPassengers,
   findReservations,
   findUpcomingRidesForList,
   findUpcomingRidesForPassengers,
@@ -105,6 +106,7 @@ import {
 } from "./report";
 import type { ReportScope } from "./report-zones";
 import { storyForPassengers } from "./passenger-story";
+import { yearInReview } from "./year-in-review";
 
 export type {
   FeedAudience,
@@ -1115,6 +1117,30 @@ export async function listPassengerRidesPage(
     nextCursor:
       found.length > limit ? encodeCursor(page[page.length - 1]) : null,
   };
+}
+
+/** These riders' calendar year on the trishaw so far, or `null` before their first ride. */
+export async function passengerYearInReview(
+  passengerIds: string[],
+  now = new Date(),
+) {
+  if (!passengerIds.length) return null;
+  const year = now.getUTCFullYear();
+  const rides = await findRiddenRidesForPassengers(
+    passengerIds,
+    new Date(Date.UTC(year, 0, 1)),
+    new Date(Date.UTC(year + 1, 0, 1)),
+    now,
+  );
+  return yearInReview(
+    rides.map((ride) => ({
+      startsAt: ride.startsAt,
+      endsAt: ride.endsAt,
+      locationName: ride.locationName,
+      pilotIds: ride.assignments.map(({ userId }) => userId),
+    })),
+    year,
+  );
 }
 
 /**

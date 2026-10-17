@@ -34,11 +34,12 @@ export async function passengerRidesPage(
 
 export async function passengerRidesOverview(userId: string) {
   const riderIds = await passengerRiderIds(userId);
-  const [upcoming, past] = await Promise.all([
+  const [upcoming, past, year] = await Promise.all([
     rides.listPassengerRidesPage(riderIds, { direction: "upcoming" }),
     rides.listPassengerRidesPage(riderIds, { direction: "past" }),
+    rides.passengerYearInReview(riderIds),
   ]);
-  return { upcoming, past, riderCount: riderIds.length };
+  return { upcoming, past, year, riderCount: riderIds.length };
 }
 
 export async function passengerRideView(userId: string, rideId: string) {

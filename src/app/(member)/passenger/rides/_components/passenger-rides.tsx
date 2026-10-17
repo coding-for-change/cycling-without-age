@@ -21,6 +21,7 @@ const listStrings = (dict: Dictionary): PassengerRideListStrings => ({
   via: dict.calendar.via,
   models: dict.calendar.models,
   statuses: dict.calendar.statuses,
+  year: dict.passenger.rides.year,
 });
 
 export async function PassengerRides() {
@@ -51,6 +52,7 @@ export async function PassengerRides() {
         <PassengerRideList
           upcoming={toPassengerListPage(overview.upcoming)}
           past={toPassengerListPage(overview.past)}
+          year={overview.year}
           showRiders={overview.riderCount > 1}
           now={new Date()}
           locale={resolveLocale(head.get("accept-language"))}

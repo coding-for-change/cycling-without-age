@@ -475,3 +475,27 @@ export function formatDuration(seconds: number, locale: Locale): string {
     ? unit(hours, "hour")
     : `${unit(hours, "hour")} ${unit(rest, "minute")}`;
 }
+
+/**
+ * The same length written out, for sentences and for reading aloud: "2 hours",
+ * "1 Stunde 30 Minuten". Rounded to the nearest five minutes past the first
+ * hour — a memory, not a timesheet.
+ */
+export function formatDurationLong(seconds: number, locale: Locale): string {
+  const exact = Math.max(1, Math.round(seconds / 60));
+  const minutes = exact < 60 ? exact : Math.round(exact / 5) * 5;
+  const unit = (value: number, unit: "hour" | "minute") =>
+    numberFormatter(locale, {
+      style: "unit",
+      unit,
+      unitDisplay: "long",
+      maximumFractionDigits: 0,
+    }).format(value);
+
+  if (minutes < 60) return unit(minutes, "minute");
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest === 0
+    ? unit(hours, "hour")
+    : `${unit(hours, "hour")} ${unit(rest, "minute")}`;
+}

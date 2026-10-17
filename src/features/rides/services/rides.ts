@@ -64,7 +64,15 @@ const calendarSelect = {
   assignments: {
     select: {
       role: true,
-      user: { select: { id: true, name: true, email: true, image: true } },
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatarSeed: true,
+          image: true,
+        },
+      },
     },
   },
   _count: { select: { roster: true } },
@@ -543,7 +551,15 @@ const detailSelect = {
       role: true,
       createdAt: true,
       assignedByUserId: true,
-      user: { select: { id: true, name: true, email: true, image: true } },
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatarSeed: true,
+          image: true,
+        },
+      },
     },
   },
   roster: {
@@ -561,7 +577,7 @@ const detailSelect = {
           managedByUserId: true,
           userId: true,
           ...pickupColumns,
-          user: { select: { email: true, ...pickupColumns } },
+          user: { select: { email: true, avatarSeed: true, ...pickupColumns } },
         },
       },
     },
@@ -647,7 +663,13 @@ const passengerRideSelect = (passengerIds: string[]) =>
       select: {
         role: true,
         user: {
-          select: { id: true, name: true, email: true, ...currentMembership },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarSeed: true,
+            ...currentMembership,
+          },
         },
       },
     },
@@ -706,6 +728,31 @@ export const findPastRidesForPassengers = (
     take,
   });
 
+/**
+ * The rides of a rider's year that took place: booked for one of these riders,
+ * not cancelled, over by now. Only what a year in review counts — no names.
+ */
+export const findRiddenRidesForPassengers = (
+  passengerIds: string[],
+  from: Date,
+  to: Date,
+  now: Date,
+) =>
+  prisma.ride.findMany({
+    where: {
+      ...bookedFor(passengerIds),
+      status: { not: "cancelled" },
+      startsAt: { gte: from, lt: to },
+      endsAt: { lte: now },
+    },
+    select: {
+      startsAt: true,
+      endsAt: true,
+      locationName: true,
+      assignments: { where: { role: "pilot" }, select: { userId: true } },
+    },
+  });
+
 const legSelect = (passengerIds: string[]) =>
   ({
     select: {
@@ -745,6 +792,7 @@ const passengerRideDetailSelect = (passengerIds: string[]) =>
             id: true,
             name: true,
             email: true,
+            avatarSeed: true,
             phoneNumber: true,
             ...currentMembership,
           },

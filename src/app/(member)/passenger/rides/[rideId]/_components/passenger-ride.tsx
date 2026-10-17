@@ -10,11 +10,11 @@ import {
   Flag,
   Mail,
   MapPin,
-  PartyPopper,
   Phone,
 } from "lucide-react";
 import { RichText } from "@/components/markdown";
 import { PersonAvatar } from "@/components/person-avatar";
+import { ReadAloud } from "@/components/read-aloud";
 import { Skeleton } from "@/components/ui/skeleton";
 import { coordsOf, PlaceValue } from "@/features/rides/components/place";
 import {
@@ -23,11 +23,14 @@ import {
   rideHeadline,
 } from "@/features/rides/components/ride-presentation";
 import { requirePerspective } from "@/lib/auth-guards";
-import { avatarSeed, avatarSvg } from "@/lib/avatar";
+import { avatarSvg, seedOf } from "@/lib/avatar";
 import { calendarDate } from "@/lib/calendar";
 import {
   formatDateTime,
+  formatDurationLong,
+  formatList,
   formatLongDateWithWeekday,
+  formatTime,
   formatTimeRange,
   resolveLocale,
   wordsLocale,
@@ -105,6 +108,59 @@ export async function PassengerRide({
     ride.destinationName ||
     ride.destinationAddress
   );
+  const date = formatLongDateWithWeekday(
+    calendarDate(ride.startsAt, zone),
+    notation,
+  );
+  const pilotNames = formatList(
+    pilots.map(({ user }) => user.name),
+    words,
+  );
+  const duration = formatDurationLong(
+    (ride.endsAt.getTime() - ride.startsAt.getTime()) / 1000,
+    words,
+  );
+  const spoken = [
+    cancelled
+      ? say(s.speak.cancelled, { title: headline, date })
+      : over
+        ? say(s.speak.past, { title: headline, date, duration })
+        : say(s.speak.upcoming, {
+            title: headline,
+            date,
+            time: formatTime(ride.startsAt, notation, zone),
+          }),
+    cancelled && ride.cancellationReasonCode
+      ? say(s.cancelledBecause, {
+          reason: dict.rides.reasons[ride.cancellationReasonCode],
+        })
+      : null,
+    !cancelled && !over && (ride.locationName || ride.locationAddress)
+      ? say(s.speak.pickup, {
+          place: (ride.locationName || ride.locationAddress) ?? "",
+        })
+      : null,
+    !cancelled &&
+    !over &&
+    functional &&
+    (ride.destinationName || ride.destinationAddress)
+      ? say(s.speak.destination, {
+          place: (ride.destinationName || ride.destinationAddress) ?? "",
+        })
+      : null,
+    cancelled
+      ? null
+      : pilots.length
+        ? over
+          ? say(s.speak.pastPilot, { names: pilotNames })
+          : say(s.speak.pilot, { count: pilots.length, names: pilotNames })
+        : over
+          ? null
+          : s.speak.noPilot,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const voice = notation.startsWith(language) ? notation : language;
 
   return (
     <>
@@ -166,6 +222,12 @@ export async function PassengerRide({
             {say(dict.rides.detail.zoneHint, { zone })}
           </span>
         </p>
+        <ReadAloud
+          text={spoken}
+          lang={voice}
+          labels={s.speak}
+          className="w-fit"
+        />
       </header>
 
       {cancelled ? (
@@ -192,10 +254,25 @@ export async function PassengerRide({
           tone="live"
         />
       ) : over ? (
-        <Notice
-          icon={PartyPopper}
-          title={s.completed}
-          tone="mint"
+        <MemoryCard
+          date={date}
+          title={s.memory.title}
+          outside={say(s.memory.outside, { duration })}
+          places={[
+            ride.locationName || ride.locationAddress,
+            functional ? ride.destinationName || ride.destinationAddress : null,
+          ].filter((place): place is string => Boolean(place))}
+          via={dict.calendar.via}
+          pilots={pilots.map(({ user }) => ({
+            id: user.id,
+            avatar: avatarSvg(seedOf(user)),
+          }))}
+          withPilots={
+            pilots.length
+              ? say(s.memory.withPilots, { names: pilotNames })
+              : null
+          }
+          slogan={s.memory.slogan}
         />
       ) : null}
 
@@ -272,7 +349,7 @@ export async function PassengerRide({
                   <li key={user.id}>
                     <PilotCard
                       name={user.name}
-                      avatar={avatarSvg(avatarSeed(user.email), true)}
+                      avatar={avatarSvg(seedOf(user), true)}
                       email={isPhoneTempEmail(user.email) ? null : user.email}
                       phone={user.phoneNumber}
                       call={say(s.call, { name: user.name })}
@@ -347,6 +424,62 @@ export async function PassengerRide({
         </aside>
       </div>
     </>
+  );
+}
+
+/**
+ * What is left of a ride once it is over: a postcard — the day, the time out
+ * in the open, where it went and who pedalled — on the brand's diagonal mint.
+ */
+function MemoryCard({
+  date,
+  title,
+  outside,
+  places,
+  via,
+  pilots,
+  withPilots,
+  slogan,
+}: {
+  date: string;
+  title: string;
+  outside: string;
+  places: string[];
+  via: string;
+  pilots: { id: string; avatar: string }[];
+  withPilots: string | null;
+  slogan: string;
+}) {
+  return (
+    <section className="relative overflow-hidden rounded-(--r-tile) bg-mint-tint p-5 md:p-6">
+      <div
+        aria-hidden
+        className="diagonal-edge absolute inset-x-0 top-0 h-28 bg-mint"
+      />
+      <div className="relative flex flex-col gap-4">
+        <p className="text-sm font-medium">{date}</p>
+        <h2 className="text-2xl md:text-3xl">{title}</h2>
+        <p className="text-lg">{outside}</p>
+        {places.length ? (
+          <p className="text-base">{places.join(` ${via} `)}</p>
+        ) : null}
+        {withPilots ? (
+          <div className="flex items-center gap-3">
+            <div className="flex -space-x-2">
+              {pilots.map((pilot) => (
+                <PersonAvatar
+                  key={pilot.id}
+                  svg={pilot.avatar}
+                  className="size-11 ring-2 ring-mint-tint"
+                />
+              ))}
+            </div>
+            <p className="text-base">{withPilots}</p>
+          </div>
+        ) : null}
+        <p className="font-display text-sm text-ink-soft">{slogan}</p>
+      </div>
+    </section>
   );
 }
 

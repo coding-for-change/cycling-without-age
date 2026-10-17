@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { addDays, calendarDate, dayKey } from "@/lib/calendar";
 import {
+  formatDurationLong,
   formatLongDateWithWeekday,
   formatTimeRange,
   type Locale,
@@ -22,6 +23,7 @@ import { formatMessage } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
 import { listMyRidesPageAction, type RideResult } from "../actions";
 import type { PassengerRideDirection } from "../schemas";
+import type { YearInReview } from "../year-in-review";
 import type {
   PassengerListPage,
   PassengerListRide,
@@ -50,11 +52,19 @@ export type PassengerRideListStrings = {
   via: string;
   models: Record<PassengerListRide["model"], string>;
   statuses: Record<PassengerListRide["status"], string>;
+  year: {
+    title: string;
+    rides: string;
+    outside: string;
+    pilots: string;
+    favourite: string;
+  };
 };
 
 type Props = {
   upcoming: PassengerListPage;
   past: PassengerListPage;
+  year: YearInReview | null;
   showRiders: boolean;
   now: Date;
   locale: Locale;
@@ -127,6 +137,7 @@ function usePages(
 export function PassengerRideList({
   upcoming: firstUpcoming,
   past: firstPast,
+  year,
   showRiders,
   now,
   locale,
@@ -241,6 +252,13 @@ export function PassengerRideList({
           >
             {strings.past}
           </h2>
+          {year ? (
+            <YearCard
+              year={year}
+              strings={strings.year}
+              words={words}
+            />
+          ) : null}
           {renderDays(past.rides, true)}
           <div aria-live="polite">
             {past.more && past.state === "idle" ? (
@@ -415,5 +433,56 @@ function RideRow({
         className="size-4 shrink-0 text-ink-faint"
       />
     </Link>
+  );
+}
+
+/**
+ * The year so far, told the way a postcard would: how often, how long out in
+ * the open, with how many pilots, and the place they kept coming back to.
+ */
+function YearCard({
+  year,
+  strings,
+  words,
+}: {
+  year: YearInReview;
+  strings: PassengerRideListStrings["year"];
+  words: Locale;
+}) {
+  const say = (template: string, values: Record<string, string | number>) =>
+    formatMessage(template, values, words);
+  const facts = [
+    say(strings.rides, { count: year.rides }),
+    say(strings.outside, {
+      duration: formatDurationLong(year.seconds, words),
+    }),
+    ...(year.pilots ? [say(strings.pilots, { count: year.pilots })] : []),
+  ];
+
+  return (
+    <article className="relative overflow-hidden rounded-(--r-tile) bg-mint-tint p-5">
+      <div
+        aria-hidden
+        className="diagonal-edge absolute inset-x-0 top-0 h-20 bg-mint"
+      />
+      <div className="relative flex flex-col gap-4">
+        <h3 className="text-xl">{say(strings.title, { year: year.year })}</h3>
+        <ul className="flex flex-wrap gap-2">
+          {facts.map((fact) => (
+            <li
+              key={fact}
+              className="rounded-full bg-canvas px-4 py-2 text-base font-medium"
+            >
+              {fact}
+            </li>
+          ))}
+        </ul>
+        {year.favouritePlace ? (
+          <p className="text-base">
+            {say(strings.favourite, { place: year.favouritePlace })}
+          </p>
+        ) : null}
+      </div>
+    </article>
   );
 }
