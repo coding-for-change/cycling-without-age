@@ -501,7 +501,7 @@ async function seedRides(
         destinationName: item.destination ?? null,
         title: item.title ?? null,
         capacity: item.model === "event" ? 8 : null,
-        requiredPilots: Math.max(1, item.staff.length),
+        requiredPilots: Math.max(item.staff.length, 1),
       }),
       null,
     );

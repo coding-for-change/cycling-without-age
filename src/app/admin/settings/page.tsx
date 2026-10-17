@@ -12,11 +12,12 @@ import { ADMIN_LIFE } from "../admin-viewer";
 import { JoinLinkCard } from "./_components/join-link-card";
 import { NotificationSettingsCard } from "./_components/notification-settings-card";
 import { PostRideInstructionsCard } from "./_components/post-ride-instructions-card";
+import { StaffingSettingsCard } from "./_components/staffing-settings-card";
 import { markdownToolLabels } from "@/components/markdown-editor";
 
 type PageProps = { searchParams: Promise<AdminSearchParams> };
 
-const CARDS = ["h-40", "h-72", "h-56"];
+const CARDS = ["h-40", "h-72", "h-56", "h-64"];
 
 export default function SettingsPage({ searchParams }: PageProps) {
   return (
@@ -105,6 +106,16 @@ async function ChapterSettings({ searchParams }: PageProps) {
         labels={{
           markdown: markdownToolLabels(dict),
           ...strings.postRide,
+          status: strings.notifications.status,
+          field: strings.notifications.field,
+        }}
+      />
+      <StaffingSettingsCard
+        chapterId={chapter.id}
+        settings={settings}
+        language={language}
+        labels={{
+          ...strings.staffing,
           status: strings.notifications.status,
           field: strings.notifications.field,
         }}

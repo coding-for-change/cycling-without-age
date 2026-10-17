@@ -141,6 +141,132 @@
     "subject": "{chapter} möchte {pool} nutzen",
     "unnamed": "den Pool"
   },
+  "rideAnnounced": {
+    "cta": "Veranstaltung ansehen",
+    "footer": "Sie erhalten diese E-Mail, weil Sie einen Fahrgast bei einer Ortsgruppe von Cycling Without Age begleiten. In Ihren Benachrichtigungen können Sie sie abschalten.",
+    "heading": "Eine neue Ausfahrt zum Mitfahren",
+    "intro": "{chapter} lädt Sie ein: {ride} am {date}, {time}, bei {place}. Die Plätze sind begrenzt, buchen können Sie in der App.",
+    "preview": "{ride} · {time}",
+    "subject": "{ride} am {date}"
+  },
+  "rideBookingCancelled": {
+    "cta": "Fahrt öffnen",
+    "footer": "Sie erhalten diese E-Mail, weil Sie eine Ortsgruppe von Cycling Without Age mitgestalten.",
+    "heading": "Ein Platz ist frei geworden",
+    "intro": "{rider} fährt am {date}, {time}, nicht mehr mit (Start bei {place}). Vielleicht ist jetzt Platz für jemand anderen – oder niemand mehr angemeldet.",
+    "preview": "{ride} · {time}",
+    "someone": "Ein Fahrgast",
+    "subject": "{rider} fährt am {date} nicht mehr mit"
+  },
+  "rideBookingConfirmed": {
+    "cta": "Fahrt ansehen",
+    "footer": "Sie erhalten diese E-Mail, weil Sie einen Fahrgast bei einer Ortsgruppe von Cycling Without Age begleiten.",
+    "heading": "Ein Platz ist gebucht",
+    "intro": "{rider} ist für eine Fahrt am {date}, {time}, gebucht, mit Start bei {place}. Sobald ein Pilot eingeteilt ist, sehen Sie in der App, wer fährt.",
+    "introBoth": "{rider} ist am {date} für Hin- und Rückfahrt gebucht: Start {time} bei {place}. Sobald ein Pilot eingeteilt ist, sehen Sie in der App, wer fährt.",
+    "preview": "{ride} · {time}",
+    "someone": "Ihr Fahrgast",
+    "subject": "{rider} ist für den {date} gebucht"
+  },
+  "rideCancelled": {
+    "cta": "Fahrt öffnen",
+    "footer": "Diese E-Mail betrifft eine Fahrt einer Ortsgruppe von Cycling Without Age.",
+    "heading": "Diese Fahrt ist abgesagt",
+    "intro": "Die Fahrt am {date}, {time}, mit Start bei {place} findet nicht statt. Grund: {reason}.",
+    "introBoth": "Die Fahrt am {date}, {time}, mit Start bei {place}, und die Rückfahrt finden nicht statt. Grund: {reason}.",
+    "preview": "{time} · {place}",
+    "subject": "Abgesagt: Fahrt am {date}"
+  },
+  "rideCommon": {
+    "aRide": "Fahrt",
+    "byTheChapter": "deiner Ortsgruppe",
+    "meetingPoint": "dem üblichen Treffpunkt",
+    "models": {
+      "event": "Gruppenfahrt",
+      "functional": "Zweckfahrt",
+      "pleasure": "Ausfahrt"
+    },
+    "reasons": {
+      "equipment": "ein Problem mit der Rikscha",
+      "facility": "eine Änderung im Pflegeheim oder in der Einrichtung",
+      "noRiders": "niemand war zum Mitfahren angemeldet",
+      "other": "es ist etwas dazwischengekommen",
+      "rider": "der Fahrgast hat abgesagt",
+      "volunteers": "es war kein Pilot verfügbar",
+      "weather": "das Wetter"
+    },
+    "soon": "noch offenen Termin",
+    "theChapter": "die Ortsgruppe",
+    "theDestination": "dem Ziel",
+    "timeToFollow": "Uhrzeit folgt"
+  },
+  "rideOpened": {
+    "cta": "Fahrt ansehen",
+    "footer": "Du erhältst diese E-Mail, weil du bei einer Ortsgruppe von Cycling Without Age fährst. In deinen Benachrichtigungen kannst du sie abschalten.",
+    "heading": "Eine Fahrt sucht einen Piloten",
+    "intro": "{chapter} sucht für den {date}, {time}, einen Piloten, Start bei {place} ({ride}). Wenn du Zeit hast, trag dich in der App ein.",
+    "introBoth": "{chapter} sucht für den {date} einen Piloten für eine Fahrt hin und zurück: Hinfahrt {time}, Start bei {place} ({ride}). Wenn du Zeit hast, trag dich in der App ein.",
+    "preview": "{ride} · {time}",
+    "subject": "Fahrt am {date} sucht einen Piloten"
+  },
+  "ridePilotAssigned": {
+    "cta": "Fahrt öffnen",
+    "footer": "Du erhältst diese E-Mail, weil du bei einer Ortsgruppe von Cycling Without Age fährst.",
+    "heading": "Du bist eingeteilt",
+    "intro": "Du fährst am {date}, {time} – eingeteilt von {actor}. Start ist bei {place} ({ride}). Fahrgäste, Rikscha und die Hinweise für Piloten findest du in der App.",
+    "introBoth": "Du fährst am {date} hin und zurück – eingeteilt von {actor}. Hinfahrt {time}, Start bei {place} ({ride}). Fahrgäste, Rikscha und die Hinweise für Piloten findest du in der App.",
+    "preview": "{ride} · {time}",
+    "subject": "Du fährst am {date}"
+  },
+  "ridePilotFound": {
+    "cta": "Fahrt ansehen",
+    "footer": "Sie erhalten diese E-Mail, weil Sie einen Fahrgast bei einer Ortsgruppe von Cycling Without Age begleiten.",
+    "heading": "Ihre Fahrt hat einen Piloten",
+    "intro": "{pilot} fährt die Fahrt am {date}, {time}, mit Start bei {place} ({ride}). Die Telefonnummer finden Sie bei der Fahrt in der App, dazu einen Chat mit allen, die dabei sind.",
+    "introBoth": "{pilot} fährt Ihre Fahrt am {date} hin und zurück: Hinfahrt {time}, Start bei {place} ({ride}). Die Telefonnummer finden Sie bei der Fahrt in der App, dazu einen Chat mit allen, die dabei sind.",
+    "preview": "{ride} · {time}",
+    "someone": "Ein Pilot",
+    "subject": "{pilot} fährt Ihre Fahrt am {date}"
+  },
+  "ridePilotWithdrew": {
+    "cta": "Fahrt öffnen",
+    "footer": "Sie erhalten diese E-Mail, weil Sie eine Ortsgruppe von Cycling Without Age mitgestalten. In Ihren Benachrichtigungen können Sie sie abschalten.",
+    "heading": "Ein Pilot hat sich ausgetragen",
+    "intro": "{pilot} fährt die Fahrt am {date}, {time}, bei {place} ({ride}) nicht mehr. Vielleicht braucht sie jetzt jemand anderen.",
+    "introBoth": "{pilot} fährt die Fahrt am {date} hin und zurück nicht mehr: Hinfahrt {time}, bei {place} ({ride}). Vielleicht brauchen beide Strecken jetzt jemand anderen.",
+    "preview": "{ride} · {time}",
+    "someone": "Ein Pilot",
+    "subject": "{pilot} hat sich für den {date} ausgetragen"
+  },
+  "rideRescheduled": {
+    "cta": "Fahrt öffnen",
+    "footer": "Diese E-Mail betrifft eine Fahrt einer Ortsgruppe von Cycling Without Age.",
+    "heading": "Diese Fahrt hat sich geändert",
+    "introDestination": "Die Fahrt am {date}, {time}, geht jetzt zu {destination}.",
+    "introPlace": "Die Fahrt am {date}, {time}, startet jetzt bei {place}.",
+    "introTime": "Die Fahrt findet jetzt am {date}, {time}, statt, mit Start bei {place}.",
+    "introTimeBoth": "Hin- und Rückfahrt sind verschoben. Die Fahrt startet jetzt am {date}, {time}, bei {place}.",
+    "preview": "Jetzt {time} · {place}",
+    "subject": "Geändert: Fahrt am {date}"
+  },
+  "rideSignedUp": {
+    "cta": "Fahrt öffnen",
+    "footer": "Du erhältst diese E-Mail, weil du bei einer Ortsgruppe von Cycling Without Age fährst.",
+    "heading": "Du bist dabei",
+    "intro": "Du fährst am {date}, {time}, Start bei {place} ({ride}). Fahrgäste, wie du sie erreichst, und den Chat zur Fahrt findest du in der App.",
+    "introBoth": "Du fährst am {date} hin und zurück: Hinfahrt {time}, Start bei {place} ({ride}). Fahrgäste, wie du sie erreichst, und den Chat zur Fahrt findest du in der App.",
+    "preview": "{ride} · {time}",
+    "subject": "Du fährst am {date}"
+  },
+  "rideUnderstaffed": {
+    "cta": "Fahrt öffnen",
+    "footer": "Sie erhalten diese E-Mail, weil Sie eine Ortsgruppe von Cycling Without Age mitgestalten.",
+    "heading": "Einer Fahrt fehlen noch Piloten",
+    "intro": "Die Fahrt am {date}, {time}, bei {place} ({ride}) hat {assigned} von {required, plural, one {# Piloten} other {# Piloten}}. Finden Sie bald jemanden, oder sagen Sie den Fahrgästen rechtzeitig Bescheid.",
+    "introBoth": "Der Fahrt am {date} hin und zurück fehlen in beide Richtungen noch Piloten: Die Hinfahrt um {time} ab {place} ({ride}) hat {assigned} von {required, plural, one {# Piloten} other {# Piloten}}. Finden Sie bald jemanden, oder sagen Sie den Fahrgästen rechtzeitig Bescheid.",
+    "preview": "{ride} · {time}",
+    "subject": "Fahrt am {date} ist nicht besetzt"
+  },
   "roleDemoted": {
     "cta": "Cycling Without Age öffnen",
     "footer": "Du erhältst diese E-Mail, weil sich deine Rolle in einer Cycling-Without-Age-Ortsgruppe geändert hat.",

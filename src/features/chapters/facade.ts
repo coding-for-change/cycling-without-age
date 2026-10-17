@@ -40,6 +40,7 @@ import {
 } from "./services/countries";
 import {
   findChapterSettings,
+  findChapterSettingsOf,
   upsertChapterSettings,
 } from "./services/settings";
 import {
@@ -316,6 +317,24 @@ export const getSettings = async (
   chapterId: string,
 ): Promise<ChapterSettings> =>
   (await findChapterSettings(chapterId)) ?? DEFAULT_CHAPTER_SETTINGS;
+
+/** Every chapter asked about gets an answer, the defaults when it saved none. */
+export async function getSettingsOf(
+  chapterIds: string[],
+): Promise<Map<string, ChapterSettings>> {
+  const saved = chapterIds.length
+    ? await findChapterSettingsOf([...new Set(chapterIds)])
+    : [];
+  const byChapter = new Map(
+    saved.map(({ chapterId, ...settings }) => [chapterId, settings]),
+  );
+  return new Map(
+    chapterIds.map((chapterId) => [
+      chapterId,
+      byChapter.get(chapterId) ?? DEFAULT_CHAPTER_SETTINGS,
+    ]),
+  );
+}
 
 export async function updateSettings(
   chapterId: string,

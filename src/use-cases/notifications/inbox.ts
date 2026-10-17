@@ -22,25 +22,32 @@ export async function listInbox(
   const rows = await notifications.listInbox(userId);
   const strings = getEmailStrings(locale);
 
-  return rows.flatMap((row) => {
-    const kind = findKind(row.event.type);
-    if (!kind) return [];
+  const items = await Promise.all(
+    rows.map(async (row) => {
+      const kind = findKind(row.event.type);
+      if (!kind) return [];
 
-    const params = kind.payload.safeParse(row.payload);
-    if (!params.success) return [];
+      const params = kind.payload.safeParse(row.payload);
+      if (!params.success) return [];
 
-    const message = kind.message(params.data, strings, locale);
-    return [
-      {
-        id: row.id,
-        category: kind.category,
-        title: message.title ?? message.heading,
-        body: message.body,
-        href: row.href,
-        createdAt: row.createdAt,
-        readAt: row.readAt,
-        seenAt: row.seenAt,
-      },
-    ];
-  });
+      const message = kind.message(
+        (await kind.hydrate?.(params.data)) ?? params.data,
+        strings,
+        locale,
+      );
+      return [
+        {
+          id: row.id,
+          category: kind.category,
+          title: message.title ?? message.heading,
+          body: message.body,
+          href: row.href,
+          createdAt: row.createdAt,
+          readAt: row.readAt,
+          seenAt: row.seenAt,
+        },
+      ];
+    }),
+  );
+  return items.flat();
 }

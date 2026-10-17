@@ -1,6 +1,7 @@
 import { accounts } from "@/features/accounts";
 import { passengers } from "@/features/passengers";
 import { personProfiles } from "@/features/person-profiles";
+import { rides } from "@/features/rides";
 import { deleteAccount } from "./delete-account";
 
 jest.mock("@/features/accounts", () => ({
@@ -11,7 +12,11 @@ jest.mock("@/features/passengers", () => ({
     handRidersToTheirOwnAccounts: jest.fn(),
     removeOwnPassenger: jest.fn(),
     listPassengersManagedBy: jest.fn(),
+    getOwnPassenger: jest.fn(),
   },
+}));
+jest.mock("@/features/rides", () => ({
+  rides: { cancelUpcomingBookings: jest.fn() },
 }));
 jest.mock("@/features/person-profiles", () => ({
   personProfiles: { listPhotoFilesOf: jest.fn(), purgePhotoFiles: jest.fn() },
@@ -31,6 +36,12 @@ beforeEach(() => {
     { id: "managed-greta", userId: null },
     { id: "own-lena", userId: "daughter-lena" },
   ]);
+  (passengers.getOwnPassenger as jest.Mock).mockResolvedValue({
+    id: "own-lena",
+  });
+  (rides.cancelUpcomingBookings as jest.Mock).mockImplementation(async () => {
+    order.push("cancel");
+  });
   (personProfiles.listPhotoFilesOf as jest.Mock).mockResolvedValue([
     { id: "file-1", key: "files/1.webp" },
   ]);
@@ -53,7 +64,25 @@ describe("deleteAccount", () => {
     expect(personProfiles.purgePhotoFiles).toHaveBeenCalledWith([
       { id: "file-1", key: "files/1.webp" },
     ]);
-    expect(order).toEqual(["handOver", "deleteUser", "purge"]);
+    expect(order).toEqual(["handOver", "cancel", "deleteUser", "purge"]);
+  });
+
+  it("gives up the seats still ahead of every rider that goes with the account", async () => {
+    await deleteAccount("daughter-lena", "admin-1");
+
+    expect(rides.cancelUpcomingBookings).toHaveBeenCalledWith(
+      ["managed-greta", "own-lena"],
+      "admin-1",
+    );
+  });
+
+  it("gives them up as the account itself when it leaves on its own", async () => {
+    await deleteAccount("daughter-lena");
+
+    expect(rides.cancelUpcomingBookings).toHaveBeenCalledWith(
+      ["managed-greta", "own-lena"],
+      "daughter-lena",
+    );
   });
 
   it("hands riders with their own account back to themselves before deleting", async () => {

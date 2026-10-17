@@ -3,7 +3,9 @@ import { chapters } from "@/features/chapters";
 import { DEFAULT_CHAPTER_SETTINGS } from "@/features/chapters/schemas";
 import { membership } from "@/features/membership";
 import { fleet } from "@/features/fleet";
+import { passengers } from "@/features/passengers";
 import { profile } from "@/features/profile";
+import { rides } from "@/features/rides";
 import da from "@/messages/app/da.json";
 import de from "@/messages/app/de.json";
 import en from "@/messages/app/en.json";
@@ -24,7 +26,21 @@ jest.mock("@/features/fleet", () => ({
   fleet: { getTrishaw: jest.fn(), getLocation: jest.fn() },
 }));
 jest.mock("@/features/membership", () => ({
-  membership: { listChapterAdmins: jest.fn() },
+  membership: {
+    listChapterAdmins: jest.fn(),
+    getMemberRoles: jest.fn(),
+    listPilotMembers: jest.fn(),
+  },
+}));
+jest.mock("@/features/rides", () => ({
+  ...jest.requireActual("@/features/rides/schemas"),
+  rides: { getRideFacts: jest.fn(), listRideParticipants: jest.fn() },
+}));
+jest.mock("@/features/passengers", () => ({
+  passengers: {
+    getPassenger: jest.fn(),
+    listBookingAccountsOfChapters: jest.fn(),
+  },
 }));
 jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
 jest.mock("@/features/passengers", () => ({
@@ -48,6 +64,10 @@ const getProfile = profile.getProfile as jest.Mock;
 const getTrishaw = fleet.getTrishaw as jest.Mock;
 const getLocation = fleet.getLocation as jest.Mock;
 const listCountryAdmins = chapters.listCountryAdmins as jest.Mock;
+const getRideFacts = rides.getRideFacts as jest.Mock;
+const listRideParticipants = rides.listRideParticipants as jest.Mock;
+const getPassenger = passengers.getPassenger as jest.Mock;
+const getMemberRoles = membership.getMemberRoles as jest.Mock;
 
 const DICTIONARIES = { en, da, de } as Record<Locale, typeof en>;
 
@@ -183,6 +203,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     chapterId: CHAPTER,
     actorUserId: ACTOR,
     changes: ["time", "location"],
+    pair: null,
   },
   "ride.cancelled": {
     type: "ride.cancelled",
@@ -190,6 +211,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     chapterId: CHAPTER,
     actorUserId: ACTOR,
     reasonCode: "weather",
+    pair: null,
   },
   "ride.deleted": {
     type: "ride.deleted",
@@ -204,6 +226,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     actorUserId: ACTOR,
     userId: SUBJECT,
     self: false,
+    pair: null,
   },
   "ride.pilotUnassigned": {
     type: "ride.pilotUnassigned",
@@ -212,6 +235,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     actorUserId: SUBJECT,
     userId: SUBJECT,
     self: true,
+    pair: null,
   },
   "ride.riderBooked": {
     type: "ride.riderBooked",
@@ -219,6 +243,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     chapterId: CHAPTER,
     actorUserId: ACTOR,
     passengerId: "passenger-1",
+    pair: null,
   },
   "ride.riderRemoved": {
     type: "ride.riderRemoved",
@@ -226,6 +251,29 @@ const EVENTS: Record<EventType, DomainEvent> = {
     chapterId: CHAPTER,
     actorUserId: ACTOR,
     passengerId: "passenger-1",
+    self: true,
+  },
+  "ride.opened": {
+    type: "ride.opened",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+    pair: null,
+  },
+  "ride.understaffed": {
+    type: "ride.understaffed",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: null,
+    assigned: 1,
+    required: 2,
+    pair: null,
+  },
+  "ride.announced": {
+    type: "ride.announced",
+    rideId: "ride-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
   },
 };
 
@@ -252,6 +300,23 @@ const known = () => {
   getProfile.mockResolvedValue({ name: "Anke Weiss" });
   getTrishaw.mockResolvedValue({ name: "Sonnenstrahl" });
   getLocation.mockResolvedValue({ name: "Depot Sonnenhof" });
+  getRideFacts.mockResolvedValue({
+    title: null,
+    model: "functional",
+    startsAt: new Date("2026-10-27T09:00:00Z"),
+    endsAt: new Date("2026-10-27T10:30:00Z"),
+    locationName: "Seniorenheim Sonnenhof",
+    destinationName: "Hausarzt Dr. Weber",
+    chapter: { name: "München", timeZone: "Europe/Berlin" },
+  });
+  getPassenger.mockResolvedValue({
+    id: "passenger-1",
+    chapterId: CHAPTER,
+    firstName: "Erna",
+    lastName: "Huber",
+    managedByUserId: "user-carer",
+    userId: null,
+  });
 };
 
 const unknown = () => {
@@ -260,6 +325,8 @@ const unknown = () => {
   getProfile.mockResolvedValue(null);
   getTrishaw.mockResolvedValue(null);
   getLocation.mockResolvedValue(null);
+  getRideFacts.mockResolvedValue(null);
+  getPassenger.mockResolvedValue(null);
 };
 
 beforeEach(() => {
@@ -267,6 +334,12 @@ beforeEach(() => {
   listChapterAdmins.mockResolvedValue([{ userId: ACTOR }]);
   listCountryAdmins.mockResolvedValue([{ userId: ACTOR }]);
   getSettings.mockResolvedValue(DEFAULT_CHAPTER_SETTINGS);
+  listRideParticipants.mockResolvedValue({
+    chapterId: CHAPTER,
+    pilotUserIds: [SUBJECT],
+    riderAccountUserIds: ["user-carer"],
+  });
+  getMemberRoles.mockResolvedValue(["passenger"]);
   known();
 });
 
@@ -308,6 +381,44 @@ describe.each(kinds.map((kind) => [kind.event, kind] as const))(
   },
 );
 
+describe("a message for both legs of a round trip", () => {
+  const lead = { role: "lead" as const, otherRideId: "ride-2" };
+  const paired = [
+    { ...EVENTS["ride.cancelled"], pair: lead },
+    { ...EVENTS["ride.rescheduled"], changes: ["time"], pair: lead },
+    { ...EVENTS["ride.pilotAssigned"], pair: lead },
+    {
+      ...EVENTS["ride.pilotAssigned"],
+      actorUserId: SUBJECT,
+      self: true,
+      pair: lead,
+    },
+    { ...EVENTS["ride.pilotUnassigned"], pair: lead },
+    { ...EVENTS["ride.understaffed"], pair: lead },
+    { ...EVENTS["ride.riderBooked"], pair: lead },
+    { ...EVENTS["ride.opened"], pair: lead },
+  ] as DomainEvent[];
+
+  it.each(locales)("reads as finished prose in %s", async (locale) => {
+    for (const event of paired) {
+      const kind = kinds.find((candidate) => candidate.event === event.type)!;
+      const params = kind.payload.parse(await kind.params(event));
+      const message = kind.message(params, getEmailStrings(locale), locale);
+      for (const line of lines(message)) {
+        expect(line).not.toMatch(/\{\w+\}/);
+        expect(line).not.toMatch(/\b(null|undefined)\b/);
+      }
+      expect(message.body).not.toBe(
+        kind.message(
+          { ...params, bothWays: false },
+          getEmailStrings(locale),
+          locale,
+        ).body,
+      );
+    }
+  });
+});
+
 describe("the templates the history feed has to label", () => {
   const collect = async () => {
     const templates = new Set<string>();
@@ -344,6 +455,15 @@ describe("the templates the history feed has to label", () => {
       "poolAccessDecided",
       "poolAccessRequested",
       "rejection",
+      "rideAnnounced",
+      "rideAssigned",
+      "rideBooked",
+      "rideBookingCancelled",
+      "rideCancelled",
+      "rideChanged",
+      "rideOpened",
+      "ridePilotWithdrew",
+      "rideUnderstaffed",
       "roleChanged",
       "welcome",
     ]);
