@@ -7,6 +7,7 @@ export const TRANSIENT = {
   date: null,
   start: null,
   end: null,
+  rideLocation: null,
 } as const;
 
 export const ridesView = (value: string | null | undefined): RidesView =>

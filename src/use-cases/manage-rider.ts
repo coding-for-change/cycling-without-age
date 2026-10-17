@@ -1,6 +1,7 @@
 import { passengers } from "@/features/passengers";
 import type { ManagedRiderPatchInput } from "@/features/passengers";
 import { personProfiles } from "@/features/person-profiles";
+import { rides } from "@/features/rides";
 import { DomainError } from "@/lib/domain-error";
 import { logDomainEvent } from "@/lib/observability/logger";
 import {
@@ -61,6 +62,7 @@ export async function removeManagedRider({
     passengerIds: [passengerId],
   });
 
+  await rides.cancelUpcomingBookings([passengerId], viewer.user.id);
   await passengers.removeManagedRider(passengerId);
   await personProfiles.purgePhotoFiles(photos);
   logDomainEvent(

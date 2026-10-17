@@ -30,6 +30,8 @@ export const RIDE_DESCRIPTION_MAX = 5000;
 export const RIDE_MAX_CAPACITY = 100;
 export const RIDE_MAX_PHOTOS = 6;
 export const RIDE_LIST_PAGE_MAX = 100;
+export const OPEN_RIDES_DAYS = 60;
+export const SEAT_BOOKING_MAX = 10;
 export const PLEASURE_LIMITS = {
   passengers: 2,
   trishaws: 1,
@@ -60,6 +62,7 @@ export function modelLimits(
 export function shapedForModel<
   T extends {
     model: RideModelName;
+    announced?: boolean;
     title?: string | null;
     description?: string | null;
     capacity?: number | null;
@@ -73,7 +76,7 @@ export function shapedForModel<
     ...ride,
     ...(ride.model === "event"
       ? {}
-      : { title: null, description: null, capacity: null }),
+      : { title: null, description: null, capacity: null, announced: false }),
     ...(ride.model === "functional"
       ? {}
       : {
@@ -123,6 +126,7 @@ const eventFields = {
   title: rideTitle,
   description: rideDescription,
   capacity,
+  announced: z.boolean().default(false),
   photoFileIds: uniqueIds(RIDE_MAX_PHOTOS).default([]),
   passengerIds: uniqueIds(RIDE_MAX_CAPACITY).default([]),
   pilotIds: uniqueIds(RIDE_MAX_PILOTS).default([]),
@@ -275,6 +279,7 @@ export const rideInput = z
      * and roster.
      */
     returnLeg: rideTimes.optional(),
+    rideLocationId: id.nullable().optional(),
   })
   .superRefine(checkWindow)
   .superRefine(checkModel)
@@ -325,6 +330,11 @@ export const pilotInput = rideRef.extend({ userId: id });
 export const riderInput = rideRef.extend({ passengerId: id });
 export const noteInput = rideRef.extend({ text: rideLogNote });
 export const rideTrishawsInput = rideRef.extend({ trishawIds: trishawIdList });
+export const announceInput = rideRef.extend({ announced: z.boolean() });
+export const seatBookingInput = rideRef.extend({
+  passengerIds: uniqueIds(SEAT_BOOKING_MAX).min(1),
+});
+export type SeatBookingInput = z.input<typeof seatBookingInput>;
 
 export const bookRiderInput = z.object({
   rideId: id,
@@ -412,6 +422,7 @@ export const scheduleRideForm = z
     requiredPilots: requiredPilots.default(1),
     note: rideNote,
     ...eventFields,
+    rideLocationId: id.nullable().optional(),
   })
   .superRefine(checkModel);
 export type ScheduleRideForm = z.input<typeof scheduleRideForm>;

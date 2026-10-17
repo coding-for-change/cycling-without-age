@@ -136,7 +136,7 @@ export function DetailHeader({
   return (
     <header className="flex flex-wrap items-start gap-4">
       {media}
-      <div className="grid min-w-0 flex-1 gap-1">
+      <div className="grid min-w-0 flex-1 basis-40 gap-1">
         <h1 className="leading-none">{title}</h1>
         {children}
       </div>

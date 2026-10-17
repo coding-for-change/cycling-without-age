@@ -4,6 +4,7 @@ import {
   managedRiderPatch,
   ownRiderDetailsPatch,
   passengerInput,
+  riderNeedsInput,
 } from "./schemas";
 import { DomainError } from "@/lib/domain-error";
 import { transaction } from "@/lib/events";
@@ -12,8 +13,10 @@ import type {
   ManagedRiderPatchInput,
   OwnRiderDetailsPatchInput,
   PassengerInput,
+  RiderNeedsInput,
 } from "./schemas";
 import {
+  findBookingAccountsOfChapters,
   countPassengersInChapters,
   countPassengersManagedBy,
   countPassengersWithoutAccountManagedBy,
@@ -24,6 +27,7 @@ import {
   findPassengersOfUsers,
   findPassengersByIds,
   findPassengersManagedBy,
+  findPassengersOfAccount,
   findPassengersOfChapters,
   findPassengerNames,
   findPassengersWithOtherAccountManagedBy,
@@ -39,6 +43,7 @@ import {
   insertPassengerIn,
   deletePassengerOfUser,
   setPassengerManagers,
+  updatePassengerNeeds,
   updatePassengerOfUser,
   updatePassengerWithoutAccount,
   upsertOwnPassenger,
@@ -48,10 +53,29 @@ export const getOwnPassenger = (userId: string) => findPassengerOfUser(userId);
 export const getPassenger = (id: string) => findPassengerById(id);
 export const getPassengers = async (ids: string[]) =>
   ids.length ? findPassengersByIds(ids) : [];
+/**
+ * Every rider whose rides this account may read: the ones it manages, and
+ * its own rider row when someone else manages it — a resident whose carer
+ * books for them still sees their own rides.
+ */
+export const listRidersOfAccount = (userId: string) =>
+  findPassengersOfAccount(userId);
+
 export const listPassengersManagedBy = (userId: string) =>
   findPassengersManagedBy(userId);
 export const listPassengersOfChapters = (chapterIds: string[]) =>
   findPassengersOfChapters(chapterIds);
+
+/**
+ * The accounts that book for these chapters' riders: whoever manages a rider,
+ * which is the rider's own account when it books for itself.
+ */
+export const listBookingAccountsOfChapters = async (chapterIds: string[]) =>
+  chapterIds.length
+    ? (await findBookingAccountsOfChapters(chapterIds)).map(
+        (rider) => rider.managedByUserId,
+      )
+    : [];
 
 export type PassengerRow = Awaited<
   ReturnType<typeof findPassengersOfChapters>
@@ -73,8 +97,12 @@ async function assertCanTakeOn(
     throw new DomainError("tooManyRiders");
 }
 
-export async function addPassenger(input: PassengerInput) {
+export async function addPassenger(
+  input: PassengerInput,
+  needs: RiderNeedsInput = {},
+) {
   const data = passengerInput.parse(input);
+  const riderNeeds = riderNeedsInput.parse(needs);
   const [existing] = await findPassengersManagedBy(data.managedByUserId);
   if (existing && existing.chapterId !== data.chapterId) {
     throw new DomainError("passengerChapterMismatch");
@@ -85,6 +113,7 @@ export async function addPassenger(input: PassengerInput) {
   const { pickup, ...rider } = data;
   return insertPassenger({
     ...rider,
+    ...riderNeeds,
     userId: rider.userId ?? null,
     ...pickupColumns(pickup),
   });
@@ -219,6 +248,15 @@ export const passengerNames = async (
         ]),
       )
     : {};
+
+export async function setRiderNeeds(
+  passengerId: string,
+  input: RiderNeedsInput,
+) {
+  const data = riderNeedsInput.parse(input);
+  if (Object.keys(data).length === 0) return null;
+  return updatePassengerNeeds(passengerId, data);
+}
 
 export async function requestCare(input: {
   chapterId: string;

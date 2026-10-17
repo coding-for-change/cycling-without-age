@@ -68,6 +68,7 @@ const FIELD_OF: Record<string, Field> = {
   destinationLongitude: "destination",
   requiredPilots: "requiredPilots",
   note: "note",
+  announced: "announced",
 };
 
 const names = (value: unknown) =>

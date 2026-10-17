@@ -29,9 +29,20 @@ export type Kind<
   payload: P;
   recipients: (event: EventOf<K>) => Promise<string[]>;
   params: (event: EventOf<K>) => Promise<z.infer<P>>;
+  /**
+   * When one event reaches people in different roles, each stored row can
+   * carry who it was written for, so the message reads right for that reader.
+   */
+  forRecipient?: (params: z.infer<P>, recipientUserId: string) => z.infer<P>;
   href: (event: EventOf<K>) => string;
   collapseKey?: (event: EventOf<K>) => string;
   chapterAllowsPush?: (chapterId: string | null) => Promise<boolean>;
+  /**
+   * Fills in what the stored payload deliberately leaves out — a person's
+   * name, kept as an id so deleting the person deletes the name too — just
+   * before the message is written.
+   */
+  hydrate?: (params: z.infer<P>) => Promise<z.infer<P>>;
   message: (
     params: z.infer<P>,
     strings: EmailStrings,
@@ -53,9 +64,14 @@ export type AnyKind = {
   payload: z.ZodType<NotificationPayload>;
   recipients(event: DomainEvent): Promise<string[]>;
   params(event: DomainEvent): Promise<NotificationPayload>;
+  forRecipient?(
+    params: NotificationPayload,
+    recipientUserId: string,
+  ): NotificationPayload;
   href(event: DomainEvent): string;
   collapseKey?(event: DomainEvent): string;
   chapterAllowsPush?(chapterId: string | null): Promise<boolean>;
+  hydrate?(params: NotificationPayload): Promise<NotificationPayload>;
   message(
     params: NotificationPayload,
     strings: EmailStrings,

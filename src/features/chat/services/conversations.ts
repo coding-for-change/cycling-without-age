@@ -21,6 +21,31 @@ export const findConversationWithCounts = (
   db: Prisma.TransactionClient = prisma,
 ) => db.conversation.findUnique({ where: { id }, include: withCounts });
 
+export const findConversationByRideId = (
+  rideId: string,
+  db: Prisma.TransactionClient = prisma,
+) =>
+  db.conversation.findUnique({
+    where: { rideId },
+    select: { id: true, frozenAt: true },
+  });
+
+export const findRideIdsOfMemberChats = async (
+  userId: string,
+  chapterId: string,
+) =>
+  (
+    await prisma.conversation.findMany({
+      where: {
+        origin: "ride",
+        chapterId,
+        rideId: { not: null },
+        members: { some: { userId } },
+      },
+      select: { rideId: true },
+    })
+  ).flatMap(({ rideId }) => (rideId ? [rideId] : []));
+
 export const findConversationByDirectKey = (
   directKey: string,
   db: Prisma.TransactionClient = prisma,
@@ -54,8 +79,9 @@ export const insertConversation = (
     origin?: ConversationOrigin;
     title?: string | null;
     chapterId: string | null;
-    createdByUserId: string;
+    createdByUserId: string | null;
     directKey?: string | null;
+    rideId?: string | null;
     dek: Uint8Array;
     keyVersion: number;
     announcementOnly?: boolean;

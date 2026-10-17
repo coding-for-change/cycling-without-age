@@ -93,6 +93,12 @@ export const findPassengersByIds = (ids: string[]) =>
 export const findPassengerOfUser = (userId: string) =>
   prisma.passenger.findUnique({ where: { userId } });
 
+export const findPassengersOfAccount = (userId: string) =>
+  prisma.passenger.findMany({
+    where: { OR: [{ managedByUserId: userId }, { userId }] },
+    orderBy: { createdAt: "asc" },
+  });
+
 export const findPassengersManagedBy = (managedByUserId: string) =>
   prisma.passenger.findMany({
     where: { managedByUserId },
@@ -133,6 +139,13 @@ export const findPassengersOfChapters = (chapterIds: string[]) =>
     },
   });
 
+export const findBookingAccountsOfChapters = (chapterIds: string[]) =>
+  prisma.passenger.findMany({
+    where: { chapterId: { in: chapterIds } },
+    select: { managedByUserId: true },
+    distinct: ["managedByUserId"],
+  });
+
 export const countPassengersManagedBy = (managedByUserId: string) =>
   prisma.passenger.count({ where: { managedByUserId } });
 
@@ -148,6 +161,24 @@ export const findPassengerNames = (ids: string[]) =>
   prisma.passenger.findMany({
     where: { id: { in: ids } },
     select: { id: true, firstName: true, lastName: true },
+  });
+
+export const updatePassengerNeeds = (
+  id: string,
+  data: Pick<
+    Prisma.PassengerUncheckedUpdateInput,
+    "needsWheelchairBike" | "note" | "rideLocationId"
+  >,
+) =>
+  prisma.passenger.update({
+    where: { id },
+    data,
+    select: {
+      id: true,
+      needsWheelchairBike: true,
+      note: true,
+      rideLocationId: true,
+    },
   });
 
 export const insertCareRequest = (
