@@ -56,6 +56,7 @@ const MAPPED_ERRORS = [
   "otherLegScheduled",
   "partOfRoundTrip",
   "photosEventOnly",
+  "pilotNotReady",
   "pilotsFull",
   "pleasureLimit",
   "rideClosed",

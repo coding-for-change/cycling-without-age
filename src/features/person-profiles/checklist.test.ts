@@ -18,6 +18,7 @@ const base: ChecklistInput = {
   hasPasskey: false,
   pushOn: false,
   pilotSteps: null,
+  trainingDone: false,
   firstRideDone: false,
 };
 
@@ -51,14 +52,60 @@ describe("checklistSteps", () => {
       ...base,
       perspective: "pilot",
       pilotSteps: {
-        trainingVideos: { done: true, confirmed: false },
-        workshop: { done: false, confirmed: false },
+        inPersonTraining: { confirmed: false },
       },
     });
     expect(pilot).toEqual(
-      expect.arrayContaining(["trainingVideos", "workshop", "firstRide"]),
+      expect.arrayContaining(["training", "inPersonTraining", "firstRide"]),
     );
     expect(pilot).not.toContain("accessibility");
+    expect(pilot).not.toContain("trainingVideos");
+  });
+
+  it("derives the training step from the courses and keeps the chapter's confirmation", () => {
+    const steps = checklistSteps({
+      ...base,
+      perspective: "pilot",
+      trainingDone: true,
+      pilotSteps: { inPersonTraining: { confirmed: true } },
+    });
+    expect(steps.find((s) => s.key === "training")).toEqual({
+      key: "training",
+      done: true,
+    });
+    expect(steps.find((s) => s.key === "inPersonTraining")).toEqual({
+      key: "inPersonTraining",
+      done: true,
+      confirmed: true,
+      waiting: false,
+    });
+  });
+
+  it("drops the course step when training isn't required, keeping the in-person one", () => {
+    const pilot = keys({
+      ...base,
+      perspective: "pilot",
+      trainingDone: null,
+      pilotSteps: { inPersonTraining: { confirmed: false } },
+    });
+    expect(pilot).not.toContain("training");
+    expect(pilot).toEqual(
+      expect.arrayContaining(["inPersonTraining", "firstRide"]),
+    );
+  });
+
+  it("leaves the in-person step waiting for the chapter, never ticked by the pilot", () => {
+    const steps = checklistSteps({
+      ...base,
+      perspective: "pilot",
+      pilotSteps: { inPersonTraining: { confirmed: false } },
+    });
+    expect(steps.find((s) => s.key === "inPersonTraining")).toEqual({
+      key: "inPersonTraining",
+      done: false,
+      confirmed: false,
+      waiting: true,
+    });
   });
 });
 

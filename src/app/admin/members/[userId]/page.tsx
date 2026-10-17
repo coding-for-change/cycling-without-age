@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { AdminPageShell } from "../../_components/admin-page";
 import { PersonBody } from "./_components/person-body";
-import { DetailSkeleton } from "../../_components/detail-skeleton";
+import { PersonSkeleton } from "./_components/person-skeleton";
 import type { AdminSearchParams } from "../../active-scope";
 
 export default function PersonPage({
@@ -13,7 +13,7 @@ export default function PersonPage({
 }) {
   return (
     <AdminPageShell>
-      <Suspense fallback={<DetailSkeleton />}>
+      <Suspense fallback={<PersonSkeleton />}>
         <PersonBody
           params={params}
           searchParams={searchParams}

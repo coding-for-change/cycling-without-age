@@ -6,6 +6,7 @@ export type NavKey =
   | "overview"
   | "rides"
   | "members"
+  | "training"
   | "passengers"
   | "bikes"
   | "locations"
@@ -30,6 +31,12 @@ export const NAV: readonly NavItem[] = [
   { key: "overview", href: "/admin", group: "main", icon: "overview" },
   { key: "rides", href: "/admin/rides", group: "main", icon: "rides" },
   { key: "members", href: "/admin/members", group: "main", icon: "members" },
+  {
+    key: "training",
+    href: "/admin/training",
+    group: "main",
+    icon: "training",
+  },
   {
     key: "passengers",
     href: "/admin/passengers",

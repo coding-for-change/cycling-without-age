@@ -4,6 +4,7 @@
     "footer": "Du modtager denne e-mail, fordi du har søgt om at være pilot i en Cycling Without Age-afdeling.",
     "heading": "Velkommen om bord",
     "intro": "{chapter} har godkendt dig som pilot. Næste skridt: træningsvideoerne, en workshop med en af kaptajnerne — og så din første tur.",
+    "introInPerson": "{chapter} har godkendt dig som pilot. Næste skridt: en workshop med en af kaptajnerne — og så din første tur.",
     "noteHeading": "Fra din afdeling",
     "preview": "Din afdeling siger ja",
     "subject": "Du er pilot i {chapter}"
@@ -208,6 +209,7 @@
     "noteHeading": "En hilsen fra {chapter}",
     "preview": "Din pilotansøgning er hos afdelingen",
     "subject": "Velkommen om bord — tre skridt til din første tur",
+    "subjectInPerson": "Velkommen om bord — to skridt til din første tur",
     "title": "Velkommen til {chapter}"
   },
   "careRequested": {

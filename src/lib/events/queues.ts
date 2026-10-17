@@ -6,6 +6,7 @@ export const QUEUE = {
   handlers: "handlers",
   email: "email",
   push: "push",
+  media: "media",
 } as const;
 
 export type QueueName = (typeof QUEUE)[keyof typeof QUEUE];

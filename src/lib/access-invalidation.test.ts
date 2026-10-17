@@ -105,8 +105,10 @@ jest.mock("@/features/chapters", () => ({
 }));
 jest.mock("@/use-cases/delete-account", () => ({ deleteAccount: jest.fn() }));
 jest.mock("@/use-cases/pilot-steps", () => ({
-  confirmPilotStep: jest.fn(),
-  revokePilotStep: jest.fn(),
+  confirmInPersonTraining: jest.fn(),
+  revokeInPersonTraining: jest.fn(),
+  grantTrainingExemption: jest.fn(),
+  revokeTrainingExemption: jest.fn(),
 }));
 jest.mock("@/use-cases/manage-country", () => ({ deleteCountry: jest.fn() }));
 jest.mock("@/use-cases/manage-country-admins", () => ({

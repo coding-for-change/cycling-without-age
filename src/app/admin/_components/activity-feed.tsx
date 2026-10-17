@@ -2,6 +2,8 @@ import {
   CircleCheck,
   CircleX,
   Globe,
+  GraduationCap,
+  Handshake,
   Inbox,
   KeyRound,
   Mail,
@@ -63,6 +65,10 @@ const ICON: Record<ActivityType, LucideIcon> = {
   chapterUpdated: Pencil,
   chapterDeleted: Trash2,
   countryDeleted: Trash2,
+  trainingPassed: GraduationCap,
+  trainingExemptionGranted: ShieldCheck,
+  trainingExemptionRevoked: ShieldMinus,
+  inPersonTrainingConfirmed: Handshake,
 };
 
 export function ActivityFeed({

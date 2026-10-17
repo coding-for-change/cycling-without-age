@@ -2,6 +2,7 @@ import { activity } from "@/lib/activity";
 import { DomainError } from "@/lib/domain-error";
 import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
+import { training } from "@/features/training";
 import type { ChapterInput, ChapterUpdateInput } from "@/features/chapters";
 
 export const defaultLocationFor = (
@@ -74,7 +75,12 @@ export async function deleteChapter({
   const chapter = await chapters.getChapter(chapterId);
   if (!chapter) throw new DomainError("unknownChapter");
 
+  const media = await training.ownerMedia({
+    chapterIds: [chapterId],
+    countryIds: [],
+  });
   await chapters.deleteChapter(chapterId);
+  await training.purgeOwnerMedia(media, actorUserId);
   await activity.record({
     userId: actorUserId,
     actorUserId,

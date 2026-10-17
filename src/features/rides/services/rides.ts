@@ -696,6 +696,37 @@ export const countPastRidesOfPilot = (userId: string, now: Date) =>
     },
   });
 
+const volunteerRideWhere = (userId: string, chapterIds: string[]) =>
+  ({
+    assignments: { some: { userId } },
+    chapterId: { in: chapterIds },
+    status: { not: "cancelled" },
+  }) satisfies Prisma.RideWhereInput;
+
+export const countRidesOfVolunteer = (
+  userId: string,
+  chapterIds: string[],
+  window: { endedBy?: Date; startsAfter?: Date },
+) =>
+  prisma.ride.count({
+    where: {
+      ...volunteerRideWhere(userId, chapterIds),
+      ...(window.endedBy ? { endsAt: { lte: window.endedBy } } : {}),
+      ...(window.startsAfter ? { startsAt: { gt: window.startsAfter } } : {}),
+    },
+  });
+
+export const findLastRideOfVolunteer = (
+  userId: string,
+  chapterIds: string[],
+  now: Date,
+) =>
+  prisma.ride.findFirst({
+    where: { ...volunteerRideWhere(userId, chapterIds), endsAt: { lte: now } },
+    orderBy: [{ startsAt: "desc" }, { id: "desc" }],
+    select: { startsAt: true },
+  });
+
 export const findLatestRideForPilot = (userId: string, now: Date) =>
   prisma.ride.findFirst({
     where: {

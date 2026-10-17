@@ -26,6 +26,7 @@ export const MONITORS = {
   },
   "prune-devices": daily("0 4 * * *"),
   "prune-chat": daily("0 3 * * *"),
+  "prune-training-uploads": daily("30 3 * * *"),
 } satisfies Record<string, MonitorConfig>;
 
 export type MaintenanceName = keyof typeof MONITORS;

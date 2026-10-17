@@ -202,6 +202,7 @@ export function PersonPicker({
     <PickerPopover
       items={options}
       keywords={(person) => [person.name, person.hint ?? ""]}
+      isDisabled={(person) => Boolean(person.disabled)}
       onSelect={onPick}
       search={strings.search}
       empty={strings.empty}

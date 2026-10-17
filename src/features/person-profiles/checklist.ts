@@ -10,6 +10,7 @@ export type ChecklistStepKey =
   | "managedRiders"
   | "passkey"
   | "push"
+  | "training"
   | PilotStep
   | "firstRide";
 
@@ -17,6 +18,7 @@ export type ChecklistStep = {
   key: ChecklistStepKey;
   done: boolean;
   confirmed?: boolean;
+  waiting?: boolean;
 };
 
 export type ChecklistInput = {
@@ -28,6 +30,7 @@ export type ChecklistInput = {
   hasPasskey: boolean;
   pushOn: boolean;
   pilotSteps: Record<PilotStep, PilotStepState> | null;
+  trainingDone: boolean | null;
   firstRideDone: boolean;
 };
 
@@ -92,12 +95,14 @@ export function checklistSteps(input: ChecklistInput): ChecklistStep[] {
     });
 
   if (input.perspective === "pilot" && input.pilotSteps) {
-    for (const key of ["trainingVideos", "workshop"] as const)
-      steps.push({
-        key,
-        done: input.pilotSteps[key].done,
-        confirmed: input.pilotSteps[key].confirmed,
-      });
+    if (input.trainingDone !== null)
+      steps.push({ key: "training", done: input.trainingDone });
+    steps.push({
+      key: "inPersonTraining",
+      done: input.pilotSteps.inPersonTraining.confirmed,
+      confirmed: input.pilotSteps.inPersonTraining.confirmed,
+      waiting: !input.pilotSteps.inPersonTraining.confirmed,
+    });
     steps.push({ key: "firstRide", done: input.firstRideDone });
   }
 

@@ -65,6 +65,47 @@ services:
       - redis
     env_file:
       - .env
+    environment:
+      WORKER_ROLE: events
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:' + (process.env.WORKER_PORT ?? 3001) + '/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  media-worker:
+    image: localhost:5000/cwa-${BRANCH_NAME_SAFE}-media-worker:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+    cpus: 1
+    mem_limit: 1536m
+    logging: *logging
+    labels:
+      alloy-logging: "true"
+      logging.project: cwa
+      logging.service: media-worker
+      logging.environment: "feature-${BRANCH_NAME_SAFE}"
+      prometheus.scrape: "true"
+      prometheus.port: "9464"
+      prometheus.path: "/metrics"
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+    environment:
+      WORKER_ROLE: media
+      MEDIA_SCRATCH_DIR: /scratch
+    volumes:
+      - media_scratch:/scratch
     healthcheck:
       test:
         [
@@ -126,3 +167,4 @@ services:
 volumes:
   db_data:
   redis_data:
+  media_scratch:

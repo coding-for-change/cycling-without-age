@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { requirePerspective } from "@/lib/auth-guards";
+import { isTrainingRequired } from "@/lib/feature-flags";
 import { resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
@@ -23,6 +24,10 @@ import { ApprovalCelebration } from "./_components/approval-celebration";
 import { FinishRideCard } from "./_components/finish-ride-card";
 import { PendingChapterCard } from "./_components/pending-chapter-card";
 import { RejectedCard } from "./_components/rejected-card";
+import {
+  TrainingCard,
+  TrainingCardFallback,
+} from "./_components/training-card";
 
 export default function PilotHomePage() {
   return (
@@ -32,6 +37,9 @@ export default function PilotHomePage() {
       </Suspense>
       <Suspense fallback={null}>
         <PilotStatus />
+      </Suspense>
+      <Suspense fallback={<TrainingCardFallback />}>
+        <TrainingCard />
       </Suspense>
       <Suspense fallback={null}>
         <FinishRideCard />
@@ -86,7 +94,7 @@ async function PilotStatus() {
         <ApprovalCelebration
           title={celebration.title}
           body={formatMessage(
-            celebration.body,
+            isTrainingRequired() ? celebration.body : celebration.bodyInPerson,
             { chapter: celebrate.chapter.name },
             language,
           )}

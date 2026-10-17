@@ -4,6 +4,7 @@ import { rides } from "@/features/rides";
 import { fileKindOf } from "@/lib/storage";
 import { readableFile } from "./file-access";
 import { accessPerson } from "./person-access";
+import { readableTrainingAttachment } from "./training-access";
 
 jest.mock("@/features/fleet", () => ({ fleet: { fileReadRule: jest.fn() } }));
 jest.mock("@/features/rides", () => ({ rides: { photoReadRule: jest.fn() } }));
@@ -16,6 +17,9 @@ jest.mock("@/lib/auth-guards", () => ({
     rule.kind === "anyone",
 }));
 jest.mock("./person-access", () => ({ accessPerson: jest.fn() }));
+jest.mock("./training-access", () => ({
+  readableTrainingAttachment: jest.fn(),
+}));
 
 const viewer = {
   user: { id: "rider-karl" },
@@ -61,6 +65,15 @@ describe("readableFile", () => {
       rule: { kind: "members" },
     });
     expect(await readableFile(viewer, "file-1")).toBeNull();
+    expect(fleet.fileReadRule).not.toHaveBeenCalled();
+  });
+
+  it("leaves training attachments to the training rules", async () => {
+    (personProfiles.findPhoto as jest.Mock).mockResolvedValue(null);
+    (fileKindOf as jest.Mock).mockResolvedValue("trainingAttachment");
+    (readableTrainingAttachment as jest.Mock).mockResolvedValue(photo);
+    expect(await readableFile(viewer, "file-1")).toEqual(photo);
+    expect(readableTrainingAttachment).toHaveBeenCalledWith(viewer, "file-1");
     expect(fleet.fileReadRule).not.toHaveBeenCalled();
   });
 

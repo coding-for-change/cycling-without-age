@@ -18,7 +18,7 @@ const optionalText = (max: number) =>
 
 export const fileKind = z
   .enum(FILE_KINDS)
-  .exclude(["ridePhoto", "profilePhoto"]);
+  .exclude(["ridePhoto", "profilePhoto", "trainingAttachment"]);
 
 export const uploadRequestInput = uploadRequest.extend({ kind: fileKind });
 

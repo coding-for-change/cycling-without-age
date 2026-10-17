@@ -135,6 +135,18 @@ export async function requireAdminOf(authority: AdminAuthority) {
   return session;
 }
 
+export type CatalogueOwner =
+  | { scope: "global" }
+  | { scope: "country"; countryId: string }
+  | { scope: "chapter"; chapterId: string };
+
+export const requireCatalogueOwner = (owner: CatalogueOwner) =>
+  owner.scope === "global"
+    ? requireSuperAdmin()
+    : owner.scope === "country"
+      ? requireCountryAdmin(owner.countryId)
+      : requireChapterAdmin(owner.chapterId);
+
 export async function requireChapterRole(chapterId: string, role: ChapterRole) {
   const session = await requireAuth();
   if (hasChapterRole(session.access, chapterId, role)) return session;
