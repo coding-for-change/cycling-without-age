@@ -8,6 +8,7 @@ export const FILE_KINDS = [
   "damagePhoto",
   "ridePhoto",
   "profilePhoto",
+  "trainingAttachment",
 ] as const;
 export type FileKind = (typeof FILE_KINDS)[number];
 
@@ -23,6 +24,11 @@ type Limit = {
 };
 
 const IMAGE: Limit = { mimes: IMAGE_MIMES, maxBytes: 10 * MB, image: true };
+const PDF: Limit = {
+  mimes: ["application/pdf"],
+  maxBytes: 20 * MB,
+  image: false,
+};
 
 export const FILE_LIMITS: Record<FileKind, Limit> = {
   typePhoto: IMAGE,
@@ -31,7 +37,8 @@ export const FILE_LIMITS: Record<FileKind, Limit> = {
   damagePhoto: IMAGE,
   ridePhoto: IMAGE,
   profilePhoto: { ...IMAGE, square: 512 },
-  typeManual: { mimes: ["application/pdf"], maxBytes: 20 * MB, image: false },
+  typeManual: PDF,
+  trainingAttachment: PDF,
 };
 
 export const extensionOf = (mime: string) =>

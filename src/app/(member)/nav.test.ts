@@ -3,7 +3,9 @@ import {
   MEMBER_NAV,
   activeItem,
   activeTabKey,
+  hidesTabBar,
   isConversationPath,
+  isTrainingStepPath,
   isDrillDown,
   memberNav,
   nextPerspective,
@@ -207,11 +209,28 @@ describe("isDrillDown", () => {
 
   it("treats a page that is not a tab as a drill-down of its parent", () => {
     expect(isDrillDown("/pilot/training", pilot)).toBe(true);
+    expect(isDrillDown("/pilot/training/course-1", pilot)).toBe(true);
+    expect(isDrillDown("/pilot/training/course-1/lesson-1", pilot)).toBe(true);
+    expect(isDrillDown("/pilot/training/course-1/quiz", pilot)).toBe(true);
   });
 
   it("stays off outside the member shell", () => {
     expect(isDrillDown("/admin", pilot)).toBe(false);
     expect(isDrillDown("/passenger/chat/abc", pilot)).toBe(false);
+  });
+});
+
+describe("hidesTabBar", () => {
+  it("steps aside for a lesson, the quiz and an open conversation", () => {
+    expect(hidesTabBar("/pilot/training/course-1/lesson-1")).toBe(true);
+    expect(hidesTabBar("/pilot/training/course-1/quiz")).toBe(true);
+    expect(hidesTabBar("/pilot/chat/abc123")).toBe(true);
+  });
+
+  it("stays on the training list and a course overview", () => {
+    expect(hidesTabBar("/pilot/training")).toBe(false);
+    expect(hidesTabBar("/pilot/training/course-1")).toBe(false);
+    expect(isTrainingStepPath("/passenger/training/a/b")).toBe(false);
   });
 });
 

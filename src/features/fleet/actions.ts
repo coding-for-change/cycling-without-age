@@ -8,10 +8,10 @@ import { hasAnyAdminScope } from "@/lib/access";
 import {
   requireAdminOf,
   requireAuth,
+  requireCatalogueOwner,
   requireChapterAdmin,
   requireChapterRole,
   requireCountryAdmin,
-  requireSuperAdmin,
 } from "@/lib/auth-guards";
 import {
   createAttempt,
@@ -44,7 +44,6 @@ import {
   typeUpdateInput,
   uploadCommitInput,
   uploadRequestInput,
-  type TypeOwner,
 } from "./schemas";
 
 const MAPPED_ERRORS = [
@@ -122,13 +121,6 @@ export async function commitUploadAction(
   );
 }
 
-const requireTypeOwner = (owner: TypeOwner) =>
-  owner.scope === "global"
-    ? requireSuperAdmin()
-    : owner.scope === "country"
-      ? requireCountryAdmin(owner.countryId)
-      : requireChapterAdmin(owner.chapterId);
-
 const requireTypeManager = async (typeId: string) =>
   requireAdminOf(await fleet.typeAuthority(typeId));
 
@@ -137,7 +129,7 @@ export async function createTypeAction(
 ): Promise<FleetResult<{ id: string }>> {
   const parsed = typeCreateInput.safeParse(input);
   if (!parsed.success) return INVALID;
-  const session = await requireTypeOwner(parsed.data.owner);
+  const session = await requireCatalogueOwner(parsed.data.owner);
   return attempt(async () => {
     const type = await fleet.createType(parsed.data, session.user.id);
     return { id: type.id };
@@ -197,7 +189,7 @@ export async function promoteTypeAction(typeId: string): Promise<FleetResult> {
   const type = await fleet.getType(parsedId.data);
   const target = type ? fleet.promotionTarget(type) : null;
   if (!target) return INVALID;
-  await requireTypeOwner(target);
+  await requireCatalogueOwner(target);
   return attempt(async () => {
     await fleet.promoteType(parsedId.data);
   });

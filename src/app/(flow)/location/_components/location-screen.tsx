@@ -36,7 +36,7 @@ import {
   type HomeResolution,
 } from "../actions";
 import { suggestAddresses } from "@/features/profile/actions";
-import { rankChapters } from "./rank";
+import { rankChapters, shortlist } from "./rank";
 
 const ChapterMap = dynamic(() => import("./chapter-map"), {
   ssr: false,
@@ -123,6 +123,7 @@ export function LocationScreen({
       }),
     [chapters, query, where, words],
   );
+  const { shown, hidden } = shortlist({ rows, query, selected });
 
   const toggle = (id: string) => {
     if (
@@ -371,7 +372,7 @@ export function LocationScreen({
               aria-label={strings.title}
               className="space-y-1"
             >
-              {rows.map((chapter) => {
+              {shown.map((chapter) => {
                 const isSelected = selected.includes(chapter.id);
                 return (
                   <li
@@ -429,6 +430,14 @@ export function LocationScreen({
                   </li>
                 );
               })}
+              {hidden > 0 && (
+                <li
+                  role="presentation"
+                  className="px-4 pt-3 text-center text-sm text-pretty text-ink-soft"
+                >
+                  {formatMessage(strings.moreHint, { count: hidden }, words)}
+                </li>
+              )}
             </ul>
           )}
         </div>
@@ -577,6 +586,7 @@ type Strings = {
   searchLabel: string;
   searchPlaceholder: string;
   noResults: string;
+  moreHint: string;
   distanceAway: string;
   mapUnavailable: string;
   mapLabel: string;

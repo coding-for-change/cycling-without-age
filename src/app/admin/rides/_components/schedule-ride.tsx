@@ -24,6 +24,11 @@ import { rideErrors } from "@/features/rides/components/strings";
 import { formatDuration, resolveLocale, wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { first } from "@/lib/search-params";
+import { readinessForChapters } from "@/use-cases/pilot-readiness";
+import {
+  withReadiness,
+  type ReadinessHintLabels,
+} from "../../_components/pilot-choices";
 import { readActiveScope, type AdminSearchParams } from "../../active-scope";
 import { readWeekAnchor } from "../../week-param";
 import {
@@ -94,20 +99,36 @@ function defaultSlot(
 async function loadCrew(
   chapterIds: string[],
   careHome: string,
+  hints: ReadinessHintLabels,
+  language: string,
 ): Promise<ScheduleCrew> {
   const [riders, members] = await Promise.all([
     passengers.listPassengersOfChapters(chapterIds),
     membership.listMembersOfChapters(chapterIds),
   ]);
+  const pilots = members.filter(isPilot);
+  const readiness = await readinessForChapters(
+    chapterIds.map((chapterId) => ({
+      chapterId,
+      userIds: pilots
+        .filter((member) => member.organizationId === chapterId)
+        .map((member) => member.userId),
+    })),
+    language,
+  );
   return {
     passengers: riders.map((passenger) => ({
       ...toPassengerChoice(passenger, careHome),
       chapterId: passenger.chapterId,
     })),
-    pilots: members.filter(isPilot).map((member) => ({
-      ...toPilotChoice(member),
-      chapterId: member.organizationId,
-    })),
+    pilots: withReadiness(
+      pilots.map((member) => ({
+        ...toPilotChoice(member),
+        chapterId: member.organizationId,
+      })),
+      (choice) => readiness.get(choice.chapterId)?.get(choice.id),
+      hints,
+    ),
   };
 }
 
@@ -158,7 +179,12 @@ export async function ScheduleRide({
       chapters={chapters}
       crew={
         params.new === "1"
-          ? loadCrew(chapterIds, dict.calendar.pickupCareHome)
+          ? loadCrew(
+              chapterIds,
+              dict.calendar.pickupCareHome,
+              dict.admin.training.picker,
+              language,
+            )
           : Promise.resolve({ passengers: [], pilots: [] })
       }
       stays={choices(STAYS)}

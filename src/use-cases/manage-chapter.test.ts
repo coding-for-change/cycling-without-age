@@ -1,9 +1,13 @@
 import { activity } from "@/lib/activity";
 import { chapters } from "@/features/chapters";
+import { training } from "@/features/training";
 import { deleteChapter, updateChapter } from "./manage-chapter";
 
 jest.mock("@/lib/activity", () => ({
   activity: { record: jest.fn() },
+}));
+jest.mock("@/features/training", () => ({
+  training: { ownerMedia: jest.fn(), purgeOwnerMedia: jest.fn() },
 }));
 jest.mock("@/features/chapters", () => ({
   chapters: {
@@ -80,6 +84,40 @@ describe("deleting a chapter", () => {
       type: "chapterDeleted",
       payload: { name: "Aarhus Nord", slug: "aarhus-nord" },
     });
+  });
+
+  it("collects the chapter's training media before the cascade and purges it after", async () => {
+    const media = {
+      videos: [
+        {
+          id: "v1",
+          mediaKey: "k",
+          sourceKey: "training/sources/k",
+          uploadId: null,
+        },
+      ],
+      attachments: [{ id: "f1", key: "files/f1.pdf" }],
+    };
+    const order: string[] = [];
+    (training.ownerMedia as jest.Mock).mockImplementation(async () => {
+      order.push("collect");
+      return media;
+    });
+    (chapters.deleteChapter as jest.Mock).mockImplementation(async () => {
+      order.push("delete");
+    });
+    (training.purgeOwnerMedia as jest.Mock).mockImplementation(async () => {
+      order.push("purge");
+    });
+
+    await deleteChapter({ chapterId: "ch1", actorUserId: "admin" });
+
+    expect(training.ownerMedia).toHaveBeenCalledWith({
+      chapterIds: ["ch1"],
+      countryIds: [],
+    });
+    expect(training.purgeOwnerMedia).toHaveBeenCalledWith(media, "admin");
+    expect(order).toEqual(["collect", "delete", "purge"]);
   });
 });
 

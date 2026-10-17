@@ -305,7 +305,8 @@
       "toggleSidebar": "Vis eller skjul sidepanelet",
       "viewAsAdmin": "Se som admin",
       "viewAsPassenger": "Se som passager",
-      "viewAsPilot": "Se som pilot"
+      "viewAsPilot": "Se som pilot",
+      "newCourse": "Opret et træningskursus"
     },
     "countries": {
       "admins": "Landeadmins",
@@ -364,7 +365,11 @@
       "riders": "{count, plural, one {1 booking af en passager} other {# bookinger af passagerer}}",
       "rides": "{count, plural, one {1 tur, også tidligere} other {# ture, også tidligere}}",
       "roles": "{count, plural, one {1 medlemskab af en afdeling} other {# medlemskaber af afdelinger}}",
-      "trishaws": "{count, plural, one {1 rickshaw} other {# rickshawer}}"
+      "trishaws": "{count, plural, one {1 rickshaw} other {# rickshawer}}",
+      "lessons": "{count, plural, one {1 lektion} other {# lektioner}}",
+      "questions": "{count, plural, one {1 quizspørgsmål} other {# quizspørgsmål}}",
+      "enrollments": "{count, plural, one {fremskridtet for 1 pilot} other {fremskridtet for # piloter}}",
+      "completions": "{count, plural, one {1 bestået kursus} other {# beståede kurser}}"
     },
     "history": {
       "accountClaimed": "Personen overtog selv kontoen",
@@ -413,7 +418,11 @@
         "careDecided": "Svar på anmodning",
         "careInvited": "Invitation til hjælper"
       },
-      "you": "Du"
+      "you": "Du",
+      "trainingPassed": "{actor} bestod kurset {name}",
+      "trainingExemptionGranted": "{actor} fritog personen for {scope, select, all {al træning} other {kurset {name}}}",
+      "trainingExemptionRevoked": "{actor} trak fritagelsen for {scope, select, all {al træning} other {kurset {name}}} tilbage",
+      "inPersonTrainingConfirmed": "{actor} bekræftede den fysiske træning"
     },
     "members": {
       "actions": "Handlinger for {name}",
@@ -459,7 +468,9 @@
         "sending": "Sender…",
         "sent": "Invitation sendt til {name}.",
         "submit": "Send invitationen",
-        "title": "Inviter nogen"
+        "title": "Inviter nogen",
+        "skipTraining": "Spring træningen over (erfaren pilot)",
+        "skipTrainingHint": "De kan køre med det samme: alle kurser tæller som gennemført, og denne invitation bekræfter deres fysiske træning."
       },
       "promote": "Gør til afdelingsadmin",
       "promoteBody": "Så kan personen godkende piloter, booke ture og se alles oplysninger.",
@@ -469,7 +480,47 @@
       "removeBody": "Adgangen til afdelingen forsvinder. De ture, der er kørt, bliver stående.",
       "removed": "{name} er ude af afdelingen.",
       "removeTitle": "Fjern {name} fra afdelingen?",
-      "title": "Alle i afdelingen"
+      "title": "Alle i afdelingen",
+      "training": {
+        "title": "Træning",
+        "description": "De kurser, piloten skal bestå, og den fysiske træning, en admin bekræfter.",
+        "descriptionInPerson": "Den fysiske træning, en admin bekræfter, før piloten kører.",
+        "ready": "Klar til at køre",
+        "notReady": "Ikke klar",
+        "inPerson": "Fysisk træning",
+        "inPersonBy": "Bekræftet af {name} · {date}",
+        "inPersonSystem": "System (migrering) · {date}",
+        "inPersonWaiting": "Venter på, at en admin bekræfter den",
+        "confirm": "Bekræft",
+        "revoke": "Tilbagekald",
+        "confirmed": "Fysisk træning bekræftet.",
+        "revoked": "Fysisk træning tilbagekaldt.",
+        "experienced": "Erfaren pilot – spring træningen over",
+        "experiencedHint": "Alle kurser tæller som gennemført. Den fysiske træning skal stadig bekræftes.",
+        "experiencedOn": "Fritaget for alle kurser.",
+        "experiencedOff": "Fritagelsen er tilbagekaldt.",
+        "exempt": "Fritag",
+        "revokeExemption": "Tilbagekald fritagelse",
+        "exempted": "{course}: fritaget.",
+        "exemptionRevoked": "{course}: fritagelsen er tilbagekaldt.",
+        "grantedBy": "{reason} · givet af {name} · {date}",
+        "grantedBySystem": "{reason} · System (migrering) · {date}",
+        "reasons": {
+          "experienced": "Erfaren pilot",
+          "manual": "Fritaget",
+          "migration": "Kørte før træningen fandtes"
+        },
+        "coveredByBlanket": "Dækket af fritagelsen som erfaren pilot",
+        "currentLesson": "Er nået til {lesson}",
+        "attempts": "{count, plural, =0 {Intet quizforsøg endnu} one {1 quizforsøg} other {# quizforsøg}}",
+        "passedOn": "Bestået {date}",
+        "startedOn": "Startet {date}",
+        "noCourses": "Intet kursus er obligatorisk endnu. Den fysiske træning er alt, der skal til.",
+        "inPersonConfirmed": "Bekræftet",
+        "inPersonOpen": "Ikke bekræftet",
+        "details": "Detaljer om {name}",
+        "formerAdmin": "en tidligere admin"
+      }
     },
     "nav": {
       "bikes": "Rickshawer",
@@ -483,7 +534,8 @@
       "passengers": "Passagerer",
       "reports": "Rapporter",
       "rides": "Ture",
-      "settings": "Indstillinger"
+      "settings": "Indstillinger",
+      "training": "Træning"
     },
     "navGroups": {
       "footer": "Konto",
@@ -537,6 +589,10 @@
       "settings": {
         "body": "Hvor langt din afdeling kører, hvem man kan få fat på, og oplysningerne på afdelingens egen side.",
         "title": "Indstillinger"
+      },
+      "training": {
+        "title": "Træning",
+        "body": "Kurser og videoer, der gør nye piloter klar til at køre."
       }
     },
     "passengers": {
@@ -629,16 +685,25 @@
       "noPhone": "Intet telefonnummer",
       "noRoles": "Ingen rolle endnu",
       "roles": "Roller",
-      "readiness": {
-        "title": "Klar som pilot",
-        "confirm": "Bekræft",
-        "confirmed": "Bekræftet",
-        "ticked": "Afkrydset af piloten",
-        "open": "Ikke endnu",
-        "done": "Bekræftet.",
-        "rode": "Klaret",
-        "revoke": "Tilbagekald",
-        "revoked": "Bekræftelsen er tilbagekaldt."
+      "overview": {
+        "label": "Overblik",
+        "training": "Træning",
+        "ready": "Klar",
+        "notReady": "Ikke klar",
+        "readyIn": "Klar i {ready} af {total}",
+        "percentDone": "{percent} af træningen klaret",
+        "rides": "Ture",
+        "upcoming": "{count, plural, =0 {Ingen planlagt} one {# planlagt} other {# planlagt}}",
+        "lastRide": "Seneste tur",
+        "noRide": "Ingen tur endnu",
+        "attention": "Kræver opmærksomhed",
+        "allGood": "Alt er godt",
+        "more": "{count, plural, one {+# mere} other {+# mere}}",
+        "items": {
+          "inPerson": "Træning på stedet ikke bekræftet",
+          "notStarted": "{course} ikke startet",
+          "inProgress": "{course} ikke færdig"
+        }
       },
       "profile": "Profil",
       "caretaker": {
@@ -958,6 +1023,421 @@
     "user": {
       "account": "Konto",
       "menuLabel": "Din konto"
+    },
+    "training": {
+      "status": {
+        "uploading": "Uploader",
+        "queued": "I kø",
+        "processing": "Behandles",
+        "ready": "Klar",
+        "failed": "Fejlet"
+      },
+      "failure": {
+        "unsupportedFormat": "Vi kan ikke afspille dette filformat. Prøv MP4, MOV eller WebM.",
+        "noVideoStream": "Filen har intet billede, kun lyd eller metadata.",
+        "tooLong": "Videoen er længere end grænsen tillader.",
+        "tooLarge": "Videoens opløsning, billedrate eller størrelse er over grænsen (4K, 60 fps).",
+        "sourceMissing": "Den uploadede fil mangler. Upload den igen.",
+        "transcodeFailed": "Noget gik galt, da videoen blev klargjort. Prøv igen.",
+        "timeout": "Det tog for lang tid at klargøre videoen. Prøv igen."
+      },
+      "errors": {
+        "unknownTrainingVideo": "Denne video findes ikke længere.",
+        "uploadRejected": "Uploaden blev afvist. Tjek filtype og størrelse.",
+        "videoNotFailed": "Kun en fejlet video kan prøves igen.",
+        "videoNotReady": "Videoen er ikke klar endnu.",
+        "videoNotUploading": "Denne upload er allerede færdig eller blev annulleret.",
+        "rateLimited": "For mange uploads på én gang. Vent et par minutter, og prøv igen.",
+        "generic": "Noget gik galt. Prøv igen.",
+        "courseEmpty": "Tilføj mindst én lektion, før du udgiver.",
+        "courseLanguageTaken": "Kurset findes allerede på det sprog.",
+        "invalidFile": "Filen kan ikke bruges her. Upload den igen.",
+        "quizInvalid": "Nogle quizspørgsmål er ikke færdige endnu. Ret dem, før du udgiver.",
+        "unknownTrainingCourse": "Kurset findes ikke længere.",
+        "unknownTrainingLesson": "Lektionen findes ikke længere.",
+        "unknownTrainingQuestion": "Spørgsmålet findes ikke længere.",
+        "videoInUse": "Lektioner bruger stadig denne video. Vælg en anden video til dem først.",
+        "videoNotAllowed": "Denne video er ikke tilgængelig for lektionen.",
+        "familyNotAllowed": "Dette kursus kan ikke kræves eller fritages her.",
+        "unknownTrainingRequirement": "Dette krav findes ikke længere.",
+        "notMember": "Personen er hverken pilot eller ansøger i denne afdeling.",
+        "unknownChapter": "Denne afdeling findes ikke længere.",
+        "elementKindMismatch": "Det passer ikke til denne type element.",
+        "courseFull": "Kurset kan ikke rumme flere elementer.",
+        "quizFull": "Quizzen kan ikke rumme flere spørgsmål.",
+        "scopeAmbiguous": "Vælg først en afdeling eller et land øverst."
+      },
+      "upload": {
+        "invalid": {
+          "type": "Den videotype tager vi ikke imod.",
+          "size": "Større end {size}.",
+          "duration": "Længere end {duration}.",
+          "empty": "Filen er tom."
+        },
+        "new": "Upload ny",
+        "select": "Vælg eksisterende",
+        "hint": "MP4, MOV eller WebM · op til {size}",
+        "dropFiles": "Træk og slip videoer",
+        "dropRelease": "Slip for at uploade"
+      },
+      "tray": {
+        "label": "Uploads",
+        "active": "{count, plural, one {Uploader # video} other {Uploader # videoer}}",
+        "processing": "{count, plural, one {Klargør # video} other {Klargør # videoer}}",
+        "idle": "{count, plural, one {# upload} other {# uploads}}",
+        "collapse": "Fold uploads sammen",
+        "expand": "Fold uploads ud",
+        "progress": "{percent} · {loaded} af {total}",
+        "remaining": "{time} tilbage",
+        "calculating": "Beregner tid…",
+        "starting": "Starter…",
+        "paused": "Sat på pause · {percent}",
+        "finishing": "Afslutter upload…",
+        "queued": "Venter på at blive klargjort…",
+        "transcoding": "Klargør video · {percent}",
+        "ready": "Klar til brug",
+        "cancelled": "Annulleret",
+        "pause": "Pause",
+        "resume": "Fortsæt",
+        "cancel": "Annuller upload",
+        "retry": "Prøv igen",
+        "dismiss": "Skjul",
+        "interrupted": "Upload afbrudt",
+        "resumePick": "Vælg den samme fil for at fortsætte",
+        "wrongFile": "Det er en anden fil. Vælg “{name}” igen.",
+        "leaveWarning": "Der uploades stadig videoer. Vil du gå alligevel?",
+        "errors": {
+          "network": "Forbindelsen blev afbrudt. Tjek dit netværk, og prøv igen.",
+          "invalid": "Filen kan ikke uploades."
+        }
+      },
+      "courses": {
+        "emptyTitle": "Ingen kurser endnu",
+        "empty": "Et kursus er et par korte lektioner med video og lidt tekst og en quiz til sidst. Opret det første, så kan nye piloter gå i gang, så snart det er udgivet."
+      },
+      "library": {
+        "archived": "Arkiveret",
+        "owners": {
+          "global": "Global – alle afdelinger overalt",
+          "country": "{name} – alle afdelinger i landet",
+          "chapter": "{name} – kun denne afdeling"
+        },
+        "pick": {
+          "title": "Vælg video",
+          "search": "Søg i videoer",
+          "allLanguages": "Alle sprog",
+          "languageFilter": "Sprog",
+          "none": "Ingen video passer til din søgning.",
+          "empty": "Ingen videoer endnu. Upload den første, så dukker den op her med det samme.",
+          "cancel": "Annuller",
+          "done": "Færdig",
+          "selected": "Valgt",
+          "uploading": "Uploader · {percent}",
+          "preparing": "Klargøres · {percent}",
+          "queued": "Venter …",
+          "failed": "Mislykkedes",
+          "notReady": "Kan vælges, når den er klar"
+        }
+      },
+      "detail": {
+        "back": "Bibliotek",
+        "title": "Titel",
+        "description": "Om denne video",
+        "descriptionPlaceholder": "Intet skrevet endnu. Tilføj, hvad piloterne lærer her …",
+        "preview": "Forhåndsvisning",
+        "properties": "Egenskaber",
+        "status": "Status",
+        "language": "Sprog",
+        "owner": "Bibliotek",
+        "duration": "Længde",
+        "resolution": "Opløsning",
+        "renditions": "Kvaliteter",
+        "uploaded": "Tilføjet",
+        "size": "Originalfil",
+        "processingTitle": "Videoen gøres klar",
+        "processingBody": "Vi laver versioner af uploaden til alle skærme. Du kan godt forlade siden, det fortsætter.",
+        "queuedBody": "Venter på sin tur. Det tager som regel kun et øjeblik.",
+        "uploadingBody": "Filen bliver stadig uploadet.",
+        "failedTitle": "Videoen kunne ikke gøres klar",
+        "retry": "Prøv igen",
+        "retryDone": "Prøver igen. Det tager et par minutter.",
+        "posterFromFrame": "Brug aktuelt billede som forsidebillede",
+        "posterDone": "Forsidebilledet opdateres om et øjeblik.",
+        "posterHint": "Stop dér, hvor billedet siger mest, og brug det billede.",
+        "readOnly": "Denne video hører til biblioteket {owner}. Kun dets administratorer kan ændre den.",
+        "archive": "Arkivér",
+        "restore": "Gendan",
+        "archiveHint": "En arkiveret video bliver i de kurser, der bruger den, men kan ikke vælges til nye lektioner.",
+        "archivedDone": "{name} er arkiveret.",
+        "restoredDone": "{name} er tilbage i biblioteket.",
+        "archivedBadge": "Arkiveret",
+        "cancel": "Annuller",
+        "delete": {
+          "open": "Slet video",
+          "title": "Slet {name}?",
+          "body": "Videoen og alle klargjorte versioner fjernes for altid.",
+          "label": "Skriv {word} for at bekræfte",
+          "word": "DELETE",
+          "submit": "Slet video",
+          "done": "{name} er slettet."
+        }
+      },
+      "create": {
+        "open": "Nyt kursus",
+        "title": "Nyt kursus",
+        "body": "Start med en titel og et sprog. Lektioner og quiz kommer bagefter, på kursussiden.",
+        "kindLabel": "Hvad opretter du?",
+        "kinds": {
+          "family": "Et nyt kursus",
+          "translation": "En oversættelse"
+        },
+        "family": "Oversættelse af",
+        "familyHint": "Piloter får kurset på deres eget sprog. Det tæller at bestå på et hvilket som helst sprog.",
+        "language": "Sprog",
+        "languageTaken": "{language} (findes allerede)",
+        "courseTitle": "Titel",
+        "titlePlaceholder": "fx Grundkursus for piloter",
+        "owner": "Bibliotek",
+        "ownerHint": "Hvem der kan bruge kurset. Ejeren bestemmer lektioner og quiz.",
+        "submit": "Opret kursus",
+        "created": "“{name}” er klar til sin første lektion.",
+        "titleRequired": "Giv kurset en titel.",
+        "familyRequired": "Vælg kurset, du vil oversætte.",
+        "noFreeLanguage": "Kurset findes allerede på alle sprog."
+      },
+      "course": {
+        "back": "Kurser",
+        "title": "Titel",
+        "summary": "Resumé",
+        "summaryPlaceholder": "To sætninger om, hvad piloter lærer her …",
+        "lessonCount": "{count, plural, =0 {Ingen lektioner endnu} one {1 lektion} other {# lektioner}}",
+        "newLesson": "Ny lektion",
+        "noVideo": "Læsning",
+        "orderSaved": "Rækkefølgen er gemt.",
+        "properties": "Egenskaber",
+        "language": "Sprog",
+        "languages": "Sprog",
+        "owner": "Bibliotek",
+        "published": "Udgivet",
+        "publishedHint": "Piloter ser kurset, når det er udgivet. Ændringer derefter er live med det samme.",
+        "questionCount": "{count, plural, =0 {Ingen spørgsmål endnu} one {1 spørgsmål} other {# spørgsmål}}",
+        "danger": "Farezone",
+        "dangerHint": "Sletning fjerner dette sprog for altid. Kursets andre sprog bliver.",
+        "cancel": "Annuller",
+        "delete": {
+          "open": "Slet kursus",
+          "title": "Slet {name}?",
+          "body": "Kurset på dette sprog, dets lektioner og quiz fjernes for altid. Videoerne bliver i biblioteket.",
+          "label": "Skriv {word} for at bekræfte",
+          "word": "DELETE",
+          "submit": "Slet kursus",
+          "done": "{name} er slettet."
+        },
+        "elements": "Lektioner og quizzer",
+        "elementsHint": "Piloterne går igennem dem i denne rækkefølge. En quiz er et checkpoint: Det, der kommer efter, åbner først, når den er bestået.",
+        "addElement": "Tilføj element",
+        "addElementHere": "Tilføj her",
+        "kinds": {
+          "lesson": "Lektion",
+          "quiz": "Quiz"
+        },
+        "newQuiz": "Ny quiz",
+        "dragElement": "Flyt {name}",
+        "noElements": "Her er intet endnu. Start med en lektion, og tilføj så en quiz som checkpoint.",
+        "addLanguage": "Tilføj sprog",
+        "managedBy": "Styres af {owner}. Kun deres admins kan ændre det.",
+        "managedByRequire": "Styres af {owner}. Kun deres admins kan ændre det, men du kan gøre det påkrævet for {scope} i kursuslisten.",
+        "consequenceQuizzes": "{count, plural, one {1 quiz} other {# quizzer}}",
+        "progress": {
+          "title": "Fremskridt",
+          "description": "{count, plural, =0 {Ingen i {scope} er startet endnu.} one {1 pilot i {scope}} other {# piloter i {scope}}}",
+          "privacy": "Vælg en afdeling for at se de enkelte piloter. På tværs af afdelinger ser du kun totaler.",
+          "empty": "Her er ingen piloter endnu.",
+          "statuses": {
+            "passed": "Bestået",
+            "exempt": "Fritaget",
+            "inProgress": "I gang",
+            "notStarted": "Ikke startet"
+          },
+          "columns": {
+            "pilot": "Pilot",
+            "status": "Status",
+            "progress": "Fremskridt",
+            "current": "Er nået til",
+            "attempts": "Quizforsøg",
+            "lastActivity": "Sidst aktiv"
+          },
+          "unnamed": "Pilot uden navn"
+        }
+      },
+      "lesson": {
+        "title": "Titel",
+        "body": "Lektionstekst",
+        "bodyPlaceholder": "Hvad skal piloter tage med? Et par linjer er nok …",
+        "video": "Video",
+        "videoNone": "Ingen video endnu. Vælg en fra biblioteket, eller lad lektionen være en læselektion.",
+        "videoRemove": "Fjern video",
+        "videoSet": "Videoen er valgt.",
+        "attachment": "Materiale",
+        "attachmentLabels": {
+          "add": "Tilføj en PDF",
+          "hint": "Slip en PDF her, op til 20 MB",
+          "name": "Materiale (PDF)",
+          "remove": "Fjern materiale",
+          "open": "Åbn i en ny fane",
+          "uploading": "Uploader …",
+          "failed": "PDF'en kunne ikke uploades."
+        },
+        "readOnly": "Lektionen tilhører {owner}. Kun deres admins kan ændre den.",
+        "cancel": "Annuller",
+        "delete": {
+          "open": "Slet lektion",
+          "title": "Slet {name}?",
+          "body": "Lektionen og alles fremskridt i den fjernes. Videoen bliver i biblioteket.",
+          "label": "Skriv {word} for at bekræfte",
+          "word": "DELETE",
+          "submit": "Slet lektion",
+          "done": "{name} er slettet."
+        },
+        "titlePlaceholder": "Bremsning ned ad bakke",
+        "videoUploading": "Uploader · {percent}",
+        "videoPreparing": "Klargøres · {percent}",
+        "videoPending": "Den kommer med i lektionen, så snart den er klar.",
+        "videoReplace": "Erstat",
+        "videoRemoved": "Video fjernet.",
+        "videoArchived": "Arkiveret i biblioteket"
+      },
+      "quiz": {
+        "body": "Alle svar skal være rigtige for at bestå. Piloter kan prøve igen, så tit de vil.",
+        "preview": "Se som pilot",
+        "add": "Tilføj spørgsmål",
+        "emptyTitle": "Ingen spørgsmål endnu",
+        "empty": "Spørg om det, der virkelig tæller på vejen: bremser, tæppet til passageren, hvad man gør, når det regner.",
+        "number": "Spørgsmål {number}",
+        "kindLabel": "Svartype",
+        "kinds": {
+          "single": "Ét svar",
+          "multiple": "Flere svar"
+        },
+        "prompt": "Spørgsmål",
+        "promptPlaceholder": "Hvad tjekker du før hver tur?",
+        "options": "Svar",
+        "optionPlaceholder": "Svar {number}",
+        "addOption": "Tilføj svar",
+        "removeOption": "Fjern svar {number}",
+        "markCorrect": "Markér svar {number} som rigtigt",
+        "correct": "Rigtigt",
+        "explanation": "Forklaring",
+        "explanationPlaceholder": "Vises efter forsøget: hvorfor er det det rigtige svar?",
+        "delete": "Slet spørgsmål",
+        "deleted": "Spørgsmålet er slettet.",
+        "drag": "Flyt spørgsmål {number}",
+        "readOnly": "Kun admins i {owner} kan ændre quizzen.",
+        "issues": {
+          "promptMissing": "Skriv spørgsmålet.",
+          "tooFewOptions": "Tilføj mindst to svar.",
+          "optionTextMissing": "Hvert svar skal have en tekst.",
+          "noCorrect": "Markér det rigtige svar.",
+          "singleNeedsOneCorrect": "Med ét svar markerer du præcis ét som rigtigt."
+        },
+        "settings": "Indstillinger",
+        "shuffle": "Bland",
+        "shuffleHint": "Spørgsmål og svar kommer i ny rækkefølge ved hvert forsøg.",
+        "draw": "Pr. forsøg",
+        "drawAll": "Alle spørgsmål",
+        "drawCount": "{count, plural, one {1 spørgsmål} other {# spørgsmål}}",
+        "questions": "Spørgsmål",
+        "untitled": "Spørgsmål uden tekst",
+        "needsWork": "Mangler noget"
+      },
+      "picker": {
+        "trainingIncomplete": "Træning ikke gennemført",
+        "inPersonMissing": "Fysisk træning mangler"
+      },
+      "progress": {
+        "statuses": {
+          "passed": "Bestået",
+          "exempt": "Fritaget",
+          "inProgress": "I gang",
+          "notStarted": "Ikke startet"
+        }
+      },
+      "list": {
+        "columns": {
+          "course": "Kursus",
+          "languages": "Sprog",
+          "owner": "Ejer",
+          "status": "Status",
+          "required": "Påkrævet i",
+          "elements": "Indhold"
+        },
+        "scopes": {
+          "global": "Global",
+          "country": "Land",
+          "chapter": "Afdeling"
+        },
+        "published": "Udgivet",
+        "draft": "Kladde",
+        "partly": "{published} af {total} udgivet",
+        "statuses": {
+          "published": "Udgivet",
+          "draft": "Kladde"
+        },
+        "requiredTag": "Påkrævet",
+        "requiredFilter": {
+          "required": "Påkrævet",
+          "optional": "Frivilligt"
+        },
+        "inherited": "{name} (arvet)",
+        "everywhere": "Overalt",
+        "lessonCount": "{count, plural, =0 {Ingen lektioner} one {1 lektion} other {# lektioner}}",
+        "quizCount": "{count, plural, =0 {ingen quiz} one {1 quiz} other {# quizzer}}",
+        "everyone": "alle afdelinger",
+        "menu": {
+          "label": "Handlinger for {name}",
+          "open": "Åbn kursus",
+          "publish": "Udgiv",
+          "unpublish": "Træk tilbage",
+          "publishLanguage": "Udgiv {language}",
+          "unpublishLanguage": "Træk {language} tilbage",
+          "require": "Gør påkrævet for {scope}",
+          "unrequire": "Ikke længere påkrævet for {scope}",
+          "inheritedFrom": "Påkrævet via {name}"
+        },
+        "confirm": {
+          "title": "Gør {name} påkrævet?",
+          "body": "Piloter i {scope} skal bestå det, før de kører.",
+          "impact": "{count, plural, one {1 pilot må ikke længere køre} other {# piloter må ikke længere køre}}",
+          "impactHint": "De kan køre igen, når de består det, eller når du fritager dem på deres medlemsside.",
+          "submit": "Gør påkrævet",
+          "cancel": "Annuller"
+        },
+        "done": {
+          "published": "{name} er udgivet.",
+          "unpublished": "{name} er en kladde igen.",
+          "required": "{name} er nu påkrævet for {scope}.",
+          "notRequired": "{name} er ikke længere påkrævet for {scope}."
+        }
+      },
+      "element": {
+        "kinds": {
+          "lesson": "Lektion",
+          "quiz": "Quiz"
+        },
+        "close": "Luk",
+        "trail": "Kursus og element",
+        "shortcut": "Færdig",
+        "missing": "Dette element findes ikke længere.",
+        "deleteQuiz": {
+          "open": "Slet quiz",
+          "title": "Slet {name}?",
+          "body": "Quizzen, dens spørgsmål og alle forsøg fjernes for altid.",
+          "label": "Skriv {word} for at bekræfte",
+          "word": "DELETE",
+          "submit": "Slet quiz",
+          "done": "{name} er slettet."
+        }
+      }
     }
   },
   "calendar": {
@@ -1762,6 +2242,7 @@
     "mapUnavailable": "Kortet er ikke tilgængeligt lige nu. Listen virker stadig.",
     "next": "Næste",
     "noResults": "Ingen afdeling passer på det.",
+    "moreHint": "{count, plural, one {# afdeling mere} other {# afdelinger mere}}: søg på navn eller by for at finde dem.",
     "pending": "Et øjeblik …",
     "permissionDenied": "Uden din placering kan vi ikke sortere efter afstand — her er alle afdelinger i stedet.",
     "request": "Anmod om at deltage",
@@ -1924,11 +2405,21 @@
     "home": {
       "celebration": {
         "body": "{chapter} siger velkommen. Se træningsvideoerne, og mød så en kaptajn til din første tur.",
+        "bodyInPerson": "{chapter} siger velkommen. Mød en kaptajn til din første tur.",
         "dismiss": "Forstået",
         "title": "Du er med."
       },
       "title": "Klar, når du er",
-      "yourChapters": "Dine afdelinger"
+      "yourChapters": "Dine afdelinger",
+      "training": {
+        "title": "Gør din træning færdig for at køre",
+        "steps": "{done} af {total} trin klaret",
+        "next": "Næste: {title}",
+        "nextInPerson": "Næste: din træning på stedet",
+        "waiting": "Din afdeling bekræfter træningen på stedet, når du har været der.",
+        "continue": "Fortsæt",
+        "view": "Se træning"
+      }
     },
     "status": {
       "appliedOn": "Spurgte den {date}",
@@ -1947,8 +2438,122 @@
       }
     },
     "training": {
-      "body": "Videoerne er stadig under optagelse. Så snart de er klar, står de her — cirka 20 minutter og derefter en workshop med en af kaptajnerne.",
-      "title": "Træning mens du venter"
+      "title": "Træning",
+      "intro": "Et par korte videoer og så en quiz. Hold pause, når du vil – vi husker, hvor du var, på alle dine enheder.",
+      "ring": {
+        "label": "{percent} % af din træning er klaret",
+        "done": "Færdig"
+      },
+      "sections": {
+        "courses": "Kurser",
+        "required": "Påkrævet",
+        "inPerson": "På stedet",
+        "optional": "Valgfrit"
+      },
+      "readiness": {
+        "title": "Gør din træning færdig for at køre",
+        "steps": "{done} af {total} trin klaret",
+        "readyTitle": "Du er klar til at køre",
+        "readyBody": "Alle kurser er klaret, og din afdeling har bekræftet din træning på stedet. Vi ses på vejen.",
+        "applicant": "Din ansøgning bliver stadig behandlet, men du kan allerede gå i gang med træningen.",
+        "next": "Næste: {title}",
+        "nextInPerson": "Næste: din træning på stedet",
+        "chapterReady": "Klar til at køre",
+        "chapterNotReady": "Ikke klar endnu"
+      },
+      "inPerson": {
+        "title": "Træning på stedet",
+        "confirmed": "Bekræftet af din afdeling · {date}",
+        "waiting": "Venter på bekræftelse fra din afdeling",
+        "hint": "Din afdeling viser dig rickshawen og kører en tur med dig. Når du har været der, bekræfter de det her."
+      },
+      "emptyTitle": "Intet kursus endnu",
+      "empty": "Din afdeling har ikke udgivet et kursus endnu. Så snart det sker, dukker det op lige her.",
+      "card": {
+        "lessons": "{count, plural, one {# lektion} other {# lektioner}}",
+        "progress": "{done} af {total} trin",
+        "passed": "Bestået",
+        "notStarted": "Ikke startet",
+        "quizReady": "Quizzen er låst op",
+        "exempt": "Fritaget",
+        "exemptHint": "Ikke nødvendigt for dig"
+      },
+      "course": {
+        "back": "Træning",
+        "start": "Start kurset",
+        "resume": "Fortsæt",
+        "takeQuiz": "Tag quizzen",
+        "watchAgain": "Se igen",
+        "outline": "Lektioner",
+        "quiz": "Afsluttende quiz",
+        "quizHint": "{count, plural, one {# spørgsmål} other {# spørgsmål}} · alle svar skal være rigtige",
+        "quizLocked": "Låses op, når alt før er klaret",
+        "passedOn": "Bestået {date}",
+        "done": "Færdig",
+        "upNext": "Næste",
+        "reading": "Læsning",
+        "lessonNumber": "Lektion {index}",
+        "lockedHint": "Bestå quizzen før først"
+      },
+      "lesson": {
+        "back": "Kursus",
+        "of": "Trin {index} af {total}",
+        "next": "Næste lektion",
+        "toQuiz": "Gå til quizzen",
+        "keepWatching": "Se videre for at fortsætte",
+        "markRead": "Jeg har læst det",
+        "outline": "Lektioner",
+        "resume": "Fortsæt fra {time}",
+        "startOver": "Start forfra",
+        "completed": "Lektion klaret",
+        "attachment": "Materiale (PDF)",
+        "attachmentHint": "Åbner i en ny fane",
+        "previous": "Forrige lektion",
+        "nextHint": "Tryk N for næste lektion",
+        "lockedTitle": "Bestå quizzen først",
+        "lockedBody": "Denne del åbner, når du har bestået quizzen før den.",
+        "finish": "Afslut kurset"
+      },
+      "quiz": {
+        "title": "Afsluttende quiz",
+        "introTitle": "Klar til quizzen?",
+        "introBody": "{count, plural, one {# spørgsmål} other {# spørgsmål}}. Alle svar skal være rigtige, og du kan prøve igen, så tit du vil.",
+        "start": "Start quizzen",
+        "lockedTitle": "Lektionerne først",
+        "lockedBody": "Quizzen åbner, når alt før den er klaret.",
+        "toLesson": "Gå til næste lektion",
+        "questionOf": "Spørgsmål {index} af {total}",
+        "pickOne": "Vælg ét svar",
+        "pickAll": "Vælg alle, der passer",
+        "keys": "Tip: tryk 1–{max} for at vælge",
+        "next": "Næste",
+        "back": "Tilbage",
+        "review": "Se dine svar",
+        "reviewTitle": "Tjek dine svar",
+        "reviewBody": "Tryk på et spørgsmål for at ændre det.",
+        "unanswered": "Ikke besvaret endnu",
+        "submit": "Send svar",
+        "checking": "Vi tjekker dine svar …",
+        "score": "{correct} af {total}",
+        "passTitle": "Du har bestået!",
+        "passBody": "Alle svar var rigtige. Næste skridt: træningen med din afdeling ude i virkeligheden.",
+        "passNext": "Tilbage til træning",
+        "failTitle": "Næsten",
+        "failBody": "{correct} af {total} rigtige. Kig på dem her igen:",
+        "yourAnswer": "Dit svar",
+        "rightAnswer": "Rigtigt svar",
+        "noAnswer": "Intet svar",
+        "tryAgain": "Prøv igen",
+        "alreadyPassed": "Du bestod quizzen {date}. Du kan tage den igen når som helst.",
+        "error": "Vi kunne ikke tjekke dine svar. Tjek din forbindelse, og prøv igen.",
+        "preview": "Forhåndsvisning",
+        "previewBody": "Sådan ser piloterne quizzen. Dine svar bliver ikke gemt.",
+        "progress": "Fremskridt i quizzen",
+        "exit": "Forlad quizzen",
+        "outOf": "af {total}",
+        "checkpointBody": "Alle svar var rigtige. Videre til næste del.",
+        "continue": "Fortsæt"
+      }
     }
   },
   "profile": {
@@ -2149,7 +2754,8 @@
       "unknownPassenger": "Den passager findes ikke længere.",
       "unknownRide": "Turen findes ikke længere.",
       "unknownTrishaw": "Den rickshaw findes ikke længere.",
-      "uploadRejected": "Filen blev ikke godkendt. Brug JPEG, PNG eller WebP på op til 10 MB."
+      "uploadRejected": "Filen blev ikke godkendt. Brug JPEG, PNG eller WebP på op til 10 MB.",
+      "pilotNotReady": "Denne pilot har ikke gennemført træningen endnu."
     },
     "history": {
       "cancelled": "{who, select, you {Du} other {{actor}}} aflyste turen",
@@ -2509,8 +3115,7 @@
       "invalid": "Det ser ikke rigtigt ud.",
       "rateLimited": "Tag den med ro, og prøv igen om et minut.",
       "consentRequired": "Giv først samtykke til at dele helbredsoplysninger.",
-      "uploadRejected": "Det foto virkede ikke. Prøv en JPG, PNG eller WebP under 10 MB.",
-      "pilotStepConfirmed": "Din afdeling har bekræftet dette trin. Spørg dem, hvis det skal ændres."
+      "uploadRejected": "Det foto virkede ikke. Prøv en JPG, PNG eller WebP under 10 MB."
     }
   },
   "setupChecklist": {
@@ -2518,9 +3123,8 @@
     "progress": "{done} af {total} klaret",
     "dismiss": "Skjul",
     "dismissed": "Skjult. Din profil er altid kun et tryk væk.",
-    "markDone": "Markér som klaret",
-    "markUndone": "Markér som ikke klaret",
     "confirmed": "Bekræftet af afdelingen",
+    "waiting": "Venter på bekræftelse fra din afdeling",
     "steps": {
       "photo": "Tilføj et profilfoto",
       "bio": "Skriv et par ord om dig selv",
@@ -2530,14 +3134,14 @@
       "managedRiders": "{count, plural, one {Udfyld profilen for {name}} other {Udfyld profilerne for # passagerer}}",
       "passkey": "Opret en adgangsnøgle",
       "push": "Slå notifikationer til",
-      "trainingVideos": "Se træningsvideoerne",
-      "workshop": "Deltag i en praktisk workshop",
+      "training": "Gennemfør dine træningskurser",
+      "inPersonTraining": "Deltag i den fysiske træning",
       "firstRide": "Kør første gang med en kaptajn"
     },
     "aboutYou": "Om dig, så piloterne ved, hvem der booker.",
     "hints": {
-      "trainingVideos": "Omkring 20 minutter, direkte i appen.",
-      "workshop": "Med en af kaptajnerne.",
+      "training": "Korte videoer og en quiz, direkte i appen.",
+      "inPersonTraining": "Din afdeling bekræfter den, når du har været med.",
       "firstRide": "En kaptajn kører med første gang."
     }
   },
@@ -2555,6 +3159,34 @@
       "passengerChapterMismatch": "Du passer allerede på nogen i en anden afdeling, så {rider} kan ikke tilføjes her.",
       "tooManyRiders": "Du kan passe på op til 10 personer.",
       "generic": "Det virkede ikke. Prøv igen."
+    }
+  },
+  "training": {
+    "player": {
+      "label": "Videoafspiller",
+      "play": "Afspil",
+      "pause": "Pause",
+      "replay": "Afspil igen",
+      "mute": "Slå lyd fra",
+      "unmute": "Slå lyd til",
+      "fullscreenEnter": "Fuld skærm",
+      "fullscreenExit": "Afslut fuld skærm",
+      "pipEnter": "Billede i billede",
+      "pipExit": "Afslut billede i billede",
+      "seekForward": "{seconds} sekunder frem",
+      "seekBackward": "{seconds} sekunder tilbage",
+      "seek": "Spol",
+      "settings": "Indstillinger",
+      "speed": "Hastighed",
+      "quality": "Kvalitet",
+      "auto": "Automatisk",
+      "errorTitle": "Videoen kan ikke afspilles lige nu",
+      "errorNetwork": "Videoen kunne ikke indlæses. Tjek din forbindelse, og prøv igen.",
+      "errorSource": "Videoen er ikke tilgængelig lige nu.",
+      "errorUnexpected": "Noget gik galt under afspilningen.",
+      "close": "Luk",
+      "watchFirst": "Se op til her først",
+      "loading": "Indlæser video"
     }
   }
 }

@@ -20,7 +20,10 @@ export function MarkdownEditor({
   maxLength,
   minRows = 3,
   autoFocus,
+  toolbar = "bottom",
   className,
+  areaClassName,
+  fieldClassName,
   "aria-label": ariaLabel,
 }: {
   id?: string;
@@ -33,7 +36,10 @@ export function MarkdownEditor({
   maxLength?: number;
   minRows?: number;
   autoFocus?: boolean;
+  toolbar?: "top" | "bottom";
   className?: string;
+  areaClassName?: string;
+  fieldClassName?: string;
   "aria-label"?: string;
 }) {
   const field = useRef<HTMLTextAreaElement>(null);
@@ -42,6 +48,23 @@ export function MarkdownEditor({
     value,
     onChange,
     labels.link,
+  );
+
+  const tools = (
+    <div
+      className={cn(
+        "flex items-center gap-0.5 border-line px-1 py-1",
+        toolbar === "top"
+          ? "flex-wrap rounded-t-[calc(var(--r-card)-1px)] border-b bg-canvas-deep px-2"
+          : "border-t",
+      )}
+    >
+      <MarkdownToolbar
+        labels={labels}
+        run={run}
+        size={toolbar === "top" ? "icon-sm" : "icon-xs"}
+      />
+    </div>
   );
 
   return (
@@ -55,6 +78,7 @@ export function MarkdownEditor({
           onBlur?.();
       }}
     >
+      {toolbar === "top" ? tools : null}
       <HighlightedTextarea
         ref={field}
         id={id}
@@ -69,15 +93,10 @@ export function MarkdownEditor({
           if (shortcut(event)) return;
           onKeyDown?.(event);
         }}
-        fieldClassName={FIELD}
-        className="block max-h-80 outline-none"
+        fieldClassName={cn(FIELD, fieldClassName)}
+        className={cn("block max-h-80 outline-none", areaClassName)}
       />
-      <div className="flex items-center gap-0.5 border-t border-line px-1 py-1">
-        <MarkdownToolbar
-          labels={labels}
-          run={run}
-        />
-      </div>
+      {toolbar === "bottom" ? tools : null}
     </div>
   );
 }

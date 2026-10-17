@@ -19,7 +19,6 @@ import type {
   SubjectRef,
 } from "./schemas";
 import {
-  clearPilotStepConfirmation,
   deletePilotStep,
   deleteProfileOfPassenger,
   deleteStoredFile,
@@ -27,6 +26,7 @@ import {
   findPhotoFilesOf,
   findPhotoOwner,
   findPilotSteps,
+  findStepOfUsers,
   findProfileBySubject,
   findProfilesBySubjects,
   findStoredFileKey,
@@ -316,36 +316,38 @@ export async function transferPassengerProfileToUser(
 export const dismissSetup = (userId: string) =>
   upsertProfile({ kind: "user", id: userId }, { setupDismissedAt: new Date() });
 
-export type PilotStepState = { done: boolean; confirmed: boolean };
+export type PilotStepState = { confirmed: boolean };
 
 export async function getPilotSteps(
   userId: string,
 ): Promise<Record<PilotStep, PilotStepState>> {
   const ticks = await findPilotSteps(userId);
-  const state = (step: PilotStep): PilotStepState => {
-    const tick = ticks.find((t) => t.step === step);
-    return { done: Boolean(tick), confirmed: Boolean(tick?.confirmedAt) };
-  };
-  return {
-    trainingVideos: state("trainingVideos"),
-    workshop: state("workshop"),
-  };
+  const confirmed = (step: PilotStep) =>
+    ticks.some((tick) => tick.step === step && tick.confirmedAt !== null);
+  return { inPersonTraining: { confirmed: confirmed("inPersonTraining") } };
 }
 
-export const setPilotStep = async (
-  userId: string,
-  step: PilotStep,
-  done: boolean,
-) => {
-  if (done) {
-    await upsertPilotStep(userId, step);
-    return;
-  }
-  const ticks = await findPilotSteps(userId);
-  if (ticks.some((tick) => tick.step === step && tick.confirmedAt))
-    throw new DomainError("pilotStepConfirmed");
-  await deletePilotStep(userId, step);
+export type InPersonTraining = {
+  confirmedAt: Date | null;
+  confirmedByUserId: string | null;
 };
+
+export async function inPersonTrainingOf(
+  userIds: string[],
+): Promise<Map<string, InPersonTraining>> {
+  const unique = [...new Set(userIds)];
+  if (unique.length === 0) return new Map();
+  const rows = await findStepOfUsers(unique, "inPersonTraining");
+  return new Map(
+    rows.map((row) => [
+      row.userId,
+      {
+        confirmedAt: row.confirmedAt,
+        confirmedByUserId: row.confirmedByUserId,
+      },
+    ]),
+  );
+}
 
 export const confirmPilotStep = async (
   userId: string,
@@ -356,5 +358,5 @@ export const confirmPilotStep = async (
 };
 
 export const revokePilotStep = async (userId: string, step: PilotStep) => {
-  await clearPilotStepConfirmation(userId, step);
+  await deletePilotStep(userId, step);
 };

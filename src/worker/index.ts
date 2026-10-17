@@ -3,6 +3,7 @@ import type { Job } from "bullmq";
 import { captureException, flush } from "@sentry/node";
 import { chat } from "@/features/chat";
 import { notifications } from "@/features/notifications";
+import { training } from "@/features/training";
 import type { EventType } from "@/lib/events/catalog";
 import { QUEUE, closeQueues, queue } from "@/lib/events/queues";
 import {
@@ -32,6 +33,7 @@ import {
   runPushDelivery,
 } from "./deliveries";
 import { handlers } from "./handlers";
+import { runMediaJob } from "./media";
 import { checkHealth } from "./health";
 import {
   MAINTENANCE_NAMES,
@@ -54,6 +56,17 @@ const HARD_EXIT_MS = 25_000;
 const FLUSH_MS = 2_000;
 
 const RESEND_RATE_LIMIT = Number(process.env.RESEND_RATE_LIMIT ?? 8);
+const MEDIA_LOCK_MS = 5 * 60_000;
+
+const WORKER_ROLES = ["events", "media", "all"] as const;
+type WorkerRole = (typeof WORKER_ROLES)[number];
+
+const workerRole = (): WorkerRole => {
+  const role = process.env.WORKER_ROLE ?? "all";
+  return (WORKER_ROLES as readonly string[]).includes(role)
+    ? (role as WorkerRole)
+    : "all";
+};
 
 // A jobId may not contain a colon: BullMQ keys are `bull:<queue>:<jobId>`.
 async function dispatchEvent(eventId: string) {
@@ -110,10 +123,16 @@ async function pruneChat() {
     logger.info({ messages, conversations }, "pruned chat history");
 }
 
+async function pruneTrainingUploads() {
+  const removed = await training.pruneStaleUploads();
+  if (removed > 0) logger.info({ removed }, "pruned stale training uploads");
+}
+
 const MAINTENANCE: Record<MaintenanceName, () => Promise<void>> = {
   sweep,
   "prune-devices": pruneDevices,
   "prune-chat": pruneChat,
+  "prune-training-uploads": pruneTrainingUploads,
 };
 
 const runEventJob = (job: Job<{ id: string }>) =>
@@ -151,8 +170,8 @@ function captureWorkerError(queueName: string, error: unknown) {
   captureException(error);
 }
 
-async function main() {
-  const workers = [
+function eventWorkers() {
+  return [
     new Worker<{ id: string }>(QUEUE.events, runEventJob, {
       connection: redisConnection,
     }),
@@ -169,6 +188,22 @@ async function main() {
       connection: redisConnection,
       concurrency: 5,
     }),
+  ];
+}
+
+const mediaWorker = () =>
+  new Worker(QUEUE.media, runMediaJob, {
+    connection: redisConnection,
+    concurrency: 1,
+    lockDuration: MEDIA_LOCK_MS,
+  });
+
+async function main() {
+  const role = workerRole();
+  const runsEvents = role !== "media";
+  const workers = [
+    ...(runsEvents ? eventWorkers() : []),
+    ...(role !== "events" ? [mediaWorker()] : []),
   ];
 
   for (const worker of workers) {
@@ -220,16 +255,21 @@ async function main() {
     });
   }
 
-  for (const name of MAINTENANCE_NAMES)
-    await queue(QUEUE.events).upsertJobScheduler(name, schedulerOptions(name));
+  if (runsEvents)
+    for (const name of MAINTENANCE_NAMES)
+      await queue(QUEUE.events).upsertJobScheduler(
+        name,
+        schedulerOptions(name),
+      );
 
   const board = await startBoard(BOARD_PORT, () => checkHealth(workers));
   startMetricsServer(METRICS_PORT);
-  registerWorkerCollectors({
-    queues: Object.values(QUEUE).map((name) => queue(name)),
-    workers,
-    countUnprocessed,
-  });
+  if (runsEvents)
+    registerWorkerCollectors({
+      queues: Object.values(QUEUE).map((name) => queue(name)),
+      workers,
+      countUnprocessed,
+    });
 
   let stopping = false;
   const shutdown = async () => {
@@ -264,7 +304,8 @@ async function main() {
 
   logger.info(
     {
-      queues: Object.values(QUEUE),
+      role,
+      queues: workers.map((worker) => worker.name),
       board_port: BOARD_PORT,
       metrics_port: METRICS_PORT,
     },

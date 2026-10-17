@@ -1,0 +1,50 @@
+@layer base.theme, base.preset, base.preferences;
+
+@layer base.preset {
+  .media-skin[data-brand="cwa"] {
+    --media-accent-color: var(--mint-bright);
+    --media-accent-text-color: var(--mint-deep);
+    --media-background: var(--mint-deep);
+    --media-backdrop: var(--mint-deep);
+    --media-foreground: white;
+    --media-controls: color-mix(in oklab, var(--mint-deep) 45%, transparent);
+    --media-popover: color-mix(in oklab, var(--mint-deep) 72%, transparent);
+    --media-muted: color-mix(in oklab, white 15%, transparent);
+    --media-muted-foreground: color-mix(in oklab, white 70%, transparent);
+    --media-ring: var(--mint-bright);
+    --media-live-color: var(--red);
+    --media-border-color: var(--line);
+    --media-border-radius: 1rem;
+    --media-font-family: var(--font-sans);
+  }
+}
+
+.training-player-not-yet {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    color-mix(in oklab, currentColor 14%, transparent) 0 3px,
+    transparent 3px 6px
+  );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .training-player-shake {
+    animation: training-player-shake 360ms ease-out;
+  }
+}
+
+@keyframes training-player-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+  75% {
+    transform: translateX(-2px);
+  }
+}

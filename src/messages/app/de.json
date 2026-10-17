@@ -305,7 +305,8 @@
       "toggleSidebar": "Seitenleiste ein- oder ausblenden",
       "viewAsAdmin": "Als Admin ansehen",
       "viewAsPassenger": "Als Passagier ansehen",
-      "viewAsPilot": "Als Pilot ansehen"
+      "viewAsPilot": "Als Pilot ansehen",
+      "newCourse": "Schulungskurs anlegen"
     },
     "countries": {
       "admins": "Länder-Admins",
@@ -364,7 +365,11 @@
       "riders": "{count, plural, one {1 Buchung eines Fahrgasts} other {# Buchungen von Fahrgästen}}",
       "rides": "{count, plural, one {1 Ausfahrt, vergangene eingeschlossen} other {# Ausfahrten, vergangene eingeschlossen}}",
       "roles": "{count, plural, one {1 Mitgliedschaft in einer Ortsgruppe} other {# Mitgliedschaften in Ortsgruppen}}",
-      "trishaws": "{count, plural, one {1 Rikscha} other {# Rikschas}}"
+      "trishaws": "{count, plural, one {1 Rikscha} other {# Rikschas}}",
+      "lessons": "{count, plural, one {1 Lektion} other {# Lektionen}}",
+      "questions": "{count, plural, one {1 Quizfrage} other {# Quizfragen}}",
+      "enrollments": "{count, plural, one {den Fortschritt von 1 Pilot*in} other {den Fortschritt von # Pilot*innen}}",
+      "completions": "{count, plural, one {1 bestandenen Kurs} other {# bestandene Kurse}}"
     },
     "history": {
       "accountClaimed": "Diese Person hat das Konto übernommen",
@@ -413,7 +418,11 @@
         "careDecided": "Antwort auf Betreuung",
         "careInvited": "Einladung Begleitperson"
       },
-      "you": "Du"
+      "you": "Du",
+      "trainingPassed": "{actor} hat den Kurs {name} bestanden",
+      "trainingExemptionGranted": "{actor} hat diese Person von {scope, select, all {allen Schulungen} other {dem Kurs {name}}} befreit",
+      "trainingExemptionRevoked": "{actor} hat die Befreiung von {scope, select, all {allen Schulungen} other {dem Kurs {name}}} zurückgenommen",
+      "inPersonTrainingConfirmed": "{actor} hat die Präsenzschulung bestätigt"
     },
     "members": {
       "actions": "Aktionen für {name}",
@@ -459,7 +468,9 @@
         "sending": "Wird gesendet…",
         "sent": "Einladung an {name} verschickt.",
         "submit": "Einladung senden",
-        "title": "Jemanden einladen"
+        "title": "Jemanden einladen",
+        "skipTraining": "Schulung überspringen (erfahrene Pilot*in)",
+        "skipTrainingHint": "Die Person kann sofort fahren: Alle Kurse gelten als erledigt und mit dieser Einladung bestätigst du ihre Präsenzschulung."
       },
       "promote": "Zum Ortsgruppen-Admin machen",
       "promoteBody": "Damit kann die Person Piloten freigeben, Ausfahrten buchen und alle Angaben sehen.",
@@ -469,7 +480,47 @@
       "removeBody": "Der Zugang zur Ortsgruppe ist damit weg. Gefahrene Ausfahrten bleiben im Protokoll.",
       "removed": "{name} ist nicht mehr in der Ortsgruppe.",
       "removeTitle": "{name} aus der Ortsgruppe entfernen?",
-      "title": "Alle in der Ortsgruppe"
+      "title": "Alle in der Ortsgruppe",
+      "training": {
+        "title": "Schulung",
+        "description": "Die Kurse, die diese Person bestehen muss, und die Präsenzschulung, die ein Admin bestätigt.",
+        "descriptionInPerson": "Die Präsenzschulung, die ein Admin bestätigt, bevor diese Person fährt.",
+        "ready": "Fahrbereit",
+        "notReady": "Nicht fahrbereit",
+        "inPerson": "Präsenzschulung",
+        "inPersonBy": "Bestätigt von {name} · {date}",
+        "inPersonSystem": "System (Migration) · {date}",
+        "inPersonWaiting": "Wartet auf die Bestätigung durch einen Admin",
+        "confirm": "Bestätigen",
+        "revoke": "Zurücknehmen",
+        "confirmed": "Präsenzschulung bestätigt.",
+        "revoked": "Präsenzschulung zurückgenommen.",
+        "experienced": "Erfahrene Pilot*in – Schulung überspringen",
+        "experiencedHint": "Alle Kurse gelten als erledigt. Die Präsenzschulung muss trotzdem bestätigt werden.",
+        "experiencedOn": "Von allen Kursen befreit.",
+        "experiencedOff": "Befreiung zurückgenommen.",
+        "exempt": "Befreien",
+        "revokeExemption": "Befreiung zurücknehmen",
+        "exempted": "{course}: befreit.",
+        "exemptionRevoked": "{course}: Befreiung zurückgenommen.",
+        "grantedBy": "{reason} · erteilt von {name} · {date}",
+        "grantedBySystem": "{reason} · System (Migration) · {date}",
+        "reasons": {
+          "experienced": "Erfahrene Pilot*in",
+          "manual": "Befreit",
+          "migration": "Ist schon vor der Schulung gefahren"
+        },
+        "coveredByBlanket": "Durch die Befreiung als erfahrene Pilot*in abgedeckt",
+        "currentLesson": "Gerade bei {lesson}",
+        "attempts": "{count, plural, =0 {Noch kein Quizversuch} one {1 Quizversuch} other {# Quizversuche}}",
+        "passedOn": "Bestanden am {date}",
+        "startedOn": "Begonnen am {date}",
+        "noCourses": "Noch kein Pflichtkurs. Die Präsenzschulung reicht.",
+        "inPersonConfirmed": "Bestätigt",
+        "inPersonOpen": "Nicht bestätigt",
+        "details": "Details zu {name}",
+        "formerAdmin": "einem ehemaligen Admin"
+      }
     },
     "nav": {
       "bikes": "Rikschas",
@@ -483,7 +534,8 @@
       "passengers": "Passagiere",
       "reports": "Berichte",
       "rides": "Ausfahrten",
-      "settings": "Einstellungen"
+      "settings": "Einstellungen",
+      "training": "Training"
     },
     "navGroups": {
       "footer": "Konto",
@@ -537,6 +589,10 @@
       "settings": {
         "body": "Wie weit deine Ortsgruppe fährt, wer zu erreichen ist und was auf der eigenen Seite der Ortsgruppe steht.",
         "title": "Einstellungen"
+      },
+      "training": {
+        "title": "Training",
+        "body": "Kurse und Videos, mit denen neue Pilot:innen startklar werden."
       }
     },
     "passengers": {
@@ -629,16 +685,25 @@
       "noPhone": "Keine Telefonnummer",
       "noRoles": "Noch keine Rolle",
       "roles": "Rollen",
-      "readiness": {
-        "title": "Bereit als Pilot:in",
-        "confirm": "Bestätigen",
-        "confirmed": "Bestätigt",
-        "ticked": "Von der Pilotin oder dem Piloten abgehakt",
-        "open": "Noch offen",
-        "done": "Bestätigt.",
-        "rode": "Erledigt",
-        "revoke": "Zurücknehmen",
-        "revoked": "Bestätigung zurückgenommen."
+      "overview": {
+        "label": "Überblick",
+        "training": "Training",
+        "ready": "Bereit",
+        "notReady": "Nicht bereit",
+        "readyIn": "Bereit in {ready} von {total}",
+        "percentDone": "{percent} des Trainings geschafft",
+        "rides": "Fahrten",
+        "upcoming": "{count, plural, =0 {Keine geplant} one {# geplant} other {# geplant}}",
+        "lastRide": "Letzte Fahrt",
+        "noRide": "Noch keine Fahrt",
+        "attention": "Braucht Aufmerksamkeit",
+        "allGood": "Alles gut",
+        "more": "{count, plural, one {+# weitere} other {+# weitere}}",
+        "items": {
+          "inPerson": "Training vor Ort nicht bestätigt",
+          "notStarted": "{course} nicht begonnen",
+          "inProgress": "{course} nicht abgeschlossen"
+        }
       },
       "profile": "Profil",
       "caretaker": {
@@ -958,6 +1023,421 @@
     "user": {
       "account": "Konto",
       "menuLabel": "Dein Konto"
+    },
+    "training": {
+      "status": {
+        "uploading": "Wird hochgeladen",
+        "queued": "In der Warteschlange",
+        "processing": "Wird verarbeitet",
+        "ready": "Bereit",
+        "failed": "Fehlgeschlagen"
+      },
+      "failure": {
+        "unsupportedFormat": "Dieses Dateiformat können wir nicht abspielen. Versuch es mit MP4, MOV oder WebM.",
+        "noVideoStream": "Die Datei enthält kein Bild, nur Ton oder Metadaten.",
+        "tooLong": "Das Video ist länger als erlaubt.",
+        "tooLarge": "Auflösung, Bildrate oder Größe liegen über dem Limit (4K, 60 fps).",
+        "sourceMissing": "Die hochgeladene Datei fehlt. Lade sie erneut hoch.",
+        "transcodeFailed": "Beim Aufbereiten des Videos ist etwas schiefgelaufen. Versuch es noch einmal.",
+        "timeout": "Das Aufbereiten hat zu lange gedauert. Versuch es noch einmal."
+      },
+      "errors": {
+        "unknownTrainingVideo": "Dieses Video gibt es nicht mehr.",
+        "uploadRejected": "Der Upload wurde abgelehnt. Prüf Dateityp und Größe.",
+        "videoNotFailed": "Nur ein fehlgeschlagenes Video kann neu gestartet werden.",
+        "videoNotReady": "Das Video ist noch nicht bereit.",
+        "videoNotUploading": "Dieser Upload ist schon abgeschlossen oder wurde abgebrochen.",
+        "rateLimited": "Zu viele Uploads auf einmal. Warte ein paar Minuten und versuch es dann erneut.",
+        "generic": "Etwas ist schiefgelaufen. Versuch es noch einmal.",
+        "courseEmpty": "Füg mindestens eine Lektion hinzu, bevor du veröffentlichst.",
+        "courseLanguageTaken": "Diesen Kurs gibt es in dieser Sprache schon.",
+        "invalidFile": "Diese Datei kann hier nicht verwendet werden. Lad sie noch einmal hoch.",
+        "quizInvalid": "Einige Quizfragen sind noch nicht fertig. Korrigier sie vor dem Veröffentlichen.",
+        "unknownTrainingCourse": "Diesen Kurs gibt es nicht mehr.",
+        "unknownTrainingLesson": "Diese Lektion gibt es nicht mehr.",
+        "unknownTrainingQuestion": "Diese Frage gibt es nicht mehr.",
+        "videoInUse": "Lektionen nutzen dieses Video noch. Wähl dort zuerst ein anderes Video.",
+        "videoNotAllowed": "Dieses Video ist für diese Lektion nicht verfügbar.",
+        "familyNotAllowed": "Dieser Kurs kann hier nicht verlangt oder erlassen werden.",
+        "unknownTrainingRequirement": "Diese Vorgabe gibt es nicht mehr.",
+        "notMember": "Diese Person ist in dieser Ortsgruppe weder Pilot:in noch Bewerber:in.",
+        "unknownChapter": "Diese Ortsgruppe gibt es nicht mehr.",
+        "elementKindMismatch": "Das passt nicht zu dieser Art von Element.",
+        "courseFull": "Dieser Kurs kann keine weiteren Elemente aufnehmen.",
+        "quizFull": "Dieses Quiz kann keine weiteren Fragen aufnehmen.",
+        "scopeAmbiguous": "Wähl oben zuerst eine Ortsgruppe oder ein Land."
+      },
+      "upload": {
+        "invalid": {
+          "type": "Diesen Videotyp nehmen wir nicht an.",
+          "size": "Größer als {size}.",
+          "duration": "Länger als {duration}.",
+          "empty": "Diese Datei ist leer."
+        },
+        "new": "Neu hochladen",
+        "select": "Vorhandenes auswählen",
+        "hint": "MP4, MOV oder WebM · bis {size}",
+        "dropFiles": "Videos hierher ziehen und ablegen",
+        "dropRelease": "Loslassen zum Hochladen"
+      },
+      "tray": {
+        "label": "Uploads",
+        "active": "{count, plural, one {# Video wird hochgeladen} other {# Videos werden hochgeladen}}",
+        "processing": "{count, plural, one {# Video wird aufbereitet} other {# Videos werden aufbereitet}}",
+        "idle": "{count, plural, one {# Upload} other {# Uploads}}",
+        "collapse": "Uploads einklappen",
+        "expand": "Uploads ausklappen",
+        "progress": "{percent} · {loaded} von {total}",
+        "remaining": "noch {time}",
+        "calculating": "Restzeit wird geschätzt…",
+        "starting": "Wird gestartet…",
+        "paused": "Pausiert · {percent}",
+        "finishing": "Upload wird abgeschlossen…",
+        "queued": "Wartet auf die Aufbereitung…",
+        "transcoding": "Video wird aufbereitet · {percent}",
+        "ready": "Bereit",
+        "cancelled": "Abgebrochen",
+        "pause": "Pausieren",
+        "resume": "Fortsetzen",
+        "cancel": "Upload abbrechen",
+        "retry": "Erneut versuchen",
+        "dismiss": "Ausblenden",
+        "interrupted": "Upload unterbrochen",
+        "resumePick": "Wähl dieselbe Datei, um fortzusetzen",
+        "wrongFile": "Das ist eine andere Datei. Wähl „{name}“ erneut.",
+        "leaveWarning": "Es werden noch Videos hochgeladen. Trotzdem verlassen?",
+        "errors": {
+          "network": "Die Verbindung ist abgebrochen. Prüf dein Netzwerk und versuch es erneut.",
+          "invalid": "Diese Datei kann nicht hochgeladen werden."
+        }
+      },
+      "courses": {
+        "emptyTitle": "Noch keine Kurse",
+        "empty": "Ein Kurs besteht aus ein paar kurzen Lektionen mit Video und etwas Text und einem Quiz am Ende. Leg den ersten an, und neue Pilot*innen können starten, sobald er veröffentlicht ist."
+      },
+      "library": {
+        "archived": "Archiviert",
+        "owners": {
+          "global": "Global – alle Ortsgruppen weltweit",
+          "country": "{name} – alle Ortsgruppen im Land",
+          "chapter": "{name} – nur diese Ortsgruppe"
+        },
+        "pick": {
+          "title": "Video auswählen",
+          "search": "Videos suchen",
+          "allLanguages": "Alle Sprachen",
+          "languageFilter": "Sprache",
+          "none": "Kein Video passt zu deiner Suche.",
+          "empty": "Noch keine Videos. Lade das erste hoch, dann erscheint es sofort hier.",
+          "cancel": "Abbrechen",
+          "done": "Fertig",
+          "selected": "Ausgewählt",
+          "uploading": "Wird hochgeladen · {percent}",
+          "preparing": "Wird aufbereitet · {percent}",
+          "queued": "Wartet …",
+          "failed": "Fehlgeschlagen",
+          "notReady": "Auswählbar, sobald es bereit ist"
+        }
+      },
+      "detail": {
+        "back": "Mediathek",
+        "title": "Titel",
+        "description": "Über dieses Video",
+        "descriptionPlaceholder": "Noch nichts geschrieben. Ergänze, was Pilot:innen hier lernen …",
+        "preview": "Vorschau",
+        "properties": "Eigenschaften",
+        "status": "Status",
+        "language": "Sprache",
+        "owner": "Mediathek",
+        "duration": "Länge",
+        "resolution": "Auflösung",
+        "renditions": "Qualitäten",
+        "uploaded": "Hinzugefügt",
+        "size": "Originaldatei",
+        "processingTitle": "Video wird aufbereitet",
+        "processingBody": "Wir erstellen aus dem Upload Versionen für jeden Bildschirm. Du kannst die Seite verlassen, es läuft weiter.",
+        "queuedBody": "Wartet, bis es an der Reihe ist. Das dauert meist nur einen Moment.",
+        "uploadingBody": "Die Datei wird noch hochgeladen.",
+        "failedTitle": "Das Video konnte nicht aufbereitet werden",
+        "retry": "Erneut versuchen",
+        "retryDone": "Neuer Versuch läuft. Das dauert ein paar Minuten.",
+        "posterFromFrame": "Aktuelles Bild als Vorschaubild",
+        "posterDone": "Das Vorschaubild wird gleich aktualisiert.",
+        "posterHint": "Halte dort an, wo das Bild am meisten zeigt, und nimm dieses Bild.",
+        "readOnly": "Dieses Video gehört zur Mediathek {owner}. Nur deren Admins können es ändern.",
+        "archive": "Archivieren",
+        "restore": "Wiederherstellen",
+        "archiveHint": "Ein archiviertes Video bleibt in den Kursen, die es nutzen, kann aber nicht mehr für neue Lektionen gewählt werden.",
+        "archivedDone": "{name} ist archiviert.",
+        "restoredDone": "{name} ist wieder in der Mediathek.",
+        "archivedBadge": "Archiviert",
+        "cancel": "Abbrechen",
+        "delete": {
+          "open": "Video löschen",
+          "title": "{name} löschen?",
+          "body": "Das Video und alle aufbereiteten Versionen werden endgültig entfernt.",
+          "label": "Gib {word} ein, um zu bestätigen",
+          "word": "DELETE",
+          "submit": "Video löschen",
+          "done": "{name} ist gelöscht."
+        }
+      },
+      "create": {
+        "open": "Neuer Kurs",
+        "title": "Neuer Kurs",
+        "body": "Fang mit Titel und Sprache an. Lektionen und Quiz folgen auf der Kursseite.",
+        "kindLabel": "Was legst du an?",
+        "kinds": {
+          "family": "Einen neuen Kurs",
+          "translation": "Eine Übersetzung"
+        },
+        "family": "Übersetzung von",
+        "familyHint": "Pilot*innen bekommen den Kurs in ihrer Sprache. Jede bestandene Sprache zählt.",
+        "language": "Sprache",
+        "languageTaken": "{language} (gibt es schon)",
+        "courseTitle": "Titel",
+        "titlePlaceholder": "z. B. Grundschulung für Pilot*innen",
+        "owner": "Bibliothek",
+        "ownerHint": "Wer den Kurs nutzen kann. Die Eigentümer bestimmen Lektionen und Quiz.",
+        "submit": "Kurs anlegen",
+        "created": "„{name}“ wartet auf die erste Lektion.",
+        "titleRequired": "Gib dem Kurs einen Titel.",
+        "familyRequired": "Wähl den Kurs, den du übersetzen willst.",
+        "noFreeLanguage": "Diesen Kurs gibt es schon in jeder Sprache."
+      },
+      "course": {
+        "back": "Kurse",
+        "title": "Titel",
+        "summary": "Zusammenfassung",
+        "summaryPlaceholder": "Zwei Sätze dazu, was Pilot*innen hier lernen …",
+        "lessonCount": "{count, plural, =0 {Noch keine Lektionen} one {1 Lektion} other {# Lektionen}}",
+        "newLesson": "Neue Lektion",
+        "noVideo": "Lesen",
+        "orderSaved": "Reihenfolge gespeichert.",
+        "properties": "Eigenschaften",
+        "language": "Sprache",
+        "languages": "Sprachen",
+        "owner": "Bibliothek",
+        "published": "Veröffentlicht",
+        "publishedHint": "Pilot*innen sehen den Kurs, sobald er veröffentlicht ist. Änderungen danach sind sofort live.",
+        "questionCount": "{count, plural, =0 {Noch keine Fragen} one {1 Frage} other {# Fragen}}",
+        "danger": "Gefahrenzone",
+        "dangerHint": "Löschen entfernt diese Sprache endgültig. Andere Sprachen des Kurses bleiben.",
+        "cancel": "Abbrechen",
+        "delete": {
+          "open": "Kurs löschen",
+          "title": "{name} löschen?",
+          "body": "Der Kurs in dieser Sprache, seine Lektionen und sein Quiz werden endgültig entfernt. Die Videos bleiben in der Bibliothek.",
+          "label": "Gib {word} ein, um zu bestätigen",
+          "word": "DELETE",
+          "submit": "Kurs löschen",
+          "done": "{name} ist gelöscht."
+        },
+        "elements": "Lektionen und Quizze",
+        "elementsHint": "Pilot*innen gehen sie in dieser Reihenfolge durch. Ein Quiz ist ein Checkpoint: Was danach kommt, öffnet sich erst, wenn es bestanden ist.",
+        "addElement": "Element hinzufügen",
+        "addElementHere": "Hier einfügen",
+        "kinds": {
+          "lesson": "Lektion",
+          "quiz": "Quiz"
+        },
+        "newQuiz": "Neues Quiz",
+        "dragElement": "{name} verschieben",
+        "noElements": "Noch nichts da. Fang mit einer Lektion an und setz danach ein Quiz als Checkpoint.",
+        "addLanguage": "Sprache hinzufügen",
+        "managedBy": "Verwaltet von {owner}. Nur deren Admins können ihn ändern.",
+        "managedByRequire": "Verwaltet von {owner}. Nur deren Admins können ihn ändern, aber du kannst ihn in der Kursliste für {scope} zur Pflicht machen.",
+        "consequenceQuizzes": "{count, plural, one {1 Quiz} other {# Quizze}}",
+        "progress": {
+          "title": "Fortschritt",
+          "description": "{count, plural, =0 {In {scope} hat noch niemand angefangen.} one {1 Pilot*in in {scope}} other {# Pilot*innen in {scope}}}",
+          "privacy": "Wähl eine Ortsgruppe, um einzelne Pilot*innen zu sehen. Über mehrere Ortsgruppen siehst du nur Summen.",
+          "empty": "Hier gibt es noch keine Pilot*innen.",
+          "statuses": {
+            "passed": "Bestanden",
+            "exempt": "Befreit",
+            "inProgress": "Läuft",
+            "notStarted": "Nicht begonnen"
+          },
+          "columns": {
+            "pilot": "Pilot*in",
+            "status": "Status",
+            "progress": "Fortschritt",
+            "current": "Gerade bei",
+            "attempts": "Quizversuche",
+            "lastActivity": "Zuletzt aktiv"
+          },
+          "unnamed": "Pilot*in ohne Namen"
+        }
+      },
+      "lesson": {
+        "title": "Titel",
+        "body": "Lektionstext",
+        "bodyPlaceholder": "Was sollen Pilot*innen mitnehmen? Ein paar Zeilen reichen …",
+        "video": "Video",
+        "videoNone": "Noch kein Video. Wähl eins aus der Bibliothek oder lass die Lektion eine Leselektion sein.",
+        "videoRemove": "Video entfernen",
+        "videoSet": "Video gesetzt.",
+        "attachment": "Handout",
+        "attachmentLabels": {
+          "add": "PDF hinzufügen",
+          "hint": "PDF hier ablegen, bis 20 MB",
+          "name": "Handout (PDF)",
+          "remove": "Handout entfernen",
+          "open": "In neuem Tab öffnen",
+          "uploading": "Wird hochgeladen …",
+          "failed": "Das PDF konnte nicht hochgeladen werden."
+        },
+        "readOnly": "Diese Lektion gehört {owner}. Nur deren Admins können sie ändern.",
+        "cancel": "Abbrechen",
+        "delete": {
+          "open": "Lektion löschen",
+          "title": "{name} löschen?",
+          "body": "Die Lektion und der Fortschritt aller darin werden entfernt. Das Video bleibt in der Bibliothek.",
+          "label": "Gib {word} ein, um zu bestätigen",
+          "word": "DELETE",
+          "submit": "Lektion löschen",
+          "done": "{name} ist gelöscht."
+        },
+        "titlePlaceholder": "Bremsen am Hang",
+        "videoUploading": "Wird hochgeladen · {percent}",
+        "videoPreparing": "Wird aufbereitet · {percent}",
+        "videoPending": "Es kommt in die Lektion, sobald es bereit ist.",
+        "videoReplace": "Ersetzen",
+        "videoRemoved": "Video entfernt.",
+        "videoArchived": "In der Mediathek archiviert"
+      },
+      "quiz": {
+        "body": "Zum Bestehen muss jede Antwort stimmen. Pilot*innen können es so oft versuchen, wie sie wollen.",
+        "preview": "Als Pilot*in ansehen",
+        "add": "Frage hinzufügen",
+        "emptyTitle": "Noch keine Fragen",
+        "empty": "Frag, was auf der Straße wirklich zählt: Bremsen, die Decke für die Fahrgäste, was tun bei Regen.",
+        "number": "Frage {number}",
+        "kindLabel": "Antworttyp",
+        "kinds": {
+          "single": "Eine Antwort",
+          "multiple": "Mehrere Antworten"
+        },
+        "prompt": "Frage",
+        "promptPlaceholder": "Was prüfst du vor jeder Fahrt?",
+        "options": "Antworten",
+        "optionPlaceholder": "Antwort {number}",
+        "addOption": "Antwort hinzufügen",
+        "removeOption": "Antwort {number} entfernen",
+        "markCorrect": "Antwort {number} als richtig markieren",
+        "correct": "Richtig",
+        "explanation": "Erklärung",
+        "explanationPlaceholder": "Erscheint nach dem Versuch: Warum ist das die richtige Antwort?",
+        "delete": "Frage löschen",
+        "deleted": "Frage gelöscht.",
+        "drag": "Frage {number} verschieben",
+        "readOnly": "Nur die Admins von {owner} können dieses Quiz ändern.",
+        "issues": {
+          "promptMissing": "Schreib die Frage.",
+          "tooFewOptions": "Füg mindestens zwei Antworten hinzu.",
+          "optionTextMissing": "Jede Antwort braucht einen Text.",
+          "noCorrect": "Markier die richtige Antwort.",
+          "singleNeedsOneCorrect": "Bei einer Antwort markierst du genau eine als richtig."
+        },
+        "settings": "Einstellungen",
+        "shuffle": "Mischen",
+        "shuffleHint": "Fragen und Antworten kommen bei jedem Versuch in neuer Reihenfolge.",
+        "draw": "Pro Versuch",
+        "drawAll": "Alle Fragen",
+        "drawCount": "{count, plural, one {1 Frage} other {# Fragen}}",
+        "questions": "Fragen",
+        "untitled": "Frage ohne Text",
+        "needsWork": "Braucht noch etwas"
+      },
+      "picker": {
+        "trainingIncomplete": "Schulung nicht abgeschlossen",
+        "inPersonMissing": "Präsenzschulung fehlt"
+      },
+      "progress": {
+        "statuses": {
+          "passed": "Bestanden",
+          "exempt": "Befreit",
+          "inProgress": "Läuft",
+          "notStarted": "Nicht begonnen"
+        }
+      },
+      "list": {
+        "columns": {
+          "course": "Kurs",
+          "languages": "Sprachen",
+          "owner": "Verantwortlich",
+          "status": "Status",
+          "required": "Pflicht in",
+          "elements": "Inhalt"
+        },
+        "scopes": {
+          "global": "Global",
+          "country": "Land",
+          "chapter": "Ortsgruppe"
+        },
+        "published": "Veröffentlicht",
+        "draft": "Entwurf",
+        "partly": "{published} von {total} veröffentlicht",
+        "statuses": {
+          "published": "Veröffentlicht",
+          "draft": "Entwurf"
+        },
+        "requiredTag": "Pflicht",
+        "requiredFilter": {
+          "required": "Pflicht",
+          "optional": "Freiwillig"
+        },
+        "inherited": "{name} (übernommen)",
+        "everywhere": "Überall",
+        "lessonCount": "{count, plural, =0 {Keine Lektionen} one {1 Lektion} other {# Lektionen}}",
+        "quizCount": "{count, plural, =0 {kein Quiz} one {1 Quiz} other {# Quizze}}",
+        "everyone": "alle Ortsgruppen",
+        "menu": {
+          "label": "Aktionen für {name}",
+          "open": "Kurs öffnen",
+          "publish": "Veröffentlichen",
+          "unpublish": "Zurückziehen",
+          "publishLanguage": "{language} veröffentlichen",
+          "unpublishLanguage": "{language} zurückziehen",
+          "require": "Pflicht für {scope}",
+          "unrequire": "Keine Pflicht mehr für {scope}",
+          "inheritedFrom": "Pflicht über {name}"
+        },
+        "confirm": {
+          "title": "{name} zur Pflicht machen?",
+          "body": "Pilot*innen in {scope} müssen ihn bestehen, bevor sie fahren.",
+          "impact": "{count, plural, one {1 Pilot*in darf danach nicht mehr fahren} other {# Pilot*innen dürfen danach nicht mehr fahren}}",
+          "impactHint": "Sie dürfen wieder fahren, sobald sie ihn bestehen oder du sie auf ihrer Mitgliederseite befreist.",
+          "submit": "Zur Pflicht machen",
+          "cancel": "Abbrechen"
+        },
+        "done": {
+          "published": "{name} ist veröffentlicht.",
+          "unpublished": "{name} ist wieder ein Entwurf.",
+          "required": "{name} ist jetzt Pflicht für {scope}.",
+          "notRequired": "{name} ist keine Pflicht mehr für {scope}."
+        }
+      },
+      "element": {
+        "kinds": {
+          "lesson": "Lektion",
+          "quiz": "Quiz"
+        },
+        "close": "Schließen",
+        "trail": "Kurs und Element",
+        "shortcut": "Fertig",
+        "missing": "Dieses Element gibt es nicht mehr.",
+        "deleteQuiz": {
+          "open": "Quiz löschen",
+          "title": "{name} löschen?",
+          "body": "Das Quiz, seine Fragen und alle Versuche werden endgültig entfernt.",
+          "label": "Gib {word} ein, um zu bestätigen",
+          "word": "DELETE",
+          "submit": "Quiz löschen",
+          "done": "{name} ist gelöscht."
+        }
+      }
     }
   },
   "calendar": {
@@ -1762,6 +2242,7 @@
     "mapUnavailable": "Die Karte ist gerade nicht verfügbar. Die Liste funktioniert weiterhin.",
     "next": "Weiter",
     "noResults": "Keine Ortsgruppe passt dazu.",
+    "moreHint": "{count, plural, one {# weitere Ortsgruppe} other {# weitere Ortsgruppen}}: über die Suche nach Name oder Ort zu finden.",
     "pending": "Einen Moment …",
     "permissionDenied": "Ohne Ihren Standort können wir nicht nach Entfernung sortieren — hier sind stattdessen alle Ortsgruppen.",
     "request": "Beitritt anfragen",
@@ -1924,11 +2405,21 @@
     "home": {
       "celebration": {
         "body": "{chapter} sagt willkommen. Schau die Trainingsvideos und triff dann eine Captain für deine erste Ausfahrt.",
+        "bodyInPerson": "{chapter} sagt willkommen. Triff eine Captain für deine erste Ausfahrt.",
         "dismiss": "Alles klar",
         "title": "Du bist dabei."
       },
       "title": "Bereit, wenn du es bist",
-      "yourChapters": "Deine Ortsgruppen"
+      "yourChapters": "Deine Ortsgruppen",
+      "training": {
+        "title": "Schließ dein Training ab, um zu fahren",
+        "steps": "{done} von {total} Schritten geschafft",
+        "next": "Als Nächstes: {title}",
+        "nextInPerson": "Als Nächstes: dein Training vor Ort",
+        "waiting": "Deine Ortsgruppe bestätigt das Training vor Ort, sobald du dort warst.",
+        "continue": "Weiter",
+        "view": "Zum Training"
+      }
     },
     "status": {
       "appliedOn": "Gefragt am {date}",
@@ -1947,8 +2438,122 @@
       }
     },
     "training": {
-      "body": "Die Videos werden noch gedreht. Sobald sie fertig sind, stehen sie hier — rund 20 Minuten, danach ein Workshop mit einer der Captains.",
-      "title": "Training für die Wartezeit"
+      "title": "Training",
+      "intro": "Ein paar kurze Videos, dann ein Quiz. Pausier, wann immer du willst – wir merken uns, wo du warst, auf jedem Gerät.",
+      "ring": {
+        "label": "{percent} % deines Trainings geschafft",
+        "done": "Fertig"
+      },
+      "sections": {
+        "courses": "Kurse",
+        "required": "Pflicht",
+        "inPerson": "Vor Ort",
+        "optional": "Freiwillig"
+      },
+      "readiness": {
+        "title": "Schließ dein Training ab, um zu fahren",
+        "steps": "{done} von {total} Schritten geschafft",
+        "readyTitle": "Du bist bereit zum Fahren",
+        "readyBody": "Alle Kurse sind geschafft und deine Ortsgruppe hat dein Training vor Ort bestätigt. Wir sehen uns auf der Straße.",
+        "applicant": "Deine Bewerbung wird noch geprüft – mit dem Training kannst du schon jetzt anfangen.",
+        "next": "Als Nächstes: {title}",
+        "nextInPerson": "Als Nächstes: dein Training vor Ort",
+        "chapterReady": "Bereit zum Fahren",
+        "chapterNotReady": "Noch nicht bereit"
+      },
+      "inPerson": {
+        "title": "Training vor Ort",
+        "confirmed": "Von deiner Ortsgruppe bestätigt · {date}",
+        "waiting": "Wartet auf Bestätigung durch deine Ortsgruppe",
+        "hint": "Deine Ortsgruppe zeigt dir die Rikscha und fährt mit dir eine Runde. Sobald du dort warst, bestätigt sie es hier."
+      },
+      "emptyTitle": "Noch kein Kurs da",
+      "empty": "Deine Ortsgruppe hat noch keinen Kurs veröffentlicht. Sobald es so weit ist, findest du ihn hier.",
+      "card": {
+        "lessons": "{count, plural, one {# Lektion} other {# Lektionen}}",
+        "progress": "{done} von {total} Schritten",
+        "passed": "Bestanden",
+        "notStarted": "Noch nicht begonnen",
+        "quizReady": "Quiz freigeschaltet",
+        "exempt": "Befreit",
+        "exemptHint": "Für dich nicht nötig"
+      },
+      "course": {
+        "back": "Training",
+        "start": "Kurs starten",
+        "resume": "Weitermachen",
+        "takeQuiz": "Zum Quiz",
+        "watchAgain": "Nochmal ansehen",
+        "outline": "Lektionen",
+        "quiz": "Abschlussquiz",
+        "quizHint": "{count, plural, one {# Frage} other {# Fragen}} · alle Antworten müssen stimmen",
+        "quizLocked": "Wird freigeschaltet, sobald alles davor erledigt ist",
+        "passedOn": "Bestanden am {date}",
+        "done": "Erledigt",
+        "upNext": "Als Nächstes",
+        "reading": "Lesen",
+        "lessonNumber": "Lektion {index}",
+        "lockedHint": "Bestehe zuerst das Quiz davor"
+      },
+      "lesson": {
+        "back": "Kurs",
+        "of": "Schritt {index} von {total}",
+        "next": "Nächste Lektion",
+        "toQuiz": "Zum Quiz",
+        "keepWatching": "Schau weiter, um fortzufahren",
+        "markRead": "Hab ich gelesen",
+        "outline": "Lektionen",
+        "resume": "Weiter ab {time}",
+        "startOver": "Von vorn",
+        "completed": "Lektion erledigt",
+        "attachment": "Handout (PDF)",
+        "attachmentHint": "Öffnet sich in einem neuen Tab",
+        "previous": "Vorherige Lektion",
+        "nextHint": "Drück N für die nächste Lektion",
+        "lockedTitle": "Bestehe zuerst das Quiz",
+        "lockedBody": "Dieser Teil öffnet sich, sobald du das Quiz davor bestanden hast.",
+        "finish": "Kurs abschließen"
+      },
+      "quiz": {
+        "title": "Abschlussquiz",
+        "introTitle": "Bereit fürs Quiz?",
+        "introBody": "{count, plural, one {# Frage} other {# Fragen}}. Alle Antworten müssen stimmen, und du kannst es so oft versuchen, wie du willst.",
+        "start": "Quiz starten",
+        "lockedTitle": "Erst die Lektionen",
+        "lockedBody": "Das Quiz öffnet sich, sobald alles davor erledigt ist.",
+        "toLesson": "Zur nächsten Lektion",
+        "questionOf": "Frage {index} von {total}",
+        "pickOne": "Wähl eine Antwort",
+        "pickAll": "Wähl alle zutreffenden aus",
+        "keys": "Tipp: Mit 1–{max} wählst du aus",
+        "next": "Weiter",
+        "back": "Zurück",
+        "review": "Antworten prüfen",
+        "reviewTitle": "Prüf deine Antworten",
+        "reviewBody": "Tipp auf eine Frage, um sie zu ändern.",
+        "unanswered": "Noch nicht beantwortet",
+        "submit": "Antworten abschicken",
+        "checking": "Deine Antworten werden geprüft …",
+        "score": "{correct} von {total}",
+        "passTitle": "Bestanden!",
+        "passBody": "Alle Antworten stimmen. Als Nächstes: das Training vor Ort mit deiner Ortsgruppe.",
+        "passNext": "Zurück zum Training",
+        "failTitle": "Fast geschafft",
+        "failBody": "{correct} von {total} richtig. Schau dir diese nochmal an:",
+        "yourAnswer": "Deine Antwort",
+        "rightAnswer": "Richtige Antwort",
+        "noAnswer": "Keine Antwort",
+        "tryAgain": "Nochmal versuchen",
+        "alreadyPassed": "Du hast dieses Quiz am {date} bestanden. Du kannst es jederzeit wiederholen.",
+        "error": "Wir konnten deine Antworten nicht prüfen. Prüf deine Verbindung und versuch es nochmal.",
+        "preview": "Vorschau",
+        "previewBody": "So sehen Piloten das Quiz. Deine Antworten werden nicht gespeichert.",
+        "progress": "Fortschritt im Quiz",
+        "exit": "Quiz verlassen",
+        "outOf": "von {total}",
+        "checkpointBody": "Alle Antworten waren richtig. Weiter zum nächsten Teil.",
+        "continue": "Weiter"
+      }
     }
   },
   "profile": {
@@ -2149,7 +2754,8 @@
       "unknownPassenger": "Diesen Fahrgast gibt es nicht mehr.",
       "unknownRide": "Diese Fahrt gibt es nicht mehr.",
       "unknownTrishaw": "Diese Rikscha gibt es nicht mehr.",
-      "uploadRejected": "Die Datei wurde nicht angenommen. Nutze JPEG, PNG oder WebP bis 10 MB."
+      "uploadRejected": "Die Datei wurde nicht angenommen. Nutze JPEG, PNG oder WebP bis 10 MB.",
+      "pilotNotReady": "Diese:r Pilot:in hat die Schulung noch nicht abgeschlossen."
     },
     "history": {
       "cancelled": "{who, select, you {Du hast} other {{actor} hat}} die Fahrt abgesagt",
@@ -2509,8 +3115,7 @@
       "invalid": "Das sieht nicht richtig aus.",
       "rateLimited": "Etwas langsamer – in einer Minute noch einmal versuchen.",
       "consentRequired": "Zuerst dem Teilen der Gesundheitsangaben zustimmen.",
-      "uploadRejected": "Das Foto hat nicht geklappt. Bitte ein JPG, PNG oder WebP unter 10 MB nehmen.",
-      "pilotStepConfirmed": "Deine Ortsgruppe hat diesen Schritt bestätigt. Frag sie, wenn sich daran etwas ändern soll."
+      "uploadRejected": "Das Foto hat nicht geklappt. Bitte ein JPG, PNG oder WebP unter 10 MB nehmen."
     }
   },
   "setupChecklist": {
@@ -2518,9 +3123,8 @@
     "progress": "{done} von {total} erledigt",
     "dismiss": "Ausblenden",
     "dismissed": "Ausgeblendet. Das Profil ist immer nur einen Tipp entfernt.",
-    "markDone": "Als erledigt markieren",
-    "markUndone": "Als offen markieren",
     "confirmed": "Von der Ortsgruppe bestätigt",
+    "waiting": "Wartet auf die Bestätigung deiner Ortsgruppe",
     "steps": {
       "photo": "Profilfoto hinzufügen",
       "bio": "Ein paar Worte über sich schreiben",
@@ -2530,14 +3134,14 @@
       "managedRiders": "{count, plural, one {Profil von {name} ausfüllen} other {Profile von # Fahrgästen ausfüllen}}",
       "passkey": "Passkey einrichten",
       "push": "Benachrichtigungen einschalten",
-      "trainingVideos": "Schulungsvideos ansehen",
-      "workshop": "An einem Praxis-Workshop teilnehmen",
+      "training": "Schließ deine Schulungen ab",
+      "inPersonTraining": "Nimm an der Präsenzschulung teil",
       "firstRide": "Erste Fahrt mit einem Captain"
     },
     "aboutYou": "Über Sie, damit Piloten wissen, wer bucht.",
     "hints": {
-      "trainingVideos": "Etwa 20 Minuten, direkt in der App.",
-      "workshop": "Mit einem der Captains.",
+      "training": "Kurze Videos und ein Quiz, direkt in der App.",
+      "inPersonTraining": "Deine Ortsgruppe bestätigt sie, sobald du dabei warst.",
       "firstRide": "Beim ersten Mal fährt ein Captain mit."
     }
   },
@@ -2555,6 +3159,34 @@
       "passengerChapterMismatch": "Sie betreuen schon Personen in einer anderen Ortsgruppe, deshalb kann {rider} hier nicht hinzugefügt werden.",
       "tooManyRiders": "Sie können bis zu 10 Personen betreuen.",
       "generic": "Das hat nicht geklappt. Versuchen Sie es noch einmal."
+    }
+  },
+  "training": {
+    "player": {
+      "label": "Videoplayer",
+      "play": "Abspielen",
+      "pause": "Pause",
+      "replay": "Nochmal abspielen",
+      "mute": "Stumm",
+      "unmute": "Ton an",
+      "fullscreenEnter": "Vollbild",
+      "fullscreenExit": "Vollbild beenden",
+      "pipEnter": "Bild im Bild",
+      "pipExit": "Bild im Bild beenden",
+      "seekForward": "{seconds} Sekunden vor",
+      "seekBackward": "{seconds} Sekunden zurück",
+      "seek": "Position",
+      "settings": "Einstellungen",
+      "speed": "Geschwindigkeit",
+      "quality": "Qualität",
+      "auto": "Automatisch",
+      "errorTitle": "Dieses Video lässt sich gerade nicht abspielen",
+      "errorNetwork": "Das Video konnte nicht geladen werden. Prüf deine Verbindung und versuch es nochmal.",
+      "errorSource": "Dieses Video ist gerade nicht verfügbar.",
+      "errorUnexpected": "Beim Abspielen ist etwas schiefgelaufen.",
+      "close": "Schließen",
+      "watchFirst": "Schau erst bis hierhin",
+      "loading": "Video wird geladen"
     }
   }
 }

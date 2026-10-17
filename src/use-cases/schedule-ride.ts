@@ -12,6 +12,7 @@ import {
   type TrishawWindowQuery,
 } from "@/features/rides";
 import { DomainError } from "@/lib/domain-error";
+import { assertPilotsReady } from "./pilot-readiness";
 
 type Window = { startsAt: Date; endsAt: Date };
 
@@ -33,6 +34,7 @@ async function assertPilots(userIds: string[], chapterId: string) {
   const roles = await membership.getMembersRoles(userIds, chapterId);
   if (userIds.some((userId) => !roles.get(userId)?.includes("pilot")))
     throw new DomainError("notPilot");
+  await assertPilotsReady(userIds, chapterId);
 }
 
 /**

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isTrainingRequired } from "@/lib/feature-flags";
 import { formatMessage } from "@/lib/i18n/format";
 import { nameOfChapter } from "./lookups";
 import { defineKind } from "./types";
@@ -30,7 +31,13 @@ export const pilotApplicationDecided = defineKind({
       subject: formatMessage(copy.subject, { chapter }, locale),
       preview: copy.preview,
       heading: copy.heading,
-      body: formatMessage(copy.intro, { chapter }, locale),
+      body: formatMessage(
+        approved && !isTrainingRequired()
+          ? strings.applicationApproved.introInPerson
+          : copy.intro,
+        { chapter },
+        locale,
+      ),
       note: note ? { heading: copy.noteHeading, text: note } : null,
       cta: copy.cta,
       footer: copy.footer,

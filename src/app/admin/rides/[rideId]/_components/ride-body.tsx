@@ -22,6 +22,7 @@ import { trishawOptions } from "@/features/rides/components/trishaw-options";
 import { RIDE_NOTE_MAX } from "@/features/rides/schemas";
 import { requireChapterAdmin } from "@/lib/auth-guards";
 import { trishawChoicesForRide } from "@/use-cases/schedule-ride";
+import { readinessOfPilots } from "@/use-cases/pilot-readiness";
 import {
   formatDate,
   formatDateTime,
@@ -44,6 +45,7 @@ import {
 } from "../../../_components/detail-page";
 import { deletionConsequences } from "../../../_components/deletion-consequences";
 import { fieldLabels } from "../../../_components/field-labels";
+import { withReadiness } from "../../../_components/pilot-choices";
 import { hrefWith } from "@/lib/search-params";
 import { historyShown } from "../../../_components/history-more";
 import { HistorySection } from "../../../_components/history-section";
@@ -145,9 +147,19 @@ export async function RideBody({
       toPassengerChoice(passenger, dict.calendar.pickupCareHome),
     );
   const limits = modelLimits(ride.model, ride.capacity, ride.requiredPilots);
-  const pilotChoices = chapterMembers
-    .filter((member) => isPilot(member) && !onRide.has(member.userId))
-    .map(toPilotChoice);
+  const candidates = chapterMembers.filter(
+    (member) => isPilot(member) && !onRide.has(member.userId),
+  );
+  const readiness = await readinessOfPilots(
+    candidates.map((member) => member.userId),
+    ride.chapterId,
+    language,
+  );
+  const pilotChoices = withReadiness(
+    candidates.map(toPilotChoice),
+    (choice) => readiness.get(choice.id),
+    dict.admin.training.picker,
+  );
   const people = {
     search: dict.rides.people.search,
     empty: dict.rides.people.empty,

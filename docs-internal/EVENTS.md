@@ -127,7 +127,7 @@ type DeliveryPolicy = {
 
 ## The queues
 
-`src/lib/events/queues.ts` defines four:
+`src/lib/events/queues.ts` defines five:
 
 | Queue      | Consumer                              | Why it is its own queue                                        |
 | ---------- | ------------------------------------- | -------------------------------------------------------------- |
@@ -135,6 +135,7 @@ type DeliveryPolicy = {
 | `handlers` | `runListener`, concurrency 10         | one job per (event, listener)                                   |
 | `email`    | `runEmailDelivery`, rate limited      | Resend allows 10 requests/s per team                            |
 | `push`     | `runPushDelivery`, concurrency 5      | FCM has no such limit, and mail must never hold a push back     |
+| `media`    | `runMediaJob`, concurrency 1, `media-worker` container | ffmpeg transcodes take minutes of CPU and must not share a process with delivery |
 
 The email worker runs with `limiter: { max: RESEND_RATE_LIMIT, duration: 1000 }` and the
 same number as its concurrency, where `RESEND_RATE_LIMIT` defaults to **8** — the two
@@ -156,6 +157,7 @@ can never be mistaken for an event id:
 | `sweep`         | every 60 s              | re-queues `Event` rows Redis never heard about                                  |
 | `prune-devices` | `0 4 * * *` (04:00 UTC) | deletes `Device` rows whose `lastSeenAt` is older than `STALE_DEVICE_DAYS` (270) |
 | `prune-chat`    | `0 3 * * *` (03:00 UTC) | deletes `chat_message` rows older than 12 months in 1,000-row batches, then conversations with no members left |
+| `prune-training-uploads` | `30 3 * * *` (03:30 UTC) | aborts multipart uploads of training videos still `uploading` after 24 h and deletes their rows |
 
 `notifications.registerDevice` bumps `lastSeenAt` on every app open, so the cutoff means
 "no sign of this install for nine months", not "no push has been sent to it". 270 days is
@@ -231,6 +233,40 @@ Nothing listens to these yet: `handlers.ts` maps each of them to `{}`, so the di
 them processed and enqueues nothing. PR 2 adds the `ride` notification kinds, and with them the
 listeners. The note for pilots and anyone's name never enter a payload; a kind that needs a name looks it
 up through the facades, the way the existing kinds do.
+
+## Training videos: events that start media jobs
+
+| Event | Payload | Listener → `media` job |
+| --- | --- | --- |
+| `trainingVideo.uploaded` | `videoId`, `revision`, `chapterId`, `actorUserId` | `transcode` → `transcode` (jobId `transcode-<videoId>-<revision>`) |
+| `trainingVideo.posterRequested` | `videoId`, `revision`, `seconds`, `chapterId`, `actorUserId` | `poster` → `poster` (jobId `poster-<eventId>`) |
+| `trainingVideo.deleted` | `videoId`, `mediaKey`, `sourceKey`, `uploadId`, `chapterId`, `actorUserId` | `purge` → `purge` (jobId `purge-<videoId>`) |
+
+`markUploaded` and `retryVideo` emit `uploaded` (a retry with the bumped revision), so the
+same listener covers both. Media jobs run with 3 attempts and a 30 s exponential backoff; a
+`MediaFailure` (bad file) is final on the first attempt and marks the video `failed` with its
+code, while an unexpected error (S3, network) retries and marks `transcodeFailed` only on the
+last attempt. Each job re-reads the row and does nothing when its revision is no longer
+current. `chapterId` is `null` for global and country videos.
+
+## Training: course passed
+
+| Event | Payload | Listener |
+| --- | --- | --- |
+| `training.coursePassed` | `userId`, `courseId`, `familyId`, `attemptId` (the passing quiz attempt, `null` when the last open element was a lesson), `chapterId` (the chapter the course was taken in, or `null`), `actorUserId` (the pilot) | `recordActivity` → `trainingPassed` history line with the course title (`worker/listeners/training.ts`) |
+| `training.exemptionGranted` | `userId`, `familyId` (`null` = blanket), `reason` (`experienced` · `manual` · `migration`), `chapterId` (where it was granted, or `null`), `actorUserId` (`null` = system) | `recordActivity` → `trainingExemptionGranted` |
+| `training.exemptionRevoked` | `userId`, `familyId` (`null` = blanket), `chapterId`, `actorUserId` | `recordActivity` → `trainingExemptionRevoked` |
+
+Emitted inside the transaction that completes the course's last open element (a passing
+`submitAttempt`, or the heartbeat / mark-read finishing the last lesson), only by the write that
+sets `passedAt`, so a later pass of the same course or of another language variant of an already passed family still
+emits once per course. The exemption events are emitted by `training.grantExemption` /
+`revokeExemption` only when a row was actually created or deleted. The migration's backfill
+writes rows directly and emits nothing. There is no "pilot is now ready" notification yet:
+none of the existing kinds can compute readiness cheaply, so it waits for its own kind.
+
+Deleting a chapter or country emits `trainingVideo.deleted` (with `chapterId: null`) for each
+video the cascade removed, from `training.purgeOwnerMedia`, so the same `purge` job cleans up.
 
 ## Watching the queues
 

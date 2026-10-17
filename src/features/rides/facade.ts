@@ -45,6 +45,8 @@ import {
   deleteRosterEntry,
   findLogNames,
   countPastRidesOfPilot,
+  countRidesOfVolunteer,
+  findLastRideOfVolunteer,
   findLatestRideForPilot,
   findPastRidesForList,
   findReservations,
@@ -187,6 +189,21 @@ export const hasPilotedRide = async (userId: string, now = new Date()) =>
 
 export const latestRideForPilot = (userId: string, now = new Date()) =>
   findLatestRideForPilot(userId, now);
+
+export async function volunteerRideStats(
+  userId: string,
+  chapterIds: string[],
+  now = new Date(),
+) {
+  if (chapterIds.length === 0)
+    return { done: 0, upcoming: 0, lastRideAt: null };
+  const [done, upcoming, last] = await Promise.all([
+    countRidesOfVolunteer(userId, chapterIds, { endedBy: now }),
+    countRidesOfVolunteer(userId, chapterIds, { startsAfter: now }),
+    findLastRideOfVolunteer(userId, chapterIds, now),
+  ]);
+  return { done, upcoming, lastRideAt: last?.startsAt ?? null };
+}
 
 export const getRideDetail = (id: string) => findRideDetail(id);
 
