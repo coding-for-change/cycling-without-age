@@ -8,6 +8,8 @@ jest.mock("@/lib/auth-guards", () => ({
 }));
 jest.mock("@/lib/avatar", () => ({
   avatarSeed: (email: string) => email,
+  seedOf: (person: { email: string; avatarSeed?: string | null }) =>
+    person.avatarSeed ?? person.email,
   avatarSvg: (seed: string) => `<svg data-seed="${seed}" />`,
 }));
 jest.mock("@/use-cases/passenger-rides", () => ({
@@ -91,4 +93,25 @@ it("refuses a direction it does not know", async () => {
     listMyRidesPageAction({ direction: "sideways" }),
   ).resolves.toEqual({ ok: false, error: "generic" });
   expect(page).not.toHaveBeenCalled();
+});
+
+it("draws the character a pilot picked over the one from their email", async () => {
+  page.mockResolvedValue({
+    rides: [
+      {
+        ...ROW,
+        assignments: [
+          {
+            role: "pilot",
+            user: { ...ROW.assignments[0].user, avatarSeed: "sunny-7" },
+          },
+        ],
+      },
+    ],
+    nextCursor: null,
+  });
+  const result = await listMyRidesPageAction({ direction: "upcoming" });
+  expect(result).toMatchObject({
+    rides: [{ pilots: [{ avatar: '<svg data-seed="sunny-7" />' }] }],
+  });
 });

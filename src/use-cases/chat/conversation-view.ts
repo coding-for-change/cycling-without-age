@@ -5,7 +5,7 @@ import type {
   MemberView,
 } from "@/features/chat";
 import { profile } from "@/features/profile";
-import { avatarSeed, avatarSvg } from "@/lib/avatar";
+import { avatarSvg, seedOf } from "@/lib/avatar";
 import { presence } from "@/lib/realtime";
 import type { Viewer } from "../person-access";
 import { displayOf, visiblePhotoUrls, type ChatDisplay } from "./chat-inbox";
@@ -57,7 +57,7 @@ export async function getConversationView(
       return {
         ...member,
         name: person?.name ?? "",
-        avatarSvg: person ? avatarSvg(avatarSeed(person.email)) : null,
+        avatarSvg: person ? avatarSvg(seedOf(person)) : null,
         photoUrl: person ? (photos.get(member.userId) ?? null) : null,
         online: online.has(member.userId),
       };

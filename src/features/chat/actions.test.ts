@@ -13,6 +13,8 @@ jest.mock("@/lib/auth-guards", () => ({
 }));
 jest.mock("@/lib/avatar", () => ({
   avatarSeed: (email: string) => email,
+  seedOf: (person: { email: string; avatarSeed?: string | null }) =>
+    person.avatarSeed ?? person.email,
   avatarSvg: () => "<svg />",
 }));
 jest.mock("@/use-cases/chat/chat-inbox", () => ({ syncInbox: jest.fn() }));

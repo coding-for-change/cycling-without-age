@@ -7,7 +7,7 @@ import type {
 import { profile } from "@/features/profile";
 import { scopeChapters } from "@/lib/access";
 import type { ActiveScope, AdminScope } from "@/lib/access";
-import { avatarSeed, avatarSvg } from "@/lib/avatar";
+import { avatarSvg, seedOf } from "@/lib/avatar";
 
 const PARTICIPANT_SEPARATOR = " · ";
 
@@ -108,7 +108,7 @@ export async function readConversationAsAdmin(
       return {
         ...member,
         name: person?.name ?? "",
-        avatarSvg: person ? avatarSvg(avatarSeed(person.email)) : null,
+        avatarSvg: person ? avatarSvg(seedOf(person)) : null,
       };
     }),
     messages: thread.messages,

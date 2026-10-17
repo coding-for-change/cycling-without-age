@@ -1,5 +1,5 @@
 import "server-only";
-import { avatarSeed, avatarSvg } from "@/lib/avatar";
+import { avatarSvg, seedOf } from "@/lib/avatar";
 import { fullName } from "@/lib/utils";
 import type { PassengerRidePage, PassengerRideRow } from "../facade";
 
@@ -39,7 +39,7 @@ export const toPassengerListRide = (
     .map(({ user }) => ({
       id: user.id,
       name: user.name,
-      avatar: avatarSvg(avatarSeed(user.email)),
+      avatar: avatarSvg(seedOf(user)),
     })),
   riders: ride.roster.map(({ passenger }) => fullName(passenger)),
 });

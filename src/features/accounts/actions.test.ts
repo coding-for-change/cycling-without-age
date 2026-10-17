@@ -15,6 +15,7 @@ jest.mock("@/lib/auth-guards", () => ({
 jest.mock("@/lib/access", () => ({ canDeleteOwnAccount: jest.fn() }));
 jest.mock("@/lib/avatar", () => ({
   avatarSeed: jest.fn(),
+  seedOf: jest.fn(),
   avatarSvg: jest.fn(),
 }));
 jest.mock("@/lib/i18n", () => ({ getLocale: jest.fn() }));

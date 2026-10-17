@@ -4,7 +4,7 @@ import {
   type PickupSource,
 } from "@/features/passengers/pickup";
 import { parseRoles } from "@/lib/access";
-import { avatarSeed, avatarSvg } from "@/lib/avatar";
+import { avatarSvg, seedOf } from "@/lib/avatar";
 import { fullName } from "@/lib/utils";
 
 export const toPassengerChoice = (
@@ -12,7 +12,7 @@ export const toPassengerChoice = (
     id: string;
     firstName: string;
     lastName: string;
-    user: { email: string } | null;
+    user: { email: string; avatarSeed: string | null } | null;
   } & Partial<PickupSource>,
   careHome?: string,
 ) => {
@@ -23,9 +23,7 @@ export const toPassengerChoice = (
   return {
     id: passenger.id,
     name: fullName(passenger),
-    avatar: avatarSvg(
-      passenger.user ? avatarSeed(passenger.user.email) : passenger.id,
-    ),
+    avatar: avatarSvg(passenger.user ? seedOf(passenger.user) : passenger.id),
     ...(hint ? { hint } : {}),
   };
 };
@@ -34,10 +32,11 @@ export const toPersonChoice = (user: {
   id: string;
   name: string | null;
   email: string;
+  avatarSeed: string | null;
 }) => ({
   id: user.id,
   name: user.name || user.email,
-  avatar: avatarSvg(avatarSeed(user.email)),
+  avatar: avatarSvg(seedOf(user)),
 });
 
 export const isPilot = (member: { role: string | null }) =>
@@ -45,5 +44,5 @@ export const isPilot = (member: { role: string | null }) =>
 
 export const toPilotChoice = (member: {
   userId: string;
-  user: { name: string | null; email: string };
+  user: { name: string | null; email: string; avatarSeed: string | null };
 }) => toPersonChoice({ ...member.user, id: member.userId });

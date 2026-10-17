@@ -240,3 +240,27 @@ describe("setDisplayPreferences", () => {
     expect(db.user.update).not.toHaveBeenCalled();
   });
 });
+
+describe("setAvatarSeed", () => {
+  it("keeps the character someone picked", async () => {
+    await profile.setAvatarSeed(USER, "sunny-7");
+    expect(db.user.update).toHaveBeenCalledWith({
+      where: { id: USER },
+      data: { avatarSeed: "sunny-7" },
+    });
+  });
+
+  it("goes back to the email's character on null", async () => {
+    await profile.setAvatarSeed(USER, null);
+    expect(db.user.update).toHaveBeenCalledWith({
+      where: { id: USER },
+      data: { avatarSeed: null },
+    });
+  });
+
+  it("refuses a seed that is not a plain token", async () => {
+    for (const seed of ["", "a b", "<svg>", "x".repeat(65)])
+      await expect(profile.setAvatarSeed(USER, seed)).rejects.toThrow();
+    expect(db.user.update).not.toHaveBeenCalled();
+  });
+});

@@ -17,6 +17,14 @@ export function getInitials(name: string) {
 
 export const firstName = (name: string) => name.trim().split(/\s+/)[0];
 
+/** "Pernille Marie Holm" → Pernille Marie · Holm: the last word is the surname. */
+export const splitName = (name: string) => {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  return words.length > 1
+    ? { firstName: words.slice(0, -1).join(" "), lastName: words.at(-1)! }
+    : { firstName: words[0] ?? "", lastName: "" };
+};
+
 export const fullName = (person: { firstName: string; lastName: string }) =>
   `${person.firstName} ${person.lastName}`.trim();
 

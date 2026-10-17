@@ -1,8 +1,10 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/auth-guards";
+import { avatarSvg } from "@/lib/avatar";
 import {
   DISPLAY_COOKIE_MAX_AGE,
   MOTION_COOKIE,
@@ -17,6 +19,7 @@ import type { PlaceSuggestion } from "@/lib/mapbox";
 import { z } from "zod";
 import { updateOwnDetails } from "@/use-cases/update-own-details";
 import {
+  avatarSeedInput,
   displayPreferences,
   notificationPreferences,
   ownDetailsPatch,
@@ -44,8 +47,10 @@ export async function updateOwnDetailsAction(
     await updateOwnDetails(session.user.id, parsed.data);
     revalidatePath("/", "layout");
     const chapterIds = session.access.memberships.map((m) => m.chapterId);
-    if (parsed.data.name !== undefined && chapterIds.length)
-      invalidateReports(...chapterIds);
+    const renamed = ["name", "firstName", "lastName"].some(
+      (key) => parsed.data[key as keyof typeof parsed.data] !== undefined,
+    );
+    if (renamed && chapterIds.length) invalidateReports(...chapterIds);
     return { ok: true };
   } catch (error) {
     return actionFailure(error, {});
@@ -132,6 +137,44 @@ export async function setDisplayPreferencesAction(
       jar.set(TEXT_SIZE_COOKIE, textSize, displayCookie);
     if (reduceMotion !== undefined)
       jar.set(MOTION_COOKIE, reduceMotion ? REDUCED_MOTION : "", displayCookie);
+    return { ok: true };
+  } catch (error) {
+    return actionFailure(error, {});
+  }
+}
+
+export type AvatarSuggestion = { seed: string; svg: string };
+
+const AVATAR_SUGGESTIONS = 6;
+const SUGGEST_LIMIT = { max: 30, windowMs: 60_000 };
+
+/** Fresh characters to choose from, drawn on the server so DiceBear never ships. */
+export async function suggestAvatarsAction(): Promise<AvatarSuggestion[]> {
+  const session = await requireAuth();
+  if (!withinRateLimit(`avatar-suggest:${session.user.id}`, SUGGEST_LIMIT))
+    return [];
+  return Array.from({ length: AVATAR_SUGGESTIONS }, () => {
+    const seed = randomBytes(9).toString("base64url");
+    return { seed, svg: avatarSvg(seed) };
+  });
+}
+
+/**
+ * The character drawn where there is no photo. A photo, when there is one,
+ * still comes first (`PersonAvatar`'s `photoUrl`).
+ */
+export async function setAvatarAction(
+  seed: unknown,
+): Promise<ProfileActionResult> {
+  const session = await requireAuth();
+
+  const parsed = avatarSeedInput.safeParse(seed);
+  if (!parsed.success) return { ok: false, error: "invalid" };
+  if (!withinSaveLimit(session.user.id)) return { ok: false, error: "generic" };
+
+  try {
+    await profile.setAvatarSeed(session.user.id, parsed.data);
+    revalidatePath("/", "layout");
     return { ok: true };
   } catch (error) {
     return actionFailure(error, {});

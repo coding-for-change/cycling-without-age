@@ -155,8 +155,11 @@ export async function updateOwnRiderDetails(
   userId: string,
   patch: OwnRiderDetailsPatchInput,
 ) {
-  const { birthDate, gender } = ownRiderDetailsPatch.parse(patch);
+  const { firstName, lastName, birthDate, gender } =
+    ownRiderDetailsPatch.parse(patch);
   const data = {
+    ...(firstName === undefined ? {} : { firstName }),
+    ...(lastName === undefined ? {} : { lastName }),
     ...(birthDate === undefined ? {} : { birthDate }),
     ...(gender === undefined ? {} : { gender }),
   };

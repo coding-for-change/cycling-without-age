@@ -121,6 +121,7 @@ export const findPassengersOfChapters = (chapterIds: string[]) =>
       user: {
         select: {
           email: true,
+          avatarSeed: true,
           phoneNumber: true,
           image: true,
           residence: true,
@@ -129,7 +130,14 @@ export const findPassengersOfChapters = (chapterIds: string[]) =>
           longitude: true,
         },
       },
-      managedBy: { select: { name: true, email: true, phoneNumber: true } },
+      managedBy: {
+        select: {
+          name: true,
+          email: true,
+          avatarSeed: true,
+          phoneNumber: true,
+        },
+      },
     },
   });
 

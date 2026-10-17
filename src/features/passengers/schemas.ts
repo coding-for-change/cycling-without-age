@@ -35,6 +35,8 @@ export type ManagedRiderPatch = z.infer<typeof managedRiderPatch>;
 export type ManagedRiderPatchInput = z.input<typeof managedRiderPatch>;
 
 export const ownRiderDetailsPatch = z.object({
+  firstName: z.string().trim().min(1).max(80).optional(),
+  lastName: z.string().trim().min(1).max(80).optional(),
   birthDate: birthDate.optional(),
   gender: gender.optional(),
 });

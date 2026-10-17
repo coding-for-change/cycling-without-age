@@ -2,6 +2,7 @@ import { DomainError } from "@/lib/domain-error";
 import { transaction } from "@/lib/events";
 import type { OnboardingRole } from "@/lib/onboarding";
 import {
+  avatarSeedInput,
   consentInput,
   displayPreferences as displayPreferencesSchema,
   homeInput,
@@ -179,4 +180,9 @@ export async function setDisplayPreferences(
     ...(textSize === undefined ? {} : { textSize }),
     ...(reduceMotion === undefined ? {} : { reduceMotion }),
   });
+}
+
+/** `null` goes back to the character drawn from the email. */
+export async function setAvatarSeed(userId: string, seed: string | null) {
+  return updateProfile(userId, { avatarSeed: avatarSeedInput.parse(seed) });
 }

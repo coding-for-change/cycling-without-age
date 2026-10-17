@@ -84,7 +84,10 @@ export const findCountryAdminsOf = (userId: string) =>
 export const findCountryAdmins = (countryId: string) =>
   prisma.countryAdmin.findMany({
     where: { countryId },
-    select: { userId: true, user: { select: { name: true, email: true } } },
+    select: {
+      userId: true,
+      user: { select: { name: true, email: true, avatarSeed: true } },
+    },
   });
 
 export const findCountryAdminsOfCountries = (countryIds: string[]) =>
@@ -93,6 +96,6 @@ export const findCountryAdminsOfCountries = (countryIds: string[]) =>
     select: {
       countryId: true,
       userId: true,
-      user: { select: { name: true, email: true } },
+      user: { select: { name: true, email: true, avatarSeed: true } },
     },
   });

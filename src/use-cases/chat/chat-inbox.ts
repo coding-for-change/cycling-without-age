@@ -8,7 +8,7 @@ import {
 } from "@/features/person-profiles";
 import { profile } from "@/features/profile";
 import type { ProfileSummary } from "@/features/profile";
-import { avatarSeed, avatarSvg } from "@/lib/avatar";
+import { avatarSvg, seedOf } from "@/lib/avatar";
 import { presence } from "@/lib/realtime";
 import { visiblePhotoSubjects, type Viewer } from "../person-access";
 
@@ -72,7 +72,7 @@ export const displayOf = (
     : undefined;
   return {
     name: other?.name ?? "",
-    avatarSvg: other ? avatarSvg(avatarSeed(other.email)) : null,
+    avatarSvg: other ? avatarSvg(seedOf(other)) : null,
     photoUrl: other ? (photos.get(other.id) ?? null) : null,
   };
 };

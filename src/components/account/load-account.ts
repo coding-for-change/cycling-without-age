@@ -5,7 +5,7 @@ import { availablePerspectives, canDeleteOwnAccount } from "@/lib/access";
 import { calendarFeedUrl } from "@/lib/app-url";
 import { getSession } from "@/lib/auth-guards";
 import { docsEntryHref } from "@/lib/docs-auth";
-import { avatarSeed, avatarSvg } from "@/lib/avatar";
+import { avatarSvg, seedOf } from "@/lib/avatar";
 import { passengers } from "@/features/passengers";
 import { personProfiles, photoUrl } from "@/features/person-profiles";
 import { profile as profileFacade } from "@/features/profile";
@@ -32,7 +32,7 @@ export const loadAccount = cache(async (): Promise<AccountData | null> => {
   const caretaker =
     (person?.managesOthers === true || riders > 0) &&
     availablePerspectives(session.access).includes("passenger");
-  const seed = avatarSeed(email);
+  const seed = seedOf({ email, avatarSeed: person?.avatarSeed ?? null });
 
   return {
     strings: dict.account,
