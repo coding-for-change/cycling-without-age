@@ -101,3 +101,16 @@ Each increment ships on its own: schemas → services → facade → action → 
 ## Recommended order
 
 P1 → P2 → P4 → P3 → P6 → P5 → P8. (P7 chat later.)
+
+## Where this branch stands (2026-10-16)
+
+- **P1, P2** — done: "My rides" with upcoming and past rides of every rider the account looks after,
+  and a ride page with the rider-facing story, the pilots who are still in the chapter, read aloud,
+  a postcard for a ride that took place and the year so far above the past rides.
+- **P8** — done on main's `PersonProfile` (#43): `/passenger/profile` lays main's photo, bio,
+  interests, prompts and accessibility into one route — your details (first and last name, kept in
+  step with the own rider row), about me (with dictation into the bio), your character (a photo
+  still comes first), text size and less motion, the people you look after, settings and help.
+  Other people's profiles stay main's `ProfilePage`. Passengers get it as a fifth tab and from the
+  avatar; pilots keep main's page under home and the account sheet.
+- **P3–P6** — open. Self-booking needs the per-chapter setting first (decision 1).
