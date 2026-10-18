@@ -73,14 +73,16 @@ export async function Greeting({
       >
         {tagline}
       </p>
-      <Button
-        asChild
-        variant="brand"
-        size="hero"
-        className="mt-2 md:hidden"
-      >
-        <Link href={hero.href}>{hero.label}</Link>
-      </Button>
+      {session && perspective === "passenger" ? null : (
+        <Button
+          asChild
+          variant="brand"
+          size="hero"
+          className="mt-2 md:hidden"
+        >
+          <Link href={hero.href}>{hero.label}</Link>
+        </Button>
+      )}
       {session ? null : (
         <p className="text-sm text-ink-soft md:hidden">{guest.heroHint}</p>
       )}

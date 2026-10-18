@@ -1812,7 +1812,22 @@
       "passenger": {
         "caretakerTagline": "{who, select, one {Die nächste Ausfahrt für {name} beginnt hier.} withOne {Ausfahrten für Sie und {name} beginnen hier.} withMany {Ausfahrten für Sie und die Menschen, um die Sie sich kümmern, beginnen hier.} other {Ausfahrten für die Menschen, um die Sie sich kümmern, beginnen hier.}}",
         "chooseChapter": "Ortsgruppe wählen",
-        "tagline": "Ihre nächste Ausfahrt beginnt hier."
+        "tagline": "Ihre nächste Ausfahrt beginnt hier.",
+        "next": {
+          "eyebrow": "Ihre nächste Ausfahrt",
+          "pickupAt": "Wir holen Sie hier ab: {place}",
+          "pilotPicksYou": "{name} holt Sie hier ab: {place}",
+          "lookingPilot": "Wir suchen einen Piloten für Sie",
+          "later": "Danach",
+          "emptyTitle": "Wohin möchten Sie?",
+          "open": "Ausfahrt öffnen"
+        },
+        "totals": {
+          "rides": "{count, plural, one {Gemeinsame Fahrt} other {Gemeinsame Fahrten}}",
+          "hours": "{count, plural, one {Stunde draußen} other {Stunden draußen}}",
+          "first": "Ihre erste Ausfahrt wartet",
+          "firstHint": "Sobald Sie unterwegs waren, zählen wir hier mit."
+        }
       },
       "pilot": {
         "tagline": "Bereit, wenn du es bist."

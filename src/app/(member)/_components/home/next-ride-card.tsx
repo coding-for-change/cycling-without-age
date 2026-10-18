@@ -9,10 +9,11 @@ import { perspectiveViewerSession } from "@/lib/auth-guards";
 import { resolveLocale, wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
-import type { MemberPerspective } from "../../nav";
+import { primaryAction, type MemberPerspective } from "../../nav";
 import { getPassengerAudience } from "@/use-cases/passenger-audience";
 import { audienceCopy } from "../audience-copy";
 import { MEMBER_LIFE } from "../instant";
+import { PassengerNextRide } from "./passenger-next-ride";
 
 // A member plans in weeks, not months — far enough to see what is coming,
 // near enough that the list stays a list.
@@ -51,6 +52,31 @@ export async function NextRideCard({
     ),
   };
 
+  const empty = audienceCopy(
+    audience,
+    nextRide[perspective].empty,
+    nextRide.passenger.caretakerEmpty,
+    language,
+  );
+
+  if (session && perspective === "passenger")
+    return (
+      <PassengerNextRide
+        upcoming={upcoming}
+        bookHref={primaryAction(perspective).href}
+        strings={{
+          ...dict.member.home.passenger.next,
+          book: dict.member.action.passenger,
+          empty,
+          agenda: strings,
+        }}
+        notation={resolveLocale(head.get("accept-language"))}
+        words={wordsLocale(language)}
+        profileBase={`${PERSPECTIVE_HOME[perspective]}/profile`}
+        now={new Date()}
+      />
+    );
+
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-xs font-semibold tracking-wide text-ink-soft uppercase">
@@ -69,12 +95,7 @@ export async function NextRideCard({
           icon={CalendarClock}
           className="flex-none"
         >
-          {audienceCopy(
-            audience,
-            nextRide[perspective].empty,
-            nextRide.passenger.caretakerEmpty,
-            language,
-          )}
+          {empty}
         </EmptyState>
       )}
     </section>

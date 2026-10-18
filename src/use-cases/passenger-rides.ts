@@ -51,3 +51,7 @@ export async function passengerRideView(userId: string, rideId: string) {
   );
   return view ? { ...view, riderCount: riderIds.length } : null;
 }
+
+export async function passengerRideTotals(userId: string) {
+  return rides.passengerTotals(await passengerRiderIds(userId));
+}

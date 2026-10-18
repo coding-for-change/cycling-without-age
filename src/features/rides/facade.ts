@@ -1122,6 +1122,29 @@ export async function listPassengerRidesPage(
   };
 }
 
+/** Every ride these riders have taken, and the time it kept them outside. */
+export async function passengerTotals(
+  passengerIds: string[],
+  now = new Date(),
+) {
+  if (!passengerIds.length) return { rides: 0, seconds: 0 };
+  const ridden = await findRiddenRidesForPassengers(
+    passengerIds,
+    new Date(0),
+    now,
+    now,
+  );
+  return {
+    rides: ridden.length,
+    seconds: ridden.reduce(
+      (sum, ride) =>
+        sum +
+        Math.max(0, ride.endsAt.getTime() - ride.startsAt.getTime()) / 1000,
+      0,
+    ),
+  };
+}
+
 /** These riders' calendar year on the trishaw so far, or `null` before their first ride. */
 export async function passengerYearInReview(
   passengerIds: string[],

@@ -1812,7 +1812,22 @@
       "passenger": {
         "caretakerTagline": "{who, select, one {Næste tur for {name} begynder her.} withOne {Ture for dig og {name} begynder her.} withMany {Ture for dig og dem, du passer på, begynder her.} other {Ture for dem, du passer på, begynder her.}}",
         "chooseChapter": "Vælg en afdeling",
-        "tagline": "Din næste tur begynder her."
+        "tagline": "Din næste tur begynder her.",
+        "next": {
+          "eyebrow": "Din næste tur",
+          "pickupAt": "Vi henter dig her: {place}",
+          "pilotPicksYou": "{name} henter dig her: {place}",
+          "lookingPilot": "Vi leder efter en pilot til dig",
+          "later": "Bagefter",
+          "emptyTitle": "Hvor vil du gerne hen?",
+          "open": "Åbn turen"
+        },
+        "totals": {
+          "rides": "{count, plural, one {Tur sammen} other {Ture sammen}}",
+          "hours": "{count, plural, one {Time udenfor} other {Timer udenfor}}",
+          "first": "Din første tur venter",
+          "firstHint": "Når du har været ude, tæller vi med her."
+        }
       },
       "pilot": {
         "tagline": "Klar, når du er."

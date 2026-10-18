@@ -1812,7 +1812,22 @@
       "passenger": {
         "caretakerTagline": "{who, select, one {{name}'s next ride starts here.} withOne {Rides for you and {name} start here.} withMany {Rides for you and the people you look after start here.} other {Rides for the people you look after start here.}}",
         "chooseChapter": "Choose a chapter",
-        "tagline": "Your next ride starts here."
+        "tagline": "Your next ride starts here.",
+        "next": {
+          "eyebrow": "Your next ride",
+          "pickupAt": "We pick you up at {place}",
+          "pilotPicksYou": "{name} picks you up at {place}",
+          "lookingPilot": "We're looking for a pilot for you",
+          "later": "After that",
+          "emptyTitle": "Where would you like to go?",
+          "open": "Open the ride"
+        },
+        "totals": {
+          "rides": "{count, plural, one {Ride together} other {Rides together}}",
+          "hours": "{count, plural, one {Hour outside} other {Hours outside}}",
+          "first": "Your first ride is waiting",
+          "firstHint": "Once you've been out, we count along here."
+        }
       },
       "pilot": {
         "tagline": "Ready when you are."

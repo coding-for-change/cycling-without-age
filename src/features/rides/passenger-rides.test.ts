@@ -298,3 +298,39 @@ describe("pilotContactOpen", () => {
     ).toBe(false);
   });
 });
+
+describe("passengerTotals", () => {
+  it("counts every ride the riders took and the time outside", async () => {
+    findMany.mockResolvedValue([
+      {
+        startsAt: new Date("2025-06-01T10:00:00Z"),
+        endsAt: new Date("2025-06-01T12:00:00Z"),
+        locationName: null,
+        assignments: [],
+      },
+      {
+        startsAt: new Date("2026-03-01T10:00:00Z"),
+        endsAt: new Date("2026-03-01T11:30:00Z"),
+        locationName: null,
+        assignments: [],
+      },
+    ]);
+    await expect(rides.passengerTotals(MINE, now)).resolves.toEqual({
+      rides: 2,
+      seconds: 3.5 * 3600,
+    });
+    expect(findMany.mock.calls[0][0].where).toMatchObject({
+      roster: { some: { passengerId: { in: MINE } } },
+      status: { not: "cancelled" },
+      endsAt: { lte: now },
+    });
+  });
+
+  it("asks nothing for someone with no riders", async () => {
+    await expect(rides.passengerTotals([], now)).resolves.toEqual({
+      rides: 0,
+      seconds: 0,
+    });
+    expect(findMany).not.toHaveBeenCalled();
+  });
+});
