@@ -5,40 +5,32 @@ import { rides } from "@/features/rides";
 const HOUR_MS = 60 * 60 * 1000;
 const PICKUP_LEAD_HOURS = 24;
 
-/** Each trishaw with the location it waits at, if the chapter can still reach it. */
-async function trishawPlaces(chapterId: string, trishawIds: string[]) {
-  const [trishaws, locations] = await Promise.all([
-    fleet.getTrishaws(trishawIds),
-    fleet.listLocationsForChapters([chapterId]),
-  ]);
-  const locationById = new Map(locations.map((l) => [l.id, l]));
-  return trishaws.map((trishaw) => ({
-    trishaw,
-    location: locationById.get(trishaw.storageLocation.id) ?? null,
-  }));
-}
-
 /**
  * What a pilot sees after a ride: the chapter's standing instructions, then per
- * trishaw where it goes back and how to get in. Only the ride's own pilots who
- * are still members get it, and only locations the chapter can still reach —
- * the access code is on this page.
+ * trishaw where it goes back and how to get in, the roster to close and the
+ * pilot's own debrief. Only the ride's own pilots who are still members get
+ * it, and only locations the chapter can still reach — the access code is on
+ * this page.
  */
 export async function finishRideView(rideId: string, userId: string) {
   const ride = await rides.getFinishableRideForPilot(rideId, userId);
   if (!ride) return null;
 
-  const [settings, places, reported] = await Promise.all([
+  const [settings, places, reported, crewView, debrief] = await Promise.all([
     chapters.getSettings(ride.chapterId),
-    trishawPlaces(
+    fleet.listTrishawPlaces(
       ride.chapterId,
       ride.trishaws.map(({ trishaw }) => trishaw.id),
     ),
     fleet.listDamagesReportedOnRide(rideId, userId),
+    rides.getRideForPilot(rideId, userId),
+    rides.getDebrief(rideId, userId),
   ]);
 
   return {
     ride,
+    roster: crewView?.roster ?? [],
+    debrief,
     instructions: settings.postRideInstructions,
     trishaws: places.map((place) => ({
       ...place,
@@ -78,7 +70,7 @@ export async function pickupView(
     return null;
   const { staffingCheckLeadHours } = await chapters.getSettings(ride.chapterId);
   if (now < pickupOpens(ride.startsAt, staffingCheckLeadHours)) return null;
-  return trishawPlaces(
+  return fleet.listTrishawPlaces(
     ride.chapterId,
     ride.trishaws.map(({ trishaw }) => trishaw.id),
   );

@@ -423,7 +423,11 @@
         "welcome": "Welcome",
         "careRequested": "Care request",
         "careDecided": "Care answer",
-        "careInvited": "Caretaker invite"
+        "careInvited": "Caretaker invite",
+        "rideReminder": "Rider reminder",
+        "pilotReminder": "Pilot reminder",
+        "rideNoDemand": "Nobody booked",
+        "rideRosterRefilled": "Rider back"
       },
       "you": "You"
     },
@@ -939,6 +943,25 @@
         "placeholder": "Plug in the charger, wipe the seat, and drop the key back in the safe.",
         "title": "After the ride"
       },
+      "reminders": {
+        "body": "When riders and pilots hear about an upcoming ride, and when a ride nobody is booked on is flagged.",
+        "demand": {
+          "hint": "Admins hear about a ride with an empty roster, so it can be cancelled in time.",
+          "label": "Warn about empty rides"
+        },
+        "hours": "{count, plural, one {# hour before} other {# hours before}}",
+        "minutes": "{count, plural, one {# minute before} other {# minutes before}}",
+        "days": "{count, plural, one {# day before} other {# days before}}",
+        "rider": {
+          "hint": "Riders, or whoever books for them, are asked to confirm the seat or give it up.",
+          "label": "Remind riders"
+        },
+        "title": "Reminders",
+        "volunteer": {
+          "hint": "Pilots get the ride again, with where to pick up the trishaw.",
+          "label": "Remind pilots"
+        }
+      },
       "staffing": {
         "body": "How pilots find rides, and when you hear about a ride still short of pilots.",
         "lead": {
@@ -1235,6 +1258,7 @@
         "body": "Your chats live on the left. Open one, or start a new chat with somebody from your chapter.",
         "title": "Pick a conversation"
       },
+      "rideBadge": "Ride",
       "search": "Search names and groups",
       "title": "Chat",
       "unreads": "Unreads",
@@ -1276,7 +1300,9 @@
       "deleted": "Message deleted",
       "edited": "edited",
       "frozen": {
-        "body": "It closed when the ride ended. Either of you can pick it up again.",
+        "body": "It closed when the ride was completed. Anyone in it can pick it up again.",
+        "continued": "The chat is open again.",
+        "keepChatting": "Keep chatting",
         "title": "This chat has wrapped up"
       },
       "jumpToLatest": "Jump to the latest",
@@ -2170,6 +2196,41 @@
         "volunteers": "We couldn't find a pilot for this ride, and we're sorry about that.",
         "weather": "The weather isn't on our side this time, and we'd rather keep you warm and dry."
       },
+      "seat": {
+        "cancel": {
+          "aria": "Cancel seat for {name}",
+          "body": "The chapter can offer the seat to someone else. You can take it back here as long as there is room.",
+          "cancel": "Keep the seat",
+          "confirm": "Give up the seat",
+          "done": "Seat given up. The chapter knows.",
+          "label": "Cancel seat",
+          "title": "Give up {name}'s seat?"
+        },
+        "confirm": "Confirm seat",
+        "confirmAria": "Confirm seat for {name}",
+        "confirmed": "Seat confirmed. See you there!",
+        "errors": {
+          "pleasureLimit": "This ride is full again. Your chapter is happy to help.",
+          "rateLimited": "That was a lot at once. Please wait a moment and try again.",
+          "rideClosed": "The seat can't change anymore: the ride has started or was called off.",
+          "rideFull": "This ride is full again. Your chapter is happy to help.",
+          "riderNotInChapter": "This rider rides with another chapter.",
+          "unknownPassenger": "That rider isn't one you book for.",
+          "unknownRide": "This ride isn't available anymore."
+        },
+        "hint": "Please confirm each seat — or give it up if plans have changed, so someone else can ride.",
+        "retake": "Take the seat back",
+        "retakeAria": "Take the seat back for {name}",
+        "retaken": "Seat taken back. See you there!",
+        "states": {
+          "booked": "Not confirmed yet",
+          "cancelled": "Seat given up",
+          "checkedIn": "Checked in",
+          "completed": "Rode along",
+          "confirmed": "Confirmed",
+          "noShow": "Didn't ride"
+        }
+      },
       "write": "Write an email"
     },
     "riderNeeds": {
@@ -2468,7 +2529,6 @@
       "placesTaken": "{count} of {max} places taken",
       "properties": "Properties",
       "readOnlyCancelled": "Cancelled rides keep their slot on the calendar. Only the history still takes comments.",
-      "readOnlyCompleted": "This ride is done. Only the history still takes comments.",
       "reason": "Reason",
       "remove": "Take {name} off the ride",
       "removed": "{name} is off the ride.",
@@ -2519,12 +2579,17 @@
     },
     "history": {
       "cancelled": "{who, select, you {You} other {{actor}}} cancelled the ride",
+      "checkInUndone": "{who, select, you {You} other {{actor}}} undid {name}'s check-in",
+      "checkedIn": "{who, select, you {You} other {{actor}}} checked {name} in",
+      "completed": "{who, select, you {You} other {{actor}}} completed the ride",
+      "completedTally": "{riders, plural, one {# rider} other {# riders}} rode, {noShows, plural, =0 {no no-shows} one {# no-show} other {# no-shows}}",
       "composer": {
         "added": "Comment added.",
         "label": "Comment",
         "placeholder": "Add a comment to the history — e.g. rider asked for a blanket",
         "submit": "Comment"
       },
+      "debriefed": "{who, select, you {You} other {{actor}}} wrote a debrief",
       "edited": "{who, select, you {You} other {{actor}}} changed {fields}",
       "fields": {
         "announced": "whether riders can book",
@@ -2538,11 +2603,15 @@
         "title": "the title"
       },
       "formerMember": "a former member",
+      "formerRider": "a former rider",
       "note": "{who, select, you {You} other {{actor}}} commented",
       "pilotAssigned": "{who, select, you {You} other {{actor}}} put {name} on as pilot",
+      "pilotNoShow": "{who, select, you {You} other {{actor}}} marked {name} as a no-show",
+      "pilotShowed": "{who, select, you {You} other {{actor}}} marked {name} as having piloted",
       "pilotSignedUp": "{name} signed up to pilot",
       "pilotSteppedBack": "{name} stepped back as pilot",
       "pilotUnassigned": "{who, select, you {You} other {{actor}}} took {name} off as pilot",
+      "reopened": "{who, select, you {You} other {{actor}}} reopened the ride",
       "rescheduled": "{who, select, you {You} other {{actor}}} moved the ride",
       "rescheduledWithLeg": "{who, select, you {You} other {{actor}}} moved the ride along with the way there",
       "riderBooked": "{who, select, you {You} other {{actor}}} booked {name}",
@@ -2550,9 +2619,13 @@
       "rosterReordered": "{who, select, you {You} other {{actor}}} changed the riders' order",
       "scheduled": "{who, select, you {You} other {{actor}}} scheduled the ride",
       "scheduledReturn": "{who, select, you {You} other {{actor}}} scheduled the ride as the way back",
+      "seatCancelled": "{who, select, you {You} other {{actor}}} gave up {name}'s seat",
+      "seatConfirmed": "{who, select, you {You} other {{actor}}} confirmed {name}'s seat",
       "trishawsAdded": "Added {names}",
       "trishawsChanged": "{who, select, you {You} other {{actor}}} changed the trishaws",
-      "trishawsRemoved": "Removed {names}"
+      "trishawsRemoved": "Removed {names}",
+      "walkUpAdded": "{who, select, you {You} other {{actor}}} added {name} at the door",
+      "walkUpRemoved": "{who, select, you {You} other {{actor}}} took someone added at the door off again"
     },
     "reasons": {
       "equipment": "Trishaw problem",
@@ -2666,6 +2739,109 @@
       "retry": "Try again",
       "end": "That's everything booked so far.",
       "ridersOf": "{count} of {capacity} places taken"
+    },
+    "execution": {
+      "addWalkUp": "Add someone at the door",
+      "attendance": {
+        "booked": "Booked",
+        "cancelled": "Gave up the seat",
+        "checkedIn": "Checked in",
+        "completed": "Rode",
+        "confirmed": "Confirmed",
+        "noShow": "No-show"
+      },
+      "checkIn": "Check-in",
+      "checkInHint": "Tap each rider as they arrive. Whoever isn't checked in when the ride is completed counts as a no-show.",
+      "checkInLabel": "Check in {name}",
+      "checkedIn": "{name} is checked in",
+      "checkedInCount": "{count} of {total} checked in",
+      "complete": {
+        "body": "This closes the roster and counts the ride: {tally}. Riders who aren't checked in count as no-shows, and the ride's chat wraps up.",
+        "cancel": "Not yet",
+        "confirm": "Complete ride",
+        "done": "Ride completed. Thank you!",
+        "label": "Complete ride",
+        "title": "Complete the ride?"
+      },
+      "completedBy": "Completed by {name}",
+      "debrief": {
+        "autosaves": "Saves by itself as you go.",
+        "by": "{name}'s debrief",
+        "distance": "Distance ridden",
+        "distanceHint": "In kilometres, as measured on the way.",
+        "hint": "A few lines for the chapter. You can come back and change them.",
+        "invalidNumber": "Please enter a number, like 12.5.",
+        "kilometres": "{km} km",
+        "none": "No debrief yet.",
+        "note": "How did it go?",
+        "notePlaceholder": "Anything the chapter should know?",
+        "savedStatus": "Saved",
+        "saving": "Saving…",
+        "someone": "A former pilot",
+        "title": "Debrief",
+        "titleMany": "Debriefs",
+        "unit": "km",
+        "unset": "Not given"
+      },
+      "errors": {
+        "checkInClosed": "Check-in is open from two hours before the ride until a day after it.",
+        "notAssigned": "That pilot isn't on this ride.",
+        "pleasureLimit": "This ride is full.",
+        "rateLimited": "That was a lot at once. Please wait a moment and try again.",
+        "rideClosed": "This ride is closed.",
+        "rideFull": "This ride is full.",
+        "rideNotCompleted": "This ride isn't completed.",
+        "rideNotStarted": "The ride hasn't started yet.",
+        "unknownPassenger": "That rider isn't on this ride anymore.",
+        "unknownRide": "This ride isn't available anymore."
+      },
+      "noRiders": "Nobody on the roster yet. Add whoever turns up at the door.",
+      "onTheDay": "On the day",
+      "onTheDayHint": "Who came, who piloted, and closing the roster.",
+      "pilotAttendance": {
+        "completed": "Piloted",
+        "noShow": "No-show",
+        "signedUp": "Signed up"
+      },
+      "pilotNoShow": "Didn't come",
+      "pilotNoShowLabel": "{name} didn't come",
+      "pilotNoShowMarked": "{name} is marked as a no-show",
+      "pilotNoShowCleared": "{name} piloted after all",
+      "pilots": "Pilots",
+      "removeWalkUp": "Remove {name}",
+      "reopen": {
+        "body": "The roster opens again, so you can correct who rode. The ride stops counting until it's completed again.",
+        "cancel": "Keep it completed",
+        "confirm": "Reopen",
+        "done": "Ride reopened",
+        "label": "Reopen ride",
+        "title": "Reopen this ride?"
+      },
+      "riders": "Riders",
+      "tally": "{riders, plural, one {# rider checked in} other {# riders checked in}}, {trishaws, plural, =0 {no trishaw} one {# trishaw} other {# trishaws}}, {duration}",
+      "undo": "Undo",
+      "undone": "Check-in undone",
+      "walkUp": {
+        "added": "{name} is on the ride",
+        "body": "Enrol someone who turned up without a booking. They're checked in straight away.",
+        "badge": "At the door",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "removed": "{name} is off the ride",
+        "submit": "Add and check in",
+        "submitting": "Adding…",
+        "title": "Someone at the door",
+        "removeTitle": "Remove {name} from the ride?",
+        "removeBody": "Only for someone added by mistake. Whoever rode stays on the roster.",
+        "removeConfirm": "Remove",
+        "keep": "Keep"
+      },
+      "completedNotice": "This ride is completed and counts in the statistics.",
+      "finishHint": "Check everyone in who rode, then complete the ride. Riders who aren't checked in count as no-shows.",
+      "danger": "Danger zone",
+      "givenUp": "Gave up their seat",
+      "nobodyRode": "Nobody was on the roster.",
+      "completedByFormer": "Completed by a former member"
     }
   },
   "signIn": {

@@ -846,6 +846,17 @@ export async function freeze(conversationId: string): Promise<void> {
   });
 }
 
+/**
+ * A ride's chat wraps up with the ride: it stays readable, and anyone in it
+ * can pick it up again. A ride without a chat has nothing to freeze.
+ */
+export async function freezeRideConversation(rideId: string) {
+  const conversation = await findConversationByRideId(rideId);
+  if (!conversation || conversation.frozenAt) return null;
+  await freeze(conversation.id);
+  return conversation.id;
+}
+
 export async function continueConversation({
   conversationId,
   userId,

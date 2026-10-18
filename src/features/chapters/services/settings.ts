@@ -15,6 +15,9 @@ const COLUMNS = {
   pilotsMaySelfAssign: true,
   requiredPilotsDefault: true,
   staffingCheckLeadHours: true,
+  riderReminderLeadMinutes: true,
+  volunteerReminderLeadMinutes: true,
+  demandCheckLeadHours: true,
 } as const;
 
 export const findChapterSettings = (chapterId: string) =>

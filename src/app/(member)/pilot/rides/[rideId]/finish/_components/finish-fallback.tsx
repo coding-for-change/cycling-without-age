@@ -16,6 +16,18 @@ export function FinishFallback() {
         <Skeleton className="h-3.5 w-40" />
         <Skeleton className="h-96 w-full rounded-2xl" />
       </section>
+      <section className="flex flex-col gap-3">
+        <Skeleton className="h-3.5 w-24" />
+        <Skeleton className="h-4 w-64 max-w-full" />
+        <Skeleton className="h-32 w-full rounded-2xl" />
+        <Skeleton className="h-11 w-full rounded-full" />
+      </section>
+      <section className="flex flex-col gap-3">
+        <Skeleton className="h-3.5 w-24" />
+        <Skeleton className="h-4 w-64 max-w-full" />
+        <Skeleton className="h-96 w-full rounded-2xl" />
+      </section>
+      <Skeleton className="h-14 w-full rounded-full" />
     </>
   );
 }

@@ -1,7 +1,12 @@
 import type { ReactNode } from "react";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { Accessibility, CalendarClock, TriangleAlert } from "lucide-react";
+import {
+  Accessibility,
+  CalendarClock,
+  CircleCheck,
+  TriangleAlert,
+} from "lucide-react";
 import { RichText } from "@/components/markdown";
 import { Badge } from "@/components/ui/badge";
 import type { DamageFormLabels } from "@/features/fleet/components/damage-form";
@@ -12,7 +17,21 @@ import {
   fleetCommon,
   storageAccessLabels,
 } from "@/features/fleet/components/strings";
+import { rides } from "@/features/rides";
+import { CheckInList } from "@/features/rides/components/check-in-list";
+import { CompleteRideButton } from "@/features/rides/components/complete-ride-button";
+import { DebriefForm } from "@/features/rides/components/debrief-form";
+import {
+  checkInStrings,
+  completeStrings,
+  debriefStrings,
+  rideDayErrors,
+  rideTally,
+  walkUpStrings,
+} from "@/features/rides/components/strings";
+import { WalkUpDrawer } from "@/features/rides/components/walk-up-drawer";
 import { requirePerspective } from "@/lib/auth-guards";
+import { fullName } from "@/lib/utils";
 import { calendarDate } from "@/lib/calendar";
 import {
   formatShortDateWithWeekday,
@@ -58,6 +77,11 @@ export async function FinishRide({
   const common = fleetCommon(dict);
   const { ride } = view;
   const zone = ride.chapter.timeZone;
+  const day = dict.rides.execution;
+  const now = new Date();
+  const doorOpen = rides.checkInOpen(ride, "pilot", now);
+  const completable = rides.canComplete(ride, "pilot", now);
+  const completed = ride.status === "completed";
 
   const damageLabels: DamageFormLabels = {
     ...common.damage,
@@ -133,11 +157,76 @@ export async function FinishRide({
         ))
       )}
 
-      <div className="mt-auto flex flex-col pt-4">
-        <DoneButton
-          label={finish.done}
-          thanks={finish.thanks}
+      <section className="flex flex-col gap-3">
+        <SectionHeading>{day.riders}</SectionHeading>
+        {completable ? (
+          <p className="text-2sm text-ink-soft">{day.finishHint}</p>
+        ) : null}
+        <CheckInList
+          rideId={ride.id}
+          entries={view.roster.map((entry) => ({
+            id: entry.id,
+            name: entry.passenger
+              ? fullName(entry.passenger)
+              : (entry.guestName ?? ""),
+            walkUp: !entry.passenger,
+            attendance: entry.attendance,
+          }))}
+          open={doorOpen}
+          language={language}
+          labels={checkInStrings(dict)}
         />
+        {doorOpen ? (
+          <WalkUpDrawer
+            rideId={ride.id}
+            language={language}
+            labels={walkUpStrings(dict)}
+            triggerClassName="w-full sm:w-fit"
+          />
+        ) : null}
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <SectionHeading>{day.debrief.title}</SectionHeading>
+        <p className="text-2sm text-ink-soft">{day.debrief.hint}</p>
+        <div className="border-line rounded-2xl border p-4">
+          <DebriefForm
+            rideId={ride.id}
+            functional={ride.model === "functional"}
+            initial={view.debrief}
+            notation={locale}
+            labels={debriefStrings(dict)}
+          />
+        </div>
+      </section>
+
+      <div className="mt-auto flex flex-col gap-3 pt-4">
+        {completed ? (
+          <p className="bg-mint-tint flex items-center gap-3 rounded-2xl p-4 text-sm">
+            <CircleCheck
+              aria-hidden
+              className="size-5 shrink-0"
+            />
+            {day.completedNotice}
+          </p>
+        ) : null}
+        {completable ? (
+          <CompleteRideButton
+            rideId={ride.id}
+            hero
+            labels={completeStrings(
+              dict,
+              rideTally(dict, { ...ride, roster: view.roster }, language),
+              language,
+            )}
+            errors={rideDayErrors(dict)}
+          />
+        ) : (
+          <DoneButton
+            label={finish.done}
+            thanks={finish.thanks}
+          />
+        )}
       </div>
     </>
   );

@@ -10,6 +10,12 @@ import { pilotApplicationDecided } from "./pilot-application-decided";
 import { pilotApplicationSubmitted } from "./pilot-application-submitted";
 import { poolAccessDecided, poolAccessRequested } from "./pool-access";
 import {
+  rideNoDemand,
+  ridePilotReminder,
+  rideRiderReminder,
+  rideRosterRefilled,
+} from "./reminders";
+import {
   rideBookingCancelled,
   rideBookingConfirmed,
   rideCancelled,
@@ -42,10 +48,14 @@ export const kinds: AnyKind[] = [
   rideBookingCancelled,
   rideBookingConfirmed,
   rideCancelled,
+  rideNoDemand,
   rideOpened,
   ridePilotAssigned,
+  ridePilotReminder,
   ridePilotWithdrew,
   rideRescheduled,
+  rideRiderReminder,
+  rideRosterRefilled,
   rideUnderstaffed,
   trishawDamageReported,
   userOnboarded,

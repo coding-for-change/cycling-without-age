@@ -686,3 +686,28 @@ describe("putting a grounded trishaw back into service", () => {
     expect(damages.clearDamageById).not.toHaveBeenCalled();
   });
 });
+
+describe("listTrishawPlaces", () => {
+  // The access code lives on the location: one the chapter no longer reaches is not shown.
+  it("names where each trishaw waits, only where the chapter still reaches", async () => {
+    mocked(trishaws.findTrishawsByIds).mockResolvedValue([
+      { id: "t-1", name: "Sonnenstrahl", storageLocation: { id: "loc-1" } },
+      { id: "t-2", name: "Isarwind", storageLocation: { id: "gone" } },
+    ]);
+    mocked(locations.findLocations).mockResolvedValue([
+      { id: "loc-1", name: "Depot", accessCode: "4711" },
+    ]);
+    const places = await fleet.listTrishawPlaces(MUENCHEN, ["t-1", "t-2"]);
+    expect(
+      places.map(({ trishaw, location }) => [trishaw.id, location?.id ?? null]),
+    ).toEqual([
+      ["t-1", "loc-1"],
+      ["t-2", null],
+    ]);
+    expect(mocked(trishaws.findTrishawsByIds)).toHaveBeenCalledWith([
+      "t-1",
+      "t-2",
+    ]);
+    expect(mocked(locations.findLocations)).toHaveBeenCalledTimes(1);
+  });
+});

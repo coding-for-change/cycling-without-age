@@ -43,6 +43,7 @@ describe("syncRideChat", () => {
       pilotUserIds: ["pilot-1"],
       riderCount: 1,
       riderAccountUserIds: ["carer-1"],
+      household: { riders: 1, accountUserIds: ["carer-1"] },
     });
     expect(await loaded(false)).toEqual({
       chapterId: "chapter-1",
@@ -61,6 +62,7 @@ describe("syncRideChat", () => {
       chapterId: "chapter-1",
       pilotUserIds: ["pilot-1"],
       riderAccountUserIds: ["carer-1", "carer-2"],
+      household: { riders: 1, accountUserIds: ["carer-1", "carer-2"] },
     });
     expect(await loaded(false)).toEqual(
       expect.objectContaining({ memberUserIds: ["pilot-1", "admin-1"] }),
@@ -73,6 +75,7 @@ describe("syncRideChat", () => {
       pilotUserIds: ["pilot-1"],
       riderCount: 2,
       riderAccountUserIds: ["carer-1"],
+      household: { riders: 2, accountUserIds: ["carer-1"] },
     });
     expect(await loaded(false)).toEqual(
       expect.objectContaining({
@@ -87,6 +90,7 @@ describe("syncRideChat", () => {
       pilotUserIds: ["pilot-1"],
       riderCount: 1,
       riderAccountUserIds: ["carer-1", "rider-1"],
+      household: { riders: 1, accountUserIds: ["carer-1", "rider-1"] },
     });
     expect(await loaded(false)).toEqual(
       expect.objectContaining({
@@ -102,6 +106,21 @@ describe("syncRideChat", () => {
       pilotUserIds: ["pilot-1"],
       riderCount: 2,
       riderAccountUserIds: ["carer-1", "carer-2"],
+      household: { riders: 2, accountUserIds: ["carer-1", "carer-2"] },
+    });
+    expect(await loaded(false)).toEqual(
+      expect.objectContaining({ memberUserIds: ["pilot-1", "admin-1"] }),
+    );
+  });
+
+  // A gave the seat up: B, still booked, must not read what was said about A.
+  it("keeps the other household out when one family gives its seat up", async () => {
+    participants.mockResolvedValue({
+      chapterId: "chapter-1",
+      pilotUserIds: ["pilot-1"],
+      riderCount: 1,
+      riderAccountUserIds: ["carer-2"],
+      household: { riders: 2, accountUserIds: ["carer-1", "carer-2"] },
     });
     expect(await loaded(false)).toEqual(
       expect.objectContaining({ memberUserIds: ["pilot-1", "admin-1"] }),
@@ -113,6 +132,7 @@ describe("syncRideChat", () => {
       chapterId: "chapter-1",
       pilotUserIds: [],
       riderAccountUserIds: ["carer-1"],
+      household: { riders: 1, accountUserIds: ["carer-1"] },
     });
     expect(await loaded(false)).toBeNull();
   });
@@ -122,6 +142,7 @@ describe("syncRideChat", () => {
       chapterId: "chapter-1",
       pilotUserIds: [],
       riderAccountUserIds: ["carer-1"],
+      household: { riders: 1, accountUserIds: ["carer-1"] },
     });
     expect(await loaded(true)).toEqual(
       expect.objectContaining({ memberUserIds: ["carer-1", "admin-1"] }),

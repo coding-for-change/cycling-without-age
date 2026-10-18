@@ -162,6 +162,7 @@ describe("who hears about a ride", () => {
         ...rider,
         actorUserId: "carer-1",
         self: true,
+        rosterNowEmpty: false,
       }),
     ).toEqual([]);
   });
@@ -271,18 +272,38 @@ describe("who hears about a ride", () => {
 
   // Whether a country admin or a superadmin did it, an admin removal is no news.
   it("tells the admins when a rider's own account gives the seat up, and only then", async () => {
-    const event = (self: boolean): EventOf<"ride.riderRemoved"> => ({
+    const event = (
+      self: boolean,
+      rosterNowEmpty = false,
+    ): EventOf<"ride.riderRemoved"> => ({
       type: "ride.riderRemoved",
       ...scope,
       actorUserId: self ? "carer-1" : "country-admin",
       passengerId: "passenger-1",
       self,
+      rosterNowEmpty,
+      pair: null,
     });
     expect(await rideBookingCancelled.recipients(event(false))).toEqual([]);
     expect(await rideBookingCancelled.recipients(event(true))).toEqual([
       "admin-1",
       "pilot-1",
     ]);
+  });
+
+  // 5B-b: when nobody is left, the other admins hear it whoever removed them.
+  it("tells the other admins when the last rider is taken off", async () => {
+    expect(
+      await rideBookingCancelled.recipients({
+        type: "ride.riderRemoved",
+        ...scope,
+        actorUserId: "admin-1",
+        passengerId: "passenger-1",
+        self: false,
+        rosterNowEmpty: true,
+        pair: null,
+      }),
+    ).toEqual(["pilot-1"]);
   });
 
   describe("a round trip", () => {
