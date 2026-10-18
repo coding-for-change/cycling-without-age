@@ -9,6 +9,7 @@ import { getPassengerAudience } from "@/use-cases/passenger-audience";
 import { audienceCopy } from "./audience-copy";
 import type { MemberPerspective } from "../nav";
 import { MEMBER_LIFE } from "./instant";
+import type { HeroName } from "@/components/art";
 import { EmptyState } from "@/components/empty-state";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +54,11 @@ export function MemberPageShell({
 
 export type MemberPageKey = "rides" | "calendar";
 
+/** A passenger's empty pages carry one of mockup 2's drawings. */
+const PAGE_HERO: Partial<Record<MemberPageKey, HeroName>> = {
+  calendar: "calendar",
+};
+
 export async function MemberPageBody({
   perspective,
   page,
@@ -74,9 +80,17 @@ export async function MemberPageBody({
 
   return (
     <>
-      <h1 className="text-2xl tracking-tight md:text-3xl">{strings.title}</h1>
+      <h1
+        className={cn(
+          "text-2xl tracking-tight md:text-3xl",
+          perspective === "passenger" && "max-md:sr-only",
+        )}
+      >
+        {strings.title}
+      </h1>
       <EmptyState
         icon={Icon}
+        hero={perspective === "passenger" ? PAGE_HERO[page] : undefined}
         className="flex-1 justify-start rounded-none border-none pt-16"
       >
         {audienceCopy(

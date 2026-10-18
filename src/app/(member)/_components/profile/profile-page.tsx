@@ -49,12 +49,17 @@ export function ProfilePage({
 }) {
   return (
     <MemberPageShell>
-      <Suspense fallback={<ProfileFallback />}>
-        <ProfileBody
-          perspective={perspective}
-          slug={slug}
-        />
-      </Suspense>
+      <div
+        data-look={perspective === "passenger" ? "cards" : undefined}
+        className="group/look contents"
+      >
+        <Suspense fallback={<ProfileFallback />}>
+          <ProfileBody
+            perspective={perspective}
+            slug={slug}
+          />
+        </Suspense>
+      </div>
     </MemberPageShell>
   );
 }
@@ -62,9 +67,14 @@ export function ProfilePage({
 export function PeoplePage() {
   return (
     <MemberPageShell>
-      <Suspense fallback={<PeopleFallback />}>
-        <PeopleBody />
-      </Suspense>
+      <div
+        data-look="cards"
+        className="group/look contents"
+      >
+        <Suspense fallback={<PeopleFallback />}>
+          <PeopleBody />
+        </Suspense>
+      </div>
     </MemberPageShell>
   );
 }

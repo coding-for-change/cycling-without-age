@@ -176,10 +176,11 @@ experiences." Mainly color, but **black and white is also allowed**.
 Imagery keeps its own colors and is never tinted or duotoned into the UI palette; the
 chrome around it carries the brand instead.
 
-There is no illustration system in this repo yet. If a surface needs artwork before
-photography is available, add it deliberately — flat SVG with line work in `--ink` (the
-same espresso as the type, per Colors above), mint vegetation and the CWA-red bench —
-rather than reaching for stock imagery or emoji.
+Until photography is available, artwork is the flat SVG system from the booking
+prototype, `src/components/art.tsx`: line work in the brand's espresso, mint vegetation
+and the CWA-red bench, natural colours for sky, sun and skin. In dark mode the scenes keep
+their light sky — framed like a postcard — rather than being dimmed or recoloured. Never
+stock imagery or emoji.
 
 ## Getting assets and answers from CWA
 
