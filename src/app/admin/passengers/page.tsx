@@ -10,7 +10,7 @@ import {
   subjectSlug,
   type SubjectRef,
 } from "@/features/person-profiles";
-import { avatarSeed, avatarSvg } from "@/lib/avatar";
+import { avatarSvg, seedOf } from "@/lib/avatar";
 import { formatDate, formatNumber, resolveLocale } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
 import { Badge } from "@/components/ui/badge";
@@ -136,9 +136,7 @@ const loadPassengers = cache(
         caretaker,
         pickup: pickupLabel(passenger, dict.riders.pickup.careHome),
         avatar: avatarSvg(
-          passenger.user
-            ? avatarSeed(passenger.user.email)
-            : `passenger:${passenger.id}`,
+          passenger.user ? seedOf(passenger.user) : `passenger:${passenger.id}`,
         ),
         photoUrl: photoUrl(
           photos.get(subjectSlug(subjectOf(passenger))) ?? null,

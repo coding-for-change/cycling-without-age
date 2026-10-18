@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { PersonAvatar } from "@/components/person-avatar";
 import type { ActivityType } from "@/lib/activity";
-import { avatarSeed, avatarSvg } from "@/lib/avatar";
+import { avatarSvg, seedOf } from "@/lib/avatar";
 import type { Locale } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
 import {
@@ -32,7 +32,7 @@ export type FeedEvent = {
   id: string;
   type: ActivityType;
   actorUserId: string | null;
-  actor: { name: string; email: string } | null;
+  actor: { name: string; email: string; avatarSeed: string | null } | null;
   payload: unknown;
   createdAt: Date;
 };
@@ -103,9 +103,7 @@ export function ActivityFeed({
               event.actorUserId ? (
                 <PersonAvatar
                   svg={avatarSvg(
-                    event.actor
-                      ? avatarSeed(event.actor.email)
-                      : event.actorUserId,
+                    event.actor ? seedOf(event.actor) : event.actorUserId,
                   )}
                   className="size-4"
                 />

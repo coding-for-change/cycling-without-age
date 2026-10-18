@@ -125,7 +125,12 @@ function CancelRidePopover({
   language: Locale;
   labels: RideTrashLabels;
 }) {
-  const ids = { reason: useId(), note: useId(), back: useId() };
+  const ids = {
+    reason: useId(),
+    note: useId(),
+    noteHint: useId(),
+    back: useId(),
+  };
   const strings = labels.cancel;
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<RideCancellationReasonName>(
@@ -240,8 +245,15 @@ function CancelRidePopover({
               placeholder={strings.notePlaceholder}
               maxLength={RIDE_NOTE_MAX}
               rows={2}
+              aria-describedby={ids.noteHint}
               className="min-h-16 border-line text-2sm md:text-2sm"
             />
+            <p
+              id={ids.noteHint}
+              className="text-xs text-ink-soft"
+            >
+              {strings.noteHint}
+            </p>
           </div>
           {returnLeg ? (
             <div className="flex items-start gap-2">

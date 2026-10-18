@@ -5,7 +5,7 @@ import { cacheLife } from "next/cache";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
-import { firstName } from "@/lib/utils";
+import { cn, firstName } from "@/lib/utils";
 import { primaryAction, type MemberPerspective } from "../../nav";
 import { MEMBER_LIFE } from "../instant";
 import { signInHref } from "@/lib/redirects";
@@ -55,16 +55,34 @@ export async function Greeting({
 
   return (
     <section className="flex flex-col gap-3">
-      <h1 className="text-2xl tracking-tight md:text-3xl">{heading}</h1>
-      <p className="text-ink-soft">{tagline}</p>
-      <Button
-        asChild
-        variant="brand"
-        size="hero"
-        className="mt-2 md:hidden"
+      {/* A passenger's phone greets in the top bar (mockup 2); the h1 stays for
+          screen readers and the desktop. */}
+      <h1
+        className={cn(
+          "text-2xl tracking-tight md:text-3xl",
+          session && perspective === "passenger" && "max-md:sr-only",
+        )}
       >
-        <Link href={hero.href}>{hero.label}</Link>
-      </Button>
+        {heading}
+      </h1>
+      <p
+        className={cn(
+          "text-ink-soft",
+          session && perspective === "passenger" && "max-md:hidden",
+        )}
+      >
+        {tagline}
+      </p>
+      {session && perspective === "passenger" ? null : (
+        <Button
+          asChild
+          variant="brand"
+          size="hero"
+          className="mt-2 md:hidden"
+        >
+          <Link href={hero.href}>{hero.label}</Link>
+        </Button>
+      )}
       {session ? null : (
         <p className="text-sm text-ink-soft md:hidden">{guest.heroHint}</p>
       )}

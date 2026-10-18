@@ -12,7 +12,12 @@ import {
 import type { Access } from "@/lib/access";
 import { DomainError } from "@/lib/domain-error";
 
-export type ContactPerson = { userId: string; name: string; email: string };
+export type ContactPerson = {
+  userId: string;
+  name: string;
+  email: string;
+  avatarSeed: string | null;
+};
 
 export type PersonMatch = ContactPerson & {
   chapterId: string | null;
@@ -78,7 +83,12 @@ async function assertReachable(
     );
 
   return {
-    person: { userId: targetUserId, name: account.name, email: account.email },
+    person: {
+      userId: targetUserId,
+      name: account.name,
+      email: account.email,
+      avatarSeed: account.avatarSeed,
+    },
     chapterId,
   };
 }
@@ -170,6 +180,7 @@ export async function searchPeople({
       userId: row.id,
       name: row.name,
       email: row.email,
+      avatarSeed: row.avatarSeed,
       chapterId: null,
       chapterName: null,
     }));

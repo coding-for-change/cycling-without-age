@@ -4,7 +4,7 @@ import { z } from "zod";
 import { requireAuth } from "@/lib/auth-guards";
 import { actionFailure } from "@/lib/domain-error";
 import { withinRateLimit } from "@/lib/rate-limit";
-import { avatarSeed, avatarSvg } from "@/lib/avatar";
+import { avatarSvg, seedOf } from "@/lib/avatar";
 import { syncInbox } from "@/use-cases/chat/chat-inbox";
 import type { InboxItem } from "@/use-cases/chat/chat-inbox";
 import {
@@ -386,7 +386,7 @@ export async function searchPeopleAction(
       people: people.map((person) => ({
         userId: person.userId,
         name: person.name,
-        avatarSvg: avatarSvg(avatarSeed(person.email)),
+        avatarSvg: avatarSvg(seedOf(person)),
         subtitle: person.chapterName,
       })),
     };

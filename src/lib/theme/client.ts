@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { THEME_COOKIE, isTheme, type ResolvedTheme, type Theme } from ".";
+import { prefersReducedMotion } from "@/lib/motion";
 
 const ONE_YEAR = 60 * 60 * 24 * 365;
 const DARK_QUERY = "(prefers-color-scheme: dark)";
@@ -43,7 +44,7 @@ export function setTheme(theme: Theme) {
   const secure = location.protocol === "https:" ? "; secure" : "";
   document.cookie = `${THEME_COOKIE}=${theme}; path=/; max-age=${ONE_YEAR}; samesite=lax${secure}`;
 
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reduced = prefersReducedMotion();
   if (!document.startViewTransition || reduced) {
     apply(theme);
     return;

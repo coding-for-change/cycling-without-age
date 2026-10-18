@@ -352,6 +352,16 @@ export const rideListPageInput = z.object({
 });
 export type RideListPageInput = z.input<typeof rideListPageInput>;
 
+export const PASSENGER_RIDE_DIRECTIONS = ["upcoming", "past"] as const;
+export type PassengerRideDirection = (typeof PASSENGER_RIDE_DIRECTIONS)[number];
+
+export const passengerRidePageInput = z.object({
+  direction: z.enum(PASSENGER_RIDE_DIRECTIONS),
+  cursor: z.string().max(200).nullable().optional(),
+  limit: z.number().int().min(1).max(RIDE_LIST_PAGE_MAX).default(20),
+});
+export type PassengerRidePageInput = z.input<typeof passengerRidePageInput>;
+
 const coords = z.object({
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),

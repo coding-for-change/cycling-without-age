@@ -11,6 +11,7 @@ import {
 
 export type Channel = "email" | "phone";
 export type FlowRole = "pilot" | "passenger";
+export type FlowMode = "signIn" | "register";
 
 export type FlowState = {
   channel: Channel | null;
@@ -21,6 +22,8 @@ export type FlowState = {
   /** ISO 3166-1 alpha-2, only meaningful on the phone path. */
   country: string | null;
   role: FlowRole | null;
+  /** Whether the person came to sign in or to create an account. */
+  mode: FlowMode | null;
 };
 
 const EMPTY: FlowState = {
@@ -29,6 +32,7 @@ const EMPTY: FlowState = {
   display: null,
   country: null,
   role: null,
+  mode: null,
 };
 
 const KEY = "cwa.flow";

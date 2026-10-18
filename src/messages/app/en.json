@@ -1794,6 +1794,11 @@
     },
     "home": {
       "greeting": "Hi {name}",
+      "timeGreeting": {
+        "morning": "Good morning, {name}!",
+        "afternoon": "Good afternoon, {name}!",
+        "evening": "Good evening, {name}!"
+      },
       "nextRide": {
         "passenger": {
           "caretakerEmpty": "{who, select, one {Nothing booked for {name} yet. When you book a ride, the day, the time and the pilot who's coming to collect {name} land here.} withOne {Nothing booked yet. When you book a ride for yourself or {name}, the day, the time and the pilot who's pedalling land here.} withMany {Nothing booked yet. When you book a ride for yourself or someone you look after, the day, the time and the pilot who's pedalling land here.} other {Nothing booked yet. When you book a ride for someone you look after, the day, the time and the pilot who's coming to collect them land here.}}",
@@ -1807,7 +1812,47 @@
       "passenger": {
         "caretakerTagline": "{who, select, one {{name}'s next ride starts here.} withOne {Rides for you and {name} start here.} withMany {Rides for you and the people you look after start here.} other {Rides for the people you look after start here.}}",
         "chooseChapter": "Choose a chapter",
-        "tagline": "Your next ride starts here."
+        "tagline": "Your next ride starts here.",
+        "next": {
+          "eyebrow": "Your next ride",
+          "pickupAt": "We pick you up at {place}",
+          "pilotPicksYou": "{name} picks you up at {place}",
+          "lookingPilot": "We're looking for a pilot for you",
+          "later": "After that",
+          "emptyTitle": "Where would you like to go?",
+          "open": "Open the ride"
+        },
+        "totals": {
+          "rides": "{count, plural, one {Ride together} other {Rides together}}",
+          "hours": "{count, plural, one {Hour outside} other {Hours outside}}",
+          "first": "Your first ride is waiting",
+          "firstHint": "Once you've been out, we count along here."
+        },
+        "pulse": "{count, plural, one {# ride this month} other {# rides this month}}",
+        "events": {
+          "title": "Coming up in your chapter",
+          "seats": "{free} of {total} seats free",
+          "full": "Fully booked",
+          "mine": "You're on it"
+        },
+        "weather": {
+          "clear": "Sunny",
+          "partlyCloudy": "Partly cloudy",
+          "cloudy": "Cloudy",
+          "fog": "Fog",
+          "drizzle": "Drizzle",
+          "rain": "Rain",
+          "snow": "Snow",
+          "thunder": "Thunderstorms",
+          "label": "Weather forecast"
+        },
+        "report": {
+          "title": "Report a problem",
+          "body": "Something isn't working or looks odd? Tell us — a person reads every message.",
+          "action": "Report a problem",
+          "subject": "A problem in the app",
+          "template": "What happened?\n\n\nWhere in the app was it?\n\n"
+        }
       },
       "pilot": {
         "tagline": "Ready when you are."
@@ -1904,7 +1949,164 @@
   },
   "passenger": {
     "browsing": "Browsing {chapter}",
-    "noChapter": "No chapter chosen yet"
+    "noChapter": "No chapter chosen yet",
+    "ride": {
+      "about": "About this ride",
+      "back": "My rides",
+      "booked": "Booked for",
+      "call": "Call {name}",
+      "cancelled": "This ride is off",
+      "cancelledBecause": "Reason: {reason}",
+      "chapter": "Chapter",
+      "contactLater": "You'll see how to reach your pilot from a day before the ride.",
+      "destination": "Destination",
+      "email": "Email {name}",
+      "memory": {
+        "outside": "{duration} outside",
+        "slogan": "The right to wind in your hair",
+        "title": "A lovely memory",
+        "withPilots": "Ridden with {names}"
+      },
+      "noPilot": "We're still finding a pilot. As soon as someone signs up, you'll see here who is riding with you.",
+      "noPlace": "The place is still being decided.",
+      "openInMaps": "Open in Maps",
+      "openLeg": "Open",
+      "pickup": "Pick-up",
+      "pilots": "{count, plural, one {Your pilot} other {Your pilots}}",
+      "running": "Your ride is on right now.",
+      "speak": {
+        "cancelled": "{title} on {date} is off.",
+        "destination": "Destination: {place}.",
+        "listen": "Read aloud",
+        "noPilot": "We're still finding a pilot.",
+        "past": "{title} was on {date}. You were out for {duration}.",
+        "pastPilot": "You rode with {names}.",
+        "pickup": "Pick-up: {place}.",
+        "pilot": "{count, plural, one {Your pilot is {names}.} other {Your pilots are {names}.}}",
+        "stop": "Stop reading",
+        "upcoming": "{title}, on {date} at {time}."
+      },
+      "story": {
+        "aPilot": "A pilot",
+        "cancelled": "{who, select, you {You} other {{chapter}}} cancelled the ride",
+        "change": "{from} → {to}",
+        "edited": "{who, select, you {You} other {{chapter}}} changed {fields}",
+        "fields": {
+          "destination": "the destination",
+          "location": "the pick-up",
+          "model": "the kind of ride",
+          "title": "the title"
+        },
+        "nothing": "nothing",
+        "pilotAssigned": "{name} is riding this one",
+        "pilotUnassigned": "{name} can't make it after all",
+        "rescheduled": "{who, select, you {You} other {{chapter}}} moved the ride",
+        "rescheduledWithLeg": "{who, select, you {You} other {{chapter}}} moved the ride together with its other leg",
+        "riderBooked": "{who, select, you {You} other {{chapter}}} booked {name}",
+        "riderRemoved": "{who, select, you {You} other {{chapter}}} took {name} off the ride",
+        "scheduled": "{who, select, you {You} other {{chapter}}} put the ride on the calendar",
+        "scheduledReturn": "{who, select, you {You} other {{chapter}}} added the way back",
+        "someone": "someone who has left"
+      },
+      "storyEmpty": "Nothing has happened to this ride yet.",
+      "storyTitle": "So far",
+      "trishaws": "{count, plural, one {Trishaw} other {Trishaws}}",
+      "when": "When",
+      "where": "Where",
+      "timeline": {
+        "booked": "Booked",
+        "pilotFound": "Pilot found",
+        "rideDay": "Ride day",
+        "done": "Done"
+      },
+      "callNote": "Only call for last-minute changes, please.",
+      "duration": "Duration",
+      "details": "Details",
+      "places": "Seats"
+    },
+    "rides": {
+      "failed": "That didn't load.",
+      "forRiders": "For {names}",
+      "loading": "Loading…",
+      "now": "Riding now",
+      "past": "Earlier rides",
+      "pilot": "With {name}",
+      "pilotNeeded": "Pilot still to be found",
+      "retry": "Try again",
+      "showEarlier": "Show earlier rides",
+      "upcoming": "Coming up",
+      "year": {
+        "favourite": "Favourite place: {place}",
+        "outside": "{duration} outside",
+        "pilots": "{count, plural, one {# pilot} other {# pilots}}",
+        "rides": "{count, plural, one {# ride} other {# rides}}",
+        "title": "Your {year} on the trishaw"
+      }
+    },
+    "profile": {
+      "title": "Your profile",
+      "intro": "Make the app yours, and tell your pilot a little about yourself.",
+      "account": {
+        "age": "{age, plural, one {# year} other {# years}}",
+        "contactHint": "You sign in with these, so they change through signing in.",
+        "email": "Email",
+        "firstName": "First name",
+        "firstNamePlaceholder": "Your first name",
+        "hint": "Who you are, and how we reach you.",
+        "lastName": "Last name",
+        "lastNamePlaceholder": "Your last name",
+        "name": "Name",
+        "namePlaceholder": "Your name",
+        "phone": "Phone",
+        "title": "Your details"
+      },
+      "about": {
+        "title": "About me",
+        "dictate": {
+          "add": "Add to my text",
+          "allow": "Understood — start",
+          "denied": "The microphone was not allowed. You can allow it in your browser settings.",
+          "discard": "Discard",
+          "failed": "That didn't work. Please try again, or type instead.",
+          "heard": "Heard:",
+          "listening": "Listening …",
+          "privacy": "Your browser sends the recording to Google or Apple to turn it into text. Nothing is saved here until you add it.",
+          "start": "Tell it instead",
+          "stop": "Done"
+        }
+      },
+      "avatar": {
+        "current": "Your character now",
+        "failed": "That didn't work. Try again.",
+        "hint": "This is how pilots and your chapter see you. Pick the one that feels like you.",
+        "more": "Show others",
+        "pick": "Choose this character",
+        "reset": "Back to the first one",
+        "saved": "Your new character is on.",
+        "title": "Your character",
+        "photoFirst": "Your photo comes first. The character shows wherever no photo is shown."
+      },
+      "display": {
+        "motion": "Less motion",
+        "motionHint": "Pages change without sliding or fading, and characters hold still.",
+        "sample": "The right to wind in your hair",
+        "sizes": {
+          "large": "Large",
+          "normal": "Normal",
+          "xLarge": "Extra large"
+        },
+        "textSize": "Text size",
+        "textSizeHint": "Bigger letters on every page you see as a passenger."
+      },
+      "more": {
+        "hint": "Language, notifications, calendar, passkeys, help and signing out.",
+        "title": "Settings & help"
+      },
+      "chips": {
+        "role": "Passenger",
+        "rides": "{count, plural, one {# ride} other {# rides}}"
+      }
+    }
   },
   "passkey": {
     "admin": {
@@ -2025,6 +2227,7 @@
       "doneBoth": "Both legs cancelled.",
       "keep": "Keep ride",
       "note": "Note",
+      "noteHint": "Riders and whoever books for them see this note.",
       "notePlaceholder": "What happened — e.g. heavy rain forecast",
       "reason": "Why is it off?",
       "returnLeg": "Also cancel the way back",
@@ -2313,7 +2516,8 @@
       "resent": "New code sent.",
       "sentToEmail": "We emailed a 6-digit code to {identifier}.",
       "sentToPhone": "We texted a 6-digit code to {identifier}.",
-      "title": "Enter your code"
+      "title": "Enter your code",
+      "welcomeBack": "You already had an account — we’ve signed you in."
     },
     "country": {
       "noResults": "No country matches that.",
@@ -2332,11 +2536,19 @@
         "rateLimited": "Too many attempts. Try again in a minute."
       },
       "google": "Continue with Google",
+      "hintRegister": "We'll send you a code — that's all it takes to create your account.",
       "label": "Email or phone number",
+      "noAccount": "There's no account for this address yet. Create one here — we'll send you a fresh code.",
       "passkey": "Use a passkey",
       "placeholder": "you@example.com",
       "separator": "or",
-      "title": "What's your email or phone number?"
+      "title": "What's your email or phone number?",
+      "titleRegister": "Which email or phone number would you like to register with?"
+    },
+    "mode": {
+      "label": "Sign in or create an account",
+      "register": "Create account",
+      "signIn": "Sign in"
     },
     "role": {
       "passenger": {

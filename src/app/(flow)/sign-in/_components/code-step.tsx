@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { useCharacter } from "@/components/character";
 import { haptics } from "@/lib/native/haptics";
@@ -16,8 +17,17 @@ import {
 import { Step } from "../../_components/step";
 import { useFlow } from "../../_components/flow-state";
 import { clearOfflineCaches } from "@/lib/offline-caches";
+import { NO_ACCOUNT } from "@/lib/sign-up-intent";
+import { setSignUpIntentAction } from "../actions";
 
 const RESEND_AFTER_MS = 30_000;
+
+/** An account made by this very code is minutes old at most. */
+const JUST_CREATED_MS = 5 * 60_000;
+
+const createdBefore = (user: { createdAt?: Date | string } | undefined) =>
+  user?.createdAt !== undefined &&
+  Date.now() - new Date(user.createdAt).getTime() > JUST_CREATED_MS;
 
 type Strings = {
   title: string;
@@ -28,6 +38,7 @@ type Strings = {
   resendWait: string;
   resent: string;
   change: string;
+  welcomeBack: string;
   errors: Record<string, string>;
 };
 
@@ -47,7 +58,7 @@ export function CodeStep({
   const [canResend, setCanResend] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  const { channel, identifier, display } = flow;
+  const { channel, identifier, display, mode } = flow;
 
   useEffect(() => {
     if (!identifier) router.replace("/sign-in");
@@ -71,13 +82,21 @@ export function CodeStep({
   const verify = (value: string) => {
     setError(null);
     startTransition(async () => {
-      const { error: verifyError } =
+      const { data, error: verifyError } =
         channel === "email"
           ? await authClient.signIn.emailOtp({ email: identifier, otp: value })
           : await authClient.phoneNumber.verify({
               phoneNumber: identifier,
               code: value,
             });
+
+      if (verifyError?.code === NO_ACCOUNT) {
+        haptics.warning();
+        router.replace("/sign-in?mode=register&notice=noAccount", {
+          transitionTypes: ["nav-back"],
+        });
+        return;
+      }
 
       if (verifyError) {
         return failWith(
@@ -91,7 +110,10 @@ export function CodeStep({
 
       haptics.success();
       say("heureux", 4000);
-      update({ role: null });
+      if (mode === "register" && createdBefore(data?.user))
+        toast.success(strings.welcomeBack);
+      await setSignUpIntentAction(false);
+      update({ role: null, mode: null });
       await clearOfflineCaches().catch(() => {});
       router.replace("/onboarding");
     });
@@ -136,7 +158,11 @@ export function CodeStep({
           </Button>
           <Button
             variant="link"
-            onClick={() => router.replace("/sign-in")}
+            onClick={() =>
+              router.replace(
+                mode === "register" ? "/sign-in?mode=register" : "/sign-in",
+              )
+            }
             className="h-11 w-full text-base text-ink-soft"
           >
             {strings.change}

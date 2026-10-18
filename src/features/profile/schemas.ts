@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { AVATAR_SEED } from "@/lib/avatar-seed";
+import { TEXT_SIZES } from "@/lib/display-preferences";
 
 export const gender = z.enum(["female", "male", "other"]);
 export type Gender = z.infer<typeof gender>;
@@ -36,9 +38,15 @@ export type ConsentInput = z.infer<typeof consentInput>;
 const nonEmpty = (patch: Record<string, unknown>) =>
   Object.values(patch).some((value) => value !== undefined);
 
+/** Together they make the account name, which holds 120 characters. */
+export const PERSON_NAME_PART_MAX = 59;
+const namePart = z.string().trim().min(1).max(PERSON_NAME_PART_MAX);
+
 export const ownDetailsPatch = z
   .object({
     name: z.string().trim().min(1).max(120).optional(),
+    firstName: namePart.optional(),
+    lastName: namePart.optional(),
     birthDate: birthDate.optional(),
     gender: gender.optional(),
   })
@@ -55,3 +63,13 @@ export const notificationPreferences = z
   })
   .refine(nonEmpty);
 export type NotificationPreferences = z.infer<typeof notificationPreferences>;
+
+export const displayPreferences = z
+  .object({
+    textSize: z.enum(TEXT_SIZES).optional(),
+    reduceMotion: z.boolean().optional(),
+  })
+  .refine(nonEmpty);
+export type DisplayPreferences = z.infer<typeof displayPreferences>;
+
+export const avatarSeedInput = z.string().regex(AVATAR_SEED).nullable();

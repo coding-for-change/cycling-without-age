@@ -6,6 +6,7 @@ import { haptics } from "@/lib/native/haptics";
 
 import type { ExpressionId } from "./bloub/expressions";
 import { STATE_BY_ID, type StateId } from "./bloub/states";
+import { prefersReducedMotion } from "@/lib/motion";
 
 /**
  * Moods the character cycles through on a tap. Upstream's list, and the reason
@@ -75,7 +76,7 @@ export function CharacterProvider({ children }: { children: React.ReactNode }) {
   const play = (next: StateId, holdMs?: number) => {
     // The whole point of these states is the movement; with motion turned
     // down there is nothing left to show, only a silhouette that jumps.
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (prefersReducedMotion()) return;
     if (stateTimer.current) clearTimeout(stateTimer.current);
     setState(next);
     stateTimer.current = setTimeout(

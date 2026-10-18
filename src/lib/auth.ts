@@ -22,6 +22,7 @@ import { getEmailStrings } from "@/emails/strings";
 import { OtpEmail } from "@/emails/otp";
 import { sendSms } from "@/lib/sms";
 import { phoneTempEmail } from "@/lib/identity";
+import { mayCreateAccount, NO_ACCOUNT } from "@/lib/sign-up-intent";
 import { buildSessionAccess } from "@/use-cases/build-session-access";
 import { ORG_NAME } from "@/lib/brand";
 import { authEventKind } from "@/lib/auth-events";
@@ -114,6 +115,16 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
+        // Signing in creates no account unless the person chose to register
+        // (`lib/sign-up-intent`). The code is spent by now, so the refusal says
+        // nothing about who has an account that the code didn't already prove.
+        before: async (_user, ctx) => {
+          if (!mayCreateAccount(ctx))
+            throw new APIError("FORBIDDEN", {
+              message: NO_ACCOUNT,
+              code: NO_ACCOUNT,
+            });
+        },
         after: async (user) => {
           logDomainEvent({ type: "user.created", actorUserId: user.id });
           web.authEvents.inc({ kind: "user_created", outcome: "success" });

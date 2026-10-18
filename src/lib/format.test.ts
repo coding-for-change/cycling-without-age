@@ -2,6 +2,9 @@ import {
   formatDayOfMonth,
   formatDistance,
   formatDuration,
+  formatDurationLong,
+  formatMonthAbbrev,
+  formatTemperature,
   formatHour,
   formatPeriod,
   formatRelativeTime,
@@ -128,5 +131,33 @@ describe("formatHour", () => {
   it("reads the hour in the given zone, not in UTC", () => {
     expect(formatHour(instant, "en-GB", "UTC")).toBe("08");
     expect(formatHour(instant, "en-GB", "America/Denver")).toBe("02");
+  });
+});
+
+describe("formatDurationLong", () => {
+  it("writes a ride's length out, in either notation", () => {
+    expect(formatDurationLong(2 * 3600, "en-US")).toBe("2 hours");
+    expect(formatDurationLong(2 * 3600, "de-DE")).toBe("2 Stunden");
+    expect(formatDurationLong(90 * 60, "de-DE")).toBe("1 Stunde 30 Minuten");
+    expect(formatDurationLong(25 * 60, "en-US")).toBe("25 minutes");
+  });
+
+  it("rounds a long ride to five minutes", () => {
+    expect(formatDurationLong(122 * 60, "en-US")).toBe("2 hours");
+    expect(formatDurationLong(133 * 60, "en-US")).toBe("2 hours 15 minutes");
+  });
+});
+
+describe("formatMonthAbbrev", () => {
+  it("names the month alone, in either notation", () => {
+    expect(formatMonthAbbrev("2026-10-24", "en-US")).toBe("Oct");
+    expect(formatMonthAbbrev("2026-10-24", "de-DE")).toBe("Okt");
+  });
+});
+
+describe("formatTemperature", () => {
+  it("follows the regional scale", () => {
+    expect(formatTemperature(18, "en-US")).toBe("64°F");
+    expect(formatTemperature(18, "de-DE")).toBe("18 °C");
   });
 });

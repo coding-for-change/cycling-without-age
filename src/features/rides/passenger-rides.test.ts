@@ -1,0 +1,405 @@
+import { prisma } from "@/lib/prisma";
+import { rides } from "@/features/rides";
+
+jest.mock("@/lib/prisma", () => ({
+  prisma: {
+    ride: { findMany: jest.fn(), findFirst: jest.fn(), count: jest.fn() },
+    rideLogEntry: { findMany: jest.fn() },
+    user: { findMany: jest.fn() },
+    passenger: { findMany: jest.fn() },
+  },
+}));
+
+const findMany = prisma.ride.findMany as jest.Mock;
+const findFirst = prisma.ride.findFirst as jest.Mock;
+const now = new Date("2026-10-13T10:00:00Z");
+const MINE = ["p-anna", "p-karl"];
+
+const ride = (id: string, startsAt: string) => ({
+  id,
+  chapterId: "ch-muenchen",
+  startsAt: new Date(startsAt),
+  assignments: [],
+});
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  findMany.mockResolvedValue([]);
+});
+
+describe("listPassengerRidesPage", () => {
+  it("asks nothing when there are no riders to ask for", async () => {
+    await expect(
+      rides.listPassengerRidesPage([], { direction: "upcoming" }, now),
+    ).resolves.toEqual({ rides: [], nextCursor: null });
+    expect(findMany).not.toHaveBeenCalled();
+  });
+
+  it("only reads rides one of these riders is booked on, and only their names", async () => {
+    await rides.listPassengerRidesPage(MINE, { direction: "upcoming" }, now);
+    const query = findMany.mock.calls[0][0];
+    expect(query.where.roster).toEqual({
+      some: { passengerId: { in: MINE } },
+    });
+    expect(query.select.roster.where).toEqual({ passengerId: { in: MINE } });
+    expect(query.where.endsAt).toEqual({ gt: now });
+    expect(query.orderBy).toEqual([{ startsAt: "asc" }, { id: "asc" }]);
+  });
+
+  it("pages forward with a cursor when there is more", async () => {
+    findMany.mockResolvedValue([
+      ride("r-1", "2026-10-14T08:00:00Z"),
+      ride("r-2", "2026-10-15T08:00:00Z"),
+      ride("r-3", "2026-10-16T08:00:00Z"),
+    ]);
+    const page = await rides.listPassengerRidesPage(
+      MINE,
+      { direction: "upcoming", limit: 2 },
+      now,
+    );
+    expect(page.rides.map((r) => r.id)).toEqual(["r-1", "r-2"]);
+    expect(page.nextCursor).toBe(
+      `${new Date("2026-10-15T08:00:00Z").getTime()}.r-2`,
+    );
+    expect(findMany.mock.calls[0][0].take).toBe(3);
+
+    await rides.listPassengerRidesPage(
+      MINE,
+      { direction: "upcoming", cursor: page.nextCursor, limit: 2 },
+      now,
+    );
+    expect(findMany.mock.calls[1][0].where.OR).toEqual([
+      { startsAt: { gt: new Date("2026-10-15T08:00:00Z") } },
+      { startsAt: new Date("2026-10-15T08:00:00Z"), id: { gt: "r-2" } },
+    ]);
+  });
+
+  it("pages the past backwards, latest first", async () => {
+    const cursor = `${new Date("2026-10-01T08:00:00Z").getTime()}.r-9`;
+    await rides.listPassengerRidesPage(
+      MINE,
+      { direction: "past", cursor },
+      now,
+    );
+    const query = findMany.mock.calls[0][0];
+    expect(query.where.endsAt).toEqual({ lte: now });
+    expect(query.orderBy).toEqual([{ startsAt: "desc" }, { id: "desc" }]);
+    expect(query.where.OR).toEqual([
+      { startsAt: { lt: new Date("2026-10-01T08:00:00Z") } },
+      { startsAt: new Date("2026-10-01T08:00:00Z"), id: { lt: "r-9" } },
+    ]);
+    expect(query.where.roster).toEqual({
+      some: { passengerId: { in: MINE } },
+    });
+  });
+
+  it("treats a forged cursor as the first page", async () => {
+    await rides.listPassengerRidesPage(
+      MINE,
+      { direction: "upcoming", cursor: "1; DROP TABLE ride" },
+      now,
+    );
+    expect(findMany.mock.calls[0][0].where.OR).toBeUndefined();
+  });
+});
+
+const pilot = (id: string, chapterIds: string[], role = "pilot") => ({
+  role: "pilot",
+  user: {
+    id,
+    name: id,
+    email: `${id}@cwa.local`,
+    members: chapterIds.map((organizationId) => ({ organizationId, role })),
+  },
+});
+
+describe("pilots who left the chapter", () => {
+  it("are left out of a page of rides", async () => {
+    findMany.mockResolvedValue([
+      {
+        ...ride("r-1", "2026-10-14T08:00:00Z"),
+        chapterId: "ch-muenchen",
+        assignments: [
+          pilot("u-current", ["ch-muenchen"]),
+          pilot("u-gone", ["ch-hamburg"]),
+        ],
+      },
+    ]);
+    const page = await rides.listPassengerRidesPage(
+      MINE,
+      { direction: "upcoming" },
+      now,
+    );
+    expect(page.rides[0].assignments.map((a) => a.user.id)).toEqual([
+      "u-current",
+    ]);
+  });
+
+  it("are left out once they are no longer pilots there", async () => {
+    findMany.mockResolvedValue([
+      {
+        ...ride("r-1", "2026-10-14T08:00:00Z"),
+        assignments: [
+          pilot("u-current", ["ch-muenchen"], "passenger,pilot"),
+          pilot("u-demoted", ["ch-muenchen"], "passenger"),
+        ],
+      },
+    ]);
+    const page = await rides.listPassengerRidesPage(
+      MINE,
+      { direction: "upcoming" },
+      now,
+    );
+    expect(page.rides[0].assignments.map((a) => a.user.id)).toEqual([
+      "u-current",
+    ]);
+  });
+});
+
+describe("getRideWithStoryForPassengers", () => {
+  const findLog = prisma.rideLogEntry.findMany as jest.Mock;
+
+  it("reads the ride only through the riders' own bookings", async () => {
+    findFirst.mockResolvedValue(null);
+    await expect(
+      rides.getRideWithStoryForPassengers("r-1", MINE, "user-1"),
+    ).resolves.toBeNull();
+    const query = findFirst.mock.calls[0][0];
+    expect(query.where).toEqual({
+      id: "r-1",
+      roster: { some: { passengerId: { in: MINE } } },
+    });
+    expect(query.select.roster.where).toEqual({ passengerId: { in: MINE } });
+    expect(query.select.returnLeg.select.roster.where).toEqual({
+      passengerId: { in: MINE },
+    });
+  });
+
+  it("never reads the history of a ride the riders are not on", async () => {
+    findFirst.mockResolvedValue(null);
+    await rides.getRideWithStoryForPassengers("r-1", MINE, "user-1");
+    expect(findLog).not.toHaveBeenCalled();
+  });
+
+  it("never shows a pilot's address", async () => {
+    findFirst.mockResolvedValue(null);
+    await rides.getRideWithStoryForPassengers("r-1", MINE, "user-1");
+    const user = findFirst.mock.calls[0][0].select.assignments.select.user;
+    expect(user.select).toEqual({
+      id: true,
+      name: true,
+      email: true,
+      avatarSeed: true,
+      phoneNumber: true,
+      members: { select: { organizationId: true, role: true } },
+    });
+  });
+
+  it("hands over the ride and its story, without pilots who left", async () => {
+    findFirst.mockResolvedValue({
+      id: "r-1",
+      chapterId: "ch-muenchen",
+      status: "scheduled",
+      startsAt: new Date("2026-10-20T10:00:00Z"),
+      endsAt: new Date("2026-10-20T12:00:00Z"),
+      assignments: [pilot("u-current", ["ch-muenchen"]), pilot("u-gone", [])],
+    });
+    findLog.mockResolvedValue([
+      {
+        id: "l-1",
+        type: "note",
+        payload: { text: "internal" },
+        createdAt: now,
+        actor: null,
+      },
+      {
+        id: "l-2",
+        type: "scheduled",
+        payload: {},
+        createdAt: now,
+        actor: null,
+      },
+    ]);
+    const view = await rides.getRideWithStoryForPassengers(
+      "r-1",
+      MINE,
+      "user-1",
+      now,
+    );
+    expect(view?.ride.assignments.map((a) => a.user.id)).toEqual(["u-current"]);
+    expect(view?.contactOpen).toBe(false);
+    expect(view?.story.map((entry) => entry.id)).toEqual(["l-2"]);
+  });
+
+  it("asks nothing for someone with no riders", async () => {
+    await expect(
+      rides.getRideWithStoryForPassengers("r-1", [], "user-1"),
+    ).resolves.toBeNull();
+    expect(findFirst).not.toHaveBeenCalled();
+  });
+});
+
+describe("passengerYearInReview", () => {
+  it("reads only the riders' own rides that took place this year", async () => {
+    findMany.mockResolvedValue([
+      {
+        startsAt: new Date("2026-03-01T10:00:00Z"),
+        endsAt: new Date("2026-03-01T12:00:00Z"),
+        locationName: "Sonnenhof",
+        assignments: [{ userId: "u-max" }],
+      },
+    ]);
+    const review = await rides.passengerYearInReview(MINE, now);
+    const query = findMany.mock.calls[0][0];
+    expect(query.where).toEqual({
+      roster: { some: { passengerId: { in: MINE } } },
+      status: { not: "cancelled" },
+      startsAt: {
+        gte: new Date("2026-01-01T00:00:00Z"),
+        lt: new Date("2027-01-01T00:00:00Z"),
+      },
+      endsAt: { lte: now },
+    });
+    expect(query.select.assignments.select).toEqual({ userId: true });
+    expect(review).toMatchObject({ year: 2026, rides: 1, pilots: 1 });
+  });
+
+  it("asks nothing for someone with no riders", async () => {
+    await expect(rides.passengerYearInReview([], now)).resolves.toBeNull();
+    expect(findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("pilotContactOpen", () => {
+  const at = (iso: string) => new Date(iso);
+  const ride = {
+    status: "scheduled",
+    startsAt: at("2026-10-14T10:00:00Z"),
+    endsAt: at("2026-10-14T12:00:00Z"),
+  };
+
+  it("opens a day before the ride and closes when it ends", () => {
+    expect(rides.pilotContactOpen(ride, at("2026-10-13T09:59:00Z"))).toBe(
+      false,
+    );
+    expect(rides.pilotContactOpen(ride, at("2026-10-13T10:00:00Z"))).toBe(true);
+    expect(rides.pilotContactOpen(ride, at("2026-10-14T12:00:00Z"))).toBe(true);
+    expect(rides.pilotContactOpen(ride, at("2026-10-14T12:01:00Z"))).toBe(
+      false,
+    );
+  });
+
+  it("stays closed for a cancelled ride", () => {
+    expect(
+      rides.pilotContactOpen(
+        { ...ride, status: "cancelled" },
+        at("2026-10-14T10:30:00Z"),
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("passengerTotals", () => {
+  it("counts every ride the riders took and the time outside", async () => {
+    findMany.mockResolvedValue([
+      {
+        startsAt: new Date("2025-06-01T10:00:00Z"),
+        endsAt: new Date("2025-06-01T12:00:00Z"),
+        locationName: null,
+        assignments: [],
+      },
+      {
+        startsAt: new Date("2026-03-01T10:00:00Z"),
+        endsAt: new Date("2026-03-01T11:30:00Z"),
+        locationName: null,
+        assignments: [],
+      },
+    ]);
+    await expect(rides.passengerTotals(MINE, now)).resolves.toEqual({
+      rides: 2,
+      seconds: 3.5 * 3600,
+    });
+    expect(findMany.mock.calls[0][0].where).toMatchObject({
+      roster: { some: { passengerId: { in: MINE } } },
+      status: { not: "cancelled" },
+      endsAt: { lte: now },
+    });
+  });
+
+  it("asks nothing for someone with no riders", async () => {
+    await expect(rides.passengerTotals([], now)).resolves.toEqual({
+      rides: 0,
+      seconds: 0,
+    });
+    expect(findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("chapterRidesThisMonth", () => {
+  it("counts from the first of the month in the chapter's own time zone", async () => {
+    const count = prisma.ride.count as jest.Mock;
+    count.mockResolvedValue(6);
+    await expect(
+      rides.chapterRidesThisMonth(
+        { id: "ch-muenchen", timeZone: "Europe/Berlin" },
+        now,
+      ),
+    ).resolves.toBe(6);
+    expect(count).toHaveBeenCalledWith({
+      where: {
+        chapterId: "ch-muenchen",
+        status: { not: "cancelled" },
+        startsAt: { gte: new Date("2026-09-30T22:00:00Z") },
+        endsAt: { lte: now },
+      },
+    });
+  });
+});
+
+describe("upcomingChapterEvents", () => {
+  it("reads only events of the given chapters, and marks the riders' own", async () => {
+    findMany.mockResolvedValue([
+      {
+        id: "e-1",
+        title: "Sommerfest",
+        startsAt: new Date("2026-10-20T12:00:00Z"),
+        endsAt: new Date("2026-10-20T14:00:00Z"),
+        locationName: "Westpark",
+        capacity: 6,
+        chapter: { timeZone: "Europe/Berlin" },
+        _count: { roster: 2 },
+        roster: [{ id: "entry-1" }],
+      },
+    ]);
+    const events = await rides.upcomingChapterEvents(
+      ["ch-muenchen"],
+      MINE,
+      now,
+    );
+    const query = findMany.mock.calls[0][0];
+    expect(query.where).toEqual({
+      chapterId: { in: ["ch-muenchen"] },
+      model: "event",
+      status: "scheduled",
+      startsAt: { gt: now },
+    });
+    expect(query.select.roster.where).toEqual({ passengerId: { in: MINE } });
+    expect(Object.keys(query.select)).not.toContain("assignments");
+    expect(events).toEqual([
+      expect.objectContaining({
+        id: "e-1",
+        timeZone: "Europe/Berlin",
+        taken: 2,
+        mine: true,
+      }),
+    ]);
+    expect(events[0]).not.toHaveProperty("roster");
+  });
+
+  it("asks nothing without a chapter", async () => {
+    await expect(rides.upcomingChapterEvents([], MINE, now)).resolves.toEqual(
+      [],
+    );
+    expect(findMany).not.toHaveBeenCalled();
+  });
+});

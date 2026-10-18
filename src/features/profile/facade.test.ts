@@ -212,3 +212,55 @@ describe("getUserIdByPhone", () => {
     ).resolves.toBeNull();
   });
 });
+
+describe("setDisplayPreferences", () => {
+  it("stores the text size and the motion switch", async () => {
+    await profile.setDisplayPreferences(USER, {
+      textSize: "xLarge",
+      reduceMotion: true,
+    });
+    expect(db.user.update).toHaveBeenCalledWith({
+      where: { id: USER },
+      data: { textSize: "xLarge", reduceMotion: true },
+    });
+  });
+
+  it("changes only what it is given", async () => {
+    await profile.setDisplayPreferences(USER, { reduceMotion: false });
+    expect(db.user.update).toHaveBeenCalledWith({
+      where: { id: USER },
+      data: { reduceMotion: false },
+    });
+  });
+
+  it("refuses a size it does not know", async () => {
+    await expect(
+      profile.setDisplayPreferences(USER, { textSize: "huge" as "large" }),
+    ).rejects.toThrow();
+    expect(db.user.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("setAvatarSeed", () => {
+  it("keeps the character someone picked", async () => {
+    await profile.setAvatarSeed(USER, "sunny-7");
+    expect(db.user.update).toHaveBeenCalledWith({
+      where: { id: USER },
+      data: { avatarSeed: "sunny-7" },
+    });
+  });
+
+  it("goes back to the email's character on null", async () => {
+    await profile.setAvatarSeed(USER, null);
+    expect(db.user.update).toHaveBeenCalledWith({
+      where: { id: USER },
+      data: { avatarSeed: null },
+    });
+  });
+
+  it("refuses a seed that is not a plain token", async () => {
+    for (const seed of ["", "a b", "<svg>", "x".repeat(65)])
+      await expect(profile.setAvatarSeed(USER, seed)).rejects.toThrow();
+    expect(db.user.update).not.toHaveBeenCalled();
+  });
+});

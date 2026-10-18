@@ -232,6 +232,29 @@ export function formatMonthShort(value: Date | string, locale: Locale): string {
   }).format(toCalendarDate(value));
 }
 
+/**
+ * `64°F` (en-US) · `18 °C` (de-DE): the scale is regional notation, so an
+ * American reads Fahrenheit for a ride in Munich.
+ */
+export function formatTemperature(celsius: number, locale: Locale): string {
+  const fahrenheit = locale === "en-US";
+  return numberFormatter(locale, {
+    style: "unit",
+    unit: fahrenheit ? "fahrenheit" : "celsius",
+    maximumFractionDigits: 0,
+  }).format(fahrenheit ? (celsius * 9) / 5 + 32 : celsius);
+}
+
+/** `Mar` (en-US) · `März` (de-DE) — the month alone, for a calendar-sheet chip */
+export function formatMonthAbbrev(
+  value: Date | string,
+  locale: Locale,
+): string {
+  return dateTimeFormatter(locale, { ...CALENDAR_UTC, month: "short" }).format(
+    toCalendarDate(value),
+  );
+}
+
 /** `Mar 7, 2026` (en-US) · `7. März 2026` (de-DE) */
 export function formatDateMedium(value: Date | string, locale: Locale): string {
   return dateTimeFormatter(locale, {
@@ -465,6 +488,30 @@ export function formatDuration(seconds: number, locale: Locale): string {
       style: "unit",
       unit,
       unitDisplay: "short",
+      maximumFractionDigits: 0,
+    }).format(value);
+
+  if (minutes < 60) return unit(minutes, "minute");
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest === 0
+    ? unit(hours, "hour")
+    : `${unit(hours, "hour")} ${unit(rest, "minute")}`;
+}
+
+/**
+ * The same length written out, for sentences and for reading aloud: "2 hours",
+ * "1 Stunde 30 Minuten". Rounded to the nearest five minutes past the first
+ * hour — a memory, not a timesheet.
+ */
+export function formatDurationLong(seconds: number, locale: Locale): string {
+  const exact = Math.max(1, Math.round(seconds / 60));
+  const minutes = exact < 60 ? exact : Math.round(exact / 5) * 5;
+  const unit = (value: number, unit: "hour" | "minute") =>
+    numberFormatter(locale, {
+      style: "unit",
+      unit,
+      unitDisplay: "long",
       maximumFractionDigits: 0,
     }).format(value);
 

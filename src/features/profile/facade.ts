@@ -2,7 +2,9 @@ import { DomainError } from "@/lib/domain-error";
 import { transaction } from "@/lib/events";
 import type { OnboardingRole } from "@/lib/onboarding";
 import {
+  avatarSeedInput,
   consentInput,
+  displayPreferences as displayPreferencesSchema,
   homeInput,
   notificationPreferences as notificationPreferencesSchema,
   ownDetailsPatch,
@@ -11,6 +13,7 @@ import {
 } from "./schemas";
 import type {
   ConsentInput,
+  DisplayPreferences,
   HomeInput,
   NotificationPreferences,
   OwnDetailsPatchInput,
@@ -167,3 +170,19 @@ export const getAccessAccounts = async (userIds: string[]) => {
   const unique = [...new Set(userIds)];
   return unique.length === 0 ? [] : findAccessAccounts(unique);
 };
+
+export async function setDisplayPreferences(
+  userId: string,
+  prefs: DisplayPreferences,
+) {
+  const { textSize, reduceMotion } = displayPreferencesSchema.parse(prefs);
+  return updateProfile(userId, {
+    ...(textSize === undefined ? {} : { textSize }),
+    ...(reduceMotion === undefined ? {} : { reduceMotion }),
+  });
+}
+
+/** `null` goes back to the character drawn from the email. */
+export async function setAvatarSeed(userId: string, seed: string | null) {
+  return updateProfile(userId, { avatarSeed: avatarSeedInput.parse(seed) });
+}

@@ -52,6 +52,7 @@ export type MemberMatch = {
   userId: string;
   name: string;
   email: string;
+  avatarSeed: string | null;
   chapterId: string;
 };
 
@@ -66,6 +67,7 @@ export const searchMembersByName = async (
         userId: user.id,
         name: user.name,
         email: user.email,
+        avatarSeed: user.avatarSeed,
         chapterId: user.members[0]?.organizationId ?? chapterIds[0],
       }));
 

@@ -58,8 +58,24 @@ export const MEMBER_NAV: readonly MemberNavRow[] = [
     symbol: "person.crop.circle.fill",
     tab: false,
     parent: "home",
+    only: "pilot",
+  },
+  {
+    key: "profile",
+    path: "/profile",
+    icon: "profile",
+    symbol: "person.crop.circle.fill",
+    tab: true,
+    only: "passenger",
   },
 ];
+
+/**
+ * Where a perspective keeps its account: a page of its own for passengers,
+ * the account sheet everywhere else (`null`).
+ */
+export const accountPage = (perspective: Perspective): string | null =>
+  perspective === "passenger" ? `${PERSPECTIVE_HOME.passenger}/profile` : null;
 
 export type MemberNavItem = {
   key: MemberNavKey;

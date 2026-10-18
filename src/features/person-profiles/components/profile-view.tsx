@@ -26,14 +26,16 @@ export function ProfileHero({
   children?: React.ReactNode;
 }) {
   return (
-    <header className="grid justify-items-center gap-3 text-center">
+    <header className="grid justify-items-center gap-3 text-center group-data-[look=cards]/look:rounded-(--r-tile) group-data-[look=cards]/look:bg-grey-tint group-data-[look=cards]/look:p-5">
       <PersonAvatar
         svg={avatar}
         photoUrl={photo}
         className="size-28 ring-4 ring-mint-tint"
       />
       <div className="grid gap-1">
-        <h1 className="text-2xl tracking-tight md:text-3xl">{name}</h1>
+        <h1 className="text-2xl tracking-tight group-data-[look=cards]/look:display-title md:text-3xl">
+          {name}
+        </h1>
         {age !== null ? (
           <p className="text-sm text-ink-soft">
             {formatMessage(strings.age, { age }, language)}
@@ -57,9 +59,16 @@ export function ProfileSection({
   className?: string;
 }) {
   return (
-    <section className={cn("grid gap-3 border-t border-line pt-5", className)}>
+    <section
+      className={cn(
+        "grid gap-3 border-t border-line pt-5 group-data-[look=cards]/look:rounded-soft group-data-[look=cards]/look:border group-data-[look=cards]/look:bg-paper group-data-[look=cards]/look:p-5 group-data-[look=cards]/look:shadow-soft",
+        className,
+      )}
+    >
       <div className="grid gap-1">
-        <h2 className="text-base font-semibold">{title}</h2>
+        <h2 className="text-base font-semibold group-data-[look=cards]/look:eyebrow">
+          {title}
+        </h2>
         {hint ? <p className="text-sm text-ink-soft">{hint}</p> : null}
       </div>
       {children}

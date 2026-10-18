@@ -8,11 +8,13 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { Hero, type HeroName } from "@/components/art";
 import { cn } from "@/lib/utils";
 
 export function EmptyState({
   icon: Icon,
   illustration,
+  hero,
   title,
   action,
   children,
@@ -20,6 +22,8 @@ export function EmptyState({
 }: {
   icon: LucideIcon;
   illustration?: string;
+  /** A drawn scene from `@/components/art` in place of the icon. */
+  hero?: HeroName;
   title?: string;
   action?: ReactNode;
   children: ReactNode;
@@ -28,7 +32,14 @@ export function EmptyState({
   return (
     <Empty className={cn("rounded-2xl border border-line", className)}>
       <EmptyHeader>
-        {illustration ? (
+        {hero ? (
+          <EmptyMedia>
+            <Hero
+              name={hero}
+              className="w-56 max-w-full"
+            />
+          </EmptyMedia>
+        ) : illustration ? (
           <EmptyMedia>
             <span
               aria-hidden

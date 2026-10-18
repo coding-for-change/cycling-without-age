@@ -37,6 +37,7 @@ export const findApplicationsOfChapters = (
         select: {
           name: true,
           email: true,
+          avatarSeed: true,
           image: true,
           phoneNumber: true,
         },

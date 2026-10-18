@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { MessageSquarePlus, SearchX } from "lucide-react";
+import type { HeroName } from "@/components/art";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { useDrawerParam } from "@/hooks/use-drawer-param";
@@ -11,15 +12,18 @@ import type { ChatListStrings } from "./strings";
 export function ChatEmptyList({
   strings,
   illustrations = false,
+  hero,
 }: {
   strings: ChatListStrings;
   illustrations?: boolean;
+  hero?: HeroName;
 }) {
   const { openHref } = useDrawerParam();
 
   return (
     <EmptyState
       icon={MessageSquarePlus}
+      hero={hero}
       illustration={chatIllustration("no-conversations", illustrations)}
       title={strings.empty.title}
       className="border-none"

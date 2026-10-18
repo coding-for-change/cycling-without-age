@@ -11,6 +11,8 @@ jest.mock("@/lib/auth-guards", () => ({
 }));
 jest.mock("@/lib/avatar", () => ({
   avatarSeed: (email: string) => email,
+  seedOf: (person: { email: string; avatarSeed?: string | null }) =>
+    person.avatarSeed ?? person.email,
   avatarSvg: () => "<svg />",
 }));
 jest.mock("@/lib/i18n", () => ({

@@ -3,14 +3,16 @@ import { profile } from "@/features/profile";
 import { updateOwnDetails } from "@/use-cases/update-own-details";
 
 jest.mock("@/features/passengers", () => ({
-  passengers: { updateOwnRiderDetails: jest.fn() },
+  passengers: { updateOwnRiderDetails: jest.fn(), getOwnPassenger: jest.fn() },
 }));
 jest.mock("@/features/profile", () => ({
-  profile: { updateOwnDetails: jest.fn() },
+  profile: { updateOwnDetails: jest.fn(), getProfile: jest.fn() },
 }));
 
 const updateAccount = profile.updateOwnDetails as jest.Mock;
 const updateRider = passengers.updateOwnRiderDetails as jest.Mock;
+const ownRider = passengers.getOwnPassenger as jest.Mock;
+const account = profile.getProfile as jest.Mock;
 
 const USER = "user-pernille";
 const BIRTH_DATE = new Date("1948-04-02");
@@ -70,5 +72,42 @@ describe("updateOwnDetails", () => {
       updateOwnDetails(USER, { gender: "female" }),
     ).rejects.toThrow();
     expect(updateRider).not.toHaveBeenCalled();
+  });
+
+  it("puts a first name together with the last name the rider row holds", async () => {
+    ownRider.mockResolvedValue({ firstName: "Pernille", lastName: "Holm" });
+    account.mockResolvedValue({ name: "Pernille Holm" });
+
+    await updateOwnDetails(USER, { firstName: "Nille" });
+
+    expect(updateAccount).toHaveBeenCalledWith(USER, { name: "Nille Holm" });
+    expect(updateRider).toHaveBeenCalledWith(USER, {
+      firstName: "Nille",
+      lastName: "Holm",
+    });
+  });
+
+  it("splits the account name when there is no rider row to read", async () => {
+    ownRider.mockResolvedValue(null);
+    account.mockResolvedValue({ name: "Pernille Marie Holm" });
+
+    await updateOwnDetails(USER, { lastName: "Jensen" });
+
+    expect(updateAccount).toHaveBeenCalledWith(USER, {
+      name: "Pernille Marie Jensen",
+    });
+  });
+
+  it("never puts back a name the account sheet has since changed", async () => {
+    ownRider.mockResolvedValue({ firstName: "Anna", lastName: "Holm" });
+    account.mockResolvedValue({ name: "Anna Berg" });
+
+    await updateOwnDetails(USER, { firstName: "Annie" });
+
+    expect(updateAccount).toHaveBeenCalledWith(USER, { name: "Annie Berg" });
+    expect(updateRider).toHaveBeenCalledWith(USER, {
+      firstName: "Annie",
+      lastName: "Berg",
+    });
   });
 });

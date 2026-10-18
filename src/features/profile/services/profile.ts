@@ -7,6 +7,7 @@ export const findProfile = (userId: string) =>
     select: {
       name: true,
       email: true,
+      avatarSeed: true,
       image: true,
       phoneNumber: true,
       locale: true,
@@ -21,6 +22,8 @@ export const findProfile = (userId: string) =>
       notifyPush: true,
       notifyChatPush: true,
       notifyChatEmail: true,
+      textSize: true,
+      reduceMotion: true,
       consentSafetyAt: true,
       consentDataAt: true,
       passkeyPromptedAt: true,
@@ -70,7 +73,7 @@ export const findProfilesByName = (
     where: { id: { not: excludeUserId }, name: { contains: query } },
     orderBy: { name: "asc" },
     take: limit,
-    select: { id: true, name: true, email: true },
+    select: { id: true, name: true, email: true, avatarSeed: true },
   });
 
 export const findProfiles = (userIds: string[]) =>
@@ -80,6 +83,7 @@ export const findProfiles = (userIds: string[]) =>
       id: true,
       name: true,
       email: true,
+      avatarSeed: true,
       image: true,
       locale: true,
       notifyChatPush: true,
@@ -94,6 +98,7 @@ export const findAccessAccounts = (userIds: string[]) =>
       id: true,
       name: true,
       email: true,
+      avatarSeed: true,
       birthDate: true,
       createdByUserId: true,
       claimedAt: true,

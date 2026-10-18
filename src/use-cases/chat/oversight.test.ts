@@ -18,6 +18,8 @@ jest.mock("@/features/profile", () => ({
 }));
 jest.mock("@/lib/avatar", () => ({
   avatarSeed: (email: string) => email,
+  seedOf: (person: { email: string; avatarSeed?: string | null }) =>
+    person.avatarSeed ?? person.email,
   avatarSvg: (seed: string) => `<svg>${seed}</svg>`,
 }));
 

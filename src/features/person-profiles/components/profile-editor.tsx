@@ -81,7 +81,7 @@ export function ProfileEditor({
             </p>
           ) : null}
 
-          <header className="grid justify-items-center gap-3 text-center">
+          <header className="grid justify-items-center gap-3 text-center group-data-[look=cards]/look:rounded-(--r-tile) group-data-[look=cards]/look:bg-grey-tint group-data-[look=cards]/look:p-5">
             <PhotoField
               avatar={avatar}
               photo={photoUrl(profile.photoFileId)}
@@ -154,7 +154,7 @@ export function ProfileEditor({
   );
 }
 
-function AgeToggle({
+export function AgeToggle({
   age,
   hidden,
   save,

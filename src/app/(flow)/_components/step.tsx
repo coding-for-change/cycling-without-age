@@ -30,6 +30,7 @@ export function Step({
   children,
   action,
   progress,
+  lead,
   className,
 }: {
   title: ReactNode;
@@ -37,6 +38,8 @@ export function Step({
   children?: ReactNode;
   action?: ReactNode;
   progress?: StepProgress;
+  /** Above the headline, where a step without progress dots has room. */
+  lead?: ReactNode;
   className?: string;
 }) {
   return (
@@ -61,6 +64,7 @@ export function Step({
         >
           {progress && <StepDots {...progress} />}
         </div>
+        {lead && <div className="mb-6">{lead}</div>}
         <h1 className="text-3xl leading-tight tracking-tight text-balance">
           {title}
         </h1>

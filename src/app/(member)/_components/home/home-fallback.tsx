@@ -18,3 +18,24 @@ export function SectionFallback() {
     </section>
   );
 }
+
+export function TilesFallback() {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <Skeleton className="h-28 rounded-(--r-tile)" />
+      <Skeleton className="h-28 rounded-(--r-tile)" />
+    </div>
+  );
+}
+
+export function EventsFallback() {
+  return (
+    <section className="flex flex-col gap-3">
+      <Skeleton className="h-6 w-56" />
+      <div className="flex gap-3 overflow-hidden">
+        <Skeleton className="h-64 w-64 shrink-0 rounded-soft" />
+        <Skeleton className="h-64 w-64 shrink-0 rounded-soft" />
+      </div>
+    </section>
+  );
+}

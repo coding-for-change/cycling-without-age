@@ -41,6 +41,7 @@ export const findMembersOfChapters = (
         select: {
           name: true,
           email: true,
+          avatarSeed: true,
           image: true,
           phoneNumber: true,
         },
@@ -66,6 +67,7 @@ export const findMembersMatchingName = (
       id: true,
       name: true,
       email: true,
+      avatarSeed: true,
       members: {
         where: { organizationId: { in: chapterIds } },
         orderBy: { createdAt: "asc" },
@@ -85,7 +87,9 @@ export const findAdminMembersOfChapter = (
     select: {
       userId: true,
       role: true,
-      user: { select: { name: true, email: true, image: true } },
+      user: {
+        select: { name: true, email: true, avatarSeed: true, image: true },
+      },
     },
   });
 

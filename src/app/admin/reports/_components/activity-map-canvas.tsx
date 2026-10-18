@@ -14,6 +14,7 @@ import {
 import { radiusStops, totalRides } from "./place-geometry";
 import { rescopeHref } from "./ranking-model";
 import { useReportNav } from "./report-nav";
+import { prefersReducedMotion } from "@/lib/motion";
 
 export type MapChapter = {
   id: string;
@@ -140,9 +141,7 @@ export default function ActivityMapCanvas({
   useEffect(() => {
     if (!container.current || map.current) return;
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
-    reduced.current = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    reduced.current = prefersReducedMotion();
 
     const instance = new mapboxgl.Map({
       container: container.current,

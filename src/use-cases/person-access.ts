@@ -10,7 +10,7 @@ import {
   type Access,
   type Membership,
 } from "@/lib/access";
-import { avatarSeed } from "@/lib/avatar-seed";
+import { seedOf } from "@/lib/avatar-seed";
 import { subjectSlug, type SubjectRef } from "@/features/person-profiles";
 
 export type Viewer = { user: { id: string }; access: Access };
@@ -46,6 +46,7 @@ type CountryLookup = (
 type AccessAccount = {
   name: string;
   email: string;
+  avatarSeed: string | null;
   birthDate: Date | null;
   createdByUserId: string | null;
   claimedAt: Date | null;
@@ -67,7 +68,7 @@ function userTarget(
   return {
     subject: ref,
     name: account.name,
-    avatarSeed: avatarSeed(account.email),
+    avatarSeed: seedOf(account),
     birthDate: account.birthDate,
     managedByUserId: helper,
     // An account set up for someone by a helper stays the helper's to fill in

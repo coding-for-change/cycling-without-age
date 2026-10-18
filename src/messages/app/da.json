@@ -1794,6 +1794,11 @@
     },
     "home": {
       "greeting": "Hej {name}",
+      "timeGreeting": {
+        "morning": "Godmorgen, {name}!",
+        "afternoon": "Goddag, {name}!",
+        "evening": "Godaften, {name}!"
+      },
       "nextRide": {
         "passenger": {
           "caretakerEmpty": "{who, select, one {Der er ikke booket noget til {name} endnu. Når du booker en tur, lander dagen, tidspunktet og piloten, der kommer og henter {name}, her.} withOne {Der er ikke booket noget endnu. Når du booker en tur til dig selv eller {name}, lander dagen, tidspunktet og piloten, der træder i pedalerne, her.} withMany {Der er ikke booket noget endnu. Når du booker en tur til dig selv eller en, du passer på, lander dagen, tidspunktet og piloten, der træder i pedalerne, her.} other {Der er ikke booket noget endnu. Når du booker en tur til en, du passer på, lander dagen, tidspunktet og piloten, der kommer forbi, her.}}",
@@ -1807,7 +1812,47 @@
       "passenger": {
         "caretakerTagline": "{who, select, one {Næste tur for {name} begynder her.} withOne {Ture for dig og {name} begynder her.} withMany {Ture for dig og dem, du passer på, begynder her.} other {Ture for dem, du passer på, begynder her.}}",
         "chooseChapter": "Vælg en afdeling",
-        "tagline": "Din næste tur begynder her."
+        "tagline": "Din næste tur begynder her.",
+        "next": {
+          "eyebrow": "Din næste tur",
+          "pickupAt": "Vi henter dig her: {place}",
+          "pilotPicksYou": "{name} henter dig her: {place}",
+          "lookingPilot": "Vi leder efter en pilot til dig",
+          "later": "Bagefter",
+          "emptyTitle": "Hvor vil du gerne hen?",
+          "open": "Åbn turen"
+        },
+        "totals": {
+          "rides": "{count, plural, one {Tur sammen} other {Ture sammen}}",
+          "hours": "{count, plural, one {Time udenfor} other {Timer udenfor}}",
+          "first": "Din første tur venter",
+          "firstHint": "Når du har været ude, tæller vi med her."
+        },
+        "pulse": "{count, plural, one {# tur denne måned} other {# ture denne måned}}",
+        "events": {
+          "title": "Snart i din afdeling",
+          "seats": "{free} af {total} pladser ledige",
+          "full": "Fuldt booket",
+          "mine": "Du er med"
+        },
+        "weather": {
+          "clear": "Sol",
+          "partlyCloudy": "Let skyet",
+          "cloudy": "Overskyet",
+          "fog": "Tåge",
+          "drizzle": "Støvregn",
+          "rain": "Regn",
+          "snow": "Sne",
+          "thunder": "Torden",
+          "label": "Vejrudsigt"
+        },
+        "report": {
+          "title": "Meld et problem",
+          "body": "Virker noget ikke, eller ser det mærkeligt ud? Skriv til os — et menneske læser hver besked.",
+          "action": "Meld et problem",
+          "subject": "Et problem i appen",
+          "template": "Hvad skete der?\n\n\nHvor i appen var det?\n\n"
+        }
       },
       "pilot": {
         "tagline": "Klar, når du er."
@@ -1904,7 +1949,164 @@
   },
   "passenger": {
     "browsing": "Du kigger på {chapter}",
-    "noChapter": "Du har ikke valgt en lokalafdeling endnu"
+    "noChapter": "Du har ikke valgt en lokalafdeling endnu",
+    "ride": {
+      "about": "Om turen",
+      "back": "Mine ture",
+      "booked": "Booket til",
+      "call": "Ring til {name}",
+      "cancelled": "Turen er aflyst",
+      "cancelledBecause": "Årsag: {reason}",
+      "chapter": "Lokalafdeling",
+      "contactLater": "Du kan se, hvordan du når din pilot, fra en dag før turen.",
+      "destination": "Destination",
+      "email": "Skriv til {name}",
+      "memory": {
+        "outside": "{duration} i det fri",
+        "slogan": "Ret til vind i håret",
+        "title": "Et dejligt minde",
+        "withPilots": "Kørt med {names}"
+      },
+      "noPilot": "Vi leder stadig efter en pilot. Så snart nogen melder sig, kan du se her, hvem der kører dig.",
+      "noPlace": "Stedet er ikke fastlagt endnu.",
+      "openInMaps": "Åbn i Kort",
+      "openLeg": "Åbn",
+      "pickup": "Afhentning",
+      "pilots": "{count, plural, one {Din pilot} other {Dine piloter}}",
+      "running": "Din tur er i gang lige nu.",
+      "speak": {
+        "cancelled": "{title} {date} er aflyst.",
+        "destination": "Destination: {place}.",
+        "listen": "Læs højt",
+        "noPilot": "Vi leder stadig efter en pilot.",
+        "past": "{title} var {date}. Du var ude i {duration}.",
+        "pastPilot": "Du kørte med {names}.",
+        "pickup": "Afhentning: {place}.",
+        "pilot": "{count, plural, one {Din pilot er {names}.} other {Dine piloter er {names}.}}",
+        "stop": "Stop oplæsning",
+        "upcoming": "{title}, {date} kl. {time}."
+      },
+      "story": {
+        "aPilot": "En pilot",
+        "cancelled": "{who, select, you {Du} other {{chapter}}} aflyste turen",
+        "change": "{from} → {to}",
+        "edited": "{who, select, you {Du} other {{chapter}}} ændrede {fields}",
+        "fields": {
+          "destination": "destinationen",
+          "location": "afhentningsstedet",
+          "model": "turtypen",
+          "title": "titlen"
+        },
+        "nothing": "intet",
+        "pilotAssigned": "{name} kører turen",
+        "pilotUnassigned": "{name} kan alligevel ikke køre",
+        "rescheduled": "{who, select, you {Du} other {{chapter}}} flyttede turen",
+        "rescheduledWithLeg": "{who, select, you {Du} other {{chapter}}} flyttede turen sammen med den anden strækning",
+        "riderBooked": "{who, select, you {Du} other {{chapter}}} bookede {name}",
+        "riderRemoved": "{who, select, you {Du} other {{chapter}}} tog {name} af turen",
+        "scheduled": "{who, select, you {Du} other {{chapter}}} satte turen i kalenderen",
+        "scheduledReturn": "{who, select, you {Du} other {{chapter}}} planlagde hjemturen",
+        "someone": "en, der ikke er med længere"
+      },
+      "storyEmpty": "Der er ikke sket noget med turen endnu.",
+      "storyTitle": "Indtil nu",
+      "trishaws": "{count, plural, one {Rickshaw} other {Rickshawer}}",
+      "when": "Hvornår",
+      "where": "Hvor",
+      "timeline": {
+        "booked": "Booket",
+        "pilotFound": "Pilot fundet",
+        "rideDay": "Turdag",
+        "done": "Gennemført"
+      },
+      "callNote": "Ring kun ved ændringer i sidste øjeblik.",
+      "duration": "Varighed",
+      "details": "Detaljer",
+      "places": "Pladser"
+    },
+    "rides": {
+      "failed": "Det kunne ikke hentes.",
+      "forRiders": "For {names}",
+      "loading": "Henter …",
+      "now": "I gang nu",
+      "past": "Tidligere ture",
+      "pilot": "Med {name}",
+      "pilotNeeded": "Vi mangler stadig en pilot",
+      "retry": "Prøv igen",
+      "showEarlier": "Vis tidligere ture",
+      "upcoming": "Kommende",
+      "year": {
+        "favourite": "Yndlingssted: {place}",
+        "outside": "{duration} i det fri",
+        "pilots": "{count, plural, one {# pilot} other {# piloter}}",
+        "rides": "{count, plural, one {# tur} other {# ture}}",
+        "title": "Dit {year} på rickshaw"
+      }
+    },
+    "profile": {
+      "title": "Din profil",
+      "intro": "Gør appen til din, og fortæl din pilot lidt om dig selv.",
+      "account": {
+        "age": "{age, plural, one {# år} other {# år}}",
+        "contactHint": "Du logger ind med dem, så de ændres via login.",
+        "email": "E-mail",
+        "firstName": "Fornavn",
+        "firstNamePlaceholder": "Dit fornavn",
+        "hint": "Hvem du er, og hvordan vi når dig.",
+        "lastName": "Efternavn",
+        "lastNamePlaceholder": "Dit efternavn",
+        "name": "Navn",
+        "namePlaceholder": "Dit navn",
+        "phone": "Telefon",
+        "title": "Dine oplysninger"
+      },
+      "about": {
+        "title": "Om mig",
+        "dictate": {
+          "add": "Tilføj til min tekst",
+          "allow": "Forstået – start",
+          "denied": "Mikrofonen blev ikke tilladt. Du kan give adgang i din browsers indstillinger.",
+          "discard": "Kassér",
+          "failed": "Det virkede ikke. Prøv igen, eller skriv i stedet.",
+          "heard": "Hørt:",
+          "listening": "Jeg lytter …",
+          "privacy": "Din browser sender optagelsen til Google eller Apple for at gøre den til tekst. Vi gemmer først noget, når du tilføjer teksten.",
+          "start": "Fortæl i stedet",
+          "stop": "Færdig"
+        }
+      },
+      "avatar": {
+        "current": "Din figur nu",
+        "failed": "Det virkede ikke. Prøv igen.",
+        "hint": "Sådan ser piloter og din lokalafdeling dig. Vælg den, der ligner dig.",
+        "more": "Vis andre",
+        "pick": "Vælg denne figur",
+        "reset": "Tilbage til den første",
+        "saved": "Din nye figur er på.",
+        "title": "Din figur",
+        "photoFirst": "Dit billede kommer først. Figuren vises, hvor der ikke vises et billede."
+      },
+      "display": {
+        "motion": "Mindre bevægelse",
+        "motionHint": "Sider skifter uden at glide eller tone ind, og figurer står stille.",
+        "sample": "Ret til vind i håret",
+        "sizes": {
+          "large": "Stor",
+          "normal": "Normal",
+          "xLarge": "Ekstra stor"
+        },
+        "textSize": "Tekststørrelse",
+        "textSizeHint": "Større bogstaver på alle sider, du ser som passager."
+      },
+      "more": {
+        "hint": "Sprog, notifikationer, kalender, passkeys, hjælp og log ud.",
+        "title": "Indstillinger & hjælp"
+      },
+      "chips": {
+        "role": "Passager",
+        "rides": "{count, plural, one {# tur} other {# ture}}"
+      }
+    }
   },
   "passkey": {
     "admin": {
@@ -2025,6 +2227,7 @@
       "doneBoth": "Begge ture er aflyst.",
       "keep": "Behold tur",
       "note": "Note",
+      "noteHint": "Passagerer og dem, der booker for dem, kan se denne note.",
       "notePlaceholder": "Hvad skete der – f.eks. kraftig regn i vejrudsigten",
       "reason": "Hvorfor bliver den aflyst?",
       "returnLeg": "Aflys også hjemturen",
@@ -2313,7 +2516,8 @@
       "resent": "Ny kode sendt.",
       "sentToEmail": "Vi har sendt en 6-cifret kode til {identifier}.",
       "sentToPhone": "Vi har sendt en sms med en 6-cifret kode til {identifier}.",
-      "title": "Indtast din kode"
+      "title": "Indtast din kode",
+      "welcomeBack": "Du havde allerede en konto – vi har logget dig ind."
     },
     "country": {
       "noResults": "Intet land passer på det.",
@@ -2332,11 +2536,19 @@
         "rateLimited": "For mange forsøg. Prøv igen om et minut."
       },
       "google": "Fortsæt med Google",
+      "hintRegister": "Vi sender dig en kode – så er din konto oprettet.",
       "label": "E-mail eller telefonnummer",
+      "noAccount": "Der er endnu ingen konto til denne adresse. Opret en her – vi sender dig en ny kode.",
       "passkey": "Brug en adgangsnøgle",
       "placeholder": "dig@eksempel.dk",
       "separator": "eller",
-      "title": "Hvad er din e-mail eller dit telefonnummer?"
+      "title": "Hvad er din e-mail eller dit telefonnummer?",
+      "titleRegister": "Hvilken e-mail eller hvilket telefonnummer vil du oprette dig med?"
+    },
+    "mode": {
+      "label": "Log ind eller opret en konto",
+      "register": "Opret konto",
+      "signIn": "Log ind"
     },
     "role": {
       "passenger": {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AsYouType, type CountryCode } from "libphonenumber-js";
 import { authClient } from "@/lib/auth-client";
@@ -13,13 +14,17 @@ import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
 import { Button } from "@/components/ui/button";
 import { Step } from "../../_components/step";
-import { useFlow } from "../../_components/flow-state";
+import { useFlow, type FlowMode } from "../../_components/flow-state";
+import { setSignUpIntentAction } from "../actions";
 import { GoogleButton } from "./google-button";
 import { PasskeyButton } from "./passkey-button";
 import { clearOfflineCaches } from "@/lib/offline-caches";
 
 type Strings = {
   title: string;
+  titleRegister: string;
+  hintRegister: string;
+  noAccount: string;
   label: string;
   placeholder: string;
   changeCountry: string;
@@ -29,13 +34,21 @@ type Strings = {
   errors: Record<string, string>;
 };
 
+type ModeStrings = { label: string; signIn: string; register: string };
+
 export function IdentifierStep({
+  mode,
+  noAccount,
+  modeStrings,
   strings,
   common,
   language,
   defaultCountry,
   googleEnabled,
 }: {
+  mode: FlowMode;
+  noAccount: boolean;
+  modeStrings: ModeStrings;
   strings: Strings;
   common: { continue: string };
   language: Locale;
@@ -103,6 +116,7 @@ export function IdentifierStep({
 
     const { channel, value: identifier } = result.identity;
     startTransition(async () => {
+      await setSignUpIntentAction(mode === "register");
       const { error: sendError } =
         channel === "email"
           ? await authClient.emailOtp.sendVerificationOtp({
@@ -123,14 +137,33 @@ export function IdentifierStep({
         return;
       }
 
-      update({ channel, identifier, display: value, country });
+      update({ channel, identifier, display: value, country, mode });
       router.push("/sign-in/code", { transitionTypes: ["nav-forward"] });
     });
   };
 
+  const register = mode === "register";
+
   return (
     <Step
-      title={<label htmlFor="identifier">{strings.title}</label>}
+      lead={
+        <ModeSwitch
+          mode={mode}
+          strings={modeStrings}
+        />
+      }
+      title={
+        <label htmlFor="identifier">
+          {register ? strings.titleRegister : strings.title}
+        </label>
+      }
+      description={
+        noAccount ? (
+          <span role="status">{strings.noAccount}</span>
+        ) : register ? (
+          strings.hintRegister
+        ) : undefined
+      }
       action={
         <div className="space-y-4">
           <Button
@@ -139,15 +172,22 @@ export function IdentifierStep({
             variant="brand"
             size="hero"
           >
-            {common.continue}
+            {register ? modeStrings.register : common.continue}
           </Button>
-          <div className="space-y-3 empty:hidden">
-            <p className="text-center text-sm text-ink-faint">
-              {strings.separator}
-            </p>
-            <PasskeyButton label={strings.passkey} />
-            {googleEnabled && <GoogleButton label={strings.google} />}
-          </div>
+          {register && !googleEnabled ? null : (
+            <div className="space-y-3 empty:hidden">
+              <p className="text-center text-sm text-ink-faint">
+                {strings.separator}
+              </p>
+              {register ? null : <PasskeyButton label={strings.passkey} />}
+              {googleEnabled && (
+                <GoogleButton
+                  label={strings.google}
+                  register={register}
+                />
+              )}
+            </div>
+          )}
         </div>
       }
     >
@@ -204,5 +244,51 @@ export function IdentifierStep({
         </p>
       )}
     </Step>
+  );
+}
+
+/**
+ * Sign in or create an account — one flow underneath, so the switch only
+ * changes what the screen says and whether the code may open a new account.
+ * Kept in the URL, never the identifier.
+ */
+function ModeSwitch({
+  mode,
+  strings,
+}: {
+  mode: FlowMode;
+  strings: ModeStrings;
+}) {
+  const options: { value: FlowMode; href: string; label: string }[] = [
+    { value: "signIn", href: "/sign-in", label: strings.signIn },
+    {
+      value: "register",
+      href: "/sign-in?mode=register",
+      label: strings.register,
+    },
+  ];
+  return (
+    <nav
+      aria-label={strings.label}
+      className="flex rounded-full bg-canvas-deeper p-1"
+    >
+      {options.map((option) => (
+        <Link
+          key={option.value}
+          href={option.href}
+          replace
+          scroll={false}
+          aria-current={option.value === mode ? "page" : undefined}
+          className={cn(
+            "flex min-h-11 flex-1 items-center justify-center rounded-full px-4 text-sm font-medium transition-[color,background-color,box-shadow] outline-none focus-visible:ring-2 focus-visible:ring-ink motion-reduce:transition-none",
+            option.value === mode
+              ? "bg-canvas text-ink shadow-soft"
+              : "text-ink-soft hover:text-ink",
+          )}
+        >
+          {option.label}
+        </Link>
+      ))}
+    </nav>
   );
 }

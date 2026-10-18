@@ -1,7 +1,7 @@
 "use client";
 
 import NumberFlow from "@number-flow/react";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { formatMessage } from "@/lib/i18n/format";
 import { formatNumber, type Locale } from "@/lib/format";
 import type { Locale as Language } from "@/lib/i18n/locales";
@@ -13,6 +13,7 @@ import {
 import { ReportLink, useReportMetric } from "../reports/_components/report-nav";
 import { isTrendMetric, type KpiTile } from "./kpi-data";
 import { Sparkline } from "./sparkline";
+import { useReducedMotion } from "@/lib/motion";
 
 export type KpiTileStrings = {
   label: string;

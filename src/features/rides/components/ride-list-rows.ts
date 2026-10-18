@@ -1,5 +1,5 @@
 import "server-only";
-import { avatarSeed, avatarSvg } from "@/lib/avatar";
+import { avatarSvg, seedOf } from "@/lib/avatar";
 import type { RideCalendarRow } from "../facade";
 import { ridePilots, rideTrishaws } from "./ride-presentation";
 
@@ -42,7 +42,7 @@ export function toListRide(ride: RideCalendarRow): ListRide {
     pilots: ridePilots(ride).map(({ user }) => ({
       id: user.id,
       name: user.name,
-      avatar: avatarSvg(avatarSeed(user.email)),
+      avatar: avatarSvg(seedOf(user)),
     })),
     trishaws: rideTrishaws(ride).map((trishaw) => trishaw.name),
     grounded:

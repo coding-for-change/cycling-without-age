@@ -53,6 +53,7 @@ export function ConversationRow({
   strings,
   language,
   notation,
+  card = false,
 }: {
   item: InboxItem;
   viewerId: string;
@@ -61,6 +62,8 @@ export function ConversationRow({
   strings: ChatStrings;
   language: string;
   notation: Locale;
+  /** Mockup 2's soft card, for the passenger's inbox. */
+  card?: boolean;
 }) {
   const unread = Math.max(0, item.lastSeq - item.me.lastReadSeq);
   const muted = item.me.mutedUntil !== null;
@@ -72,8 +75,11 @@ export function ConversationRow({
       transitionTypes={["push"]}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-start gap-3 rounded-lg px-3 py-3 transition-colors",
-        active ? "bg-canvas-deep" : "hover:bg-canvas-deep/60",
+        "flex items-start gap-3 transition-colors",
+        card
+          ? "rounded-soft border border-line bg-paper p-4 shadow-soft outline-none hover:border-ink/30 focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:transition-none"
+          : "rounded-lg px-3 py-3",
+        active ? "bg-canvas-deep" : !card && "hover:bg-canvas-deep/60",
       )}
     >
       <ChatAvatar

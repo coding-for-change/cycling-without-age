@@ -1,6 +1,7 @@
 import { DomainError, mapping } from "@/lib/domain-error";
 import { transaction, type DomainEvent } from "@/lib/events";
-import type { FileReadRule } from "@/lib/access";
+import { parseRoles, type FileReadRule } from "@/lib/access";
+import { instantAt, wallClock } from "@/lib/calendar";
 import type { $Enums, Prisma } from "@/generated/prisma";
 import {
   PLEASURE_LIMITS,
@@ -9,6 +10,7 @@ import {
   modelLimits,
   reorderRosterInput,
   rescheduleInput,
+  passengerRidePageInput,
   rideListPageInput,
   ridePhotosInput,
   rideDetailsPatch,
@@ -19,6 +21,7 @@ import {
   slotWindow,
   trishawIdList,
   type CancelRideInput,
+  type PassengerRidePageInput,
   type ReorderRosterInput,
   type RescheduleInput,
   type RideData,
@@ -47,11 +50,17 @@ import {
   countPastRidesOfPilot,
   findLatestRideForPilot,
   findPastRidesForList,
+  findPastRidesForPassengers,
+  countRiddenRidesOfChapter,
+  findRiddenRidesForPassengers,
+  findUpcomingChapterEvents,
   findReservations,
   findUpcomingRidesForList,
+  findUpcomingRidesForPassengers,
   findFinishableRideForPilot,
   findRideById,
   findRideDetail,
+  findRideForPassengers,
   findRideIdsWithTrishawFrom,
   findRideLegIds,
   findRideScope,
@@ -72,6 +81,8 @@ import {
   updateRide,
   updateRosterPositions,
   type FeedAudience,
+  type PassengerRideDetailRow,
+  type PassengerRideRow,
   type PilotRideRow,
   type RideCalendarRow,
   type RideDetailRow,
@@ -97,9 +108,13 @@ import {
   type ReportTally,
 } from "./report";
 import type { ReportScope } from "./report-zones";
+import { storyForPassengers } from "./passenger-story";
+import { yearInReview } from "./year-in-review";
 
 export type {
   FeedAudience,
+  PassengerRideDetailRow,
+  PassengerRideRow,
   PilotRideRow,
   RideCalendarRow,
   RideDetailRow,
@@ -1053,6 +1068,184 @@ export async function listRidesForList(
     rides: page,
     nextCursor:
       upcoming.length > limit ? encodeCursor(page[page.length - 1]) : null,
+  };
+}
+
+/**
+ * Only people who are still pilots of the ride's chapter are shown to its
+ * riders. An assignment outlives its pilot's membership and their pilot role,
+ * and a rider is given their pilot's phone and email.
+ */
+const withCurrentPilots = <
+  R extends {
+    chapterId: string;
+    assignments: {
+      user: { members: { organizationId: string; role: string }[] };
+    }[];
+  },
+>(
+  ride: R,
+): R => ({
+  ...ride,
+  assignments: ride.assignments.filter(({ user }) =>
+    user.members.some(
+      ({ organizationId, role }) =>
+        organizationId === ride.chapterId && parseRoles(role).includes("pilot"),
+    ),
+  ),
+});
+
+export type PassengerRidePage = {
+  rides: PassengerRideRow[];
+  nextCursor: string | null;
+};
+
+/**
+ * One page of the rides booked for these riders, coming up soonest-first or
+ * gone by latest-first. A ride counts as coming up until it has ended, so the
+ * one running right now is still at the top.
+ */
+export async function listPassengerRidesPage(
+  passengerIds: string[],
+  input: PassengerRidePageInput,
+  now = new Date(),
+): Promise<PassengerRidePage> {
+  const { direction, cursor, limit } = passengerRidePageInput.parse(input);
+  if (!passengerIds.length) return { rides: [], nextCursor: null };
+  const find =
+    direction === "upcoming"
+      ? findUpcomingRidesForPassengers
+      : findPastRidesForPassengers;
+  const found = await find(passengerIds, now, decodeCursor(cursor), limit + 1);
+  const page = found.slice(0, limit);
+  return {
+    rides: page.map(withCurrentPilots),
+    nextCursor:
+      found.length > limit ? encodeCursor(page[page.length - 1]) : null,
+  };
+}
+
+/** How many rides a chapter has taken out since the start of this month, its own. */
+export async function chapterRidesThisMonth(
+  chapter: { id: string; timeZone: string },
+  now = new Date(),
+) {
+  const { year, month } = wallClock(now, chapter.timeZone);
+  const from = instantAt(
+    { year, month, day: 1, hour: 0, minute: 0 },
+    chapter.timeZone,
+  );
+  return countRiddenRidesOfChapter(chapter.id, from, now);
+}
+
+const EVENTS_SHOWN = 6;
+
+/** The events coming up in these chapters, and whether these riders are on each. */
+export async function upcomingChapterEvents(
+  chapterIds: string[],
+  passengerIds: string[],
+  now = new Date(),
+) {
+  if (!chapterIds.length) return [];
+  const events = await findUpcomingChapterEvents(
+    chapterIds,
+    passengerIds,
+    now,
+    EVENTS_SHOWN,
+  );
+  return events.map(({ roster, _count, chapter, ...event }) => ({
+    ...event,
+    timeZone: chapter.timeZone,
+    taken: _count.roster,
+    mine: roster.length > 0,
+  }));
+}
+
+/** Every ride these riders have taken, and the time it kept them outside. */
+export async function passengerTotals(
+  passengerIds: string[],
+  now = new Date(),
+) {
+  if (!passengerIds.length) return { rides: 0, seconds: 0 };
+  const ridden = await findRiddenRidesForPassengers(
+    passengerIds,
+    new Date(0),
+    now,
+    now,
+  );
+  return {
+    rides: ridden.length,
+    seconds: ridden.reduce(
+      (sum, ride) =>
+        sum +
+        Math.max(0, ride.endsAt.getTime() - ride.startsAt.getTime()) / 1000,
+      0,
+    ),
+  };
+}
+
+/** These riders' calendar year on the trishaw so far, or `null` before their first ride. */
+export async function passengerYearInReview(
+  passengerIds: string[],
+  now = new Date(),
+) {
+  if (!passengerIds.length) return null;
+  const year = now.getUTCFullYear();
+  const rides = await findRiddenRidesForPassengers(
+    passengerIds,
+    new Date(Date.UTC(year, 0, 1)),
+    new Date(Date.UTC(year + 1, 0, 1)),
+    now,
+  );
+  return yearInReview(
+    rides.map((ride) => ({
+      startsAt: ride.startsAt,
+      endsAt: ride.endsAt,
+      locationName: ride.locationName,
+      pilotIds: ride.assignments.map(({ userId }) => userId),
+    })),
+    year,
+  );
+}
+
+const PILOT_CONTACT_LEAD_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * A pilot's phone and email reach a rider from the day before the ride until
+ * it ends — enough to sort out the pick-up, not a volunteer's number for good.
+ */
+export const pilotContactOpen = (
+  ride: { status: string; startsAt: Date; endsAt: Date },
+  now: Date,
+) =>
+  ride.status !== "cancelled" &&
+  now.getTime() >= ride.startsAt.getTime() - PILOT_CONTACT_LEAD_MS &&
+  now.getTime() <= ride.endsAt.getTime();
+
+/**
+ * One ride and its history as these riders may read them, or `null` unless one
+ * of them is on the ride — a guessed id reads as missing, and the history is
+ * never read for a ride they are not on.
+ */
+export async function getRideWithStoryForPassengers(
+  rideId: string,
+  passengerIds: string[],
+  viewerId: string,
+  now = new Date(),
+) {
+  if (!passengerIds.length) return null;
+  const found = await findRideForPassengers(rideId, passengerIds);
+  if (!found) return null;
+  const ride = withCurrentPilots(found);
+  return {
+    ride,
+    contactOpen: pilotContactOpen(ride, now),
+    story: storyForPassengers(
+      await listRideLog(rideId),
+      passengerIds,
+      viewerId,
+      new Set(ride.assignments.map(({ user }) => user.id)),
+    ),
   };
 }
 

@@ -9,7 +9,9 @@ import { getPassengerAudience } from "@/use-cases/passenger-audience";
 import { audienceCopy } from "./audience-copy";
 import type { MemberPerspective } from "../nav";
 import { MEMBER_LIFE } from "./instant";
+import type { HeroName } from "@/components/art";
 import { EmptyState } from "@/components/empty-state";
+import { cn } from "@/lib/utils";
 
 const MEMBER_ENTER = {
   push: "push-in",
@@ -25,14 +27,25 @@ const MEMBER_EXIT = {
   default: "tab-out",
 } as const;
 
-export function MemberPageShell({ children }: { children: ReactNode }) {
+export function MemberPageShell({
+  wide = false,
+  children,
+}: {
+  wide?: boolean;
+  children: ReactNode;
+}) {
   return (
     <ViewTransition
       enter={MEMBER_ENTER}
       exit={MEMBER_EXIT}
       default="none"
     >
-      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 pt-2 pb-8 lg:px-6">
+      <div
+        className={cn(
+          "mx-auto flex w-full flex-1 flex-col gap-6 px-4 pt-2 pb-8 lg:px-6",
+          wide ? "max-w-5xl" : "max-w-2xl",
+        )}
+      >
         {children}
       </div>
     </ViewTransition>
@@ -40,6 +53,11 @@ export function MemberPageShell({ children }: { children: ReactNode }) {
 }
 
 export type MemberPageKey = "rides" | "calendar";
+
+/** A passenger's empty pages carry one of mockup 2's drawings. */
+const PAGE_HERO: Partial<Record<MemberPageKey, HeroName>> = {
+  calendar: "calendar",
+};
 
 export async function MemberPageBody({
   perspective,
@@ -62,9 +80,17 @@ export async function MemberPageBody({
 
   return (
     <>
-      <h1 className="text-2xl tracking-tight md:text-3xl">{strings.title}</h1>
+      <h1
+        className={cn(
+          "text-2xl tracking-tight md:text-3xl",
+          perspective === "passenger" && "max-md:sr-only",
+        )}
+      >
+        {strings.title}
+      </h1>
       <EmptyState
         icon={Icon}
+        hero={perspective === "passenger" ? PAGE_HERO[page] : undefined}
         className="flex-1 justify-start rounded-none border-none pt-16"
       >
         {audienceCopy(

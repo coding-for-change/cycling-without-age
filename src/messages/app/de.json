@@ -1794,6 +1794,11 @@
     },
     "home": {
       "greeting": "Hallo {name}",
+      "timeGreeting": {
+        "morning": "Guten Morgen, {name}!",
+        "afternoon": "Guten Tag, {name}!",
+        "evening": "Guten Abend, {name}!"
+      },
       "nextRide": {
         "passenger": {
           "caretakerEmpty": "{who, select, one {Für {name} ist noch nichts gebucht. Wenn Sie eine Ausfahrt buchen, stehen hier der Tag, die Uhrzeit und der Pilot, der {name} abholt.} withOne {Noch nichts gebucht. Wenn Sie eine Ausfahrt für sich oder {name} buchen, stehen hier der Tag, die Uhrzeit und der Pilot, der in die Pedale tritt.} withMany {Noch nichts gebucht. Wenn Sie eine Ausfahrt für sich oder einen Menschen buchen, um den Sie sich kümmern, stehen hier der Tag, die Uhrzeit und der Pilot, der in die Pedale tritt.} other {Noch nichts gebucht. Wenn Sie eine Ausfahrt für einen Menschen buchen, um den Sie sich kümmern, stehen hier der Tag, die Uhrzeit und der Pilot, der zur Abholung kommt.}}",
@@ -1807,7 +1812,47 @@
       "passenger": {
         "caretakerTagline": "{who, select, one {Die nächste Ausfahrt für {name} beginnt hier.} withOne {Ausfahrten für Sie und {name} beginnen hier.} withMany {Ausfahrten für Sie und die Menschen, um die Sie sich kümmern, beginnen hier.} other {Ausfahrten für die Menschen, um die Sie sich kümmern, beginnen hier.}}",
         "chooseChapter": "Ortsgruppe wählen",
-        "tagline": "Ihre nächste Ausfahrt beginnt hier."
+        "tagline": "Ihre nächste Ausfahrt beginnt hier.",
+        "next": {
+          "eyebrow": "Ihre nächste Ausfahrt",
+          "pickupAt": "Wir holen Sie hier ab: {place}",
+          "pilotPicksYou": "{name} holt Sie hier ab: {place}",
+          "lookingPilot": "Wir suchen einen Piloten für Sie",
+          "later": "Danach",
+          "emptyTitle": "Wohin möchten Sie?",
+          "open": "Ausfahrt öffnen"
+        },
+        "totals": {
+          "rides": "{count, plural, one {Gemeinsame Fahrt} other {Gemeinsame Fahrten}}",
+          "hours": "{count, plural, one {Stunde draußen} other {Stunden draußen}}",
+          "first": "Ihre erste Ausfahrt wartet",
+          "firstHint": "Sobald Sie unterwegs waren, zählen wir hier mit."
+        },
+        "pulse": "{count, plural, one {# Ausfahrt diesen Monat} other {# Ausfahrten diesen Monat}}",
+        "events": {
+          "title": "Demnächst in Ihrer Ortsgruppe",
+          "seats": "{free} von {total} Plätzen frei",
+          "full": "Ausgebucht",
+          "mine": "Sie sind dabei"
+        },
+        "weather": {
+          "clear": "Sonnig",
+          "partlyCloudy": "Heiter",
+          "cloudy": "Bewölkt",
+          "fog": "Nebel",
+          "drizzle": "Nieselregen",
+          "rain": "Regen",
+          "snow": "Schnee",
+          "thunder": "Gewitter",
+          "label": "Wettervorhersage"
+        },
+        "report": {
+          "title": "Melden Sie ein Problem",
+          "body": "Etwas funktioniert nicht oder sieht seltsam aus? Schreiben Sie uns — jede Nachricht liest ein Mensch.",
+          "action": "Problem melden",
+          "subject": "Problem in der App",
+          "template": "Was ist passiert?\n\n\nWo in der App war das?\n\n"
+        }
       },
       "pilot": {
         "tagline": "Bereit, wenn du es bist."
@@ -1904,7 +1949,164 @@
   },
   "passenger": {
     "browsing": "Sie sehen {chapter}",
-    "noChapter": "Sie haben noch keine Ortsgruppe gewählt"
+    "noChapter": "Sie haben noch keine Ortsgruppe gewählt",
+    "ride": {
+      "about": "Über diese Ausfahrt",
+      "back": "Meine Ausfahrten",
+      "booked": "Gebucht für",
+      "call": "{name} anrufen",
+      "cancelled": "Diese Ausfahrt fällt aus",
+      "cancelledBecause": "Grund: {reason}",
+      "chapter": "Ortsgruppe",
+      "contactLater": "Wie Sie Ihren Piloten erreichen, sehen Sie ab einem Tag vor der Ausfahrt.",
+      "destination": "Ziel",
+      "email": "E-Mail an {name}",
+      "memory": {
+        "outside": "{duration} an der frischen Luft",
+        "slogan": "Recht auf Wind im Haar",
+        "title": "Eine schöne Erinnerung",
+        "withPilots": "Gefahren mit {names}"
+      },
+      "noPilot": "Wir suchen noch einen Piloten. Sobald sich jemand einträgt, sehen Sie hier, wer Sie fährt.",
+      "noPlace": "Der Ort steht noch nicht fest.",
+      "openInMaps": "In Karten öffnen",
+      "openLeg": "Öffnen",
+      "pickup": "Abholung",
+      "pilots": "{count, plural, one {Ihr Pilot} other {Ihre Piloten}}",
+      "running": "Ihre Ausfahrt läuft gerade.",
+      "speak": {
+        "cancelled": "{title} am {date} fällt aus.",
+        "destination": "Ziel: {place}.",
+        "listen": "Vorlesen",
+        "noPilot": "Ein Pilot wird noch gesucht.",
+        "past": "{title} war am {date}. Sie waren {duration} unterwegs.",
+        "pastPilot": "Gefahren sind Sie mit {names}.",
+        "pickup": "Abholung: {place}.",
+        "pilot": "{count, plural, one {Ihr Pilot ist {names}.} other {Ihre Piloten sind {names}.}}",
+        "stop": "Vorlesen anhalten",
+        "upcoming": "{title}, am {date} um {time}."
+      },
+      "story": {
+        "aPilot": "Ein Pilot",
+        "cancelled": "{who, select, you {Sie haben} other {{chapter} hat}} die Ausfahrt abgesagt",
+        "change": "{from} → {to}",
+        "edited": "{who, select, you {Sie haben} other {{chapter} hat}} {fields} geändert",
+        "fields": {
+          "destination": "das Ziel",
+          "location": "den Abholort",
+          "model": "die Art der Ausfahrt",
+          "title": "den Titel"
+        },
+        "nothing": "nichts",
+        "pilotAssigned": "{name} fährt diese Ausfahrt",
+        "pilotUnassigned": "{name} kann nun doch nicht fahren",
+        "rescheduled": "{who, select, you {Sie haben} other {{chapter} hat}} die Ausfahrt verschoben",
+        "rescheduledWithLeg": "{who, select, you {Sie haben} other {{chapter} hat}} die Ausfahrt samt dem anderen Weg verschoben",
+        "riderBooked": "{who, select, you {Sie haben} other {{chapter} hat}} {name} angemeldet",
+        "riderRemoved": "{who, select, you {Sie haben} other {{chapter} hat}} {name} abgemeldet",
+        "scheduled": "{who, select, you {Sie haben} other {{chapter} hat}} die Ausfahrt eingeplant",
+        "scheduledReturn": "{who, select, you {Sie haben} other {{chapter} hat}} den Rückweg eingeplant",
+        "someone": "jemand, der nicht mehr dabei ist"
+      },
+      "storyEmpty": "Bei dieser Ausfahrt ist noch nichts passiert.",
+      "storyTitle": "Bisher",
+      "trishaws": "{count, plural, one {Rikscha} other {Rikschas}}",
+      "when": "Wann",
+      "where": "Wo",
+      "timeline": {
+        "booked": "Gebucht",
+        "pilotFound": "Pilot gefunden",
+        "rideDay": "Fahrttag",
+        "done": "Abgeschlossen"
+      },
+      "callNote": "Bitte rufen Sie nur bei kurzfristigen Änderungen an.",
+      "duration": "Dauer",
+      "details": "Details",
+      "places": "Plätze"
+    },
+    "rides": {
+      "failed": "Das hat nicht geklappt.",
+      "forRiders": "Für {names}",
+      "loading": "Wird geladen …",
+      "now": "Läuft gerade",
+      "past": "Frühere Ausfahrten",
+      "pilot": "Mit {name}",
+      "pilotNeeded": "Pilot wird noch gesucht",
+      "retry": "Erneut versuchen",
+      "showEarlier": "Frühere Ausfahrten anzeigen",
+      "upcoming": "Demnächst",
+      "year": {
+        "favourite": "Lieblingsort: {place}",
+        "outside": "{duration} an der frischen Luft",
+        "pilots": "{count, plural, one {# Pilot} other {# Piloten}}",
+        "rides": "{count, plural, one {# Ausfahrt} other {# Ausfahrten}}",
+        "title": "Ihr Jahr {year} auf der Rikscha"
+      }
+    },
+    "profile": {
+      "title": "Ihr Profil",
+      "intro": "Machen Sie die App zu Ihrer – und erzählen Sie Ihrem Piloten ein wenig von sich.",
+      "account": {
+        "age": "{age, plural, one {# Jahr} other {# Jahre}}",
+        "contactHint": "Damit melden Sie sich an – geändert werden sie über die Anmeldung.",
+        "email": "E-Mail",
+        "firstName": "Vorname",
+        "firstNamePlaceholder": "Ihr Vorname",
+        "hint": "Wer Sie sind und wie wir Sie erreichen.",
+        "lastName": "Nachname",
+        "lastNamePlaceholder": "Ihr Nachname",
+        "name": "Name",
+        "namePlaceholder": "Ihr Name",
+        "phone": "Telefon",
+        "title": "Ihre Angaben"
+      },
+      "about": {
+        "title": "Über mich",
+        "dictate": {
+          "add": "In meinen Text übernehmen",
+          "allow": "Verstanden – los geht’s",
+          "denied": "Das Mikrofon wurde nicht erlaubt. Sie können es in den Einstellungen Ihres Browsers freigeben.",
+          "discard": "Verwerfen",
+          "failed": "Das hat nicht geklappt. Versuchen Sie es noch einmal oder tippen Sie.",
+          "heard": "Verstanden:",
+          "listening": "Ich höre zu …",
+          "privacy": "Ihr Browser schickt die Aufnahme an Google oder Apple, um sie in Text umzuwandeln. Bei uns wird erst etwas gespeichert, wenn Sie den Text übernehmen.",
+          "start": "Erzählen statt tippen",
+          "stop": "Fertig"
+        }
+      },
+      "avatar": {
+        "current": "Ihre Figur jetzt",
+        "failed": "Das hat nicht geklappt. Bitte noch einmal.",
+        "hint": "So sehen Pilot:innen und Ihre Ortsgruppe Sie. Wählen Sie die Figur, die zu Ihnen passt.",
+        "more": "Andere zeigen",
+        "pick": "Diese Figur wählen",
+        "reset": "Zurück zur ersten",
+        "saved": "Ihre neue Figur ist da.",
+        "title": "Ihre Figur",
+        "photoFirst": "Ihr Foto steht vorn. Die Figur erscheint, wo kein Foto gezeigt wird."
+      },
+      "display": {
+        "motion": "Weniger Bewegung",
+        "motionHint": "Seiten wechseln ohne Gleiten und Überblenden, Figuren bleiben ruhig.",
+        "sample": "Recht auf Wind im Haar",
+        "sizes": {
+          "large": "Groß",
+          "normal": "Normal",
+          "xLarge": "Sehr groß"
+        },
+        "textSize": "Schriftgröße",
+        "textSizeHint": "Größere Buchstaben auf allen Seiten, die Sie als Fahrgast sehen."
+      },
+      "more": {
+        "hint": "Sprache, Benachrichtigungen, Kalender, Passkeys, Hilfe und Abmelden.",
+        "title": "Einstellungen & Hilfe"
+      },
+      "chips": {
+        "role": "Fahrgast",
+        "rides": "{count, plural, one {# Fahrt} other {# Fahrten}}"
+      }
+    }
   },
   "passkey": {
     "admin": {
@@ -2025,6 +2227,7 @@
       "doneBoth": "Hin- und Rückweg abgesagt.",
       "keep": "Fahrt behalten",
       "note": "Notiz",
+      "noteHint": "Fahrgäste und alle, die für sie buchen, sehen diese Notiz.",
       "notePlaceholder": "Was ist passiert – z. B. Starkregen angesagt",
       "reason": "Warum fällt sie aus?",
       "returnLeg": "Auch den Rückweg absagen",
@@ -2313,7 +2516,8 @@
       "resent": "Neuer Code gesendet.",
       "sentToEmail": "Wir haben einen 6-stelligen Code an {identifier} geschickt.",
       "sentToPhone": "Wir haben eine SMS mit einem 6-stelligen Code an {identifier} geschickt.",
-      "title": "Geben Sie Ihren Code ein"
+      "title": "Geben Sie Ihren Code ein",
+      "welcomeBack": "Sie hatten schon ein Konto – wir haben Sie angemeldet."
     },
     "country": {
       "noResults": "Kein Land passt dazu.",
@@ -2332,11 +2536,19 @@
         "rateLimited": "Zu viele Versuche. Versuchen Sie es in einer Minute erneut."
       },
       "google": "Weiter mit Google",
+      "hintRegister": "Wir schicken Ihnen einen Code – damit ist Ihr Konto angelegt.",
       "label": "E-Mail-Adresse oder Telefonnummer",
+      "noAccount": "Zu dieser Adresse gibt es noch kein Konto. Erstellen Sie hier eins – wir schicken Ihnen dafür einen neuen Code.",
       "passkey": "Passkey verwenden",
       "placeholder": "sie@beispiel.de",
       "separator": "oder",
-      "title": "Wie lautet Ihre E-Mail-Adresse oder Telefonnummer?"
+      "title": "Wie lautet Ihre E-Mail-Adresse oder Telefonnummer?",
+      "titleRegister": "Mit welcher E-Mail-Adresse oder Telefonnummer möchten Sie sich registrieren?"
+    },
+    "mode": {
+      "label": "Anmelden oder Konto erstellen",
+      "register": "Konto erstellen",
+      "signIn": "Anmelden"
     },
     "role": {
       "passenger": {

@@ -1,7 +1,9 @@
 "use client";
 
 import { useSyncExternalStore, type ReactNode } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,11 +15,15 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { LanguagePicker } from "@/components/language-picker";
 import { ThemePicker, type ThemeStrings } from "@/components/theme-picker";
 import type { AccountData } from "@/components/account/types";
+import { formatLongDateWithWeekday, toIsoDateLocal } from "@/lib/format";
 import type { Locale } from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
 import {
+  accountPage,
   activeItem,
   isConversationPath,
+  isDrillDown,
   type MemberPerspective,
   type ResolvedMemberNavItem,
 } from "../nav";
@@ -36,6 +42,41 @@ const useScrolled = () =>
     () => false,
   );
 
+const subscribeMinute = (onChange: () => void) => {
+  const timer = setInterval(onChange, 60_000);
+  return () => clearInterval(timer);
+};
+
+/** The device's own clock, read after hydration — the server has no idea. */
+const useLocalNow = () => {
+  const hour = useSyncExternalStore(
+    subscribeMinute,
+    () => new Date().getHours(),
+    () => null,
+  );
+  const day = useSyncExternalStore(
+    subscribeMinute,
+    () => toIsoDateLocal(new Date()),
+    () => null,
+  );
+  return { hour, day };
+};
+
+type Greetings = { morning: string; afternoon: string; evening: string };
+
+const greetingFor = (hour: number, greetings: Greetings) =>
+  hour < 12
+    ? greetings.morning
+    : hour < 18
+      ? greetings.afternoon
+      : greetings.evening;
+
+export type PassengerTopBar = {
+  greetings: Greetings;
+  name: string | null;
+  back: string;
+};
+
 export function MemberTopBar({
   items,
   account,
@@ -46,6 +87,7 @@ export function MemberTopBar({
   languageLabel,
   themeStrings,
   bell,
+  passenger = null,
 }: {
   items: ResolvedMemberNavItem[];
   account: AccountData | null;
@@ -56,10 +98,29 @@ export function MemberTopBar({
   languageLabel: string;
   themeStrings: ThemeStrings;
   bell: ReactNode;
+  /** Mockup 2's header on a phone: left-aligned, a greeting at home, a back knob below a tab. */
+  passenger?: PassengerTopBar | null;
 }) {
   const pathname = usePathname();
-  const title = activeItem(pathname, items)?.label;
+  const item = activeItem(pathname, items);
+  const title = item?.label;
   const scrolled = useScrolled();
+  const { hour, day } = useLocalNow();
+  const drill = passenger !== null && isDrillDown(pathname, items);
+  const atHome = passenger !== null && !drill && item?.key === "home";
+  const words = account?.language ?? locale;
+  const heading =
+    atHome && passenger.name && hour !== null
+      ? formatMessage(
+          greetingFor(hour, passenger.greetings),
+          { name: passenger.name },
+          words,
+        )
+      : title;
+  const sub =
+    atHome && account && day
+      ? formatLongDateWithWeekday(day, account.notation)
+      : null;
 
   return (
     <header
@@ -70,11 +131,24 @@ export function MemberTopBar({
         isConversationPath(pathname) && "hidden md:flex",
       )}
     >
-      {account ? (
+      {drill && item ? (
+        <Link
+          href={item.href}
+          transitionTypes={["pop"]}
+          aria-label={passenger.back}
+          className="-ml-1 flex size-11 shrink-0 items-center justify-center rounded-full border border-line bg-paper shadow-soft outline-none transition-transform focus-visible:ring-[3px] focus-visible:ring-ring/50 active:scale-95 motion-reduce:transition-none md:hidden"
+        >
+          <ArrowLeft
+            aria-hidden
+            className="size-5"
+          />
+        </Link>
+      ) : account ? (
         <AvatarButton
           data={account}
           activePerspective={activePerspective}
           strings={strings}
+          href={accountPage(activePerspective)}
           className="-ml-1 md:hidden"
         />
       ) : (
@@ -93,12 +167,26 @@ export function MemberTopBar({
 
       {/* The page's own h1 announces the section; this is the same word drawn
           where a phone expects it, so it is decoration. */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 truncate px-16 text-center font-semibold md:hidden"
-      >
-        {title}
-      </span>
+      {passenger ? (
+        <span
+          aria-hidden
+          className="flex min-w-0 flex-1 flex-col md:hidden"
+        >
+          <span className="truncate font-display text-lg leading-tight font-bold">
+            {heading}
+          </span>
+          {sub ? (
+            <span className="truncate text-xs text-ink-soft">{sub}</span>
+          ) : null}
+        </span>
+      ) : (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 truncate px-16 text-center font-semibold md:hidden"
+        >
+          {title}
+        </span>
+      )}
 
       <Breadcrumb className="hidden md:block">
         <BreadcrumbList>

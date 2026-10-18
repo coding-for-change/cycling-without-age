@@ -1,5 +1,14 @@
-import { ProfilePage } from "../../_components/profile/profile-page";
+import { Suspense } from "react";
+import { MemberPageShell } from "../../_components/member-page";
+import { OwnProfile } from "./_components/own-profile";
+import { ProfileFallback } from "./_components/profile-fallback";
 
 export default function PassengerProfilePage() {
-  return <ProfilePage perspective="passenger" />;
+  return (
+    <MemberPageShell>
+      <Suspense fallback={<ProfileFallback />}>
+        <OwnProfile />
+      </Suspense>
+    </MemberPageShell>
+  );
 }

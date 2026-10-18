@@ -31,7 +31,7 @@ import { ProfileView } from "@/features/person-profiles/components/profile-view"
 import { accessPerson, seesHealthDetails } from "@/use-cases/person-access";
 import { getSetupChecklist } from "@/use-cases/setup-checklist";
 import type { ChapterRole } from "@/lib/access";
-import { avatarSeed, avatarSvg } from "@/lib/avatar";
+import { avatarSvg, seedOf } from "@/lib/avatar";
 import { formatDate, resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
@@ -140,7 +140,7 @@ export async function PersonBody({
           <DetailHeader
             media={
               <PersonAvatar
-                svg={avatarSvg(avatarSeed(person.email), true)}
+                svg={avatarSvg(seedOf(person), true)}
                 photoUrl={access ? photoUrl(ownProfile.photoFileId) : null}
                 className={cn(DETAIL_MEDIA, "rounded-full")}
               />

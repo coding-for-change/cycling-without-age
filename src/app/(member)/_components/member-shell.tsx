@@ -3,6 +3,7 @@ import { CollapseSidebarOn } from "@/components/collapse-sidebar-on";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
 import type { MemberPerspective } from "../nav";
+import { DisplaySync } from "./display/display-sync";
 import { MemberChrome, MemberChromeFallback } from "./member-chrome";
 import { MemberSidebar } from "./member-sidebar";
 import { MemberSidebarSkeleton } from "./member-sidebar-skeleton";
@@ -20,6 +21,9 @@ export function MemberShell({
     <SidebarProvider className="min-h-dvh">
       <Suspense fallback={null}>
         <CollapseSidebarOn prefix={`${PERSPECTIVE_HOME[perspective]}/chat`} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <DisplaySync />
       </Suspense>
       <Suspense fallback={<MemberSidebarSkeleton />}>
         <MemberSidebar perspective={perspective} />

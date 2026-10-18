@@ -281,10 +281,21 @@ needs one, give it its own module in its own slice rather than growing this one.
 
 ## What is deliberately not here yet
 
-There is no illustration system beyond the character. The one hook for artwork is
-`EmptyState`'s optional `illustration` prop (`@/components/empty-state`): a public URL such as
-`/illustrations/chat/no-conversations.svg` replaces the lucide icon, and the icon stays the
-fallback while the file does not exist. Every empty state in the app goes through that one
+**Illustrations** come from the booking prototype (mockup 2) as `@/components/art`: hand-written
+SVG `Scene`s (400×240 covers: `park`, `festival`, `market`, …) and `Hero`es (360×260 pictures:
+`trishaw`, `chat`, `calendar`, `wind`, `celebrate`, …). They keep natural colours — artwork is
+exempt from the four-colour rule (`docs-internal/BRAND.md` § Colors) — with line work pinned to
+espresso so they stay postcards in dark mode, and their small motions stop under reduced or less
+motion. `EmptyState` takes a `hero` for a drawn picture, or the older `illustration` URL
+(`/illustrations/chat/no-conversations.svg`); the lucide icon stays the fallback.
+
+**The passenger view follows mockup 2** (`coding-for-change/cycling-without-age-mockup-2`):
+`display-title` (Inter extrabold, tight) for the one big line of a surface, `eyebrow` for card
+labels, soft cards (`rounded-soft border border-line bg-paper shadow-soft`), tiles on
+`--r-tile`, `HeroButton` (`@/components/hero-button`, the pill with a round knob) for the
+screen's call to action, and `reveal` with `--i` for a staggered entrance. Shared components
+that passengers also see switch on a prop or `group/look` + `data-look="cards"` rather than
+forking. Every empty state in the app goes through that one
 component — chat's wrappers in `features/chat/components/chat-empty-*.tsx` only bind strings
 and file names. If a task needs something new, build it in the right layer per `AGENTS.md`
 and extend this skill in the same change.

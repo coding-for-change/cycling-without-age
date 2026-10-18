@@ -9,7 +9,7 @@ import {
   subjectSlug,
 } from "@/features/person-profiles";
 import { parseRoles, type ChapterRole } from "@/lib/access";
-import { avatarSeed, avatarSvg } from "@/lib/avatar";
+import { avatarSvg, seedOf } from "@/lib/avatar";
 import { formatDate, formatNumber, resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
@@ -65,7 +65,7 @@ const loadMembers = cache(async (searchParams: Promise<AdminSearchParams>) => {
     name: application.user.name,
     email: application.user.email,
     phone: application.user.phoneNumber,
-    avatar: avatarSvg(avatarSeed(application.user.email)),
+    avatar: avatarSvg(seedOf(application.user)),
     message: application.message,
     chapterName: application.chapter.name,
     applied: formatDate(application.createdAt, notation),
@@ -88,7 +88,7 @@ const loadMembers = cache(async (searchParams: Promise<AdminSearchParams>) => {
       name: member.user.name,
       email: member.user.email,
       phone: member.user.phoneNumber,
-      avatar: avatarSvg(avatarSeed(member.user.email)),
+      avatar: avatarSvg(seedOf(member.user)),
       photoUrl: photoUrl(
         photos.get(subjectSlug({ kind: "user", id: member.userId })) ?? null,
       ),
