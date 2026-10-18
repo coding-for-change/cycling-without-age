@@ -1554,7 +1554,6 @@ export async function cancelBooking(
   });
 }
 
-/** The rides still ahead that any of these riders is booked on. */
 export async function upcomingRideIdsOf(
   passengerIds: string[],
   now = new Date(),

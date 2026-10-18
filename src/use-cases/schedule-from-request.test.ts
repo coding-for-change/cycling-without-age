@@ -373,7 +373,6 @@ describe("scheduleAutomatically", () => {
     expect(scheduledRide().requiredPilots).toBe(1);
   });
 
-  // Nobody saw what the ride lacks, so the sweep checks its pilots.
   it("leaves the staffing check to the sweep", async () => {
     (chapters.getSettings as jest.Mock).mockResolvedValue({
       ...DEFAULT_CHAPTER_SETTINGS,

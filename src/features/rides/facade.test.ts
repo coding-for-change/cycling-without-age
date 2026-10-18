@@ -3250,7 +3250,6 @@ describe("ridersBookedBetween", () => {
     );
   });
 
-  // A seat the family gave up stays on the roster as cancelled, and is free.
   it("counts only seats still held, on rides that overlap the window and were not cancelled", async () => {
     db.rideRosterEntry.count.mockResolvedValue(0);
     await rides.ridersBookedBetween(["mother", "father"], window);
