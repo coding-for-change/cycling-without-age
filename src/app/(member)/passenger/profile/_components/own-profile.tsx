@@ -24,6 +24,7 @@ import { resolveLocale, toIsoDateUtc, wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { isPhoneTempEmail } from "@/lib/identity";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
+import { nameParts } from "@/lib/utils";
 import {
   accessPerson,
   canGiveHealthConsent,
@@ -136,11 +137,7 @@ export async function OwnProfile() {
           >
             <PersonalDetails
               name={name}
-              names={
-                own
-                  ? { firstName: own.firstName, lastName: own.lastName }
-                  : null
-              }
+              names={own ? nameParts(name, own) : null}
               birthDate={
                 person?.birthDate ? toIsoDateUtc(person.birthDate) : null
               }

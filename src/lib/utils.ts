@@ -28,6 +28,19 @@ export const splitName = (name: string) => {
 export const fullName = (person: { firstName: string; lastName: string }) =>
   `${person.firstName} ${person.lastName}`.trim();
 
+/**
+ * The two parts of an account's name: the rider row's while they still add up
+ * to the account name, else the account name split — so a rename elsewhere
+ * (the account sheet) is never put back from a stale row.
+ */
+export const nameParts = (
+  name: string,
+  row: { firstName: string; lastName: string } | null,
+) =>
+  row && fullName(row) === name.trim()
+    ? { firstName: row.firstName, lastName: row.lastName }
+    : splitName(name);
+
 export const pick = <T extends object, K extends keyof T>(
   source: T,
   keys: readonly K[],

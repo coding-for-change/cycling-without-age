@@ -76,6 +76,7 @@ describe("updateOwnDetails", () => {
 
   it("puts a first name together with the last name the rider row holds", async () => {
     ownRider.mockResolvedValue({ firstName: "Pernille", lastName: "Holm" });
+    account.mockResolvedValue({ name: "Pernille Holm" });
 
     await updateOwnDetails(USER, { firstName: "Nille" });
 
@@ -94,6 +95,19 @@ describe("updateOwnDetails", () => {
 
     expect(updateAccount).toHaveBeenCalledWith(USER, {
       name: "Pernille Marie Jensen",
+    });
+  });
+
+  it("never puts back a name the account sheet has since changed", async () => {
+    ownRider.mockResolvedValue({ firstName: "Anna", lastName: "Holm" });
+    account.mockResolvedValue({ name: "Anna Berg" });
+
+    await updateOwnDetails(USER, { firstName: "Annie" });
+
+    expect(updateAccount).toHaveBeenCalledWith(USER, { name: "Annie Berg" });
+    expect(updateRider).toHaveBeenCalledWith(USER, {
+      firstName: "Annie",
+      lastName: "Berg",
     });
   });
 });

@@ -1,21 +1,23 @@
 import { passengers } from "@/features/passengers";
 import { profile } from "@/features/profile";
 import type { OwnDetailsPatch } from "@/features/profile";
-import { splitName } from "@/lib/utils";
+import { nameParts } from "@/lib/utils";
 
 /**
  * The account and the rider row the account books its own rides with carry
  * the same person: a first or last name is written into both, and the account
- * name is put back together from them. A rider row's own two fields are the
- * truth to complete from; without one the account name is split.
+ * name is put back together from them (`nameParts` says which side to
+ * complete from).
  */
 async function namesAfter(
   userId: string,
   { firstName, lastName }: Pick<OwnDetailsPatch, "firstName" | "lastName">,
 ) {
-  const own = await passengers.getOwnPassenger(userId);
-  const current =
-    own ?? splitName((await profile.getProfile(userId))?.name ?? "");
+  const [own, account] = await Promise.all([
+    passengers.getOwnPassenger(userId),
+    profile.getProfile(userId),
+  ]);
+  const current = nameParts(account?.name ?? "", own);
   const next = {
     firstName: firstName ?? current.firstName,
     lastName: lastName ?? current.lastName,
