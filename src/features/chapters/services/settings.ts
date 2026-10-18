@@ -5,6 +5,7 @@ const COLUMNS = {
   notifyOnMemberJoined: true,
   applicationAlertPush: true,
   replyToEmail: true,
+  passengerPhone: true,
   welcomeNote: true,
   postRideInstructions: true,
   damageAlertPush: true,

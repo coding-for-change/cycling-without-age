@@ -907,6 +907,12 @@
           "label": "Reply-to address",
           "placeholder": "hello@example.com"
         },
+        "passengerPhone": {
+          "hint": "Passengers see it on their home page under \"Do you need help?\". A number where a person answers.",
+          "invalid": "That doesn't look like a phone number.",
+          "label": "Phone for passengers",
+          "placeholder": "+49 89 1234 5678"
+        },
         "status": {
           "saved": "Saved {when}",
           "saving": "Saving"
@@ -1845,6 +1851,12 @@
           "snow": "Snow",
           "thunder": "Thunderstorms",
           "label": "Weather forecast"
+        },
+        "help": {
+          "title": "Do you need help?",
+          "body": "Call us. We're happy to help — a person answers.",
+          "write": "Write to your chapter",
+          "bodyWrite": "Write to us — a person will answer."
         }
       },
       "pilot": {

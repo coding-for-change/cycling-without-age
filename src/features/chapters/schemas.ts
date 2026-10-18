@@ -97,10 +97,14 @@ export type ChapterUpdateInput = z.infer<typeof chapterUpdateInput>;
 export const CHAPTER_WELCOME_NOTE_MAX = 600;
 export const CHAPTER_POST_RIDE_MAX = 5_000;
 
+/** A number people dial: digits, an optional leading +, the usual separators. */
+export const PASSENGER_PHONE = /^\+?[0-9][0-9 ()/-]{3,30}$/;
+
 export type ChapterSettings = {
   notifyOnMemberJoined: boolean;
   applicationAlertPush: boolean;
   replyToEmail: string | null;
+  passengerPhone: string | null;
   welcomeNote: string | null;
   postRideInstructions: string | null;
   damageAlertPush: boolean;
@@ -110,6 +114,7 @@ export const DEFAULT_CHAPTER_SETTINGS: ChapterSettings = {
   notifyOnMemberJoined: true,
   applicationAlertPush: true,
   replyToEmail: null,
+  passengerPhone: null,
   welcomeNote: null,
   postRideInstructions: null,
   damageAlertPush: true,
@@ -128,6 +133,12 @@ export const chapterSettingsInput = z
           .max(254)
           .transform((value) => value.toLowerCase()),
       )
+      .nullable(),
+    passengerPhone: z
+      .string()
+      .trim()
+      .regex(PASSENGER_PHONE)
+      .transform((value) => value.replace(/\s+/g, " "))
       .nullable(),
     welcomeNote: z
       .string()

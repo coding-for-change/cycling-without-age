@@ -279,6 +279,7 @@ model ChapterSettings {
   notifyOnMemberJoined Boolean      @default(true)
   applicationAlertPush Boolean      @default(true)
   replyToEmail         String?      @db.VarChar(254)
+  passengerPhone       String?      @db.VarChar(32)
   welcomeNote          String?      @db.Text
   postRideInstructions String?      @db.Text
   damageAlertPush      Boolean      @default(true)

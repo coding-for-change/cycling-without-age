@@ -3,6 +3,7 @@
 import { z } from "zod";
 import {
   CHAPTER_WELCOME_NOTE_MAX,
+  PASSENGER_PHONE,
   type ChapterSettings,
   type ChapterSettingsInput,
 } from "@/features/chapters/schemas";
@@ -18,6 +19,12 @@ export type NotificationSettingsLabels = {
   applicationPush: { label: string; hint: string };
   damagePush: { label: string; hint: string };
   replyTo: {
+    label: string;
+    hint: string;
+    placeholder: string;
+    invalid: string;
+  };
+  passengerPhone: {
     label: string;
     hint: string;
     placeholder: string;
@@ -92,6 +99,25 @@ export function NotificationSettingsCard({
               validate={isEmail}
               onSave={(next) => save({ replyToEmail: next })}
               labels={{ ...labels.field, invalid: labels.replyTo.invalid }}
+            />
+          </FieldRow>
+          <FieldRow
+            label={labels.passengerPhone.label}
+            hint={labels.passengerPhone.hint}
+          >
+            <InlineField
+              type="tel"
+              inputMode="tel"
+              maxLength={32}
+              value={settings.passengerPhone}
+              label={labels.passengerPhone.label}
+              placeholder={labels.passengerPhone.placeholder}
+              validate={(next) => PASSENGER_PHONE.test(next.trim())}
+              onSave={(next) => save({ passengerPhone: next })}
+              labels={{
+                ...labels.field,
+                invalid: labels.passengerPhone.invalid,
+              }}
             />
           </FieldRow>
           <FieldRow
