@@ -130,7 +130,7 @@ export function RideStory({
       case "pilotUnassigned":
         return {
           sentence: say(strings[entry.type], {
-            name: entry.pilot ?? strings.someone,
+            name: entry.pilot ?? strings.aPilot,
           }),
         };
       case "riderBooked":

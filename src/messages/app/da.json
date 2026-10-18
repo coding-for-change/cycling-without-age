@@ -1962,6 +1962,7 @@
         "upcoming": "{title}, {date} kl. {time}."
       },
       "story": {
+        "aPilot": "En pilot",
         "cancelled": "{who, select, you {Du} other {{chapter}}} aflyste turen",
         "change": "{from} → {to}",
         "edited": "{who, select, you {Du} other {{chapter}}} ændrede {fields}",
@@ -1986,7 +1987,17 @@
       "storyTitle": "Indtil nu",
       "trishaws": "{count, plural, one {Rickshaw} other {Rickshawer}}",
       "when": "Hvornår",
-      "where": "Hvor"
+      "where": "Hvor",
+      "timeline": {
+        "booked": "Booket",
+        "pilotFound": "Pilot fundet",
+        "rideDay": "Turdag",
+        "done": "Gennemført"
+      },
+      "callNote": "Ring kun ved ændringer i sidste øjeblik.",
+      "duration": "Varighed",
+      "details": "Detaljer",
+      "places": "Pladser"
     },
     "rides": {
       "failed": "Det kunne ikke hentes.",

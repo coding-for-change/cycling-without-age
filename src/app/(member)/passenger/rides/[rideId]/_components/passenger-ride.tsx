@@ -5,13 +5,17 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import {
   Ban,
+  Check,
   ChevronLeft,
+  Clock,
   ExternalLink,
   Flag,
   Mail,
   MapPin,
   Phone,
+  Search,
 } from "lucide-react";
+import { Scene, type SceneName } from "@/components/art";
 import { RichText } from "@/components/markdown";
 import { PersonAvatar } from "@/components/person-avatar";
 import { ReadAloud } from "@/components/read-aloud";
@@ -24,12 +28,13 @@ import {
 } from "@/features/rides/components/ride-presentation";
 import { requirePerspective } from "@/lib/auth-guards";
 import { avatarSvg, seedOf } from "@/lib/avatar";
-import { calendarDate } from "@/lib/calendar";
+import { calendarDate, dayKey } from "@/lib/calendar";
 import {
   formatDateTime,
   formatDurationLong,
   formatList,
   formatLongDateWithWeekday,
+  formatRelativeTime,
   formatTime,
   formatTimeRange,
   resolveLocale,
@@ -162,65 +167,125 @@ export async function PassengerRide({
     .join(" ");
   const voice = notation.startsWith(language) ? notation : language;
 
+  const relative =
+    !cancelled && !over ? formatRelativeTime(ride.startsAt, words, now) : null;
+  const sameDay = dayKey(ride.startsAt, zone) === dayKey(now, zone);
+  const steps: Step[] = [
+    { label: s.timeline.booked, state: "done" },
+    { label: s.timeline.pilotFound, state: pilots.length ? "done" : "next" },
+    {
+      label: s.timeline.rideDay,
+      sub: `${date} · ${formatTime(ride.startsAt, notation, zone)}`,
+      state: over ? "done" : sameDay || running ? "now" : "next",
+    },
+    { label: s.timeline.done, state: over ? "done" : "next" },
+  ];
+  const details: { label: string; value: ReactNode }[] = [
+    ...(ride.roster.length
+      ? [
+          {
+            label: s.booked,
+            value: formatList(
+              ride.roster.map(({ passenger }) => fullName(passenger)),
+              words,
+            ),
+          },
+        ]
+      : []),
+    ...(ride.capacity !== null && riderCount > 0
+      ? [
+          {
+            label: s.places,
+            value: say(dict.rides.detail.placesTaken, {
+              count: ride._count.roster,
+              max: ride.capacity,
+            }),
+          },
+        ]
+      : []),
+    { label: s.duration, value: duration },
+    ...(trishaws.length
+      ? [
+          {
+            label: say(s.trishaws, { count: trishaws.length }),
+            value: formatList(trishaws, words),
+          },
+        ]
+      : []),
+    { label: s.chapter, value: ride.chapter.name },
+  ];
+
   return (
     <>
-      <header className="flex flex-col gap-3">
-        <Link
-          href="/passenger/rides"
-          transitionTypes={["pop"]}
-          className="-ml-1.25 inline-flex min-h-11 w-fit items-center gap-1 rounded-full pr-3 text-sm text-ink-soft outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-ring/50 max-md:hidden"
+      <Link
+        href="/passenger/rides"
+        transitionTypes={["pop"]}
+        className="-ml-1.25 inline-flex min-h-11 w-fit items-center gap-1 rounded-full pr-3 text-sm text-ink-soft outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-ring/50 max-md:hidden"
+      >
+        <ChevronLeft
+          aria-hidden
+          className="size-4"
+        />
+        {s.back}
+      </Link>
+
+      <div className="reveal overflow-hidden rounded-(--r-cover) [--i:0]">
+        <Scene
+          name={COVER[ride.model]}
+          className={cn(
+            "aspect-5/2 w-full",
+            cancelled && "opacity-50 grayscale",
+          )}
+        />
+      </div>
+
+      <header className="reveal flex flex-col gap-3 [--i:1]">
+        <h1
+          className={cn(
+            "display-title text-3xl md:text-4xl",
+            cancelled && "text-ink-soft line-through",
+          )}
         >
-          <ChevronLeft
-            aria-hidden
-            className="size-4"
-          />
-          {s.back}
-        </Link>
-        <p className="flex flex-wrap items-center gap-2 text-sm text-ink-soft">
-          <Icon
-            aria-hidden
-            className="size-4"
-          />
-          {dict.calendar.models[ride.model]}
+          <time dateTime={ride.startsAt.toISOString()}>
+            {date} · {formatTime(ride.startsAt, notation, zone)}
+          </time>
+        </h1>
+        <p className="flex flex-wrap items-center gap-1.25">
+          <Badge tone="outline">
+            <Icon
+              aria-hidden
+              className="size-3"
+            />
+            {dict.calendar.models[ride.model]}
+          </Badge>
           {cancelled ? (
-            <StatusPill tone="muted">
-              {dict.calendar.statuses.cancelled}
-            </StatusPill>
+            <Badge tone="grey">{dict.calendar.statuses.cancelled}</Badge>
           ) : running ? (
-            <StatusPill tone="live">{dict.passenger.rides.now}</StatusPill>
+            <Badge tone="live">{dict.passenger.rides.now}</Badge>
           ) : over ? (
-            <StatusPill tone="muted">
-              {dict.calendar.statuses.completed}
-            </StatusPill>
+            <Badge tone="grey">{dict.calendar.statuses.completed}</Badge>
+          ) : (
+            <Badge tone="mint">{dict.calendar.statuses.scheduled}</Badge>
+          )}
+          {relative ? (
+            <Badge tone="outline">
+              <Clock
+                aria-hidden
+                className="size-3"
+              />
+              {relative}
+            </Badge>
           ) : null}
         </p>
         <ViewTransition name={`passenger-ride-title-${ride.id}`}>
-          <h1
-            className={cn(
-              "text-2xl tracking-tight md:text-3xl",
-              cancelled && "text-ink-soft",
-            )}
-          >
+          <p className={cn("text-lg font-bold", cancelled && "text-ink-soft")}>
             {headline}
-          </h1>
+          </p>
         </ViewTransition>
-        <p className="flex flex-col gap-0.5 text-base">
-          <span>
-            <time
-              dateTime={ride.startsAt.toISOString()}
-              className={cn(cancelled && "line-through")}
-            >
-              {formatLongDateWithWeekday(
-                calendarDate(ride.startsAt, zone),
-                notation,
-              )}
-              {" · "}
-              {formatTimeRange(ride.startsAt, ride.endsAt, notation, zone)}
-            </time>
-          </span>
-          <span className="text-sm text-ink-soft">
-            {say(dict.rides.detail.zoneHint, { zone })}
-          </span>
+        <p className="text-sm text-ink-soft">
+          {formatTimeRange(ride.startsAt, ride.endsAt, notation, zone)}
+          {" · "}
+          {say(dict.rides.detail.zoneHint, { zone })}
         </p>
         <ReadAloud
           text={spoken}
@@ -247,40 +312,145 @@ export async function PassengerRide({
             <p className="whitespace-pre-wrap">{ride.cancellationNote}</p>
           ) : null}
         </Notice>
-      ) : running ? (
-        <Notice
-          icon={Flag}
-          title={s.running}
-          tone="live"
-        />
-      ) : over ? (
-        <MemoryCard
-          date={date}
-          title={s.memory.title}
-          outside={say(s.memory.outside, { duration })}
-          places={[
-            ride.locationName || ride.locationAddress,
-            functional ? ride.destinationName || ride.destinationAddress : null,
-          ].filter((place): place is string => Boolean(place))}
-          via={dict.calendar.via}
-          pilots={pilots.map(({ user }) => ({
-            id: user.id,
-            avatar: avatarSvg(seedOf(user)),
-          }))}
-          withPilots={
-            pilots.length
-              ? say(s.memory.withPilots, { names: pilotNames })
-              : null
-          }
-          slogan={s.memory.slogan}
-        />
-      ) : null}
+      ) : (
+        <>
+          {running ? (
+            <Notice
+              icon={Flag}
+              title={s.running}
+              tone="live"
+            />
+          ) : null}
+          {over ? (
+            <MemoryCard
+              date={date}
+              title={s.memory.title}
+              outside={say(s.memory.outside, { duration })}
+              places={[
+                ride.locationName || ride.locationAddress,
+                functional
+                  ? ride.destinationName || ride.destinationAddress
+                  : null,
+              ].filter((place): place is string => Boolean(place))}
+              via={dict.calendar.via}
+              pilots={pilots.map(({ user }) => ({
+                id: user.id,
+                avatar: avatarSvg(seedOf(user)),
+              }))}
+              withPilots={
+                pilots.length
+                  ? say(s.memory.withPilots, { names: pilotNames })
+                  : null
+              }
+              slogan={s.memory.slogan}
+            />
+          ) : null}
+          <Timeline
+            steps={steps}
+            className="reveal [--i:2]"
+          />
+        </>
+      )}
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-10">
-        <div className="flex min-w-0 flex-col gap-8">
-          <Section title={s.where}>
+      <section
+        aria-label={say(s.pilots, { count: Math.max(1, pilots.length) })}
+        className="reveal flex flex-col gap-3 [--i:3]"
+      >
+        {pilots.length ? (
+          pilots.map(({ user }) => (
+            <PilotCard
+              key={user.id}
+              title={say(s.pilots, { count: 1 })}
+              name={user.name}
+              avatar={avatarSvg(seedOf(user), true)}
+              email={
+                contactOpen && !isPhoneTempEmail(user.email) ? user.email : null
+              }
+              phone={contactOpen ? user.phoneNumber : null}
+              call={s.call}
+              write={s.email}
+              note={
+                contactOpen
+                  ? s.callNote
+                  : !cancelled && !over
+                    ? s.contactLater
+                    : null
+              }
+              say={say}
+            />
+          ))
+        ) : (
+          <div className="flex items-center gap-3 rounded-(--r-tile) bg-mint-tint p-5">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-paper">
+              <Search
+                aria-hidden
+                className="size-5"
+              />
+            </span>
+            <p className="text-base">
+              {cancelled ? dict.rides.detail.emptyPilots : s.noPilot}
+            </p>
+          </div>
+        )}
+      </section>
+
+      <Card title={s.details}>
+        <dl className="divide-y divide-line">
+          {details.map((row) => (
+            <div
+              key={row.label}
+              className="flex items-baseline justify-between gap-4 py-3 first:pt-0 last:pb-0"
+            >
+              <dt className="shrink-0 text-ink-soft">{row.label}</dt>
+              <dd className="min-w-0 text-right">{row.value}</dd>
+            </div>
+          ))}
+        </dl>
+        {ride.returnLegOf || ride.returnLeg ? (
+          <div className="flex flex-col gap-3 border-t border-line pt-3">
+            {ride.returnLegOf ? (
+              <LegRow
+                label={dict.rides.detail.wayThere}
+                leg={ride.returnLegOf}
+                zone={zone}
+                notation={notation}
+                open={s.openLeg}
+                cancelled={dict.calendar.statuses.cancelled}
+              />
+            ) : null}
+            {ride.returnLeg ? (
+              <LegRow
+                label={dict.rides.detail.wayBack}
+                leg={ride.returnLeg}
+                zone={zone}
+                notation={notation}
+                open={s.openLeg}
+                cancelled={dict.calendar.statuses.cancelled}
+              />
+            ) : null}
+          </div>
+        ) : null}
+      </Card>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xl">{s.where}</h2>
+        <div className="overflow-hidden rounded-soft border border-line bg-paper shadow-soft">
+          {pickup ? (
+            <Suspense fallback={<Skeleton className="h-48 rounded-none" />}>
+              <RideRouteMap
+                pickup={pickup}
+                destination={destination}
+                label={dict.rides.schedule.mapLabel}
+                unavailable={dict.rides.schedule.mapUnavailable}
+                eta={dict.rides.detail.eta}
+                language={language}
+                notation={notation}
+              />
+            </Suspense>
+          ) : null}
+          <div className="flex flex-col gap-3 p-4">
             {hasPlace ? (
-              <div className="flex flex-col gap-3">
+              <>
                 <PlaceRow
                   label={s.pickup}
                   name={ride.locationName}
@@ -297,139 +467,38 @@ export async function PassengerRide({
                     open={s.openInMaps}
                   />
                 ) : null}
-              </div>
+              </>
             ) : (
               <p className="text-sm text-ink-soft">{s.noPlace}</p>
             )}
-            {pickup ? (
-              <Suspense fallback={<Skeleton className="h-48 rounded-2xl" />}>
-                <RideRouteMap
-                  pickup={pickup}
-                  destination={destination}
-                  label={dict.rides.schedule.mapLabel}
-                  unavailable={dict.rides.schedule.mapUnavailable}
-                  eta={dict.rides.detail.eta}
-                  language={language}
-                  notation={notation}
-                />
-              </Suspense>
-            ) : null}
-          </Section>
-
-          {ride.description?.trim() ? (
-            <Section title={s.about}>
-              <RichText
-                text={ride.description}
-                className="text-base"
-              />
-            </Section>
-          ) : null}
-
-          <Section title={s.storyTitle}>
-            <RideStory
-              entries={story}
-              chapter={ride.chapter.name}
-              timeZone={zone}
-              strings={s.story}
-              reasons={dict.rides.reasons}
-              models={dict.calendar.models}
-              empty={s.storyEmpty}
-              notation={notation}
-              words={words}
-              now={now}
-            />
-          </Section>
+          </div>
         </div>
+      </section>
 
-        <aside className="flex flex-col gap-4">
-          <Panel title={say(s.pilots, { count: Math.max(1, pilots.length) })}>
-            {pilots.length ? (
-              <ul className="flex flex-col gap-4">
-                {pilots.map(({ user }) => (
-                  <li key={user.id}>
-                    <PilotCard
-                      name={user.name}
-                      avatar={avatarSvg(seedOf(user), true)}
-                      email={
-                        contactOpen && !isPhoneTempEmail(user.email)
-                          ? user.email
-                          : null
-                      }
-                      phone={contactOpen ? user.phoneNumber : null}
-                      call={say(s.call, { name: user.name })}
-                      write={say(s.email, { name: user.name })}
-                    />
-                  </li>
-                ))}
-                {!contactOpen && !cancelled && !over ? (
-                  <li className="text-sm text-ink-soft">{s.contactLater}</li>
-                ) : null}
-              </ul>
-            ) : (
-              <p className="text-sm text-ink-soft">
-                {cancelled ? dict.rides.detail.emptyPilots : s.noPilot}
-              </p>
-            )}
-          </Panel>
+      {ride.description?.trim() ? (
+        <Card title={s.about}>
+          <RichText
+            text={ride.description}
+            className="text-base"
+          />
+        </Card>
+      ) : null}
 
-          <Panel title={s.booked}>
-            <ul className="flex flex-col gap-1 text-sm">
-              {ride.roster.map(({ passenger }) => (
-                <li key={passenger.id}>{fullName(passenger)}</li>
-              ))}
-            </ul>
-            {ride.capacity !== null && riderCount > 0 ? (
-              <p className="text-sm text-ink-soft">
-                {say(dict.rides.detail.placesTaken, {
-                  count: ride._count.roster,
-                  max: ride.capacity,
-                })}
-              </p>
-            ) : null}
-          </Panel>
-
-          {ride.returnLegOf || ride.returnLeg ? (
-            <Panel
-              title={
-                dict.rides.detail.wayThere + " · " + dict.rides.detail.wayBack
-              }
-            >
-              <div className="flex flex-col gap-3">
-                {ride.returnLegOf ? (
-                  <LegRow
-                    label={dict.rides.detail.wayThere}
-                    leg={ride.returnLegOf}
-                    zone={zone}
-                    notation={notation}
-                    open={s.openLeg}
-                    cancelled={dict.calendar.statuses.cancelled}
-                  />
-                ) : null}
-                {ride.returnLeg ? (
-                  <LegRow
-                    label={dict.rides.detail.wayBack}
-                    leg={ride.returnLeg}
-                    zone={zone}
-                    notation={notation}
-                    open={s.openLeg}
-                    cancelled={dict.calendar.statuses.cancelled}
-                  />
-                ) : null}
-              </div>
-            </Panel>
-          ) : null}
-
-          {trishaws.length ? (
-            <Panel title={say(s.trishaws, { count: trishaws.length })}>
-              <p className="text-sm">{trishaws.join(", ")}</p>
-            </Panel>
-          ) : null}
-
-          <Panel title={s.chapter}>
-            <p className="text-sm">{ride.chapter.name}</p>
-          </Panel>
-        </aside>
-      </div>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xl">{s.storyTitle}</h2>
+        <RideStory
+          entries={story}
+          chapter={ride.chapter.name}
+          timeZone={zone}
+          strings={s.story}
+          reasons={dict.rides.reasons}
+          models={dict.calendar.models}
+          empty={s.storyEmpty}
+          notation={notation}
+          words={words}
+          now={now}
+        />
+      </section>
     </>
   );
 }
@@ -487,49 +556,6 @@ function MemoryCard({
         <p className="font-display text-sm text-ink-soft">{slogan}</p>
       </div>
     </section>
-  );
-}
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-xs font-semibold tracking-wide text-ink-soft uppercase">
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
-
-function Panel({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-line p-4">
-      <h2 className="text-xs font-semibold tracking-wide text-ink-soft uppercase">
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
-
-function StatusPill({
-  tone,
-  children,
-}: {
-  tone: "muted" | "live";
-  children: ReactNode;
-}) {
-  return (
-    <span
-      className={cn(
-        "rounded-full px-2 text-xs font-medium",
-        tone === "live"
-          ? "bg-mint-deep text-white"
-          : "bg-canvas-deeper text-ink",
-      )}
-    >
-      {children}
-    </span>
   );
 }
 
@@ -611,60 +637,163 @@ function PlaceRow({
   );
 }
 
+const COVER: Record<Ride["model"], SceneName> = {
+  pleasure: "park",
+  event: "festival",
+  functional: "market",
+};
+
+type Step = { label: string; sub?: string; state: "done" | "now" | "next" };
+
+/** Where a ride stands, in mockup 2's four steps. */
+function Timeline({ steps, className }: { steps: Step[]; className?: string }) {
+  return (
+    <ol
+      className={cn(
+        "flex flex-col gap-4 rounded-soft border border-line bg-paper p-5 shadow-soft",
+        className,
+      )}
+    >
+      {steps.map((step) => (
+        <li
+          key={step.label}
+          aria-current={step.state === "now" ? "step" : undefined}
+          className="flex items-start gap-3"
+        >
+          <span
+            aria-hidden
+            className={cn(
+              "flex size-6 shrink-0 items-center justify-center rounded-full border-2",
+              step.state === "done" && "border-mint bg-mint text-ink",
+              step.state === "now" && "border-ink",
+              step.state === "next" && "border-line",
+            )}
+          >
+            {step.state === "done" ? (
+              <Check className="size-3.5" />
+            ) : step.state === "now" ? (
+              <span className="size-2.5 rounded-full bg-ink" />
+            ) : null}
+          </span>
+          <span className="flex flex-col">
+            <span
+              className={cn(
+                "text-base",
+                step.state === "next" ? "text-ink-soft" : "font-bold",
+              )}
+            >
+              {step.label}
+            </span>
+            {step.sub && step.state === "now" ? (
+              <span className="text-sm text-ink-soft">{step.sub}</span>
+            ) : null}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function Card({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="flex flex-col gap-3 rounded-soft border border-line bg-paper p-5 shadow-soft">
+      <h2 className="eyebrow">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+const badgeTone = {
+  outline: "border-line text-ink-soft",
+  grey: "border-transparent bg-grey-tint text-ink",
+  mint: "border-transparent bg-mint-tint text-ink",
+  live: "border-transparent bg-mint-deep text-white",
+} as const;
+
+function Badge({
+  tone,
+  children,
+}: {
+  tone: keyof typeof badgeTone;
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold",
+        badgeTone[tone],
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** The pilot as mockup 2 introduces them: a mint card, a big round phone button. */
 function PilotCard({
+  title,
   name,
   avatar,
   email,
   phone,
   call,
   write,
+  note,
+  say,
 }: {
+  title: string;
   name: string;
   avatar: string;
   email: string | null;
   phone: string | null;
   call: string;
   write: string;
+  note: string | null;
+  say: (template: string, values: Record<string, string | number>) => string;
 }) {
   const action =
-    "flex min-h-11 items-center gap-2 rounded-xl border border-line px-3 text-sm outline-none hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ring/50";
+    "flex min-h-13 items-center justify-center gap-2 rounded-full border border-line bg-paper px-5 font-bold shadow-soft outline-none hover:bg-canvas-deep focus-visible:ring-[3px] focus-visible:ring-ring/50";
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4 rounded-(--r-tile) bg-mint-tint p-5">
       <div className="flex items-center gap-3">
         <PersonAvatar
           svg={avatar}
-          size="lg"
+          className="size-16"
         />
-        <span className="font-medium">{name}</span>
+        <div className="flex min-w-0 flex-col">
+          <span className="text-sm text-ink-soft">{title}</span>
+          <span className="display-title truncate text-xl">{name}</span>
+        </div>
       </div>
-      <div className="flex flex-col gap-1.25">
-        {phone ? (
-          <a
-            href={`tel:${phone}`}
-            aria-label={call}
-            className={action}
-          >
-            <Phone
-              aria-hidden
-              className="size-4 shrink-0 text-ink-soft"
-            />
-            <span className="truncate tabular-nums">{phone}</span>
-          </a>
-        ) : null}
-        {email ? (
-          <a
-            href={`mailto:${email}`}
-            aria-label={write}
-            className={action}
-          >
-            <Mail
-              aria-hidden
-              className="size-4 shrink-0 text-ink-soft"
-            />
-            <span className="truncate">{email}</span>
-          </a>
-        ) : null}
-      </div>
+      {phone ? (
+        <a
+          href={`tel:${phone}`}
+          className={action}
+        >
+          <Phone
+            aria-hidden
+            className="size-4 shrink-0"
+          />
+          <span className="sr-only">{say(call, { name })}: </span>
+          <span className="truncate tabular-nums">{phone}</span>
+        </a>
+      ) : null}
+      {email ? (
+        <a
+          href={`mailto:${email}`}
+          className={cn(action, "font-normal")}
+        >
+          <Mail
+            aria-hidden
+            className="size-4 shrink-0"
+          />
+          <span className="sr-only">{say(write, { name })}: </span>
+          <span className="truncate">{email}</span>
+        </a>
+      ) : null}
+      {note ? (
+        <p className="text-center text-sm text-ink-soft">{note}</p>
+      ) : null}
     </div>
   );
 }

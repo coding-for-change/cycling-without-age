@@ -1962,6 +1962,7 @@
         "upcoming": "{title}, am {date} um {time}."
       },
       "story": {
+        "aPilot": "Ein Pilot",
         "cancelled": "{who, select, you {Sie haben} other {{chapter} hat}} die Ausfahrt abgesagt",
         "change": "{from} → {to}",
         "edited": "{who, select, you {Sie haben} other {{chapter} hat}} {fields} geändert",
@@ -1986,7 +1987,17 @@
       "storyTitle": "Bisher",
       "trishaws": "{count, plural, one {Rikscha} other {Rikschas}}",
       "when": "Wann",
-      "where": "Wo"
+      "where": "Wo",
+      "timeline": {
+        "booked": "Gebucht",
+        "pilotFound": "Pilot gefunden",
+        "rideDay": "Fahrttag",
+        "done": "Abgeschlossen"
+      },
+      "callNote": "Bitte rufen Sie nur bei kurzfristigen Änderungen an.",
+      "duration": "Dauer",
+      "details": "Details",
+      "places": "Plätze"
     },
     "rides": {
       "failed": "Das hat nicht geklappt.",

@@ -1962,6 +1962,7 @@
         "upcoming": "{title}, on {date} at {time}."
       },
       "story": {
+        "aPilot": "A pilot",
         "cancelled": "{who, select, you {You} other {{chapter}}} cancelled the ride",
         "change": "{from} → {to}",
         "edited": "{who, select, you {You} other {{chapter}}} changed {fields}",
@@ -1986,7 +1987,17 @@
       "storyTitle": "So far",
       "trishaws": "{count, plural, one {Trishaw} other {Trishaws}}",
       "when": "When",
-      "where": "Where"
+      "where": "Where",
+      "timeline": {
+        "booked": "Booked",
+        "pilotFound": "Pilot found",
+        "rideDay": "Ride day",
+        "done": "Done"
+      },
+      "callNote": "Only call for last-minute changes, please.",
+      "duration": "Duration",
+      "details": "Details",
+      "places": "Seats"
     },
     "rides": {
       "failed": "That didn't load.",
