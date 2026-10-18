@@ -94,9 +94,10 @@ function shownValue(field: StoryField, values: Record<string, unknown>) {
 
 /**
  * A ride can be handed from one rider to the next and its pick-up moved to
- * the new rider's door, so where it used to start or end is somebody else's
- * address. Places are told by where they are now; the title and the kind of
- * ride keep their before and after.
+ * the new rider's door, so any place in its history — before or after an
+ * edit — may be somebody else's address. The story only says that a place
+ * changed; where the ride goes now is on the ride itself. The title and the
+ * kind of ride keep their before and after.
  */
 const PLACES: readonly StoryField[] = ["location", "destination"];
 
@@ -108,11 +109,11 @@ function changesOf(payload: Record<string, unknown>) {
     .filter((field) =>
       FIELD_COLUMNS[field].some((column) => fields.includes(column)),
     )
-    .map((field) => ({
-      field,
-      from: PLACES.includes(field) ? null : shownValue(field, from),
-      to: shownValue(field, to),
-    }));
+    .map((field) =>
+      PLACES.includes(field)
+        ? { field, from: null, to: null }
+        : { field, from: shownValue(field, from), to: shownValue(field, to) },
+    );
 }
 
 /**

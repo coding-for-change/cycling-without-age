@@ -107,14 +107,17 @@ export function RideStory({
               words,
             ),
           }),
-          details: entry.changes.map((change) =>
-            change.field === "location" || change.field === "destination"
-              ? shown(change.field, change.to)
-              : say(strings.change, {
-                  from: shown(change.field, change.from),
-                  to: shown(change.field, change.to),
-                }),
-          ),
+          details: entry.changes
+            .filter(
+              (change) =>
+                change.field !== "location" && change.field !== "destination",
+            )
+            .map((change) =>
+              say(strings.change, {
+                from: shown(change.field, change.from),
+                to: shown(change.field, change.to),
+              }),
+            ),
         };
       }
       case "cancelled":

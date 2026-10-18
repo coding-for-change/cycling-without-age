@@ -174,7 +174,7 @@ it("keeps only the edits a rider cares about, once per thing", () => {
     createdAt: at,
     type: "edited",
     by: "chapter",
-    changes: [{ field: "location", from: null, to: "Parkstraße 2" }],
+    changes: [{ field: "location", from: null, to: null }],
   });
 });
 
@@ -246,9 +246,31 @@ it("never tells where a ride used to pick up or go", () => {
   );
   expect(edited).toMatchObject({
     changes: [
-      { field: "destination", from: null, to: "Praxis, Parkstraße 2" },
+      { field: "destination", from: null, to: null },
       { field: "title", from: "Old", to: "New" },
     ],
   });
   expect(JSON.stringify(edited)).not.toContain("Hofweg");
+});
+
+it("keeps an earlier rider's door out of a later rider's story", () => {
+  const story = storyForPassengers(
+    [
+      entry("edited", {
+        fields: ["locationAddress"],
+        from: { locationAddress: "Sonnenhof" },
+        to: { locationAddress: "Karl Huber, Hofweg 1" },
+      }),
+      entry("edited", {
+        fields: ["locationAddress"],
+        from: { locationAddress: "Karl Huber, Hofweg 1" },
+        to: { locationAddress: "Anna Bauer, Lindenweg 3" },
+      }),
+    ],
+    MINE,
+    VIEWER,
+  );
+  expect(story).toHaveLength(2);
+  expect(JSON.stringify(story)).not.toContain("Hofweg");
+  expect(JSON.stringify(story)).not.toContain("Lindenweg");
 });
