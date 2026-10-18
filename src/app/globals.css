@@ -802,11 +802,18 @@ body {
 
    `data-text-size` sits on <html>, written before the first paint by the root
    layout; `data-text-scale` marks the subtree that reacts — the passenger
-   pages. Spacing stays on its 4px grid; the larger type brings its own air.
+   pages. Layers rendered into <body> — drawers, dialogs, menus, toasts —
+   follow while `data-text-scope` says a passenger page is open. Spacing stays on its 4px grid; the larger type brings its own air.
    An attribute, not a class: tailwind-merge would read `text-scale` as a
    colour and drop it.
    ========================================================================== */
-html[data-text-size="large"] [data-text-scale] {
+html[data-text-size="large"] [data-text-scale],
+html[data-text-size="large"][data-text-scope]
+  :is(
+    body > [data-slot$="-content"],
+    [data-radix-popper-content-wrapper],
+    [data-sonner-toaster]
+  ) {
   --text-2sm: 0.9375rem; /* 15px */
   --text-xs: 0.875rem; /* 14px */
   --text-sm: 1rem; /* 16px */
@@ -817,7 +824,13 @@ html[data-text-size="large"] [data-text-scale] {
   --text-3xl: 2.125rem; /* 34px */
 }
 
-html[data-text-size="xLarge"] [data-text-scale] {
+html[data-text-size="xLarge"] [data-text-scale],
+html[data-text-size="xLarge"][data-text-scope]
+  :is(
+    body > [data-slot$="-content"],
+    [data-radix-popper-content-wrapper],
+    [data-sonner-toaster]
+  ) {
   --text-2sm: 1.0625rem; /* 17px */
   --text-xs: 1rem; /* 16px */
   --text-sm: 1.125rem; /* 18px */
