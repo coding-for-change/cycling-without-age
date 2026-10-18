@@ -2,6 +2,7 @@ import { activity } from "@/lib/activity";
 import { DomainError } from "@/lib/domain-error";
 import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
+import { rideLocations } from "@/features/ride-locations";
 import type { ChapterInput, ChapterUpdateInput } from "@/features/chapters";
 
 export const defaultLocationFor = (
@@ -16,6 +17,32 @@ export const defaultLocationFor = (
   longitude: chapter.longitude,
 });
 
+export const careHomeRideLocationFor = (chapter: {
+  id: string;
+  careHomeName: string | null;
+  address: string | null;
+  latitude: number;
+  longitude: number;
+}) => {
+  const name = chapter.careHomeName?.trim();
+  if (!name) return null;
+  return {
+    chapterId: chapter.id,
+    kind: "careCenter" as const,
+    name,
+    address: chapter.address,
+    latitude: chapter.latitude,
+    longitude: chapter.longitude,
+  };
+};
+
+const addCareHomeRideLocation = async (
+  chapter: Parameters<typeof careHomeRideLocationFor>[0],
+) => {
+  const location = careHomeRideLocationFor(chapter);
+  if (location) await rideLocations.createRideLocation(location);
+};
+
 export async function createChapter({
   input,
   actorUserId,
@@ -25,6 +52,7 @@ export async function createChapter({
 }) {
   const chapter = await chapters.createChapter(input);
   await fleet.createDefaultLocation(defaultLocationFor(chapter));
+  await addCareHomeRideLocation(chapter);
   await activity.record({
     userId: actorUserId,
     actorUserId,
@@ -52,6 +80,12 @@ export async function updateChapter({
   const patch = chapters.withDerivedTimeZone(input);
   const changes = chapters.diffChapter(before, patch);
   const after = await chapters.updateChapter(chapterId, patch);
+  if (
+    !before.careHomeName?.trim() &&
+    after.careHomeName?.trim() &&
+    (await rideLocations.countChapterRideLocations(chapterId)) === 0
+  )
+    await addCareHomeRideLocation(after);
   for (const change of changes) {
     await activity.record({
       userId: actorUserId,

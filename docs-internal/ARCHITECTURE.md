@@ -1162,6 +1162,11 @@ kept. The nav calls them "Ride locations" and "Storage locations" so the two nev
   over whatever the client sent. Editing or archiving a location never rewrites a ride, and
   editing a ride's place on its detail page drops the link. The way back of a round trip
   starts at the destination, so only the way there is linked.
+- **The care home comes first.** A chapter's `careHomeName` becomes a Care Center ride location
+  with the chapter's address and pin: `use-cases/manage-chapter` adds it when a chapter is
+  created with one, or when one is named later while the chapter has no ride location at all,
+  and the migration `ride_location_from_care_home` did the same once for the chapters that
+  existed. Renaming the care home or moving the chapter afterwards leaves the location alone.
 - **Archive, never delete.** Archived locations disappear from the drawer and the add-rider
   form; past rides keep their snapshot. Archived rows are read-only until restored.
 - **Defaults.** `defaultPilotCount`, `defaultTrishawCount` and `defaultMinutes` prefill the
