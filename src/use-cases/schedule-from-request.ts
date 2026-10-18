@@ -131,7 +131,6 @@ export async function scheduleAutomatically(requestId: string) {
     return await scheduleClaimed(request, null, () =>
       rides.scheduleRide(ride, null, {
         opensForSignUp: settings.pilotsMaySelfAssign,
-        staffingLeadHours: settings.staffingCheckLeadHours,
         requestId,
         pickTrishaws: { candidates, count: 1 },
       }),

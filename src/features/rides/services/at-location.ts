@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { ACTIVE_SEAT } from "./rides";
 
 export const countUpcomingRidesByLocation = (
   locationIds: string[],
@@ -32,6 +33,6 @@ export const findUpcomingRidesAtLocation = (
       model: true,
       title: true,
       startsAt: true,
-      _count: { select: { roster: true } },
+      _count: { select: { roster: { where: ACTIVE_SEAT } } },
     },
   });

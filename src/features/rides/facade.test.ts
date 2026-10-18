@@ -2634,6 +2634,14 @@ describe("rides at a Ride Location", () => {
   it("asks nothing for no locations", async () => {
     expect((await rides.countRidesAt([])).size).toBe(0);
   });
+
+  it("counts only the seats still held on each upcoming ride", async () => {
+    db.ride.findMany.mockResolvedValue([]);
+    await rides.listUpcomingRidesAt("loc-1");
+    expect(db.ride.findMany.mock.calls[0][0].select._count).toEqual({
+      select: { roster: { where: { attendance: { not: "cancelled" } } } },
+    });
+  });
 });
 
 describe("pilots signing up themselves", () => {
@@ -3242,12 +3250,13 @@ describe("ridersBookedBetween", () => {
     );
   });
 
-  it("counts only rides that overlap the window and were not cancelled", async () => {
+  it("counts only seats still held, on rides that overlap the window and were not cancelled", async () => {
     db.rideRosterEntry.count.mockResolvedValue(0);
     await rides.ridersBookedBetween(["mother", "father"], window);
     expect(db.rideRosterEntry.count).toHaveBeenCalledWith({
       where: {
         passengerId: { in: ["mother", "father"] },
+        attendance: { not: "cancelled" },
         ride: {
           status: { not: "cancelled" },
           startsAt: { lt: window.endsAt },

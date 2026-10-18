@@ -348,7 +348,6 @@ describe("scheduleAutomatically", () => {
     );
     expect(options).toEqual({
       opensForSignUp: false,
-      staffingLeadHours: 24,
       requestId: "request-1",
       pickTrishaws: { candidates: SUITABLE, count: 1 },
     });
@@ -372,6 +371,17 @@ describe("scheduleAutomatically", () => {
     });
     await scheduleAutomatically("request-1");
     expect(scheduledRide().requiredPilots).toBe(1);
+  });
+
+  it("leaves the staffing check to the sweep", async () => {
+    (chapters.getSettings as jest.Mock).mockResolvedValue({
+      ...DEFAULT_CHAPTER_SETTINGS,
+      staffingCheckLeadHours: 48,
+    });
+    await scheduleAutomatically("request-1");
+    expect(scheduleRide.mock.calls[0][2]).not.toHaveProperty(
+      "staffingLeadHours",
+    );
   });
 
   it("starts the ride at the request's Ride Location and its coordinates", async () => {

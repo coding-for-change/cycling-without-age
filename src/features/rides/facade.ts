@@ -1554,12 +1554,6 @@ export async function cancelBooking(
   });
 }
 
-/**
- * A rider about to be deleted gives up every seat still ahead first, each as
- * a cancelled booking, so the ride's history, its chat and — when their own
- * side let go — its admins hear of it instead of the row just vanishing.
- */
-/** The rides still ahead that any of these riders is booked on. */
 export async function upcomingRideIdsOf(
   passengerIds: string[],
   now = new Date(),
@@ -1569,6 +1563,11 @@ export async function upcomingRideIdsOf(
   return [...new Set(bookings.map((booking) => booking.rideId))];
 }
 
+/**
+ * A rider about to be deleted gives up every seat still ahead first, each as
+ * a cancelled booking, so the ride's history, its chat and — when their own
+ * side let go — its admins hear of it instead of the row just vanishing.
+ */
 export async function cancelUpcomingBookings(
   passengerIds: string[],
   actorUserId: Actor,

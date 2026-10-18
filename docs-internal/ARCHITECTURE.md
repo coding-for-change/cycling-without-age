@@ -1453,8 +1453,8 @@ needs no migration later; nothing writes the contact columns yet.
   (`leadTime`, `beyondHorizon`, `closedDate`, `outsideHours` as `DomainError` codes). The
   account must still be a member of the riders' chapter (`notChapterMember`), the riders must
   fit the chapter's largest trishaw in service and never more than two (`tooManyRiders`), no
-  rider may already be asked for in an overlapping window (`alreadyRequested`) or booked then
-  (`riderBooked`), and an account has at most five requests waiting (`tooManyRequests`). A Ride
+  rider may already be asked for in an overlapping window (`alreadyRequested`) or hold a seat
+  then (`riderBooked`; a seat given up is free again), and an account has at most five requests waiting (`tooManyRequests`). A Ride
   Location's snapshot overrides whatever place was sent. Rate-limited to 10 an hour per account.
 - **Scheduling** (`use-cases/schedule-from-request`): the request is first **claimed**
   (`pending` → `scheduled` in one conditional update), so two admins pressing Schedule at once
@@ -1469,8 +1469,10 @@ needs no migration later; nothing writes the contact columns yet.
   is free: `rides.scheduleRide` takes `pickTrishaws` and picks the free ones **under their
   locks inside the ride's own write**, never checked first and booked after. The ride starts at
   the start of the requested window, lasts `defaultRideMinutes`, has no pilot (pilots sign up
-  through PR 5's open rides) and is scheduled by nobody (`actorUserId: null`). Without a free
-  trishaw the request stays pending and only then is announced to the admins.
+  through PR 5's open rides) and is scheduled by nobody (`actorUserId: null`). No admin saw
+  what it lacks, so it is never stamped as staffing-checked: one that starts inside the staffing
+  window short of pilots is warned about on the next sweep. Without a free trishaw the request
+  stays pending and only then is announced to the admins.
 - **Declining and withdrawing** are single-feature: the Actions call `rideRequests.decline`
   (after `requireChapterAdmin` on the request's own chapter) and `rideRequests.withdraw`
   (which checks that the caller sent it and that it is still pending).
