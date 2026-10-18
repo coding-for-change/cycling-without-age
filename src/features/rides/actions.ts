@@ -21,7 +21,6 @@ import {
   withinUploadLimit,
 } from "@/lib/storage";
 import { bookRider } from "@/use-cases/book-rider";
-import { completeRide } from "@/use-cases/complete-ride";
 import {
   allocateTrishaws,
   freeTrishawsInWindow,
@@ -505,7 +504,8 @@ export async function completeRideAction(
   return onRideDay(
     rideRef,
     { rideId },
-    (_, { rideId: id, actorUserId, as }) => completeRide(id, actorUserId, as),
+    (_, { rideId: id, actorUserId, as }) =>
+      rides.closeRoster(id, actorUserId, as),
     (tally) => changed(tally !== null),
   );
 }

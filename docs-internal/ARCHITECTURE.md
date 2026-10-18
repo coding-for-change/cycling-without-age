@@ -1158,11 +1158,11 @@ debrief and the frozen ride chat. One migration, `20261016120000_ride_execution`
   the rider tallies skip rows without a passenger. The admin's roster lists them under "At the
   door", so its count of places taken matches its rows.
 - **Roster closure** (6D). "Complete ride" (`CompleteRideButton`, a confirm dialog that shows the
-  tally: "3 riders checked in, 1 trishaw, 2 hr") runs `use-cases/complete-ride.ts`:
-  `rides.closeRoster` sets `status: completed`, `completedAt`/`completedByUserId`, turns
+  tally: "3 riders checked in, 1 trishaw, 2 hr") calls `rides.closeRoster`, which sets `status: completed`, `completedAt`/`completedByUserId`, turns
   `checkedIn` into `completed`, `booked`/`confirmed` into `noShow` and every pilot's `signedUp`
-  into `completed`, and emits `ride.completed` — then `chat.freezeRideConversation` freezes the
-  ride's chat. A second tap changes nothing and leaves alone a chat its people kept going. An
+  into `completed`, and emits `ride.completed` — whose `freezeRideChat` worker listener freezes
+  the ride's chat, retried with the event until it holds. A second tap changes nothing and emits
+  nothing, so it leaves alone a chat its people kept going. An
   admin can mark a pilot who never came
   (`setPilotNoShow`, Report 1) and **Reopen** a completed ride from the detail page's danger
   zone (`rides.reopenRide`, logged): every rider goes back to where they stood on the day, the

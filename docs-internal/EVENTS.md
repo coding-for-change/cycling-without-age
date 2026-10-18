@@ -287,8 +287,11 @@ reminder cannot ride on an existing event; the marker (`riderReminderSentAt`,
 emit under the ride's lock, so neither a retried sweep nor a retried dispatch tells anyone
 twice. Moving a ride's start clears all three and asks confirmed or checked-in seats again,
 so the reminders go again for its new time; a new end clears only the staffing stamp.
-`ride.completed` and `ride.reopened` have no listener: the chat freezes in
-`use-cases/complete-ride.ts` itself.
+`ride.completed` has a `freezeRideChat` listener that wraps the ride's chat up
+(`chat.freezeRideConversation`). The roster closes and emits in one transaction, so the freeze
+rides the outbox and its retries: a freeze that fails tries again and never takes the closed
+roster back. A second tap on a closed roster emits nothing, so a chat its people kept going
+stays open. `ride.reopened` has no listener.
 
 **A ride already over is history.** `ridePilotAssigned`, `rideBookingConfirmed` and
 `rideBookingCancelled` tell nobody when the ride has ended (`rideNotOver`), so an admin

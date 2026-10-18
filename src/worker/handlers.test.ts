@@ -32,9 +32,11 @@ describe("handlers", () => {
     expect(listenersOf("ride.riderBooked")).toEqual(["notify", "syncRideChat"]);
   });
 
-  // The chat freezes in the completing use case itself, not in a listener.
-  it("lets a closed or reopened roster pass without a job", () => {
-    expect(listenersOf("ride.completed")).toEqual([]);
+  it("wraps up the ride's chat once the roster is closed, retried until it holds", () => {
+    expect(listenersOf("ride.completed")).toEqual(["freezeRideChat"]);
+  });
+
+  it("lets a reopened roster pass without a job", () => {
     expect(listenersOf("ride.reopened")).toEqual([]);
   });
 });

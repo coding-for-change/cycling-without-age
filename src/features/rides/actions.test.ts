@@ -15,7 +15,6 @@ import {
 import { isChapterAdmin } from "@/lib/access";
 import { requireChapterAdmin } from "@/lib/auth-guards";
 import { withinRateLimit } from "@/lib/rate-limit";
-import { completeRide } from "@/use-cases/complete-ride";
 
 jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }));
 jest.mock("@/lib/auth-guards", () => ({
@@ -25,9 +24,6 @@ jest.mock("@/lib/auth-guards", () => ({
 }));
 jest.mock("@/lib/access", () => ({ isChapterAdmin: jest.fn(() => false) }));
 jest.mock("@/lib/rate-limit", () => ({ withinRateLimit: jest.fn(() => true) }));
-jest.mock("@/use-cases/complete-ride", () => ({
-  completeRide: jest.fn(async () => ({ riders: 2, noShows: 0 })),
-}));
 jest.mock("@/lib/avatar", () => ({
   avatarSeed: (email: string) => email,
   avatarSvg: () => "<svg />",
@@ -69,6 +65,7 @@ jest.mock("@/features/rides/index", () => ({
     removeWalkUp: jest.fn(async () => true),
     setPilotNoShow: jest.fn(async () => true),
     rescheduleRide: jest.fn(async () => ({ changed: true })),
+    closeRoster: jest.fn(async () => ({ riders: 2, noShows: 0 })),
   },
 }));
 
@@ -142,7 +139,7 @@ describe("who runs a ride on the day", () => {
     {
       name: "completion",
       run: () => completeRideAction("ride-1"),
-      facade: () => completeRide as jest.Mock,
+      facade: () => rides.closeRoster as jest.Mock,
       as: (call: unknown[]) => call[2],
     },
     {
