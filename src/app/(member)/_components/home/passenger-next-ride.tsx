@@ -1,5 +1,19 @@
 import Link from "next/link";
-import { ArrowRight, Bike, Clock, Search } from "lucide-react";
+import {
+  ArrowRight,
+  Bike,
+  Clock,
+  Cloud,
+  CloudDrizzle,
+  CloudFog,
+  CloudLightning,
+  CloudRain,
+  CloudSnow,
+  CloudSun,
+  Search,
+  Sun,
+  type LucideIcon,
+} from "lucide-react";
 import { Scene } from "@/components/art";
 import { HeroButton } from "@/components/hero-button";
 import { PersonAvatar } from "@/components/person-avatar";
@@ -15,6 +29,20 @@ import {
 import { dayKey } from "@/lib/calendar";
 import { formatMessage } from "@/lib/i18n/format";
 import { firstName } from "@/lib/utils";
+import type { WeatherKind } from "@/lib/weather";
+
+const WEATHER_ICON: Record<WeatherKind, LucideIcon> = {
+  clear: Sun,
+  partlyCloudy: CloudSun,
+  cloudy: Cloud,
+  fog: CloudFog,
+  drizzle: CloudDrizzle,
+  rain: CloudRain,
+  snow: CloudSnow,
+  thunder: CloudLightning,
+};
+
+type Weather = { kind: WeatherKind; text: string; label: string };
 
 type Strings = {
   book: string;
@@ -42,6 +70,7 @@ export function PassengerNextRide({
   words,
   profileBase,
   now,
+  weather,
 }: {
   upcoming: RideCalendarRow[];
   bookHref: string;
@@ -50,6 +79,7 @@ export function PassengerNextRide({
   words: Locale;
   profileBase: string;
   now: Date;
+  weather: Weather | null;
 }) {
   const coming = upcoming.filter(
     (ride) => ride.status !== "cancelled" && ride.endsAt > now,
@@ -76,6 +106,7 @@ export function PassengerNextRide({
           words={words}
           now={now}
           say={say}
+          weather={weather}
         />
       ) : (
         <div className="reveal relative overflow-hidden rounded-(--r-tile) bg-mint-tint [--i:2]">
@@ -113,6 +144,7 @@ function NextRideTile({
   words,
   now,
   say,
+  weather,
 }: {
   ride: RideCalendarRow;
   strings: Strings;
@@ -120,7 +152,9 @@ function NextRideTile({
   words: Locale;
   now: Date;
   say: (template: string, values: Record<string, string>) => string;
+  weather: Weather | null;
 }) {
+  const WeatherIcon = weather ? WEATHER_ICON[weather.kind] : null;
   const zone = ride.chapter.timeZone;
   const pilot = ride.assignments.find(({ role }) => role === "pilot")?.user;
   const place = ride.locationName ?? ride.locationAddress;
@@ -155,6 +189,16 @@ function NextRideTile({
                 place,
               })
             : say(strings.pickupAt, { place })}
+        </span>
+      ) : null}
+      {weather && WeatherIcon ? (
+        <span className="inline-flex w-fit items-center gap-1.25 rounded-full bg-white/15 px-2.5 py-1 text-sm font-bold">
+          <WeatherIcon
+            aria-hidden
+            className="size-4"
+          />
+          <span className="sr-only">{weather.label}: </span>
+          {weather.text}
         </span>
       ) : null}
       <span className="mt-2 flex items-center justify-between gap-3">

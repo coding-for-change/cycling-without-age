@@ -4,6 +4,7 @@ import {
   formatDuration,
   formatDurationLong,
   formatMonthAbbrev,
+  formatTemperature,
   formatHour,
   formatPeriod,
   formatRelativeTime,
@@ -151,5 +152,12 @@ describe("formatMonthAbbrev", () => {
   it("names the month alone, in either notation", () => {
     expect(formatMonthAbbrev("2026-10-24", "en-US")).toBe("Oct");
     expect(formatMonthAbbrev("2026-10-24", "de-DE")).toBe("Okt");
+  });
+});
+
+describe("formatTemperature", () => {
+  it("follows the regional scale", () => {
+    expect(formatTemperature(18, "en-US")).toBe("64°F");
+    expect(formatTemperature(18, "de-DE")).toBe("18 °C");
   });
 });

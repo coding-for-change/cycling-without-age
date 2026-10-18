@@ -6,7 +6,8 @@ import { passengers } from "@/features/passengers";
 import { rides } from "@/features/rides";
 import { RideAgenda } from "@/features/rides/components/ride-agenda";
 import { perspectiveViewerSession } from "@/lib/auth-guards";
-import { resolveLocale, wordsLocale } from "@/lib/format";
+import { formatTemperature, resolveLocale, wordsLocale } from "@/lib/format";
+import { forecastFor } from "@/lib/weather";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
 import { primaryAction, type MemberPerspective } from "../../nav";
@@ -59,7 +60,15 @@ export async function NextRideCard({
     language,
   );
 
-  if (session && perspective === "passenger")
+  if (session && perspective === "passenger") {
+    const now = new Date();
+    const next = upcoming.find(
+      (ride) => ride.status !== "cancelled" && ride.endsAt > now,
+    );
+    const forecast = next
+      ? await forecastFor(next.chapter, next.startsAt, now)
+      : null;
+    const notation = resolveLocale(head.get("accept-language"));
     return (
       <PassengerNextRide
         upcoming={upcoming}
@@ -70,12 +79,24 @@ export async function NextRideCard({
           empty,
           agenda: strings,
         }}
-        notation={resolveLocale(head.get("accept-language"))}
+        notation={notation}
         words={wordsLocale(language)}
         profileBase={`${PERSPECTIVE_HOME[perspective]}/profile`}
-        now={new Date()}
+        now={now}
+        weather={
+          forecast
+            ? {
+                kind: forecast.kind,
+                text: `${formatTemperature(forecast.celsius, notation)} · ${
+                  dict.member.home.passenger.weather[forecast.kind]
+                }`,
+                label: dict.member.home.passenger.weather.label,
+              }
+            : null
+        }
       />
     );
+  }
 
   return (
     <section className="flex flex-col gap-3">

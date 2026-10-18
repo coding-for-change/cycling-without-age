@@ -1834,6 +1834,17 @@
           "seats": "{free} af {total} pladser ledige",
           "full": "Fuldt booket",
           "mine": "Du er med"
+        },
+        "weather": {
+          "clear": "Sol",
+          "partlyCloudy": "Let skyet",
+          "cloudy": "Overskyet",
+          "fog": "Tåge",
+          "drizzle": "Støvregn",
+          "rain": "Regn",
+          "snow": "Sne",
+          "thunder": "Torden",
+          "label": "Vejrudsigt"
         }
       },
       "pilot": {

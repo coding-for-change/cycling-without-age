@@ -232,6 +232,19 @@ export function formatMonthShort(value: Date | string, locale: Locale): string {
   }).format(toCalendarDate(value));
 }
 
+/**
+ * `64°F` (en-US) · `18 °C` (de-DE): the scale is regional notation, so an
+ * American reads Fahrenheit for a ride in Munich.
+ */
+export function formatTemperature(celsius: number, locale: Locale): string {
+  const fahrenheit = locale === "en-US";
+  return numberFormatter(locale, {
+    style: "unit",
+    unit: fahrenheit ? "fahrenheit" : "celsius",
+    maximumFractionDigits: 0,
+  }).format(fahrenheit ? (celsius * 9) / 5 + 32 : celsius);
+}
+
 /** `Mar` (en-US) · `März` (de-DE) — the month alone, for a calendar-sheet chip */
 export function formatMonthAbbrev(
   value: Date | string,

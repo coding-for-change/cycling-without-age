@@ -1834,6 +1834,17 @@
           "seats": "{free} of {total} seats free",
           "full": "Fully booked",
           "mine": "You're on it"
+        },
+        "weather": {
+          "clear": "Sunny",
+          "partlyCloudy": "Partly cloudy",
+          "cloudy": "Cloudy",
+          "fog": "Fog",
+          "drizzle": "Drizzle",
+          "rain": "Rain",
+          "snow": "Snow",
+          "thunder": "Thunderstorms",
+          "label": "Weather forecast"
         }
       },
       "pilot": {

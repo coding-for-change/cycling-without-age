@@ -1834,6 +1834,17 @@
           "seats": "{free} von {total} Plätzen frei",
           "full": "Ausgebucht",
           "mine": "Sie sind dabei"
+        },
+        "weather": {
+          "clear": "Sonnig",
+          "partlyCloudy": "Heiter",
+          "cloudy": "Bewölkt",
+          "fog": "Nebel",
+          "drizzle": "Nieselregen",
+          "rain": "Regen",
+          "snow": "Schnee",
+          "thunder": "Gewitter",
+          "label": "Wettervorhersage"
         }
       },
       "pilot": {
