@@ -171,6 +171,33 @@ describe("reading a chapter's settings", () => {
     expect(settings.get(CHAPTER)).toEqual(row);
     expect(settings.get("other")).toEqual(DEFAULT_CHAPTER_SETTINGS);
   });
+
+  it("answers the booking policy from the chapter's settings and hours", async () => {
+    db.chapterSettings.findUnique.mockResolvedValue({
+      ...DEFAULT_CHAPTER_SETTINGS,
+      bookingLeadTimeHours: 48,
+      bookingHorizonDays: 14,
+      defaultRideMinutes: 90,
+    });
+    db.chapterOperatingWindow.findMany.mockResolvedValue([
+      { chapterId: CHAPTER, weekday: 2, startMinute: 600, endMinute: 720 },
+    ]);
+    db.chapterClosure.findMany.mockResolvedValue([]);
+
+    const { policy, hours } = await chapters.getBookingPolicy(
+      CHAPTER,
+      new Date("2026-10-16T08:00:00Z"),
+    );
+
+    expect(policy).toEqual({
+      leadTimeHours: 48,
+      horizonDays: 14,
+      rideMinutes: 90,
+    });
+    expect(hours.windows).toEqual([
+      expect.objectContaining({ weekday: 2, startMinute: 600, endMinute: 720 }),
+    ]);
+  });
 });
 
 describe("writing a chapter's settings", () => {

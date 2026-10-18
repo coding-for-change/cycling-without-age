@@ -32,7 +32,7 @@ calls that facade directly. Its old work is two listeners in the worker.
 | `complete-onboarding-profile` | `membership`, `passengers`, `profile` | Writes the account's own details, creates the rider profile a ride will point at, and stamps `onboardedAt`. The welcome mail is no longer sent here: `profile.completeOnboarding` emits `user.onboarded` and the pipeline does the rest, exactly once. `completeCaretakerOnboarding` is the caretaker branch: it adds every rider they book for (each with its own pickup place), names the account and marks it `managesOthers`. |
 | `add-managed-rider` | `membership`, `passengers`, `profile` | A passenger starts or keeps booking for someone else after onboarding: the rider lands in the chapter of the riders already managed (or the caretaker's passenger membership), which only `membership` can confirm, and the account is marked `managesOthers`. |
 | `notifications/notify` | `notifications` (+ the kinds) | The generic listener. A kind names the recipients and the parameters; this writes one inbox row each and queues push and email per the kind's policy. Runs in the worker, from an event, with no session. |
-| `notifications/deliver-email` | `notifications`, `profile`, `chapters` (+ `activity`, `mailer`) | One email for one `Notification`, in the recipient's own locale (hence `profile`), with the attempt recorded on the `Delivery` row. A delayed `ifNoPush` job re-checks here whether the push landed or the row was already read. `chapters.getSettings` supplies the chapter's reply-to, so an answer goes back to the chapter the mail was about. |
+| `notifications/deliver-email` | `notifications`, `profile`, `chapters` (+ `activity`, `mailer`) | One email for one `Notification`, in the recipient's own locale (hence `profile`), with the attempt recorded on the `Delivery` row. A delayed `ifNoPush` job re-checks here whether the push landed or the row was already read. `chapters.getSettings` supplies the chapter's reply-to, so an answer goes back to the chapter the mail was about. A kind that names `attachments` (the scheduled Ride Request's `.ics`) has them rendered with `lib/ics` and attached. |
 | `notifications/deliver-push` | `notifications`, `profile` (+ `lib/push`) | One push for one `Notification`: the recipient's opt-in and device tokens, the locale for the copy, `sendPush` through `firebase-admin`, and dead tokens pruned from the `device` table. A kind may also carry a `chapterAllowsPush` hook, which the notification kinds answer from `chapters`. Missing credentials are a `skipped` row, not a retry. |
 | `notifications/inbox` | `notifications` (+ the kinds) | The bell's read model: stored payloads rendered back into `{ title, body, href }` in the reader's locale, plus the unseen count. Its kind lookup is non-throwing, so a retired kind leaves a gap in the list instead of blanking the bell. |
 | `member-home` | `chapters`, `membership` | Where a member belongs: their memberships, their open applications and the chapter rows behind both. `cache()`d, because the sidebar subtitle and the home's chapter cards ask it in the same request from two different Suspense boundaries. |
@@ -59,7 +59,7 @@ calls that facade directly. Its old work is two listeners in the worker.
 | `ride-sweep` | (`staffing-check`, `ride-reminders`) | The worker's five-minute pass over upcoming rides: the staffing check, the rider and pilot reminders and the demand check, one after another. One that fails is logged and the others still run; the run then fails, so the monitor sees it. |
 | `ride-reminders` | `chapters`, `rides` | Lifecycle 4C and 5B. Each chapter sets its own leads (`riderReminderLeadMinutes`, `volunteerReminderLeadMinutes`, `demandCheckLeadHours`), so the chapters are grouped by lead and each group reads only the rides already inside it, at most 50 a run. `rides.sendReminder` and `rides.checkDemand` stamp the ride's marker and emit in one transaction under its lock. Runs in the worker, from `ride-sweep`. |
 | `seat-confirmation` | `passengers`, `rides` | Lifecycle 5B-b: an account answers for a seat only of a rider it books for, or its own (`passengers.listRidersOfAccount`); the seat changes under the ride's lock (`rides.confirmSeat`, `rides.cancelSeat`). |
-| `ride-chat` | `chat`, `membership`, `rides` | A ride's chat holds its pilots and riders' accounts (`rides`) and the chapter's admins (`membership`) — the riders' accounts only when they are one household, never on an event, so riders of different households never meet in it; `chat.syncRideConversation` keeps the members in step. Called by the `syncRideChat` worker listener. |
+| `ride-chat` | `chat`, `membership`, `rides` | A ride's chat holds its pilots and riders' accounts (`rides`) and the chapter's admins (`membership`) — the riders' accounts only when they are one household, never on an event, so riders of different households never meet in it; `chat.syncRideConversation` keeps the members in step. Called by the `syncRideChat` worker listener; after a hand-over, `syncRiderChats` syncs every ride still ahead of the rider (`rides.upcomingRideIdsOf`). |
 | `leave-ride-crews` | `chat`, `rides` (+ `ride-chat`) | The `member.roleChanged` listener for a demotion or removal. Someone who stops piloting in a chapter keeps their assignment rows, so the upcoming rides they were on are checked for pilots again (`rides.reopenStaffingChecksOf`), and every ride chat of the chapter they are in (`chat.listRideChatsOf`) is synced, which drops a former pilot or admin. |
 | `book-event-seat` | `passengers`, `rides` | An account books seats on an announced event only for riders it manages, in the event's chapter (`passengers`); the seats are counted under the ride's lock (`rides.bookSeats`). |
 | `staff-ride` | `membership`, `rides` | An admin may put only someone holding the `pilot` role in the ride's own chapter on it; that role is membership's, the assignment the calendar's. Taking a pilot off is single-feature, so that Action calls `rides.unassignVolunteer` directly. |
@@ -74,8 +74,12 @@ calls that facade directly. Its old work is two listeners in the worker.
 | `chat-notifications/deliver-chat-digest` | `chat`, `profile`, `notifications` (+ `lib/mailer`) | One grouped mail for everything unread in one conversation, for a recipient push cannot reach. Re-checks membership, unread, mute, preference and *still no push* before decrypting a single row. |
 | `person-access` | `chapters`, `membership`, `passengers`, `person-profiles`, `profile` | Who may see or edit a person: `self`, `manager`, `admin`, `peer` or nothing. A peer is an approved pilot of one of the person's chapters, or a rider or manager looking at a pilot of their chapter; riders never see each other. Health details only with recorded consent, and only for the chapter the person rides in. |
 | `file-access` | `person-profiles`, `rides`, `fleet` (+ `person-access`) | The read rule behind `/api/files/[id]`: a profile photo is readable exactly when its person is (`person-access`), a ride photo by `rides.photoReadRule`, everything else by `fleet.fileReadRule`. |
-| `delete-account` | `accounts`, `passengers`, `person-profiles`, `rides` | The schema cascades the rows, but profile photos live in the bucket: their keys are collected before `accounts.deleteUser` and the objects deleted after. A rider with their own account who was looked after by the deleted user becomes their own manager first, so only riders without an account go with it. Before the cascade, the account's own rider and the riders going with it give up their seats on rides still ahead (`rides.cancelUpcomingBookings`), so each ride logs it, its chat is synced and its admins hear when the account left on its own. |
-| `manage-rider` | `passengers`, `person-profiles`, `rides` (+ `person-access`) | A caretaker, or an admin of the rider's chapter, edits or removes a rider without an account (`canManageRider`); a rider with their own account is never reachable this way. Removal first gives up the rider's seats on rides still ahead (`rides.cancelUpcomingBookings`, one `ride.riderRemoved` each), then deletes the passenger (past roster entries cascade, rides stay) and purges their profile photo from the bucket. |
+| `delete-account` | `accounts`, `passengers`, `person-profiles`, `ride-requests`, `rides` | The schema cascades most rows, but profile photos live in the bucket: their keys are collected before `accounts.deleteUser` and the objects deleted after. A rider with their own account who was looked after by the deleted user becomes their own manager first. Riders without an account are deleted only when the caller passes `removeRiders` — `Passenger.managedBy` restricts, so nothing goes silently (`managesRiders` otherwise). Those riders and the account's own rider give up their seats on rides still ahead (`rides.cancelUpcomingBookings`), and the open ride requests of the account and of those riders are withdrawn (`rideRequests.withdrawOpenRequests`). |
+| `manage-rider` | `passengers`, `person-profiles`, `ride-requests`, `rides` (+ `person-access`) | A caretaker, or an admin of the rider's chapter, edits or removes a rider without an account (`canManageRider`); a rider with their own account is never reachable this way. Removal first gives up the rider's seats on rides still ahead (`rides.cancelUpcomingBookings`, one `ride.riderRemoved` each), withdraws the open requests that had only this rider on them, then deletes the passenger (past roster entries cascade, rides stay) and purges their profile photo from the bucket. |
+| `hand-over-rider` | `accounts`, `membership`, `passengers`, `profile`, `ride-requests` | An admin moves a rider without an account to another manager: a member of the rider's chapter (`membership.getMemberRoles`), or someone new whom `accounts` provisions and `membership` joins as a passenger before `passengers.announceCareInvite` invites them. An existing account outside the chapter is refused. `passengers.handOverRider` moves the rider under a compare-and-set and emits `rider.handedOver`; `profile.markManagesOthers` marks the new manager. The rider's open requests move along (`rideRequests.handOverOpenRequests`): one for this rider alone now belongs to the new manager, a shared one goes on without this rider, so the old manager is told nothing more about them. |
+| `move-handed-over-requests` | `passengers`, `ride-requests` | The worker's `moveRequests` listener on `rider.handedOver`: a second go at moving the rider's open requests (`rideRequests.handOverOpenRequests`), only while the rider is still with the account they were handed to (`passengers.getPassenger`). Kept apart from `hand-over-rider` so the worker never loads `accounts`. |
+| `submit-ride-request` | `chapters`, `fleet`, `membership`, `passengers`, `profile`, `ride-locations`, `ride-requests`, `rides` (+ `schedule-from-request`, `lib/booking-windows`) | The riders come from the account's own (`passengers`), and only while the account is still a member of their chapter (`membership`); the chapter is theirs, never the client's. The window must pass the chapter's booking policy and riding hours (`chapters`, `lib/booking-windows`), the riders fit the largest trishaw type (`fleet`), and a Ride Location's snapshot replaces the sent place (`ride-locations`). `ridersToBook` reads the own rider's home from `profile`. A rider already asked for in an overlapping window, or an account with five requests waiting, is refused (`rideRequests.assertCanAsk`), and so is a rider already booked then (`rides.ridersBookedBetween`). In a chapter that schedules automatically it hands the request to `scheduleAutomatically` and announces it only when no ride came of it. |
+| `schedule-from-request` | `chapters`, `fleet`, `ride-requests`, `rides` (+ `schedule-ride`) | Claims the request (`rideRequests.claim`), writes the ride with the request's riders on both legs — through `scheduleRideAt` for the admin's drawer, or `rides.scheduleRide` with `pickTrishaws` for automatic scheduling, which picks among the chapter's usable trishaws (`fleet`) under their locks — and links it (`rideRequests.markScheduled`). A failed write releases the claim. |
 | `setup-checklist` | `person-profiles`, `profile`, `passengers`, `notifications`, `rides` | The home card that replaced the pilot next-steps screen: the profile, the passkey count, push devices, managed riders and the first finished ride, each from the feature that owns it. |
 | `passenger-audience` | `profile`, `passengers` | Who the passenger home speaks to: the rider themself, a caretaker of one named rider or several, or a caretaker who also rides. `managesOthers` is `profile`'s, the riders are `passengers`'. `cache()`d, because the greeting, the next-ride card and the setup checklist ask it in the same request. |
 | `pilot-steps` | `membership`, `chapters`, `person-profiles` | Self-ticked training steps are for pilots and applicants only; an admin confirms one through `requireAdminOf` over the pilot's chapters. |
@@ -147,10 +151,7 @@ Single-facade work has no use case: `lib/auth-guards` calls `chapters.getChapter
 and `profile.getProfile` (the admin passkey gate) directly, `app/admin/chapters/actions` calls
 the chapters facade directly, `features/membership/actions` calls the membership facade
 directly, and the passkey and pilot-next-steps actions call the profile facade directly.
-`deleteOwnAccountAction` (in `features/accounts/actions`) is the same: `accounts.deleteUser` is one facade call
-behind `requireAuth` plus `canDeleteOwnAccount`, and the schema cascades the rest, so it is an
-Action and not a use case — the mirror of the admin hard delete below, with the session as the only
-subject. `features/notifications/actions` is the same shape: mark seen, mark read, register and
+`features/notifications/actions` is the same shape: mark seen, mark read, register and
 unregister a device are four writes into one facade, called from the bell and from the
 push registrar. `app/admin/settings/actions` likewise: one write of the chapter's
 `ChapterSettings` row behind `requireChapterAdmin`, so it calls `chapters.updateSettings`
@@ -160,7 +161,9 @@ The worker calls exactly one facade directly: the nightly
 `prune-devices` scheduler calls `notifications.pruneStaleDevices()`. Token hygiene
 coordinates one feature and carries no session, so per AGENTS.md it is not a use case —
 `worker/index` dispatches it next to `sweep` through its `MAINTENANCE` map. See
-[EVENTS.md](../EVENTS.md) → *Maintenance jobs*.
+[EVENTS.md](../EVENTS.md) → *Maintenance jobs*. Event listeners may call one facade directly
+for the same reason: `linkRideRequest` (on `ride.scheduled`) calls
+`rideRequests.markScheduled` to link a request whose scheduling stopped halfway.
 
 The member shell (`src/app/(member)`) and the account surface
 (`src/components/account`). Neither is a feature slice: the shell is routing plus chrome and
@@ -175,9 +178,11 @@ not because two features are involved.
 `features/accounts` has no UI of its own either — its Server Actions are imported
 straight into the admin passengers and members screens, because "provision a user" is not a
 page. Deleting an account — the super admin's `deleteUserAction` and the member's own
-`deleteOwnAccountAction` — goes through `delete-account`: the schema cascades the
-rows, but profile photos are objects in the bucket, so the use case collects their keys from
-`person-profiles` before `accounts.deleteUser` and deletes the objects after. The `accounts` service is the only place outside `prisma/seed.ts` that calls BetterAuth's admin API
+`deleteOwnAccountAction` — goes through `delete-account`: riders without an account go only
+when the caller names them, their seats and open requests are given up first, and profile
+photos are objects in the bucket, so the use case collects their keys from
+`person-profiles` before `accounts.deleteUser` and deletes the objects after (see its row
+above). The `accounts` service is the only place outside `prisma/seed.ts` that calls BetterAuth's admin API
 (`auth.api.createUser`); everything else in that slice is ordinary Prisma.
 `accounts.claimAccount` is called from the onboarding consent action, not from the
 admin shell: the account is claimed by the person who received it, at the one step nobody may
@@ -250,8 +255,17 @@ trishaw's name and where it waits, never the access code.
 
 The ride kinds (`kinds/rides.ts`, category `ride`) reach `rides` for the ride's time, place and
 participants and `passengers` for a rider's name and the accounts behind them; whether a rider
-who left was an admin's doing comes from `membership.getMemberRoles`. `/rides/[rideId]` is a
-Route Handler in the Boundary layer for the same reason as `/chat/[id]`: it is a deep link.
+who left was an admin's doing comes from `membership.getMemberRoles`, and `ride-requests`
+names who asked for a ride booked from a request, so the booking notice skips them.
+`/rides/[rideId]` is a Route Handler in the Boundary layer for the same reason as
+`/chat/[id]`: it is a deep link.
+
+The Ride Request kinds (`kinds/ride-requests.ts`, category `request`, and `rider.handedOver`,
+category `membership`) reach `ride-requests` for the request, `chapters` for the chapter's
+name and whether its admins want request alerts on the phone, `passengers` for the riders'
+names, `rides` for the ride a scheduled request became — its legs feed the `.ics` attachment —
+and, through `kinds/lookups.ts`, `membership` for the chapter's admins and `profile` for the
+requester's name.
 
 ### Person profiles
 

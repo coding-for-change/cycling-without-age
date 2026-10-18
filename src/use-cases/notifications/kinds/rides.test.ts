@@ -139,6 +139,7 @@ describe("who hears about a ride", () => {
       actorUserId: "admin-1",
       passengerId: "passenger-1",
       pair: null,
+      requestId: null,
     };
     expect(
       await ridePilotAssigned.recipients({ ...assigned, self: false }),
@@ -266,6 +267,7 @@ describe("who hears about a ride", () => {
         actorUserId: "admin-1",
         passengerId: "passenger-1",
         pair: null,
+        requestId: null,
       }),
     ).toEqual(["carer-1", "rider-1"]);
   });
@@ -328,6 +330,7 @@ describe("who hears about a ride", () => {
           actorUserId: "admin-1",
           passengerId: "passenger-1",
           pair: follow,
+          requestId: null,
         }),
       ).toEqual([]);
       expect(
@@ -421,6 +424,7 @@ describe("names in stored notifications", () => {
     actorUserId: "admin-1",
     passengerId: "passenger-1",
     pair: null,
+    requestId: null,
   };
 
   it("stores the rider's id and no name", async () => {
@@ -493,6 +497,7 @@ it("tells nobody about a ride that no longer exists", async () => {
       actorUserId: "admin-1",
       passengerId: "passenger-1",
       pair: null,
+      requestId: null,
     }),
   ).toEqual([]);
 });

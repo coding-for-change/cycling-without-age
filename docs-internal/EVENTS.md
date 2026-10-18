@@ -102,7 +102,8 @@ type DeliveryPolicy = {
   `"push delivered"` if the sibling `push` delivery is `sent`. Otherwise the mail goes out.
 - `collapseKey?(event)` is optional and lands on the `Notification` row. It is the handle
   for "five ride requests become one card" later. `trishawDamageReported`, `rideOpened`,
-  `ridePilotWithdrew` and `rideAnnounced` set one, but nothing reads the column yet:
+  `ridePilotWithdrew`, `rideAnnounced`, `rideRequestSubmitted` and `rideRequestWithdrawn`
+  (`requests:{chapterId}`) set one, but nothing reads the column yet:
   `deliverPush` does not pass it to `sendPush` and the bell does not group by it, so no
   notification collapses today. Which kinds should replace each other's banners is COD-267.
 - `chapterAllowsPush?(chapterId)` is optional too: the **chapter's** say on the push
@@ -123,6 +124,9 @@ type DeliveryPolicy = {
 - All three read `features/chapters`' `ChapterSettings` row through the facade, which
   answers with the defaults while the chapter has no row. See
   [ARCHITECTURE.md](ARCHITECTURE.md) → *Chapter settings*.
+- `attachments?(params, strings, locale)` is optional: calendar files the mail carries, as
+  `{ filename, calendar }`. `deliverEmail` renders each `calendar` with `lib/ics` and hands it
+  to `sendMail` as `text/calendar`; push and the inbox ignore it.
 - `Message` is email-shaped. `heading` and `body` carry the mail; `title` is the shorter
   line the bell and the push banner use when a kind sets it (the welcome card reads
   "Welcome to München" while the mail keeps its heading). `steps` renders the numbered
@@ -220,13 +224,13 @@ the worker):
 
 | Event | Extra payload | Emitted by |
 | --- | --- | --- |
-| `ride.scheduled` | `returnLegId` (the way back of a round trip, or `null`) | `scheduleRide`, once for both legs |
+| `ride.scheduled` | `returnLegId` (the way back of a round trip, or `null`), `requestId` (the Ride Request it was scheduled from, or `null`) | `scheduleRide`, once for both legs |
 | `ride.rescheduled` | `changes`: `time` · `location` · `destination` | `rescheduleRide` (once per leg it moves: moving the way there moves a scheduled way back too), `updateRideDetails` (a new place only; the note and pilots needed are history, not news) |
 | `ride.cancelled` | `reasonCode` | `cancelRide`, once per leg it cancels |
 | `ride.deleted` | — | `deleteRide`, once per leg it deletes (a cancelled other leg of a round trip goes too); the ride's history goes with it, so this row is what records who deleted it |
 | `ride.pilotAssigned` | `userId`, `self` | `assignVolunteer`, `selfAssign` (per leg it takes: signing up for a round trip takes the other leg too while it still needs a pilot) |
 | `ride.pilotUnassigned` | `userId`, `self` | `unassignVolunteer`, `withdraw` (per leg it leaves: stepping back from a round trip leaves the other leg too while it is outside the staffing window) |
-| `ride.riderBooked` | `passengerId` | `bookRider`, `bookSeats`, and `confirmSeat` when it takes back a seat given up |
+| `ride.riderBooked` | `passengerId`, `requestId` (null unless booked from a Ride Request) | `bookRider`, `bookSeats`, and `confirmSeat` when it takes back a seat given up |
 | `ride.riderRemoved` | `passengerId`, `self` (the rider's own account gave the seat up), `rosterNowEmpty` (nobody is left to ride), `pair` | `cancelBooking` (an admin takes the rider off, the row goes), `cancelSeat` (the rider's side gives the seat up, the row stays as `cancelled`; per leg of a round trip it leaves) |
 | `ride.opened` | — | `scheduleRide`, per leg, when the chapter lets pilots sign up and the ride is still ahead and short of pilots |
 | `ride.understaffed` | `assigned`, `required` | `checkStaffing` (the worker's staffing check), once per ride, with `actorUserId: null`; the way there checks its way back along |
@@ -293,8 +297,9 @@ rides the outbox and its retries: a freeze that fails tries again and never take
 roster back. A second tap on a closed roster emits nothing, so a chat its people kept going
 stays open. `ride.reopened` has no listener.
 
-**A ride already over is history.** `ridePilotAssigned`, `rideBookingConfirmed` and
-`rideBookingCancelled` tell nobody when the ride has ended (`rideNotOver`), so an admin
+**A ride already over is history.** `ridePilotAssigned`, `rideBookingConfirmed`,
+`rideBookingCancelled` and `rideRequestScheduled` tell nobody when the ride has ended
+(`rideNotOver`), so an admin
 recording last Monday's crew and riders doesn't send "you're piloting on Monday".
 
 **One event, two readers.** A self sign-up reaches the pilot and the riders' side with
@@ -302,10 +307,14 @@ different words. A kind may define `forRecipient(params, recipientUserId)`; `not
 each recipient's row with what it returns, so `ridePilotAssigned` remembers `audience: "pilot"`
 or `"rider"` per row and the bell, the push and the mail read it back.
 
-`ride.scheduled` and `ride.deleted` still have no listener and are marked processed without
-a job. The four roster events (`ride.pilotAssigned`, `ride.pilotUnassigned`,
+`ride.deleted` still has no listener and is marked processed without a job.
+`ride.scheduled` has one, `linkRideRequest` (COD-261): a ride scheduled from a Ride Request
+links that request if the scheduling use case stopped between writing the ride and linking
+it; `rideRequests.markScheduled` does nothing when the link is already there. The four roster events (`ride.pilotAssigned`, `ride.pilotUnassigned`,
 `ride.riderBooked`, `ride.riderRemoved`) also have a `syncRideChat` listener that keeps the
-ride's chat members in step (`use-cases/ride-chat.ts`), and `member.roleChanged` has a
+ride's chat members in step (`use-cases/ride-chat.ts`); `rider.handedOver` has it too and
+syncs the chat of every ride still ahead that the rider is booked on (`syncRiderChats`), so the
+old manager leaves those chats and the new one joins. `member.roleChanged` has a
 `leaveRideCrews` listener: a demotion or removal checks the person's upcoming rides for pilots
 again and syncs every ride chat of the chapter they are in (`use-cases/leave-ride-crews.ts`).
 
@@ -349,6 +358,36 @@ The params carry the ride's start and end as ISO strings plus the chapter's zone
 `rideWords` writes them per recipient, in their language, on the chapter's wall clock: a carer
 abroad still reads the time the ride starts in Munich. German copy is du-form for pilots,
 Sie-form for riders' accounts and admins, and impersonal where one mail reaches all of them.
+
+## Ride requests and hand-overs (COD-261)
+
+| Event | Payload | Emitted by |
+| --- | --- | --- |
+| `rideRequest.submitted` | `requestId`, `chapterId`, `actorUserId` (the requester) | `rideRequests.submit`, or `announce` once automatic scheduling found no free trishaw |
+| `rideRequest.scheduled` | `requestId`, `chapterId`, `actorUserId` (`null` when automatic), `requesterUserId`, `rideId`, `returnLegId` | `rideRequests.markScheduled` |
+| `rideRequest.declined` | `requestId`, `chapterId`, `actorUserId`, `requesterUserId` | `rideRequests.decline` |
+| `rideRequest.withdrawn` | `requestId`, `chapterId`, `actorUserId` | `rideRequests.withdraw`, `withdrawOpenRequests` (an account or its riders leaving) |
+| `rider.handedOver` | `passengerId`, `chapterId`, `actorUserId`, `fromUserId`, `toUserId`, `invited` | `passengers.handOverRider` |
+
+`ride.riderBooked` gained `requestId` (default `null`): set when the rider was booked by
+scheduling that request.
+
+| Kind | Event | Who hears it | Policy | Link |
+| --- | --- | --- | --- | --- |
+| `rideRequestSubmitted` | `rideRequest.submitted` | chapter admins minus the requester — nobody once the request is no longer pending | push (chapter switch `requestAlertPush`), mail if no push, opt-out-able, collapsed `requests:{chapterId}` | `/admin/rides/requests/{id}` |
+| `rideRequestWithdrawn` | `rideRequest.withdrawn` | chapter admins minus the actor | as above | `/admin/rides/requests/{id}` |
+| `rideRequestScheduled` | `rideRequest.scheduled` | the requester | push, mail always, with `ride.ics` (one VEVENT per leg, no names) | `/passenger/rides/{rideId}` |
+| `rideRequestDeclined` | `rideRequest.declined` | the requester, with the admin's note | push, mail always | `/passenger/rides/requests/{id}` |
+| `riderHandedOver` | `rider.handedOver` | the new and the old manager minus the actor (not the new one when they were just invited — the invitation speaks for it); each reads their own words (`forRecipient`) | push, mail always | `/passenger/profile/people` |
+
+`rideBookingConfirmed` leaves out the requester of a `ride.riderBooked` that carries a
+`requestId`: `rideRequestScheduled` already told them, with the calendar file. A rider's own
+account, when it is not the requester, still hears it. `rider.handedOver` also has a
+`recordActivity` listener that writes a `riderHandedOver` line into both managers' histories,
+and a `moveRequests` listener (`use-cases/move-handed-over-requests`) that
+moves the rider's open requests to the new manager should the hand-over have stopped before it
+did — only while the rider is still with that manager, so a hand-over undone in the meantime
+keeps its requests; a second run finds nothing left to move.
 
 ## Watching the queues
 

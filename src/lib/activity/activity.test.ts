@@ -31,6 +31,7 @@ describe("recording an event", () => {
         type: "emailSent",
         actorUserId: null,
         chapterId: null,
+        passengerId: null,
         payload: { template: "applicationApproved" },
       },
     });

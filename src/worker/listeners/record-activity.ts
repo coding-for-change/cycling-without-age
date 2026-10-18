@@ -2,7 +2,9 @@ import { activity } from "@/lib/activity";
 import type { ActivityType, RecordEventInput } from "@/lib/activity";
 import type { Envelope, EventOf, EventType } from "@/lib/events/catalog";
 
-type Builder<K extends EventType> = (event: EventOf<K>) => RecordEventInput;
+type Builder<K extends EventType> = (
+  event: EventOf<K>,
+) => RecordEventInput | RecordEventInput[];
 
 const ROLE_EVENT: Record<"promote" | "demote" | "remove", ActivityType> = {
   promote: "roleGranted",
@@ -47,6 +49,19 @@ const builders: { [K in EventType]?: Builder<K> } = {
     actorUserId: event.actorUserId,
     type: "countryAdminRemoved",
   }),
+  "rider.handedOver": (event) =>
+    (["in", "out"] as const).map((direction) => ({
+      userId: direction === "in" ? event.toUserId : event.fromUserId,
+      actorUserId: event.actorUserId,
+      chapterId: event.chapterId,
+      passengerId: event.passengerId,
+      type: "riderHandedOver" as const,
+      payload: {
+        fromUserId: event.fromUserId,
+        toUserId: event.toUserId,
+        direction,
+      },
+    })),
 };
 
 export const recordsActivityFor = (type: EventType) => type in builders;
@@ -54,5 +69,7 @@ export const recordsActivityFor = (type: EventType) => type in builders;
 export async function recordActivity({ event }: Envelope) {
   const build = builders[event.type] as Builder<EventType> | undefined;
   if (!build) throw new Error(`[activity] no builder for ${event.type}`);
-  await activity.record(build(event));
+  const built = build(event);
+  if (Array.isArray(built)) await activity.recordMany(built);
+  else await activity.record(built);
 }

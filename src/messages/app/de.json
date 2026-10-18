@@ -54,14 +54,16 @@
         "errors": {
           "generic": "Das hat nicht geklappt. Versuch es noch mal.",
           "handOverAdmin": "Gib zuerst deine Adminrolle ab.",
-          "rateLimited": "Einen Moment noch, dann versuch es erneut."
+          "rateLimited": "Einen Moment noch, dann versuch es erneut.",
+          "managesRiders": "Du betreust inzwischen jemanden, der hier nicht steht. Lade neu und prüfe es noch einmal."
         },
         "label": "Tipp {word} zur Bestätigung",
         "open": "Konto löschen",
-        "riders": "{count, plural, one {1 betreute Person wird samt ihren Buchungen mit entfernt} other {# betreute Personen werden samt ihren Buchungen mit entfernt}}",
+        "riders": "{count, plural, one {Die Person, die du betreust} other {Die Personen, die du betreust}}: {names}, samt allen Buchungen",
         "submit": "Konto löschen",
         "title": "Konto endgültig löschen?",
-        "word": "DELETE"
+        "word": "DELETE",
+        "bodyWithRiders": "Konto, Rollen, Anfragen und Verlauf gehen damit weg. Gefahrene Ausfahrten bleiben im Protokoll. Damit die Personen, die du betreust, weiter mitfahren können, bitte ihre Ortsgruppe, sie vorher an jemand anderen zu übergeben."
       },
       "title": "Abmelden oder löschen"
     },
@@ -424,12 +426,19 @@
         "careRequested": "Betreuungsanfrage",
         "careDecided": "Antwort auf Betreuung",
         "careInvited": "Einladung Begleitperson",
+        "rideRequestSubmitted": "Neue Fahrtanfrage",
+        "rideRequestWithdrawn": "Fahrtanfrage zurückgezogen",
+        "rideRequestDeclined": "Fahrtanfrage abgelehnt",
+        "rideRequestScheduled": "Fahrtanfrage eingeplant",
+        "riderHandedOver": "Fahrgast übernommen",
+        "riderHandedAway": "Fahrgast übergeben",
         "rideReminder": "Fahrgasterinnerung",
         "pilotReminder": "Pilotenerinnerung",
         "rideNoDemand": "Niemand gebucht",
         "rideRosterRefilled": "Fahrgast wieder dabei"
       },
-      "you": "Du"
+      "you": "Du",
+      "riderHandedOver": "{direction, select, in {{self, select, yes {Du hast} other {{actor} hat}} {riderGone, select, yes {einen ehemaligen Fahrgast} other {{rider}}} von {previousGone, select, yes {einem ehemaligen Mitglied} other {{previous}}} an dieses Konto übergeben} other {{self, select, yes {Du hast} other {{actor} hat}} {riderGone, select, yes {einen ehemaligen Fahrgast} other {{rider}}} an {nextGone, select, yes {ein ehemaliges Mitglied} other {{next}}} übergeben}}"
     },
     "members": {
       "actions": "Aktionen für {name}",
@@ -616,11 +625,46 @@
           "errors": {
             "generic": "Das hat nicht geklappt. Versuch es noch einmal."
           }
-        }
+        },
+        "history": "Verlauf",
+        "historyEmpty": "Noch nichts. Eine Übergabe an jemand anderen erscheint hier.",
+        "handedOver": "{self, select, yes {Du hast} other {{actor} hat}} {riderGone, select, yes {einen ehemaligen Fahrgast} other {{rider}}} von {previousGone, select, yes {einem ehemaligen Mitglied} other {{previous}}} an {nextGone, select, yes {ein ehemaliges Mitglied} other {{next}}} übergeben"
       },
       "waiting": {
         "title": "Warten auf Antwort",
         "row": "{caretaker} gefragt · {date}"
+      },
+      "handOver": {
+        "open": "Übergeben …",
+        "title": "{rider} übergeben",
+        "body": "Wähle, wer ab jetzt die Fahrten für {rider} bucht. Buchungen, Profil und Verlauf bleiben, wie sie sind.",
+        "modeLabel": "Wer übernimmt",
+        "member": "Jemand aus der Ortsgruppe",
+        "invite": "Jemand Neues",
+        "picker": {
+          "label": "Mitglied",
+          "placeholder": "Mitglied wählen",
+          "search": "Mitglieder suchen",
+          "empty": "Kein Mitglied gefunden",
+          "count": "{count} von {max}",
+          "full": "Eine Person auf einmal"
+        },
+        "noMembers": "In {chapter} kann noch niemand anderes übernehmen. Lade jemand Neues ein.",
+        "name": "Name",
+        "contact": "E-Mail oder Handynummer",
+        "contactHint": "Die Person bekommt eine Einladung und meldet sich damit an.",
+        "invalid": "Gib einen Namen und eine gültige E-Mail-Adresse oder Handynummer ein.",
+        "submit": "Übergeben",
+        "done": "{rider} wird jetzt von {name} betreut",
+        "invited": "{name} ist eingeladen und betreut jetzt {rider}",
+        "errors": {
+          "notChapterMember": "Diese Person ist kein Mitglied der Ortsgruppe des Fahrgasts. Sie muss erst beitreten.",
+          "sameManager": "Diese Person betreut den Fahrgast bereits.",
+          "passengerChapterMismatch": "Diese Person betreut schon Fahrgäste einer anderen Ortsgruppe.",
+          "tooManyRiders": "Diese Person betreut schon so viele Fahrgäste, wie ein Konto betreuen kann.",
+          "unknownPassenger": "Dieser Fahrgast kann nicht mehr übergeben werden. Lade die Seite neu.",
+          "rateLimited": "Das waren viele Übergaben hintereinander. Warte kurz und versuch es erneut."
+        }
       }
     },
     "person": {
@@ -631,7 +675,8 @@
         "done": "{name} ist gelöscht.",
         "errors": {
           "generic": "Das hat nicht geklappt. Versuch es noch mal.",
-          "self": "Dein eigenes Konto kannst du hier nicht löschen."
+          "self": "Dein eigenes Konto kannst du hier nicht löschen.",
+          "managesRiders": "Dieses Konto betreut inzwischen Fahrgäste, die nicht aufgeführt waren. Lade neu und prüfe es noch einmal."
         },
         "label": "Tipp {word} zur Bestätigung",
         "open": "Konto löschen",
@@ -660,7 +705,8 @@
       "profile": "Profil",
       "caretaker": {
         "title": "Kümmert sich um",
-        "relationship": "Beziehung: {relationship}"
+        "relationship": "Beziehung: {relationship}",
+        "handOverHint": "Wird dieses Konto gelöscht, werden die Fahrgäste ohne eigenes Konto mit gelöscht. Übergib sie vorher auf ihrer eigenen Seite an jemand anderen, damit sie weiter mitfahren können."
       }
     },
     "perspectives": {
@@ -933,6 +979,10 @@
           "hint": "Ein paar Zeilen von dir, hervorgehoben in der Willkommensmail, die jede neue Pilotin und jeder neue Passagier bekommt.",
           "label": "Ein paar Willkommensworte",
           "placeholder": "Wir fahren dienstags um zwei, und Kuchen gibt es immer."
+        },
+        "requestPush": {
+          "label": "Fahrtanfragen brummen aufs Handy",
+          "hint": "Schaltest du es aus, warten neue Anfragen trotzdem im Posteingang – mit einer E-Mail zwei Minuten später, falls sie noch niemand in der App gelesen hat."
         }
       },
       "pickChapter": "Wähl links eine Ortsgruppe, um ihren Beitrittslink zu sehen.",
@@ -1051,7 +1101,15 @@
         },
         "noNotice": "Kein Mindestvorlauf",
         "hours": "{count, plural, one {1 Stunde} other {# Stunden}}",
-        "days": "{count, plural, one {1 Tag} other {# Tage}}"
+        "days": "{count, plural, one {1 Tag} other {# Tage}}",
+        "method": {
+          "label": "Planung",
+          "hint": "Wer aus einer Fahrtanfrage eine Fahrt macht. Bei „Automatisch“ wird eine Anfrage sofort beim Eingang gebucht, wenn zu der Zeit eine Rikscha frei ist; alle anderen warten auf einen Admin.",
+          "options": {
+            "scheduler": "Ein Admin entscheidet",
+            "auto": "Automatisch, wenn eine Rikscha frei ist"
+          }
+        }
       }
     },
     "table": {
@@ -1182,6 +1240,107 @@
       "errors": {
         "unknownLocation": "Diesen Abfahrtsort gibt es nicht mehr. Lade die Seite neu und versuch es noch mal.",
         "locationArchived": "Dieser Abfahrtsort ist archiviert. Stell ihn zuerst wieder her."
+      }
+    },
+    "rideRequests": {
+      "title": "Fahrtanfragen",
+      "tabs": {
+        "label": "Fahrten und Fahrtanfragen",
+        "rides": "Fahrten",
+        "requests": "Fahrtanfragen"
+      },
+      "waiting": "{count, plural, one {1 Anfrage wartet} other {# Anfragen warten}}",
+      "statuses": {
+        "pending": "Wartet",
+        "scheduled": "Eingeplant",
+        "declined": "Abgelehnt",
+        "withdrawn": "Zurückgezogen",
+        "lapsed": "Verstrichen",
+        "closed": "Geschlossen"
+      },
+      "filter": {
+        "label": "Anfragen anzeigen",
+        "all": "Alle"
+      },
+      "empty": {
+        "pending": "Keine Anfragen offen. Neue landen hier, sobald jemand fragt.",
+        "other": "Hier gibt es keine Anfragen."
+      },
+      "columns": {
+        "when": "Angefragt für",
+        "riders": "Fahrgäste",
+        "model": "Fahrt",
+        "where": "Wo",
+        "asked": "Angefragt",
+        "status": "Status",
+        "chapter": "Ortsgruppe"
+      },
+      "detail": {
+        "back": "Fahrtanfragen",
+        "asked": "{name} hat {when} angefragt",
+        "someone": "Ein ehemaliges Mitglied",
+        "request": "Anfrage",
+        "when": "Angefragt für",
+        "from": "Von",
+        "to": "Nach",
+        "model": "Fahrt",
+        "note": "{name} schreibt",
+        "riders": "Fahrgäste",
+        "requester": "Angefragt von",
+        "noPhone": "Keine Telefonnummer am Konto",
+        "history": "Verlauf",
+        "lines": {
+          "submitted": "{self, select, yes {Du hast die Fahrt angefragt} other {{name} hat die Fahrt angefragt}}",
+          "scheduled": "{self, select, yes {Du hast sie eingeplant} other {{name} hat sie eingeplant}}",
+          "scheduledAuto": "Automatisch eingeplant",
+          "declined": "{self, select, yes {Du hast sie abgelehnt} other {{name} hat sie abgelehnt}}",
+          "withdrawn": "{self, select, yes {Du hast die Anfrage zurückgezogen} other {{name} hat die Anfrage zurückgezogen}}",
+          "closed": "Geschlossen, weil ein Fahrgast oder die anfragende Person nicht mehr dabei ist"
+        },
+        "seeRide": "Fahrt öffnen",
+        "rideGone": "Die Fahrt wurde inzwischen gelöscht.",
+        "decision": "Entscheidung",
+        "schedule": "Einplanen …",
+        "decline": "Ablehnen …",
+        "pendingHint": "Einplanen öffnet die Fahrt mit den Angaben der Anfrage. Gebucht ist erst, wenn du speicherst.",
+        "decided": {
+          "scheduled": "Eingeplant {when}",
+          "declined": "Abgelehnt {when}",
+          "withdrawn": "Zurückgezogen {when}",
+          "closed": "Geschlossen {when}"
+        },
+        "conflicts": "Bevor du entscheidest",
+        "noConflicts": "In den Fahrzeiten, mit genug Vorlauf und ohne andere Fahrten.",
+        "conflict": {
+          "outsideHours": "Außerhalb der Fahrzeiten",
+          "closedDate": "Die Ortsgruppe hat an diesem Tag geschlossen",
+          "shortNotice": "Kurzfristig: {hours, plural, one {1 Stunde} other {# Stunden}} vorher",
+          "beyondHorizon": "Weiter im Voraus, als ihr bucht",
+          "ridesThen": "{count, plural, one {1 weitere Fahrt} other {# weitere Fahrten}} in diesem Zeitfenster"
+        },
+        "lapsed": "Die angefragte Zeit ist vorbei. Du kannst die Fahrt trotzdem zu einer anderen Zeit einplanen oder die Anfrage ablehnen.",
+        "rideCancelled": "Die Fahrt wurde inzwischen abgesagt."
+      },
+      "decline": {
+        "title": "Anfrage ablehnen",
+        "body": "{name} bekommt eine Nachricht. Ein Satz zum Warum hilft, neu anzufragen.",
+        "note": "Nachricht an {name}",
+        "placeholder": "An dem Vormittag ist kein Pilot frei – ginge Donnerstag?",
+        "submit": "Anfrage ablehnen",
+        "done": "Anfrage abgelehnt",
+        "bodyNobody": "Niemand bekommt eine E-Mail: Die anfragende Person ist nicht mehr dabei. Eine Notiz bleibt im Verlauf der Anfrage.",
+        "noteNobody": "Notiz für den Verlauf"
+      },
+      "schedule": {
+        "fromRequest": "Anfrage von {name}",
+        "done": "Fahrt eingeplant. {name} bekommt eine Bestätigung.",
+        "note": "Das hat die anfragende Person für die Ortsgruppe geschrieben. Piloten sehen nur, was du in die Nachricht für die Piloten schreibst.",
+        "stale": "Diese Anfrage wartet nicht mehr: Sie wurde zurückgezogen oder es wurde schon entschieden. Schließe die Ansicht, um zu sehen, was passiert ist.",
+        "requestedRider": "In der Anfrage gewünscht"
+      },
+      "errors": {
+        "requestNotPending": "Über diese Anfrage wurde schon entschieden. Lade neu, um zu sehen, was passiert ist.",
+        "unknownRequest": "Diese Anfrage gibt es nicht mehr."
       }
     }
   },
@@ -1376,7 +1535,12 @@
       "label": "Darstellung ändern",
       "light": "Hell",
       "system": "System"
-    }
+    },
+    "route": {
+      "to": "Von {from} zu {to}",
+      "toAndBack": "Von {from} zu {to} und zurück"
+    },
+    "dateTime": "{date}, {time}"
   },
   "consent": {
     "data": "Ich stimme der Speicherung und Verarbeitung meiner Daten zu.",
@@ -1939,19 +2103,8 @@
       "slogan": "Recht auf Wind im Haar"
     },
     "ride": {
-      "back": "Zurück zu {chapter}",
-      "confirm": "Weiter",
       "cta": "Ausfahrt buchen",
-      "noDraft": "Wir haben Ihre Auswahl verloren. Wählen Sie auf der Seite der Ortsgruppe noch einmal eine Zeit.",
-      "note": "Die Buchung kommt bald — abgeschickt wurde noch nichts.",
-      "summary": "Sie möchten mit {chapter} fahren, {when}.",
-      "title": "Fast geschafft",
-      "when": {
-        "afternoon": "nachmittags",
-        "any": "jederzeit",
-        "morning": "vormittags"
-      },
-      "whenTitle": "Wann passt es Ihnen?"
+      "body": "Fragen Sie eine Fahrt an – für sich selbst oder für jemanden, um den Sie sich kümmern. Die Ortsgruppe bestätigt die Uhrzeit."
     }
   },
   "legal": {
@@ -2065,10 +2218,6 @@
         "title": "Kalender"
       },
       "rides": {
-        "passenger": {
-          "body": "Noch nichts gebucht. Sobald Ihre Ortsgruppe die Buchung öffnet, warten Ihre Ausfahrten hier — der Tag, die Uhrzeit und der Pilot, der klingelt.",
-          "caretakerBody": "{who, select, one {Für {name} ist noch nichts gebucht. Sobald Ihre Ortsgruppe die Buchung öffnet, warten die Ausfahrten hier — der Tag, die Uhrzeit und der Pilot, der klingelt.} withOne {Für Sie und {name} ist noch nichts gebucht. Sobald Ihre Ortsgruppe die Buchung öffnet, warten die Ausfahrten hier — der Tag, die Uhrzeit und der Pilot, der klingelt.} withMany {Für Sie und die Menschen, um die Sie sich kümmern, ist noch nichts gebucht. Sobald Ihre Ortsgruppe die Buchung öffnet, warten die Ausfahrten hier — der Tag, die Uhrzeit und der Pilot, der klingelt.} other {Für die Menschen, um die Sie sich kümmern, ist noch nichts gebucht. Sobald Ihre Ortsgruppe die Buchung öffnet, warten die Ausfahrten hier — der Tag, die Uhrzeit und der Pilot, der klingelt.}}"
-        },
         "pilot": {
           "body": "Deine erste Ausfahrt steht noch nicht auf der Liste. Sobald deine Ortsgruppe offene Ausfahrten ausschreibt, tauchen hier die auf, die einen Piloten brauchen — such dir eine aus, und die Rikscha gehört dir für den Nachmittag."
         },
@@ -2117,7 +2266,8 @@
       "invitation": "Einladung",
       "membership": "Mitgliedschaft",
       "ride": "Fahrt",
-      "welcome": "Willkommen"
+      "welcome": "Willkommen",
+      "request": "Fahrtanfrage"
     },
     "empty": {
       "body": "Sobald etwas passiert — eine Ortsgruppe antwortet, eine Ausfahrt wird gebucht — landet es genau hier.",
@@ -2155,12 +2305,6 @@
         "startsAt": "Start: {place}",
         "subject": "Unsere Ausfahrt am {date}",
         "to": "nach {destination}"
-      },
-      "empty": {
-        "ask": "Fragen Sie {chapter} nach einer Ausfahrt",
-        "askBody": "Schreiben Sie dem Team ein paar Zeilen: wann Sie gern hinaus möchten und wohin. Man findet dort einen Tag, eine Uhrzeit und einen Piloten für Sie.",
-        "subject": "Eine Ausfahrt mit Cycling Without Age",
-        "title": "Gerade ist keine Ausfahrt geplant"
       },
       "events": {
         "badge": "Ausfahrt",
@@ -2249,6 +2393,177 @@
         "hint": "Wo der Fahrgast wohnt, falls die Ortsgruppe von dort losfährt.",
         "gone": "{name} (nicht mehr im Angebot)",
         "none": "Keine"
+      }
+    },
+    "request": {
+      "title": "Fahrt buchen",
+      "back": "Zurück",
+      "next": "Weiter",
+      "send": "Anfrage senden",
+      "sending": "Wird gesendet …",
+      "sent": "Anfrage an {chapter} gesendet",
+      "join": {
+        "title": "Treten Sie zuerst {chapter} bei",
+        "body": "Fahrtanfragen gehen an die Ortsgruppen, zu denen Sie gehören. Treten Sie als Fahrgast bei, dann können Sie direkt danach Ihre erste Fahrt anfragen."
+      },
+      "notMember": {
+        "title": "Buchen ist gerade nicht möglich",
+        "body": "{names} {count, plural, one {fährt} other {fahren}} mit einer Ortsgruppe, in der Sie nicht mehr Mitglied sind. Deshalb können Sie gerade keine Fahrten anfragen. Bitten Sie die Ortsgruppe um eine Übergabe an jemand anderen, oder treten Sie wieder bei.",
+        "cta": "Zur Startseite"
+      },
+      "empty": {
+        "title": "Für wen möchten Sie buchen?",
+        "body": "Fügen Sie die Person hinzu, die mitfährt – sich selbst oder jemanden, um den Sie sich kümmern – und fragen Sie dann eine Fahrt an.",
+        "cta": "Fahrgast hinzufügen"
+      },
+      "steps": {
+        "who": {
+          "title": "Wer fährt mit?",
+          "body": "{count, plural, one {Auf eine Rikscha passt ein Fahrgast.} other {Auf eine Rikscha passen bis zu # Fahrgäste.}}"
+        },
+        "where": {
+          "title": "Wohin soll es gehen?",
+          "body": "Eine Ausfahrt an der frischen Luft oder eine Fahrt zu einem bestimmten Ziel."
+        },
+        "when": {
+          "title": "Wann passt es Ihnen?",
+          "body": "Wählen Sie einen Tag und ein Zeitfenster. {chapter} bestätigt die genaue Uhrzeit."
+        },
+        "note": {
+          "title": "Sonst noch etwas?",
+          "body": "Ein Rollator kommt mit, die Klingel klemmt – alles, was {chapter} bei der Planung hilft."
+        },
+        "review": {
+          "title": "Bereit zum Senden?",
+          "body": "Prüfen Sie die Angaben. Gebucht ist erst, wenn {chapter} bestätigt.",
+          "bodyAuto": "Prüfen Sie die Angaben. Ist zu der Zeit eine Rikscha frei, wird die Fahrt sofort gebucht."
+        }
+      },
+      "who": {
+        "stranded": "Für {names} können Sie gerade keine Fahrten anfragen, weil Sie nicht mehr Mitglied der zugehörigen Ortsgruppe sind."
+      },
+      "models": {
+        "pleasure": "Eine Ausfahrt",
+        "functional": "Zu einem Ziel"
+      },
+      "where": {
+        "kind": "Welche Art von Fahrt?",
+        "pleasureBody": "Eine Runde im Schritttempo mit Wind im Haar, zurück zum Ausgangspunkt.",
+        "functionalBody": "Zum Arzt, ins Café oder zu Freunden – und auf Wunsch wieder zurück.",
+        "from": "Start bei",
+        "pickup": "Abholen bei",
+        "to": "Ziel",
+        "careCenter": "Pflegeeinrichtung",
+        "kinds": {
+          "careCenter": "Pflegeeinrichtung",
+          "residence": "Wohnanlage",
+          "publicPlace": "Treffpunkt",
+          "other": "Ort"
+        },
+        "home": "Zuhause",
+        "change": "Ändern",
+        "elsewhere": "Woanders",
+        "elsewhereBody": "Nach einer Adresse suchen",
+        "searchLabel": "Adresse",
+        "searchHint": "Straße, Ort oder Gebäude",
+        "searchFailed": "Diese Adresse wurde nicht gefunden. Versuchen Sie eine andere.",
+        "previous": "Schon einmal dort gewesen",
+        "roundTrip": "Und wieder zurück",
+        "roundTripHint": "Die Ortsgruppe bringt alle nach dem Besuch wieder nach Hause."
+      },
+      "when": {
+        "parts": {
+          "morning": "Vormittag",
+          "afternoon": "Nachmittag",
+          "evening": "Abend"
+        },
+        "windows": "Zeiten am {date}",
+        "confirm": "Das sind Zeitfenster, keine Termine – die Ortsgruppe bestätigt die genaue Uhrzeit.",
+        "pickDay": "Wählen Sie einen Tag, um die Zeiten zu sehen.",
+        "none": "Gerade sind keine Tage für Anfragen offen. Fragen Sie direkt bei der Ortsgruppe nach."
+      },
+      "note": {
+        "label": "Nachricht an die Ortsgruppe (optional)",
+        "placeholder": "Ein Rollator kommt mit, die Klingel klemmt, …"
+      },
+      "review": {
+        "riders": "Fahrgäste",
+        "ride": "Fahrt",
+        "when": "Wann",
+        "note": "Nachricht",
+        "noNote": "Keine Nachricht",
+        "change": "Ändern",
+        "waiting": "Noch ist nichts gebucht. {chapter} sieht sich Ihre Anfrage an und bestätigt die genaue Uhrzeit – Sie bekommen in jedem Fall Bescheid.",
+        "waitingAuto": "Ist zu der Zeit eine Rikscha frei, bucht {chapter} die Fahrt sofort und Sie bekommen die Bestätigung. Sonst sieht sich {chapter} Ihre Anfrage an und meldet sich bei Ihnen."
+      },
+      "list": {
+        "title": "Ihre Anfragen",
+        "empty": "Noch keine Fahrten gebucht. Fragen Sie bei der Ortsgruppe an – das dauert nur eine Minute.",
+        "status": {
+          "pending": "Wartet auf {chapter}",
+          "declined": "{chapter} kann leider nicht"
+        }
+      },
+      "page": {
+        "title": "Fahrtanfrage",
+        "asked": "Angefragt am {date}",
+        "statuses": {
+          "pending": "Wartet auf {chapter}",
+          "scheduled": "Gebucht",
+          "declined": "Diesmal leider nicht",
+          "withdrawn": "Zurückgezogen",
+          "lapsed": "Nicht rechtzeitig beantwortet",
+          "closed": "Geschlossen"
+        },
+        "bodies": {
+          "pending": "{chapter} hat Ihre Anfrage und bestätigt die genaue Uhrzeit. Sie bekommen eine Nachricht.",
+          "scheduled": "{chapter} hat die Fahrt gebucht. Sie finden sie bei Ihren Fahrten.",
+          "scheduledGone": "{chapter} hatte für diese Anfrage eine Fahrt gebucht, die inzwischen abgesagt wurde. Fragen Sie bei der Ortsgruppe nach einem anderen Tag.",
+          "declined": "{chapter} kann diese Fahrt leider nicht möglich machen. Fragen Sie gern einen anderen Tag an.",
+          "withdrawn": "Sie haben diese Anfrage zurückgezogen.",
+          "lapsed": "{chapter} ist vor dem gewünschten Termin nicht mehr dazu gekommen, Ihre Anfrage zu beantworten. Fragen Sie gern noch einmal an.",
+          "closed": "Diese Anfrage wurde geschlossen, weil ein Fahrgast, für den sie gedacht war, nicht mehr auf Ihrer Liste steht. Fragen Sie gern neu an."
+        },
+        "decisionNote": "Eine Nachricht von {chapter}",
+        "riders": "Fahrgäste",
+        "ride": "Fahrt",
+        "when": "Angefragt für",
+        "note": "Ihre Nachricht",
+        "seeRide": "Fahrt ansehen",
+        "askAgain": "Andere Fahrt anfragen",
+        "cancel": {
+          "label": "Anfrage zurückziehen",
+          "title": "Anfrage zurückziehen?",
+          "body": "Die Ortsgruppe plant sie dann nicht weiter. Sie können jederzeit neu anfragen.",
+          "confirm": "Zurückziehen",
+          "cancel": "Behalten",
+          "done": "Anfrage zurückgezogen"
+        }
+      },
+      "errors": {
+        "beyondHorizon": "So weit im Voraus nimmt die Ortsgruppe keine Anfragen an. Wählen Sie einen früheren Tag.",
+        "closedDate": "An diesem Tag ist die Ortsgruppe geschlossen. Wählen Sie einen anderen.",
+        "leadTime": "Das ist zu kurzfristig für die Planung. Wählen Sie einen späteren Zeitpunkt.",
+        "outsideHours": "Zu dieser Zeit fährt die Ortsgruppe nicht. Wählen Sie eine der angezeigten Zeiten.",
+        "locationNotInChapter": "Dieser Ort wird nicht mehr angeboten. Wählen Sie einen anderen.",
+        "unknownLocation": "Dieser Ort wird nicht mehr angeboten. Wählen Sie einen anderen.",
+        "notChapterMember": "Sie sind nicht mehr Mitglied dieser Ortsgruppe.",
+        "riderNotInChapter": "Diese Fahrgäste fahren mit verschiedenen Ortsgruppen. Fragen Sie für jeden einzeln an.",
+        "tooManyRiders": "Das sind mehr Fahrgäste, als auf eine Rikscha passen.",
+        "unknownChapter": "Diese Ortsgruppe ist nicht verfügbar.",
+        "unknownPassenger": "Ein Fahrgast steht nicht mehr auf Ihrer Liste. Laden Sie die Seite neu und versuchen Sie es noch einmal.",
+        "unknownRequest": "Diese Anfrage gibt es nicht mehr.",
+        "requestNotPending": "Die Ortsgruppe hat über diese Anfrage bereits entschieden.",
+        "rateLimited": "Das waren viele Anfragen hintereinander. Bitte warten Sie kurz und versuchen Sie es erneut.",
+        "alreadyRequested": "Für diesen Fahrgast wartet zu dieser Zeit schon eine Anfrage. Warten Sie die Antwort der Ortsgruppe ab oder ziehen Sie die Anfrage zuerst zurück.",
+        "riderBooked": "Dieser Fahrgast ist zu dieser Zeit schon für eine Fahrt gebucht.",
+        "tooManyRequests": "Sie haben schon mehrere offene Anfragen. Sobald die Ortsgruppe geantwortet hat, können Sie neu anfragen."
+      },
+      "booked": "Bei {chapter} gebucht",
+      "noDays": {
+        "title": "Gerade keine Tage frei für Anfragen",
+        "body": "{chapter} nimmt für die nächsten Wochen gerade keine Fahrtanfragen an. Schreiben Sie der Ortsgruppe, sie findet einen Weg.",
+        "subject": "Eine Fahrt mit Cycling Without Age"
       }
     }
   },

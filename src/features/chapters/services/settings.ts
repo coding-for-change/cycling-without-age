@@ -15,6 +15,8 @@ const COLUMNS = {
   pilotsMaySelfAssign: true,
   requiredPilotsDefault: true,
   staffingCheckLeadHours: true,
+  schedulingMethod: true,
+  requestAlertPush: true,
   riderReminderLeadMinutes: true,
   volunteerReminderLeadMinutes: true,
   demandCheckLeadHours: true,

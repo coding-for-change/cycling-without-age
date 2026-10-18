@@ -18,7 +18,10 @@ jest.mock("@/features/notifications", () => ({
 }));
 jest.mock("@/features/profile", () => ({ profile: { getProfile: jest.fn() } }));
 jest.mock("@/features/passengers", () => ({
-  passengers: { getOwnPassenger: jest.fn() },
+  passengers: {
+    getOwnPassenger: jest.fn(),
+    passengerNames: jest.fn().mockResolvedValue({ mother: "Erna Huber" }),
+  },
 }));
 jest.mock("@/features/chapters", () => ({
   chapters: {
@@ -121,7 +124,60 @@ beforeEach(() => {
   mail.mockResolvedValue(undefined);
 });
 
+const scheduledRequest = () => ({
+  id: "notif-5",
+  recipientUserId: APPLICANT,
+  category: "request",
+  href: "/passenger/rides/ride-1",
+  readAt: null,
+  payload: {
+    rideTitle: null,
+    model: "functional",
+    startsAt: "2026-10-27T08:00:00.000Z",
+    endsAt: "2026-10-27T08:45:00.000Z",
+    timeZone: "Europe/Berlin",
+    place: "Lindenweg 3",
+    destination: "Hausarzt Dr. Weber",
+    chapterName: "München",
+    bothWays: true,
+    rideId: "ride-1",
+    returnLegId: "ride-2",
+    returnStartsAt: "2026-10-27T09:45:00.000Z",
+    returnEndsAt: "2026-10-27T10:30:00.000Z",
+    returnPlace: "Hausarzt Dr. Weber",
+    riderIds: "mother",
+  },
+  event: {
+    type: "rideRequest.scheduled",
+    actorUserId: ACTOR,
+    chapterId: CHAPTER,
+  },
+});
+
 describe("deliverEmail", () => {
+  it("attaches the calendar file a kind carries", async () => {
+    get.mockResolvedValue(scheduledRequest());
+
+    await deliverEmail("notif-5");
+
+    const [{ attachments, text }] = mail.mock.calls[0];
+    expect(text).toContain("Erna Huber");
+    expect(attachments).toEqual([
+      expect.objectContaining({
+        filename: "fahrt.ics",
+        contentType: "text/calendar; charset=utf-8; method=PUBLISH",
+      }),
+    ]);
+    expect(attachments[0].content.match(/BEGIN:VEVENT/g)).toHaveLength(2);
+    expect(attachments[0].content).not.toContain("Erna");
+  });
+
+  it("sends no attachment for a kind without one", async () => {
+    await deliverEmail("notif-1");
+
+    expect(mail.mock.calls[0][0]).not.toHaveProperty("attachments");
+  });
+
   it("writes in the recipient's language, not the decider's", async () => {
     await deliverEmail("notif-1");
 

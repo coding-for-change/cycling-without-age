@@ -54,14 +54,16 @@
         "errors": {
           "generic": "Det virkede ikke. Prøv igen.",
           "handOverAdmin": "Giv din adminrolle videre først.",
-          "rateLimited": "Vent et øjeblik, og prøv igen."
+          "rateLimited": "Vent et øjeblik, og prøv igen.",
+          "managesRiders": "Du tager dig nu af en, der ikke står her. Genindlæs og tjek igen."
         },
         "label": "Skriv {word} for at bekræfte",
         "open": "Slet konto",
-        "riders": "{count, plural, one {1 person, du tager dig af, bliver også fjernet sammen med sine bookinger} other {# personer, du tager dig af, bliver også fjernet sammen med deres bookinger}}",
+        "riders": "{count, plural, one {Den, du tager dig af} other {Dem, du tager dig af}}: {names}, med alle {count, plural, one {sine} other {deres}} bookinger",
         "submit": "Slet konto",
         "title": "Slet din konto for altid?",
-        "word": "DELETE"
+        "word": "DELETE",
+        "bodyWithRiders": "Din konto, dine roller, dine ansøgninger og din historik forsvinder. Ture, der allerede er kørt, bliver stående. Skal dem, du tager dig af, blive ved med at køre, så bed deres afdeling om at overdrage dem til en anden, før du sletter din konto."
       },
       "title": "Log ud eller slet"
     },
@@ -424,12 +426,19 @@
         "careRequested": "Anmodning om at passe på",
         "careDecided": "Svar på anmodning",
         "careInvited": "Invitation til hjælper",
+        "rideRequestSubmitted": "Nyt turønske",
+        "rideRequestWithdrawn": "Turønske trukket tilbage",
+        "rideRequestDeclined": "Turønske afvist",
+        "rideRequestScheduled": "Turønske planlagt",
+        "riderHandedOver": "Passager overtaget",
+        "riderHandedAway": "Passager overdraget",
         "rideReminder": "Passagerpåmindelse",
         "pilotReminder": "Pilotpåmindelse",
         "rideNoDemand": "Ingen booket",
         "rideRosterRefilled": "Passager med igen"
       },
-      "you": "Du"
+      "you": "Du",
+      "riderHandedOver": "{direction, select, in {{self, select, yes {Du} other {{actor}}} overdrog {riderGone, select, yes {en tidligere passager} other {{rider}}} fra {previousGone, select, yes {et tidligere medlem} other {{previous}}} til denne konto} other {{self, select, yes {Du} other {{actor}}} overdrog {riderGone, select, yes {en tidligere passager} other {{rider}}} til {nextGone, select, yes {et tidligere medlem} other {{next}}}}}"
     },
     "members": {
       "actions": "Handlinger for {name}",
@@ -616,11 +625,46 @@
           "errors": {
             "generic": "Det virkede ikke. Prøv igen."
           }
-        }
+        },
+        "history": "Historik",
+        "historyEmpty": "Intet endnu. En overdragelse til en anden vises her.",
+        "handedOver": "{self, select, yes {Du} other {{actor}}} overdrog {riderGone, select, yes {en tidligere passager} other {{rider}}} fra {previousGone, select, yes {et tidligere medlem} other {{previous}}} til {nextGone, select, yes {et tidligere medlem} other {{next}}}"
       },
       "waiting": {
         "title": "Venter på svar",
         "row": "Spurgt {caretaker} · {date}"
+      },
+      "handOver": {
+        "open": "Overdrag …",
+        "title": "Overdrag {rider}",
+        "body": "Vælg, hvem der booker ture for {rider} fremover. Bookinger, profil og historik bliver, som de er.",
+        "modeLabel": "Hvem overtager",
+        "member": "En fra afdelingen",
+        "invite": "En ny",
+        "picker": {
+          "label": "Medlem",
+          "placeholder": "Vælg et medlem",
+          "search": "Søg i medlemmer",
+          "empty": "Intet medlem fundet",
+          "count": "{count} af {max}",
+          "full": "Én person ad gangen"
+        },
+        "noMembers": "Ingen andre i {chapter} kan overtage endnu. Invitér en ny.",
+        "name": "Navn",
+        "contact": "E-mail eller mobilnummer",
+        "contactHint": "Personen får en invitation og logger ind med dette.",
+        "invalid": "Skriv et navn og en gyldig e-mailadresse eller et mobilnummer.",
+        "submit": "Overdrag",
+        "done": "{name} tager sig nu af {rider}",
+        "invited": "{name} er inviteret og tager sig nu af {rider}",
+        "errors": {
+          "notChapterMember": "Personen er ikke medlem af passagerens afdeling. Vedkommende skal melde sig ind først.",
+          "sameManager": "Personen tager sig allerede af passageren.",
+          "passengerChapterMismatch": "Personen tager sig allerede af passagerer i en anden afdeling.",
+          "tooManyRiders": "Personen tager sig allerede af så mange passagerer, som en konto kan.",
+          "unknownPassenger": "Passageren kan ikke overdrages længere. Genindlæs siden.",
+          "rateLimited": "Det var mange overdragelser i træk. Vent lidt, og prøv igen."
+        }
       }
     },
     "person": {
@@ -631,7 +675,8 @@
         "done": "{name} er slettet.",
         "errors": {
           "generic": "Det virkede ikke. Prøv igen.",
-          "self": "Du kan ikke slette din egen konto her."
+          "self": "Du kan ikke slette din egen konto her.",
+          "managesRiders": "Kontoen tager sig nu af passagerer, der ikke stod på listen. Genindlæs og tjek igen."
         },
         "label": "Skriv {word} for at bekræfte",
         "open": "Slet bruger",
@@ -660,7 +705,8 @@
       "profile": "Profil",
       "caretaker": {
         "title": "Står for",
-        "relationship": "Relation: {relationship}"
+        "relationship": "Relation: {relationship}",
+        "handOverHint": "Slettes kontoen, bliver passagererne uden egen konto slettet med. Overdrag dem til en anden fra deres egen side først, så de kan blive ved med at køre."
       }
     },
     "perspectives": {
@@ -933,6 +979,10 @@
           "hint": "Et par linjer fra dig, fremhævet i velkomstmailen, som alle nye piloter og passagerer får.",
           "label": "Et par ord med på vejen",
           "placeholder": "Vi kører tirsdage klokken to, og der er altid kage."
+        },
+        "requestPush": {
+          "label": "Turønsker vibrerer i lommen",
+          "hint": "Slår du det fra, venter nye ønsker stadig i indbakken – med en e-mail to minutter senere, hvis ingen har læst dem i appen."
         }
       },
       "pickChapter": "Vælg en afdeling i sidemenuen for at se afdelingens link.",
@@ -1051,7 +1101,15 @@
         },
         "noNotice": "Intet mindste varsel",
         "hours": "{count, plural, one {1 time} other {# timer}}",
-        "days": "{count, plural, one {1 dag} other {# dage}}"
+        "days": "{count, plural, one {1 dag} other {# dage}}",
+        "method": {
+          "label": "Planlægning",
+          "hint": "Hvem der gør et turønske til en tur. Med “Automatisk” bliver et ønske booket, så snart det kommer ind, hvis der er en ledig rickshaw på det tidspunkt; alle andre venter på en administrator.",
+          "options": {
+            "scheduler": "En administrator beslutter",
+            "auto": "Automatisk, når en rickshaw er ledig"
+          }
+        }
       }
     },
     "table": {
@@ -1182,6 +1240,107 @@
       "errors": {
         "unknownLocation": "Det startsted findes ikke længere. Genindlæs siden og prøv igen.",
         "locationArchived": "Det startsted er arkiveret. Gendan det først."
+      }
+    },
+    "rideRequests": {
+      "title": "Turønsker",
+      "tabs": {
+        "label": "Ture og turønsker",
+        "rides": "Ture",
+        "requests": "Turønsker"
+      },
+      "waiting": "{count, plural, one {1 ønske venter} other {# ønsker venter}}",
+      "statuses": {
+        "pending": "Venter",
+        "scheduled": "Planlagt",
+        "declined": "Afvist",
+        "withdrawn": "Trukket tilbage",
+        "lapsed": "Udløbet",
+        "closed": "Lukket"
+      },
+      "filter": {
+        "label": "Vis ønsker",
+        "all": "Alle"
+      },
+      "empty": {
+        "pending": "Ingen ønsker venter. Nye lander her, så snart nogen spørger.",
+        "other": "Ingen ønsker her."
+      },
+      "columns": {
+        "when": "Ønsket til",
+        "riders": "Passagerer",
+        "model": "Tur",
+        "where": "Hvor",
+        "asked": "Sendt",
+        "status": "Status",
+        "chapter": "Afdeling"
+      },
+      "detail": {
+        "back": "Turønsker",
+        "asked": "{name} sendte ønsket {when}",
+        "someone": "Et tidligere medlem",
+        "request": "Ønske",
+        "when": "Ønsket til",
+        "from": "Fra",
+        "to": "Til",
+        "model": "Tur",
+        "note": "{name} skriver",
+        "riders": "Passagerer",
+        "requester": "Ønsket af",
+        "noPhone": "Intet telefonnummer på kontoen",
+        "history": "Historik",
+        "lines": {
+          "submitted": "{self, select, yes {Du bad om turen} other {{name} bad om turen}}",
+          "scheduled": "{self, select, yes {Du planlagde den} other {{name} planlagde den}}",
+          "scheduledAuto": "Planlagt automatisk",
+          "declined": "{self, select, yes {Du afviste den} other {{name} afviste den}}",
+          "withdrawn": "{self, select, yes {Du trak ønsket tilbage} other {{name} trak ønsket tilbage}}",
+          "closed": "Lukket, fordi en passager eller den, der bad om turen, ikke længere er med"
+        },
+        "seeRide": "Åbn turen",
+        "rideGone": "Turen er siden blevet slettet.",
+        "decision": "Beslutning",
+        "schedule": "Planlæg …",
+        "decline": "Afvis …",
+        "pendingHint": "Planlæg åbner turen med ønsket udfyldt. Intet er booket, før du gemmer.",
+        "decided": {
+          "scheduled": "Planlagt {when}",
+          "declined": "Afvist {when}",
+          "withdrawn": "Trukket tilbage {when}",
+          "closed": "Lukket {when}"
+        },
+        "conflicts": "Før du beslutter",
+        "noConflicts": "Inden for køretiderne, med nok varsel og intet andet på programmet.",
+        "conflict": {
+          "outsideHours": "Uden for køretiderne",
+          "closedDate": "Afdelingen har lukket den dag",
+          "shortNotice": "Kort varsel: {hours, plural, one {1 time} other {# timer}} før",
+          "beyondHorizon": "Længere ude, end I tager imod bookinger",
+          "ridesThen": "{count, plural, one {1 anden tur} other {# andre ture}} i det tidsrum"
+        },
+        "lapsed": "Det ønskede tidspunkt er gået. Du kan stadig planlægge turen til et andet tidspunkt eller afvise ønsket.",
+        "rideCancelled": "Turen er siden blevet aflyst."
+      },
+      "decline": {
+        "title": "Afvis ønsket",
+        "body": "{name} får besked. Et par ord om hvorfor gør det lettere at sende et nyt ønske.",
+        "note": "Besked til {name}",
+        "placeholder": "Ingen pilot er ledig den formiddag – passer torsdag?",
+        "submit": "Afvis ønsket",
+        "done": "Ønsket er afvist",
+        "bodyNobody": "Ingen får en e-mail: Den, der bad om turen, er ikke længere med. En note bliver i ønskets historik.",
+        "noteNobody": "Note til historikken"
+      },
+      "schedule": {
+        "fromRequest": "Ønske fra {name}",
+        "done": "Turen er planlagt. {name} får en bekræftelse.",
+        "note": "Det skrev den, der bad om turen, til afdelingen. Piloterne ser kun det, du skriver i beskeden til piloterne.",
+        "stale": "Dette ønske venter ikke længere: Det er trukket tilbage, eller der er allerede taget stilling til det. Luk visningen for at se, hvad der skete.",
+        "requestedRider": "Med i ønsket"
+      },
+      "errors": {
+        "requestNotPending": "Der er allerede taget stilling til ønsket. Genindlæs for at se, hvad der skete.",
+        "unknownRequest": "Dette ønske findes ikke længere."
       }
     }
   },
@@ -1376,7 +1535,12 @@
       "label": "Skift udseende",
       "light": "Lys",
       "system": "System"
-    }
+    },
+    "route": {
+      "to": "Fra {from} til {to}",
+      "toAndBack": "Fra {from} til {to} og hjem igen"
+    },
+    "dateTime": "{date} kl. {time}"
   },
   "consent": {
     "data": "Jeg accepterer, at mine data opbevares og behandles.",
@@ -1939,19 +2103,8 @@
       "slogan": "Ret til vind i håret"
     },
     "ride": {
-      "back": "Tilbage til {chapter}",
-      "confirm": "Fortsæt",
-      "cta": "Bestil en tur",
-      "noDraft": "Vi mistede overblikket over dit valg. Vælg et tidspunkt igen på afdelingens side.",
-      "note": "Turbestilling er på vej — der er ikke sendt noget endnu.",
-      "summary": "Du vil gerne køre med {chapter}, {when}.",
-      "title": "Næsten der",
-      "when": {
-        "afternoon": "om eftermiddagen",
-        "any": "når som helst",
-        "morning": "om formiddagen"
-      },
-      "whenTitle": "Hvornår passer det dig?"
+      "cta": "Book en tur",
+      "body": "Ønsk en tur til dig selv eller til en, du passer på. Afdelingen bekræfter tidspunktet."
     }
   },
   "legal": {
@@ -2065,10 +2218,6 @@
         "title": "Kalender"
       },
       "rides": {
-        "passenger": {
-          "body": "Der er ikke booket noget endnu. Når din afdeling åbner for booking, venter dine ture her — dagen, tidspunktet og piloten, der ringer på.",
-          "caretakerBody": "{who, select, one {Der er ikke booket noget til {name} endnu. Når din afdeling åbner for booking, venter turene her — dagen, tidspunktet og piloten, der ringer på.} withOne {Der er ikke booket noget til dig eller {name} endnu. Når din afdeling åbner for booking, venter turene her — dagen, tidspunktet og piloten, der ringer på.} withMany {Der er ikke booket noget til dig eller dem, du passer på, endnu. Når din afdeling åbner for booking, venter turene her — dagen, tidspunktet og piloten, der ringer på.} other {Der er ikke booket noget til dem, du passer på, endnu. Når din afdeling åbner for booking, venter turene her — dagen, tidspunktet og piloten, der ringer på.}}"
-        },
         "pilot": {
           "body": "Din første tur står ikke på listen endnu. Når din afdeling lægger ture op, kommer dem, der mangler en pilot, frem her — vælg en, så er rickshawen din hele eftermiddagen."
         },
@@ -2117,7 +2266,8 @@
       "invitation": "Invitation",
       "membership": "Medlemskab",
       "ride": "Tur",
-      "welcome": "Velkommen"
+      "welcome": "Velkommen",
+      "request": "Turønske"
     },
     "empty": {
       "body": "I samme øjeblik der sker noget — en afdeling svarer, en tur bliver booket — lander det her.",
@@ -2155,12 +2305,6 @@
         "startsAt": "Starter ved {place}",
         "subject": "Vores tur den {date}",
         "to": "til {destination}"
-      },
-      "empty": {
-        "ask": "Spørg {chapter} om en tur",
-        "askBody": "Skriv et par linjer til holdet: hvornår du gerne vil ud, og hvorhen. Så finder de en dag, et tidspunkt og en pilot til dig.",
-        "subject": "En tur med Cycling Without Age",
-        "title": "Der er ingen ture planlagt lige nu"
       },
       "events": {
         "badge": "Arrangement",
@@ -2249,6 +2393,177 @@
         "hint": "Hvor passageren bor, hvis afdelingen kører derfra.",
         "gone": "{name} (tilbydes ikke længere)",
         "none": "Intet"
+      }
+    },
+    "request": {
+      "title": "Book en tur",
+      "back": "Tilbage",
+      "next": "Fortsæt",
+      "send": "Send ønske",
+      "sending": "Sender …",
+      "sent": "Ønsket er sendt til {chapter}",
+      "join": {
+        "title": "Bliv medlem af {chapter} først",
+        "body": "Turønsker går til de afdelinger, du er med i. Bliv medlem som passager, så kan du sende dit første turønske lige bagefter."
+      },
+      "notMember": {
+        "title": "Du kan ikke booke lige nu",
+        "body": "{count, plural, one {Du er ikke længere medlem af den afdeling, som {names} kører med, så der kan ikke sendes turønsker for vedkommende. Bed afdelingen om at overdrage vedkommende til en anden, eller bliv medlem igen.} other {Du er ikke længere medlem af den afdeling, som {names} kører med, så der kan ikke sendes turønsker for dem. Bed afdelingen om at overdrage dem til en anden, eller bliv medlem igen.}}",
+        "cta": "Til forsiden"
+      },
+      "empty": {
+        "title": "Hvem vil du booke for?",
+        "body": "Tilføj den, der skal køre med – dig selv eller en, du passer på – og kom så tilbage og ønsk en tur.",
+        "cta": "Tilføj en passager"
+      },
+      "steps": {
+        "who": {
+          "title": "Hvem skal med?",
+          "body": "{count, plural, one {Der er plads til én passager i en rickshaw.} other {Der er plads til op til # passagerer i en rickshaw.}}"
+        },
+        "where": {
+          "title": "Hvor skal turen gå hen?",
+          "body": "En tur ud i den friske luft eller en tur et bestemt sted hen."
+        },
+        "when": {
+          "title": "Hvornår passer det dig?",
+          "body": "Vælg en dag og et tidsrum. {chapter} bekræfter det præcise tidspunkt."
+        },
+        "note": {
+          "title": "Andet?",
+          "body": "En rollator skal med, dørklokken driller – alt, der hjælper {chapter} med at planlægge."
+        },
+        "review": {
+          "title": "Klar til at sende?",
+          "body": "Tjek oplysningerne. Intet er booket, før {chapter} bekræfter.",
+          "bodyAuto": "Tjek oplysningerne. Er der en ledig rickshaw på det tidspunkt, bliver turen booket med det samme."
+        }
+      },
+      "who": {
+        "stranded": "Du kan ikke ønske ture for {names} lige nu: du er ikke længere medlem af deres afdeling."
+      },
+      "models": {
+        "pleasure": "En tur ud",
+        "functional": "Et bestemt sted hen"
+      },
+      "where": {
+        "kind": "Hvilken slags tur?",
+        "pleasureBody": "En runde i gåtempo med vind i håret, tilbage hvor du startede.",
+        "functionalBody": "Til lægen, en café eller en ven – og hjem igen, hvis du vil.",
+        "from": "Starter ved",
+        "pickup": "Hentes ved",
+        "to": "Skal hen til",
+        "careCenter": "Plejecenter",
+        "kinds": {
+          "careCenter": "Plejecenter",
+          "residence": "Bolig",
+          "publicPlace": "Mødested",
+          "other": "Sted"
+        },
+        "home": "Hjemme",
+        "change": "Skift",
+        "elsewhere": "Et andet sted",
+        "elsewhereBody": "Søg efter en adresse",
+        "searchLabel": "Adresse",
+        "searchHint": "Gade, sted eller bygning",
+        "searchFailed": "Adressen kunne ikke findes. Prøv en anden.",
+        "previous": "Været der før",
+        "roundTrip": "Og hjem igen",
+        "roundTripHint": "Afdelingen kører alle hjem efter besøget."
+      },
+      "when": {
+        "parts": {
+          "morning": "Formiddag",
+          "afternoon": "Eftermiddag",
+          "evening": "Aften"
+        },
+        "windows": "Tider {date}",
+        "confirm": "Det er tidsrum, ikke aftaler – afdelingen bekræfter det præcise tidspunkt.",
+        "pickDay": "Vælg en dag for at se tiderne.",
+        "none": "Der er ingen dage åbne for ønsker lige nu. Spørg afdelingen direkte."
+      },
+      "note": {
+        "label": "Besked til afdelingen (valgfri)",
+        "placeholder": "En rollator skal med, dørklokken driller, …"
+      },
+      "review": {
+        "riders": "Passagerer",
+        "ride": "Tur",
+        "when": "Hvornår",
+        "note": "Besked",
+        "noNote": "Ingen besked",
+        "change": "Skift",
+        "waiting": "Intet er booket endnu. {chapter} kigger på dit ønske og bekræfter det præcise tidspunkt – du hører fra dem uanset hvad.",
+        "waitingAuto": "Er der en ledig rickshaw på det tidspunkt, booker {chapter} turen med det samme, og du får en bekræftelse. Ellers kigger {chapter} på dit ønske og vender tilbage."
+      },
+      "list": {
+        "title": "Dine ønsker",
+        "empty": "Ingen ture booket endnu. Spørg afdelingen om en – det tager kun et minut.",
+        "status": {
+          "pending": "Venter på {chapter}",
+          "declined": "{chapter} kan desværre ikke"
+        }
+      },
+      "page": {
+        "title": "Turønske",
+        "asked": "Sendt {date}",
+        "statuses": {
+          "pending": "Venter på {chapter}",
+          "scheduled": "Booket",
+          "declined": "Ikke denne gang",
+          "withdrawn": "Trukket tilbage",
+          "lapsed": "Intet svar i tide",
+          "closed": "Lukket"
+        },
+        "bodies": {
+          "pending": "{chapter} har dit ønske og bekræfter det præcise tidspunkt. Du får besked.",
+          "scheduled": "{chapter} har booket turen. Du finder den under dine ture.",
+          "scheduledGone": "{chapter} bookede en tur til dette ønske, men den er siden blevet aflyst. Spørg afdelingen om en anden dag.",
+          "declined": "{chapter} kan desværre ikke tilbyde denne tur. Du er velkommen til at ønske en tur en anden dag.",
+          "withdrawn": "Du har trukket dette ønske tilbage.",
+          "lapsed": "{chapter} nåede ikke at svare på dit ønske før det tidspunkt, du bad om. Du er velkommen til at sende et nyt ønske.",
+          "closed": "Dette ønske blev lukket, fordi en passager, det var til, ikke længere er på din liste. Du er velkommen til at sende et nyt ønske."
+        },
+        "decisionNote": "En besked fra {chapter}",
+        "riders": "Passagerer",
+        "ride": "Tur",
+        "when": "Ønsket til",
+        "note": "Din besked",
+        "seeRide": "Se turen",
+        "askAgain": "Ønsk en anden tur",
+        "cancel": {
+          "label": "Træk ønsket tilbage",
+          "title": "Træk ønsket tilbage?",
+          "body": "Afdelingen holder op med at planlægge det. Du kan altid sende et nyt ønske.",
+          "confirm": "Træk tilbage",
+          "cancel": "Behold det",
+          "done": "Ønsket er trukket tilbage"
+        }
+      },
+      "errors": {
+        "beyondHorizon": "Så langt ude tager afdelingen ikke imod ønsker. Vælg en tidligere dag.",
+        "closedDate": "Afdelingen har lukket den dag. Vælg en anden.",
+        "leadTime": "Det er for kort varsel til at planlægge. Vælg et senere tidspunkt.",
+        "outsideHours": "Afdelingen kører ikke på det tidspunkt. Vælg en af de viste tider.",
+        "locationNotInChapter": "Det sted tilbydes ikke længere. Vælg et andet.",
+        "unknownLocation": "Det sted tilbydes ikke længere. Vælg et andet.",
+        "notChapterMember": "Du er ikke længere medlem af denne afdeling.",
+        "riderNotInChapter": "Disse passagerer kører med forskellige afdelinger. Send et ønske for hver enkelt.",
+        "tooManyRiders": "Det er flere passagerer, end der er plads til i en rickshaw.",
+        "unknownChapter": "Den afdeling er ikke tilgængelig.",
+        "unknownPassenger": "En af passagererne er ikke længere på din liste. Genindlæs og prøv igen.",
+        "unknownRequest": "Dette ønske findes ikke længere.",
+        "requestNotPending": "Afdelingen har allerede taget stilling til dette ønske.",
+        "rateLimited": "Det var mange ønsker i træk. Vent lidt, og prøv igen.",
+        "alreadyRequested": "Der venter allerede et ønske for denne passager på det tidspunkt. Vent på afdelingens svar, eller træk det ønske tilbage først.",
+        "riderBooked": "Passageren er allerede booket på en tur på det tidspunkt.",
+        "tooManyRequests": "Du har allerede flere ønsker, der venter. Når afdelingen har svaret, kan du sende et nyt."
+      },
+      "booked": "Booket hos {chapter}",
+      "noDays": {
+        "title": "Ingen dage åbne for ønsker",
+        "body": "{chapter} tager ikke imod turønsker de næste uger lige nu. Skriv til dem, så finder de en løsning.",
+        "subject": "En tur med Cycling Without Age"
       }
     }
   },

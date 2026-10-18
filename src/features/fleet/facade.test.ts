@@ -687,6 +687,69 @@ describe("putting a grounded trishaw back into service", () => {
   });
 });
 
+describe("picking trishaws for riders", () => {
+  const typed = (seats: number, wheelchairAccessible = false) => ({
+    seats,
+    wheelchairAccessible,
+  });
+
+  it("counts a trishaw without a model as two seats", async () => {
+    mocked(trishaws.findTrishawsOfChapters).mockResolvedValue([
+      trishaw({ type: typed(1) }),
+      trishaw({ id: "trishaw-2", type: null }),
+    ] as never);
+    expect(await fleet.maxSeats(MUENCHEN)).toBe(2);
+  });
+
+  it("offers two seats to a chapter without trishaws", async () => {
+    mocked(trishaws.findTrishawsOfChapters).mockResolvedValue([]);
+    expect(await fleet.maxSeats(MUENCHEN)).toBe(2);
+  });
+
+  it("leaves a retired trishaw's seats out", async () => {
+    mocked(trishaws.findTrishawsOfChapters).mockResolvedValue([
+      trishaw({ type: typed(1) }),
+      trishaw({ id: "trishaw-2", status: "retired", type: typed(4) }),
+    ] as never);
+    expect(await fleet.maxSeats(MUENCHEN)).toBe(1);
+  });
+
+  it("takes the largest model of the chapter", async () => {
+    mocked(trishaws.findTrishawsOfChapters).mockResolvedValue([
+      trishaw({ type: typed(1) }),
+      trishaw({ id: "trishaw-2", type: typed(4) }),
+    ] as never);
+    expect(await fleet.maxSeats(MUENCHEN)).toBe(4);
+  });
+
+  it("leaves out trishaws off the road, grounded or too small", async () => {
+    mocked(trishaws.findTrishawsOfChapters).mockResolvedValue([
+      trishaw({ id: "workshop", status: "maintenance", type: typed(2) }),
+      trishaw({
+        id: "grounded",
+        type: typed(2),
+        damages: [{ id: "d1", grounding: true }],
+      }),
+      trishaw({ id: "solo", type: typed(1) }),
+      trishaw({ id: "pair", type: typed(2) }),
+    ] as never);
+    expect(
+      await fleet.suitableTrishawIds(MUENCHEN, { count: 2, wheelchair: false }),
+    ).toEqual(["pair"]);
+  });
+
+  it("takes only a wheelchair-ready trishaw when a rider needs one", async () => {
+    mocked(trishaws.findTrishawsOfChapters).mockResolvedValue([
+      trishaw({ id: "pair", type: typed(2) }),
+      trishaw({ id: "ramp", type: typed(1, true) }),
+      trishaw({ id: "plain", type: null }),
+    ] as never);
+    expect(
+      await fleet.suitableTrishawIds(MUENCHEN, { count: 1, wheelchair: true }),
+    ).toEqual(["ramp"]);
+  });
+});
+
 describe("listTrishawPlaces", () => {
   // The access code lives on the location: one the chapter no longer reaches is not shown.
   it("names where each trishaw waits, only where the chapter still reaches", async () => {

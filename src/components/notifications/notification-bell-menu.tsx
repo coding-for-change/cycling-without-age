@@ -47,6 +47,7 @@ const ICON: Record<NotificationCategory, LucideIcon> = {
   membership: Users,
   fleet: Bike,
   ride: CalendarClock,
+  request: Inbox,
 };
 
 export function NotificationBellMenu({

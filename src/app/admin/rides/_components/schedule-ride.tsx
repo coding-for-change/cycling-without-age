@@ -3,8 +3,14 @@ import { chapters as chapterFeature } from "@/features/chapters";
 import { DEFAULT_CHAPTER_SETTINGS } from "@/features/chapters/schemas";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
+import { rideRequests, type RideRequestRow } from "@/features/ride-requests";
 import { rideLocations } from "@/features/ride-locations";
-import { RIDE_MAX_MINUTES, RIDE_MIN_MINUTES, wallSlot } from "@/features/rides";
+import {
+  RIDE_MAX_MINUTES,
+  RIDE_MIN_MINUTES,
+  slotOf,
+  wallSlot,
+} from "@/features/rides";
 import {
   isPilot,
   toPassengerChoice,
@@ -31,6 +37,7 @@ import { readActiveScope, type AdminSearchParams } from "../../active-scope";
 import { readWeekAnchor } from "../../week-param";
 import {
   ScheduleRideDrawer,
+  type RequestPrefill,
   type ScheduleChapter,
   type ScheduleCrew,
 } from "./schedule-ride-drawer";
@@ -166,6 +173,73 @@ async function loadCrew(
   };
 }
 
+const placeOf = (
+  name: string | null,
+  address: string | null,
+  latitude: number | null,
+  longitude: number | null,
+) =>
+  name && latitude !== null && longitude !== null
+    ? { name, address: address ?? name, latitude, longitude }
+    : null;
+
+/**
+ * The drawer opened from a Ride Request starts from what was asked for: the
+ * riders, the place, the destination and the start of the window, at the
+ * chapter's usual ride length. The Action re-reads the request, so nothing
+ * here is trusted on the way back.
+ */
+function prefillOf(
+  request: RideRequestRow,
+  rideMinutes: number,
+): RequestPrefill {
+  const slot = slotOf(
+    {
+      startsAt: request.requestedStartsAt,
+      endsAt: new Date(
+        Math.min(
+          request.requestedEndsAt.getTime(),
+          request.requestedStartsAt.getTime() + rideMinutes * 60_000,
+        ),
+      ),
+    },
+    request.chapter.timeZone,
+  );
+  return {
+    id: request.id,
+    chapterId: request.chapterId,
+    name: request.requester?.name ?? null,
+    model: request.model === "functional" ? "functional" : "pleasure",
+    slot,
+    rideLocationId: request.rideLocationId,
+    origin: placeOf(
+      request.pickupName,
+      request.pickupAddress,
+      request.pickupLatitude,
+      request.pickupLongitude,
+    ),
+    destination: placeOf(
+      request.destinationName,
+      request.destinationAddress,
+      request.destinationLatitude,
+      request.destinationLongitude,
+    ),
+    roundTrip: request.roundTrip,
+    passengerIds: request.passengers.map(({ passenger }) => passenger.id),
+    note: request.note,
+  };
+}
+
+async function pendingRequest(id: string | undefined, chapterIds: string[]) {
+  if (!id) return null;
+  const request = await rideRequests.getRequest(id.slice(0, 64));
+  return request &&
+    request.status === "pending" &&
+    chapterIds.includes(request.chapterId)
+    ? request
+    : null;
+}
+
 export async function ScheduleRide({
   searchParams,
 }: {
@@ -176,14 +250,16 @@ export async function ScheduleRide({
   if (!chapterIds.length) return null;
 
   const opening = params.new === "1";
-  const [found, dict, language, head, planning, places] = await Promise.all([
-    chapterFeature.getChapters(chapterIds),
-    getDictionary(),
-    getLocale(),
-    headers(),
-    opening ? loadPlanning(chapterIds) : new Map<string, Planning>(),
-    opening ? rideLocations.listRideLocations(chapterIds) : [],
-  ]);
+  const [found, dict, language, head, planning, places, request] =
+    await Promise.all([
+      chapterFeature.getChapters(chapterIds),
+      getDictionary(),
+      getLocale(),
+      headers(),
+      opening ? loadPlanning(chapterIds) : new Map<string, Planning>(),
+      opening ? rideLocations.listRideLocations(chapterIds) : [],
+      opening ? pendingRequest(first(params.request), chapterIds) : null,
+    ]);
   if (!found.length) return null;
 
   const locale = resolveLocale(head.get("accept-language"));
@@ -229,6 +305,16 @@ export async function ScheduleRide({
   return (
     <ScheduleRideDrawer
       chapters={chapters}
+      request={
+        request
+          ? prefillOf(
+              request,
+              planning.get(request.chapterId)?.rideMinutes ??
+                DEFAULT_CHAPTER_SETTINGS.defaultRideMinutes,
+            )
+          : null
+      }
+      requestStrings={dict.admin.rideRequests.schedule}
       crew={
         params.new === "1"
           ? loadCrew(chapterIds, dict.calendar.pickupCareHome)
@@ -245,7 +331,7 @@ export async function ScheduleRide({
       address={dict.common.address}
       markdown={dict.common.markdown}
       models={dict.calendar.models}
-      errors={rideErrors(dict)}
+      errors={{ ...rideErrors(dict), ...dict.admin.rideRequests.errors }}
       locations={places.map(toChoice)}
       locationStrings={{
         picker: dict.admin.rideLocations.picker,

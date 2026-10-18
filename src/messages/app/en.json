@@ -54,14 +54,16 @@
         "errors": {
           "generic": "That didn't work. Try again.",
           "handOverAdmin": "Hand over your admin role first.",
-          "rateLimited": "Give it a moment and try again."
+          "rateLimited": "Give it a moment and try again.",
+          "managesRiders": "You now look after someone who isn't listed here. Reload and check again."
         },
         "label": "Type {word} to confirm",
         "open": "Delete account",
-        "riders": "{count, plural, one {1 person you look after will be removed too, with their bookings} other {# people you look after will be removed too, with their bookings}}",
+        "riders": "{count, plural, one {The person you look after} other {The people you look after}}: {names}, with all their bookings",
         "submit": "Delete account",
         "title": "Delete your account for good?",
-        "word": "DELETE"
+        "word": "DELETE",
+        "bodyWithRiders": "Your account, roles, requests and history go with it. Rides already ridden stay on the record. To keep the people you look after riding, ask their chapter to hand them over to someone else before you delete your account."
       },
       "title": "Sign out or delete"
     },
@@ -424,12 +426,19 @@
         "careRequested": "Care request",
         "careDecided": "Care answer",
         "careInvited": "Caretaker invite",
+        "rideRequestSubmitted": "New ride request",
+        "rideRequestWithdrawn": "Ride request withdrawn",
+        "rideRequestDeclined": "Ride request declined",
+        "rideRequestScheduled": "Ride request scheduled",
+        "riderHandedOver": "Rider handed over",
+        "riderHandedAway": "Rider handed on",
         "rideReminder": "Rider reminder",
         "pilotReminder": "Pilot reminder",
         "rideNoDemand": "Nobody booked",
         "rideRosterRefilled": "Rider back"
       },
-      "you": "You"
+      "you": "You",
+      "riderHandedOver": "{direction, select, in {{self, select, yes {You} other {{actor}}} handed {riderGone, select, yes {a former rider} other {{rider}}} over to this account from {previousGone, select, yes {a former member} other {{previous}}}} other {{self, select, yes {You} other {{actor}}} handed {riderGone, select, yes {a former rider} other {{rider}}} over to {nextGone, select, yes {a former member} other {{next}}}}}"
     },
     "members": {
       "actions": "Actions for {name}",
@@ -616,11 +625,46 @@
           "errors": {
             "generic": "That didn't work. Try again."
           }
-        }
+        },
+        "history": "History",
+        "historyEmpty": "Nothing yet. A hand-over to someone else shows up here.",
+        "handedOver": "{self, select, yes {You} other {{actor}}} handed {riderGone, select, yes {a former rider} other {{rider}}} over from {previousGone, select, yes {a former member} other {{previous}}} to {nextGone, select, yes {a former member} other {{next}}}"
       },
       "waiting": {
         "title": "Waiting for an answer",
         "row": "Asked {caretaker} · {date}"
+      },
+      "handOver": {
+        "open": "Hand over…",
+        "title": "Hand {rider} over",
+        "body": "Choose who books rides for {rider} from now on. Their bookings, profile and history stay as they are.",
+        "modeLabel": "Who takes over",
+        "member": "Someone in the chapter",
+        "invite": "Someone new",
+        "picker": {
+          "label": "Member",
+          "placeholder": "Pick a member",
+          "search": "Search members",
+          "empty": "No member found",
+          "count": "{count} of {max}",
+          "full": "One person at a time"
+        },
+        "noMembers": "Nobody else in {chapter} can take over yet. Invite someone new.",
+        "name": "Name",
+        "contact": "Email or mobile number",
+        "contactHint": "They get an invitation and sign in with this.",
+        "invalid": "Enter a name and a valid email address or mobile number.",
+        "submit": "Hand over",
+        "done": "{rider} is now looked after by {name}",
+        "invited": "{name} is invited and now looks after {rider}",
+        "errors": {
+          "notChapterMember": "That person isn't a member of the rider's chapter. They need to join it first.",
+          "sameManager": "They already look after this rider.",
+          "passengerChapterMismatch": "They already look after riders of another chapter.",
+          "tooManyRiders": "They already look after as many riders as one account can.",
+          "unknownPassenger": "This rider can't be handed over any more. Reload the page.",
+          "rateLimited": "That's a lot of hand-overs in a row. Wait a little and try again."
+        }
       }
     },
     "person": {
@@ -631,7 +675,8 @@
         "done": "{name} is gone.",
         "errors": {
           "generic": "That didn't work. Try again.",
-          "self": "You can't delete your own account."
+          "self": "You can't delete your own account.",
+          "managesRiders": "This account now looks after riders who weren't listed. Reload and check again."
         },
         "label": "Type {word} to confirm",
         "open": "Delete user",
@@ -660,7 +705,8 @@
       "profile": "Profile",
       "caretaker": {
         "title": "Looks after",
-        "relationship": "Relationship: {relationship}"
+        "relationship": "Relationship: {relationship}",
+        "handOverHint": "Deleting this account deletes the riders here who have no account of their own. Hand them over to someone else from their own page first to keep them riding."
       }
     },
     "perspectives": {
@@ -933,6 +979,10 @@
           "hint": "A few lines from you, highlighted in the welcome mail every new pilot and passenger gets.",
           "label": "A word of welcome",
           "placeholder": "We ride Tuesdays at two, and there is always cake."
+        },
+        "requestPush": {
+          "label": "Ride requests buzz your phone",
+          "hint": "Switch it off and new requests still wait in the inbox — with an email two minutes later, unless somebody has already read them in the app."
         }
       },
       "pickChapter": "Pick a chapter in the sidebar to see its join link.",
@@ -1051,7 +1101,15 @@
         },
         "noNotice": "No minimum",
         "hours": "{count, plural, one {1 hour} other {# hours}}",
-        "days": "{count, plural, one {1 day} other {# days}}"
+        "days": "{count, plural, one {1 day} other {# days}}",
+        "method": {
+          "label": "Scheduling method",
+          "hint": "Who turns a ride request into a ride. With “Automatically”, a request is booked as soon as it arrives if a trishaw is free at that time; any other request waits for an admin.",
+          "options": {
+            "scheduler": "An admin decides",
+            "auto": "Automatically when a trishaw is free"
+          }
+        }
       }
     },
     "table": {
@@ -1182,6 +1240,107 @@
       "errors": {
         "unknownLocation": "That ride location is gone. Reload the page and try again.",
         "locationArchived": "That ride location is archived. Restore it first."
+      }
+    },
+    "rideRequests": {
+      "title": "Ride requests",
+      "tabs": {
+        "label": "Rides and ride requests",
+        "rides": "Rides",
+        "requests": "Ride requests"
+      },
+      "waiting": "{count, plural, one {1 request waiting} other {# requests waiting}}",
+      "statuses": {
+        "pending": "Waiting",
+        "scheduled": "Scheduled",
+        "declined": "Declined",
+        "withdrawn": "Withdrawn",
+        "lapsed": "Lapsed",
+        "closed": "Closed"
+      },
+      "filter": {
+        "label": "Show requests",
+        "all": "All"
+      },
+      "empty": {
+        "pending": "No requests waiting. New ones land here the moment someone asks.",
+        "other": "No requests here."
+      },
+      "columns": {
+        "when": "Requested for",
+        "riders": "Riders",
+        "model": "Ride",
+        "where": "Where",
+        "asked": "Asked",
+        "status": "Status",
+        "chapter": "Chapter"
+      },
+      "detail": {
+        "back": "Ride requests",
+        "asked": "{name} asked {when}",
+        "someone": "A former member",
+        "request": "Request",
+        "when": "Requested for",
+        "from": "From",
+        "to": "To",
+        "model": "Ride",
+        "note": "{name} wrote",
+        "riders": "Riders",
+        "requester": "Asked by",
+        "noPhone": "No phone number on the account",
+        "history": "History",
+        "lines": {
+          "submitted": "{self, select, yes {You asked for the ride} other {{name} asked for the ride}}",
+          "scheduled": "{self, select, yes {You scheduled it} other {{name} scheduled it}}",
+          "scheduledAuto": "Scheduled automatically",
+          "declined": "{self, select, yes {You declined it} other {{name} declined it}}",
+          "withdrawn": "{self, select, yes {You took the request back} other {{name} took the request back}}",
+          "closed": "Closed because a rider or the person who asked left"
+        },
+        "seeRide": "Open the ride",
+        "rideGone": "The ride has since been deleted.",
+        "decision": "Decision",
+        "schedule": "Schedule…",
+        "decline": "Decline…",
+        "pendingHint": "Scheduling opens the ride drawer with the request filled in. Nothing is booked until you save it.",
+        "decided": {
+          "scheduled": "Scheduled {when}",
+          "declined": "Declined {when}",
+          "withdrawn": "Withdrawn {when}",
+          "closed": "Closed {when}"
+        },
+        "conflicts": "Before you decide",
+        "noConflicts": "Inside riding hours, with enough notice, and nothing else on.",
+        "conflict": {
+          "outsideHours": "Outside riding hours",
+          "closedDate": "The chapter is closed that day",
+          "shortNotice": "Short notice: {hours, plural, one {1 hour} other {# hours}} ahead",
+          "beyondHorizon": "Further ahead than you take bookings",
+          "ridesThen": "{count, plural, one {1 other ride} other {# other rides}} in that window"
+        },
+        "lapsed": "The time asked for has passed. You can still schedule it for another time, or decline it.",
+        "rideCancelled": "The ride has since been cancelled."
+      },
+      "decline": {
+        "title": "Decline the request",
+        "body": "{name} gets a message. A line on why helps them ask again.",
+        "note": "Note for {name}",
+        "placeholder": "No pilot is free that morning — would Thursday work?",
+        "submit": "Decline request",
+        "done": "Request declined",
+        "bodyNobody": "Nobody gets an email: the person who asked has left. A note stays in the request's history.",
+        "noteNobody": "Note for the history"
+      },
+      "schedule": {
+        "fromRequest": "Request from {name}",
+        "done": "Ride scheduled. {name} gets a confirmation.",
+        "note": "The requester wrote this for the chapter. Pilots only see what you put in the note for pilots.",
+        "stale": "This request is no longer waiting: someone took it back or decided on it already. Close the drawer to see what happened.",
+        "requestedRider": "Asked for in the request"
+      },
+      "errors": {
+        "requestNotPending": "Someone already decided on this request. Reload to see what happened.",
+        "unknownRequest": "This request no longer exists."
       }
     }
   },
@@ -1376,7 +1535,12 @@
       "label": "Change appearance",
       "light": "Light",
       "system": "System"
-    }
+    },
+    "route": {
+      "to": "{from} to {to}",
+      "toAndBack": "{from} to {to} and back"
+    },
+    "dateTime": "{date}, {time}"
   },
   "consent": {
     "data": "I agree to the storage and processing of my data.",
@@ -1939,19 +2103,8 @@
       "slogan": "The right to wind in your hair"
     },
     "ride": {
-      "back": "Back to {chapter}",
-      "confirm": "Continue",
       "cta": "Book a ride",
-      "noDraft": "We lost track of what you picked. Choose a time again on the chapter's page.",
-      "note": "Ride booking is coming soon — nothing has been sent yet.",
-      "summary": "You'd like to ride with {chapter}, {when}.",
-      "title": "Almost there",
-      "when": {
-        "afternoon": "afternoons",
-        "any": "any time",
-        "morning": "mornings"
-      },
-      "whenTitle": "When suits you?"
+      "body": "Ask for a ride for yourself or for someone you look after. The chapter confirms the time."
     }
   },
   "legal": {
@@ -2065,10 +2218,6 @@
         "title": "Calendar"
       },
       "rides": {
-        "passenger": {
-          "body": "Nothing booked yet. Once your chapter opens booking, this is where your rides wait — the day, the time, and the pilot who rings the bell.",
-          "caretakerBody": "{who, select, one {Nothing booked for {name} yet. Once your chapter opens booking, this is where the rides wait — the day, the time, and the pilot who rings the bell.} withOne {Nothing booked for you or {name} yet. Once your chapter opens booking, this is where the rides wait — the day, the time, and the pilot who rings the bell.} withMany {Nothing booked for you or the people you look after yet. Once your chapter opens booking, this is where the rides wait — the day, the time, and the pilot who rings the bell.} other {Nothing booked for the people you look after yet. Once your chapter opens booking, this is where the rides wait — the day, the time, and the pilot who rings the bell.}}"
-        },
         "pilot": {
           "body": "Your first ride isn't on the list yet. When your chapter posts open rides, the ones that need a pilot appear here — pick one, and the trishaw is yours for the afternoon."
         },
@@ -2117,7 +2266,8 @@
       "invitation": "Invitation",
       "membership": "Membership",
       "ride": "Ride",
-      "welcome": "Welcome"
+      "welcome": "Welcome",
+      "request": "Ride request"
     },
     "empty": {
       "body": "The moment something happens — a chapter answers, a ride is booked — it lands right here.",
@@ -2155,12 +2305,6 @@
         "startsAt": "Starts at {place}",
         "subject": "Our ride on {date}",
         "to": "to {destination}"
-      },
-      "empty": {
-        "ask": "Ask {chapter} for a ride",
-        "askBody": "Write a few lines to the team: when you would like to go out, and where to. They'll find a day, a time and a pilot for you.",
-        "subject": "A ride with Cycling Without Age",
-        "title": "No rides planned right now"
       },
       "events": {
         "badge": "Event",
@@ -2249,6 +2393,177 @@
         "hint": "Where the rider lives, if the chapter rides from there.",
         "gone": "{name} (no longer offered)",
         "none": "None"
+      }
+    },
+    "request": {
+      "title": "Book a ride",
+      "back": "Back",
+      "next": "Continue",
+      "send": "Send request",
+      "sending": "Sending…",
+      "sent": "Request sent to {chapter}",
+      "join": {
+        "title": "Join {chapter} first",
+        "body": "Ride requests go to the chapters you belong to. Join as a rider and you can ask for your first ride straight after."
+      },
+      "notMember": {
+        "title": "You can't book right now",
+        "body": "{names} {count, plural, one {rides} other {ride}} with a chapter you're no longer a member of, so you can't ask for rides for them right now. Ask the chapter to hand them over to someone else, or join it again.",
+        "cta": "Back to home"
+      },
+      "empty": {
+        "title": "Who would you like to book for?",
+        "body": "Add the person who rides — yourself or someone you look after — and come back to ask for a ride.",
+        "cta": "Add a rider"
+      },
+      "steps": {
+        "who": {
+          "title": "Who's riding?",
+          "body": "{count, plural, one {One rider fits on a trishaw.} other {Up to # riders fit on one trishaw.}}"
+        },
+        "where": {
+          "title": "Where to?",
+          "body": "A ride out for the fresh air, or a trip to somewhere in particular."
+        },
+        "when": {
+          "title": "When suits you?",
+          "body": "Pick a day and a window. {chapter} confirms the exact time."
+        },
+        "note": {
+          "title": "Anything else?",
+          "body": "A walker coming along, a doorbell that sticks — whatever helps {chapter} plan."
+        },
+        "review": {
+          "title": "Ready to send?",
+          "body": "Check the details. Nothing is booked until {chapter} confirms.",
+          "bodyAuto": "Check the details. If a trishaw is free then, the ride is booked straight away."
+        }
+      },
+      "who": {
+        "stranded": "You can't ask for rides for {names} right now: you're no longer a member of their chapter."
+      },
+      "models": {
+        "pleasure": "A ride out",
+        "functional": "Get somewhere"
+      },
+      "where": {
+        "kind": "What kind of ride?",
+        "pleasureBody": "A loop at walking pace with the wind in your hair, back where you started.",
+        "functionalBody": "To the doctor, a café or a friend — and home again if you like.",
+        "from": "Starting from",
+        "pickup": "Pick up from",
+        "to": "Going to",
+        "careCenter": "Care center",
+        "kinds": {
+          "careCenter": "Care center",
+          "residence": "Residence",
+          "publicPlace": "Meeting point",
+          "other": "Place"
+        },
+        "home": "Home",
+        "change": "Change",
+        "elsewhere": "Somewhere else",
+        "elsewhereBody": "Search for an address",
+        "searchLabel": "Address",
+        "searchHint": "Street, place or building",
+        "searchFailed": "That address couldn't be found. Try another one.",
+        "previous": "Been there before",
+        "roundTrip": "And back again",
+        "roundTripHint": "The chapter brings everyone home after the visit."
+      },
+      "when": {
+        "parts": {
+          "morning": "Morning",
+          "afternoon": "Afternoon",
+          "evening": "Evening"
+        },
+        "windows": "Times on {date}",
+        "confirm": "These are windows, not appointments — the chapter confirms the exact time.",
+        "pickDay": "Pick a day to see its times.",
+        "none": "No days are open for requests right now. Ask the chapter directly."
+      },
+      "note": {
+        "label": "Note for the chapter (optional)",
+        "placeholder": "A walker comes along, the doorbell sticks, …"
+      },
+      "review": {
+        "riders": "Riders",
+        "ride": "Ride",
+        "when": "When",
+        "note": "Note",
+        "noNote": "No note",
+        "change": "Change",
+        "waiting": "Nothing is booked yet. {chapter} looks at your request and confirms the exact time — you'll get a message either way.",
+        "waitingAuto": "If a trishaw is free for that time, {chapter} books the ride straight away and you get the confirmation. If not, {chapter} looks at your request and gets back to you."
+      },
+      "list": {
+        "title": "Your requests",
+        "empty": "No rides booked yet. Ask the chapter for one — it only takes a minute.",
+        "status": {
+          "pending": "Waiting for {chapter}",
+          "declined": "{chapter} can't make it"
+        }
+      },
+      "page": {
+        "title": "Ride request",
+        "asked": "Asked on {date}",
+        "statuses": {
+          "pending": "Waiting for {chapter}",
+          "scheduled": "Booked",
+          "declined": "Not this time",
+          "withdrawn": "Cancelled",
+          "lapsed": "No answer in time",
+          "closed": "Closed"
+        },
+        "bodies": {
+          "pending": "{chapter} has your request and confirms the exact time. You'll hear back by message.",
+          "scheduled": "{chapter} booked the ride. You'll find it in your rides.",
+          "scheduledGone": "{chapter} booked a ride for this request, but it has since been cancelled. Ask the chapter about another day.",
+          "declined": "{chapter} can't make this ride happen. You're welcome to ask for another day.",
+          "withdrawn": "You cancelled this request.",
+          "lapsed": "{chapter} didn't get to your request before the time you asked for. You're welcome to ask again.",
+          "closed": "This request was closed because a rider it was for is no longer on your list. You're welcome to ask again."
+        },
+        "decisionNote": "A note from {chapter}",
+        "riders": "Riders",
+        "ride": "Ride",
+        "when": "Requested for",
+        "note": "Your note",
+        "seeRide": "See the ride",
+        "askAgain": "Ask for another ride",
+        "cancel": {
+          "label": "Cancel request",
+          "title": "Cancel this request?",
+          "body": "The chapter stops planning it. You can always ask again.",
+          "confirm": "Cancel request",
+          "cancel": "Keep it",
+          "done": "Request cancelled"
+        }
+      },
+      "errors": {
+        "beyondHorizon": "That day is further ahead than the chapter takes requests. Pick an earlier one.",
+        "closedDate": "The chapter is closed that day. Pick another one.",
+        "leadTime": "That's too soon for the chapter to plan. Pick a later time.",
+        "outsideHours": "The chapter doesn't ride then. Pick one of the times shown.",
+        "locationNotInChapter": "That place is no longer offered. Pick another one.",
+        "unknownLocation": "That place is no longer offered. Pick another one.",
+        "notChapterMember": "You're no longer a member of this chapter.",
+        "riderNotInChapter": "These riders ride with different chapters. Ask for each one separately.",
+        "tooManyRiders": "That's more riders than one trishaw takes.",
+        "unknownChapter": "That chapter is not available.",
+        "unknownPassenger": "One of the riders is no longer on your list. Reload and try again.",
+        "unknownRequest": "This request no longer exists.",
+        "requestNotPending": "The chapter has already decided on this request.",
+        "rateLimited": "That's a lot of requests in a row. Wait a little and try again.",
+        "alreadyRequested": "There's already a request waiting for this rider at that time. Wait for the chapter's answer, or cancel that request first.",
+        "riderBooked": "This rider is already booked on a ride at that time.",
+        "tooManyRequests": "You have several requests waiting already. Once the chapter has answered them, you can ask again."
+      },
+      "booked": "Booked with {chapter}",
+      "noDays": {
+        "title": "No days open for requests",
+        "body": "{chapter} isn't taking ride requests for the coming weeks right now. Write to them, and they'll find a way.",
+        "subject": "A ride with Cycling Without Age"
       }
     }
   },

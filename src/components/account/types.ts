@@ -27,7 +27,7 @@ export type AccountData = {
   };
   perspectives: PerspectiveChoice[];
   canDeleteAccount: boolean;
-  ridersRemovedWithAccount: number;
+  ridersRemovedWithAccount: { id: string; name: string }[];
   notifications: {
     push: boolean;
     email: boolean;

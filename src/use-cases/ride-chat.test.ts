@@ -1,7 +1,7 @@
 import { chat, type RideConversationInput } from "@/features/chat";
 import { membership } from "@/features/membership";
 import { rides } from "@/features/rides";
-import { syncRideChat } from "./ride-chat";
+import { syncRideChat, syncRiderChats } from "./ride-chat";
 
 jest.mock("@/features/chat", () => ({
   chat: { syncRideConversation: jest.fn() },
@@ -10,7 +10,11 @@ jest.mock("@/features/membership", () => ({
   membership: { listChapterAdmins: jest.fn() },
 }));
 jest.mock("@/features/rides", () => ({
-  rides: { listRideParticipants: jest.fn(), getRideFacts: jest.fn() },
+  rides: {
+    listRideParticipants: jest.fn(),
+    getRideFacts: jest.fn(),
+    upcomingRideIdsOf: jest.fn(),
+  },
 }));
 
 const participants = rides.listRideParticipants as jest.Mock;
@@ -155,5 +159,20 @@ describe("syncRideChat", () => {
     sync.mockClear();
     participants.mockResolvedValue(null);
     expect(await loaded(true)).toBeNull();
+  });
+});
+
+describe("syncRiderChats", () => {
+  it("brings every chat of the rider's rides still ahead in step", async () => {
+    (rides.upcomingRideIdsOf as jest.Mock).mockResolvedValue([
+      "ride-1",
+      "ride-2",
+    ]);
+    await syncRiderChats("managed-greta");
+    expect(rides.upcomingRideIdsOf).toHaveBeenCalledWith(["managed-greta"]);
+    expect(sync.mock.calls.map(([input]) => input.rideId)).toEqual([
+      "ride-1",
+      "ride-2",
+    ]);
   });
 });

@@ -8,6 +8,7 @@ export const TRANSIENT = {
   start: null,
   end: null,
   rideLocation: null,
+  request: null,
 } as const;
 
 export const ridesView = (value: string | null | undefined): RidesView =>

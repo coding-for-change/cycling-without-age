@@ -8,7 +8,7 @@ import { membership } from "@/features/membership";
 import { passengers, pickupOf } from "@/features/passengers";
 import { rides } from "@/features/rides";
 import { APP_URL } from "@/lib/app-url";
-import { renderIcs, type IcsEvent } from "@/lib/ics";
+import { renderIcs, rideUid, type IcsEvent } from "@/lib/ics";
 import { serializeError } from "@/lib/observability/errors";
 import { logger } from "@/lib/observability/logger";
 import { formatMessage } from "@/lib/i18n/format";
@@ -28,7 +28,6 @@ const FUTURE_DAYS = 400;
 const REFRESH_MINUTES = 60;
 
 const PROD_ID = "-//Coding for Change//CWA GO//EN";
-const UID_HOST = new URL(APP_URL).host;
 
 const place = (name: string | null, address: string | null) =>
   [name, address].filter(Boolean).join(", ") || null;
@@ -128,7 +127,7 @@ function toEvent(
   const home = only?.pickup?.residence === "home" ? only.pickup.address : null;
 
   return {
-    uid: `ride-${ride.id}@${UID_HOST}`,
+    uid: rideUid(ride.id),
     start: ride.startsAt,
     end: ride.endsAt,
     stamp: ride.updatedAt,
