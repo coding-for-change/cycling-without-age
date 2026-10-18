@@ -1794,6 +1794,11 @@
     },
     "home": {
       "greeting": "Hallo {name}",
+      "timeGreeting": {
+        "morning": "Guten Morgen, {name}!",
+        "afternoon": "Guten Tag, {name}!",
+        "evening": "Guten Abend, {name}!"
+      },
       "nextRide": {
         "passenger": {
           "caretakerEmpty": "{who, select, one {Für {name} ist noch nichts gebucht. Wenn Sie eine Ausfahrt buchen, stehen hier der Tag, die Uhrzeit und der Pilot, der {name} abholt.} withOne {Noch nichts gebucht. Wenn Sie eine Ausfahrt für sich oder {name} buchen, stehen hier der Tag, die Uhrzeit und der Pilot, der in die Pedale tritt.} withMany {Noch nichts gebucht. Wenn Sie eine Ausfahrt für sich oder einen Menschen buchen, um den Sie sich kümmern, stehen hier der Tag, die Uhrzeit und der Pilot, der in die Pedale tritt.} other {Noch nichts gebucht. Wenn Sie eine Ausfahrt für einen Menschen buchen, um den Sie sich kümmern, stehen hier der Tag, die Uhrzeit und der Pilot, der zur Abholung kommt.}}",

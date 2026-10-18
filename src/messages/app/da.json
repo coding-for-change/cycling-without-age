@@ -1794,6 +1794,11 @@
     },
     "home": {
       "greeting": "Hej {name}",
+      "timeGreeting": {
+        "morning": "Godmorgen, {name}!",
+        "afternoon": "Goddag, {name}!",
+        "evening": "Godaften, {name}!"
+      },
       "nextRide": {
         "passenger": {
           "caretakerEmpty": "{who, select, one {Der er ikke booket noget til {name} endnu. Når du booker en tur, lander dagen, tidspunktet og piloten, der kommer og henter {name}, her.} withOne {Der er ikke booket noget endnu. Når du booker en tur til dig selv eller {name}, lander dagen, tidspunktet og piloten, der træder i pedalerne, her.} withMany {Der er ikke booket noget endnu. Når du booker en tur til dig selv eller en, du passer på, lander dagen, tidspunktet og piloten, der træder i pedalerne, her.} other {Der er ikke booket noget endnu. Når du booker en tur til en, du passer på, lander dagen, tidspunktet og piloten, der kommer forbi, her.}}",

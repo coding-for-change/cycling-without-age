@@ -9,6 +9,7 @@ import { getDictionary, getLocale } from "@/lib/i18n";
 import { PERSPECTIVE_HOME, safeNextPath } from "@/lib/redirects";
 import { resolveMemberNav, type MemberPerspective } from "../nav";
 import { MemberTopBar } from "./member-top-bar";
+import { firstName } from "@/lib/utils";
 import { signInHref } from "@/lib/redirects";
 
 export async function MemberChrome({
@@ -37,6 +38,15 @@ export async function MemberChrome({
       locale={locale}
       languageLabel={dict.common.language}
       themeStrings={dict.common.theme}
+      passenger={
+        perspective === "passenger"
+          ? {
+              greetings: dict.member.home.timeGreeting,
+              name: account ? firstName(account.profile.name) : null,
+              back: dict.common.back,
+            }
+          : null
+      }
       bell={
         session ? (
           <Suspense

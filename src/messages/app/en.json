@@ -1794,6 +1794,11 @@
     },
     "home": {
       "greeting": "Hi {name}",
+      "timeGreeting": {
+        "morning": "Good morning, {name}!",
+        "afternoon": "Good afternoon, {name}!",
+        "evening": "Good evening, {name}!"
+      },
       "nextRide": {
         "passenger": {
           "caretakerEmpty": "{who, select, one {Nothing booked for {name} yet. When you book a ride, the day, the time and the pilot who's coming to collect {name} land here.} withOne {Nothing booked yet. When you book a ride for yourself or {name}, the day, the time and the pilot who's pedalling land here.} withMany {Nothing booked yet. When you book a ride for yourself or someone you look after, the day, the time and the pilot who's pedalling land here.} other {Nothing booked yet. When you book a ride for someone you look after, the day, the time and the pilot who's coming to collect them land here.}}",

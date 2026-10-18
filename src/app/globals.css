@@ -272,6 +272,42 @@
   clip-path: polygon(0 0, 100% 0, 100% 55%, 0 100%);
 }
 
+/* Mockup 2's display type, set in Inter: extrabold, tight, for the one big
+   line of a surface — a ride's day and time, a count. Headlines differ by
+   weight, not typeface (docs-internal/BRAND.md § Typography). */
+@utility display-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+/* The small uppercase label above a card or section. */
+@utility eyebrow {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* A page's blocks arrive one after another: `reveal` on each, `--i` its
+   place in line. Still under reduced or less motion. */
+@utility reveal {
+  @variant motion-safe {
+    animation: reveal-rise 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: min(calc(var(--i, 0) * 55ms), 330ms);
+  }
+}
+
+@keyframes reveal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
 @utility pt-safe {
   padding-top: env(safe-area-inset-top);
 }
@@ -861,4 +897,69 @@ html[data-motion="reduce"]::view-transition-new(*),
 html[data-motion="reduce"]::view-transition-group(*) {
   animation-duration: 0s !important;
   animation-delay: 0s !important;
+}
+
+/* ==========================================================================
+   Illustrations (src/components/art.tsx) — postcards, also in dark mode:
+   line work stays espresso and the sky stays light. Their small motions are
+   classes inside the SVG markup, so they are held here, and still under
+   reduced or less motion.
+   ========================================================================== */
+.art {
+  --art-ink: #2e2823;
+  display: block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-motion="reduce"]) .art .float {
+    animation: art-float 5s ease-in-out infinite;
+  }
+  html:not([data-motion="reduce"]) .art .float-slow {
+    animation: art-float 8s ease-in-out infinite;
+  }
+  html:not([data-motion="reduce"]) .art .spin-slow {
+    animation: art-spin 26s linear infinite;
+  }
+  html:not([data-motion="reduce"]) .art .roll {
+    animation: art-roll 2.4s ease-in-out infinite;
+  }
+  html:not([data-motion="reduce"]) .art .dash {
+    animation: art-dash 1.4s linear infinite;
+  }
+}
+
+.art .dash {
+  stroke-dasharray: 6 10;
+}
+
+@keyframes art-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes art-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes art-roll {
+  0%,
+  100% {
+    transform: translateX(-6%);
+  }
+  50% {
+    transform: translateX(6%);
+  }
+}
+
+@keyframes art-dash {
+  to {
+    stroke-dashoffset: -32;
+  }
 }

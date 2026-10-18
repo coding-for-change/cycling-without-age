@@ -168,7 +168,7 @@ export async function PassengerRide({
         <Link
           href="/passenger/rides"
           transitionTypes={["pop"]}
-          className="-ml-1.25 inline-flex min-h-11 w-fit items-center gap-1 rounded-full pr-3 text-sm text-ink-soft outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="-ml-1.25 inline-flex min-h-11 w-fit items-center gap-1 rounded-full pr-3 text-sm text-ink-soft outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-ring/50 max-md:hidden"
         >
           <ChevronLeft
             aria-hidden
