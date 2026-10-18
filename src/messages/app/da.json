@@ -1913,6 +1913,7 @@
       "cancelled": "Turen er aflyst",
       "cancelledBecause": "Årsag: {reason}",
       "chapter": "Lokalafdeling",
+      "contactLater": "Du kan se, hvordan du når din pilot, fra en dag før turen.",
       "destination": "Destination",
       "email": "Skriv til {name}",
       "memory": {

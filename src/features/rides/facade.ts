@@ -1146,6 +1146,20 @@ export async function passengerYearInReview(
   );
 }
 
+const PILOT_CONTACT_LEAD_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * A pilot's phone and email reach a rider from the day before the ride until
+ * it ends — enough to sort out the pick-up, not a volunteer's number for good.
+ */
+export const pilotContactOpen = (
+  ride: { status: string; startsAt: Date; endsAt: Date },
+  now: Date,
+) =>
+  ride.status !== "cancelled" &&
+  now.getTime() >= ride.startsAt.getTime() - PILOT_CONTACT_LEAD_MS &&
+  now.getTime() <= ride.endsAt.getTime();
+
 /**
  * One ride and its history as these riders may read them, or `null` unless one
  * of them is on the ride — a guessed id reads as missing, and the history is
@@ -1155,6 +1169,7 @@ export async function getRideWithStoryForPassengers(
   rideId: string,
   passengerIds: string[],
   viewerId: string,
+  now = new Date(),
 ) {
   if (!passengerIds.length) return null;
   const found = await findRideForPassengers(rideId, passengerIds);
@@ -1162,6 +1177,7 @@ export async function getRideWithStoryForPassengers(
   const ride = withCurrentPilots(found);
   return {
     ride,
+    contactOpen: pilotContactOpen(ride, now),
     story: storyForPassengers(
       await listRideLog(rideId),
       passengerIds,

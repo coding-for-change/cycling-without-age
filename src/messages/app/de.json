@@ -1913,6 +1913,7 @@
       "cancelled": "Diese Ausfahrt fällt aus",
       "cancelledBecause": "Grund: {reason}",
       "chapter": "Ortsgruppe",
+      "contactLater": "Wie Sie Ihren Piloten erreichen, sehen Sie ab einem Tag vor der Ausfahrt.",
       "destination": "Ziel",
       "email": "E-Mail an {name}",
       "memory": {

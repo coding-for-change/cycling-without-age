@@ -1913,6 +1913,7 @@
       "cancelled": "This ride is off",
       "cancelledBecause": "Reason: {reason}",
       "chapter": "Chapter",
+      "contactLater": "You'll see how to reach your pilot from a day before the ride.",
       "destination": "Destination",
       "email": "Email {name}",
       "memory": {

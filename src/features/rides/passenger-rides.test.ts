@@ -199,6 +199,9 @@ describe("getRideWithStoryForPassengers", () => {
     findFirst.mockResolvedValue({
       id: "r-1",
       chapterId: "ch-muenchen",
+      status: "scheduled",
+      startsAt: new Date("2026-10-20T10:00:00Z"),
+      endsAt: new Date("2026-10-20T12:00:00Z"),
       assignments: [pilot("u-current", ["ch-muenchen"]), pilot("u-gone", [])],
     });
     findLog.mockResolvedValue([
@@ -221,8 +224,10 @@ describe("getRideWithStoryForPassengers", () => {
       "r-1",
       MINE,
       "user-1",
+      now,
     );
     expect(view?.ride.assignments.map((a) => a.user.id)).toEqual(["u-current"]);
+    expect(view?.contactOpen).toBe(false);
     expect(view?.story.map((entry) => entry.id)).toEqual(["l-2"]);
   });
 
@@ -262,5 +267,34 @@ describe("passengerYearInReview", () => {
   it("asks nothing for someone with no riders", async () => {
     await expect(rides.passengerYearInReview([], now)).resolves.toBeNull();
     expect(findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("pilotContactOpen", () => {
+  const at = (iso: string) => new Date(iso);
+  const ride = {
+    status: "scheduled",
+    startsAt: at("2026-10-14T10:00:00Z"),
+    endsAt: at("2026-10-14T12:00:00Z"),
+  };
+
+  it("opens a day before the ride and closes when it ends", () => {
+    expect(rides.pilotContactOpen(ride, at("2026-10-13T09:59:00Z"))).toBe(
+      false,
+    );
+    expect(rides.pilotContactOpen(ride, at("2026-10-13T10:00:00Z"))).toBe(true);
+    expect(rides.pilotContactOpen(ride, at("2026-10-14T12:00:00Z"))).toBe(true);
+    expect(rides.pilotContactOpen(ride, at("2026-10-14T12:01:00Z"))).toBe(
+      false,
+    );
+  });
+
+  it("stays closed for a cancelled ride", () => {
+    expect(
+      rides.pilotContactOpen(
+        { ...ride, status: "cancelled" },
+        at("2026-10-14T10:30:00Z"),
+      ),
+    ).toBe(false);
   });
 });

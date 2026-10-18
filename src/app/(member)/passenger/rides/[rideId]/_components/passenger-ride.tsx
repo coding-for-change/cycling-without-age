@@ -66,7 +66,7 @@ export async function PassengerRide({
   ]);
   if (!view) notFound();
 
-  const { ride, story, riderCount } = view;
+  const { ride, story, riderCount, contactOpen } = view;
   const s = dict.passenger.ride;
   const notation = resolveLocale(head.get("accept-language"));
   const words = wordsLocale(language);
@@ -350,13 +350,20 @@ export async function PassengerRide({
                     <PilotCard
                       name={user.name}
                       avatar={avatarSvg(seedOf(user), true)}
-                      email={isPhoneTempEmail(user.email) ? null : user.email}
-                      phone={user.phoneNumber}
+                      email={
+                        contactOpen && !isPhoneTempEmail(user.email)
+                          ? user.email
+                          : null
+                      }
+                      phone={contactOpen ? user.phoneNumber : null}
                       call={say(s.call, { name: user.name })}
                       write={say(s.email, { name: user.name })}
                     />
                   </li>
                 ))}
+                {!contactOpen && !cancelled && !over ? (
+                  <li className="text-sm text-ink-soft">{s.contactLater}</li>
+                ) : null}
               </ul>
             ) : (
               <p className="text-sm text-ink-soft">
