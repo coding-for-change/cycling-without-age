@@ -2076,6 +2076,10 @@
       "more": {
         "hint": "Sprache, Benachrichtigungen, Kalender, Passkeys, Hilfe und Abmelden.",
         "title": "Einstellungen & Hilfe"
+      },
+      "chips": {
+        "role": "Fahrgast",
+        "rides": "{count, plural, one {# Fahrt} other {# Fahrten}}"
       }
     }
   },

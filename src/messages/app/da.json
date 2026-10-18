@@ -2076,6 +2076,10 @@
       "more": {
         "hint": "Sprog, notifikationer, kalender, passkeys, hjælp og log ud.",
         "title": "Indstillinger & hjælp"
+      },
+      "chips": {
+        "role": "Passager",
+        "rides": "{count, plural, one {# tur} other {# ture}}"
       }
     }
   },

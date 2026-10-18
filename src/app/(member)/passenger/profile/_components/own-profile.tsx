@@ -4,6 +4,8 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import {
   ALargeSmall,
+  Bike,
+  MapPin,
   HeartHandshake,
   LifeBuoy,
   MessageCircleHeart,
@@ -22,6 +24,7 @@ import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { requirePerspective } from "@/lib/auth-guards";
 import { resolveLocale, toIsoDateUtc, wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
+import { formatMessage } from "@/lib/i18n/format";
 import { isPhoneTempEmail } from "@/lib/identity";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
 import { nameParts } from "@/lib/utils";
@@ -31,6 +34,8 @@ import {
   canRemovePhoto,
   canUploadPhoto,
 } from "@/use-cases/person-access";
+import { getMemberHome } from "@/use-cases/member-home";
+import { passengerRideTotals } from "@/use-cases/passenger-rides";
 import { ManagedRiders } from "../../../_components/profile/profile-page";
 import { AboutMe } from "./about-me";
 import { AccountSections } from "./account-area";
@@ -81,8 +86,8 @@ export async function OwnProfile() {
   if (!found) notFound();
   const { target, relation } = found;
 
-  const [about, person, own, account, dict, language, head] = await Promise.all(
-    [
+  const [about, person, own, account, dict, language, head, home, totals] =
+    await Promise.all([
       personProfiles.getProfile(target.subject),
       profile.getProfile(session.user.id),
       passengers.getOwnPassenger(session.user.id),
@@ -90,8 +95,9 @@ export async function OwnProfile() {
       getDictionary(),
       getLocale(),
       headers(),
-    ],
-  );
+      getMemberHome(session.user.id),
+      passengerRideTotals(session.user.id),
+    ]);
   const s = dict.passenger.profile;
   const strings = dict.personProfile;
   const labels = dict.account.field;
@@ -112,7 +118,7 @@ export async function OwnProfile() {
       language={language}
     >
       <div className="flex flex-col gap-9">
-        <header className="grid justify-items-center gap-3 text-center">
+        <header className="reveal relative grid justify-items-center gap-3 rounded-(--r-tile) bg-grey-tint p-5 text-center">
           <div className="flex min-h-5 w-full justify-end">
             <SaveStatus
               labels={dict.account.status}
@@ -125,7 +131,35 @@ export async function OwnProfile() {
             canUpload={canUploadPhoto(relation)}
             canRemove={canRemovePhoto(relation)}
           />
-          <h1 className="text-2xl tracking-tight md:text-3xl">{target.name}</h1>
+          <h1 className="display-title text-3xl">{target.name}</h1>
+          <ul className="flex flex-wrap justify-center gap-1.25">
+            {[
+              { icon: UserRound, label: s.chips.role },
+              ...home.chapters.map((chapter) => ({
+                icon: MapPin,
+                label: chapter.name,
+              })),
+              {
+                icon: Bike,
+                label: formatMessage(
+                  s.chips.rides,
+                  { count: totals.rides },
+                  language,
+                ),
+              },
+            ].map(({ icon: Icon, label }) => (
+              <li
+                key={label}
+                className="inline-flex items-center gap-1 rounded-full bg-paper px-2.5 py-1 text-xs font-bold"
+              >
+                <Icon
+                  aria-hidden
+                  className="size-3"
+                />
+                {label}
+              </li>
+            ))}
+          </ul>
           <p className="text-base text-ink-soft">{s.intro}</p>
         </header>
 

@@ -110,7 +110,7 @@ export function PersonalDetails({
 
   return (
     <div className="flex flex-col gap-3">
-      <ul className="divide-y divide-line rounded-2xl border border-line [&>li]:flex-wrap [&>li]:gap-y-1.25 [&>li]:px-4">
+      <ul className="divide-y divide-line [&>li]:flex-wrap [&>li]:gap-y-1.25">
         {names ? (
           <>
             {namePart(

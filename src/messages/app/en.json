@@ -2076,6 +2076,10 @@
       "more": {
         "hint": "Language, notifications, calendar, passkeys, help and signing out.",
         "title": "Settings & help"
+      },
+      "chips": {
+        "role": "Passenger",
+        "rides": "{count, plural, one {# ride} other {# rides}}"
       }
     }
   },
