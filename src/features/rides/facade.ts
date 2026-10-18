@@ -2414,8 +2414,6 @@ export async function submitDebrief(
       userId,
       {
         distanceKm: ride.model === "functional" ? data.distanceKm : null,
-        bikeCondition: data.bikeCondition,
-        cooperation: data.cooperation,
         note: data.note,
       },
       tx,

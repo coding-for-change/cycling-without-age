@@ -26,13 +26,15 @@ export function RideDebriefs({
   notation: Notation;
 }) {
   const copy = dict.rides.execution.debrief;
-  const unset = <PropertyValue muted>{copy.unset}</PropertyValue>;
+  const written = debriefs.filter(
+    (debrief) => debrief.note || (functional && debrief.distanceKm !== null),
+  );
 
   return (
-    <DetailSection title={debriefs.length > 1 ? copy.titleMany : copy.title}>
-      {debriefs.length ? (
+    <DetailSection title={written.length > 1 ? copy.titleMany : copy.title}>
+      {written.length ? (
         <div className="grid gap-6">
-          {debriefs.map((debrief) => (
+          {written.map((debrief) => (
             <article
               key={debrief.id}
               className="grid gap-3"
@@ -44,11 +46,11 @@ export function RideDebriefs({
                   language,
                 )}
               </h3>
-              <PropertyList className="max-w-md">
-                {functional ? (
+              {functional ? (
+                <PropertyList className="max-w-md">
                   <PropertyRow label={copy.distance}>
                     {debrief.distanceKm === null ? (
-                      unset
+                      <PropertyValue muted>{copy.unset}</PropertyValue>
                     ) : (
                       <PropertyValue className="tabular-nums">
                         {formatMessage(
@@ -63,26 +65,8 @@ export function RideDebriefs({
                       </PropertyValue>
                     )}
                   </PropertyRow>
-                ) : null}
-                <PropertyRow label={copy.bikeCondition}>
-                  {debrief.bikeCondition ? (
-                    <PropertyValue>
-                      {copy.ratings[debrief.bikeCondition]}
-                    </PropertyValue>
-                  ) : (
-                    unset
-                  )}
-                </PropertyRow>
-                <PropertyRow label={copy.cooperation}>
-                  {debrief.cooperation ? (
-                    <PropertyValue>
-                      {copy.ratings[debrief.cooperation]}
-                    </PropertyValue>
-                  ) : (
-                    unset
-                  )}
-                </PropertyRow>
-              </PropertyList>
+                </PropertyList>
+              ) : null}
               {debrief.note ? (
                 <TimelineBubble>{debrief.note}</TimelineBubble>
               ) : null}

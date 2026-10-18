@@ -29,8 +29,6 @@ CREATE TABLE `ride_debrief` (
     `rideId` VARCHAR(191) NOT NULL,
     `userId` VARCHAR(191) NULL,
     `distanceKm` DECIMAL(7, 2) NULL,
-    `bikeCondition` ENUM('good', 'fair', 'poor') NULL,
-    `cooperation` ENUM('good', 'fair', 'poor') NULL,
     `note` TEXT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,

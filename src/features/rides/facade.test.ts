@@ -3718,7 +3718,6 @@ describe("the debrief", () => {
       {
         rideId: "ride-1",
         distanceKm: 7.456,
-        bikeCondition: "good",
         note: "  ",
       },
       "pilot-1",
@@ -3730,8 +3729,6 @@ describe("the debrief", () => {
         where: { rideId_userId: { rideId: "ride-1", userId: "pilot-1" } },
         update: {
           distanceKm: 7.46,
-          bikeCondition: "good",
-          cooperation: null,
           note: null,
         },
       }),

@@ -11,16 +11,9 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { formatNumber, type Locale as Notation } from "@/lib/format";
 import { submitDebriefAction } from "../actions";
-import {
-  DEBRIEF_MAX_KM,
-  DEBRIEF_NOTE_MAX,
-  DEBRIEF_RATINGS,
-  parseDecimal,
-  type DebriefRatingName,
-} from "../schemas";
+import { DEBRIEF_MAX_KM, DEBRIEF_NOTE_MAX, parseDecimal } from "../schemas";
 
 export type DebriefLabels = {
   title: string;
@@ -28,11 +21,6 @@ export type DebriefLabels = {
   distance: string;
   distanceHint: string;
   unit: string;
-  bikeCondition: string;
-  bikePoor: string;
-  cooperation: string;
-  cooperationHint: string;
-  ratings: Record<DebriefRatingName, string>;
   note: string;
   notePlaceholder: string;
   invalidNumber: string;
@@ -44,8 +32,6 @@ export type DebriefLabels = {
 
 export type DebriefValues = {
   distanceKm: number | null;
-  bikeCondition: DebriefRatingName | null;
-  cooperation: DebriefRatingName | null;
   note: string | null;
 };
 
@@ -66,8 +52,6 @@ const SAVE_AFTER_MS = 900;
 
 type Draft = {
   distance: string;
-  bikeCondition: DebriefRatingName | null;
-  cooperation: DebriefRatingName | null;
   note: string;
 };
 
@@ -77,8 +61,6 @@ function payloadOf(draft: Draft, rideId: string, functional: boolean) {
   return {
     rideId,
     distanceKm: functional ? parseDecimal(draft.distance) : null,
-    bikeCondition: draft.bikeCondition,
-    cooperation: draft.cooperation,
     note: draft.note,
   };
 }
@@ -103,27 +85,15 @@ export function DebriefForm({
 }) {
   const ids = {
     distance: useId(),
-    bike: useId(),
-    cooperation: useId(),
     note: useId(),
   };
   const [distance, setDistance] = useState(
     decimal(initial?.distanceKm ?? null, notation),
   );
-  const [bikeCondition, setBikeCondition] = useState(
-    initial?.bikeCondition ?? null,
-  );
-  const [cooperation, setCooperation] = useState(initial?.cooperation ?? null);
   const [note, setNote] = useState(initial?.note ?? "");
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [saved] = useState(() =>
-    JSON.stringify(
-      payloadOf(
-        { distance, bikeCondition, cooperation, note },
-        rideId,
-        functional,
-      ),
-    ),
+    JSON.stringify(payloadOf({ distance, note }, rideId, functional)),
   );
   const lastSaved = useRef(saved);
   const pending = useRef<(() => void) | null>(null);
@@ -131,11 +101,7 @@ export function DebriefForm({
   const distanceOk = withinRange(distance, DEBRIEF_MAX_KM);
 
   useEffect(() => {
-    const payload = payloadOf(
-      { distance, bikeCondition, cooperation, note },
-      rideId,
-      functional,
-    );
+    const payload = payloadOf({ distance, note }, rideId, functional);
     const key = JSON.stringify(payload);
     if (!payload || key === lastSaved.current) {
       pending.current = null;
@@ -158,15 +124,7 @@ export function DebriefForm({
     pending.current = save;
     const timer = setTimeout(save, SAVE_AFTER_MS);
     return () => clearTimeout(timer);
-  }, [
-    distance,
-    bikeCondition,
-    cooperation,
-    note,
-    rideId,
-    functional,
-    labels.errors,
-  ]);
+  }, [distance, note, rideId, functional, labels.errors]);
 
   useEffect(() => () => pending.current?.(), []);
 
@@ -201,24 +159,6 @@ export function DebriefForm({
         </Field>
       ) : null}
 
-      <Rating
-        id={ids.bike}
-        label={labels.bikeCondition}
-        value={bikeCondition}
-        onChange={setBikeCondition}
-        labels={labels.ratings}
-        hint={bikeCondition === "poor" ? labels.bikePoor : null}
-      />
-
-      <Rating
-        id={ids.cooperation}
-        label={labels.cooperation}
-        value={cooperation}
-        onChange={setCooperation}
-        labels={labels.ratings}
-        hint={labels.cooperationHint}
-      />
-
       <Field>
         <FieldLabel htmlFor={ids.note}>{labels.note}</FieldLabel>
         <Textarea
@@ -242,48 +182,5 @@ export function DebriefForm({
             : labels.autosaves}
       </p>
     </form>
-  );
-}
-
-function Rating({
-  id,
-  label,
-  value,
-  onChange,
-  labels,
-  hint,
-}: {
-  id: string;
-  label: string;
-  value: DebriefRatingName | null;
-  onChange: (next: DebriefRatingName | null) => void;
-  labels: Record<DebriefRatingName, string>;
-  hint: string | null;
-}) {
-  return (
-    <Field>
-      <FieldLabel id={id}>{label}</FieldLabel>
-      <ToggleGroup
-        type="single"
-        variant="outline"
-        aria-labelledby={id}
-        value={value ?? ""}
-        onValueChange={(next) =>
-          onChange(next ? (next as DebriefRatingName) : null)
-        }
-        className="w-full sm:w-fit"
-      >
-        {DEBRIEF_RATINGS.map((rating) => (
-          <ToggleGroupItem
-            key={rating}
-            value={rating}
-            className="min-h-11 flex-1 border-line px-4 data-[state=on]:bg-mint-tint data-[state=on]:text-ink sm:flex-none"
-          >
-            {labels[rating]}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
-      {hint ? <FieldDescription>{hint}</FieldDescription> : null}
-    </Field>
   );
 }

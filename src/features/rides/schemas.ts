@@ -385,12 +385,8 @@ export type WalkUpInput = z.input<typeof walkUpInput>;
 export const rosterEntryRef = rideRef.extend({ entryId: id });
 export const pilotNoShowInput = pilotInput.extend({ noShow: z.boolean() });
 
-export const DEBRIEF_RATINGS = ["good", "fair", "poor"] as const;
-export type DebriefRatingName = (typeof DEBRIEF_RATINGS)[number];
 export const DEBRIEF_NOTE_MAX = 2000;
 export const DEBRIEF_MAX_KM = 1000;
-
-const rating = z.enum(DEBRIEF_RATINGS).nullable().default(null);
 
 export const debriefInput = rideRef.extend({
   distanceKm: z
@@ -400,8 +396,6 @@ export const debriefInput = rideRef.extend({
     .transform((km) => Math.round(km * 100) / 100)
     .nullable()
     .default(null),
-  bikeCondition: rating,
-  cooperation: rating,
   note: z
     .string()
     .trim()

@@ -763,12 +763,6 @@ enum AssignmentAttendance {
   noShow
 }
 
-enum DebriefRating {
-  good
-  fair
-  poor
-}
-
 enum TrishawStatus {
   active
   maintenance
@@ -1198,17 +1192,15 @@ model RideRosterEntry {
 /// A pilot's report after a ride (story 31): one per pilot and ride, written
 /// again as often as they like.
 model RideDebrief {
-  id            String         @id @default(cuid())
-  rideId        String
-  ride          Ride           @relation(fields: [rideId], references: [id], onDelete: Cascade)
-  userId        String?
-  user          User?          @relation("rideDebriefs", fields: [userId], references: [id], onDelete: SetNull)
-  distanceKm    Decimal?       @db.Decimal(7, 2)
-  bikeCondition DebriefRating?
-  cooperation   DebriefRating?
-  note          String?        @db.Text
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id         String   @id @default(cuid())
+  rideId     String
+  ride       Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?    @relation("rideDebriefs", fields: [userId], references: [id], onDelete: SetNull)
+  distanceKm Decimal? @db.Decimal(7, 2)
+  note       String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@unique([rideId, userId])
   @@index([userId])

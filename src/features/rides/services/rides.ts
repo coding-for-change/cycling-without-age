@@ -1286,8 +1286,6 @@ const debriefSelect = {
   id: true,
   userId: true,
   distanceKm: true,
-  bikeCondition: true,
-  cooperation: true,
   note: true,
   createdAt: true,
   updatedAt: true,
