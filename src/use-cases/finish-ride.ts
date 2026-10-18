@@ -16,24 +16,21 @@ export async function finishRideView(rideId: string, userId: string) {
   const ride = await rides.getFinishableRideForPilot(rideId, userId);
   if (!ride) return null;
 
-  const [settings, places, reported, crewView, debrief, currency] =
-    await Promise.all([
-      chapters.getSettings(ride.chapterId),
-      fleet.listTrishawPlaces(
-        ride.chapterId,
-        ride.trishaws.map(({ trishaw }) => trishaw.id),
-      ),
-      fleet.listDamagesReportedOnRide(rideId, userId),
-      rides.getRideForPilot(rideId, userId),
-      rides.getDebrief(rideId, userId),
-      rides.chapterCurrencyOfRide(rideId),
-    ]);
+  const [settings, places, reported, crewView, debrief] = await Promise.all([
+    chapters.getSettings(ride.chapterId),
+    fleet.listTrishawPlaces(
+      ride.chapterId,
+      ride.trishaws.map(({ trishaw }) => trishaw.id),
+    ),
+    fleet.listDamagesReportedOnRide(rideId, userId),
+    rides.getRideForPilot(rideId, userId),
+    rides.getDebrief(rideId, userId),
+  ]);
 
   return {
     ride,
     roster: crewView?.roster ?? [],
     debrief,
-    currency,
     instructions: settings.postRideInstructions,
     trishaws: places.map((place) => ({
       ...place,

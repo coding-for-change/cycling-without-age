@@ -24,34 +24,3 @@ export function regionName(code: string, locale: string): string {
     return code.toUpperCase();
   }
 }
-
-/**
- * The money a chapter's donations are counted in, from its country — the
- * markets of phase 1 and 2. Never from the reader's locale.
- */
-const CURRENCY_BY_REGION: Record<string, string> = {
-  AT: "EUR",
-  AU: "AUD",
-  BE: "EUR",
-  CA: "CAD",
-  CH: "CHF",
-  DE: "EUR",
-  DK: "DKK",
-  ES: "EUR",
-  FI: "EUR",
-  FR: "EUR",
-  GB: "GBP",
-  HU: "HUF",
-  IE: "EUR",
-  NL: "EUR",
-  NO: "NOK",
-  NZ: "NZD",
-  PL: "PLN",
-  PT: "EUR",
-  SE: "SEK",
-  SK: "EUR",
-  US: "USD",
-};
-
-export const currencyOfRegion = (code: string | null | undefined) =>
-  (code && CURRENCY_BY_REGION[code.toUpperCase()]) || null;

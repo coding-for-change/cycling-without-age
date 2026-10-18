@@ -14,7 +14,6 @@ jest.mock("@/features/rides", () => ({
     getFinishableRideForPilot: jest.fn(),
     getRideForPilot: jest.fn(),
     getDebrief: jest.fn(),
-    chapterCurrencyOfRide: jest.fn(),
   },
 }));
 
@@ -58,13 +57,12 @@ describe("pickupView", () => {
 });
 
 describe("finishRideView", () => {
-  it("gives the pilot the roster to close, their own debrief and the chapter's money", async () => {
+  it("gives the pilot the roster to close and their own debrief", async () => {
     (rides.getFinishableRideForPilot as jest.Mock).mockResolvedValue(ride);
     (rides.getRideForPilot as jest.Mock).mockResolvedValue({
       roster: [{ id: "entry-1", attendance: "checkedIn" }],
     });
-    (rides.getDebrief as jest.Mock).mockResolvedValue({ donationCents: 500 });
-    (rides.chapterCurrencyOfRide as jest.Mock).mockResolvedValue("EUR");
+    (rides.getDebrief as jest.Mock).mockResolvedValue({ note: "Lovely" });
     (chapters.getSettings as jest.Mock).mockResolvedValue({
       postRideInstructions: null,
     });
@@ -74,8 +72,7 @@ describe("finishRideView", () => {
     expect(rides.getDebrief).toHaveBeenCalledWith("ride-1", "pilot-1");
     expect(view).toMatchObject({
       roster: [{ id: "entry-1", attendance: "checkedIn" }],
-      debrief: { donationCents: 500 },
-      currency: "EUR",
+      debrief: { note: "Lovely" },
     });
   });
 

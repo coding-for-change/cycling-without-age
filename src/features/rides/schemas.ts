@@ -389,7 +389,6 @@ export const DEBRIEF_RATINGS = ["good", "fair", "poor"] as const;
 export type DebriefRatingName = (typeof DEBRIEF_RATINGS)[number];
 export const DEBRIEF_NOTE_MAX = 2000;
 export const DEBRIEF_MAX_KM = 1000;
-export const DEBRIEF_MAX_DONATION_CENTS = 100_000_000;
 
 const rating = z.enum(DEBRIEF_RATINGS).nullable().default(null);
 
@@ -399,13 +398,6 @@ export const debriefInput = rideRef.extend({
     .min(0)
     .max(DEBRIEF_MAX_KM)
     .transform((km) => Math.round(km * 100) / 100)
-    .nullable()
-    .default(null),
-  donationCents: z
-    .number()
-    .int()
-    .min(0)
-    .max(DEBRIEF_MAX_DONATION_CENTS)
     .nullable()
     .default(null),
   bikeCondition: rating,

@@ -1,11 +1,9 @@
 import {
-  DEBRIEF_MAX_DONATION_CENTS,
   debriefInput,
   parseDecimal,
   walkUpInput,
 } from "@/features/rides/schemas";
 import { formatNumber } from "@/lib/format";
-import { currencyOfRegion } from "@/lib/countries";
 
 describe("debriefInput", () => {
   const debrief = (fields: Record<string, unknown>) =>
@@ -15,7 +13,6 @@ describe("debriefInput", () => {
     expect(debriefInput.parse({ rideId: "ride-1" })).toEqual({
       rideId: "ride-1",
       distanceKm: null,
-      donationCents: null,
       bikeCondition: null,
       cooperation: null,
       note: null,
@@ -25,10 +22,6 @@ describe("debriefInput", () => {
   it("refuses what no ride could have", () => {
     expect(debrief({ distanceKm: -1 })).toBe(false);
     expect(debrief({ distanceKm: 1000.01 })).toBe(false);
-    expect(debrief({ donationCents: 12.5 })).toBe(false);
-    expect(debrief({ donationCents: DEBRIEF_MAX_DONATION_CENTS + 1 })).toBe(
-      false,
-    );
     expect(debrief({ bikeCondition: "great" })).toBe(false);
     expect(debrief({ note: "x".repeat(2001) })).toBe(false);
   });
@@ -82,14 +75,5 @@ describe("walkUpInput", () => {
       firstName: "Inge",
       lastName: "",
     });
-  });
-});
-
-describe("currencyOfRegion", () => {
-  it("counts a chapter's donations in its country's money", () => {
-    expect(currencyOfRegion("dk")).toBe("DKK");
-    expect(currencyOfRegion("DE")).toBe("EUR");
-    expect(currencyOfRegion("XX")).toBeNull();
-    expect(currencyOfRegion(null)).toBeNull();
   });
 });

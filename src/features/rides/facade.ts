@@ -1,7 +1,6 @@
 import { DomainError, mapping } from "@/lib/domain-error";
 import { transaction, type DomainEvent } from "@/lib/events";
 import type { FileReadRule } from "@/lib/access";
-import { currencyOfRegion } from "@/lib/countries";
 import type { $Enums, Prisma } from "@/generated/prisma";
 import {
   CHECK_IN_LEAD_MINUTES,
@@ -103,7 +102,6 @@ import {
   findDebrief,
   findDebriefsOfRide,
   findEntryNames,
-  findRideCountryCode,
   findRidesDue,
   insertWalkUp,
   updateAssignmentAttendance,
@@ -2394,8 +2392,7 @@ export type RideDebriefView = ReturnType<typeof debriefView>;
  * Story 31 and lifecycle 7E: one report per pilot and ride, written again as
  * often as they like while the finish page is open; an admin's, any time.
  * The form saves as it goes, so the history notes the first version only.
- * Distance is measured only on a functional ride (Report 11), and a donation
- * is counted in the chapter's own currency.
+ * Distance is measured only on a functional ride (Report 11).
  */
 export async function submitDebrief(
   input: DebriefInput,
@@ -2412,17 +2409,11 @@ export async function submitDebrief(
     if (as === "pilot" && !withinPilotWindow(ride, now))
       throw new DomainError("rideClosed");
     const written = await findDebrief(ride.id, userId, tx);
-    const currency =
-      data.donationCents === null
-        ? null
-        : currencyOfRegion(await findRideCountryCode(ride.id, tx));
     const row = await upsertDebrief(
       ride.id,
       userId,
       {
         distanceKm: ride.model === "functional" ? data.distanceKm : null,
-        donationCents: data.donationCents,
-        currency,
         bikeCondition: data.bikeCondition,
         cooperation: data.cooperation,
         note: data.note,
@@ -2441,9 +2432,6 @@ export const getDebrief = async (rideId: string, userId: string) => {
 
 export const listDebriefs = async (rideId: string) =>
   (await findDebriefsOfRide(rideId)).map(debriefView);
-
-export const chapterCurrencyOfRide = async (rideId: string) =>
-  currencyOfRegion(await findRideCountryCode(rideId));
 
 /** Chapters with a ride not swept yet for this marker, within the furthest lead. */
 export const listChaptersDue = (

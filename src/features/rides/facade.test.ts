@@ -3709,22 +3709,15 @@ describe("the debrief", () => {
   });
 
   const ride = (overrides: Record<string, unknown> = {}) => {
-    db.ride.findUnique.mockImplementation(({ select }) =>
-      Promise.resolve(
-        select.chapter?.select?.country
-          ? { chapter: { country: { code: "DK" } } }
-          : scheduled(overrides),
-      ),
-    );
+    db.ride.findUnique.mockResolvedValue(scheduled(overrides));
   };
 
-  it("measures distance only on a functional ride, and counts money in the chapter's currency", async () => {
+  it("measures distance only on a functional ride", async () => {
     ride({ model: "functional" });
     const debrief = await rides.submitDebrief(
       {
         rideId: "ride-1",
         distanceKm: 7.456,
-        donationCents: 5000,
         bikeCondition: "good",
         note: "  ",
       },
@@ -3737,8 +3730,6 @@ describe("the debrief", () => {
         where: { rideId_userId: { rideId: "ride-1", userId: "pilot-1" } },
         update: {
           distanceKm: 7.46,
-          donationCents: 5000,
-          currency: "DKK",
           bikeCondition: "good",
           cooperation: null,
           note: null,
@@ -3757,7 +3748,6 @@ describe("the debrief", () => {
     );
     expect(db.rideDebrief.upsert.mock.calls[0][0].update).toMatchObject({
       distanceKm: null,
-      currency: null,
     });
   });
 

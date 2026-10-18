@@ -1196,7 +1196,7 @@ model RideRosterEntry {
 }
 
 /// A pilot's report after a ride (story 31): one per pilot and ride, written
-/// again as often as they like. The donation is in the chapter's currency.
+/// again as often as they like.
 model RideDebrief {
   id            String         @id @default(cuid())
   rideId        String
@@ -1204,8 +1204,6 @@ model RideDebrief {
   userId        String?
   user          User?          @relation("rideDebriefs", fields: [userId], references: [id], onDelete: SetNull)
   distanceKm    Decimal?       @db.Decimal(7, 2)
-  donationCents Int?
-  currency      String?        @db.VarChar(3)
   bikeCondition DebriefRating?
   cooperation   DebriefRating?
   note          String?        @db.Text

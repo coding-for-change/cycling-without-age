@@ -147,7 +147,7 @@ describe("who runs a ride on the day", () => {
     },
     {
       name: "debrief",
-      run: () => submitDebriefAction({ rideId: "ride-1", donationCents: 500 }),
+      run: () => submitDebriefAction({ rideId: "ride-1", note: "Lovely" }),
       facade: () => rides.submitDebrief as jest.Mock,
       as: (call: unknown[]) => call[2],
     },
@@ -201,9 +201,9 @@ describe("who runs a ride on the day", () => {
 
   it("files the debrief under whoever wrote it", async () => {
     (rides.pilotCanRun as jest.Mock).mockResolvedValue(true);
-    await submitDebriefAction({ rideId: "ride-1", donationCents: 500 });
+    await submitDebriefAction({ rideId: "ride-1", note: "Lovely" });
     expect(rides.submitDebrief).toHaveBeenCalledWith(
-      expect.objectContaining({ rideId: "ride-1", donationCents: 500 }),
+      expect.objectContaining({ rideId: "ride-1", note: "Lovely" }),
       "user-1",
       "pilot",
     );

@@ -1282,23 +1282,10 @@ export const updateAssignmentAttendance = (
     data: { attendance },
   });
 
-export const findRideCountryCode = async (
-  rideId: string,
-  db: Prisma.TransactionClient = prisma,
-) =>
-  (
-    await db.ride.findUnique({
-      where: { id: rideId },
-      select: { chapter: { select: { country: { select: { code: true } } } } },
-    })
-  )?.chapter.country.code ?? null;
-
 const debriefSelect = {
   id: true,
   userId: true,
   distanceKm: true,
-  donationCents: true,
-  currency: true,
   bikeCondition: true,
   cooperation: true,
   note: true,

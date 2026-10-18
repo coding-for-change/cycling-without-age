@@ -1171,10 +1171,9 @@ debrief and the frozen ride chat. One migration, `20261016120000_ride_execution`
 - **Debrief** (story 31, 7E). One `RideDebrief` per pilot and ride (`@@unique([rideId,
   userId])`), upserted from the finish page as often as the pilot likes while it is open (a day
   after the ride; an admin's any time): distance on a
-  functional ride only (Report 11), donations in the chapter's currency (`currencyOfRegion`
-  from the chapter's country — never the reader's locale; COD-152's hook), the trishaw's
-  condition, the cooperation with a care home, a note. The admin detail lists them as the day
-  report (story 32a).
+  functional ride only (Report 11), the trishaw's condition, the cooperation with a care home,
+  a note. Donations are not part of it; they come with COD-152. The admin detail lists them as
+  the day report (story 32a).
 - **Frozen chat.** `conversation-thread.tsx` shows "Keep chatting" on the frozen banner
   (`continueConversationAction`, CHAT-PLAN 2.3), and the chat list badges a ride chat.
 - **Who may.** Check-in, walk-ups, completion and the debrief go through `executorOfRide` in

@@ -1,9 +1,5 @@
 import type { RideDebriefView } from "@/features/rides";
-import {
-  formatCurrency,
-  formatNumber,
-  type Locale as Notation,
-} from "@/lib/format";
+import { formatNumber, type Locale as Notation } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
@@ -68,23 +64,6 @@ export function RideDebriefs({
                     )}
                   </PropertyRow>
                 ) : null}
-                <PropertyRow label={copy.donation}>
-                  {debrief.donationCents === null ? (
-                    unset
-                  ) : (
-                    <PropertyValue className="tabular-nums">
-                      {debrief.currency
-                        ? formatCurrency(
-                            debrief.donationCents / 100,
-                            debrief.currency,
-                            notation,
-                          )
-                        : formatNumber(debrief.donationCents / 100, notation, {
-                            minimumFractionDigits: 2,
-                          })}
-                    </PropertyValue>
-                  )}
-                </PropertyRow>
                 <PropertyRow label={copy.bikeCondition}>
                   {debrief.bikeCondition ? (
                     <PropertyValue>

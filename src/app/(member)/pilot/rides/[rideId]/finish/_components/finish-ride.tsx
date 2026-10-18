@@ -193,9 +193,7 @@ export async function FinishRide({
           <DebriefForm
             rideId={ride.id}
             functional={ride.model === "functional"}
-            currency={view.currency}
             initial={view.debrief}
-            language={language}
             notation={locale}
             labels={debriefStrings(dict)}
           />

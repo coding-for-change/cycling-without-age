@@ -12,18 +12,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  currencyName,
-  currencySymbol,
-  formatNumber,
-  wordsLocale,
-  type Locale as Notation,
-} from "@/lib/format";
-import { formatMessage } from "@/lib/i18n/format";
-import type { Locale } from "@/lib/i18n/locales";
+import { formatNumber, type Locale as Notation } from "@/lib/format";
 import { submitDebriefAction } from "../actions";
 import {
-  DEBRIEF_MAX_DONATION_CENTS,
   DEBRIEF_MAX_KM,
   DEBRIEF_NOTE_MAX,
   DEBRIEF_RATINGS,
@@ -37,9 +28,6 @@ export type DebriefLabels = {
   distance: string;
   distanceHint: string;
   unit: string;
-  donation: string;
-  donationHint: string;
-  donationHintNoCurrency: string;
   bikeCondition: string;
   bikePoor: string;
   cooperation: string;
@@ -56,7 +44,6 @@ export type DebriefLabels = {
 
 export type DebriefValues = {
   distanceKm: number | null;
-  donationCents: number | null;
   bikeCondition: DebriefRatingName | null;
   cooperation: DebriefRatingName | null;
   note: string | null;
@@ -79,7 +66,6 @@ const SAVE_AFTER_MS = 900;
 
 type Draft = {
   distance: string;
-  donation: string;
   bikeCondition: DebriefRatingName | null;
   cooperation: DebriefRatingName | null;
   note: string;
@@ -87,16 +73,10 @@ type Draft = {
 
 /** What the server gets for a draft, or null while a number is still wrong. */
 function payloadOf(draft: Draft, rideId: string, functional: boolean) {
-  if (
-    !withinRange(draft.distance, DEBRIEF_MAX_KM) ||
-    !withinRange(draft.donation, DEBRIEF_MAX_DONATION_CENTS / 100)
-  )
-    return null;
-  const amount = parseDecimal(draft.donation);
+  if (!withinRange(draft.distance, DEBRIEF_MAX_KM)) return null;
   return {
     rideId,
     distanceKm: functional ? parseDecimal(draft.distance) : null,
-    donationCents: amount === null ? null : Math.round(amount * 100),
     bikeCondition: draft.bikeCondition,
     cooperation: draft.cooperation,
     note: draft.note,
@@ -111,35 +91,24 @@ function payloadOf(draft: Draft, rideId: string, functional: boolean) {
 export function DebriefForm({
   rideId,
   functional,
-  currency,
   initial,
-  language,
   notation,
   labels,
 }: {
   rideId: string;
   functional: boolean;
-  currency: string | null;
   initial: DebriefValues | null;
-  language: Locale;
   notation: Notation;
   labels: DebriefLabels;
 }) {
   const ids = {
     distance: useId(),
-    donation: useId(),
     bike: useId(),
     cooperation: useId(),
     note: useId(),
   };
   const [distance, setDistance] = useState(
     decimal(initial?.distanceKm ?? null, notation),
-  );
-  const [donation, setDonation] = useState(
-    decimal(
-      initial?.donationCents == null ? null : initial.donationCents / 100,
-      notation,
-    ),
   );
   const [bikeCondition, setBikeCondition] = useState(
     initial?.bikeCondition ?? null,
@@ -150,7 +119,7 @@ export function DebriefForm({
   const [saved] = useState(() =>
     JSON.stringify(
       payloadOf(
-        { distance, donation, bikeCondition, cooperation, note },
+        { distance, bikeCondition, cooperation, note },
         rideId,
         functional,
       ),
@@ -160,11 +129,10 @@ export function DebriefForm({
   const pending = useRef<(() => void) | null>(null);
 
   const distanceOk = withinRange(distance, DEBRIEF_MAX_KM);
-  const donationOk = withinRange(donation, DEBRIEF_MAX_DONATION_CENTS / 100);
 
   useEffect(() => {
     const payload = payloadOf(
-      { distance, donation, bikeCondition, cooperation, note },
+      { distance, bikeCondition, cooperation, note },
       rideId,
       functional,
     );
@@ -192,7 +160,6 @@ export function DebriefForm({
     return () => clearTimeout(timer);
   }, [
     distance,
-    donation,
     bikeCondition,
     cooperation,
     note,
@@ -233,39 +200,6 @@ export function DebriefForm({
           )}
         </Field>
       ) : null}
-
-      <Field data-invalid={!donationOk || undefined}>
-        <FieldLabel htmlFor={ids.donation}>{labels.donation}</FieldLabel>
-        <div className="flex items-center gap-3">
-          <Input
-            id={ids.donation}
-            inputMode="decimal"
-            autoComplete="off"
-            value={donation}
-            onChange={(event) => setDonation(event.target.value)}
-            aria-invalid={!donationOk || undefined}
-            className="max-w-32 tabular-nums"
-          />
-          {currency ? (
-            <span className="text-sm text-ink-soft">
-              {currencySymbol(currency, notation)}
-            </span>
-          ) : null}
-        </div>
-        {donationOk ? (
-          <FieldDescription>
-            {currency
-              ? formatMessage(
-                  labels.donationHint,
-                  { currency: currencyName(currency, wordsLocale(language)) },
-                  language,
-                )
-              : labels.donationHintNoCurrency}
-          </FieldDescription>
-        ) : (
-          <FieldError>{labels.invalidNumber}</FieldError>
-        )}
-      </Field>
 
       <Rating
         id={ids.bike}
