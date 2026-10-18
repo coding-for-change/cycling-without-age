@@ -2634,6 +2634,14 @@ describe("rides at a Ride Location", () => {
   it("asks nothing for no locations", async () => {
     expect((await rides.countRidesAt([])).size).toBe(0);
   });
+
+  it("counts only the seats still held on each upcoming ride", async () => {
+    db.ride.findMany.mockResolvedValue([]);
+    await rides.listUpcomingRidesAt("loc-1");
+    expect(db.ride.findMany.mock.calls[0][0].select._count).toEqual({
+      select: { roster: { where: { attendance: { not: "cancelled" } } } },
+    });
+  });
 });
 
 describe("pilots signing up themselves", () => {
