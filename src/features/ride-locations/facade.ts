@@ -31,8 +31,6 @@ export type RideLocation = {
   contactEmail: string | null;
   notes: string | null;
   typicalRideKm: number | null;
-  defaultTrishawCount: number;
-  defaultPilotCount: number;
   defaultMinutes: number | null;
   archivedAt: Date | null;
   createdAt: Date;
@@ -53,8 +51,6 @@ const toRideLocation = (record: RideLocationRecord): RideLocation => ({
   contactEmail: record.contactEmail,
   notes: record.notes,
   typicalRideKm: record.typicalRideKm?.toNumber() ?? null,
-  defaultTrishawCount: record.defaultTrishawCount,
-  defaultPilotCount: record.defaultPilotCount,
   defaultMinutes: record.defaultMinutes,
   archivedAt: record.archivedAt,
   createdAt: record.createdAt,

@@ -19,8 +19,6 @@ export type RideLocationChoice = {
   address: string | null;
   latitude: number | null;
   longitude: number | null;
-  defaultTrishawCount: number;
-  defaultPilotCount: number;
   defaultMinutes: number | null;
 };
 

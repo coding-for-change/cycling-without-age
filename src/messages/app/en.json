@@ -1050,7 +1050,7 @@
     },
     "rideLocations": {
       "title": "Ride locations",
-      "body": "Where your rides start: Care Centers, residences and public places. Pick one when you schedule, and its address, pilots and usual length come along.",
+      "body": "Where your rides start: Care Centers, residences and public places. Pick one when you schedule, and its address and usual length come along.",
       "new": "New ride location",
       "commandNew": "Add a ride location",
       "pickChapter": "Pick a chapter to add a ride location.",
@@ -1093,13 +1093,9 @@
         "contactEmail": "Email",
         "invalidEmail": "That email address does not look right.",
         "defaults": "When you schedule here",
-        "defaultsHint": "These fill in the scheduling drawer. You can still change them for each ride.",
+        "defaultsHint": "It fills in the scheduling drawer. You can still change it for each ride.",
         "defaultMinutes": "Usual ride length",
         "chapterDefault": "Chapter default",
-        "defaultTrishaws": "Trishaws",
-        "defaultPilots": "Pilots",
-        "fewer": "Fewer",
-        "more": "More",
         "notes": "Notes for pilots",
         "notesPlaceholder": "Where to wait, who opens the door, which entrance has the ramp …",
         "submit": "Add ride location",
@@ -1126,8 +1122,6 @@
         "contactEmailPlaceholder": "name@example.org",
         "defaults": "When you schedule here",
         "defaultMinutes": "Usual ride length",
-        "defaultTrishaws": "Trishaws",
-        "defaultPilots": "Pilots",
         "typicalRideKm": "Typical distance",
         "typicalRideKmPlaceholder": "Kilometres per ride",
         "km": "{km} km",
@@ -1160,9 +1154,7 @@
       "picker": {
         "placeholder": "Ride location or address",
         "hint": "{kind} · {address}",
-        "pilots": "{count, plural, one {1 pilot} other {# pilots}}",
-        "trishaws": "{count, plural, one {1 trishaw} other {# trishaws}}",
-        "defaults": "Filled in from {name}: {parts}."
+        "defaults": "Usual length at {name}: {length}."
       },
       "errors": {
         "unknownLocation": "That ride location is gone. Reload the page and try again.",

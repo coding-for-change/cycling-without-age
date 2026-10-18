@@ -1095,25 +1095,23 @@ enum RideLocationKind {
 }
 
 model RideLocation {
-  id                  String           @id @default(cuid())
-  chapterId           String
-  chapter             Organization     @relation(fields: [chapterId], references: [id], onDelete: Cascade)
-  kind                RideLocationKind @default(careCenter)
-  name                String           @db.VarChar(160)
-  address             String?          @db.Text
-  latitude            Float?
-  longitude           Float?
-  contactName         String?          @db.VarChar(120)
-  contactPhone        String?          @db.VarChar(40)
-  contactEmail        String?          @db.VarChar(254)
-  notes               String?          @db.Text
-  typicalRideKm       Decimal?         @db.Decimal(6, 1)
-  defaultTrishawCount Int              @default(1)
-  defaultPilotCount   Int              @default(1)
-  defaultMinutes      Int?
-  archivedAt          DateTime?
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
+  id             String           @id @default(cuid())
+  chapterId      String
+  chapter        Organization     @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  kind           RideLocationKind @default(careCenter)
+  name           String           @db.VarChar(160)
+  address        String?          @db.Text
+  latitude       Float?
+  longitude      Float?
+  contactName    String?          @db.VarChar(120)
+  contactPhone   String?          @db.VarChar(40)
+  contactEmail   String?          @db.VarChar(254)
+  notes          String?          @db.Text
+  typicalRideKm  Decimal?         @db.Decimal(6, 1)
+  defaultMinutes Int?
+  archivedAt     DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
   rides      Ride[]
   passengers Passenger[]

@@ -1050,7 +1050,7 @@
     },
     "rideLocations": {
       "title": "Abfahrtsorte",
-      "body": "Wo eure Ausfahrten beginnen: Pflegeeinrichtungen, Wohnanlagen und öffentliche Orte. Wähl einen beim Planen aus, dann kommen Adresse, Pilot:innen und übliche Dauer gleich mit.",
+      "body": "Wo eure Ausfahrten beginnen: Pflegeeinrichtungen, Wohnanlagen und öffentliche Orte. Wähl einen beim Planen aus, dann kommen Adresse und übliche Dauer gleich mit.",
       "new": "Neuer Abfahrtsort",
       "commandNew": "Abfahrtsort hinzufügen",
       "pickChapter": "Wähl eine Ortsgruppe, um einen Abfahrtsort hinzuzufügen.",
@@ -1096,10 +1096,6 @@
         "defaultsHint": "Das füllt die Planung vor. Für jede Ausfahrt kannst du es noch ändern.",
         "defaultMinutes": "Übliche Dauer",
         "chapterDefault": "Wie in der Ortsgruppe",
-        "defaultTrishaws": "Rikschas",
-        "defaultPilots": "Pilot:innen",
-        "fewer": "Weniger",
-        "more": "Mehr",
         "notes": "Hinweise für Pilot:innen",
         "notesPlaceholder": "Wo man wartet, wer die Tür öffnet, welcher Eingang die Rampe hat …",
         "submit": "Abfahrtsort hinzufügen",
@@ -1126,8 +1122,6 @@
         "contactEmailPlaceholder": "name@example.org",
         "defaults": "Wenn du hier planst",
         "defaultMinutes": "Übliche Dauer",
-        "defaultTrishaws": "Rikschas",
-        "defaultPilots": "Pilot:innen",
         "typicalRideKm": "Übliche Strecke",
         "typicalRideKmPlaceholder": "Kilometer pro Ausfahrt",
         "km": "{km} km",
@@ -1160,9 +1154,7 @@
       "picker": {
         "placeholder": "Abfahrtsort oder Adresse",
         "hint": "{kind} · {address}",
-        "pilots": "{count, plural, one {1 Pilot:in} other {# Pilot:innen}}",
-        "trishaws": "{count, plural, one {1 Rikscha} other {# Rikschas}}",
-        "defaults": "Aus {name} übernommen: {parts}."
+        "defaults": "Übliche Dauer bei {name}: {length}."
       },
       "errors": {
         "unknownLocation": "Diesen Abfahrtsort gibt es nicht mehr. Lade die Seite neu und versuch es noch mal.",

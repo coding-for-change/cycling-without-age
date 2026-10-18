@@ -77,8 +77,6 @@ export type RideLocationDetailData = {
   contactEmail: string | null;
   notes: string | null;
   typicalRideKm: number | null;
-  defaultTrishawCount: number;
-  defaultPilotCount: number;
   defaultMinutes: number | null;
   archived: boolean;
   added: string;
@@ -114,8 +112,6 @@ const breakAfterAt = (email: string) => {
   );
 };
 const CHAPTER_DEFAULT = "";
-const range = (max: number) =>
-  Array.from({ length: max }, (_, index) => index + 1);
 
 export function RideLocationDetail({
   location,
@@ -191,9 +187,6 @@ export function RideLocationDetail({
         {options.find((option) => option.value === value)?.label}
       </PropertyValue>
     );
-
-  const numberOptions = (max: number) =>
-    range(max).map((count) => ({ value: String(count), label: String(count) }));
 
   return (
     <DetailEditorShell
@@ -292,20 +285,6 @@ export function RideLocationDetail({
                       defaultMinutes:
                         next === CHAPTER_DEFAULT ? null : Number(next),
                     }),
-                )}
-              </PropertyRow>
-              <PropertyRow label={detail.defaultTrishaws}>
-                {choice(
-                  String(location.defaultTrishawCount),
-                  numberOptions(RIDE_LOCATION_LIMITS.trishaws),
-                  (next) => save({ defaultTrishawCount: Number(next) }),
-                )}
-              </PropertyRow>
-              <PropertyRow label={detail.defaultPilots}>
-                {choice(
-                  String(location.defaultPilotCount),
-                  numberOptions(RIDE_LOCATION_LIMITS.pilots),
-                  (next) => save({ defaultPilotCount: Number(next) }),
                 )}
               </PropertyRow>
               <PropertyRow label={detail.typicalRideKm}>

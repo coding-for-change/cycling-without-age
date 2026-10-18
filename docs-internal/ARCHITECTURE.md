@@ -1169,10 +1169,11 @@ kept. The nav calls them "Ride locations" and "Storage locations" so the two nev
   existed. Renaming the care home or moving the chapter afterwards leaves the location alone.
 - **Archive, never delete.** Archived locations disappear from the drawer and the add-rider
   form; past rides keep their snapshot. Archived rows are read-only until restored.
-- **Defaults.** `defaultPilotCount`, `defaultTrishawCount` and `defaultMinutes` prefill the
-  scheduling drawer when the location is picked (or when it opens from "Schedule a ride
-  here", `?rideLocation=<id>`); the admin can still change each one. `typicalRideKm` is
-  recorded for Report 11 (distance ridden); no report reads it yet.
+- **Defaults.** `defaultMinutes` prefills the ride's length in the scheduling drawer when
+  the location is picked (or when it opens from "Schedule a ride here", `?rideLocation=<id>`);
+  the admin can still change it. A location carries no trishaw or pilot count: a ride needs
+  one pilot per trishaw, and the drawer takes the chapter's "Pilots per ride" whatever the
+  place. `typicalRideKm` is recorded for Report 11 (distance ridden); no report reads it yet.
 - **Riders.** `Passenger` gained `needsWheelchairBike`, `note` and `rideLocationId` (their
   Care Center). An admin sets them when adding a rider; an account edits its own rider in the
   account surface through `use-cases/set-own-rider-needs`. Both go through

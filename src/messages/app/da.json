@@ -1050,7 +1050,7 @@
     },
     "rideLocations": {
       "title": "Startsteder",
-      "body": "Hvor jeres ture starter: plejecentre, boliger og offentlige steder. Vælg et, når du planlægger, så følger adresse, piloter og den sædvanlige længde med.",
+      "body": "Hvor jeres ture starter: plejecentre, boliger og offentlige steder. Vælg et, når du planlægger, så følger adresse og den sædvanlige længde med.",
       "new": "Nyt startsted",
       "commandNew": "Tilføj et startsted",
       "pickChapter": "Vælg en afdeling for at tilføje et startsted.",
@@ -1096,10 +1096,6 @@
         "defaultsHint": "Det udfylder planlægningen. Du kan stadig ændre det for hver tur.",
         "defaultMinutes": "Sædvanlig længde",
         "chapterDefault": "Som i afdelingen",
-        "defaultTrishaws": "Rickshawer",
-        "defaultPilots": "Piloter",
-        "fewer": "Færre",
-        "more": "Flere",
         "notes": "Noter til piloterne",
         "notesPlaceholder": "Hvor man venter, hvem der åbner døren, hvilken indgang der har rampen …",
         "submit": "Tilføj startsted",
@@ -1126,8 +1122,6 @@
         "contactEmailPlaceholder": "navn@example.org",
         "defaults": "Når du planlægger her",
         "defaultMinutes": "Sædvanlig længde",
-        "defaultTrishaws": "Rickshawer",
-        "defaultPilots": "Piloter",
         "typicalRideKm": "Sædvanlig distance",
         "typicalRideKmPlaceholder": "Kilometer pr. tur",
         "km": "{km} km",
@@ -1160,9 +1154,7 @@
       "picker": {
         "placeholder": "Startsted eller adresse",
         "hint": "{kind} · {address}",
-        "pilots": "{count, plural, one {1 pilot} other {# piloter}}",
-        "trishaws": "{count, plural, one {1 rickshaw} other {# rickshawer}}",
-        "defaults": "Udfyldt fra {name}: {parts}."
+        "defaults": "Sædvanlig længde ved {name}: {length}."
       },
       "errors": {
         "unknownLocation": "Det startsted findes ikke længere. Genindlæs siden og prøv igen.",
