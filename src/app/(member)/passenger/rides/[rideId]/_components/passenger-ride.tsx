@@ -15,7 +15,7 @@ import {
   Phone,
   Search,
 } from "lucide-react";
-import { Scene, type SceneName } from "@/components/art";
+import { Hero, Scene, type SceneName } from "@/components/art";
 import { RichText } from "@/components/markdown";
 import { PersonAvatar } from "@/components/person-avatar";
 import { ReadAloud } from "@/components/read-aloud";
@@ -532,9 +532,15 @@ function MemoryCard({
         aria-hidden
         className="diagonal-edge absolute inset-x-0 top-0 h-28 bg-mint"
       />
+      <Hero
+        name="wind"
+        className="pointer-events-none absolute -top-2.75 -right-5 w-40"
+      />
       <div className="relative flex flex-col gap-4">
         <p className="text-sm font-medium">{date}</p>
-        <h2 className="text-2xl md:text-3xl">{title}</h2>
+        <h2 className="display-title max-w-[65%] text-2xl md:text-3xl">
+          {title}
+        </h2>
         <p className="text-lg">{outside}</p>
         {places.length ? (
           <p className="text-base">{places.join(` ${via} `)}</p>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { MapPin } from "lucide-react";
 import { chapters } from "@/features/chapters";
 import { Button } from "@/components/ui/button";
@@ -39,19 +40,37 @@ export async function ChapterCards({
         <h2 className="text-xs font-semibold tracking-wide text-ink-soft uppercase">
           {heading}
         </h2>
-        <ul className="divide-y divide-line rounded-2xl border border-line">
+        <ul
+          className={cn(
+            "divide-y divide-line",
+            perspective === "passenger"
+              ? "reveal rounded-soft border border-line bg-paper shadow-soft [--i:5]"
+              : "rounded-2xl border border-line",
+          )}
+        >
           {mine.map((chapter) => (
             <li
               key={chapter.id}
-              className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3"
+              className="flex items-center gap-3 px-4 py-3"
             >
-              <MapPin
-                className="size-4 text-mint-ink"
-                aria-hidden
-              />
-              <span className="font-medium">{chapter.name}</span>
-              <span className="text-sm text-ink-soft">
-                {chapter.careHomeName ?? chapter.city}
+              {perspective === "passenger" ? (
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-mint-tint">
+                  <MapPin
+                    className="size-5"
+                    aria-hidden
+                  />
+                </span>
+              ) : (
+                <MapPin
+                  className="size-4 text-mint-ink"
+                  aria-hidden
+                />
+              )}
+              <span className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span className="font-medium">{chapter.name}</span>
+                <span className="text-sm text-ink-soft">
+                  {chapter.careHomeName ?? chapter.city}
+                </span>
               </span>
             </li>
           ))}
