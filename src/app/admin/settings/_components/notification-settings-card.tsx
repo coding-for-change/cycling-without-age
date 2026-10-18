@@ -1,6 +1,5 @@
 "use client";
 
-import { z } from "zod";
 import {
   CHAPTER_WELCOME_NOTE_MAX,
   type ChapterSettings,
@@ -9,6 +8,7 @@ import {
 import { InlineField, type InlineFieldLabels } from "@/components/inline-field";
 import { SaveStatus, SaveStatusProvider } from "@/components/save-status";
 import { FieldRow, ToggleRow } from "@/components/settings-rows";
+import { isEmail } from "@/lib/email";
 import { updateChapterSettingsAction } from "../actions";
 
 export type NotificationSettingsLabels = {
@@ -27,8 +27,6 @@ export type NotificationSettingsLabels = {
   status: { saving: string; saved: string };
   field: InlineFieldLabels;
 };
-
-const isEmail = (next: string) => z.email().safeParse(next).success;
 
 export function NotificationSettingsCard({
   chapterId,

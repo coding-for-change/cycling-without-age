@@ -6,7 +6,7 @@ import { getDictionary } from "@/lib/i18n";
 import type { NavKey } from "../nav";
 import { ICONS } from "@/components/icons";
 
-type AdminPageKey = Exclude<NavKey, "chat">;
+type AdminPageKey = Exclude<NavKey, "chat" | "rideLocations">;
 
 export function AdminPageShell({ children }: { children: ReactNode }) {
   return (

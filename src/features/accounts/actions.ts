@@ -56,6 +56,9 @@ export async function addAssistedPassenger(
   } catch (error) {
     return actionFailure(error, {
       alreadyHasAccount: "exists",
+      unknownLocation: "invalid",
+      locationNotInChapter: "invalid",
+      locationNotCareCenter: "invalid",
       passengerChapterMismatch: "exists",
       tooManyRiders: "tooMany",
     } as const);

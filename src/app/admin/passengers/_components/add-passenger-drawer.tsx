@@ -20,6 +20,8 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { RIDER_NOTE_MAX } from "@/features/passengers/schemas";
 import { addAssistedPassenger } from "@/features/accounts/actions";
 import { gender as genderSchema } from "@/features/profile/schemas";
 import {
@@ -55,6 +57,9 @@ const schemaOf = (country: CountryCode, invalid: string) => {
       helperName: z.string().trim(),
       helperRelationship: z.string().trim(),
       helperContact: z.string().trim(),
+      needsWheelchairBike: z.boolean(),
+      riderNote: z.string().trim().max(RIDER_NOTE_MAX),
+      careCenterId: z.string(),
     })
     .superRefine((values, ctx) => {
       if (!values.withHelper) {
@@ -120,12 +125,23 @@ export type AddPassengerLabels = {
   };
 };
 
+export type RiderNeedsLabels = {
+  title: string;
+  wheelchair: { label: string; hint: string };
+  note: { label: string; hint: string; placeholder: string };
+  careCenter: { label: string; hint: string; none: string };
+};
+
+const NO_CARE_CENTER = "none";
+
 export function AddPassengerDrawer({
   chapterId,
   country,
   labels,
   pickup: pickupStrings,
   relationships,
+  needs,
+  careCenters,
   person,
   locale,
 }: {
@@ -134,6 +150,8 @@ export function AddPassengerDrawer({
   labels: AddPassengerLabels;
   pickup: PickupStrings;
   relationships: Record<string, string>;
+  needs: RiderNeedsLabels;
+  careCenters: { id: string; name: string }[];
   locale: Locale;
   person: {
     firstName: string;
@@ -166,6 +184,9 @@ export function AddPassengerDrawer({
       helperName: "",
       helperRelationship: "",
       helperContact: "",
+      needsWheelchairBike: false,
+      riderNote: "",
+      careCenterId: NO_CARE_CENTER,
     },
   });
 
@@ -223,6 +244,12 @@ export function AddPassengerDrawer({
             }
           : undefined,
         pickup: place,
+        needs: {
+          needsWheelchairBike: data.needsWheelchairBike,
+          note: data.riderNote || null,
+          rideLocationId:
+            data.careCenterId === NO_CARE_CENTER ? null : data.careCenterId,
+        },
       });
       notify(result, {
         done: formatMessage(
@@ -376,6 +403,88 @@ export function AddPassengerDrawer({
               </div>
             )}
           </div>
+
+          <fieldset className="grid gap-4 rounded-2xl border border-line p-4">
+            <legend className="px-1 text-sm font-medium">{needs.title}</legend>
+            <FormField
+              control={form.control}
+              name="needsWheelchairBike"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start justify-between gap-5">
+                  <div className="grid gap-1">
+                    <FormLabel>{needs.wheelchair.label}</FormLabel>
+                    <span className="text-2sm text-ink-soft">
+                      {needs.wheelchair.hint}
+                    </span>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      className="mt-1"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            {careCenters.length > 0 ? (
+              <FormField
+                control={form.control}
+                name="careCenterId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{needs.careCenter.label}</FormLabel>
+                    <FormControl>
+                      <NativeSelect
+                        value={field.value}
+                        onChange={(event) => field.onChange(event.target.value)}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        wrapperClassName="w-full"
+                        className="h-11 border-line text-base"
+                      >
+                        <NativeSelectOption value={NO_CARE_CENTER}>
+                          {needs.careCenter.none}
+                        </NativeSelectOption>
+                        {careCenters.map((place) => (
+                          <NativeSelectOption
+                            key={place.id}
+                            value={place.id}
+                          >
+                            {place.name}
+                          </NativeSelectOption>
+                        ))}
+                      </NativeSelect>
+                    </FormControl>
+                    <span className="text-2sm text-ink-soft">
+                      {needs.careCenter.hint}
+                    </span>
+                  </FormItem>
+                )}
+              />
+            ) : null}
+            <FormField
+              control={form.control}
+              name="riderNote"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{needs.note.label}</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      rows={2}
+                      maxLength={RIDER_NOTE_MAX}
+                      placeholder={needs.note.placeholder}
+                      className="min-h-16 border-line text-base"
+                    />
+                  </FormControl>
+                  <span className="text-2sm text-ink-soft">
+                    {needs.note.hint}
+                  </span>
+                </FormItem>
+              )}
+            />
+          </fieldset>
 
           <FormField
             control={form.control}

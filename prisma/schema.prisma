@@ -171,26 +171,29 @@ model Organization {
   members     Member[]
   invitations Invitation[]
 
-  countryId       String
-  country         Country                  @relation(fields: [countryId], references: [id])
-  city            String                   @db.Text
-  address         String?                  @db.Text
-  careHomeName    String?                  @db.Text
-  latitude        Float
-  longitude       Float
-  applications    ChapterApplication[]
-  passengers      Passenger[]
-  careRequests    CareRequest[]
-  events          ActivityEvent[]
-  domainEvents    Event[]
-  serviceRadiusKm Int                      @default(10)
-  timeZone        String                   @db.VarChar(64)
-  settings        ChapterSettings?
-  conversations   Conversation[]
-  trishawTypes    TrishawType[]
-  rides           Ride[]
-  storageSites    StorageLocationChapter[]
-  ownedLocations  StorageLocation[]        @relation("ownedLocations")
+  countryId        String
+  country          Country                  @relation(fields: [countryId], references: [id])
+  city             String                   @db.Text
+  address          String?                  @db.Text
+  careHomeName     String?                  @db.Text
+  latitude         Float
+  longitude        Float
+  applications     ChapterApplication[]
+  passengers       Passenger[]
+  careRequests     CareRequest[]
+  events           ActivityEvent[]
+  domainEvents     Event[]
+  serviceRadiusKm  Int                      @default(10)
+  timeZone         String                   @db.VarChar(64)
+  settings         ChapterSettings?
+  conversations    Conversation[]
+  trishawTypes     TrishawType[]
+  rides            Ride[]
+  storageSites     StorageLocationChapter[]
+  ownedLocations   StorageLocation[]        @relation("ownedLocations")
+  rideLocations    RideLocation[]
+  operatingWindows ChapterOperatingWindow[]
+  closures         ChapterClosure[]
 
   @@unique([slug])
   @@index([countryId])
@@ -281,6 +284,10 @@ model ChapterSettings {
   postRideInstructions String?      @db.Text
   damageAlertPush      Boolean      @default(true)
   updatedAt            DateTime     @updatedAt
+  bookingLeadTimeHours Int          @default(48)
+  bookingHorizonDays   Int          @default(60)
+  defaultRideMinutes   Int          @default(60)
+  defaultStayMinutes   Int          @default(60)
 
   /// Pilots of the chapter may sign up for open rides themselves.
   pilotsMaySelfAssign    Boolean @default(true)
@@ -297,6 +304,30 @@ model ChapterSettings {
   demandCheckLeadHours         Int @default(24)
 
   @@map("chapter_settings")
+}
+
+model ChapterOperatingWindow {
+  id          String       @id @default(cuid())
+  chapterId   String
+  chapter     Organization @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  weekday     Int
+  startMinute Int
+  endMinute   Int
+
+  @@unique([chapterId, weekday, startMinute])
+  @@map("chapter_operating_window")
+}
+
+model ChapterClosure {
+  id        String       @id @default(cuid())
+  chapterId String
+  chapter   Organization @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  date      DateTime     @db.Date
+  reason    String?      @db.VarChar(200)
+  createdAt DateTime     @default(now())
+
+  @@unique([chapterId, date])
+  @@map("chapter_closure")
 }
 
 model ChapterApplication {
@@ -361,8 +392,14 @@ model Passenger {
   profile      PersonProfile?    @relation("profileOfPassenger")
   careRequests CareRequest[]
 
+  rideLocationId      String?
+  rideLocation        RideLocation? @relation(fields: [rideLocationId], references: [id], onDelete: SetNull)
+  needsWheelchairBike Boolean       @default(false)
+  note                String?       @db.Text
+
   @@index([chapterId])
   @@index([managedByUserId])
+  @@index([rideLocationId])
   @@map("passenger")
 }
 
@@ -1086,12 +1123,49 @@ model Ride {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  rideLocationId String?
+  rideLocation   RideLocation? @relation(fields: [rideLocationId], references: [id], onDelete: SetNull)
+
   @@index([chapterId, startsAt])
   @@index([status, startsAt])
   @@index([seriesId])
   @@index([cancelledByUserId])
   @@index([completedByUserId])
+  @@index([rideLocationId, startsAt])
   @@map("ride")
+}
+
+enum RideLocationKind {
+  careCenter
+  residence
+  publicPlace
+  other
+}
+
+model RideLocation {
+  id             String           @id @default(cuid())
+  chapterId      String
+  chapter        Organization     @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  kind           RideLocationKind @default(careCenter)
+  name           String           @db.VarChar(160)
+  address        String?          @db.Text
+  latitude       Float?
+  longitude      Float?
+  contactName    String?          @db.VarChar(120)
+  contactPhone   String?          @db.VarChar(40)
+  contactEmail   String?          @db.VarChar(254)
+  notes          String?          @db.Text
+  typicalRideKm  Decimal?         @db.Decimal(6, 1)
+  defaultMinutes Int?
+  archivedAt     DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  rides      Ride[]
+  passengers Passenger[]
+
+  @@index([chapterId, archivedAt])
+  @@map("ride_location")
 }
 
 model RidePhoto {

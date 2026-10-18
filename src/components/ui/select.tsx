@@ -69,11 +69,12 @@ function SelectTrigger({
 function SelectContent({
   className,
   children,
-  position = "item-aligned",
+  position: requested,
   align = "center",
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
   const container = usePortalContainer();
+  const position = requested ?? (container ? "popper" : "item-aligned");
   return (
     <SelectPrimitive.Portal container={container ?? undefined}>
       <SelectPrimitive.Content

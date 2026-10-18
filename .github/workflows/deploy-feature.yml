@@ -126,7 +126,7 @@ jobs:
             --cache-to type=gha,scope=cwa-${{ env.BRANCH_NAME_SAFE }},mode=max \
             --build-arg NEXT_PUBLIC_APP_URL=https://${{ env.BRANCH_NAME_SAFE }}.cwa.codingforchange.com \
             --build-arg NEXT_PUBLIC_MAPBOX_TOKEN="$(jq -r '.NEXT_PUBLIC_MAPBOX_TOKEN // empty' "$SECRETS_DIR/decrypted.json")" \
-            --build-arg NEXT_PUBLIC_SENTRY_ENVIRONMENT=feature-${{ env.BRANCH_NAME_SAFE }} \
+            --build-arg NEXT_PUBLIC_SENTRY_ENVIRONMENT=preview \
             --build-arg SENTRY_RELEASE=${{ github.sha }} \
             --build-arg NEXT_PUBLIC_SENTRY_DSN="$(jq -r '.NEXT_PUBLIC_SENTRY_DSN // empty' "$SECRETS_DIR/decrypted.json")" \
             --build-arg SENTRY_ORG=codingforchange \
@@ -174,7 +174,7 @@ jobs:
           echo "REDIS_URL=redis://redis:6379" >> .env
           echo "CHAT_MASTER_KEY=$(jq -r '.CHAT_MASTER_KEY // empty' "$SECRETS_DIR/decrypted.json")" >> .env
           echo "IMAGE_TAG=${{ github.sha }}" >> .env
-          echo "SENTRY_ENVIRONMENT=feature-${{ env.BRANCH_NAME_SAFE }}" >> .env
+          echo "SENTRY_ENVIRONMENT=preview" >> .env
           echo "SENTRY_RELEASE=${{ github.sha }}" >> .env
           echo "METRICS_PORT=9464" >> .env
           if [ "${{ inputs.translator_mode }}" = "true" ]; then

@@ -39,6 +39,7 @@ export type AccountData = {
   guidesHref: string;
   signOutLabel: string;
   cancelLabel: string;
+  riderNeeds: Dictionary["passenger"]["riderNeeds"] | null;
 };
 
 export const profileHref = (
