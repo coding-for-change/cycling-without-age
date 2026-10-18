@@ -55,3 +55,17 @@ export async function passengerRideView(userId: string, rideId: string) {
 export async function passengerRideTotals(userId: string) {
   return rides.passengerTotals(await passengerRiderIds(userId));
 }
+
+/**
+ * What a passenger's chapters have going on: the events coming up — marked
+ * where one of their riders is on it — and each chapter's rides this month.
+ */
+export async function passengerChapterNews(userId: string) {
+  const [memberships, riderIds] = await Promise.all([
+    membership.listMembershipsOfUser(userId),
+    passengerRiderIds(userId),
+  ]);
+  const chapterIds = memberships.map(({ chapterId }) => chapterId);
+  const events = await rides.upcomingChapterEvents(chapterIds, riderIds);
+  return { events };
+}

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { MapPin } from "lucide-react";
+import { Bike, MapPin } from "lucide-react";
 import { chapters } from "@/features/chapters";
+import { rides } from "@/features/rides";
 import { Button } from "@/components/ui/button";
 import { perspectiveViewerSession } from "@/lib/auth-guards";
 import { readGuestChapterId } from "@/lib/guest-chapter";
@@ -29,6 +30,13 @@ export async function ChapterCards({
 
   const mine = home?.chapters ?? [];
 
+  const pulses =
+    perspective === "passenger"
+      ? await Promise.all(
+          mine.map((chapter) => rides.chapterRidesThisMonth(chapter)),
+        )
+      : [];
+
   const heading =
     mine.length > 1
       ? dict.member.home.yourChapters
@@ -48,7 +56,7 @@ export async function ChapterCards({
               : "rounded-2xl border border-line",
           )}
         >
-          {mine.map((chapter) => (
+          {mine.map((chapter, index) => (
             <li
               key={chapter.id}
               className="flex items-center gap-3 px-4 py-3"
@@ -66,11 +74,26 @@ export async function ChapterCards({
                   aria-hidden
                 />
               )}
-              <span className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="font-medium">{chapter.name}</span>
-                <span className="text-sm text-ink-soft">
-                  {chapter.careHomeName ?? chapter.city}
+              <span className="flex min-w-0 flex-1 flex-col gap-1.25">
+                <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="font-medium">{chapter.name}</span>
+                  <span className="text-sm text-ink-soft">
+                    {chapter.careHomeName ?? chapter.city}
+                  </span>
                 </span>
+                {pulses[index] ? (
+                  <span className="inline-flex w-fit items-center gap-1 rounded-full bg-mint-tint px-2.5 py-0.5 text-xs font-bold text-ink">
+                    <Bike
+                      aria-hidden
+                      className="size-3"
+                    />
+                    {formatMessage(
+                      dict.member.home.passenger.pulse,
+                      { count: pulses[index] },
+                      locale,
+                    )}
+                  </span>
+                ) : null}
               </span>
             </li>
           ))}

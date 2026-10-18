@@ -902,3 +902,53 @@ export const findLatestRideForPilot = (userId: string, now: Date) =>
     orderBy: [{ startsAt: "desc" }, { id: "desc" }],
     select: pilotSelect,
   });
+
+/** Rides of a chapter that took place between two instants — a count, no names. */
+export const countRiddenRidesOfChapter = (
+  chapterId: string,
+  from: Date,
+  to: Date,
+) =>
+  prisma.ride.count({
+    where: {
+      chapterId,
+      status: { not: "cancelled" },
+      startsAt: { gte: from },
+      endsAt: { lte: to },
+    },
+  });
+
+/**
+ * A chapter's coming events as its members may see them: when, where, how many
+ * seats are left — and whether one of these riders is already on it. No names.
+ */
+export const findUpcomingChapterEvents = (
+  chapterIds: string[],
+  passengerIds: string[],
+  now: Date,
+  take: number,
+) =>
+  prisma.ride.findMany({
+    where: {
+      chapterId: { in: chapterIds },
+      model: "event",
+      status: "scheduled",
+      startsAt: { gt: now },
+    },
+    orderBy: [{ startsAt: "asc" }, { id: "asc" }],
+    take,
+    select: {
+      id: true,
+      title: true,
+      startsAt: true,
+      endsAt: true,
+      locationName: true,
+      capacity: true,
+      chapter: { select: { timeZone: true } },
+      _count: { select: { roster: true } },
+      roster: {
+        where: { passengerId: { in: passengerIds } },
+        select: { id: true },
+      },
+    },
+  });

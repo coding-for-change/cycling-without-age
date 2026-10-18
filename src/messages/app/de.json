@@ -1827,6 +1827,13 @@
           "hours": "{count, plural, one {Stunde draußen} other {Stunden draußen}}",
           "first": "Ihre erste Ausfahrt wartet",
           "firstHint": "Sobald Sie unterwegs waren, zählen wir hier mit."
+        },
+        "pulse": "{count, plural, one {# Ausfahrt diesen Monat} other {# Ausfahrten diesen Monat}}",
+        "events": {
+          "title": "Demnächst in Ihrer Ortsgruppe",
+          "seats": "{free} von {total} Plätzen frei",
+          "full": "Ausgebucht",
+          "mine": "Sie sind dabei"
         }
       },
       "pilot": {

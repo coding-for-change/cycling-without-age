@@ -3,7 +3,7 @@ import { rides } from "@/features/rides";
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
-    ride: { findMany: jest.fn(), findFirst: jest.fn() },
+    ride: { findMany: jest.fn(), findFirst: jest.fn(), count: jest.fn() },
     rideLogEntry: { findMany: jest.fn() },
     user: { findMany: jest.fn() },
     passenger: { findMany: jest.fn() },
@@ -331,6 +331,75 @@ describe("passengerTotals", () => {
       rides: 0,
       seconds: 0,
     });
+    expect(findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("chapterRidesThisMonth", () => {
+  it("counts from the first of the month in the chapter's own time zone", async () => {
+    const count = prisma.ride.count as jest.Mock;
+    count.mockResolvedValue(6);
+    await expect(
+      rides.chapterRidesThisMonth(
+        { id: "ch-muenchen", timeZone: "Europe/Berlin" },
+        now,
+      ),
+    ).resolves.toBe(6);
+    expect(count).toHaveBeenCalledWith({
+      where: {
+        chapterId: "ch-muenchen",
+        status: { not: "cancelled" },
+        startsAt: { gte: new Date("2026-09-30T22:00:00Z") },
+        endsAt: { lte: now },
+      },
+    });
+  });
+});
+
+describe("upcomingChapterEvents", () => {
+  it("reads only events of the given chapters, and marks the riders' own", async () => {
+    findMany.mockResolvedValue([
+      {
+        id: "e-1",
+        title: "Sommerfest",
+        startsAt: new Date("2026-10-20T12:00:00Z"),
+        endsAt: new Date("2026-10-20T14:00:00Z"),
+        locationName: "Westpark",
+        capacity: 6,
+        chapter: { timeZone: "Europe/Berlin" },
+        _count: { roster: 2 },
+        roster: [{ id: "entry-1" }],
+      },
+    ]);
+    const events = await rides.upcomingChapterEvents(
+      ["ch-muenchen"],
+      MINE,
+      now,
+    );
+    const query = findMany.mock.calls[0][0];
+    expect(query.where).toEqual({
+      chapterId: { in: ["ch-muenchen"] },
+      model: "event",
+      status: "scheduled",
+      startsAt: { gt: now },
+    });
+    expect(query.select.roster.where).toEqual({ passengerId: { in: MINE } });
+    expect(Object.keys(query.select)).not.toContain("assignments");
+    expect(events).toEqual([
+      expect.objectContaining({
+        id: "e-1",
+        timeZone: "Europe/Berlin",
+        taken: 2,
+        mine: true,
+      }),
+    ]);
+    expect(events[0]).not.toHaveProperty("roster");
+  });
+
+  it("asks nothing without a chapter", async () => {
+    await expect(rides.upcomingChapterEvents([], MINE, now)).resolves.toEqual(
+      [],
+    );
     expect(findMany).not.toHaveBeenCalled();
   });
 });

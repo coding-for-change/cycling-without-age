@@ -3,6 +3,7 @@ import {
   formatDistance,
   formatDuration,
   formatDurationLong,
+  formatMonthAbbrev,
   formatHour,
   formatPeriod,
   formatRelativeTime,
@@ -143,5 +144,12 @@ describe("formatDurationLong", () => {
   it("rounds a long ride to five minutes", () => {
     expect(formatDurationLong(122 * 60, "en-US")).toBe("2 hours");
     expect(formatDurationLong(133 * 60, "en-US")).toBe("2 hours 15 minutes");
+  });
+});
+
+describe("formatMonthAbbrev", () => {
+  it("names the month alone, in either notation", () => {
+    expect(formatMonthAbbrev("2026-10-24", "en-US")).toBe("Oct");
+    expect(formatMonthAbbrev("2026-10-24", "de-DE")).toBe("Okt");
   });
 });

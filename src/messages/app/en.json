@@ -1827,6 +1827,13 @@
           "hours": "{count, plural, one {Hour outside} other {Hours outside}}",
           "first": "Your first ride is waiting",
           "firstHint": "Once you've been out, we count along here."
+        },
+        "pulse": "{count, plural, one {# ride this month} other {# rides this month}}",
+        "events": {
+          "title": "Coming up in your chapter",
+          "seats": "{free} of {total} seats free",
+          "full": "Fully booked",
+          "mine": "You're on it"
         }
       },
       "pilot": {

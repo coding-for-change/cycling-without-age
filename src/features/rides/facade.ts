@@ -1,6 +1,7 @@
 import { DomainError, mapping } from "@/lib/domain-error";
 import { transaction, type DomainEvent } from "@/lib/events";
 import { parseRoles, type FileReadRule } from "@/lib/access";
+import { instantAt, wallClock } from "@/lib/calendar";
 import type { $Enums, Prisma } from "@/generated/prisma";
 import {
   PLEASURE_LIMITS,
@@ -50,7 +51,9 @@ import {
   findLatestRideForPilot,
   findPastRidesForList,
   findPastRidesForPassengers,
+  countRiddenRidesOfChapter,
   findRiddenRidesForPassengers,
+  findUpcomingChapterEvents,
   findReservations,
   findUpcomingRidesForList,
   findUpcomingRidesForPassengers,
@@ -1120,6 +1123,42 @@ export async function listPassengerRidesPage(
     nextCursor:
       found.length > limit ? encodeCursor(page[page.length - 1]) : null,
   };
+}
+
+/** How many rides a chapter has taken out since the start of this month, its own. */
+export async function chapterRidesThisMonth(
+  chapter: { id: string; timeZone: string },
+  now = new Date(),
+) {
+  const { year, month } = wallClock(now, chapter.timeZone);
+  const from = instantAt(
+    { year, month, day: 1, hour: 0, minute: 0 },
+    chapter.timeZone,
+  );
+  return countRiddenRidesOfChapter(chapter.id, from, now);
+}
+
+const EVENTS_SHOWN = 6;
+
+/** The events coming up in these chapters, and whether these riders are on each. */
+export async function upcomingChapterEvents(
+  chapterIds: string[],
+  passengerIds: string[],
+  now = new Date(),
+) {
+  if (!chapterIds.length) return [];
+  const events = await findUpcomingChapterEvents(
+    chapterIds,
+    passengerIds,
+    now,
+    EVENTS_SHOWN,
+  );
+  return events.map(({ roster, _count, chapter, ...event }) => ({
+    ...event,
+    timeZone: chapter.timeZone,
+    taken: _count.roster,
+    mine: roster.length > 0,
+  }));
 }
 
 /** Every ride these riders have taken, and the time it kept them outside. */

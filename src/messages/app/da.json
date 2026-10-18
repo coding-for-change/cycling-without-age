@@ -1827,6 +1827,13 @@
           "hours": "{count, plural, one {Time udenfor} other {Timer udenfor}}",
           "first": "Din første tur venter",
           "firstHint": "Når du har været ude, tæller vi med her."
+        },
+        "pulse": "{count, plural, one {# tur denne måned} other {# ture denne måned}}",
+        "events": {
+          "title": "Snart i din afdeling",
+          "seats": "{free} af {total} pladser ledige",
+          "full": "Fuldt booket",
+          "mine": "Du er med"
         }
       },
       "pilot": {

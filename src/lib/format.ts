@@ -232,6 +232,16 @@ export function formatMonthShort(value: Date | string, locale: Locale): string {
   }).format(toCalendarDate(value));
 }
 
+/** `Mar` (en-US) · `März` (de-DE) — the month alone, for a calendar-sheet chip */
+export function formatMonthAbbrev(
+  value: Date | string,
+  locale: Locale,
+): string {
+  return dateTimeFormatter(locale, { ...CALENDAR_UTC, month: "short" }).format(
+    toCalendarDate(value),
+  );
+}
+
 /** `Mar 7, 2026` (en-US) · `7. März 2026` (de-DE) */
 export function formatDateMedium(value: Date | string, locale: Locale): string {
   return dateTimeFormatter(locale, {

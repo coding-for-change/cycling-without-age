@@ -1,8 +1,10 @@
 import { Suspense } from "react";
 import { ChapterCards } from "../_components/home/chapter-cards";
+import { ChapterEvents } from "../_components/home/chapter-events";
 import { Greeting } from "../_components/home/greeting";
 import {
   GreetingFallback,
+  EventsFallback,
   SectionFallback,
   TilesFallback,
 } from "../_components/home/home-fallback";
@@ -25,6 +27,9 @@ export default function PassengerHomePage() {
       </Suspense>
       <Suspense fallback={<SectionFallback />}>
         <ChapterCards perspective="passenger" />
+      </Suspense>
+      <Suspense fallback={<EventsFallback />}>
+        <ChapterEvents />
       </Suspense>
       <Suspense fallback={null}>
         <SetupChecklist perspective="passenger" />
