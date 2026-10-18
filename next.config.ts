@@ -1,6 +1,5 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs/config";
-import { withSerwist } from "@serwist/turbopack";
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -29,9 +28,17 @@ const nextConfig: NextConfig = {
   // private ranges mirror `devTrustedOrigins` in src/lib/auth.ts, so nobody
   // has to commit their own address.
   allowedDevOrigins: ["192.168.*.*", "10.*.*.*"],
+  async headers() {
+    return [
+      {
+        source: "/serwist/:path*",
+        headers: [{ key: "Service-Worker-Allowed", value: "/" }],
+      },
+    ];
+  },
 };
 
-export default withSentryConfig(withSerwist(nextConfig), {
+export default withSentryConfig(nextConfig, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   authToken: process.env.SENTRY_AUTH_TOKEN,

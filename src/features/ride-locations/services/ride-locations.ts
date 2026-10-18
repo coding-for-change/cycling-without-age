@@ -14,8 +14,6 @@ const rowSelect = {
   contactEmail: true,
   notes: true,
   typicalRideKm: true,
-  defaultTrishawCount: true,
-  defaultPilotCount: true,
   defaultMinutes: true,
   archivedAt: true,
   createdAt: true,

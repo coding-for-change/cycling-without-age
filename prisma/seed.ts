@@ -9,7 +9,10 @@ import { fleet } from "@/features/fleet";
 import { rideLocations } from "@/features/ride-locations";
 import { rideRequests } from "@/features/ride-requests";
 import { rideInput, rides } from "@/features/rides";
-import { defaultLocationFor } from "@/use-cases/manage-chapter";
+import {
+  careHomeRideLocationFor,
+  defaultLocationFor,
+} from "@/use-cases/manage-chapter";
 import type { ChapterRole } from "@/lib/access";
 
 if (process.env.NODE_ENV === "production" && !process.env.FEATURE_BRANCH) {
@@ -227,9 +230,12 @@ async function seedChapters(countryIds: Map<string, string>) {
     );
   }
   for (const id of ids.values()) {
-    if (await fleet.getDefaultLocation(id)) continue;
     const chapter = (await chapters.getChapter(id))!;
-    await fleet.createDefaultLocation(defaultLocationFor(chapter));
+    if (!(await fleet.getDefaultLocation(id)))
+      await fleet.createDefaultLocation(defaultLocationFor(chapter));
+    const careHome = careHomeRideLocationFor(chapter);
+    if (careHome && (await rideLocations.countChapterRideLocations(id)) === 0)
+      await rideLocations.createRideLocation(careHome);
   }
   return ids;
 }

@@ -11,7 +11,6 @@ import {
 import { toast } from "sonner";
 import { notify } from "@/components/action-feedback";
 import { AppDrawer, submitOnCmdEnter } from "@/components/app-drawer";
-import { CountStepper } from "@/components/count-stepper";
 import {
   MarkdownEditor,
   type MarkdownToolLabels,
@@ -156,8 +155,6 @@ function RideLocationForm({
   const [contactPhone, setContactPhone] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [defaultMinutes, setDefaultMinutes] = useState<number | null>(null);
-  const [trishaws, setTrishaws] = useState(1);
-  const [pilots, setPilots] = useState(1);
   const [notes, setNotes] = useState("");
 
   const refuse = (message: string) => {
@@ -186,8 +183,6 @@ function RideLocationForm({
         contactEmail: email || null,
         notes: notes.trim() || null,
         defaultMinutes,
-        defaultTrishawCount: trishaws,
-        defaultPilotCount: pilots,
       });
       notify(result, {
         done: formatMessage(create.created, { name: trimmed }, language),
@@ -338,68 +333,36 @@ function RideLocationForm({
       <fieldset className="grid gap-3">
         <legend className="text-sm font-medium">{create.defaults}</legend>
         <FieldDescription>{create.defaultsHint}</FieldDescription>
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-end">
-          <Field>
-            <FieldLabel
-              htmlFor={ids.minutes}
-              className="text-2sm text-ink-soft"
-            >
-              {create.defaultMinutes}
-            </FieldLabel>
-            <NativeSelect
-              id={ids.minutes}
-              value={defaultMinutes ?? ""}
-              onChange={(event) =>
-                setDefaultMinutes(
-                  event.target.value === "" ? null : Number(event.target.value),
-                )
-              }
-              className="h-11 border-line text-base"
-            >
-              <NativeSelectOption value="">
-                {create.chapterDefault}
+        <Field>
+          <FieldLabel
+            htmlFor={ids.minutes}
+            className="text-2sm text-ink-soft"
+          >
+            {create.defaultMinutes}
+          </FieldLabel>
+          <NativeSelect
+            id={ids.minutes}
+            value={defaultMinutes ?? ""}
+            onChange={(event) =>
+              setDefaultMinutes(
+                event.target.value === "" ? null : Number(event.target.value),
+              )
+            }
+            className="h-11 border-line text-base"
+          >
+            <NativeSelectOption value="">
+              {create.chapterDefault}
+            </NativeSelectOption>
+            {minutes.map((choice) => (
+              <NativeSelectOption
+                key={choice.value}
+                value={choice.value}
+              >
+                {choice.label}
               </NativeSelectOption>
-              {minutes.map((choice) => (
-                <NativeSelectOption
-                  key={choice.value}
-                  value={choice.value}
-                >
-                  {choice.label}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-          </Field>
-          <div className="grid gap-2">
-            <span className="text-2sm text-ink-soft">
-              {create.defaultTrishaws}
-            </span>
-            <CountStepper
-              value={trishaws}
-              min={1}
-              max={RIDE_LOCATION_LIMITS.trishaws}
-              onChange={setTrishaws}
-              label={create.defaultTrishaws}
-              fewer={create.fewer}
-              more={create.more}
-              className="h-11 text-sm"
-            />
-          </div>
-          <div className="grid gap-2">
-            <span className="text-2sm text-ink-soft">
-              {create.defaultPilots}
-            </span>
-            <CountStepper
-              value={pilots}
-              min={1}
-              max={RIDE_LOCATION_LIMITS.pilots}
-              onChange={setPilots}
-              label={create.defaultPilots}
-              fewer={create.fewer}
-              more={create.more}
-              className="h-11 text-sm"
-            />
-          </div>
-        </div>
+            ))}
+          </NativeSelect>
+        </Field>
       </fieldset>
 
       <Field>

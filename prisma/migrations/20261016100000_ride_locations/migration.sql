@@ -50,8 +50,6 @@ CREATE TABLE `ride_location` (
     `contactEmail` VARCHAR(254) NULL,
     `notes` TEXT NULL,
     `typicalRideKm` DECIMAL(6, 1) NULL,
-    `defaultTrishawCount` INTEGER NOT NULL DEFAULT 1,
-    `defaultPilotCount` INTEGER NOT NULL DEFAULT 1,
     `defaultMinutes` INTEGER NULL,
     `archivedAt` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),

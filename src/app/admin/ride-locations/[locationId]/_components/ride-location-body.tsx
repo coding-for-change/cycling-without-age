@@ -77,8 +77,6 @@ export async function RideLocationBody({
           contactEmail: location.contactEmail,
           notes: location.notes,
           typicalRideKm: location.typicalRideKm,
-          defaultTrishawCount: location.defaultTrishawCount,
-          defaultPilotCount: location.defaultPilotCount,
           defaultMinutes: location.defaultMinutes,
           archived: location.archivedAt !== null,
           added: formatMessage(

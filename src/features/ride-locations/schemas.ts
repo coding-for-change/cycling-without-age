@@ -16,8 +16,6 @@ export const RIDE_LOCATION_LIMITS = {
   contactEmail: 254,
   notes: 5_000,
   typicalRideKm: 999.9,
-  trishaws: 20,
-  pilots: 10,
   minutes: { min: 15, max: 12 * 60 },
 } as const;
 
@@ -54,12 +52,6 @@ const fields = {
     .max(RIDE_LOCATION_LIMITS.typicalRideKm)
     .transform((km) => Math.round(km * 10) / 10)
     .nullable(),
-  defaultTrishawCount: z
-    .number()
-    .int()
-    .min(1)
-    .max(RIDE_LOCATION_LIMITS.trishaws),
-  defaultPilotCount: z.number().int().min(1).max(RIDE_LOCATION_LIMITS.pilots),
   defaultMinutes: z
     .number()
     .int()
@@ -95,8 +87,6 @@ export const rideLocationInput = z
     contactEmail: fields.contactEmail.optional(),
     notes: fields.notes.optional(),
     typicalRideKm: fields.typicalRideKm.optional(),
-    defaultTrishawCount: fields.defaultTrishawCount.default(1),
-    defaultPilotCount: fields.defaultPilotCount.default(1),
     defaultMinutes: fields.defaultMinutes.optional(),
   })
   .superRefine(pinned);

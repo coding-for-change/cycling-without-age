@@ -40,8 +40,6 @@ const record = (overrides: Record<string, unknown> = {}) => ({
   contactEmail: null,
   notes: null,
   typicalRideKm: null,
-  defaultTrishawCount: 2,
-  defaultPilotCount: 2,
   defaultMinutes: 90,
   archivedAt: null,
   createdAt: new Date("2026-10-01T10:00:00Z"),
@@ -70,8 +68,6 @@ describe("creating a Ride Location", () => {
         name: "Solgården",
         contactEmail: null,
         notes: null,
-        defaultTrishawCount: 1,
-        defaultPilotCount: 1,
       }),
       select: expect.any(Object),
     });
@@ -82,7 +78,7 @@ describe("creating a Ride Location", () => {
       { chapterId: CHAPTER, name: " " },
       { chapterId: CHAPTER, name: "X", contactEmail: "not-an-email" },
       { chapterId: CHAPTER, name: "X", latitude: 56.1, longitude: null },
-      { chapterId: CHAPTER, name: "X", defaultTrishawCount: 0 },
+      { chapterId: CHAPTER, name: "X", defaultMinutes: 5 },
     ])
       await expect(
         rideLocations.createRideLocation(input),

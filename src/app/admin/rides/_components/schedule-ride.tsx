@@ -150,8 +150,6 @@ const toChoice = (
   address: location.address,
   latitude: location.latitude,
   longitude: location.longitude,
-  defaultTrishawCount: location.defaultTrishawCount,
-  defaultPilotCount: location.defaultPilotCount,
   defaultMinutes: location.defaultMinutes,
 });
 

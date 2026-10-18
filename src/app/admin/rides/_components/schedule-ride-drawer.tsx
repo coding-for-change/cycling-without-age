@@ -100,7 +100,6 @@ import { useDrawerParam } from "@/hooks/use-drawer-param";
 import { clockLabel, clockToMinutes, DEFAULT_SLOT_MINUTES } from "@/lib/clock";
 import {
   formatDuration,
-  formatList,
   wordsLocale,
   type Locale as NotationLocale,
 } from "@/lib/format";
@@ -223,18 +222,8 @@ const chapterPlace = (chapter: ScheduleChapter): Place | null =>
 
 type Prefilled = {
   name: string;
-  pilots: number | null;
-  trishaws: number | null;
   minutes: number | null;
 };
-
-const firstFree = (options: TrishawOption[], count: number) =>
-  new Set(
-    options
-      .filter((option) => option.blocked === null)
-      .slice(0, count)
-      .map((option) => option.id),
-  );
 
 const minutesForRoute = (route: Route) => {
   const raw = route.durationSec / 60 + ROUTE_BUFFER_MINUTES;
@@ -341,13 +330,7 @@ function ScheduleRideSheet({
     chapters.some((chapter) => chapter.durationChosen === true),
   );
   const stayEdited = useRef(false);
-  const trishawPrefill = useRef<number | null>(
-    request
-      ? request.model === "pleasure"
-        ? 1
-        : (requestedLocation?.defaultTrishawCount ?? 1)
-      : (requestedLocation?.defaultTrishawCount ?? null),
-  );
+  const trishawPrefill = useRef<number | null>(request ? 1 : null);
   const [pending, startTransition] = useTransition();
 
   const [chapterId, setChapterId] = useState(
@@ -387,15 +370,11 @@ function ScheduleRideSheet({
   );
   const [roundTrip, setRoundTrip] = useState(request?.roundTrip ?? true);
   const [stay, setStay] = useState(chapter.stayMinutes ?? DEFAULT_STAY);
-  const [pilotsNeeded, setPilotsNeeded] = useState(
-    requestedLocation?.defaultPilotCount ?? chapter.requiredPilots ?? 1,
-  );
+  const [pilotsNeeded, setPilotsNeeded] = useState(chapter.requiredPilots ?? 1);
   const [prefilled, setPrefilled] = useState<Prefilled | null>(() =>
     requestedLocation
       ? {
           name: requestedLocation.name,
-          pilots: requestedLocation.defaultPilotCount,
-          trishaws: null,
           minutes: chapter.durationChosen
             ? null
             : requestedLocation.defaultMinutes,
@@ -449,20 +428,18 @@ function ScheduleRideSheet({
       setFetched({ key: lookupKey, options });
       if (!options) return;
       setKnown(options);
+      const free = options
+        .filter((option) => option.blocked === null)
+        .map((option) => option.id);
       const prefill =
         trishawPrefill.current === null
           ? null
-          : firstFree(options, trishawPrefill.current);
+          : free.slice(0, trishawPrefill.current);
       trishawPrefill.current = null;
       setSelected((current) => {
-        const free = firstFree(options, options.length);
-        const kept = [...current].filter((id) => free.has(id));
-        return kept.length === 0 && prefill ? prefill : new Set(kept);
+        const kept = [...current].filter((id) => free.includes(id));
+        return new Set(kept.length === 0 && prefill ? prefill : kept);
       });
-      if (prefill)
-        setPrefilled((current) =>
-          current ? { ...current, trishaws: prefill.size } : current,
-        );
     }, LOOKUP_DELAY_MS);
     return () => {
       live = false;
@@ -535,8 +512,6 @@ function ScheduleRideSheet({
     setPassengerIds((current) => trim(current, nextLimits.passengers));
     setPilotIds((current) => trim(current, nextLimits.pilots));
     setSelected((current) => new Set(trim([...current], nextLimits.trishaws)));
-    if (next === "pleasure" && trishawPrefill.current !== null)
-      trishawPrefill.current = 1;
   };
 
   const pickChapter = (id: string) => {
@@ -545,7 +520,6 @@ function ScheduleRideSheet({
     if (!next) return;
     setChapterId(id);
     rememberChapter(id);
-    trishawPrefill.current = null;
     setPrefilled(null);
     setPilotsNeeded(
       chapters.find((candidate) => candidate.id === id)?.requiredPilots ?? 1,
@@ -570,7 +544,6 @@ function ScheduleRideSheet({
   };
 
   const pickPlace = (place: Place | null) => {
-    trishawPrefill.current = null;
     setPrefilled(null);
     setRideLocation(null);
     setOrigin(place);
@@ -579,24 +552,10 @@ function ScheduleRideSheet({
   const pickLocation = (location: RideLocationChoice) => {
     setRideLocation(location);
     setOrigin(placeOfLocation(location));
-    const pilots = pleasure
-      ? null
-      : Math.max(location.defaultPilotCount, pilotIds.length);
-    if (pilots !== null) changePilotsNeeded(pilots);
     const minutes = endEdited.current ? null : location.defaultMinutes;
     if (minutes)
       setSlot((current) => ({ ...current, durationMinutes: minutes }));
-    const trishaws = pleasure ? 1 : location.defaultTrishawCount;
-    const chosen =
-      options && selected.size === 0 ? firstFree(options, trishaws) : null;
-    if (!options) trishawPrefill.current = trishaws;
-    else if (chosen) setSelected(chosen);
-    setPrefilled({
-      name: location.name,
-      pilots: pilots === location.defaultPilotCount ? pilots : null,
-      trishaws: chosen ? chosen.size : null,
-      minutes,
-    });
+    setPrefilled({ name: location.name, minutes });
   };
 
   const changePilotsNeeded = (next: number) => {
@@ -700,29 +659,10 @@ function ScheduleRideSheet({
   });
 
   const photoLabels: PhotoGalleryLabels = { ...gallery, errors };
-  const prefilledParts = prefilled
-    ? [
-        !pleasure &&
-        prefilled.pilots !== null &&
-        prefilled.pilots === pilotsNeeded
-          ? formatMessage(
-              locationStrings.picker.pilots,
-              { count: prefilled.pilots },
-              language,
-            )
-          : null,
-        prefilled.trishaws && prefilled.trishaws === picked.length
-          ? formatMessage(
-              locationStrings.picker.trishaws,
-              { count: prefilled.trishaws },
-              language,
-            )
-          : null,
-        prefilled.minutes && prefilled.minutes === slot.durationMinutes
-          ? formatDuration(prefilled.minutes * 60, wordsLocale(language))
-          : null,
-      ].filter((part): part is string => part !== null)
-    : [];
+  const prefilledLength =
+    prefilled?.minutes && prefilled.minutes === slot.durationMinutes
+      ? formatDuration(prefilled.minutes * 60, wordsLocale(language))
+      : null;
   const showMap = Boolean(origin || (functional && destination));
   const trishawCount = picked.length;
 
@@ -924,14 +864,11 @@ function ScheduleRideSheet({
               language={language}
               failed={errors.generic}
             />
-            {prefilledParts.length ? (
+            {prefilledLength ? (
               <p className="pr-2 pl-9 text-xs text-ink-soft">
                 {formatMessage(
                   locationStrings.picker.defaults,
-                  {
-                    name: prefilled?.name ?? "",
-                    parts: formatList(prefilledParts, wordsLocale(language)),
-                  },
+                  { name: prefilled?.name ?? "", length: prefilledLength },
                   language,
                 )}
               </p>

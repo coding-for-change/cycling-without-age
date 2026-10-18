@@ -99,9 +99,10 @@ the operational rules.
   only syncs tabs, selection, the chat badge and `hidden` (thread, keyboard, wide viewport).
   The plugin writes `--cap-native-navigation-bottom`; `pb-tabbar` and the Toaster fall back to
   the web expression when it is unset. A pre-paint script sets `<html data-shell="ios">`.
-- **Offline shell.** Serwist (`src/app/sw.ts`, served by `src/app/serwist/[path]/route.ts`,
-  prerendered) precaches `/_next/static` and `/~offline` and keeps member and flow documents
-  and RSC payloads NetworkFirst. Non-GET, prefetches, `/api`, `/admin`, `/serwist`,
+- **Offline shell.** Serwist (`src/app/sw.ts`, bundled after `next build` by
+  `scripts/build-service-worker.mjs` into `public/serwist/`, so the server never runs esbuild)
+  precaches `/_next/static` and `/~offline` and keeps member and flow documents and RSC
+  payloads NetworkFirst. Non-GET, prefetches, `/api`, `/admin`, `/serwist`,
   `/.well-known` and `/monitoring` never reach the worker. Runtime caches are wiped on every
   sign-out (`finishSignOut`) and whenever `/sign-in` mounts, so a second person on the device
   never sees the first one's pages. iOS needs `WKAppBoundDomains` +
@@ -1199,12 +1200,18 @@ kept. The nav calls them "Ride locations" and "Storage locations" so the two nev
   over whatever the client sent. Editing or archiving a location never rewrites a ride, and
   editing a ride's place on its detail page drops the link. The way back of a round trip
   starts at the destination, so only the way there is linked.
+- **The care home comes first.** A chapter's `careHomeName` becomes a Care Center ride location
+  with the chapter's address and pin: `use-cases/manage-chapter` adds it when a chapter is
+  created with one, or when one is named later while the chapter has no ride location at all,
+  and the migration `ride_location_from_care_home` did the same once for the chapters that
+  existed. Renaming the care home or moving the chapter afterwards leaves the location alone.
 - **Archive, never delete.** Archived locations disappear from the drawer and the add-rider
   form; past rides keep their snapshot. Archived rows are read-only until restored.
-- **Defaults.** `defaultPilotCount`, `defaultTrishawCount` and `defaultMinutes` prefill the
-  scheduling drawer when the location is picked (or when it opens from "Schedule a ride
-  here", `?rideLocation=<id>`); the admin can still change each one. `typicalRideKm` is
-  recorded for Report 11 (distance ridden); no report reads it yet.
+- **Defaults.** `defaultMinutes` prefills the ride's length in the scheduling drawer when
+  the location is picked (or when it opens from "Schedule a ride here", `?rideLocation=<id>`);
+  the admin can still change it. A location carries no trishaw or pilot count: a ride needs
+  one pilot per trishaw, and the drawer takes the chapter's "Pilots per ride" whatever the
+  place. `typicalRideKm` is recorded for Report 11 (distance ridden); no report reads it yet.
 - **Riders.** `Passenger` gained `needsWheelchairBike`, `note` and `rideLocationId` (their
   Care Center). An admin sets them when adding a rider; an account edits its own rider in the
   account surface through `use-cases/set-own-rider-needs`. Both go through
