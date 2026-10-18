@@ -1999,6 +1999,8 @@
         "hint": "Who you are, and how we reach you.",
         "lastName": "Last name",
         "lastNamePlaceholder": "Your last name",
+        "name": "Name",
+        "namePlaceholder": "Your name",
         "phone": "Phone",
         "title": "Your details"
       },

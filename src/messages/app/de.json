@@ -1999,6 +1999,8 @@
         "hint": "Wer Sie sind und wie wir Sie erreichen.",
         "lastName": "Nachname",
         "lastNamePlaceholder": "Ihr Nachname",
+        "name": "Name",
+        "namePlaceholder": "Ihr Name",
         "phone": "Telefon",
         "title": "Ihre Angaben"
       },

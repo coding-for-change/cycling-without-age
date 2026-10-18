@@ -17,10 +17,13 @@ type Gender = (typeof GENDERS)[number];
 const EARLIEST_BIRTH_DATE = "1900-01-01";
 /** `PERSON_NAME_PART_MAX` in features/profile — the schema holds the line. */
 const NAME_PART_MAX = 59;
+const NAME_MAX = 120;
 
 const rejected: ActionResult = { ok: false, error: "invalid" };
 
 export type PersonalDetailsStrings = {
+  name: string;
+  namePlaceholder: string;
   firstName: string;
   lastName: string;
   firstNamePlaceholder: string;
@@ -44,9 +47,14 @@ const yearsBetween = (from: string, to: string) => {
   return ty - fy - (tm < fm || (tm === fm && td < fd) ? 1 : 0);
 };
 
+/**
+ * First and last name are edited apart where the account has a rider row that
+ * holds them apart; without one there is only the account's one name, which
+ * cannot be split back without losing a "van der" — so it stays one field.
+ */
 export function PersonalDetails({
-  firstName,
-  lastName,
+  name,
+  names,
   birthDate,
   age,
   hideAge,
@@ -58,8 +66,8 @@ export function PersonalDetails({
   notation,
   words,
 }: {
-  firstName: string;
-  lastName: string;
+  name: string;
+  names: { firstName: string; lastName: string } | null;
   birthDate: string | null;
   /** As main's profile counts it; `null` without a birth date. */
   age: number | null;
@@ -103,8 +111,36 @@ export function PersonalDetails({
   return (
     <div className="flex flex-col gap-3">
       <ul className="divide-y divide-line rounded-2xl border border-line [&>li]:flex-wrap [&>li]:gap-y-1.25 [&>li]:px-4">
-        {namePart("firstName", firstName, strings.firstNamePlaceholder)}
-        {namePart("lastName", lastName, strings.lastNamePlaceholder)}
+        {names ? (
+          <>
+            {namePart(
+              "firstName",
+              names.firstName,
+              strings.firstNamePlaceholder,
+            )}
+            {namePart("lastName", names.lastName, strings.lastNamePlaceholder)}
+          </>
+        ) : (
+          <FieldRow
+            inline
+            label={strings.name}
+          >
+            <InlineField
+              value={name || null}
+              className="mx-0 w-full text-right text-ink-soft"
+              label={strings.name}
+              placeholder={strings.namePlaceholder}
+              maxLength={NAME_MAX}
+              required
+              labels={labels}
+              onSave={(next) =>
+                next === null
+                  ? Promise.resolve(rejected)
+                  : updateOwnDetailsAction({ name: next })
+              }
+            />
+          </FieldRow>
+        )}
         <FieldRow
           inline
           label={strings.birthDate}

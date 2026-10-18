@@ -24,7 +24,6 @@ import { resolveLocale, toIsoDateUtc, wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { isPhoneTempEmail } from "@/lib/identity";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
-import { splitName } from "@/lib/utils";
 import {
   accessPerson,
   canGiveHealthConsent,
@@ -98,7 +97,7 @@ export async function OwnProfile() {
   const email = person?.email ?? session.user.email;
   const picked = person?.avatarSeed ?? null;
   const photo = photoUrl(about.photoFileId);
-  const names = own ?? splitName(person?.name ?? session.user.name);
+  const name = person?.name ?? session.user.name;
   const notation = resolveLocale(head.get("accept-language"));
   const voice = notation.startsWith(language) ? notation : language;
   const base = `${PERSPECTIVE_HOME.passenger}/profile`;
@@ -136,8 +135,12 @@ export async function OwnProfile() {
             hint={s.account.hint}
           >
             <PersonalDetails
-              firstName={names.firstName}
-              lastName={names.lastName}
+              name={name}
+              names={
+                own
+                  ? { firstName: own.firstName, lastName: own.lastName }
+                  : null
+              }
               birthDate={
                 person?.birthDate ? toIsoDateUtc(person.birthDate) : null
               }

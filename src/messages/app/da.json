@@ -1999,6 +1999,8 @@
         "hint": "Hvem du er, og hvordan vi når dig.",
         "lastName": "Efternavn",
         "lastNamePlaceholder": "Dit efternavn",
+        "name": "Navn",
+        "namePlaceholder": "Dit navn",
         "phone": "Telefon",
         "title": "Dine oplysninger"
       },
