@@ -14,6 +14,7 @@ import type {
   PassengerInput,
 } from "./schemas";
 import {
+  findBookingAccountsOfChapters,
   countPassengersInChapters,
   countPassengersManagedBy,
   countPassengersWithoutAccountManagedBy,
@@ -24,6 +25,7 @@ import {
   findPassengersOfUsers,
   findPassengersByIds,
   findPassengersManagedBy,
+  findPassengersOfAccount,
   findPassengersOfChapters,
   findPassengerNames,
   findPassengersWithOtherAccountManagedBy,
@@ -48,10 +50,29 @@ export const getOwnPassenger = (userId: string) => findPassengerOfUser(userId);
 export const getPassenger = (id: string) => findPassengerById(id);
 export const getPassengers = async (ids: string[]) =>
   ids.length ? findPassengersByIds(ids) : [];
+/**
+ * Every rider whose rides this account may read: the ones it manages, and
+ * its own rider row when someone else manages it — a resident whose carer
+ * books for them still sees their own rides.
+ */
+export const listRidersOfAccount = (userId: string) =>
+  findPassengersOfAccount(userId);
+
 export const listPassengersManagedBy = (userId: string) =>
   findPassengersManagedBy(userId);
 export const listPassengersOfChapters = (chapterIds: string[]) =>
   findPassengersOfChapters(chapterIds);
+
+/**
+ * The accounts that book for these chapters' riders: whoever manages a rider,
+ * which is the rider's own account when it books for itself.
+ */
+export const listBookingAccountsOfChapters = async (chapterIds: string[]) =>
+  chapterIds.length
+    ? (await findBookingAccountsOfChapters(chapterIds)).map(
+        (rider) => rider.managedByUserId,
+      )
+    : [];
 
 export type PassengerRow = Awaited<
   ReturnType<typeof findPassengersOfChapters>

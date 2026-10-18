@@ -8,12 +8,21 @@ const COLUMNS = {
   welcomeNote: true,
   postRideInstructions: true,
   damageAlertPush: true,
+  pilotsMaySelfAssign: true,
+  requiredPilotsDefault: true,
+  staffingCheckLeadHours: true,
 } as const;
 
 export const findChapterSettings = (chapterId: string) =>
   prisma.chapterSettings.findUnique({
     where: { chapterId },
     select: COLUMNS,
+  });
+
+export const findChapterSettingsOf = (chapterIds: string[]) =>
+  prisma.chapterSettings.findMany({
+    where: { chapterId: { in: chapterIds } },
+    select: { chapterId: true, ...COLUMNS },
   });
 
 export const upsertChapterSettings = (

@@ -12,7 +12,10 @@ import {
   toPersonChoice,
   toPilotChoice,
 } from "@/features/rides/components/crew-choices";
-import { ridePilots } from "@/features/rides/components/ride-presentation";
+import {
+  ridePilots,
+  seatedPilots,
+} from "@/features/rides/components/ride-presentation";
 import {
   rideDetailStrings,
   rideErrors,
@@ -54,6 +57,7 @@ import { PILOT_LABELS, ROSTER_LABELS, TRISHAW_LABELS } from "./panel-labels";
 import { PilotNote, RideEditor } from "./ride-editor";
 import { RideEventContent } from "./ride-event-content";
 import { RideHistory } from "./ride-history";
+import { RideAnnounce } from "./ride-announce";
 import { RidePilots } from "./ride-pilots";
 import { RideRoster } from "./ride-roster";
 import { RideTrash } from "./ride-trash";
@@ -137,6 +141,7 @@ export async function RideBody({
 
   const booked = new Set(ride.roster.map((entry) => entry.passenger.id));
   const pilots = ridePilots(ride);
+  const seated = seatedPilots(ride).length;
   const onRide = new Set(pilots.map((assignment) => assignment.user.id));
 
   const riderChoices = chapterPassengers
@@ -237,10 +242,12 @@ export async function RideBody({
       <RidePilots
         rideId={ride.id}
         editable={editable}
-        assigned={pilots.map(({ user }) => ({
+        assigned={pilots.map(({ user, stillPiloting }) => ({
           ...toPersonChoice(user),
           href: `/admin/members/${user.id}${scopeQuery}`,
+          seated: stillPiloting,
         }))}
+        seated={seated}
         required={ride.requiredPilots}
         limit={limits.pilots}
         choices={pilotChoices}
@@ -251,7 +258,21 @@ export async function RideBody({
           errors,
         }}
         pick={people}
+        unstaffed={
+          editable && ride.startsAt > new Date() && seated < ride.requiredPilots
+            ? detail.unstaffed
+            : null
+        }
       />
+
+      {ride.model === "event" ? (
+        <RideAnnounce
+          rideId={ride.id}
+          announced={ride.announced}
+          editable={editable && (ride.announced || ride.startsAt > new Date())}
+          labels={{ ...dict.rides.detail.announce, field }}
+        />
+      ) : null}
     </>
   );
 

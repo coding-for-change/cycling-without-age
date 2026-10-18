@@ -60,7 +60,7 @@ export async function deliverEmail(notificationId: string) {
 
   try {
     const locale = resolveEmailLocale(account.locale);
-    const message = renderMessage(kind, notification.payload, locale);
+    const message = await renderMessage(kind, notification.payload, locale);
     const href = `${APP_URL}${notification.href}`;
     const replyTo = await replyToOf(notification.event.chapterId);
 

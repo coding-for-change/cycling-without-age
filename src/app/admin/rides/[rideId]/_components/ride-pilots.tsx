@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { notify } from "@/components/action-feedback";
 import { PersonPicker, type PersonOption } from "@/components/people-picker";
 import { PersonAvatar } from "@/components/person-avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   assignPilotAction,
   unassignPilotAction,
@@ -19,33 +20,43 @@ import {
 } from "../../../_components/side-panel";
 import type { PilotLabels } from "./panel-labels";
 
-type Pilot = { id: string; name: string; href: string; avatar: string };
+type Pilot = {
+  id: string;
+  name: string;
+  href: string;
+  avatar: string;
+  seated: boolean;
+};
 
 export function RidePilots({
   rideId,
   editable,
   assigned,
+  seated,
   required,
   limit,
   choices,
   language,
   labels,
   pick,
+  unstaffed = null,
 }: {
   rideId: string;
   editable: boolean;
   assigned: Pilot[];
+  seated: number;
   required: number;
   limit: number | null;
   choices: PersonOption[];
   language: Locale;
   labels: PilotLabels;
   pick: { search: string; empty: string };
+  unstaffed?: string | null;
 }) {
   const [pending, startTransition] = useTransition();
   const say = (template: string, name: string) =>
     formatMessage(template, { name }, language);
-  const full = limit !== null && assigned.length >= limit;
+  const full = limit !== null && seated >= limit;
 
   const run = (
     action: (input: {
@@ -72,16 +83,21 @@ export function RidePilots({
     <SidePanel
       title={labels.pilots}
       meta={
-        <CountMeta
-          count={assigned.length}
-          max={required}
-          highlight={assigned.length < required}
-          srLabel={formatMessage(
-            labels.pilotsCount,
-            { assigned: assigned.length, required },
-            language,
-          )}
-        />
+        <>
+          {unstaffed ? (
+            <Badge className="bg-red-tint text-ink mr-1.25">{unstaffed}</Badge>
+          ) : null}
+          <CountMeta
+            count={seated}
+            max={required}
+            highlight={seated < required}
+            srLabel={formatMessage(
+              labels.pilotsCount,
+              { assigned: seated, required },
+              language,
+            )}
+          />
+        </>
       }
       action={
         editable ? (
@@ -122,6 +138,13 @@ export function RidePilots({
                 />
               }
               label={pilot.name}
+              badge={
+                pilot.seated ? null : (
+                  <Badge className="bg-canvas-deep text-ink-soft shrink-0">
+                    {labels.noLongerPilot}
+                  </Badge>
+                )
+              }
               onRemove={
                 editable
                   ? () => run(unassignPilotAction, pilot, labels.removed)

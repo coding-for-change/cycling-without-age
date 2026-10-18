@@ -31,6 +31,8 @@ export const findRidePhotoFile = (id: string) =>
           ride: {
             select: {
               chapterId: true,
+              model: true,
+              announced: true,
               chapter: { select: { countryId: true } },
             },
           },

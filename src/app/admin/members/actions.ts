@@ -115,7 +115,7 @@ export async function deleteUserAction(
     return { ok: false, error: "self" };
 
   try {
-    await deleteAccount(parsed.data.userId);
+    await deleteAccount(parsed.data.userId, session.user.id);
     revalidatePath("/admin", "layout");
     invalidateReports();
     return { ok: true };

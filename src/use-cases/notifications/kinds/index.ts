@@ -9,6 +9,19 @@ import { memberRoleChanged } from "./member-role-changed";
 import { pilotApplicationDecided } from "./pilot-application-decided";
 import { pilotApplicationSubmitted } from "./pilot-application-submitted";
 import { poolAccessDecided, poolAccessRequested } from "./pool-access";
+import {
+  rideBookingCancelled,
+  rideBookingConfirmed,
+  rideCancelled,
+  ridePilotAssigned,
+  rideRescheduled,
+} from "./rides";
+import {
+  rideAnnounced,
+  rideOpened,
+  ridePilotWithdrew,
+  rideUnderstaffed,
+} from "./staffing";
 import { trishawDamageReported } from "./trishaw-damage-reported";
 import { userOnboarded } from "./user-onboarded";
 
@@ -25,6 +38,15 @@ export const kinds: AnyKind[] = [
   pilotApplicationSubmitted,
   poolAccessDecided,
   poolAccessRequested,
+  rideAnnounced,
+  rideBookingCancelled,
+  rideBookingConfirmed,
+  rideCancelled,
+  rideOpened,
+  ridePilotAssigned,
+  ridePilotWithdrew,
+  rideRescheduled,
+  rideUnderstaffed,
   trishawDamageReported,
   userOnboarded,
 ];
@@ -39,8 +61,15 @@ export function kindOf(eventType: string): AnyKind {
   return kind;
 }
 
-export const renderMessage = (
+export async function renderMessage(
   kind: AnyKind,
   payload: unknown,
   locale: Locale,
-) => kind.message(kind.payload.parse(payload), getEmailStrings(locale), locale);
+) {
+  const params = kind.payload.parse(payload);
+  return kind.message(
+    (await kind.hydrate?.(params)) ?? params,
+    getEmailStrings(locale),
+    locale,
+  );
+}
