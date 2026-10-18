@@ -9,7 +9,8 @@ import { rides } from "@/features/rides";
  * learn of each other, so the riders' side joins only when it is one
  * household: a single rider, or one account booking for every rider on it.
  * Anything else — and every event, whose families booked on their own — is
- * the crew's and the admins' chat only.
+ * the crew's and the admins' chat only. A family that gave its seat up still
+ * counts, so its leaving never opens the chat's history to the other one.
  */
 export const syncRideChat = (rideId: string) =>
   chat.syncRideConversation({
@@ -29,11 +30,10 @@ export async function syncRiderChats(passengerId: string) {
 
 const oneHousehold = (
   facts: { model: string },
-  participants: { riderCount: number; riderAccountUserIds: string[] },
+  { household }: { household: { riders: number; accountUserIds: string[] } },
 ) =>
   facts.model !== "event" &&
-  (participants.riderCount <= 1 ||
-    participants.riderAccountUserIds.length <= 1);
+  (household.riders <= 1 || household.accountUserIds.length <= 1);
 
 async function rideChatOf(rideId: string, open: boolean) {
   const [participants, facts] = await Promise.all([

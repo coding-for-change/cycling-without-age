@@ -59,6 +59,7 @@ export function SelectRow({
   options,
   labels,
   onSave,
+  selectClassName,
 }: {
   value: string | null;
   label: string;
@@ -67,6 +68,7 @@ export function SelectRow({
   options: readonly { value: string; label: string }[];
   labels: InlineFieldLabels;
   onSave: (next: string | null) => Promise<ActionResult>;
+  selectClassName?: string;
 }) {
   const id = useId();
   const { shown, persist } = useOptimisticSave(
@@ -89,6 +91,7 @@ export function SelectRow({
       <div className="mt-1 shrink-0">
         <NativeSelect
           id={id}
+          wrapperClassName={selectClassName}
           value={shown ?? ""}
           onChange={(event) => {
             const next = event.target.value === "" ? null : event.target.value;

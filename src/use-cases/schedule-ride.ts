@@ -91,6 +91,7 @@ export async function scheduleRideAt(
       opensForSignUp: settings.pilotsMaySelfAssign,
       staffingLeadHours: settings.staffingCheckLeadHours,
       ...(requestId ? { requestId } : {}),
+      demandLeadHours: settings.demandCheckLeadHours,
     },
   );
 }

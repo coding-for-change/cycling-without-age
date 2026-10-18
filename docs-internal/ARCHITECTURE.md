@@ -222,10 +222,12 @@ off, `user.onboarded` carries the welcome note into its payload,
 admin edits the row on `/admin/settings` through `app/admin/settings/actions`, behind
 `requireChapterAdmin(chapterId)` — the guard that makes these a chapter's own switches.
 
-It is also the home for the per-chapter notification intervals the RFP asks for (how long
-before a ride a reminder goes out, how long an unanswered request waits): a column, a
-default in `DEFAULT_CHAPTER_SETTINGS`, and the kinds read it the same way. See
-[EVENTS.md](EVENTS.md) → *What a kind decides*.
+It is also the home for the per-chapter notification intervals the RFP asks for: a column, a
+default in `DEFAULT_CHAPTER_SETTINGS`, and the readers ask the facade the same way. The ride
+ones are `staffingCheckLeadHours` (COD-262) and `riderReminderLeadMinutes`,
+`volunteerReminderLeadMinutes` (30 min, 2 h, 24 h or 48 h) and `demandCheckLeadHours` (2, 12,
+24 or 48 h) on the "Reminders" card (COD-263). See [EVENTS.md](EVENTS.md) → *What a kind
+decides*.
 
 The booking policy lives here too (COD-260): `bookingLeadTimeHours`, `bookingHorizonDays`,
 `defaultRideMinutes` and `defaultStayMinutes`. A column ships only with a consumer: today
@@ -1147,7 +1149,7 @@ starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 1
   that changed the members reads the roster again and writes until a read finds nothing to
   change; the roster is read outside the conversation's lock, so a waiting sync never needs a
   second pool connection. A racing creator that loses the unique `rideId` joins that loop.
-  Freezing it is PR 6's.
+  Completing the ride freezes it (below).
 - **Announced events** (4B-b). `Ride.announced` is set in the drawer or the detail page's
   "Riders can book" panel, for event rides only (`eventsOnly`). Announced events show on the
   passenger start screen and `/passenger/rides` for the chapters of the riders the account
@@ -1162,6 +1164,88 @@ starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 1
 The admin surfaces are the week grid at `/admin/rides` (`?new=1` opens the scheduling drawer,
 and ⌘K "Schedule a ride" lands there) and the detail page `/admin/rides/[rideId]`, whose
 trishaws panel allocates trishaws in place.
+
+### Ride day and after (COD-263)
+
+Lifecycle phases 4C to 7: reminders, seat confirmation, check-in, walk-ups, roster closure,
+debrief and the frozen ride chat. One migration, `20261016120000_ride_execution`.
+
+- **Attendance.** `RideRosterEntry.attendance` is `booked → confirmed → checkedIn → completed`,
+  or `noShow`, or `cancelled`; `RideAssignment.attendance` is `signedUp → completed`, or
+  `noShow`. A seat the rider's side gives up keeps its row as `cancelled`, so Report 2 still
+  sees who signed up; `ACTIVE_SEAT` in `rides/services` keeps it out of everything that counts
+  places or people — `_count.roster`, the room check, the agendas and calendar feed, the
+  ride's participants (so its chat and its notifications), the announced events' bookings.
+  Booking that rider again takes the same row back. An admin taking a rider off still deletes
+  the row: that rider never signed up.
+- **Reminders and the demand check** (4C, 5B). `use-cases/ride-reminders.ts` runs three passes
+  from `ride-sweep`, built like the staffing check: chapters grouped by their own lead, only the
+  rides already inside it read, at most 50 a run. `rides.sendReminder` stamps
+  `riderReminderSentAt` / `volunteerReminderSentAt` and emits `ride.riderReminderDue` /
+  `ride.volunteerReminderDue`, and `rides.checkDemand` stamps `demandCheckedAt` and emits
+  `ride.noDemand` for an empty roster — each in one transaction under the ride's lock, so a
+  retried sweep or a retried dispatch sends nothing twice. The way back of a round trip goes
+  with its way there (one message, through `pair`), unless the way there has nobody to remind
+  itself. A ride with nobody to remind is stamped without an event, and the lead is read again
+  under the lock, so a ride moved away after the sweep listed it waits. Moving a ride's start
+  clears all three stamps with `staffingCheckedAt` and, while the ride is still ahead of its
+  door, asks every confirmed or checked-in seat again (`booked`, walk-ups excepted); a new end
+  only clears the staffing stamp. A ride scheduled already inside
+  its demand window is stamped as checked, like the staffing check. The four checks of a sweep
+  are independent: one that fails is logged, the others run, and the run then fails for the
+  monitor. Rides already inside a window when this ships get their reminder on the first sweep:
+  a late "your ride is coming up" still helps, so there is no backfill this time.
+- **Seat confirmation** (5B-b). The rider reminder links to `/passenger/rides/{id}`, where the
+  account answers per rider: Confirm seat, Cancel my seat, or take a given-up seat back while
+  there is room (`app/(member)/passenger/rides/actions.ts` → `use-cases/seat-confirmation.ts`,
+  which accepts only riders of `passengers.listRidersOfAccount`). Both answers close when the
+  ride starts and reach the other leg of a round trip still ahead — a confirmation confirms a
+  booked seat there, and takes a given-up one back only with this one and only while it has
+  room. The last seat given up emits `ride.riderRemoved` with `rosterNowEmpty`, which tells the
+  chapter's admins, and a seat taken back on an emptied roster emits `ride.rosterRefilled`, so
+  they hear it has a rider again; the two legs of a round trip are one message only when both are left empty
+  or both are not. A given-up seat keeps the ride's page open while the ride is ahead, without
+  the pilots' phone numbers; afterwards the ride is no longer the account's. For the ride
+  chat's one-household rule a given-up seat still counts (`listRideParticipants().household`),
+  so one family leaving never lets another into what was said in the chat about it.
+- **Check-in and walk-ups** (6B). The door opens two hours before the start
+  (`CHECK_IN_LEAD_MINUTES`). A pilot keeps it until the finish page closes a day after the ride
+  ends; an admin may still record a ride later, for as long as its roster is not closed
+  (`rides.checkInOpen`). `CheckInList` (`features/rides/components`) is one big optimistic target
+  per rider with Undo, on the pilot's ride page, the finish page and, compact, on the admin
+  detail. "Add someone at the door" (`WalkUpDrawer`, `?walkup=1`) enrols a walk-up: a roster row
+  with `passengerId: null`, the typed `guestName`, checked in at once. A walk-up takes a place and
+  counts as a ride, but is no rider record — `passengerDetailSelect` and the feed read the roster
+  filtered to the account's own riders, so a guest's name never reaches a rider's account, and
+  the rider tallies skip rows without a passenger. The admin's roster lists them under "At the
+  door", so its count of places taken matches its rows.
+- **Roster closure** (6D). "Complete ride" (`CompleteRideButton`, a confirm dialog that shows the
+  tally: "3 riders checked in, 1 trishaw, 2 hr") calls `rides.closeRoster`, which sets `status: completed`, `completedAt`/`completedByUserId`, turns
+  `checkedIn` into `completed`, `booked`/`confirmed` into `noShow` and every pilot's `signedUp`
+  into `completed`, and emits `ride.completed` — whose `freezeRideChat` worker listener freezes
+  the ride's chat, retried with the event until it holds. A second tap changes nothing and emits
+  nothing, so it leaves alone a chat its people kept going. An
+  admin can mark a pilot who never came
+  (`setPilotNoShow`, Report 1) and **Reopen** a completed ride from the detail page's danger
+  zone (`rides.reopenRide`, logged): every rider goes back to where they stood on the day, the
+  ride stops counting until it is completed again, and the chat stays frozen until someone
+  keeps chatting.
+- **Debrief** (story 31, 7E). One `RideDebrief` per pilot and ride (`@@unique([rideId,
+  userId])`), upserted from the finish page as often as the pilot likes while it is open (a day
+  after the ride; an admin's any time): distance on a
+  functional ride only (Report 11) and a note. Donations come with COD-152, and a broken
+  trishaw is reported as damage on the same page. The admin detail lists them as the day
+  report (story 32a).
+- **Frozen chat.** `conversation-thread.tsx` shows "Keep chatting" on the frozen banner
+  (`continueConversationAction`, CHAT-PLAN 2.3), and the chat list badges a ride chat.
+- **Who may.** Check-in, walk-ups, completion and the debrief go through `executorOfRide` in
+  `features/rides/actions.ts`: `requireAuth`, then the assigned pilot still piloting in the
+  ride's chapter and not marked as a no-show (`rides.pilotCanRun`) **or**
+  `requireChapterAdmin(ride.chapterId)`. An admin who also pilots the ride acts as the admin,
+  so the pilot's one-day window never narrows what they may record. The facade takes the
+  executor (`"pilot" | "admin"`) as a plain argument and never sees a session. Reopening and
+  marking a pilot as a no-show are `requireChapterAdmin` only. Check-in toggles, walk-ups and
+  debriefs are rate-limited per person.
 
 ### Storage locations: a bike lives at a place, not at a chapter
 
@@ -1505,9 +1589,14 @@ Overview strip.
 ### Units
 
 - **Ride**: one roster entry on a trip that is not cancelled and has already ended
-  (`status != cancelled AND endsAt < now`). Two riders on one trip are two rides, the RFP's
-  counting rule. `status = completed` is never written, so "ridden" is derived, not stored.
-- **Trip**: one such `Ride` row. **Riders**: unique passengers on them. **Hours**: the sum of
+  (`status != cancelled AND endsAt < now`), whose attendance is neither `cancelled` (the seat
+  was given up) nor `noShow` (the closed roster says they never came). Two riders on one trip
+  are two rides, the RFP's counting rule, and a walk-up is one too. "Ridden" is still derived
+  from the clock, so a ride nobody completed counts its booked riders; closing the roster
+  (`status = completed`, COD-263) only sharpens who rode. A pilot marked `noShow` is no pilot of
+  the trip.
+- **Trip**: one such `Ride` row. **Riders**: unique passengers on them (a walk-up has no
+  passenger and is not one). **Hours**: the sum of
   the scheduled `endsAt - startsAt` of those trips.
 - **Cancellations**: cancelled rides in the period, grouped by `Ride.cancellationReasonCode`
   (`weather`, `rider`, `facility`, `volunteers`, `equipment`, `noRiders`, `other`; null is "uncategorised"). The rate is

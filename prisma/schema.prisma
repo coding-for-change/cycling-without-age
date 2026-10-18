@@ -71,6 +71,8 @@ model User {
   rideRequestsDecided  RideRequest[]        @relation("rideRequestDecider")
   rideBookingsMade     RideRosterEntry[]    @relation("rideBooker")
   ridesCancelled       Ride[]               @relation("rideCanceller")
+  ridesCompleted       Ride[]               @relation("rideCompleter")
+  rideDebriefs         RideDebrief[]        @relation("rideDebriefs")
   rideLogEntries       RideLogEntry[]       @relation("rideLogActor")
   calendarFeed         CalendarFeed?
   uploadedFiles        StoredFile[]         @relation("fileUploader")
@@ -301,6 +303,12 @@ model ChapterSettings {
   schedulingMethod SchedulingMethod @default(scheduler)
   /// Admins get a push for each new Ride Request.
   requestAlertPush Boolean          @default(true)
+  /// How long before a ride its riders' accounts are reminded and asked to confirm their seat.
+  riderReminderLeadMinutes     Int @default(1440)
+  /// How long before a ride its pilots are reminded, with the pickup pack.
+  volunteerReminderLeadMinutes Int @default(1440)
+  /// How far ahead of a ride an empty roster is flagged for cancellation.
+  demandCheckLeadHours         Int @default(24)
 
   @@map("chapter_settings")
 }
@@ -782,6 +790,33 @@ enum RideLogType {
   riderRemoved
   rosterReordered
   note
+  seatConfirmed
+  seatCancelled
+  checkedIn
+  checkInUndone
+  walkUpAdded
+  walkUpRemoved
+  pilotNoShow
+  completed
+  reopened
+  debriefed
+}
+
+/// Where a rider stands on a ride, from booking to the closed roster.
+enum RosterAttendance {
+  booked
+  confirmed
+  checkedIn
+  completed
+  noShow
+  cancelled
+}
+
+/// Where a pilot stands on a ride; only a closed roster turns `signedUp` into `completed`.
+enum AssignmentAttendance {
+  signedUp
+  completed
+  noShow
 }
 
 enum TrishawStatus {
@@ -1079,6 +1114,16 @@ model Ride {
   /// Set once the staffing check has flagged the ride, so it is flagged only once.
   staffingCheckedAt DateTime?
 
+  /// Each set in the same transaction as the reminder or flag it records, so a retried sweep sends nothing twice.
+  riderReminderSentAt     DateTime?
+  volunteerReminderSentAt DateTime?
+  demandCheckedAt         DateTime?
+
+  /// The moment the roster was closed (lifecycle 6D), which is when the ride counts.
+  completedAt       DateTime?
+  completedByUserId String?
+  completedBy       User?     @relation("rideCompleter", fields: [completedByUserId], references: [id], onDelete: SetNull)
+
   cancelledAt            DateTime?
   cancellationReasonCode RideCancellationReason?
   cancellationNote       String?                 @db.Text
@@ -1091,6 +1136,7 @@ model Ride {
   damages     TrishawDamage[]
   log         RideLogEntry[]
   photos      RidePhoto[]
+  debriefs    RideDebrief[]
 
   conversation Conversation?
 
@@ -1106,6 +1152,7 @@ model Ride {
   @@index([status, startsAt])
   @@index([seriesId])
   @@index([cancelledByUserId])
+  @@index([completedByUserId])
   @@index([rideLocationId, startsAt])
   @@map("ride")
 }
@@ -1196,16 +1243,17 @@ model RideTrishaw {
 }
 
 model RideAssignment {
-  id               String   @id @default(cuid())
+  id               String               @id @default(cuid())
   rideId           String
-  ride             Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  ride             Ride                 @relation(fields: [rideId], references: [id], onDelete: Cascade)
   userId           String
-  user             User     @relation("rideAssignee", fields: [userId], references: [id], onDelete: Cascade)
-  role             RideRole @default(pilot)
+  user             User                 @relation("rideAssignee", fields: [userId], references: [id], onDelete: Cascade)
+  role             RideRole             @default(pilot)
+  attendance       AssignmentAttendance @default(signedUp)
   /// Null when the pilot signed up themselves.
   assignedByUserId String?
-  assignedBy       User?    @relation("rideAssigner", fields: [assignedByUserId], references: [id], onDelete: SetNull)
-  createdAt        DateTime @default(now())
+  assignedBy       User?                @relation("rideAssigner", fields: [assignedByUserId], references: [id], onDelete: SetNull)
+  createdAt        DateTime             @default(now())
 
   @@unique([rideId, userId, role])
   @@index([userId])
@@ -1215,22 +1263,45 @@ model RideAssignment {
 }
 
 model RideRosterEntry {
-  id             String    @id @default(cuid())
+  id             String           @id @default(cuid())
   rideId         String
-  ride           Ride      @relation(fields: [rideId], references: [id], onDelete: Cascade)
-  passengerId    String
-  passenger      Passenger @relation(fields: [passengerId], references: [id], onDelete: Cascade)
-  position       Int       @default(0)
+  ride           Ride             @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  /// Null for a walk-up enrolled on the spot (lifecycle 6B), who has no rider record.
+  passengerId    String?
+  passenger      Passenger?       @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  guestName      String?          @db.Text
+  position       Int              @default(0)
+  attendance     RosterAttendance @default(booked)
+  confirmedAt    DateTime?
+  cancelledAt    DateTime?
   checkedInAt    DateTime?
   bookedByUserId String?
-  bookedBy       User?     @relation("rideBooker", fields: [bookedByUserId], references: [id], onDelete: SetNull)
-  createdAt      DateTime  @default(now())
+  bookedBy       User?            @relation("rideBooker", fields: [bookedByUserId], references: [id], onDelete: SetNull)
+  createdAt      DateTime         @default(now())
 
   @@unique([rideId, passengerId])
   @@index([passengerId])
   @@index([rideId, position])
   @@index([bookedByUserId])
   @@map("ride_roster_entry")
+}
+
+/// A pilot's report after a ride (story 31): one per pilot and ride, written
+/// again as often as they like.
+model RideDebrief {
+  id         String   @id @default(cuid())
+  rideId     String
+  ride       Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?    @relation("rideDebriefs", fields: [userId], references: [id], onDelete: SetNull)
+  distanceKm Decimal? @db.Decimal(7, 2)
+  note       String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([rideId, userId])
+  @@index([userId])
+  @@map("ride_debrief")
 }
 
 /// A secret address a calendar app subscribes to (COD-182). Only `key` is kept;

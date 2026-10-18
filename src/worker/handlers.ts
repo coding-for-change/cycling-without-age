@@ -7,6 +7,7 @@ import {
   recordActivity,
   recordsActivityFor,
 } from "./listeners/record-activity";
+import { freezeRideChatListener } from "./listeners/freeze-ride-chat";
 import { leaveRideCrewsListener } from "./listeners/leave-ride-crews";
 import { linkRideRequestListener } from "./listeners/link-ride-request";
 import { moveHandedOverRequestsListener } from "./listeners/move-handed-over-requests";
@@ -29,6 +30,9 @@ export const handlers = Object.fromEntries(
       ...(recordsActivityFor(type) ? { recordActivity } : {}),
       ...(type === "chat.messageSent" ? { chatNotify: notifyChatMessage } : {}),
       ...(syncsRideChat(type) ? { syncRideChat: syncRideChatListener } : {}),
+      ...(type === "ride.completed"
+        ? { freezeRideChat: freezeRideChatListener }
+        : {}),
       ...(type === "member.roleChanged"
         ? { leaveRideCrews: leaveRideCrewsListener }
         : {}),

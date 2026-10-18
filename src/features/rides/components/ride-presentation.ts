@@ -92,13 +92,19 @@ export const rideRiderRefs = (
   roster: PilotRideRow["roster"],
   careHome: string,
 ): { ref: SubjectRef; name: string; pickup: string | null }[] =>
-  roster.map(({ passenger }) => ({
-    ref: passenger.userId
-      ? { kind: "user", id: passenger.userId }
-      : { kind: "passenger", id: passenger.id },
-    name: fullName(passenger),
-    pickup: pickupLabel(pickupOf(passenger), careHome),
-  }));
+  roster.flatMap(({ passenger }) =>
+    passenger
+      ? [
+          {
+            ref: passenger.userId
+              ? { kind: "user" as const, id: passenger.userId }
+              : { kind: "passenger" as const, id: passenger.id },
+            name: fullName(passenger),
+            pickup: pickupLabel(pickupOf(passenger), careHome),
+          },
+        ]
+      : [],
+  );
 
 export type RideFleetStrings = { grounded: string; groundedOnRide: string };
 

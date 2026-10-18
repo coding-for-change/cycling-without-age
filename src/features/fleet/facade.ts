@@ -371,6 +371,25 @@ export const listLocationsForChapters = (
       })
     : Promise.resolve([]);
 
+/**
+ * Each trishaw with the location it waits at, if the chapter can still reach
+ * it — what a pilot needs to pick a bike up or bring it back.
+ */
+export async function listTrishawPlaces(
+  chapterId: string,
+  trishawIds: string[],
+) {
+  const [trishaws, locations] = await Promise.all([
+    getTrishaws(trishawIds),
+    listLocationsForChapters([chapterId]),
+  ]);
+  const locationById = new Map(locations.map((l) => [l.id, l]));
+  return trishaws.map((trishaw) => ({
+    trishaw,
+    location: locationById.get(trishaw.storageLocation.id) ?? null,
+  }));
+}
+
 export const listPools = (countryIds: string[]) =>
   whenAny(countryIds, (ids) =>
     findLocations({ kind: "pool", countryId: { in: ids } }),

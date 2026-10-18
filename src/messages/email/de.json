@@ -153,10 +153,16 @@
     "cta": "Fahrt öffnen",
     "footer": "Sie erhalten diese E-Mail, weil Sie eine Ortsgruppe von Cycling Without Age mitgestalten.",
     "heading": "Ein Platz ist frei geworden",
+    "headingEmpty": "Niemand fährt mehr mit",
     "intro": "{rider} fährt am {date}, {time}, nicht mehr mit (Start bei {place}). Vielleicht ist jetzt Platz für jemand anderen – oder niemand mehr angemeldet.",
+    "introBoth": "{rider} fährt am {date} nicht mehr hin und zurück mit (Hinfahrt {time} ab {place}). Vielleicht ist jetzt Platz für jemand anderen – oder niemand mehr angemeldet.",
+    "introEmpty": "{rider} hat den letzten Platz der Fahrt am {date}, {time}, bei {place} abgesagt. Niemand fährt mehr mit – vielleicht möchten Sie die Fahrt absagen, damit Piloten und Rikscha wieder frei sind.",
+    "introEmptyBoth": "{rider} hat den letzten Platz der Fahrt am {date} hin und zurück abgesagt (Hinfahrt {time} ab {place}). Weder hin noch zurück fährt noch jemand mit – vielleicht möchten Sie die Fahrt absagen, damit Piloten und Rikscha wieder frei sind.",
+    "introEmptyRemoved": "{rider} wurde von der Fahrt am {date}, {time}, bei {place} genommen, und niemand fährt mehr mit. Vielleicht möchten Sie die Fahrt absagen, damit Piloten und Rikscha wieder frei sind.",
     "preview": "{ride} · {time}",
     "someone": "Ein Fahrgast",
-    "subject": "{rider} fährt am {date} nicht mehr mit"
+    "subject": "{rider} fährt am {date} nicht mehr mit",
+    "subjectEmpty": "Am {date} fährt niemand mehr mit"
   },
   "rideBookingConfirmed": {
     "cta": "Fahrt ansehen",
@@ -428,5 +434,44 @@
     "intro": "{chapter} hat {rider} an eine andere Person übergeben. Sie buchen keine Fahrten mehr für {rider}, und Nachrichten zu Anfragen und Fahrten von {rider} kommen nicht mehr zu Ihnen.",
     "cta": "App öffnen",
     "footer": "Sie erhalten diese E-Mail, weil eine Ortsgruppe von Cycling Without Age geändert hat, wer die Fahrten eines Fahrgasts bucht."
+  },
+  "rideReminder": {
+    "cta": "Platz bestätigen oder absagen",
+    "footer": "Sie erhalten diese E-Mail, weil Sie bei einer Ortsgruppe von Cycling Without Age Fahrten buchen.",
+    "heading": "Ihre Fahrt steht bald an",
+    "intro": "Ihre Fahrt am {date}, {time}, startet bei {place} ({ride}). Bitte bestätigen Sie den Platz in der App – oder geben Sie ihn frei, wenn sich etwas geändert hat, damit die Ortsgruppe ihn jemand anderem anbieten kann.",
+    "introBoth": "Ihre Fahrt am {date} hin und zurück: Hinfahrt {time} ab {place} ({ride}). Bitte bestätigen Sie den Platz in der App – oder geben Sie ihn frei, wenn sich etwas geändert hat, damit die Ortsgruppe ihn jemand anderem anbieten kann.",
+    "preview": "{ride} · {time}",
+    "subject": "Ihre Fahrt am {date}"
+  },
+  "pilotReminder": {
+    "cta": "Fahrt öffnen",
+    "footer": "Du erhältst diese E-Mail, weil du bei einer Ortsgruppe von Cycling Without Age fährst.",
+    "heading": "Deine Fahrt findet statt",
+    "intro": "Es bleibt dabei: Du fährst am {date}, {time}, Start bei {place} ({ride}). Die Fahrgäste, wie du sie erreichst, den Zugangscode und den Chat zur Fahrt findest du in der App.",
+    "introBoth": "Es bleibt dabei: Du fährst am {date} hin und zurück, Hinfahrt {time}, Start bei {place} ({ride}). Die Fahrgäste, wie du sie erreichst, den Zugangscode und den Chat zur Fahrt findest du in der App.",
+    "pickupAsk": "{trishaw} – frag die Ortsgruppe, wo sie steht",
+    "pickupAt": "{trishaw} steht bei {place}",
+    "pickupHeading": "Rikscha abholen",
+    "preview": "{ride} · {time}",
+    "subject": "Erinnerung: Du fährst am {date}"
+  },
+  "rideNoDemand": {
+    "cta": "Fahrt öffnen",
+    "footer": "Sie erhalten diese E-Mail, weil Sie eine Ortsgruppe von Cycling Without Age mitgestalten.",
+    "heading": "Noch niemand angemeldet",
+    "intro": "Für die Fahrt am {date}, {time}, bei {place} ({ride}) ist noch niemand angemeldet. Buchen Sie bald Fahrgäste, oder sagen Sie die Fahrt mit dem Grund „Keine Fahrgäste“ ab, damit Piloten und Rikscha wieder frei sind.",
+    "introBoth": "Für die Hin- und Rückfahrt am {date} ist noch niemand angemeldet: Hinfahrt {time} ab {place} ({ride}). Buchen Sie bald Fahrgäste, oder sagen Sie die Fahrt mit dem Grund „Keine Fahrgäste“ ab, damit Piloten und Rikscha wieder frei sind.",
+    "preview": "{ride} · {time}",
+    "subject": "Für den {date} ist niemand angemeldet"
+  },
+  "rideRosterRefilled": {
+    "cta": "Fahrt öffnen",
+    "footer": "Sie erhalten diese E-Mail, weil Sie eine Ortsgruppe von Cycling Without Age mitgestalten.",
+    "heading": "Ein Fahrgast ist wieder dabei",
+    "intro": "{rider} hat den Platz für die Fahrt am {date}, {time}, bei {place} zurückgenommen. Die Fahrt hat wieder jemanden, der mitfährt.",
+    "preview": "{ride} · {time}",
+    "someone": "Ein Fahrgast",
+    "subject": "{rider} fährt am {date} doch mit"
   }
 }

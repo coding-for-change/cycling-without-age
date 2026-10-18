@@ -349,6 +349,77 @@ export const reorderRosterInput = z.object({
 });
 export type ReorderRosterInput = z.input<typeof reorderRosterInput>;
 
+export const ROSTER_ATTENDANCES = [
+  "booked",
+  "confirmed",
+  "checkedIn",
+  "completed",
+  "noShow",
+  "cancelled",
+] as const;
+export type RosterAttendanceName = (typeof ROSTER_ATTENDANCES)[number];
+export const ASSIGNMENT_ATTENDANCES = [
+  "signedUp",
+  "completed",
+  "noShow",
+] as const;
+export type AssignmentAttendanceName = (typeof ASSIGNMENT_ATTENDANCES)[number];
+
+/** Pilots meet before the first rider arrives, so the door opens early. */
+export const CHECK_IN_LEAD_MINUTES = 120;
+export const GUEST_NAME_MAX = 80;
+
+export const checkInInput = rideRef.extend({
+  entryId: id,
+  checkedIn: z.boolean(),
+});
+export type CheckInInput = z.input<typeof checkInInput>;
+
+const guestName = z.string().trim().max(GUEST_NAME_MAX);
+
+export const walkUpInput = rideRef.extend({
+  firstName: guestName.min(1),
+  lastName: guestName.default(""),
+});
+export type WalkUpInput = z.input<typeof walkUpInput>;
+
+export const rosterEntryRef = rideRef.extend({ entryId: id });
+export const pilotNoShowInput = pilotInput.extend({ noShow: z.boolean() });
+
+export const DEBRIEF_NOTE_MAX = 2000;
+export const DEBRIEF_MAX_KM = 1000;
+
+export const debriefInput = rideRef.extend({
+  distanceKm: z
+    .number()
+    .min(0)
+    .max(DEBRIEF_MAX_KM)
+    .transform((km) => Math.round(km * 100) / 100)
+    .nullable()
+    .default(null),
+  note: z
+    .string()
+    .trim()
+    .max(DEBRIEF_NOTE_MAX)
+    .transform((note) => note || null)
+    .nullable()
+    .default(null),
+});
+export type DebriefInput = z.input<typeof debriefInput>;
+export type DebriefData = z.output<typeof debriefInput>;
+
+/**
+ * A decimal typed by hand, in either notation: "12,50" in Munich and "12.50"
+ * in Denver are the same twelve and a half. Thousands separators are refused
+ * rather than guessed at.
+ */
+export function parseDecimal(raw: string): number | null {
+  const text = raw.trim();
+  if (!text) return null;
+  if (!/^\d+([.,]\d{1,2})?$/.test(text)) return Number.NaN;
+  return Number(text.replace(",", "."));
+}
+
 export const ridePhotosInput = z.object({
   rideId: id,
   fileIds: uniqueIds(RIDE_MAX_PHOTOS),

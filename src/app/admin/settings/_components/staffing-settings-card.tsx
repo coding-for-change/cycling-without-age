@@ -79,6 +79,7 @@ export function StaffingSettingsCard({
               ),
             }))}
             labels={labels.field}
+            selectClassName="min-w-48"
             onSave={(next) =>
               save({ requiredPilotsDefault: Number(next ?? 1) })
             }
@@ -92,6 +93,7 @@ export function StaffingSettingsCard({
               label: leadLabel(hours),
             }))}
             labels={labels.field}
+            selectClassName="min-w-48"
             onSave={(next) =>
               save({ staffingCheckLeadHours: Number(next ?? 48) })
             }
