@@ -40,10 +40,13 @@ export async function PassengerRides() {
 
   return (
     <>
-      <h1 className="text-2xl tracking-tight md:text-3xl">{page.title}</h1>
+      <h1 className="text-2xl tracking-tight max-md:sr-only md:text-3xl">
+        {page.title}
+      </h1>
       {empty ? (
         <EmptyState
           icon={ICONS.rides}
+          hero="trishaw"
           className="flex-1 justify-start rounded-none border-none pt-16"
         >
           {page.passenger.body}

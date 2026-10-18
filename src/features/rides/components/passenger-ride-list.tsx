@@ -8,13 +8,16 @@ import {
   useRef,
   useState,
 } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, MapPin } from "lucide-react";
+import { Hero } from "@/components/art";
 import { PersonAvatar } from "@/components/person-avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { addDays, calendarDate, dayKey } from "@/lib/calendar";
 import {
+  formatDayMonthShort,
   formatDurationLong,
+  formatList,
   formatLongDateWithWeekday,
   formatTimeRange,
   type Locale,
@@ -28,12 +31,7 @@ import type {
   PassengerListPage,
   PassengerListRide,
 } from "./passenger-ride-rows";
-import {
-  MODEL_ICON,
-  rideHeadline,
-  rideTone,
-  rideWhere,
-} from "./ride-presentation";
+import { MODEL_ICON, rideHeadline, rideWhere } from "./ride-presentation";
 
 export type PassengerRideListStrings = {
   upcoming: string;
@@ -70,30 +68,6 @@ type Props = {
   locale: Locale;
   words: Locale;
   strings: PassengerRideListStrings;
-};
-
-type Day = {
-  key: string;
-  start: Date;
-  zone: string;
-  rides: PassengerListRide[];
-};
-
-const daysOf = (rides: PassengerListRide[]): Day[] => {
-  const days: Day[] = [];
-  for (const ride of rides) {
-    const key = dayKey(ride.startsAt, ride.timeZone);
-    const last = days.at(-1);
-    if (last?.key === key) last.rides.push(ride);
-    else
-      days.push({
-        key,
-        start: ride.startsAt,
-        zone: ride.timeZone,
-        rides: [ride],
-      });
-  }
-  return days;
 };
 
 function usePages(
@@ -162,58 +136,13 @@ export function PassengerRideList({
     return () => observer.disconnect();
   }, [more, state, load]);
 
-  const near = (day: Day) => {
-    if (day.key === dayKey(now, day.zone)) return strings.today;
-    if (day.key === dayKey(addDays(now, 1, day.zone), day.zone))
+  const near = (ride: PassengerListRide) => {
+    const key = dayKey(ride.startsAt, ride.timeZone);
+    if (key === dayKey(now, ride.timeZone)) return strings.today;
+    if (key === dayKey(addDays(now, 1, ride.timeZone), ride.timeZone))
       return strings.tomorrow;
-    if (day.key === dayKey(addDays(now, -1, day.zone), day.zone))
-      return strings.yesterday;
     return null;
   };
-
-  const renderDays = (rides: PassengerListRide[], faded: boolean) =>
-    daysOf(rides).map((day) => {
-      const date = formatLongDateWithWeekday(
-        calendarDate(day.start, day.zone),
-        locale,
-      );
-      const relative = near(day);
-      return (
-        <div
-          key={day.key}
-          className="flex flex-col gap-2"
-        >
-          <h3 className="text-sm font-medium text-ink">
-            {relative ? (
-              <>
-                {relative}
-                <span className="font-normal text-ink-soft">
-                  {" · "}
-                  {date}
-                </span>
-              </>
-            ) : (
-              date
-            )}
-          </h3>
-          <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line">
-            {day.rides.map((ride) => (
-              <li key={ride.id}>
-                <RideRow
-                  ride={ride}
-                  faded={faded}
-                  showRiders={showRiders}
-                  now={now}
-                  locale={locale}
-                  words={words}
-                  strings={strings}
-                />
-              </li>
-            ))}
-          </ul>
-        </div>
-      );
-    });
 
   return (
     <div className="flex flex-col gap-8">
@@ -224,11 +153,29 @@ export function PassengerRideList({
         >
           <h2
             id="rides-upcoming"
-            className="text-xs font-semibold tracking-wide text-ink-soft uppercase"
+            className="text-2xl"
           >
             {strings.upcoming}
           </h2>
-          {renderDays(upcoming.rides, false)}
+          <ul className="flex flex-col gap-3">
+            {upcoming.rides.map((ride, index) => (
+              <li
+                key={ride.id}
+                className="reveal"
+                style={{ "--i": index } as React.CSSProperties}
+              >
+                <UpcomingCard
+                  ride={ride}
+                  relative={near(ride)}
+                  showRiders={showRiders}
+                  now={now}
+                  locale={locale}
+                  words={words}
+                  strings={strings}
+                />
+              </li>
+            ))}
+          </ul>
           <div
             ref={sentinel}
             aria-live="polite"
@@ -248,7 +195,7 @@ export function PassengerRideList({
         >
           <h2
             id="rides-past"
-            className="text-xs font-semibold tracking-wide text-ink-soft uppercase"
+            className="text-2xl"
           >
             {strings.past}
           </h2>
@@ -259,7 +206,17 @@ export function PassengerRideList({
               words={words}
             />
           ) : null}
-          {renderDays(past.rides, true)}
+          <ul className="flex flex-col gap-2">
+            {past.rides.map((ride) => (
+              <li key={ride.id}>
+                <PastRow
+                  ride={ride}
+                  locale={locale}
+                  strings={strings}
+                />
+              </li>
+            ))}
+          </ul>
           <div aria-live="polite">
             {past.more && past.state === "idle" ? (
               <Button
@@ -303,8 +260,7 @@ function PageState({
         {strings.failed}
         <Button
           variant="outline"
-          size="sm"
-          className="rounded-full border-line"
+          className="min-h-11 rounded-full border-line"
           onClick={() => void pages.load()}
         >
           {strings.retry}
@@ -314,9 +270,56 @@ function PageState({
   return null;
 }
 
-function RideRow({
+const badge =
+  "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold";
+
+function StatusBadge({
   ride,
-  faded,
+  now,
+  strings,
+}: {
+  ride: PassengerListRide;
+  now: Date;
+  strings: PassengerRideListStrings;
+}) {
+  const running =
+    ride.status === "scheduled" &&
+    ride.startsAt.getTime() <= now.getTime() &&
+    ride.endsAt.getTime() > now.getTime();
+  if (ride.status === "cancelled")
+    return (
+      <span
+        className={cn(badge, "border-transparent bg-grey-tint text-ink-soft")}
+      >
+        {strings.statuses.cancelled}
+      </span>
+    );
+  if (running)
+    return (
+      <span className={cn(badge, "border-transparent bg-mint-deep text-white")}>
+        {strings.now}
+      </span>
+    );
+  if (ride.endsAt.getTime() <= now.getTime())
+    return (
+      <span className={cn(badge, "border-transparent bg-grey-tint text-ink")}>
+        {strings.statuses.completed}
+      </span>
+    );
+  return (
+    <span className={cn(badge, "border-transparent bg-mint-tint text-ink")}>
+      {strings.statuses.scheduled}
+    </span>
+  );
+}
+
+const card =
+  "flex items-center gap-3.5 rounded-soft border border-line bg-paper shadow-soft outline-none transition-[transform,border-color] hover:border-ink/30 focus-visible:ring-[3px] focus-visible:ring-ring/50 active:scale-99 motion-reduce:transition-none";
+
+/** A ride to come, as mockup 2 draws it: what kind, how it stands, when, where, who pedals. */
+function UpcomingCard({
+  ride,
+  relative,
   showRiders,
   now,
   locale,
@@ -324,7 +327,7 @@ function RideRow({
   strings,
 }: {
   ride: PassengerListRide;
-  faded: boolean;
+  relative: string | null;
   showRiders: boolean;
   now: Date;
   locale: Locale;
@@ -333,94 +336,87 @@ function RideRow({
 }) {
   const Icon = MODEL_ICON[ride.model];
   const cancelled = ride.status === "cancelled";
-  const running =
-    ride.status === "scheduled" &&
-    ride.startsAt.getTime() <= now.getTime() &&
-    ride.endsAt.getTime() > now.getTime();
   const headline = rideHeadline(ride, strings);
   const where = rideWhere(ride, strings);
-  const [pilot, ...others] = ride.pilots;
+  const [pilot] = ride.pilots;
+  const date = formatLongDateWithWeekday(
+    calendarDate(ride.startsAt, ride.timeZone),
+    locale,
+  );
 
   return (
     <Link
       href={`/passenger/rides/${ride.id}`}
       transitionTypes={["push"]}
-      className={cn(
-        "flex items-center gap-3.5 px-4 py-3.5 outline-none transition-colors hover:bg-canvas-deep focus-visible:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ring/50 motion-reduce:transition-none",
-        faded && "text-ink-soft",
-      )}
+      className={cn(card, "p-5")}
     >
-      <span
-        aria-hidden
-        className={cn(
-          "flex size-13 shrink-0 items-center justify-center rounded-xl border",
-          rideTone(ride),
-          faded && !cancelled && "opacity-70",
-        )}
-      >
-        <Icon className="size-5" />
-      </span>
-
-      <span className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
-          <time
-            dateTime={ride.startsAt.toISOString()}
-            className={cn("tabular-nums", cancelled && "line-through")}
-          >
-            {formatTimeRange(ride.startsAt, ride.endsAt, locale, ride.timeZone)}
-          </time>
-          <span aria-hidden>·</span>
-          <span>{strings.models[ride.model]}</span>
-          {cancelled ? (
-            <span className="rounded-full bg-canvas-deeper px-2 text-xs font-medium text-ink">
-              {strings.statuses.cancelled}
-            </span>
-          ) : running ? (
-            <span className="rounded-full bg-mint-deep px-2 text-xs font-medium text-white">
-              {strings.now}
+      <span className="flex min-w-0 flex-1 flex-col gap-2">
+        <span className="flex flex-wrap items-center gap-1.25">
+          <span className={cn(badge, "border-line text-ink-soft")}>
+            <Icon
+              aria-hidden
+              className="size-3"
+            />
+            {strings.models[ride.model]}
+          </span>
+          <StatusBadge
+            ride={ride}
+            now={now}
+            strings={strings}
+          />
+          {relative ? (
+            <span className={cn(badge, "border-line text-ink-soft")}>
+              {relative}
             </span>
           ) : null}
         </span>
 
+        <time
+          dateTime={ride.startsAt.toISOString()}
+          className={cn(
+            "display-title text-xl",
+            cancelled && "text-ink-soft line-through",
+          )}
+        >
+          {date} ·{" "}
+          {formatTimeRange(ride.startsAt, ride.endsAt, locale, ride.timeZone)}
+        </time>
+
         <ViewTransition name={`passenger-ride-title-${ride.id}`}>
-          <span
-            className={cn(
-              "truncate font-display text-base",
-              cancelled ? "text-ink-soft" : "text-ink",
-            )}
-          >
-            {headline}
-          </span>
+          <span className="truncate text-base">{headline}</span>
         </ViewTransition>
         {where && where !== headline ? (
-          <span className="truncate text-sm text-ink-soft">{where}</span>
+          <span className="flex min-w-0 items-center gap-1.25 text-sm text-ink-soft">
+            <MapPin
+              aria-hidden
+              className="size-3.5 shrink-0"
+            />
+            <span className="truncate">{where}</span>
+          </span>
         ) : null}
 
-        <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-soft">
+        <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm">
           {pilot ? (
-            <span className="flex min-w-0 items-center gap-2">
+            <span className="flex min-w-0 items-center gap-2 font-bold">
               <PersonAvatar
                 svg={pilot.avatar}
-                size="sm"
+                size="lg"
               />
               <span className="truncate">
-                {formatMessage(
-                  strings.pilot,
-                  {
-                    name: [pilot, ...others].map((p) => p.name).join(", "),
-                  },
+                {formatList(
+                  ride.pilots.map((p) => p.name),
                   words,
                 )}
               </span>
             </span>
           ) : cancelled ? null : (
-            <span>{strings.pilotNeeded}</span>
+            <span className="text-ink-soft">{strings.pilotNeeded}</span>
           )}
           {showRiders && ride.riders.length ? (
-            <span className="truncate">
+            <span className="truncate text-ink-soft">
               {formatMessage(
                 strings.forRiders,
-                { names: ride.riders.join(", ") },
+                { names: formatList(ride.riders, words) },
                 words,
               )}
             </span>
@@ -430,8 +426,54 @@ function RideRow({
 
       <ChevronRight
         aria-hidden
-        className="size-4 shrink-0 text-ink-faint"
+        className="size-5 shrink-0 text-ink-soft"
       />
+    </Link>
+  );
+}
+
+/** A ride that has been: one compact line, the way mockup 2 lists the past. */
+function PastRow({
+  ride,
+  locale,
+  strings,
+}: {
+  ride: PassengerListRide;
+  locale: Locale;
+  strings: PassengerRideListStrings;
+}) {
+  const Icon = MODEL_ICON[ride.model];
+  return (
+    <Link
+      href={`/passenger/rides/${ride.id}`}
+      transitionTypes={["push"]}
+      className={cn(card, "min-h-14 px-5 py-3 text-ink-soft")}
+    >
+      <Icon
+        aria-hidden
+        className="size-4 shrink-0"
+      />
+      <span className="min-w-0 flex-1 truncate">
+        <time dateTime={ride.startsAt.toISOString()}>
+          {formatDayMonthShort(
+            calendarDate(ride.startsAt, ride.timeZone),
+            locale,
+          )}
+        </time>
+        {" · "}
+        {strings.models[ride.model]}
+      </span>
+      <span
+        className={cn(
+          badge,
+          "border-transparent bg-grey-tint",
+          ride.status === "cancelled" ? "text-ink-soft" : "text-ink",
+        )}
+      >
+        {ride.status === "cancelled"
+          ? strings.statuses.cancelled
+          : strings.statuses.completed}
+      </span>
     </Link>
   );
 }
@@ -465,8 +507,14 @@ function YearCard({
         aria-hidden
         className="diagonal-edge absolute inset-x-0 top-0 h-20 bg-mint"
       />
+      <Hero
+        name="celebrate"
+        className="pointer-events-none absolute -top-2.75 -right-4 w-36"
+      />
       <div className="relative flex flex-col gap-4">
-        <h3 className="text-xl">{say(strings.title, { year: year.year })}</h3>
+        <h3 className="display-title max-w-[70%] text-2xl">
+          {say(strings.title, { year: year.year })}
+        </h3>
         <ul className="flex flex-wrap gap-2">
           {facts.map((fact) => (
             <li
