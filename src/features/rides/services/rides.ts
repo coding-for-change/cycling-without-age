@@ -652,7 +652,7 @@ const ownRoster = (passengerIds: string[]) =>
  * before a rider is shown their name, let alone their phone number.
  */
 const currentMembership = {
-  members: { select: { organizationId: true } },
+  members: { select: { organizationId: true, role: true } },
 } satisfies Prisma.UserSelect;
 
 const passengerRideSelect = (passengerIds: string[]) =>

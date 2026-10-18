@@ -1,6 +1,6 @@
 import { DomainError, mapping } from "@/lib/domain-error";
 import { transaction, type DomainEvent } from "@/lib/events";
-import type { FileReadRule } from "@/lib/access";
+import { parseRoles, type FileReadRule } from "@/lib/access";
 import type { $Enums, Prisma } from "@/generated/prisma";
 import {
   PLEASURE_LIMITS,
@@ -1069,14 +1069,16 @@ export async function listRidesForList(
 }
 
 /**
- * Only pilots who still belong to the ride's chapter are shown to its riders.
- * An assignment outlives its pilot's membership, and a rider is given their
- * pilot's phone and email.
+ * Only people who are still pilots of the ride's chapter are shown to its
+ * riders. An assignment outlives its pilot's membership and their pilot role,
+ * and a rider is given their pilot's phone and email.
  */
 const withCurrentPilots = <
   R extends {
     chapterId: string;
-    assignments: { user: { members: { organizationId: string }[] } }[];
+    assignments: {
+      user: { members: { organizationId: string; role: string }[] };
+    }[];
   },
 >(
   ride: R,
@@ -1084,7 +1086,8 @@ const withCurrentPilots = <
   ...ride,
   assignments: ride.assignments.filter(({ user }) =>
     user.members.some(
-      ({ organizationId }) => organizationId === ride.chapterId,
+      ({ organizationId, role }) =>
+        organizationId === ride.chapterId && parseRoles(role).includes("pilot"),
     ),
   ),
 });
@@ -1154,14 +1157,16 @@ export async function getRideWithStoryForPassengers(
   viewerId: string,
 ) {
   if (!passengerIds.length) return null;
-  const ride = await findRideForPassengers(rideId, passengerIds);
-  if (!ride) return null;
+  const found = await findRideForPassengers(rideId, passengerIds);
+  if (!found) return null;
+  const ride = withCurrentPilots(found);
   return {
-    ride: withCurrentPilots(ride),
+    ride,
     story: storyForPassengers(
       await listRideLog(rideId),
       passengerIds,
       viewerId,
+      new Set(ride.assignments.map(({ user }) => user.id)),
     ),
   };
 }

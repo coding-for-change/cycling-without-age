@@ -119,12 +119,14 @@ function changesOf(payload: Record<string, unknown>) {
 /**
  * A ride's history as its riders may read it. Internal notes, the trishaw
  * shuffle, the roster order and every other rider are left out; admins are
- * folded into their chapter, and only the pilot keeps a name.
+ * folded into their chapter, and only a pilot still on the ride
+ * (`namedPilots`) keeps a name — one who left is "a pilot".
  */
 export function storyForPassengers(
   entries: StoryLogEntry[],
   passengerIds: string[],
   viewerId: string,
+  namedPilots: ReadonlySet<string> = new Set(),
 ): PassengerStoryEntry[] {
   const mine = new Set(passengerIds);
   return entries.flatMap((entry): PassengerStoryEntry[] => {
@@ -168,8 +170,17 @@ export function storyForPassengers(
           },
         ];
       case "pilotAssigned":
-      case "pilotUnassigned":
-        return [{ ...base, type: entry.type, pilot: text(payload.name) }];
+      case "pilotUnassigned": {
+        const pilotId = text(payload.userId);
+        const named = pilotId !== null && namedPilots.has(pilotId);
+        return [
+          {
+            ...base,
+            type: entry.type,
+            pilot: named ? text(payload.name) : null,
+          },
+        ];
+      }
       case "riderBooked":
       case "riderRemoved": {
         const passengerId = text(payload.passengerId);

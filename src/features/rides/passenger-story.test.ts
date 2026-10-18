@@ -98,6 +98,7 @@ it("names the pilot and leaves out who put them on", () => {
     ],
     MINE,
     VIEWER,
+    new Set(["u-max"]),
   );
   expect(assigned).toEqual({
     id: "pilotAssigned-user-admin",
@@ -273,4 +274,20 @@ it("keeps an earlier rider's door out of a later rider's story", () => {
   expect(story).toHaveLength(2);
   expect(JSON.stringify(story)).not.toContain("Hofweg");
   expect(JSON.stringify(story)).not.toContain("Lindenweg");
+});
+
+it("names no pilot who is no longer on the ride", () => {
+  const [assigned] = storyForPassengers(
+    [
+      entry("pilotAssigned", {
+        userId: "u-gone",
+        role: "pilot",
+        name: "Gerda Gone",
+      }),
+    ],
+    MINE,
+    VIEWER,
+    new Set(["u-max"]),
+  );
+  expect(assigned).toMatchObject({ type: "pilotAssigned", pilot: null });
 });

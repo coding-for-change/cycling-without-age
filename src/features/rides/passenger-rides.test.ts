@@ -103,13 +103,13 @@ describe("listPassengerRidesPage", () => {
   });
 });
 
-const pilot = (id: string, chapterIds: string[]) => ({
+const pilot = (id: string, chapterIds: string[], role = "pilot") => ({
   role: "pilot",
   user: {
     id,
     name: id,
     email: `${id}@cwa.local`,
-    members: chapterIds.map((organizationId) => ({ organizationId })),
+    members: chapterIds.map((organizationId) => ({ organizationId, role })),
   },
 });
 
@@ -122,6 +122,26 @@ describe("pilots who left the chapter", () => {
         assignments: [
           pilot("u-current", ["ch-muenchen"]),
           pilot("u-gone", ["ch-hamburg"]),
+        ],
+      },
+    ]);
+    const page = await rides.listPassengerRidesPage(
+      MINE,
+      { direction: "upcoming" },
+      now,
+    );
+    expect(page.rides[0].assignments.map((a) => a.user.id)).toEqual([
+      "u-current",
+    ]);
+  });
+
+  it("are left out once they are no longer pilots there", async () => {
+    findMany.mockResolvedValue([
+      {
+        ...ride("r-1", "2026-10-14T08:00:00Z"),
+        assignments: [
+          pilot("u-current", ["ch-muenchen"], "passenger,pilot"),
+          pilot("u-demoted", ["ch-muenchen"], "passenger"),
         ],
       },
     ]);
@@ -171,7 +191,7 @@ describe("getRideWithStoryForPassengers", () => {
       email: true,
       avatarSeed: true,
       phoneNumber: true,
-      members: { select: { organizationId: true } },
+      members: { select: { organizationId: true, role: true } },
     });
   });
 
