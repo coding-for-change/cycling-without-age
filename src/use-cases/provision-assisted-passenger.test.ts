@@ -75,13 +75,16 @@ describe("provisionAssistedPassenger", () => {
     ).resolves.toEqual({ userId: "user-new", outcome: "sent" });
 
     expect(join).toHaveBeenCalledWith("user-new", CHAPTER, "admin-1");
-    expect(addPassenger).toHaveBeenCalledWith({
-      chapterId: CHAPTER,
-      managedByUserId: "user-new",
-      userId: null,
-      ...rider,
-      pickup: home,
-    });
+    expect(addPassenger).toHaveBeenCalledWith(
+      {
+        chapterId: CHAPTER,
+        managedByUserId: "user-new",
+        userId: null,
+        ...rider,
+        pickup: home,
+      },
+      undefined,
+    );
     expect(setResidence).not.toHaveBeenCalled();
     expect(record).toHaveBeenCalled();
     expect(announce).toHaveBeenCalledWith({
@@ -107,6 +110,7 @@ describe("provisionAssistedPassenger", () => {
     );
     expect(addPassenger).toHaveBeenCalledWith(
       expect.objectContaining({ managedByUserId: "user-new", userId: null }),
+      undefined,
     );
   });
 
@@ -124,6 +128,7 @@ describe("provisionAssistedPassenger", () => {
     expect(setResidence).toHaveBeenCalledWith("user-new", "careHome");
     expect(addPassenger).toHaveBeenCalledWith(
       expect.not.objectContaining({ pickup: expect.anything() }),
+      undefined,
     );
   });
 

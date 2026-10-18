@@ -2,6 +2,7 @@ import { passengers } from "@/features/passengers";
 import {
   deletePassengerWithoutAccount,
   findPassengersManagedBy,
+  insertPassenger,
   findPassengersWithOtherAccountManagedBy,
   insertPassengers,
   setPassengerManagers,
@@ -93,6 +94,34 @@ describe("updateOwnRiderDetails", () => {
       passengers.updateOwnRiderDetails(USER, { birthDate: "1899-04-02" }),
     ).rejects.toThrow();
     expect(updateRow).not.toHaveBeenCalled();
+  });
+});
+
+describe("addPassenger", () => {
+  it("writes the rider's needs in the same insert as the rider", async () => {
+    (findPassengersManagedBy as jest.Mock).mockResolvedValue([]);
+
+    await passengers.addPassenger(
+      {
+        chapterId: "chapter-aarhus",
+        managedByUserId: USER,
+        userId: null,
+        firstName: "Pernille",
+        lastName: "Holm",
+        birthDate: new Date("1948-04-02"),
+        gender: "female",
+      },
+      { needsWheelchairBike: true, note: "  ", rideLocationId: "loc-1" },
+    );
+
+    expect(insertPassenger).toHaveBeenCalledTimes(1);
+    expect(insertPassenger).toHaveBeenCalledWith(
+      expect.objectContaining({
+        needsWheelchairBike: true,
+        note: null,
+        rideLocationId: "loc-1",
+      }),
+    );
   });
 });
 

@@ -4,6 +4,7 @@ import {
   managedRiderPatch,
   ownRiderDetailsPatch,
   passengerInput,
+  riderNeedsInput,
 } from "./schemas";
 import { DomainError } from "@/lib/domain-error";
 import { transaction } from "@/lib/events";
@@ -12,6 +13,7 @@ import type {
   ManagedRiderPatchInput,
   OwnRiderDetailsPatchInput,
   PassengerInput,
+  RiderNeedsInput,
 } from "./schemas";
 import {
   findBookingAccountsOfChapters,
@@ -41,6 +43,7 @@ import {
   insertPassengerIn,
   deletePassengerOfUser,
   setPassengerManagers,
+  updatePassengerNeeds,
   updatePassengerOfUser,
   updatePassengerWithoutAccount,
   upsertOwnPassenger,
@@ -94,8 +97,12 @@ async function assertCanTakeOn(
     throw new DomainError("tooManyRiders");
 }
 
-export async function addPassenger(input: PassengerInput) {
+export async function addPassenger(
+  input: PassengerInput,
+  needs: RiderNeedsInput = {},
+) {
   const data = passengerInput.parse(input);
+  const riderNeeds = riderNeedsInput.parse(needs);
   const [existing] = await findPassengersManagedBy(data.managedByUserId);
   if (existing && existing.chapterId !== data.chapterId) {
     throw new DomainError("passengerChapterMismatch");
@@ -106,6 +113,7 @@ export async function addPassenger(input: PassengerInput) {
   const { pickup, ...rider } = data;
   return insertPassenger({
     ...rider,
+    ...riderNeeds,
     userId: rider.userId ?? null,
     ...pickupColumns(pickup),
   });
@@ -240,6 +248,15 @@ export const passengerNames = async (
         ]),
       )
     : {};
+
+export async function setRiderNeeds(
+  passengerId: string,
+  input: RiderNeedsInput,
+) {
+  const data = riderNeedsInput.parse(input);
+  if (Object.keys(data).length === 0) return null;
+  return updatePassengerNeeds(passengerId, data);
+}
 
 export async function requestCare(input: {
   chapterId: string;

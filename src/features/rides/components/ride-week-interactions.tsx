@@ -32,6 +32,7 @@ import {
   snap,
   snapDown,
   type Band,
+  type Segment,
   type WeekDay,
 } from "./ride-week-geometry";
 
@@ -57,7 +58,7 @@ export type RideWeekStrings = {
 };
 
 type Props = {
-  days: (WeekDay & { isToday: boolean })[];
+  days: (WeekDay & { isToday: boolean; closed?: Segment[] })[];
   selectedDay: string;
   band: Band;
   hourRem: number;
@@ -465,6 +466,24 @@ export function RideWeekColumns({
                 className="border-line pointer-events-none border-b"
               />
             ))}
+
+            {(day.closed ?? []).map((range) => {
+              const from = Math.max(range.from, bandStart);
+              const to = Math.min(range.to, bandEnd);
+              if (to <= from) return null;
+              return (
+                <div
+                  key={range.from}
+                  aria-hidden
+                  data-closed
+                  style={{
+                    top: `${((from - bandStart) / bandMinutes) * 100}%`,
+                    height: `${((to - from) / bandMinutes) * 100}%`,
+                  }}
+                  className="bg-canvas-deep pointer-events-none absolute inset-x-0"
+                />
+              );
+            })}
 
             {touching.map(({ item: ride, segment }, slot) => {
               const top = ((segment.from - bandStart) / bandMinutes) * 100;

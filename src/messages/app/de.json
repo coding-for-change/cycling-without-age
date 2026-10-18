@@ -361,6 +361,7 @@
       "passengers": "{count, plural, one {1 Fahrgast} other {# Fahrgäste}}",
       "pending": "{count, plural, one {1 offene Anfrage} other {# offene Anfragen}}",
       "pilots": "{count, plural, one {1 Einteilung einer Pilot:in} other {# Einteilungen von Pilot:innen}}",
+      "rideLocations": "{count, plural, one {1 Abfahrtsort} other {# Abfahrtsorte}}",
       "riders": "{count, plural, one {1 Buchung eines Fahrgasts} other {# Buchungen von Fahrgästen}}",
       "rides": "{count, plural, one {1 Ausfahrt, vergangene eingeschlossen} other {# Ausfahrten, vergangene eingeschlossen}}",
       "roles": "{count, plural, one {1 Mitgliedschaft in einer Ortsgruppe} other {# Mitgliedschaften in Ortsgruppen}}",
@@ -488,13 +489,14 @@
       "chat": "Nachrichten",
       "countries": "Länder",
       "help": "Hilfe holen",
-      "locations": "Standorte",
+      "locations": "Abstellorte",
       "members": "Mitglieder",
       "overview": "Überblick",
       "passengers": "Passagiere",
       "reports": "Berichte",
       "rides": "Ausfahrten",
-      "settings": "Einstellungen"
+      "settings": "Einstellungen",
+      "rideLocations": "Abfahrtsorte"
     },
     "navGroups": {
       "footer": "Konto",
@@ -970,6 +972,63 @@
         },
         "open": "Problem melden",
         "title": "Problem melden"
+      },
+      "hours": {
+        "title": "Fahrzeiten",
+        "body": "Wann deine Ortsgruppe fährt. Die Woche graut den Rest aus, und die Planung warnt, wenn eine Ausfahrt außerhalb liegt.",
+        "unset": "Noch keine Fahrzeiten, also zählt jede Stunde als offen.",
+        "closed": "Geschlossen",
+        "addWindow": "Zeiten hinzufügen",
+        "from": "Von",
+        "to": "Bis",
+        "add": "Hinzufügen",
+        "cancel": "Abbrechen",
+        "remove": "{range} entfernen",
+        "copyMonday": "Montag auf Werktage übertragen",
+        "invalid": "Diese Zeiten überschneiden sich, enden vor dem Beginn oder sind kürzer als 30 Minuten.",
+        "closures": {
+          "title": "Geschlossene Tage",
+          "body": "Feiertage und freie Tage. Die Woche graut sie aus, und die Planung warnt.",
+          "date": "Datum",
+          "reason": "Grund",
+          "reasonPlaceholder": "Heiligabend",
+          "add": "Geschlossenen Tag hinzufügen",
+          "empty": "Keine geschlossenen Tage in Sicht.",
+          "remove": "{date} entfernen",
+          "added": "{date} ist als geschlossen eingetragen.",
+          "removed": "{date} ist wieder offen."
+        },
+        "warnings": {
+          "outsideHours": "Außerhalb der Fahrzeiten ({hours})",
+          "closed": "Die Ortsgruppe hat an dem Tag geschlossen",
+          "closedReason": "Die Ortsgruppe hat an dem Tag geschlossen: {reason}",
+          "shortNotice": "Kürzer im Voraus als in euren Buchungsregeln ({notice})",
+          "beyondHorizon": "Weiter im Voraus, als ihr Buchungen annehmt ({horizon})"
+        },
+        "shade": "Außerhalb der Fahrzeiten"
+      },
+      "booking": {
+        "title": "Buchung",
+        "body": "Wie weit im Voraus geplant wird und womit eine neue Ausfahrt startet.",
+        "leadTime": {
+          "label": "Mindestvorlauf",
+          "hint": "Wie lange vor einer Ausfahrt sie gebucht sein sollte. Die Planung warnt bei kürzerem Vorlauf."
+        },
+        "horizon": {
+          "label": "Wie weit im Voraus",
+          "hint": "Wie weit im Voraus eine Ausfahrt höchstens gebucht werden kann."
+        },
+        "rideMinutes": {
+          "label": "Übliche Dauer",
+          "hint": "Damit startet eine neue Ausfahrt in der Planung."
+        },
+        "stayMinutes": {
+          "label": "Aufenthalt am Ziel",
+          "hint": "Bei Hin- und Rückfahrt: wie lange die Fahrgäste bleiben, bevor es zurückgeht."
+        },
+        "noNotice": "Kein Mindestvorlauf",
+        "hours": "{count, plural, one {1 Stunde} other {# Stunden}}",
+        "days": "{count, plural, one {1 Tag} other {# Tage}}"
       }
     },
     "table": {
@@ -988,6 +1047,119 @@
     "user": {
       "account": "Konto",
       "menuLabel": "Dein Konto"
+    },
+    "rideLocations": {
+      "title": "Abfahrtsorte",
+      "body": "Wo eure Ausfahrten beginnen: Pflegeeinrichtungen, Wohnanlagen und öffentliche Orte. Wähl einen beim Planen aus, dann kommen Adresse und übliche Dauer gleich mit.",
+      "new": "Neuer Abfahrtsort",
+      "commandNew": "Abfahrtsort hinzufügen",
+      "pickChapter": "Wähl eine Ortsgruppe, um einen Abfahrtsort hinzuzufügen.",
+      "empty": "Noch keine Abfahrtsorte. Leg die Pflegeeinrichtungen und Orte an, von denen deine Ortsgruppe losfährt.",
+      "kinds": {
+        "careCenter": "Pflegeeinrichtung",
+        "residence": "Wohnanlage",
+        "publicPlace": "Öffentlicher Ort",
+        "other": "Sonstiges"
+      },
+      "columns": {
+        "name": "Name",
+        "kind": "Art",
+        "address": "Adresse",
+        "contact": "Kontakt",
+        "upcoming": "Kommende Ausfahrten",
+        "chapter": "Ortsgruppe",
+        "status": "Status"
+      },
+      "statuses": {
+        "active": "Aktiv",
+        "archived": "Archiviert"
+      },
+      "noAddress": "Noch keine Adresse",
+      "noContact": "Noch kein Kontakt",
+      "upcomingCount": "{count, plural, =0 {Keine} one {1 Ausfahrt} other {# Ausfahrten}}",
+      "create": {
+        "title": "Neuer Abfahrtsort",
+        "body": "Ein Ort, von dem deine Ortsgruppe losfährt. Den Rest kannst du später auf seiner Seite ergänzen.",
+        "chapter": "Ortsgruppe",
+        "name": "Name",
+        "namePlaceholder": "Pflegeheim Sonnenhof",
+        "nameRequired": "Gib dem Abfahrtsort einen Namen.",
+        "kind": "Art",
+        "address": "Adresse",
+        "addressPlaceholder": "Adresse suchen",
+        "contact": "Ansprechperson vor Ort",
+        "contactName": "Name",
+        "contactPhone": "Telefon",
+        "contactEmail": "E-Mail",
+        "invalidEmail": "Diese E-Mail-Adresse sieht nicht richtig aus.",
+        "defaults": "Wenn du hier planst",
+        "defaultsHint": "Das füllt die Planung vor. Für jede Ausfahrt kannst du es noch ändern.",
+        "defaultMinutes": "Übliche Dauer",
+        "chapterDefault": "Wie in der Ortsgruppe",
+        "notes": "Hinweise für Pilot:innen",
+        "notesPlaceholder": "Wo man wartet, wer die Tür öffnet, welcher Eingang die Rampe hat …",
+        "submit": "Abfahrtsort hinzufügen",
+        "created": "{name} ist bereit.",
+        "addressHint": "Wähl die Adresse, von der die Fahrgäste losfahren, und zieh die Nadel dann an die richtige Tür."
+      },
+      "detail": {
+        "back": "Abfahrtsorte",
+        "name": "Name",
+        "properties": "Eigenschaften",
+        "kind": "Art",
+        "chapter": "Ortsgruppe",
+        "added": "Angelegt am {date}",
+        "place": "Adresse",
+        "map": "Karte des Abfahrtsorts",
+        "mapUnavailable": "Die Karte ist gerade nicht verfügbar.",
+        "openInGoogleMaps": "In Google Maps öffnen",
+        "contact": "Ansprechperson vor Ort",
+        "contactName": "Name",
+        "contactNamePlaceholder": "Nach wem man fragt",
+        "contactPhone": "Telefon",
+        "contactPhonePlaceholder": "+49 …",
+        "contactEmail": "E-Mail",
+        "contactEmailPlaceholder": "name@example.org",
+        "defaults": "Wenn du hier planst",
+        "defaultMinutes": "Übliche Dauer",
+        "typicalRideKm": "Übliche Strecke",
+        "typicalRideKmPlaceholder": "Kilometer pro Ausfahrt",
+        "km": "{km} km",
+        "notes": "Hinweise für Pilot:innen",
+        "notesPlaceholder": "Wo man wartet, wer die Tür öffnet, welcher Eingang die Rampe hat …",
+        "upcoming": "Kommende Ausfahrten hier",
+        "noUpcoming": "Hier ist noch keine Ausfahrt geplant.",
+        "riders": "{count, plural, =0 {Noch keine Fahrgäste} one {1 Fahrgast} other {# Fahrgäste}}",
+        "scheduleHere": "Ausfahrt hier planen",
+        "archivedNotice": "Dieser Abfahrtsort ist archiviert. Er taucht beim Planen nicht mehr auf, und vergangene Ausfahrten behalten Name und Adresse.",
+        "danger": "Archivieren",
+        "dangerBody": "Archivieren blendet den Ort in der Planung aus. Ausfahrten behalten ihre eigene Kopie von Name und Adresse, im Kalender ändert sich also nichts.",
+        "archive": {
+          "open": "Abfahrtsort archivieren",
+          "title": "{name} archivieren?",
+          "body": "Er verschwindet aus der Planung. Bereits geplante Ausfahrten behalten ihren Ort.",
+          "submit": "Archivieren",
+          "done": "{name} ist archiviert."
+        },
+        "restore": {
+          "open": "Wiederherstellen",
+          "done": "{name} ist zurück."
+        },
+        "cancel": "Abbrechen",
+        "status": {
+          "saving": "Speichert …",
+          "saved": "Gespeichert"
+        }
+      },
+      "picker": {
+        "placeholder": "Abfahrtsort oder Adresse",
+        "hint": "{kind} · {address}",
+        "defaults": "Übliche Dauer bei {name}: {length}."
+      },
+      "errors": {
+        "unknownLocation": "Diesen Abfahrtsort gibt es nicht mehr. Lade die Seite neu und versuch es noch mal.",
+        "locationArchived": "Dieser Abfahrtsort ist archiviert. Stell ihn zuerst wieder her."
+      }
     }
   },
   "calendar": {
@@ -1487,7 +1659,7 @@
         "locations": "Standorte",
         "pools": "Pools"
       },
-      "title": "Standorte",
+      "title": "Abstellorte",
       "trishawCount": "{count, plural, =0 {Keine Rikschas} one {1 Rikscha} other {# Rikschas}}"
     },
     "trishaws": {
@@ -1999,6 +2171,24 @@
         "weather": "Das Wetter spielt diesmal nicht mit, und wir möchten, dass Sie warm und trocken bleiben."
       },
       "write": "E-Mail schreiben"
+    },
+    "riderNeeds": {
+      "title": "Beim Fahren wichtig",
+      "wheelchair": {
+        "label": "Braucht ein Rollstuhlrad",
+        "hint": "Die Ortsgruppe plant eine Rikscha ein, die einen Rollstuhl mitnimmt."
+      },
+      "note": {
+        "label": "Hinweis für Pilot:innen",
+        "hint": "Alles, was bei der Ausfahrt hilft.",
+        "placeholder": "Hört schlecht, mag die Strecke am Hafen …"
+      },
+      "careCenter": {
+        "label": "Pflegeeinrichtung",
+        "hint": "Wo der Fahrgast wohnt, falls die Ortsgruppe von dort losfährt.",
+        "gone": "{name} (nicht mehr im Angebot)",
+        "none": "Keine"
+      }
     }
   },
   "passkey": {
@@ -2305,6 +2495,7 @@
       "eventsOnly": "Nur eine Ausfahrt kann den Fahrgästen gezeigt werden.",
       "invalidFile": "Dieses Foto kann hier nicht verwendet werden. Lade es erneut hoch.",
       "legsOverlap": "Die Hinfahrt würde in die Rückfahrt hineinlaufen. Verschiebe zuerst die andere Fahrt.",
+      "locationNotInChapter": "Dieser Abfahrtsort gehört zu einer anderen Ortsgruppe. Wähl einen Ort dieser Ortsgruppe.",
       "notPilot": "Nur Pilot:innen dieses Chapters können eingeteilt werden.",
       "otherLegScheduled": "Die andere Hälfte dieser Hin- und Rückfahrt findet noch statt. Sag sie zuerst ab oder behalte diese Fahrt.",
       "partOfRoundTrip": "Diese Fahrt ist Teil einer Hin- und Rückfahrt und bleibt deshalb eine Zweckfahrt.",
@@ -2320,6 +2511,7 @@
       "titleRequired": "Gib der Gruppenfahrt einen Titel.",
       "tooManyPilots": "Es sind schon mehr Pilot:innen eingeteilt. Nimm zuerst einige heraus.",
       "unknownChapter": "Dieses Chapter ist nicht verfügbar.",
+      "unknownLocation": "Diesen Abfahrtsort gibt es nicht mehr. Lade die Seite neu und versuch es noch mal.",
       "unknownPassenger": "Diesen Fahrgast gibt es nicht mehr.",
       "unknownRide": "Diese Fahrt gibt es nicht mehr.",
       "unknownTrishaw": "Diese Rikscha gibt es nicht mehr.",

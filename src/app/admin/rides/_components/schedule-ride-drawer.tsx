@@ -17,7 +17,6 @@ import {
   ChevronRight,
   Flag,
   MapPin,
-  Minus,
   NotebookPen,
   Plus,
   X,
@@ -26,6 +25,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { notify } from "@/components/action-feedback";
 import { AppDrawer, submitOnCmdEnter } from "@/components/app-drawer";
+import { CountStepper } from "@/components/count-stepper";
 import {
   MarkdownEditor,
   type MarkdownToolLabels,
@@ -90,12 +90,18 @@ import {
   RIDE_MODELS,
   RIDE_NOTE_MAX,
   RIDE_TITLE_MAX,
+  returnWindow,
+  slotWindow,
   type RideModelName,
   type WallSlot,
 } from "@/features/rides/schemas";
 import { useDrawerParam } from "@/hooks/use-drawer-param";
 import { clockLabel, clockToMinutes, DEFAULT_SLOT_MINUTES } from "@/lib/clock";
-import type { Locale as NotationLocale } from "@/lib/format";
+import {
+  formatDuration,
+  wordsLocale,
+  type Locale as NotationLocale,
+} from "@/lib/format";
 import type { RideErrors } from "@/features/rides/components/strings";
 import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
@@ -110,6 +116,17 @@ import {
   TrishawOptionRow,
   type TrishawOptionLabels,
 } from "./trishaw-option-row";
+import {
+  placeOfLocation,
+  RideLocationField,
+  type RideLocationChoice,
+  type RideLocationFieldStrings,
+} from "./ride-location-field";
+import {
+  HoursWarnings,
+  type HoursPolicy,
+  type HoursWarningStrings,
+} from "./hours-warnings";
 import { AnnounceField } from "./announce-field";
 
 export type ScheduleChapter = {
@@ -123,6 +140,8 @@ export type ScheduleChapter = {
   start: string;
   durationMinutes?: number;
   durationChosen?: boolean;
+  policy?: HoursPolicy;
+  stayMinutes?: number;
   requiredPilots?: number;
 };
 
@@ -159,6 +178,9 @@ type Props = {
   models: Dictionary["calendar"]["models"];
   errors: RideErrors;
   fleet: FleetLabels;
+  locations?: RideLocationChoice[];
+  locationStrings: Pick<RideLocationFieldStrings, "picker" | "kinds">;
+  hoursStrings: HoursWarningStrings;
 };
 
 const DEFAULT_STAY = 60;
@@ -170,8 +192,6 @@ const LAST_CHAPTER = "cwa:rides:schedule:chapter";
 const FIELD =
   "flex h-9 w-full min-w-0 items-center gap-2 rounded-lg border border-line px-2.5 text-left text-2sm transition-colors hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none data-[state=open]:bg-canvas-deep";
 const EMPTY_FIELD = "border-dashed text-ink-soft";
-const STEP_BUTTON =
-  "inline-flex h-full w-9 items-center justify-center text-ink-soft transition-colors first:rounded-l-lg last:rounded-r-lg hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40";
 
 const chapterPlace = (chapter: ScheduleChapter): Place | null =>
   chapter.latitude === null || chapter.longitude === null
@@ -182,6 +202,11 @@ const chapterPlace = (chapter: ScheduleChapter): Place | null =>
         latitude: chapter.latitude,
         longitude: chapter.longitude,
       };
+
+type Prefilled = {
+  name: string;
+  minutes: number | null;
+};
 
 const minutesForRoute = (route: Route) => {
   const raw = route.durationSec / 60 + ROUTE_BUFFER_MINUTES;
@@ -238,10 +263,21 @@ function ScheduleRideSheet({
   models,
   errors,
   fleet,
+  locations = [],
+  locationStrings,
+  hoursStrings,
 }: Props & { open: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { close } = useDrawerParam();
+  const { go } = useDrawerParam();
+  const close = () =>
+    go((params) => {
+      params.delete("new");
+      params.delete("rideLocation");
+    });
+  const requestedLocation = locations.find(
+    (candidate) => candidate.id === searchParams.get("rideLocation"),
+  );
   const formId = useId();
   const titleId = useId();
   const roundTripId = useId();
@@ -253,9 +289,12 @@ function ScheduleRideSheet({
   const endEdited = useRef(
     chapters.some((chapter) => chapter.durationChosen === true),
   );
+  const stayEdited = useRef(false);
   const [pending, startTransition] = useTransition();
 
-  const [chapterId, setChapterId] = useState(() => rememberedChapter(chapters));
+  const [chapterId, setChapterId] = useState(
+    () => requestedLocation?.chapterId ?? rememberedChapter(chapters),
+  );
   const chapter =
     chapters.find((candidate) => candidate.id === chapterId) ?? chapters[0];
   const home = chapterPlace(chapter);
@@ -267,13 +306,30 @@ function ScheduleRideSheet({
   const [slot, setSlot] = useState<WallSlot>({
     date: chapter.date,
     start: chapter.start,
-    durationMinutes: chapter.durationMinutes ?? DEFAULT_SLOT_MINUTES,
+    durationMinutes:
+      (!chapter.durationChosen && requestedLocation?.defaultMinutes) ||
+      (chapter.durationMinutes ?? DEFAULT_SLOT_MINUTES),
   });
-  const [origin, setOrigin] = useState<Place | null>(null);
+  const [rideLocation, setRideLocation] = useState<RideLocationChoice | null>(
+    requestedLocation ?? null,
+  );
+  const [origin, setOrigin] = useState<Place | null>(() =>
+    requestedLocation ? placeOfLocation(requestedLocation) : null,
+  );
   const [destination, setDestination] = useState<Place | null>(null);
   const [roundTrip, setRoundTrip] = useState(true);
-  const [stay, setStay] = useState(DEFAULT_STAY);
+  const [stay, setStay] = useState(chapter.stayMinutes ?? DEFAULT_STAY);
   const [pilotsNeeded, setPilotsNeeded] = useState(chapter.requiredPilots ?? 1);
+  const [prefilled, setPrefilled] = useState<Prefilled | null>(() =>
+    requestedLocation
+      ? {
+          name: requestedLocation.name,
+          minutes: chapter.durationChosen
+            ? null
+            : requestedLocation.defaultMinutes,
+        }
+      : null,
+  );
   const [announced, setAnnounced] = useState(false);
   const [passengerIds, setPassengerIds] = useState<string[]>([]);
   const [pilotIds, setPilotIds] = useState<string[]>([]);
@@ -403,21 +459,46 @@ function ScheduleRideSheet({
 
   const pickChapter = (id: string) => {
     if (id === chapter.id) return;
+    const next = chapters.find((candidate) => candidate.id === id);
+    if (!next) return;
     setChapterId(id);
     rememberChapter(id);
+    setPrefilled(null);
     setPilotsNeeded(
       chapters.find((candidate) => candidate.id === id)?.requiredPilots ?? 1,
     );
     setSelected(new Set());
+    setRideLocation(null);
     setOrigin(null);
     setDestination(null);
     setPassengerIds([]);
     setPilotIds([]);
+    if (!stayEdited.current) setStay(next.stayMinutes ?? DEFAULT_STAY);
+    if (!endEdited.current)
+      setSlot((current) => ({
+        ...current,
+        durationMinutes: next.durationMinutes ?? DEFAULT_SLOT_MINUTES,
+      }));
   };
 
   const changeSlot = (next: WallSlot) => {
     if (next.durationMinutes !== slot.durationMinutes) endEdited.current = true;
     setSlot(next);
+  };
+
+  const pickPlace = (place: Place | null) => {
+    setPrefilled(null);
+    setRideLocation(null);
+    setOrigin(place);
+  };
+
+  const pickLocation = (location: RideLocationChoice) => {
+    setRideLocation(location);
+    setOrigin(placeOfLocation(location));
+    const minutes = endEdited.current ? null : location.defaultMinutes;
+    if (minutes)
+      setSlot((current) => ({ ...current, durationMinutes: minutes }));
+    setPrefilled({ name: location.name, minutes });
   };
 
   const changePilotsNeeded = (next: number) => {
@@ -452,6 +533,7 @@ function ScheduleRideSheet({
         chapterId: chapter.id,
         model,
         slot,
+        rideLocationId: rideLocation?.id ?? null,
         locationName: origin?.name ?? null,
         locationAddress: origin?.address ?? null,
         latitude: origin?.latitude ?? null,
@@ -486,7 +568,10 @@ function ScheduleRideSheet({
       });
       if (result.ok)
         router.replace(
-          hrefWith(`/admin/rides/${result.id}`, searchParams, { new: null }),
+          hrefWith(`/admin/rides/${result.id}`, searchParams, {
+            new: null,
+            rideLocation: null,
+          }),
         );
     });
   };
@@ -508,6 +593,10 @@ function ScheduleRideSheet({
   });
 
   const photoLabels: PhotoGalleryLabels = { ...gallery, errors };
+  const prefilledLength =
+    prefilled?.minutes && prefilled.minutes === slot.durationMinutes
+      ? formatDuration(prefilled.minutes * 60, wordsLocale(language))
+      : null;
   const showMap = Boolean(origin || (functional && destination));
   const trishawCount = picked.length;
 
@@ -579,7 +668,7 @@ function ScheduleRideSheet({
         onSubmit={submit}
         onKeyDown={submitOnCmdEnter}
         aria-busy={pending}
-        className="grid"
+        className="grid grid-cols-[minmax(0,1fr)]"
       >
         <Section className="gap-3">
           <div className="grid gap-1.25">
@@ -638,7 +727,7 @@ function ScheduleRideSheet({
         </Section>
 
         <Section>
-          <div className="-mx-2 grid gap-1">
+          <div className="-mx-2 grid grid-cols-[minmax(0,1fr)] gap-1">
             <WhenField
               value={slot}
               onChange={changeSlot}
@@ -648,18 +737,50 @@ function ScheduleRideSheet({
               strings={when}
             />
 
-            <PlaceRow
+            {chapter.policy ? (
+              <HoursWarnings
+                slot={slot}
+                returnSlot={
+                  twoWay
+                    ? returnWindow(slotWindow(slot, chapter.timeZone), stay)
+                    : null
+                }
+                timeZone={chapter.timeZone}
+                policy={chapter.policy}
+                notation={locale}
+                language={language}
+                strings={hoursStrings}
+              />
+            ) : null}
+
+            <RideLocationField
               key={`origin-${chapter.id}`}
-              icon={MapPin}
-              value={origin}
-              onChange={setOrigin}
-              shortcut={home}
-              shortcutHint={strings.chapterLocation}
-              strings={placeStrings(strings.origin, strings.originPlaceholder)}
-              clearLabel={strings.clearPlace}
+              locations={locations.filter(
+                (candidate) => candidate.chapterId === chapter.id,
+              )}
+              location={rideLocation}
+              place={origin}
+              home={home}
+              onLocation={pickLocation}
+              onPlace={pickPlace}
+              strings={{
+                ...locationStrings,
+                search: placeStrings(strings.origin, strings.originPlaceholder),
+                chapterLocation: strings.chapterLocation,
+                clear: strings.clearPlace,
+              }}
               language={language}
               failed={errors.generic}
             />
+            {prefilledLength ? (
+              <p className="pr-2 pl-9 text-xs text-ink-soft">
+                {formatMessage(
+                  locationStrings.picker.defaults,
+                  { name: prefilled?.name ?? "", length: prefilledLength },
+                  language,
+                )}
+              </p>
+            ) : null}
 
             {functional ? (
               <>
@@ -729,9 +850,10 @@ function ScheduleRideSheet({
                     <NativeSelect
                       id={stayId}
                       value={stay}
-                      onChange={(change) =>
-                        setStay(Number(change.target.value))
-                      }
+                      onChange={(change) => {
+                        stayEdited.current = true;
+                        setStay(Number(change.target.value));
+                      }}
                       className="h-8 border-line text-2sm"
                       size="sm"
                     >
@@ -787,9 +909,10 @@ function ScheduleRideSheet({
           </FieldRow>
           {pleasure ? null : (
             <FieldRow label={strings.pilotsNeeded}>
-              <PilotsStepper
+              <CountStepper
                 value={pilotsNeeded}
                 min={Math.max(1, pilotIds.length)}
+                max={RIDE_MAX_PILOTS}
                 onChange={changePilotsNeeded}
                 label={strings.pilotsNeeded}
                 fewer={strings.fewerPilots}
@@ -930,7 +1053,7 @@ function Section({
   return (
     <div
       className={cn(
-        "grid border-t border-line py-4 first:border-t-0 first:pt-0 last:pb-0",
+        "grid grid-cols-[minmax(0,1fr)] border-t border-line py-4 first:border-t-0 first:pt-0 last:pb-0",
         className,
       )}
     >
@@ -1219,65 +1342,6 @@ function TrishawPicker({
         {body()}
       </PopoverContent>
     </Popover>
-  );
-}
-
-function PilotsStepper({
-  value,
-  min,
-  onChange,
-  label,
-  fewer,
-  more,
-}: {
-  value: number;
-  min: number;
-  onChange: (next: number) => void;
-  label: string;
-  fewer: string;
-  more: string;
-}) {
-  const step = (by: number) => {
-    onChange(value + by);
-    haptics.selectionChanged();
-  };
-  return (
-    <div
-      role="group"
-      aria-label={label}
-      className="inline-flex h-9 w-fit items-center rounded-lg border border-line text-2sm"
-    >
-      <button
-        type="button"
-        aria-label={fewer}
-        disabled={value <= min}
-        onClick={() => step(-1)}
-        className={STEP_BUTTON}
-      >
-        <Minus
-          aria-hidden
-          className="size-3.5"
-        />
-      </button>
-      <span
-        aria-live="polite"
-        className="min-w-8 text-center tabular-nums"
-      >
-        {value}
-      </span>
-      <button
-        type="button"
-        aria-label={more}
-        disabled={value >= RIDE_MAX_PILOTS}
-        onClick={() => step(1)}
-        className={STEP_BUTTON}
-      >
-        <Plus
-          aria-hidden
-          className="size-3.5"
-        />
-      </button>
-    </div>
   );
 }
 

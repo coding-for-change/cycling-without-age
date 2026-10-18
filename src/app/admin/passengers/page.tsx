@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { EmptyState } from "@/components/empty-state";
 import { chapters as chapterFeature } from "@/features/chapters";
 import { passengers } from "@/features/passengers";
+import { rideLocations } from "@/features/ride-locations";
 import {
   personProfiles,
   photoUrl,
@@ -234,6 +235,7 @@ async function PassengerList({ searchParams }: PageProps) {
 async function PassengerAdd({ searchParams }: PageProps) {
   const { active, dialling, dict, locale } = await loadPassengers(searchParams);
   if (active.kind !== "chapter") return null;
+  const places = await rideLocations.listRideLocations([active.chapter.id]);
 
   return (
     <AddPassengerDrawer
@@ -241,6 +243,10 @@ async function PassengerAdd({ searchParams }: PageProps) {
       country={dialling}
       labels={dict.admin.passengers.add}
       relationships={dict.riders.relationship.options}
+      needs={dict.passenger.riderNeeds}
+      careCenters={places
+        .filter((place) => place.kind !== "publicPlace")
+        .map((place) => ({ id: place.id, name: place.name }))}
       pickup={{
         ...dict.riders.pickup,
         missing: dict.admin.passengers.add.pickupMissing,

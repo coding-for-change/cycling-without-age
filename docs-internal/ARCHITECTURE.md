@@ -227,6 +227,30 @@ before a ride a reminder goes out, how long an unanswered request waits): a colu
 default in `DEFAULT_CHAPTER_SETTINGS`, and the kinds read it the same way. See
 [EVENTS.md](EVENTS.md) → *What a kind decides*.
 
+The booking policy lives here too (COD-260): `bookingLeadTimeHours`, `bookingHorizonDays`,
+`defaultRideMinutes` and `defaultStayMinutes`. A column ships only with a consumer: today
+the scheduling drawer starts a new ride at `defaultRideMinutes`, a round trip's stay at
+`defaultStayMinutes`, and warns (never blocks) when a ride is booked on shorter notice or
+further ahead than the policy. Later PRs append their own columns at the end of the model
+and of `chapterSettingsInput`, and each adds one card to `/admin/settings`.
+
+### Riding hours (the Chapter Operating Calendar)
+
+When a chapter rides is two tables owned by `features/chapters`: `ChapterOperatingWindow`
+(ISO weekday 1–7 plus start and end as wall-clock minutes) and `ChapterClosure` (a calendar
+date and an optional reason). Windows are replaced as a set (`chapters.setOperatingWindows`,
+validated by `operatingHoursInput`: on the 15-minute grid, at least 30 minutes, no overlap
+within a day). `chapters.getOperatingHours(chapterId)` returns the plain
+`{ windows, closures }` shape that the pure helpers in `src/lib/operating-hours.ts` read:
+`windowsOn`, `fitsHours`, `closedRanges`, `openingBand`. They work on the
+chapter's wall clock (a ride at 10:00 on a DST Sunday is inside a 10:00–16:00 window), and
+no windows at all means "always open", so a chapter that never set hours sees no warnings.
+
+Consumers: the week grid shades closed hours and widens its band to the configured hours
+(single-chapter scope only, since hours belong to one chapter), and the scheduling drawer
+warns "Outside riding hours (Tue 09:00–12:00)" or "Chapter closed that day". Nothing is
+refused because of hours — an admin may always schedule outside them.
+
 ### The hierarchy
 
 ```
@@ -1124,6 +1148,46 @@ reserved inside the write's transaction.
 Storage locations are managed at `/admin/locations`: chapter sites and the country-wide pools
 other chapters join by code.
 
+### Ride Locations: where a ride starts (COD-260)
+
+A `RideLocation` is the glossary's place a ride leaves from — a Care Center, a residence, a
+public place — and is a different thing from a storage location, which is where a trishaw is
+kept. The nav calls them "Ride locations" and "Storage locations" so the two never blur.
+`src/features/ride-locations` owns the table; every row belongs to one chapter.
+
+- **Snapshot wins.** `Ride.rideLocationId` is a nullable link (`SetNull`), but the ride keeps
+  its own copy of name, address and pin in `locationName`/`locationAddress`/`latitude`/
+  `longitude`. `use-cases/schedule-ride` resolves the location through
+  `rideLocations.requireUsableRideLocation(id, ride.chapterId)` — unknown or archived is
+  `unknownLocation`, another chapter's is `locationNotInChapter` — and copies the snapshot
+  over whatever the client sent. Editing or archiving a location never rewrites a ride, and
+  editing a ride's place on its detail page drops the link. The way back of a round trip
+  starts at the destination, so only the way there is linked.
+- **The care home comes first.** A chapter's `careHomeName` becomes a Care Center ride location
+  with the chapter's address and pin: `use-cases/manage-chapter` adds it when a chapter is
+  created with one, or when one is named later while the chapter has no ride location at all,
+  and the migration `ride_location_from_care_home` did the same once for the chapters that
+  existed. Renaming the care home or moving the chapter afterwards leaves the location alone.
+- **Archive, never delete.** Archived locations disappear from the drawer and the add-rider
+  form; past rides keep their snapshot. Archived rows are read-only until restored.
+- **Defaults.** `defaultMinutes` prefills the ride's length in the scheduling drawer when
+  the location is picked (or when it opens from "Schedule a ride here", `?rideLocation=<id>`);
+  the admin can still change it. A location carries no trishaw or pilot count: a ride needs
+  one pilot per trishaw, and the drawer takes the chapter's "Pilots per ride" whatever the
+  place. `typicalRideKm` is recorded for Report 11 (distance ridden); no report reads it yet.
+- **Riders.** `Passenger` gained `needsWheelchairBike`, `note` and `rideLocationId` (their
+  Care Center). An admin sets them when adding a rider; an account edits its own rider in the
+  account surface through `use-cases/set-own-rider-needs`. Both go through
+  `rideLocations.requireCareCenter`: a live location of the rider's chapter that is not a
+  public place (`locationNotCareCenter`). A link to a location that has since been archived
+  stays visible in the picker, marked "no longer offered", so the rider can clear it. The account surface loads that group only when it opens,
+  and only for an account with the passenger role, so `loadAccount` (which every sidebar
+  runs) never pays for it.
+- **Who may.** Creating needs `requireChapterAdmin(chapterId)`; updating, archiving and
+  restoring load the location first and guard on its stored `chapterId`, never on a chapter
+  the client names. The list and detail pages sit behind `readActiveScope(…, "rideLocations")`
+  and the detail page re-guards on the location's chapter.
+
 ### Time zones: the chapter's clock, never the server's or the reader's
 
 A ride is stored as an instant. Which day column it falls in, and what time it reads, are
@@ -1245,8 +1309,8 @@ the facade tests. When the scheduling drawer lands, its Server Action owns the
 authorization — the facade takes `chapterId` from its input and checks nothing, by design —
 so it must sit behind `requireChapterAdmin(chapterId)`, not `requireAdminScope()`.
 
-Ride *requests* (lifecycle phase 1), the Ride Request List, recurrence,
-cancellation reason codes, waivers, storage locations and care centers are all still absent —
+Ride *requests* (lifecycle phase 1), the Ride Request List, recurrence and waivers are
+still absent —
 see COD-155 / COD-179 / COD-151. The `.ics` **email attachment** half of COD-182 (a file sent
 when a ride is booked or accepted) is not built; the live feed is, below.
 
