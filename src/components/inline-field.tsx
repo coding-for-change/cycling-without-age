@@ -57,9 +57,9 @@ export function InlineField({
   multiline?: boolean;
   maxLength?: number;
   required?: boolean;
-  type?: "text" | "url" | "email" | "tel" | "date";
+  type?: "text" | "url" | "email" | "date";
   max?: string;
-  inputMode?: "text" | "url" | "email" | "tel";
+  inputMode?: "text" | "url" | "email";
   validate?: (next: string) => boolean;
   display?: (value: string) => ReactNode;
   onSave: (next: Value, previous: Value) => Promise<ActionResult>;

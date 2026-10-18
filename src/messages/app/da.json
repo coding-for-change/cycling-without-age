@@ -907,12 +907,6 @@
           "label": "Svaradresse",
           "placeholder": "hej@eksempel.dk"
         },
-        "passengerPhone": {
-          "hint": "Passagerer ser det på deres forside under \"Har du brug for hjælp?\". Et nummer, hvor et menneske tager den.",
-          "invalid": "Det ligner ikke et telefonnummer.",
-          "label": "Telefon til passagerer",
-          "placeholder": "+45 12 34 56 78"
-        },
         "status": {
           "saved": "Gemt {when}",
           "saving": "Gemmer"
@@ -1852,11 +1846,12 @@
           "thunder": "Torden",
           "label": "Vejrudsigt"
         },
-        "help": {
-          "title": "Har du brug for hjælp?",
-          "body": "Ring til os. Vi hjælper gerne — et menneske tager den.",
-          "write": "Skriv til din afdeling",
-          "bodyWrite": "Skriv til os — et menneske svarer."
+        "report": {
+          "title": "Meld et problem",
+          "body": "Virker noget ikke, eller ser det mærkeligt ud? Skriv til os — et menneske læser hver besked.",
+          "action": "Meld et problem",
+          "subject": "Et problem i appen",
+          "template": "Hvad skete der?\n\n\nHvor i appen var det?\n\n"
         }
       },
       "pilot": {

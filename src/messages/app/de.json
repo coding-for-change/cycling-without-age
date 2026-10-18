@@ -907,12 +907,6 @@
           "label": "Antwortadresse",
           "placeholder": "hallo@beispiel.de"
         },
-        "passengerPhone": {
-          "hint": "Fahrgäste sehen sie auf ihrer Startseite unter „Brauchen Sie Hilfe?“. Eine Nummer, bei der ein Mensch abnimmt.",
-          "invalid": "Das sieht nicht nach einer Telefonnummer aus.",
-          "label": "Telefon für Fahrgäste",
-          "placeholder": "+49 89 1234 5678"
-        },
         "status": {
           "saved": "Gespeichert {when}",
           "saving": "Speichert"
@@ -1852,11 +1846,12 @@
           "thunder": "Gewitter",
           "label": "Wettervorhersage"
         },
-        "help": {
-          "title": "Brauchen Sie Hilfe?",
-          "body": "Rufen Sie uns an. Wir helfen gern — es meldet sich ein Mensch.",
-          "write": "Schreiben Sie Ihrer Ortsgruppe",
-          "bodyWrite": "Schreiben Sie uns — es antwortet ein Mensch."
+        "report": {
+          "title": "Melden Sie ein Problem",
+          "body": "Etwas funktioniert nicht oder sieht seltsam aus? Schreiben Sie uns — jede Nachricht liest ein Mensch.",
+          "action": "Problem melden",
+          "subject": "Problem in der App",
+          "template": "Was ist passiert?\n\n\nWo in der App war das?\n\n"
         }
       },
       "pilot": {

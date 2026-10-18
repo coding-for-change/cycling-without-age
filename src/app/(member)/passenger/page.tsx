@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { ChapterCards } from "../_components/home/chapter-cards";
 import { ChapterEvents } from "../_components/home/chapter-events";
 import { Greeting } from "../_components/home/greeting";
-import { HelpCard } from "../_components/home/help-card";
 import {
   GreetingFallback,
   EventsFallback,
@@ -10,6 +9,7 @@ import {
   TilesFallback,
 } from "../_components/home/home-fallback";
 import { NextRideCard } from "../_components/home/next-ride-card";
+import { ReportProblemCard } from "../_components/home/report-problem-card";
 import { RideTotals } from "../_components/home/ride-totals";
 import { SetupChecklist } from "../_components/home/setup-checklist";
 import { MemberPageShell } from "../_components/member-page";
@@ -32,11 +32,11 @@ export default function PassengerHomePage() {
       <Suspense fallback={<EventsFallback />}>
         <ChapterEvents />
       </Suspense>
-      <Suspense fallback={<SectionFallback />}>
-        <HelpCard />
-      </Suspense>
       <Suspense fallback={null}>
         <SetupChecklist perspective="passenger" />
+      </Suspense>
+      <Suspense fallback={<SectionFallback />}>
+        <ReportProblemCard />
       </Suspense>
     </MemberPageShell>
   );

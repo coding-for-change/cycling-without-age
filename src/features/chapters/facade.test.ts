@@ -170,24 +170,4 @@ describe("writing a chapter's settings", () => {
     ).rejects.toThrow(ZodError);
     expect(db.chapterSettings.upsert).not.toHaveBeenCalled();
   });
-
-  it("keeps the passengers' phone tidy", async () => {
-    await chapters.updateSettings(CHAPTER, {
-      passengerPhone: "  +49 89   1234 5678 ",
-    });
-
-    expect(db.chapterSettings.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        update: { passengerPhone: "+49 89 1234 5678" },
-      }),
-    );
-  });
-
-  it("refuses a phone that is not a number to dial", async () => {
-    for (const passengerPhone of ["call us", "+", "javascript:alert(1)"])
-      await expect(
-        chapters.updateSettings(CHAPTER, { passengerPhone }),
-      ).rejects.toThrow(ZodError);
-    expect(db.chapterSettings.upsert).not.toHaveBeenCalled();
-  });
 });
