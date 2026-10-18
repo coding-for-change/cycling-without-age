@@ -993,6 +993,7 @@ export const countBookingsBetween = (
   prisma.rideRosterEntry.count({
     where: {
       passengerId: { in: passengerIds },
+      ...ACTIVE_SEAT,
       ride: {
         status: { not: "cancelled" },
         startsAt: { lt: window.endsAt },
