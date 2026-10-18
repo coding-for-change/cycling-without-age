@@ -69,6 +69,7 @@ export function ReminderSettingsCard({
             hint={labels.rider.hint}
             options={reminderOptions}
             labels={labels.field}
+            selectClassName="min-w-48"
             onSave={(next) =>
               save({ riderReminderLeadMinutes: Number(next ?? 1440) })
             }
@@ -79,6 +80,7 @@ export function ReminderSettingsCard({
             hint={labels.volunteer.hint}
             options={reminderOptions}
             labels={labels.field}
+            selectClassName="min-w-48"
             onSave={(next) =>
               save({ volunteerReminderLeadMinutes: Number(next ?? 1440) })
             }
@@ -92,6 +94,7 @@ export function ReminderSettingsCard({
               label: before(hours * 60),
             }))}
             labels={labels.field}
+            selectClassName="min-w-48"
             onSave={(next) =>
               save({ demandCheckLeadHours: Number(next ?? 24) })
             }
