@@ -12,7 +12,7 @@ import { getDictionary } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BookRideCta } from "./_components/book-ride-cta";
-import { JoinActions } from "./_components/join-actions";
+import { JoinActions } from "@/features/membership/components/join-actions";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -172,11 +172,13 @@ async function Join({ params }: Params) {
         </div>
       )}
 
-      <BookRideCta
-        slug={chapter.slug}
-        signedIn={Boolean(session)}
-        strings={strings.ride}
-      />
+      {session && !isMember ? null : (
+        <BookRideCta
+          slug={chapter.slug}
+          signedIn={Boolean(session)}
+          strings={strings.ride}
+        />
+      )}
 
       <section className="mt-10 border-t border-line pt-8">
         <h2 className="font-display text-lg font-bold">{strings.app.title}</h2>

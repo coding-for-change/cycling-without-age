@@ -1,0 +1,281 @@
+import { prisma } from "@/lib/prisma";
+import type { $Enums, Prisma } from "@/generated/prisma";
+
+type Db = Prisma.TransactionClient;
+
+const legSelect = {
+  id: true,
+  status: true,
+  startsAt: true,
+  endsAt: true,
+} as const;
+
+export const requestSelect = {
+  id: true,
+  chapterId: true,
+  status: true,
+  model: true,
+  requesterUserId: true,
+  rideLocationId: true,
+  pickupName: true,
+  pickupAddress: true,
+  pickupLatitude: true,
+  pickupLongitude: true,
+  destinationName: true,
+  destinationAddress: true,
+  destinationLatitude: true,
+  destinationLongitude: true,
+  roundTrip: true,
+  requestedStartsAt: true,
+  requestedEndsAt: true,
+  note: true,
+  decidedByUserId: true,
+  decidedAt: true,
+  decisionNote: true,
+  rideId: true,
+  createdAt: true,
+  updatedAt: true,
+  chapter: {
+    select: { id: true, name: true, slug: true, timeZone: true },
+  },
+  rideLocation: { select: { id: true, name: true, kind: true } },
+  requester: {
+    select: { id: true, name: true, email: true, phoneNumber: true },
+  },
+  decidedBy: { select: { id: true, name: true } },
+  ride: { select: { ...legSelect, returnLeg: { select: legSelect } } },
+  passengers: {
+    orderBy: { position: "asc" },
+    select: {
+      passenger: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          chapterId: true,
+          managedByUserId: true,
+          userId: true,
+          needsWheelchairBike: true,
+        },
+      },
+    },
+  },
+} satisfies Prisma.RideRequestSelect;
+
+export type RideRequestRecord = Prisma.RideRequestGetPayload<{
+  select: typeof requestSelect;
+}>;
+
+export const insertRideRequest = (
+  data: Prisma.RideRequestUncheckedCreateInput,
+  passengerIds: string[],
+  db: Db,
+) =>
+  db.rideRequest.create({
+    data: {
+      ...data,
+      passengers: {
+        create: passengerIds.map((passengerId, position) => ({
+          passengerId,
+          position,
+        })),
+      },
+    },
+    select: { id: true, chapterId: true },
+  });
+
+export const findRideRequest = (id: string, db: Db = prisma) =>
+  db.rideRequest.findUnique({ where: { id }, select: requestSelect });
+
+export const findRideRequestScope = (id: string) =>
+  prisma.rideRequest.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      chapterId: true,
+      status: true,
+      requesterUserId: true,
+      rideId: true,
+    },
+  });
+
+export const findRideRequests = (
+  chapterIds: string[],
+  status: $Enums.RideRequestStatus | null,
+  take: number,
+  endingAfter: Date | null = null,
+) =>
+  prisma.rideRequest.findMany({
+    where: {
+      chapterId: { in: chapterIds },
+      ...(status ? { status } : {}),
+      ...(endingAfter ? { requestedEndsAt: { gt: endingAfter } } : {}),
+    },
+    orderBy:
+      status === "pending"
+        ? [{ requestedStartsAt: "asc" }, { createdAt: "asc" }]
+        : [{ requestedStartsAt: "desc" }, { createdAt: "desc" }],
+    take,
+    select: requestSelect,
+  });
+
+export const countRideRequests = (
+  chapterIds: string[],
+  status: $Enums.RideRequestStatus,
+  endingAfter: Date | null = null,
+) =>
+  prisma.rideRequest.count({
+    where: {
+      chapterId: { in: chapterIds },
+      status,
+      ...(endingAfter ? { requestedEndsAt: { gt: endingAfter } } : {}),
+    },
+  });
+
+export const findRideRequestsOfRequester = (
+  requesterUserId: string,
+  { since, now }: { since: Date; now: Date },
+  take: number,
+) =>
+  prisma.rideRequest.findMany({
+    where: {
+      requesterUserId,
+      OR: [
+        { status: "pending", requestedEndsAt: { gt: now } },
+        { updatedAt: { gte: since } },
+      ],
+    },
+    orderBy: [{ requestedStartsAt: "asc" }, { createdAt: "asc" }],
+    take,
+    select: requestSelect,
+  });
+
+export const findDestinationsOfRequester = (
+  requesterUserId: string,
+  take: number,
+) =>
+  prisma.rideRequest.findMany({
+    where: { requesterUserId, destinationName: { not: null } },
+    orderBy: { createdAt: "desc" },
+    take,
+    select: {
+      destinationName: true,
+      destinationAddress: true,
+      destinationLatitude: true,
+      destinationLongitude: true,
+    },
+  });
+
+export const claimPendingRequest = (
+  id: string,
+  decidedByUserId: string | null,
+  decidedAt: Date,
+) =>
+  prisma.rideRequest.updateMany({
+    where: { id, status: "pending" },
+    data: { status: "scheduled", decidedByUserId, decidedAt },
+  });
+
+export const releaseClaimedRequest = (id: string) =>
+  prisma.rideRequest.updateMany({
+    where: { id, status: "scheduled", rideId: null },
+    data: { status: "pending", decidedByUserId: null, decidedAt: null },
+  });
+
+export const linkRequestToRide = (id: string, rideId: string, db: Db) =>
+  db.rideRequest.updateMany({
+    where: { id, status: "scheduled", rideId: null },
+    data: { rideId },
+  });
+
+export const closePendingRequest = (
+  id: string,
+  data: {
+    status: "declined" | "withdrawn";
+    decidedByUserId: string | null;
+    decidedAt: Date;
+    decisionNote?: string | null;
+  },
+  requesterUserId: string | null,
+  db: Db,
+) =>
+  db.rideRequest.updateMany({
+    where: {
+      id,
+      status: "pending",
+      ...(requesterUserId ? { requesterUserId } : {}),
+    },
+    data,
+  });
+
+export const findOpenRequestsOf = ({
+  requesterUserId,
+  passengerIds,
+}: {
+  requesterUserId?: string;
+  passengerIds?: string[];
+}) =>
+  prisma.rideRequest.findMany({
+    where: {
+      status: "pending",
+      OR: [
+        ...(requesterUserId ? [{ requesterUserId }] : []),
+        ...(passengerIds?.length
+          ? [{ passengers: { some: { passengerId: { in: passengerIds } } } }]
+          : []),
+      ],
+    },
+    select: {
+      id: true,
+      chapterId: true,
+      requesterUserId: true,
+      passengers: { select: { passengerId: true } },
+    },
+  });
+
+export const findOpenRequestsOfRequesterWith = (
+  requesterUserId: string,
+  passengerId: string,
+) =>
+  prisma.rideRequest.findMany({
+    where: {
+      status: "pending",
+      requesterUserId,
+      passengers: { some: { passengerId } },
+    },
+    select: { id: true, passengers: { select: { passengerId: true } } },
+  });
+
+export const setRequester = (id: string, requesterUserId: string) =>
+  prisma.rideRequest.updateMany({
+    where: { id, status: "pending" },
+    data: { requesterUserId },
+  });
+
+export const removeRequestRider = (requestId: string, passengerId: string) =>
+  prisma.rideRequestPassenger.deleteMany({ where: { requestId, passengerId } });
+
+export const countOpenRequestsOverlapping = (
+  passengerIds: string[],
+  window: { startsAt: Date; endsAt: Date },
+) =>
+  prisma.rideRequest.count({
+    where: {
+      status: "pending",
+      requestedStartsAt: { lt: window.endsAt },
+      requestedEndsAt: { gt: window.startsAt },
+      passengers: { some: { passengerId: { in: passengerIds } } },
+    },
+  });
+
+export const countOpenRequestsOfRequester = (
+  requesterUserId: string,
+  endingAfter: Date,
+) =>
+  prisma.rideRequest.count({
+    where: {
+      requesterUserId,
+      status: "pending",
+      requestedEndsAt: { gt: endingAfter },
+    },
+  });

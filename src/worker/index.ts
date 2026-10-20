@@ -26,6 +26,7 @@ import { deliverChatDigest } from "@/use-cases/chat-notifications/deliver-chat-d
 import type { ChatDigestJob } from "@/use-cases/chat-notifications/deliver-chat-digest";
 import { deliverChatPush } from "@/use-cases/chat-notifications/deliver-chat-push";
 import type { ChatPushJob } from "@/use-cases/chat-notifications/deliver-chat-push";
+import { rideSweep } from "@/use-cases/ride-sweep";
 import { startBoard } from "./board";
 import {
   parkOnRateLimit,
@@ -128,8 +129,23 @@ async function pruneTrainingUploads() {
   if (removed > 0) logger.info({ removed }, "pruned stale training uploads");
 }
 
+async function sweepRides() {
+  const swept = await rideSweep();
+  if (Object.values(swept).some((count) => count > 0))
+    logger.info(
+      {
+        understaffed: swept.understaffed,
+        riders_reminded: swept.ridersReminded,
+        pilots_reminded: swept.pilotsReminded,
+        no_demand: swept.noDemand,
+      },
+      "swept upcoming rides",
+    );
+}
+
 const MAINTENANCE: Record<MaintenanceName, () => Promise<void>> = {
   sweep,
+  "ride-sweep": sweepRides,
   "prune-devices": pruneDevices,
   "prune-chat": pruneChat,
   "prune-training-uploads": pruneTrainingUploads,

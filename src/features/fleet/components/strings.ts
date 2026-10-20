@@ -9,3 +9,15 @@ export const fleetCommon = (dict: Dictionary) => ({
 
 export type FleetCommon = ReturnType<typeof fleetCommon>;
 export type FleetErrors = FleetCommon["errors"];
+
+export const storageAccessLabels = (dict: Dictionary) => {
+  const { finish } = dict.fleet;
+  return {
+    openInMaps: finish.openInMaps,
+    accessCode: finish.accessCode,
+    entrance: finish.entrance,
+    entrancePhoto: finish.entrancePhoto,
+    accessNotes: finish.accessNotes,
+    returnInstructions: finish.returnInstructions,
+  };
+};

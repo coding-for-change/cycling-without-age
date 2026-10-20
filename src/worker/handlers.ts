@@ -12,6 +12,14 @@ import {
   recordActivity,
   recordsActivityFor,
 } from "./listeners/record-activity";
+import { freezeRideChatListener } from "./listeners/freeze-ride-chat";
+import { leaveRideCrewsListener } from "./listeners/leave-ride-crews";
+import { linkRideRequestListener } from "./listeners/link-ride-request";
+import { moveHandedOverRequestsListener } from "./listeners/move-handed-over-requests";
+import {
+  syncRideChatListener,
+  syncsRideChat,
+} from "./listeners/sync-ride-chat";
 import {
   recordCoursePassed,
   recordExemptionGranted,
@@ -31,6 +39,19 @@ export const handlers = Object.fromEntries(
       ...(findKind(type) ? { notify } : {}),
       ...(recordsActivityFor(type) ? { recordActivity } : {}),
       ...(type === "chat.messageSent" ? { chatNotify: notifyChatMessage } : {}),
+      ...(syncsRideChat(type) ? { syncRideChat: syncRideChatListener } : {}),
+      ...(type === "ride.completed"
+        ? { freezeRideChat: freezeRideChatListener }
+        : {}),
+      ...(type === "member.roleChanged"
+        ? { leaveRideCrews: leaveRideCrewsListener }
+        : {}),
+      ...(type === "ride.scheduled"
+        ? { linkRideRequest: linkRideRequestListener }
+        : {}),
+      ...(type === "rider.handedOver"
+        ? { moveRequests: moveHandedOverRequestsListener }
+        : {}),
       ...(type === "trainingVideo.uploaded"
         ? { transcode: enqueueTranscode }
         : {}),

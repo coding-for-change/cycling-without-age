@@ -56,7 +56,15 @@ const bucketOf = (scope: ReportScope) => {
   return Prisma.sql`DATE_FORMAT(${aligned}, '%Y-%m-01')`;
 };
 
-const riders = Prisma.sql`(SELECT COUNT(*) FROM ride_roster_entry e WHERE e.rideId = f.id)`;
+/**
+ * A seat given up never rode, and once a roster is closed a rider who never
+ * came neither; a walk-up did, so the ride counts them though no rider record
+ * does.
+ */
+const rode = (entry: string) =>
+  Prisma.raw(`${entry}.attendance NOT IN ('cancelled', 'noShow')`);
+
+const riders = Prisma.sql`(SELECT COUNT(*) FROM ride_roster_entry e WHERE e.rideId = f.id AND ${rode("e")})`;
 
 const reportRides = (scope: ReportScope) => {
   const { current, previous } = scope.periods;
@@ -156,7 +164,7 @@ export const findPilotTallies = (scope: ReportScope) =>
       CAST(SUM(${riders}) AS SIGNED) AS rides,
       CAST(SUM(f.ms) AS SIGNED) AS ms
     FROM report_ride f
-    JOIN ride_assignment a ON a.rideId = f.id AND a.role = 'pilot'
+    JOIN ride_assignment a ON a.rideId = f.id AND a.role = 'pilot' AND a.attendance <> 'noShow'
     WHERE f.kind = 'ridden'
     GROUP BY a.userId, f.side`;
 
@@ -170,7 +178,7 @@ export const findRiderTallies = (scope: ReportScope) =>
       COUNT(*) AS rides,
       CAST(SUM(f.ms) AS SIGNED) AS ms
     FROM report_ride f
-    JOIN ride_roster_entry e ON e.rideId = f.id
+    JOIN ride_roster_entry e ON e.rideId = f.id AND e.passengerId IS NOT NULL AND ${rode("e")}
     WHERE f.kind = 'ridden'
     GROUP BY e.passengerId, f.side`;
 
@@ -187,6 +195,7 @@ const isNewRider = (scope: ReportScope) => Prisma.sql`
     JOIN ride r2 ON r2.id = e2.rideId
     LEFT JOIN chapter_zone cz2 ON cz2.chapterId = r2.chapterId COLLATE utf8mb4_bin
     WHERE e2.passengerId = d.passengerId
+      AND ${rode("e2")}
       AND r2.status <> 'cancelled'
       AND (
         r2.startsAt < IF(d.side = 'current', ${scope.windows.current.from}, ${scope.windows.previous.from})
@@ -208,7 +217,7 @@ export const findRiderCounts = (scope: ReportScope, withNewRiders: boolean) =>
     FROM (
       SELECT DISTINCT f.side, e.passengerId
       FROM report_ride f
-      JOIN ride_roster_entry e ON e.rideId = f.id
+      JOIN ride_roster_entry e ON e.rideId = f.id AND e.passengerId IS NOT NULL AND ${rode("e")}
       WHERE f.kind = 'ridden'
     ) AS d
     GROUP BY d.side`;
@@ -228,7 +237,7 @@ export const findActivePilots = (
     SELECT DISTINCT a.userId, r.chapterId
     FROM ride_assignment a
     JOIN ride r ON r.id = a.rideId
-    WHERE a.role = 'pilot' AND ${ridden(chapterIds, since, until)}`;
+    WHERE a.role = 'pilot' AND a.attendance <> 'noShow' AND ${ridden(chapterIds, since, until)}`;
 
 export const countActiveRiders = async (
   chapterIds: string[],
@@ -241,6 +250,7 @@ export const countActiveRiders = async (
     JOIN ride r ON r.id = e.rideId
     JOIN passenger p ON p.id = e.passengerId
     WHERE p.chapterId IN (${Prisma.join(chapterIds)})
+      AND ${rode("e")}
       AND ${ridden(chapterIds, since, until)}`;
   return Number(row?.riders ?? 0);
 };

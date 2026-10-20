@@ -8,12 +8,30 @@ const COLUMNS = {
   welcomeNote: true,
   postRideInstructions: true,
   damageAlertPush: true,
+  bookingLeadTimeHours: true,
+  bookingHorizonDays: true,
+  defaultRideMinutes: true,
+  defaultStayMinutes: true,
+  pilotsMaySelfAssign: true,
+  requiredPilotsDefault: true,
+  staffingCheckLeadHours: true,
+  schedulingMethod: true,
+  requestAlertPush: true,
+  riderReminderLeadMinutes: true,
+  volunteerReminderLeadMinutes: true,
+  demandCheckLeadHours: true,
 } as const;
 
 export const findChapterSettings = (chapterId: string) =>
   prisma.chapterSettings.findUnique({
     where: { chapterId },
     select: COLUMNS,
+  });
+
+export const findChapterSettingsOf = (chapterIds: string[]) =>
+  prisma.chapterSettings.findMany({
+    where: { chapterId: { in: chapterIds } },
+    select: { chapterId: true, ...COLUMNS },
   });
 
 export const upsertChapterSettings = (

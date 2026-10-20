@@ -3,7 +3,9 @@ import type { DomainEvent } from "@/lib/events/catalog";
 import type { RecordEventInput } from "@/lib/activity";
 import { recordActivity } from "@/worker/listeners/record-activity";
 
-jest.mock("@/lib/activity", () => ({ activity: { record: jest.fn() } }));
+jest.mock("@/lib/activity", () => ({
+  activity: { record: jest.fn(), recordMany: jest.fn() },
+}));
 
 const record = activity.record as jest.Mock;
 
@@ -181,4 +183,30 @@ describe("recordActivity", () => {
       expect(record).not.toHaveBeenCalled();
     },
   );
+});
+
+it("writes a hand-over into both managers' histories at once, ids only", async () => {
+  await run({
+    type: "rider.handedOver",
+    passengerId: "passenger-1",
+    chapterId: CHAPTER,
+    actorUserId: ACTOR,
+    fromUserId: "user-old",
+    toUserId: "user-new",
+    invited: false,
+  });
+
+  const line = (userId: string, direction: string) => ({
+    userId,
+    actorUserId: ACTOR,
+    chapterId: CHAPTER,
+    passengerId: "passenger-1",
+    type: "riderHandedOver",
+    payload: { fromUserId: "user-old", toUserId: "user-new", direction },
+  });
+  expect(record).not.toHaveBeenCalled();
+  expect(activity.recordMany).toHaveBeenCalledWith([
+    line("user-new", "in"),
+    line("user-old", "out"),
+  ]);
 });

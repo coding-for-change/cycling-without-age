@@ -10,7 +10,7 @@ import {
 } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
-import type { PilotRideRow, RideCalendarRow } from "../facade";
+import type { PassengerRideRow, PilotRideRow } from "../facade";
 import {
   ridePilots,
   rideRiderRefs,
@@ -26,7 +26,7 @@ import {
  * because the only difference is whether the rider names are known — and only
  * the assigned pilot is given them.
  */
-type AgendaRide = RideCalendarRow & Partial<Pick<PilotRideRow, "roster">>;
+type AgendaRide = PassengerRideRow & Partial<Pick<PilotRideRow, "roster">>;
 
 type Props = {
   rides: AgendaRide[];
@@ -36,6 +36,7 @@ type Props = {
   /** Words locale — plural forms are read, not computed. */
   words: Locale;
   title?: string;
+  href?: (rideId: string) => string;
   profileBase?: string;
 };
 
@@ -53,6 +54,7 @@ export function RideAgenda({
   locale,
   words,
   title,
+  href,
   profileBase,
 }: Props) {
   if (!rides.length) {
@@ -94,6 +96,7 @@ export function RideAgenda({
                 strings={strings}
                 locale={locale}
                 words={words}
+                href={href?.(ride.id)}
                 profileBase={profileBase}
               />
             ))}
@@ -109,33 +112,58 @@ function AgendaRow({
   strings,
   locale,
   words,
+  href,
   profileBase,
 }: {
   ride: AgendaRide;
   strings: CalendarStrings;
   locale: Locale;
   words: Locale;
+  href?: string;
   profileBase?: string;
 }) {
   const zone = ride.chapter.timeZone;
   const where = rideWhere(ride, strings);
   const pilots = ridePilots(ride);
   const cancelled = ride.status === "cancelled";
+  const time = (
+    <time
+      dateTime={ride.startsAt.toISOString()}
+      className={cn("text-sm font-display", cancelled && "line-through")}
+    >
+      {formatTimeRange(ride.startsAt, ride.endsAt, locale, zone)}
+    </time>
+  );
 
   return (
     <li
       className={cn(
         "flex flex-col gap-1.25 rounded-lg border border-l-4 p-3.5",
         rideTone(ride),
+        href &&
+          "relative transition-colors has-[[data-ride-link]:focus-visible]:ring-2 has-[[data-ride-link]:focus-visible]:ring-ink has-[[data-ride-link]:hover]:bg-canvas-deep motion-reduce:transition-none",
       )}
     >
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <time
-          dateTime={ride.startsAt.toISOString()}
-          className={cn("text-sm font-display", cancelled && "line-through")}
-        >
-          {formatTimeRange(ride.startsAt, ride.endsAt, locale, zone)}
-        </time>
+        {href ? (
+          <Link
+            href={href}
+            transitionTypes={["push"]}
+            aria-label={[
+              formatTimeRange(ride.startsAt, ride.endsAt, locale, zone),
+              strings.models[ride.model],
+              where,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+            data-ride-link
+            className="outline-none after:absolute after:inset-0 after:rounded-lg"
+          >
+            {time}
+          </Link>
+        ) : (
+          time
+        )}
         <span className="text-2sm text-ink-soft">
           {strings.models[ride.model]}
         </span>
@@ -238,7 +266,7 @@ function People({
       {index > 0 ? ", " : null}
       <Link
         href={`${profileBase}/${subjectSlug(person.ref)}`}
-        className="rounded-sm underline-offset-2 outline-none hover:text-ink hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        className="relative rounded-sm underline-offset-2 outline-none hover:text-ink hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
       >
         {person.name}
       </Link>

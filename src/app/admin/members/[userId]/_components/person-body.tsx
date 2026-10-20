@@ -15,10 +15,12 @@ import {
   DetailList,
   DetailListRow,
   DetailMeta,
+  DetailNotice,
   DetailSection,
   MetaBadge,
 } from "../../../_components/detail-page";
 import { ActivityFeed } from "../../../_components/activity-feed";
+import { withHandOverNames } from "../../../_components/hand-over-names";
 import { deletionConsequences } from "../../../_components/deletion-consequences";
 import { TimelineBubble } from "../../../_components/timeline";
 import { activity } from "@/lib/activity";
@@ -105,6 +107,7 @@ export async function PersonBody({
   const open = inScopeApplications.filter((a) => a.status !== "approved");
 
   const lookedAfter = managedRows.filter((rider) => rider.userId !== userId);
+  const goneWith = lookedAfter.filter((rider) => !rider.userId);
   const visibleRiders = lookedAfter.filter((rider) =>
     chapterIds.includes(rider.chapterId),
   );
@@ -195,7 +198,7 @@ export async function PersonBody({
                         pending: applications.filter(
                           (a) => a.status !== "approved",
                         ).length,
-                        lookedAfter: lookedAfter.length,
+                        lookedAfter: goneWith.length,
                       },
                       dict.admin.deletion,
                       words,
@@ -207,7 +210,10 @@ export async function PersonBody({
                     locale={words}
                     cancel={dict.admin.chapters.cancel}
                     action={deleteUserAction}
-                    input={{ userId }}
+                    input={{
+                      userId,
+                      removeRiders: goneWith.map((rider) => rider.id),
+                    }}
                     redirectTo={backHref}
                   />
                 </DetailHeaderActions>
@@ -355,6 +361,13 @@ export async function PersonBody({
             }
             meta={visibleRiders.length > 0 ? visibleRiders.length : undefined}
           >
+            {scope.canDeleteAccounts &&
+            !isSelf &&
+            visibleRiders.some((rider) => !rider.userId) ? (
+              <DetailNotice>
+                {dict.admin.person.caretaker.handOverHint}
+              </DetailNotice>
+            ) : null}
             <DetailList>
               {visibleRiders.map((rider) => {
                 const pickup = pickupLabel(rider, dict.riders.pickup.careHome);
@@ -419,7 +432,7 @@ export async function PersonBody({
           showMoreLabel={dict.admin.history.showMore}
         >
           <ActivityFeed
-            events={events.slice(0, shown)}
+            events={await withHandOverNames(events.slice(0, shown))}
             viewerId={session.user.id}
             labels={dict.admin.history}
             empty={dict.admin.person.historyEmpty}

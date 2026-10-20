@@ -1,6 +1,5 @@
 "use client";
 
-import { z } from "zod";
 import {
   CHAPTER_WELCOME_NOTE_MAX,
   type ChapterSettings,
@@ -9,6 +8,7 @@ import {
 import { InlineField, type InlineFieldLabels } from "@/components/inline-field";
 import { SaveStatus, SaveStatusProvider } from "@/components/save-status";
 import { FieldRow, ToggleRow } from "@/components/settings-rows";
+import { isEmail } from "@/lib/email";
 import { updateChapterSettingsAction } from "../actions";
 
 export type NotificationSettingsLabels = {
@@ -17,6 +17,7 @@ export type NotificationSettingsLabels = {
   memberJoined: { label: string; hint: string };
   applicationPush: { label: string; hint: string };
   damagePush: { label: string; hint: string };
+  requestPush: { label: string; hint: string };
   replyTo: {
     label: string;
     hint: string;
@@ -27,8 +28,6 @@ export type NotificationSettingsLabels = {
   status: { saving: string; saved: string };
   field: InlineFieldLabels;
 };
-
-const isEmail = (next: string) => z.email().safeParse(next).success;
 
 export function NotificationSettingsCard({
   chapterId,
@@ -70,6 +69,13 @@ export function NotificationSettingsCard({
             hint={labels.applicationPush.hint}
             labels={labels.field}
             onSave={(next) => save({ applicationAlertPush: next })}
+          />
+          <ToggleRow
+            value={settings.requestAlertPush}
+            label={labels.requestPush.label}
+            hint={labels.requestPush.hint}
+            labels={labels.field}
+            onSave={(next) => save({ requestAlertPush: next })}
           />
           <ToggleRow
             value={settings.damageAlertPush}

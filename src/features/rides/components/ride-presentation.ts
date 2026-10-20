@@ -64,8 +64,16 @@ export const trishawMeta = (option: {
   location: string;
 }) => [option.model, option.seats, option.location].filter(Boolean).join(" · ");
 
-export const ridePilots = (ride: Pick<RideCalendarRow, "assignments">) =>
-  ride.assignments.filter((a) => a.role === "pilot");
+export const ridePilots = <A extends { role: string }>(ride: {
+  assignments: A[];
+}) => ride.assignments.filter((a) => a.role === "pilot");
+
+/** The pilots who fill a seat: a demoted one is listed but no longer counts. */
+export const seatedPilots = <
+  A extends { role: string; stillPiloting?: boolean },
+>(ride: {
+  assignments: A[];
+}) => ridePilots(ride).filter((a) => a.stillPiloting !== false);
 
 /** The trishaws committed to a ride, in name order. */
 export const rideTrishaws = (ride: Pick<RideCalendarRow, "trishaws">) =>
@@ -84,13 +92,19 @@ export const rideRiderRefs = (
   roster: PilotRideRow["roster"],
   careHome: string,
 ): { ref: SubjectRef; name: string; pickup: string | null }[] =>
-  roster.map(({ passenger }) => ({
-    ref: passenger.userId
-      ? { kind: "user", id: passenger.userId }
-      : { kind: "passenger", id: passenger.id },
-    name: fullName(passenger),
-    pickup: pickupLabel(pickupOf(passenger), careHome),
-  }));
+  roster.flatMap(({ passenger }) =>
+    passenger
+      ? [
+          {
+            ref: passenger.userId
+              ? { kind: "user" as const, id: passenger.userId }
+              : { kind: "passenger" as const, id: passenger.id },
+            name: fullName(passenger),
+            pickup: pickupLabel(pickupOf(passenger), careHome),
+          },
+        ]
+      : [],
+  );
 
 export type RideFleetStrings = { grounded: string; groundedOnRide: string };
 

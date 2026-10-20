@@ -12,11 +12,15 @@ import { ADMIN_LIFE } from "../admin-viewer";
 import { JoinLinkCard } from "./_components/join-link-card";
 import { NotificationSettingsCard } from "./_components/notification-settings-card";
 import { PostRideInstructionsCard } from "./_components/post-ride-instructions-card";
+import { ReminderSettingsCard } from "./_components/reminder-settings-card";
+import { RidingHoursSettings } from "./_components/riding-hours-settings";
+import { BookingSettings } from "./_components/booking-settings";
+import { StaffingSettingsCard } from "./_components/staffing-settings-card";
 import { markdownToolLabels } from "@/components/markdown-editor";
 
 type PageProps = { searchParams: Promise<AdminSearchParams> };
 
-const CARDS = ["h-40", "h-72", "h-56"];
+const CARDS = ["h-40", "h-72", "h-56", "h-64", "h-64", "h-72", "h-56"];
 
 export default function SettingsPage({ searchParams }: PageProps) {
   return (
@@ -108,6 +112,37 @@ async function ChapterSettings({ searchParams }: PageProps) {
           status: strings.notifications.status,
           field: strings.notifications.field,
         }}
+      />
+      <StaffingSettingsCard
+        chapterId={chapter.id}
+        settings={settings}
+        language={language}
+        labels={{
+          ...strings.staffing,
+          status: strings.notifications.status,
+          field: strings.notifications.field,
+        }}
+      />
+      <ReminderSettingsCard
+        chapterId={chapter.id}
+        settings={settings}
+        language={language}
+        labels={{
+          ...strings.reminders,
+          status: strings.notifications.status,
+          field: strings.notifications.field,
+        }}
+      />
+      <RidingHoursSettings
+        chapterId={chapter.id}
+        dict={dict}
+        language={language}
+      />
+      <BookingSettings
+        chapterId={chapter.id}
+        settings={settings}
+        dict={dict}
+        language={language}
       />
     </>
   );

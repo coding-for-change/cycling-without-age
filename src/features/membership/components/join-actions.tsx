@@ -6,8 +6,9 @@ import {
   applyToChaptersAsPilot,
   joinChapterAsPassenger,
   type MembershipActionResult,
-} from "@/features/membership/actions";
+} from "../actions";
 import { haptics } from "@/lib/native/haptics";
+import { signInHref } from "@/lib/redirects";
 import { Button } from "@/components/ui/button";
 
 type Card = { title: string; body: string; cta: string };
@@ -17,11 +18,15 @@ export function JoinActions({
   pendingApplication,
   strings,
   errors,
+  passengerOnly = false,
+  next,
 }: {
   chapterId: string;
   pendingApplication: boolean;
   strings: { passenger: Card; pilot: Card & { pending: string } };
   errors: Record<string, string>;
+  passengerOnly?: boolean;
+  next?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -41,7 +46,9 @@ export function JoinActions({
       // redirects, and both actions above revalidate it. Calling
       // `nextOnboardingPath()` here would push straight there, but that import
       // crosses two `src/app` elements and boundaries/dependencies refuses it.
-      router.push("/onboarding", { transitionTypes: ["nav-forward"] });
+      router.push(next ? signInHref(next) : "/onboarding", {
+        transitionTypes: ["nav-forward"],
+      });
     });
 
   return (
@@ -52,31 +59,36 @@ export function JoinActions({
         </h2>
         <p className="mt-1 text-sm text-ink-soft">{strings.passenger.body}</p>
         <Button
+          variant="brand"
           disabled={pending}
           onClick={() => run(() => joinChapterAsPassenger(chapterId))}
-          className="mt-4 min-h-11 rounded-full bg-red px-8 text-white hover:bg-red-hover disabled:bg-grey-tint disabled:text-ink-faint"
+          className="mt-4 min-h-11 rounded-full px-8"
         >
           {strings.passenger.cta}
         </Button>
       </div>
 
-      <div className="rounded-(--r-card) border border-line p-5">
-        <h2 className="font-display text-lg font-bold">
-          {strings.pilot.title}
-        </h2>
-        <p className="mt-1 text-sm text-ink-soft">{strings.pilot.body}</p>
-        <Button
-          variant="outline"
-          disabled={pending || pendingApplication}
-          onClick={() => run(() => applyToChaptersAsPilot([chapterId]))}
-          className="mt-4 min-h-11 rounded-full border-ink px-8"
-        >
-          {strings.pilot.cta}
-        </Button>
-        {pendingApplication ? (
-          <p className="mt-2 text-sm text-ink-soft">{strings.pilot.pending}</p>
-        ) : null}
-      </div>
+      {passengerOnly ? null : (
+        <div className="rounded-(--r-card) border border-line p-5">
+          <h2 className="font-display text-lg font-bold">
+            {strings.pilot.title}
+          </h2>
+          <p className="mt-1 text-sm text-ink-soft">{strings.pilot.body}</p>
+          <Button
+            variant="outline"
+            disabled={pending || pendingApplication}
+            onClick={() => run(() => applyToChaptersAsPilot([chapterId]))}
+            className="mt-4 min-h-11 rounded-full border-ink px-8"
+          >
+            {strings.pilot.cta}
+          </Button>
+          {pendingApplication ? (
+            <p className="mt-2 text-sm text-ink-soft">
+              {strings.pilot.pending}
+            </p>
+          ) : null}
+        </div>
+      )}
 
       {error ? (
         <p

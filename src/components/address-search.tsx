@@ -8,7 +8,14 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
-import { House, Loader2, MapPin, Search, Store } from "lucide-react";
+import {
+  House,
+  Loader2,
+  MapPin,
+  Search,
+  Store,
+  type LucideIcon,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
@@ -34,6 +41,7 @@ export type AddressShortcut = {
   name: string;
   hint: string;
   keywords?: string;
+  icon?: LucideIcon;
   onPick: () => void;
 };
 
@@ -385,12 +393,12 @@ function PopoverAddressSearch({
             aria-label={strings.label}
             className="flex max-h-72 flex-col overflow-y-auto"
           >
-            {pinned.map((shortcut, index) => (
+            {pinned.map(({ icon: Icon = House, ...shortcut }, index) => (
               <li
                 key={shortcut.id}
                 {...option(index)}
               >
-                <House
+                <Icon
                   className="size-4 shrink-0 text-ink-faint"
                   aria-hidden
                 />

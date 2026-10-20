@@ -5,6 +5,8 @@ import {
 } from "@/lib/cache-tags";
 import { membership } from "@/features/membership";
 import { chapters } from "@/features/chapters";
+import { passengers } from "@/features/passengers";
+import { handOverRider } from "@/use-cases/hand-over-rider";
 import { deleteCountry } from "@/use-cases/manage-country";
 import { appointCountryAdminByEmail } from "@/use-cases/manage-country-admins";
 import { inviteChapterUser as invite } from "@/use-cases/invite-chapter-user";
@@ -33,7 +35,10 @@ import {
   inviteChapterUser,
 } from "@/features/accounts/actions";
 import { joinChapterAsPassenger } from "@/features/membership/actions";
-import { acceptCareRequestAction } from "@/features/passengers/actions";
+import {
+  acceptCareRequestAction,
+  handOverRiderAction,
+} from "@/features/passengers/actions";
 import {
   settleCaretakerAt,
   settlePassengerAt,
@@ -103,7 +108,11 @@ jest.mock("@/features/chapters", () => ({
     getChapter: jest.fn(async () => ({ id: "chapter-muenchen" })),
   },
 }));
+jest.mock("@/features/passengers", () => ({
+  passengers: { getPassenger: jest.fn() },
+}));
 jest.mock("@/use-cases/delete-account", () => ({ deleteAccount: jest.fn() }));
+jest.mock("@/use-cases/hand-over-rider", () => ({ handOverRider: jest.fn() }));
 jest.mock("@/use-cases/pilot-steps", () => ({
   confirmInPersonTraining: jest.fn(),
   revokeInPersonTraining: jest.fn(),
@@ -289,6 +298,29 @@ describe("every write that changes a session's access expires it", () => {
       ok: true,
     });
     expect(invalidated).toHaveBeenCalledWith({ userIds: ["viewer"] });
+  });
+
+  it("handing a rider over to another account", async () => {
+    (passengers.getPassenger as jest.Mock).mockResolvedValue({
+      id: "managed-greta",
+      userId: null,
+      chapterId: "chapter-muenchen",
+    });
+    (handOverRider as jest.Mock).mockResolvedValue({
+      chapterId: "chapter-muenchen",
+      fromUserId: "user-old",
+      toUserId: "user-new",
+      invited: false,
+    });
+    await expect(
+      handOverRiderAction({
+        passengerId: "managed-greta",
+        target: { kind: "member", userId: "user-new" },
+      }),
+    ).resolves.toEqual({ ok: true, invited: false });
+    expect(invalidated).toHaveBeenCalledWith({
+      userIds: ["user-new", "user-old"],
+    });
   });
 
   it("settling a passenger or caretaker into a chapter", async () => {

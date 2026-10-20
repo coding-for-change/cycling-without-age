@@ -5,6 +5,7 @@ import type { Dictionary } from "@/lib/i18n";
 export type NavKey =
   | "overview"
   | "rides"
+  | "rideLocations"
   | "members"
   | "training"
   | "passengers"
@@ -30,6 +31,12 @@ export type NavItem = {
 export const NAV: readonly NavItem[] = [
   { key: "overview", href: "/admin", group: "main", icon: "overview" },
   { key: "rides", href: "/admin/rides", group: "main", icon: "rides" },
+  {
+    key: "rideLocations",
+    href: "/admin/ride-locations",
+    group: "main",
+    icon: "mapPin",
+  },
   { key: "members", href: "/admin/members", group: "main", icon: "members" },
   {
     key: "training",

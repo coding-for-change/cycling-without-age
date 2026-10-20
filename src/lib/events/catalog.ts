@@ -11,6 +11,19 @@ const rideScope = {
 
 const rideReasons = z.enum(RIDE_CANCELLATION_REASONS);
 
+/**
+ * Set when one change reaches both legs of a round trip. The way there leads
+ * and its notification speaks for both; the way back follows and says nothing,
+ * so nobody hears about one trip twice. Older events carry no pair.
+ */
+const ridePair = z
+  .object({
+    role: z.enum(["lead", "follow"]),
+    otherRideId: z.string().min(1),
+  })
+  .nullable()
+  .default(null);
+
 export const eventSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("pilotApplication.decided"),
@@ -107,16 +120,20 @@ export const eventSchema = z.discriminatedUnion("type", [
     type: z.literal("ride.scheduled"),
     ...rideScope,
     returnLegId: z.string().min(1).nullable(),
+    /** Scheduled from this Ride Request, which the ride's listener links. */
+    requestId: z.string().min(1).nullable().default(null),
   }),
   z.object({
     type: z.literal("ride.rescheduled"),
     ...rideScope,
     changes: z.array(z.enum(["time", "location", "destination"])).min(1),
+    pair: ridePair,
   }),
   z.object({
     type: z.literal("ride.cancelled"),
     ...rideScope,
     reasonCode: rideReasons,
+    pair: ridePair,
   }),
   z.object({
     type: z.literal("ride.deleted"),
@@ -127,22 +144,78 @@ export const eventSchema = z.discriminatedUnion("type", [
     ...rideScope,
     userId: z.string().min(1),
     self: z.boolean(),
+    pair: ridePair,
   }),
   z.object({
     type: z.literal("ride.pilotUnassigned"),
     ...rideScope,
     userId: z.string().min(1),
     self: z.boolean(),
+    pair: ridePair,
   }),
   z.object({
     type: z.literal("ride.riderBooked"),
     ...rideScope,
     passengerId: z.string().min(1),
+    pair: ridePair,
+    /** Booked by scheduling this Ride Request, whose own message tells the requester. */
+    requestId: z.string().min(1).nullable().default(null),
+  }),
+  z.object({
+    type: z.literal("ride.opened"),
+    ...rideScope,
+    pair: ridePair,
+  }),
+  z.object({
+    type: z.literal("ride.understaffed"),
+    ...rideScope,
+    assigned: z.number().int().min(0),
+    required: z.number().int().min(1),
+    pair: ridePair,
+  }),
+  z.object({
+    type: z.literal("ride.announced"),
+    ...rideScope,
   }),
   z.object({
     type: z.literal("ride.riderRemoved"),
     ...rideScope,
     passengerId: z.string().min(1),
+    /** The rider's own account gave the seat up, rather than the chapter. */
+    self: z.boolean().default(false),
+    /** Nobody is left to ride: the chapter may want to cancel (5B-b). */
+    rosterNowEmpty: z.boolean().default(false),
+    pair: ridePair,
+  }),
+  z.object({
+    type: z.literal("ride.rosterRefilled"),
+    ...rideScope,
+    passengerId: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal("ride.riderReminderDue"),
+    ...rideScope,
+    pair: ridePair,
+  }),
+  z.object({
+    type: z.literal("ride.volunteerReminderDue"),
+    ...rideScope,
+    pair: ridePair,
+  }),
+  z.object({
+    type: z.literal("ride.noDemand"),
+    ...rideScope,
+    pair: ridePair,
+  }),
+  z.object({
+    type: z.literal("ride.completed"),
+    ...rideScope,
+    riders: z.number().int().min(0),
+    noShows: z.number().int().min(0),
+  }),
+  z.object({
+    type: z.literal("ride.reopened"),
+    ...rideScope,
   }),
   z.object({
     type: z.literal("care.requested"),
@@ -213,6 +286,44 @@ export const eventSchema = z.discriminatedUnion("type", [
     uploadId: z.string().min(1).nullable(),
     chapterId: z.string().min(1).nullable(),
     actorUserId: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal("rideRequest.submitted"),
+    requestId: z.string().min(1),
+    chapterId: z.string().min(1),
+    actorUserId: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal("rideRequest.scheduled"),
+    requestId: z.string().min(1),
+    chapterId: z.string().min(1),
+    actorUserId: z.string().min(1).nullable(),
+    requesterUserId: z.string().min(1).nullable(),
+    rideId: z.string().min(1),
+    returnLegId: z.string().min(1).nullable(),
+  }),
+  z.object({
+    type: z.literal("rideRequest.declined"),
+    requestId: z.string().min(1),
+    chapterId: z.string().min(1),
+    actorUserId: z.string().min(1),
+    requesterUserId: z.string().min(1).nullable(),
+  }),
+  z.object({
+    type: z.literal("rideRequest.withdrawn"),
+    requestId: z.string().min(1),
+    chapterId: z.string().min(1),
+    actorUserId: z.string().min(1),
+  }),
+  z.object({
+    type: z.literal("rider.handedOver"),
+    passengerId: z.string().min(1),
+    chapterId: z.string().min(1),
+    actorUserId: z.string().min(1),
+    fromUserId: z.string().min(1),
+    toUserId: z.string().min(1),
+    /** The account was set up for this, and its invitation tells it already. */
+    invited: z.boolean().default(false),
   }),
 ]);
 

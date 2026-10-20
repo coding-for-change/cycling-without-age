@@ -20,6 +20,8 @@ import {
   reorderRosterAction,
 } from "@/features/rides/actions";
 import { formatMessage } from "@/lib/i18n/format";
+import { AttendanceBadge } from "@/features/rides/components/attendance-badge";
+import type { RosterAttendanceName } from "@/features/rides/schemas";
 import type { Locale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
 import {
@@ -41,6 +43,7 @@ type Person = {
   avatar: string;
   href: string | null;
   pickup: string | null;
+  attendance?: { value: RosterAttendanceName; label: string };
 };
 
 type PickStrings = { search: string; empty: string };
@@ -52,6 +55,9 @@ export function RideRoster({
   rideId,
   editable,
   riders,
+  givenUp = [],
+  walkUps = [],
+  seated,
   choices,
   limit,
   language,
@@ -61,10 +67,13 @@ export function RideRoster({
   rideId: string;
   editable: boolean;
   riders: Person[];
+  givenUp?: Person[];
+  walkUps?: Person[];
+  seated?: number;
   choices: PersonOption[];
   limit: number | null;
   language: Locale;
-  labels: RosterLabels;
+  labels: RosterLabels & { givenUp: string; walkUps: string };
   pick: PickStrings;
 }) {
   const report = useSaveStatus();
@@ -81,7 +90,9 @@ export function RideRoster({
   const byId = new Map(riders.map((rider) => [rider.id, rider]));
   const shown = order.flatMap((id) => byId.get(id) ?? []);
   const count = riders.length;
-  const full = limit !== null && count >= limit;
+  const listed = count + walkUps.length;
+  const taken = seated ?? listed;
+  const full = limit !== null && taken >= limit;
   const canAdd = editable && !full && choices.length > 0;
   const say = (template: string, name: string) =>
     formatMessage(template, { name }, language);
@@ -136,26 +147,26 @@ export function RideRoster({
     <DetailSection
       title={labels.riders}
       description={
-        count > 0
-          ? formatMessage(labels.ridersCount, { count }, language)
+        listed > 0
+          ? formatMessage(labels.ridersCount, { count: listed }, language)
           : undefined
       }
       meta={
         limit !== null ? (
           <CountMeta
-            count={count}
+            count={taken}
             max={limit}
             highlight={full}
             srLabel={formatMessage(
               labels.placesTaken,
-              { count, max: limit },
+              { count: taken, max: limit },
               language,
             )}
           />
         ) : null
       }
       action={
-        editable && count > 0 ? (
+        editable && listed > 0 ? (
           <PersonPicker
             options={choices}
             onPick={(rider) => book(rider)}
@@ -171,7 +182,7 @@ export function RideRoster({
       busy={pending}
       className="gap-3"
     >
-      {count === 0 ? (
+      {listed === 0 ? (
         <DetailEmpty
           action={
             editable ? (
@@ -196,7 +207,7 @@ export function RideRoster({
         >
           {labels.emptyRiders}
         </DetailEmpty>
-      ) : editable ? (
+      ) : count === 0 ? null : editable ? (
         <Sortable
           value={order}
           onValueChange={(next) => {
@@ -265,6 +276,7 @@ export function RideRoster({
                 {index + 1}
               </span>
               <PersonChip {...rider} />
+              <Attendance rider={rider} />
               <Pickup
                 place={rider.pickup}
                 label={labels.pickupLabel}
@@ -274,7 +286,58 @@ export function RideRoster({
           ))}
         </DetailList>
       )}
+      {walkUps.length ? (
+        <div className="flex flex-col gap-1.25">
+          <h3 className="text-xs font-medium text-ink-soft">
+            {labels.walkUps}
+          </h3>
+          <DetailList>
+            {walkUps.map((rider) => (
+              <DetailListRow key={rider.id}>
+                <PersonChip {...rider} />
+                <Attendance rider={rider} />
+              </DetailListRow>
+            ))}
+          </DetailList>
+        </div>
+      ) : null}
+      {givenUp.length ? (
+        <div className="flex flex-col gap-1.25">
+          <h3 className="text-xs font-medium text-ink-soft">
+            {labels.givenUp}
+          </h3>
+          <DetailList>
+            {givenUp.map((rider) => (
+              <DetailListRow
+                key={rider.id}
+                className="group/row"
+              >
+                <PersonChip {...rider} />
+                {editable ? (
+                  <RowRemoveButton
+                    label={say(labels.remove, rider.name)}
+                    disabled={pending}
+                    onClick={() => remove(rider)}
+                  />
+                ) : null}
+              </DetailListRow>
+            ))}
+          </DetailList>
+        </div>
+      ) : null}
     </DetailSection>
+  );
+}
+
+/** Booked is the default and says nothing; every other standing shows. */
+function Attendance({ rider }: { rider: Person }) {
+  if (!rider.attendance || rider.attendance.value === "booked") return null;
+  return (
+    <AttendanceBadge
+      attendance={rider.attendance.value}
+      label={rider.attendance.label}
+      className="shrink-0"
+    />
   );
 }
 
@@ -334,6 +397,7 @@ function RiderRow({
         </SortableItemHandle>
       </span>
       <PersonChip {...rider} />
+      <Attendance rider={rider} />
       <Pickup
         place={rider.pickup}
         label={pickupLabel}

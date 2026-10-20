@@ -25,12 +25,17 @@ export const loadAccount = cache(async (): Promise<AccountData | null> => {
     getLocale(),
     headers(),
     calendarFeeds.getFeed(session.user.id),
-    passengers.countRidersRemovedWith(session.user.id),
+    passengers.listPassengersManagedBy(session.user.id),
   ]);
+  const goneWith = passengers.othersOf(riders).map((rider) => ({
+    id: rider.id,
+    name: `${rider.firstName} ${rider.lastName}`.trim(),
+  }));
+  const perspectives = availablePerspectives(session.access);
 
   const email = person?.email ?? session.user.email;
   const caretaker =
-    (person?.managesOthers === true || riders > 0) &&
+    (person?.managesOthers === true || goneWith.length > 0) &&
     availablePerspectives(session.access).includes("passenger");
   const seed = avatarSeed(email);
 
@@ -64,7 +69,7 @@ export const loadAccount = cache(async (): Promise<AccountData | null> => {
     },
     perspectives: perspectiveChoices(session.access, dict),
     canDeleteAccount: canDeleteOwnAccount(session.access),
-    ridersRemovedWithAccount: riders,
+    ridersRemovedWithAccount: goneWith,
     notifications: {
       push: person?.notifyPush ?? false,
       email: person?.notifyEmail ?? false,
@@ -73,9 +78,7 @@ export const loadAccount = cache(async (): Promise<AccountData | null> => {
     },
     hasRides:
       (person?._count.passengers ?? 0) > 0 ||
-      availablePerspectives(session.access).some(
-        (perspective) => perspective !== "admin",
-      ),
+      perspectives.some((perspective) => perspective !== "admin"),
     calendarFeed: feed
       ? {
           url: calendarFeedUrl(feed.token),
@@ -85,5 +88,8 @@ export const loadAccount = cache(async (): Promise<AccountData | null> => {
     guidesHref: docsEntryHref(language),
     signOutLabel: dict.common.signOut,
     cancelLabel: dict.common.back,
+    riderNeeds: perspectives.includes("passenger")
+      ? dict.passenger.riderNeeds
+      : null,
   };
 });

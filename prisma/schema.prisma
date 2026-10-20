@@ -67,8 +67,12 @@ model User {
   chatReactions        ChatReaction[]
   rideAssignments      RideAssignment[]         @relation("rideAssignee")
   rideAssignmentsMade  RideAssignment[]         @relation("rideAssigner")
+  rideRequests         RideRequest[]            @relation("rideRequester")
+  rideRequestsDecided  RideRequest[]            @relation("rideRequestDecider")
   rideBookingsMade     RideRosterEntry[]        @relation("rideBooker")
   ridesCancelled       Ride[]                   @relation("rideCanceller")
+  ridesCompleted       Ride[]                   @relation("rideCompleter")
+  rideDebriefs         RideDebrief[]            @relation("rideDebriefs")
   rideLogEntries       RideLogEntry[]           @relation("rideLogActor")
   calendarFeed         CalendarFeed?
   uploadedFiles        StoredFile[]             @relation("fileUploader")
@@ -198,6 +202,10 @@ model Organization {
   rides                Ride[]
   storageSites         StorageLocationChapter[]
   ownedLocations       StorageLocation[]        @relation("ownedLocations")
+  rideLocations        RideLocation[]
+  operatingWindows     ChapterOperatingWindow[]
+  closures             ChapterClosure[]
+  rideRequests         RideRequest[]
 
   @@unique([slug])
   @@index([countryId])
@@ -291,8 +299,59 @@ model ChapterSettings {
   postRideInstructions String?      @db.Text
   damageAlertPush      Boolean      @default(true)
   updatedAt            DateTime     @updatedAt
+  bookingLeadTimeHours Int          @default(48)
+  bookingHorizonDays   Int          @default(60)
+  defaultRideMinutes   Int          @default(60)
+  defaultStayMinutes   Int          @default(60)
+
+  /// Pilots of the chapter may sign up for open rides themselves.
+  pilotsMaySelfAssign    Boolean @default(true)
+  /// Pilots a newly scheduled ride asks for.
+  requiredPilotsDefault  Int     @default(1)
+  /// How far ahead of a ride an understaffed ride is flagged, and a pilot can no longer withdraw.
+  staffingCheckLeadHours Int     @default(48)
+
+  /// Whether a Ride Request waits for an admin or becomes a ride when a trishaw is free.
+  schedulingMethod             SchedulingMethod @default(scheduler)
+  /// Admins get a push for each new Ride Request.
+  requestAlertPush             Boolean          @default(true)
+  /// How long before a ride its riders' accounts are reminded and asked to confirm their seat.
+  riderReminderLeadMinutes     Int              @default(1440)
+  /// How long before a ride its pilots are reminded, with the pickup pack.
+  volunteerReminderLeadMinutes Int              @default(1440)
+  /// How far ahead of a ride an empty roster is flagged for cancellation.
+  demandCheckLeadHours         Int              @default(24)
 
   @@map("chapter_settings")
+}
+
+enum SchedulingMethod {
+  scheduler
+  auto
+}
+
+model ChapterOperatingWindow {
+  id          String       @id @default(cuid())
+  chapterId   String
+  chapter     Organization @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  weekday     Int
+  startMinute Int
+  endMinute   Int
+
+  @@unique([chapterId, weekday, startMinute])
+  @@map("chapter_operating_window")
+}
+
+model ChapterClosure {
+  id        String       @id @default(cuid())
+  chapterId String
+  chapter   Organization @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  date      DateTime     @db.Date
+  reason    String?      @db.VarChar(200)
+  createdAt DateTime     @default(now())
+
+  @@unique([chapterId, date])
+  @@map("chapter_closure")
 }
 
 model ChapterApplication {
@@ -334,7 +393,7 @@ model Passenger {
   chapterId       String
   chapter         Organization @relation(fields: [chapterId], references: [id], onDelete: Cascade)
   managedByUserId String
-  managedBy       User         @relation("manages", fields: [managedByUserId], references: [id], onDelete: Cascade)
+  managedBy       User         @relation("manages", fields: [managedByUserId], references: [id], onDelete: Restrict)
   userId          String?      @unique
   user            User?        @relation("self", fields: [userId], references: [id], onDelete: SetNull)
 
@@ -354,11 +413,19 @@ model Passenger {
   updatedAt DateTime @updatedAt
 
   rideRoster   RideRosterEntry[]
-  profile      PersonProfile?    @relation("profileOfPassenger")
+  profile      PersonProfile?         @relation("profileOfPassenger")
   careRequests CareRequest[]
+  rideRequests RideRequestPassenger[]
+  activity     ActivityEvent[]
+
+  rideLocationId      String?
+  rideLocation        RideLocation? @relation(fields: [rideLocationId], references: [id], onDelete: SetNull)
+  needsWheelchairBike Boolean       @default(false)
+  note                String?       @db.Text
 
   @@index([chapterId])
   @@index([managedByUserId])
+  @@index([rideLocationId])
   @@map("passenger")
 }
 
@@ -474,6 +541,7 @@ enum ActivityType {
   trainingExemptionGranted
   trainingExemptionRevoked
   inPersonTrainingConfirmed
+  riderHandedOver
 }
 
 model ActivityEvent {
@@ -484,12 +552,16 @@ model ActivityEvent {
   actor       User?         @relation("activityActor", fields: [actorUserId], references: [id], onDelete: SetNull)
   chapterId   String?
   chapter     Organization? @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  /// A rider the line is about, when it is one without an account of their own.
+  passengerId String?
+  passenger   Passenger?    @relation(fields: [passengerId], references: [id], onDelete: Cascade)
   type        ActivityType
   payload     Json?
   createdAt   DateTime      @default(now())
 
   @@index([userId, createdAt])
   @@index([chapterId, createdAt])
+  @@index([passengerId, createdAt])
   @@map("activity_event")
 }
 
@@ -625,6 +697,10 @@ model Conversation {
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
 
+  /// The ride this conversation belongs to, when it is a ride chat.
+  rideId String? @unique
+  ride   Ride?   @relation(fields: [rideId], references: [id], onDelete: SetNull)
+
   members  ConversationMember[]
   messages ChatMessage[]
 
@@ -729,6 +805,33 @@ enum RideLogType {
   riderRemoved
   rosterReordered
   note
+  seatConfirmed
+  seatCancelled
+  checkedIn
+  checkInUndone
+  walkUpAdded
+  walkUpRemoved
+  pilotNoShow
+  completed
+  reopened
+  debriefed
+}
+
+/// Where a rider stands on a ride, from booking to the closed roster.
+enum RosterAttendance {
+  booked
+  confirmed
+  checkedIn
+  completed
+  noShow
+  cancelled
+}
+
+/// Where a pilot stands on a ride; only a closed roster turns `signedUp` into `completed`.
+enum AssignmentAttendance {
+  signedUp
+  completed
+  noShow
 }
 
 enum TrishawStatus {
@@ -807,6 +910,7 @@ model TrishawType {
   archivedAt           DateTime?
   createdByUserId      String?
   trishaws             Trishaw[]
+  rideRequests         RideRequest[]
   photos               TrishawTypePhoto[]
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
@@ -1020,6 +1124,23 @@ model Ride {
   /// Shared by every ride of a recurring series, once recurrence exists.
   seriesId       String?
 
+  /// An event ride the chapter's riders see and can book a seat on themselves.
+  announced         Boolean   @default(false)
+  /// Set the first time the event is announced, so its riders are told once.
+  announcedAt       DateTime?
+  /// Set once the staffing check has flagged the ride, so it is flagged only once.
+  staffingCheckedAt DateTime?
+
+  /// Each set in the same transaction as the reminder or flag it records, so a retried sweep sends nothing twice.
+  riderReminderSentAt     DateTime?
+  volunteerReminderSentAt DateTime?
+  demandCheckedAt         DateTime?
+
+  /// The moment the roster was closed (lifecycle 6D), which is when the ride counts.
+  completedAt       DateTime?
+  completedByUserId String?
+  completedBy       User?     @relation("rideCompleter", fields: [completedByUserId], references: [id], onDelete: SetNull)
+
   cancelledAt            DateTime?
   cancellationReasonCode RideCancellationReason?
   cancellationNote       String?                 @db.Text
@@ -1032,15 +1153,59 @@ model Ride {
   damages     TrishawDamage[]
   log         RideLogEntry[]
   photos      RidePhoto[]
+  debriefs    RideDebrief[]
+
+  conversation Conversation?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  rideLocationId String?
+  rideLocation   RideLocation? @relation(fields: [rideLocationId], references: [id], onDelete: SetNull)
+
+  request RideRequest?
 
   @@index([chapterId, startsAt])
   @@index([status, startsAt])
   @@index([seriesId])
   @@index([cancelledByUserId])
+  @@index([completedByUserId])
+  @@index([rideLocationId, startsAt])
   @@map("ride")
+}
+
+enum RideLocationKind {
+  careCenter
+  residence
+  publicPlace
+  other
+}
+
+model RideLocation {
+  id             String           @id @default(cuid())
+  chapterId      String
+  chapter        Organization     @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  kind           RideLocationKind @default(careCenter)
+  name           String           @db.VarChar(160)
+  address        String?          @db.Text
+  latitude       Float?
+  longitude      Float?
+  contactName    String?          @db.VarChar(120)
+  contactPhone   String?          @db.VarChar(40)
+  contactEmail   String?          @db.VarChar(254)
+  notes          String?          @db.Text
+  typicalRideKm  Decimal?         @db.Decimal(6, 1)
+  defaultMinutes Int?
+  archivedAt     DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  rides        Ride[]
+  passengers   Passenger[]
+  rideRequests RideRequest[]
+
+  @@index([chapterId, archivedAt])
+  @@map("ride_location")
 }
 
 model RidePhoto {
@@ -1095,16 +1260,17 @@ model RideTrishaw {
 }
 
 model RideAssignment {
-  id               String   @id @default(cuid())
+  id               String               @id @default(cuid())
   rideId           String
-  ride             Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  ride             Ride                 @relation(fields: [rideId], references: [id], onDelete: Cascade)
   userId           String
-  user             User     @relation("rideAssignee", fields: [userId], references: [id], onDelete: Cascade)
-  role             RideRole @default(pilot)
+  user             User                 @relation("rideAssignee", fields: [userId], references: [id], onDelete: Cascade)
+  role             RideRole             @default(pilot)
+  attendance       AssignmentAttendance @default(signedUp)
   /// Null when the pilot signed up themselves.
   assignedByUserId String?
-  assignedBy       User?    @relation("rideAssigner", fields: [assignedByUserId], references: [id], onDelete: SetNull)
-  createdAt        DateTime @default(now())
+  assignedBy       User?                @relation("rideAssigner", fields: [assignedByUserId], references: [id], onDelete: SetNull)
+  createdAt        DateTime             @default(now())
 
   @@unique([rideId, userId, role])
   @@index([userId])
@@ -1114,22 +1280,45 @@ model RideAssignment {
 }
 
 model RideRosterEntry {
-  id             String    @id @default(cuid())
+  id             String           @id @default(cuid())
   rideId         String
-  ride           Ride      @relation(fields: [rideId], references: [id], onDelete: Cascade)
-  passengerId    String
-  passenger      Passenger @relation(fields: [passengerId], references: [id], onDelete: Cascade)
-  position       Int       @default(0)
+  ride           Ride             @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  /// Null for a walk-up enrolled on the spot (lifecycle 6B), who has no rider record.
+  passengerId    String?
+  passenger      Passenger?       @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  guestName      String?          @db.Text
+  position       Int              @default(0)
+  attendance     RosterAttendance @default(booked)
+  confirmedAt    DateTime?
+  cancelledAt    DateTime?
   checkedInAt    DateTime?
   bookedByUserId String?
-  bookedBy       User?     @relation("rideBooker", fields: [bookedByUserId], references: [id], onDelete: SetNull)
-  createdAt      DateTime  @default(now())
+  bookedBy       User?            @relation("rideBooker", fields: [bookedByUserId], references: [id], onDelete: SetNull)
+  createdAt      DateTime         @default(now())
 
   @@unique([rideId, passengerId])
   @@index([passengerId])
   @@index([rideId, position])
   @@index([bookedByUserId])
   @@map("ride_roster_entry")
+}
+
+/// A pilot's report after a ride (story 31): one per pilot and ride, written
+/// again as often as they like.
+model RideDebrief {
+  id         String   @id @default(cuid())
+  rideId     String
+  ride       Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?    @relation("rideDebriefs", fields: [userId], references: [id], onDelete: SetNull)
+  distanceKm Decimal? @db.Decimal(7, 2)
+  note       String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([rideId, userId])
+  @@index([userId])
+  @@map("ride_debrief")
 }
 
 /// A secret address a calendar app subscribes to (COD-182). Only `key` is kept;
@@ -1434,4 +1623,83 @@ model TrainingExemption {
   @@index([grantedByUserId])
   @@index([chapterId])
   @@map("training_exemption")
+}
+
+enum RideRequestStatus {
+  pending
+  scheduled
+  declined
+  withdrawn
+}
+
+/// Lifecycle phase 1: a rider, or the account booking for them, asks the
+/// chapter for a ride. The chapter schedules it (the ride's way there is
+/// `rideId`, the way back hangs off that ride) or declines it.
+model RideRequest {
+  id        String            @id @default(cuid())
+  chapterId String
+  chapter   Organization      @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  status    RideRequestStatus @default(pending)
+  model     RideModel
+
+  /// Null for a request taken without an account, once guest intake exists.
+  requesterUserId String?
+  requester       User?   @relation("rideRequester", fields: [requesterUserId], references: [id], onDelete: SetNull)
+  contactName     String? @db.VarChar(120)
+  contactPhone    String? @db.VarChar(40)
+  contactEmail    String? @db.VarChar(254)
+
+  rideLocationId  String?
+  rideLocation    RideLocation? @relation(fields: [rideLocationId], references: [id], onDelete: SetNull)
+  pickupName      String?       @db.VarChar(160)
+  pickupAddress   String?       @db.Text
+  pickupLatitude  Float?
+  pickupLongitude Float?
+
+  destinationName      String? @db.VarChar(160)
+  destinationAddress   String? @db.Text
+  destinationLatitude  Float?
+  destinationLongitude Float?
+  roundTrip            Boolean @default(true)
+
+  /// The window asked for, as instants of the chapter's wall clock.
+  requestedStartsAt DateTime
+  requestedEndsAt   DateTime
+
+  trishawTypeId String?
+  trishawType   TrishawType? @relation(fields: [trishawTypeId], references: [id], onDelete: SetNull)
+  note          String?      @db.Text
+
+  decidedByUserId String?
+  decidedBy       User?     @relation("rideRequestDecider", fields: [decidedByUserId], references: [id], onDelete: SetNull)
+  decidedAt       DateTime?
+  decisionNote    String?   @db.Text
+
+  /// The way there. A round trip's way back is that ride's `returnLeg`.
+  rideId String? @unique
+  ride   Ride?   @relation(fields: [rideId], references: [id], onDelete: SetNull)
+
+  passengers RideRequestPassenger[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([chapterId, status, requestedStartsAt])
+  @@index([requesterUserId, createdAt])
+  @@index([rideLocationId])
+  @@index([trishawTypeId])
+  @@index([decidedByUserId])
+  @@map("ride_request")
+}
+
+model RideRequestPassenger {
+  requestId   String
+  request     RideRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  passengerId String
+  passenger   Passenger   @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  position    Int         @default(0)
+
+  @@id([requestId, passengerId])
+  @@index([passengerId])
+  @@map("ride_request_passenger")
 }

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { BellOff } from "lucide-react";
+import { BellOff, Bike } from "lucide-react";
 import { formatBadge } from "@/components/notifications/inbox-row";
+import { Badge } from "@/components/ui/badge";
 import { formatDate, type Locale } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
@@ -88,6 +89,12 @@ export function ConversationRow({
           <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
             {item.display.name || strings.deletedAccount}
           </span>
+          {item.origin === "ride" ? (
+            <Badge className="self-center bg-mint-tint text-ink">
+              <Bike aria-hidden />
+              {strings.list.rideBadge}
+            </Badge>
+          ) : null}
           {item.lastMessageAt ? (
             <RelativeTime
               value={item.lastMessageAt}

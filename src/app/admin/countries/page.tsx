@@ -3,6 +3,7 @@ import { cacheLife } from "next/cache";
 import { Skeleton } from "@/components/ui/skeleton";
 import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
+import { rideLocations } from "@/features/ride-locations";
 import { requireAdminScope } from "@/lib/auth-guards";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
@@ -64,11 +65,13 @@ async function Countries({ searchParams }: PageProps) {
     chapters.listCountries(),
   ]);
   const countryIds = countries.map((country) => country.id);
-  const [admins, footprints, fleetFootprints] = await Promise.all([
-    chapters.listAdminsByCountry(countryIds),
-    chapters.listCountryFootprints(countryIds),
-    fleet.listCountryFleetFootprints(countryIds),
-  ]);
+  const [admins, footprints, fleetFootprints, rideLocationCounts] =
+    await Promise.all([
+      chapters.listAdminsByCountry(countryIds),
+      chapters.listCountryFootprints(countryIds),
+      fleet.listCountryFleetFootprints(countryIds),
+      rideLocations.countCountryRideLocations(countryIds),
+    ]);
 
   const rows: CountryRow[] = countries.map((country) => {
     const footprint = footprints.get(country.id);
@@ -83,6 +86,7 @@ async function Countries({ searchParams }: PageProps) {
           members: footprint?.members,
           passengers: footprint?.passengers,
           rides: footprint?.rides,
+          rideLocations: rideLocationCounts.get(country.id),
           ...fleetFootprints.get(country.id),
         },
         dict.admin.deletion,

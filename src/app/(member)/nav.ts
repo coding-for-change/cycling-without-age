@@ -145,7 +145,10 @@ export type MemberPrimaryAction = { href: string; icon: IconKey };
 export const primaryAction = (
   perspective: MemberPerspective,
 ): MemberPrimaryAction => ({
-  href: `${PERSPECTIVE_HOME[perspective]}/rides`,
+  href:
+    perspective === "passenger"
+      ? `${PERSPECTIVE_HOME.passenger}/rides/new`
+      : `${PERSPECTIVE_HOME[perspective]}/rides`,
   icon: "rides",
 });
 

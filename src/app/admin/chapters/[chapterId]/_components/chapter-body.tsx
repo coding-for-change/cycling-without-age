@@ -12,6 +12,7 @@ import {
   PropertyValue,
 } from "../../../_components/properties";
 import { ActivityFeed } from "../../../_components/activity-feed";
+import { withHandOverNames } from "../../../_components/hand-over-names";
 import { fieldLabels } from "../../../_components/field-labels";
 import { historyShown } from "../../../_components/history-more";
 import {
@@ -24,6 +25,7 @@ import { JoinLinkActions } from "../../../_components/join-link-actions";
 import { activity } from "@/lib/activity";
 import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
+import { rideLocations } from "@/features/ride-locations";
 import { joinUrl } from "@/lib/app-url";
 import { formatDate, resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
@@ -53,6 +55,7 @@ export async function ChapterBody({
     chapter,
     footprint,
     fleetFootprint,
+    rideLocationCount,
     events,
     all,
     dict,
@@ -62,6 +65,7 @@ export async function ChapterBody({
     chapters.getChapter(chapterId),
     chapters.getChapterFootprint(chapterId),
     fleet.getChapterFleetFootprint(chapterId),
+    rideLocations.countChapterRideLocations(chapterId),
     activity.listForChapter(chapterId, historyTake(shown)),
     chapters.listChapters(),
     getDictionary(),
@@ -227,6 +231,7 @@ export async function ChapterBody({
                 passengers: footprint.passengers,
                 pending: footprint.pendingApplications,
                 rides: footprint.rides,
+                rideLocations: rideLocationCount,
                 ...fleetFootprint,
               },
               dict.admin.deletion,
@@ -255,9 +260,12 @@ export async function ChapterBody({
           showMoreLabel={dict.admin.history.showMore}
         >
           <ActivityFeed
-            events={events.slice(0, shown)}
+            events={await withHandOverNames(events.slice(0, shown))}
             viewerId={session.user.id}
-            labels={dict.admin.history}
+            labels={{
+              ...dict.admin.history,
+              riderHandedOver: dict.admin.passengers.detail.handedOver,
+            }}
             empty={detail.historyEmpty}
             notation={notation}
             words={language}

@@ -223,10 +223,39 @@ off, `user.onboarded` carries the welcome note into its payload,
 admin edits the row on `/admin/settings` through `app/admin/settings/actions`, behind
 `requireChapterAdmin(chapterId)` — the guard that makes these a chapter's own switches.
 
-It is also the home for the per-chapter notification intervals the RFP asks for (how long
-before a ride a reminder goes out, how long an unanswered request waits): a column, a
-default in `DEFAULT_CHAPTER_SETTINGS`, and the kinds read it the same way. See
-[EVENTS.md](EVENTS.md) → *What a kind decides*.
+It is also the home for the per-chapter notification intervals the RFP asks for: a column, a
+default in `DEFAULT_CHAPTER_SETTINGS`, and the readers ask the facade the same way. The ride
+ones are `staffingCheckLeadHours` (COD-262) and `riderReminderLeadMinutes`,
+`volunteerReminderLeadMinutes` (30 min, 2 h, 24 h or 48 h) and `demandCheckLeadHours` (2, 12,
+24 or 48 h) on the "Reminders" card (COD-263). See [EVENTS.md](EVENTS.md) → *What a kind
+decides*.
+
+The booking policy lives here too (COD-260): `bookingLeadTimeHours`, `bookingHorizonDays`,
+`defaultRideMinutes` and `defaultStayMinutes`. A column ships only with a consumer: today
+the scheduling drawer starts a new ride at `defaultRideMinutes`, a round trip's stay at
+`defaultStayMinutes`, and warns (never blocks) when a ride is booked on shorter notice or
+further ahead than the policy. Later PRs append their own columns at the end of the model
+and of `chapterSettingsInput`, and each adds one card to `/admin/settings`. The same policy is
+what the Ride Request Form offers and `submit-ride-request` enforces (COD-261), which also
+added `schedulingMethod` (`scheduler` · `auto`, on the Booking card) and `requestAlertPush`
+(on the notification card).
+
+### Riding hours (the Chapter Operating Calendar)
+
+When a chapter rides is two tables owned by `features/chapters`: `ChapterOperatingWindow`
+(ISO weekday 1–7 plus start and end as wall-clock minutes) and `ChapterClosure` (a calendar
+date and an optional reason). Windows are replaced as a set (`chapters.setOperatingWindows`,
+validated by `operatingHoursInput`: on the 15-minute grid, at least 30 minutes, no overlap
+within a day). `chapters.getOperatingHours(chapterId)` returns the plain
+`{ windows, closures }` shape that the pure helpers in `src/lib/operating-hours.ts` read:
+`windowsOn`, `fitsHours`, `closedRanges`, `openingBand`. They work on the
+chapter's wall clock (a ride at 10:00 on a DST Sunday is inside a 10:00–16:00 window), and
+no windows at all means "always open", so a chapter that never set hours sees no warnings.
+
+Consumers: the week grid shades closed hours and widens its band to the configured hours
+(single-chapter scope only, since hours belong to one chapter), and the scheduling drawer
+warns "Outside riding hours (Tue 09:00–12:00)" or "Chapter closed that day". Nothing is
+refused because of hours — an admin may always schedule outside them.
 
 ### The hierarchy
 
@@ -352,6 +381,33 @@ the chapter's pilots see them (`seesHealthDetails`), never another rider.
 The schema cascades the rows, but objects in the bucket survive a cascade, so
 `use-cases/delete-account` collects the photo keys of the account and of the riders it manages
 before `accounts.deleteUser`, then deletes the objects.
+
+### Handing a rider over (COD-261)
+
+A rider without an account of their own is always managed by exactly one account. When that
+account leaves the chapter or should no longer book, an admin of the rider's chapter hands the
+rider over from the rider's page (`/admin/passengers/[id]`, "Hand over…", `?handover=1`):
+to a member of the rider's chapter, or to someone new, who gets an account (`accounts`), a
+passenger membership (`membership`) and the care invitation. A contact that already has an
+account outside the chapter is refused (`notChapterMember`), so nobody is put in charge of a
+stranger's rider by typing an address. `passengers.handOverRider` moves `managedByUserId`
+under a compare-and-set on the old manager and emits `rider.handedOver`; bookings, profile and
+history stay with the rider. The rider's open requests move along
+(`rideRequests.handOverOpenRequests`): one for this rider alone now belongs to the new manager,
+a shared one goes on without this rider. Each manager hears it in their own words — the old one
+is not told who took over — but not the admin who did it, nor a new account its invitation
+already speaks to; one `createMany` writes the hand-over into both their histories
+(`riderHandedOver`). Those lines carry the rider in
+`ActivityEvent.passengerId`, which is how the rider's page reads them back and why deleting
+the rider deletes them; the payload holds ids only and the names are looked up as the
+history is read (`app/admin/_components/hand-over-names.ts`).
+
+`Passenger.managedBy` is `onDelete: Restrict`. Deleting an account that still manages riders
+without an account fails in the database, so `delete-account` deletes them only when asked to
+(`removeRiders`), after the dialog named them: the account's own dialog lists them and says to
+ask the chapter for a hand-over first, the member page tells the superadmin to hand them over
+from their own pages. Riders that go give up their upcoming seats first, and the open ride
+requests of the account and of those riders are withdrawn.
 
 ## Command bar (COD-172)
 
@@ -617,6 +673,11 @@ no `chapterId` and surface only when the reader's scope is global —
 `activity.listForUser(userId, { chapterIds, includeGlobal })` defaults `includeGlobal` to
 `false` so a narrow read cannot leak them by omission.
 
+A line may also name a rider without an account of their own (`passengerId`, COD-261): such a
+rider has no account to hang a history on, so `activity.listForPassenger` reads the lines about
+them, and the rider's deletion takes those lines along. A builder may return several lines,
+which `activity.recordMany` writes in one statement.
+
 Labels live in the dictionary (`admin.history.<ActivityType>`) with a single `{actor}`
 placeholder, filled with the actor's name, "You", or "Someone" — the feed renders copy, the
 table stores facts.
@@ -818,9 +879,10 @@ schema)` reads it back on the far side and clears it on mount.
 `readDraft` is a pure function so it can be tested without a browser, and it is deliberately
 **silent** about every failure — wrong version, wrong kind, older than an hour, malformed
 JSON, or a payload that fails the caller's Zod schema all return `null` and the screen falls
-back to its no-draft copy. Nothing from `sessionStorage` is ever trusted as input to a write:
-the Book-a-ride confirmation only *displays* the draft. When ride requests become real rows,
-the draft stays a UI convenience and the Server Action re-validates from scratch.
+back to its no-draft copy. Nothing from `sessionStorage` is ever trusted as input to a write;
+a draft is a UI convenience and the Server Action re-validates from scratch. Since COD-261 no
+screen uses it: Book a ride on `/join/[slug]` carries the chapter in the link instead, and the
+Ride Request Form starts empty.
 
 ## Chat
 
@@ -1024,9 +1086,167 @@ and deleting is what frees its square on the calendar (`rideNotCancelled` for an
 - **`seriesId`** is on every ride and unused. Recurrence will fill it; adding it now means no
   backfill then.
 
+### Staffing and self-service (COD-262)
+
+Lifecycle phase 3, and the event half of 4B-b. Three chapter settings drive it, each with its
+consumer in the same change: `pilotsMaySelfAssign`, `requiredPilotsDefault` (what the drawer
+starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 168).
+
+- **Open rides.** A pilot sees the scheduled, future rides of the chapters they pilot for that
+  let pilots sign up, still short of `requiredPilots` and without them on it
+  (`rides.listOpenRidesForPilot`, behind `use-cases/open-rides.ts`, which reads the setting).
+  Whether a ride is still short is only known once its pilots are counted, so the 60-day window
+  is read in batches on a `(startsAt, id)` cursor until the page holds 30 open rides.
+  The open shape (`openSelect`) carries time, place, model and counts — no rider names, no
+  phone numbers, no note. `/pilot/rides/[rideId]` shows that shape to a pilot who is not on the
+  ride, and the assigned shape to one who is.
+- **Signing up and stepping back.** `use-cases/sign-up-for-ride.ts` checks the `pilot` role on
+  the membership row of the ride's own chapter (a country admin or superadmin is not a pilot
+  there) and the chapter's setting, then `rides.selfAssign` locks the ride row and recounts the
+  pilots under the lock (`rideFullyStaffed`), so two pilots taking the last seat queue up. A
+  round trip is one outing: `requireRide` locks both legs, signing up for one takes the other
+  while it still needs a pilot, and stepping back leaves both while there is time — one
+  message for both, through the events' `pair`.
+  Every pilot count — signing up, an admin's assignment, the model rules, the admin's
+  "Unstaffed" badge and week grid, the staffing check — counts only pilots still holding the
+  role in the ride's chapter; the admin still sees a demoted one, marked, to take them off.
+  `withdrawFromRide` passes the chapter's lead to `rides.withdraw`, which removes only the
+  pilot's own row and refuses inside the staffing window (`tooLateToWithdraw`: call the
+  chapter). The Actions live in `app/(member)/pilot/rides/actions.ts`, rate-limited, behind
+  `requireAuth` and `hasChapterRole(…, "pilot")` on the ride's chapter read from the database.
+- **Contact exchange on match** (stories 24a/24b). The assigned pilot's select carries each
+  rider's own phone, or the managing account's name and phone; the rider's account's select
+  carries the assigned pilots' phones. Neither carries an email, and the open shape neither.
+- **Pickup pack.** From 24 hours before the ride (or from the close of the chapter's staffing
+  window, when that is later, so a pilot who can still step back never holds the code) until it
+  ends, the assigned pilot's page shows
+  each trishaw's storage location and access code (`use-cases/finish-ride.ts` → `pickupView`,
+  rendered by `features/fleet/components/storage-access-card.tsx`, which the finish page uses
+  too).
+- **Staffing check** (3D). `use-cases/ride-sweep.ts` runs every five minutes in the worker
+  (`MONITORS["ride-sweep"]`). `staffing-check.ts` groups the chapters by their lead and reads,
+  per group, only the unchecked rides already inside that window, and `rides.checkStaffing` stamps
+  `Ride.staffingCheckedAt` and emits `ride.understaffed` in one transaction under the ride's
+  lock — a retried sweep finds the stamp and stays quiet. The way there checks its way back
+  along, so a round trip short both ways is one warning. The sweep runs on the worker that
+  dispatches every outbox event, so one run checks at most 50 rides and the next carries on, and
+  a ride whose check fails is logged and passed over. Moving a ride clears the stamp. A
+  pilot stepping back clears the stamp of the legs they left, and a pilot demoted or removed
+  in the chapter clears it on every upcoming ride they were on (`use-cases/leave-ride-crews.ts`,
+  the `member.roleChanged` listener), so a seat that empties after the check is checked again. A
+  ride scheduled already inside its window is stamped as it is scheduled (the admin sees what it
+  is short of), and `20261013110000_ride_staffing_checked_backfill` stamps the rides already
+  inside their window when this ships, so the first sweep does not flag them all at once.
+- **Ride chat.** A `Conversation` with `origin: ride` and a unique `rideId`, owned by nobody.
+  The `syncRideChat` worker listener (`ride.pilotAssigned`, `ride.pilotUnassigned`,
+  `ride.riderBooked`, `ride.riderRemoved`, and `rider.handedOver` for each ride still ahead of the
+  rider) runs `use-cases/ride-chat.ts`: once a pilot is on the
+  ride it opens the chat, and from then on keeps its members equal to the ride's pilots, its
+  riders' accounts and the chapter's admins. Riders never learn of each other, so the riders'
+  accounts join only when they are one household — a single rider, or one account booking every
+  rider on the ride; a ride with riders of different households, and every event, keeps only the
+  pilots and admins (`chat.syncRideConversation`, idempotent). A demotion or removal in the chapter (`member.roleChanged`) syncs every ride chat
+  the person is in, so a former pilot or admin leaves them at once. Two syncs may read the roster in one order and write it in the other, so a sync
+  that changed the members reads the roster again and writes until a read finds nothing to
+  change; the roster is read outside the conversation's lock, so a waiting sync never needs a
+  second pool connection. A racing creator that loses the unique `rideId` joins that loop.
+  Completing the ride freezes it (below).
+- **Announced events** (4B-b). `Ride.announced` is set in the drawer or the detail page's
+  "Riders can book" panel, for event rides only (`eventsOnly`). Announced events show on the
+  passenger start screen and `/passenger/rides` for the chapters of the riders the account
+  manages, until every one of them in the event's chapter is booked on it (it is then among the
+  account's own rides), through `announcedSelect`: photos, story, place and seats left, never another
+  rider. "Book a seat" (`app/(member)/passenger/rides/actions.ts`, rate-limited) goes through
+  `use-cases/book-event-seat.ts` — riders the account manages, in the event's chapter — and
+  `rides.bookSeats` locks the ride, recounts the roster against `capacity` and refuses a booking
+  that would overfill it as a whole (`rideFull`). The photos of an announced event are readable
+  by every member of its chapter (`rides.photoReadRule`).
+
 The admin surfaces are the week grid at `/admin/rides` (`?new=1` opens the scheduling drawer,
 and ⌘K "Schedule a ride" lands there) and the detail page `/admin/rides/[rideId]`, whose
 trishaws panel allocates trishaws in place.
+
+### Ride day and after (COD-263)
+
+Lifecycle phases 4C to 7: reminders, seat confirmation, check-in, walk-ups, roster closure,
+debrief and the frozen ride chat. One migration, `20261016120000_ride_execution`.
+
+- **Attendance.** `RideRosterEntry.attendance` is `booked → confirmed → checkedIn → completed`,
+  or `noShow`, or `cancelled`; `RideAssignment.attendance` is `signedUp → completed`, or
+  `noShow`. A seat the rider's side gives up keeps its row as `cancelled`, so Report 2 still
+  sees who signed up; `ACTIVE_SEAT` in `rides/services` keeps it out of everything that counts
+  places or people — `_count.roster`, the room check, the agendas and calendar feed, the
+  ride's participants (so its chat and its notifications), the announced events' bookings.
+  Booking that rider again takes the same row back. An admin taking a rider off still deletes
+  the row: that rider never signed up.
+- **Reminders and the demand check** (4C, 5B). `use-cases/ride-reminders.ts` runs three passes
+  from `ride-sweep`, built like the staffing check: chapters grouped by their own lead, only the
+  rides already inside it read, at most 50 a run. `rides.sendReminder` stamps
+  `riderReminderSentAt` / `volunteerReminderSentAt` and emits `ride.riderReminderDue` /
+  `ride.volunteerReminderDue`, and `rides.checkDemand` stamps `demandCheckedAt` and emits
+  `ride.noDemand` for an empty roster — each in one transaction under the ride's lock, so a
+  retried sweep or a retried dispatch sends nothing twice. The way back of a round trip goes
+  with its way there (one message, through `pair`), unless the way there has nobody to remind
+  itself. A ride with nobody to remind is stamped without an event, and the lead is read again
+  under the lock, so a ride moved away after the sweep listed it waits. Moving a ride's start
+  clears all three stamps with `staffingCheckedAt` and, while the ride is still ahead of its
+  door, asks every confirmed or checked-in seat again (`booked`, walk-ups excepted); a new end
+  only clears the staffing stamp. A ride scheduled already inside
+  its demand window is stamped as checked, like the staffing check. The four checks of a sweep
+  are independent: one that fails is logged, the others run, and the run then fails for the
+  monitor. Rides already inside a window when this ships get their reminder on the first sweep:
+  a late "your ride is coming up" still helps, so there is no backfill this time.
+- **Seat confirmation** (5B-b). The rider reminder links to `/passenger/rides/{id}`, where the
+  account answers per rider: Confirm seat, Cancel my seat, or take a given-up seat back while
+  there is room (`app/(member)/passenger/rides/actions.ts` → `use-cases/seat-confirmation.ts`,
+  which accepts only riders of `passengers.listRidersOfAccount`). Both answers close when the
+  ride starts and reach the other leg of a round trip still ahead — a confirmation confirms a
+  booked seat there, and takes a given-up one back only with this one and only while it has
+  room. The last seat given up emits `ride.riderRemoved` with `rosterNowEmpty`, which tells the
+  chapter's admins, and a seat taken back on an emptied roster emits `ride.rosterRefilled`, so
+  they hear it has a rider again; the two legs of a round trip are one message only when both are left empty
+  or both are not. A given-up seat keeps the ride's page open while the ride is ahead, without
+  the pilots' phone numbers; afterwards the ride is no longer the account's. For the ride
+  chat's one-household rule a given-up seat still counts (`listRideParticipants().household`),
+  so one family leaving never lets another into what was said in the chat about it.
+- **Check-in and walk-ups** (6B). The door opens two hours before the start
+  (`CHECK_IN_LEAD_MINUTES`). A pilot keeps it until the finish page closes a day after the ride
+  ends; an admin may still record a ride later, for as long as its roster is not closed
+  (`rides.checkInOpen`). `CheckInList` (`features/rides/components`) is one big optimistic target
+  per rider with Undo, on the pilot's ride page, the finish page and, compact, on the admin
+  detail. "Add someone at the door" (`WalkUpDrawer`, `?walkup=1`) enrols a walk-up: a roster row
+  with `passengerId: null`, the typed `guestName`, checked in at once. A walk-up takes a place and
+  counts as a ride, but is no rider record — `passengerDetailSelect` and the feed read the roster
+  filtered to the account's own riders, so a guest's name never reaches a rider's account, and
+  the rider tallies skip rows without a passenger. The admin's roster lists them under "At the
+  door", so its count of places taken matches its rows.
+- **Roster closure** (6D). "Complete ride" (`CompleteRideButton`, a confirm dialog that shows the
+  tally: "3 riders checked in, 1 trishaw, 2 hr") calls `rides.closeRoster`, which sets `status: completed`, `completedAt`/`completedByUserId`, turns
+  `checkedIn` into `completed`, `booked`/`confirmed` into `noShow` and every pilot's `signedUp`
+  into `completed`, and emits `ride.completed` — whose `freezeRideChat` worker listener freezes
+  the ride's chat, retried with the event until it holds. A second tap changes nothing and emits
+  nothing, so it leaves alone a chat its people kept going. An
+  admin can mark a pilot who never came
+  (`setPilotNoShow`, Report 1) and **Reopen** a completed ride from the detail page's danger
+  zone (`rides.reopenRide`, logged): every rider goes back to where they stood on the day, the
+  ride stops counting until it is completed again, and the chat stays frozen until someone
+  keeps chatting.
+- **Debrief** (story 31, 7E). One `RideDebrief` per pilot and ride (`@@unique([rideId,
+  userId])`), upserted from the finish page as often as the pilot likes while it is open (a day
+  after the ride; an admin's any time): distance on a
+  functional ride only (Report 11) and a note. Donations come with COD-152, and a broken
+  trishaw is reported as damage on the same page. The admin detail lists them as the day
+  report (story 32a).
+- **Frozen chat.** `conversation-thread.tsx` shows "Keep chatting" on the frozen banner
+  (`continueConversationAction`, CHAT-PLAN 2.3), and the chat list badges a ride chat.
+- **Who may.** Check-in, walk-ups, completion and the debrief go through `executorOfRide` in
+  `features/rides/actions.ts`: `requireAuth`, then the assigned pilot still piloting in the
+  ride's chapter and not marked as a no-show (`rides.pilotCanRun`) **or**
+  `requireChapterAdmin(ride.chapterId)`. An admin who also pilots the ride acts as the admin,
+  so the pilot's one-day window never narrows what they may record. The facade takes the
+  executor (`"pilot" | "admin"`) as a plain argument and never sees a session. Reopening and
+  marking a pilot as a no-show are `requireChapterAdmin` only. Check-in toggles, walk-ups and
+  debriefs are rate-limited per person.
 
 ### Storage locations: a bike lives at a place, not at a chapter
 
@@ -1049,6 +1269,46 @@ reserved inside the write's transaction.
 
 Storage locations are managed at `/admin/locations`: chapter sites and the country-wide pools
 other chapters join by code.
+
+### Ride Locations: where a ride starts (COD-260)
+
+A `RideLocation` is the glossary's place a ride leaves from — a Care Center, a residence, a
+public place — and is a different thing from a storage location, which is where a trishaw is
+kept. The nav calls them "Ride locations" and "Storage locations" so the two never blur.
+`src/features/ride-locations` owns the table; every row belongs to one chapter.
+
+- **Snapshot wins.** `Ride.rideLocationId` is a nullable link (`SetNull`), but the ride keeps
+  its own copy of name, address and pin in `locationName`/`locationAddress`/`latitude`/
+  `longitude`. `use-cases/schedule-ride` resolves the location through
+  `rideLocations.requireUsableRideLocation(id, ride.chapterId)` — unknown or archived is
+  `unknownLocation`, another chapter's is `locationNotInChapter` — and copies the snapshot
+  over whatever the client sent. Editing or archiving a location never rewrites a ride, and
+  editing a ride's place on its detail page drops the link. The way back of a round trip
+  starts at the destination, so only the way there is linked.
+- **The care home comes first.** A chapter's `careHomeName` becomes a Care Center ride location
+  with the chapter's address and pin: `use-cases/manage-chapter` adds it when a chapter is
+  created with one, or when one is named later while the chapter has no ride location at all,
+  and the migration `ride_location_from_care_home` did the same once for the chapters that
+  existed. Renaming the care home or moving the chapter afterwards leaves the location alone.
+- **Archive, never delete.** Archived locations disappear from the drawer and the add-rider
+  form; past rides keep their snapshot. Archived rows are read-only until restored.
+- **Defaults.** `defaultMinutes` prefills the ride's length in the scheduling drawer when
+  the location is picked (or when it opens from "Schedule a ride here", `?rideLocation=<id>`);
+  the admin can still change it. A location carries no trishaw or pilot count: a ride needs
+  one pilot per trishaw, and the drawer takes the chapter's "Pilots per ride" whatever the
+  place. `typicalRideKm` is recorded for Report 11 (distance ridden); no report reads it yet.
+- **Riders.** `Passenger` gained `needsWheelchairBike`, `note` and `rideLocationId` (their
+  Care Center). An admin sets them when adding a rider; an account edits its own rider in the
+  account surface through `use-cases/set-own-rider-needs`. Both go through
+  `rideLocations.requireCareCenter`: a live location of the rider's chapter that is not a
+  public place (`locationNotCareCenter`). A link to a location that has since been archived
+  stays visible in the picker, marked "no longer offered", so the rider can clear it. The account surface loads that group only when it opens,
+  and only for an account with the passenger role, so `loadAccount` (which every sidebar
+  runs) never pays for it.
+- **Who may.** Creating needs `requireChapterAdmin(chapterId)`; updating, archiving and
+  restoring load the location first and guard on its stored `chapterId`, never on a chapter
+  the client names. The list and detail pages sit behind `readActiveScope(…, "rideLocations")`
+  and the detail page re-guards on the location's chapter.
 
 ### Time zones: the chapter's clock, never the server's or the reader's
 
@@ -1111,13 +1371,15 @@ and ships no calendar to the browser.
 | Surface | Guard | Rows it can reach |
 | --- | --- | --- |
 | `/admin/rides`, `/admin/bikes` | `readActiveScope(params, nav)` → `requireAdminScope` + the `NAV` row's own `visible` predicate; an out-of-scope `?chapter=`/`?country=` is a 403, never a silent widening | only `scopeChapters(scope, active)` |
-| `/pilot` | `requirePerspective("pilot")` | rides they are **assigned to** *and* whose chapter they are **still a member of** |
+| `/pilot` | `requirePerspective("pilot")` | rides they are **assigned to** *and* in whose chapter they **still hold the pilot role** |
 | `/passenger` | `getSession` | rides rostering a `Passenger` row they manage |
 | `/api/calendar/<token>.ics` | the token itself — see *Calendar feed* below | the union of the two rows above, for the token's owner, with no names |
 
 That second clause on `/pilot` is load-bearing: removing someone from a chapter deletes their
-`member` row and nothing else, so `RideAssignment` rows outlive the membership.
-`findRidesForPilot` therefore joins on current membership as well as the assignment.
+`member` row and nothing else, and demoting a pilot only rewrites the row's role list, so
+`RideAssignment` rows outlive both. Every pilot read (`pilotRideWhere`) therefore requires a
+member row in the ride's chapter whose role still contains `pilot`, as well as the assignment,
+and `listRideParticipants` applies the same rule, so a former pilot is not notified either.
 
 The **contact-detail exchange on match** runs both ways, as `references/04-ride-models.md` §7
 describes it: a rider sees the **pilot's name** once one is assigned, and the assigned pilot
@@ -1125,11 +1387,26 @@ sees the **rider names** on that ride. A pilot choosing whether a ride suits the
 who they will spend an hour with, so a bare roster count was the wrong answer.
 
 The exchange is between a rider and *their* pilot, and the selects enforce exactly that.
-`pilotSelect` in `rides/services` is `calendarSelect` plus the roster, and it is used by
-`findRidesForPilot` alone — deliberately not folded into the shared shape, because
-`/passenger` reads that too and two riders on one trishaw are managed by two different people.
-The admin week and the passenger agenda still get `_count.roster` and nothing more.
-`facade.test.ts` pins all three surfaces, so widening one by accident fails a test.
+`pilotSelect` in `rides/services` is `calendarSelect` plus the roster, used only where the
+reader is an assigned pilot — deliberately not folded into the shared shape, because two
+riders on one trishaw are managed by two different people. Riders' accounts read
+`passengerSelect`, which has a roster count and no names; on a ride's detail page
+(`passengerDetailSelect`) the roster is filtered to the riders that account manages. Members
+never read an email address: both member selects narrow `assignments.user` to id, name and
+image, and the email stays in `calendarSelect` for the admin surfaces. The note for pilots is
+in `pilotDetailSelect` only, and the admins' cancellation note in neither — a rider is told
+the reason in words from its code. `facade.test.ts` pins every surface, so widening one by
+accident fails a test. The crew a member sees is filtered the same way the reads are:
+`withActiveCrew` drops assignments of people who no longer hold the pilot role in the ride's
+chapter, so a demoted co-pilot stops "riding along" on everyone else's page too.
+
+The member pages are `/pilot/rides` and `/passenger/rides` (upcoming and the latest past,
+`listPilotRides` / `listPassengerRides`) and their details `/pilot/rides/[rideId]`
+(`getRideForPilot`: assigned *and* still a pilot there) and `/passenger/rides/[rideId]`
+(`getRideForPassengers` over `passengers.listRidersOfAccount`: the riders the account
+manages, plus its own rider row when someone else manages it). Both details call
+`notFound()` for anything else, so a guessed id reads the same as a missing one. The other
+leg of a round trip appears only to someone who is on it too.
 
 Phone numbers are the part of §7 still missing: `Passenger` carries a name, birth date and
 gender, but no number, so "the client's and/or the institution's phone" has nothing to read
@@ -1146,18 +1423,81 @@ view is what lifecycle phase 1D validates a new request against, and it needs a
 chapter-configuration model that does not exist yet. The two are different features, and
 both are wanted.
 
+### Ride Requests: booking a ride (COD-261)
+
+Lifecycle 1B–1E and 2B. A rider, or the account booking for them, sends a **Ride Request**;
+the chapter schedules or declines it. `src/features/ride-requests` owns `RideRequest` (status
+`pending` · `scheduled` · `declined` · `withdrawn`, the model, the place as a snapshot, the
+destination, `roundTrip`, the requested window as two instants, a note, the decision) and
+`RideRequestPassenger`. `requesterUserId` and the contact columns are nullable so guest intake
+needs no migration later; nothing writes the contact columns yet.
+
+- **The form.** `/passenger/rides/new?step=who|where|when|note|review` keeps the step in the
+  URL through `history.pushState`, so Android back walks the steps without a server round trip.
+  Who is skipped when the account books for one rider; at most the seats of the chapter's
+  largest trishaw type, and never more than a ride of the model takes (2). Where is a ride out
+  from a Ride Location or the rider's home, or "get somewhere" with a pickup, a destination (the
+  member address search, rate-limited, plus the account's earlier destinations) and "and back
+  again". When is a month of bookable days and window chips from `lib/booking-windows`. The
+  big red button sits above the tab bar (`bottom-above-tabbar`) and above the keyboard on
+  native. Someone who is not a member of the chapter in `?chapter=` sees the join card first.
+  Only riders whose manager is still a member of their chapter can be booked; the others are
+  named with the reason.
+- **`lib/booking-windows`** is pure: the bookable days are today to today + horizon, minus
+  closures and days without riding hours (a chapter without hours rides 09–12 and 13–17), and
+  no slot starts before now + lead time. A stretch up to 3 hours is split into rides of
+  `defaultRideMinutes`; a longer one is one "Morning 09:00–17:00" chip, trimmed to the next
+  quarter hour after the lead time. `bookingRefusal` is the same rule for the server.
+- **Submitting** (`use-cases/submit-ride-request`): the riders come from
+  `passengers.listPassengersManagedBy` and the chapter from them, never from the client; the
+  window is the chapter's wall clock turned into instants and must pass `bookingRefusal`
+  (`leadTime`, `beyondHorizon`, `closedDate`, `outsideHours` as `DomainError` codes). The
+  account must still be a member of the riders' chapter (`notChapterMember`), the riders must
+  fit the chapter's largest trishaw in service and never more than two (`tooManyRiders`), no
+  rider may already be asked for in an overlapping window (`alreadyRequested`) or hold a seat
+  then (`riderBooked`; a seat given up is free again), and an account has at most five requests waiting (`tooManyRequests`). A Ride
+  Location's snapshot overrides whatever place was sent. Rate-limited to 10 an hour per account.
+- **Scheduling** (`use-cases/schedule-from-request`): the request is first **claimed**
+  (`pending` → `scheduled` in one conditional update), so two admins pressing Schedule at once
+  make one ride; then `scheduleRideAt` writes the ride, both legs of a round trip, with the
+  request's riders on both; then `markScheduled` links the way there and emits
+  `rideRequest.scheduled`. A ride that cannot be written releases the claim. The admin path is
+  the PR 1 drawer opened with `?new=1&request=<id>` and prefilled; its Action re-reads the
+  request and forces the request's chapter; the request's riders are always on the ride, and
+  riders the admin added in the drawer ride along.
+- **Automatic scheduling.** With `schedulingMethod = auto`, a submitted request becomes a ride
+  straight away when a trishaw that seats its riders (and takes a wheelchair when one needs it)
+  is free: `rides.scheduleRide` takes `pickTrishaws` and picks the free ones **under their
+  locks inside the ride's own write**, never checked first and booked after. The ride starts at
+  the start of the requested window, lasts `defaultRideMinutes`, has no pilot (pilots sign up
+  through PR 5's open rides) and is scheduled by nobody (`actorUserId: null`). No admin saw
+  what it lacks, so it is never stamped as staffing-checked: one that starts inside the staffing
+  window short of pilots is warned about on the next sweep. Without a free trishaw the request
+  stays pending and only then is announced to the admins.
+- **Declining and withdrawing** are single-feature: the Actions call `rideRequests.decline`
+  (after `requireChapterAdmin` on the request's own chapter) and `rideRequests.withdraw`
+  (which checks that the caller sent it and that it is still pending).
+- **Surfaces.** `/admin/rides` gains `AdminTabs` (Rides · Ride requests with the open count)
+  and a "{n} requests waiting" pill on the week; `/admin/rides/requests` is the list (Waiting
+  soonest first and without lapsed requests, every other status latest first; the filter is in
+  the URL) and `/admin/rides/requests/[id]` the detail with the
+  requester's phone, the history, a Decision panel (Schedule… · Decline… in a drawer at
+  `?decline=1`) and what is in the way (outside hours, short notice, other rides in the
+  window). The requester has `/passenger/rides/requests/[id]` ("Waiting for {chapter}" until a
+  ride exists, never anything that reads like an instant booking) and the open requests on
+  `/passenger` and `/passenger/rides`. `/join/[slug]`'s Book a ride carries the chapter in
+  the link (through sign-in when needed) and is hidden from a signed-in non-member, who joins
+  as a passenger on the form's join card; `/join/[slug]/ride` redirects there.
+- **The calendar file.** The scheduled mail carries `ride.ics`: one VEVENT per leg, the ride's
+  model and chapter as the summary, no one's name, and the same `ride-<id>@host` UID the
+  subscribed feed uses, so a calendar holding both shows one entry. `MailOptions.attachments`
+  reaches Resend and Mailpit; a kind names `attachments` and `deliver-email` renders them with
+  `lib/ics`.
+
 ### Not here yet
 
-Nothing **writes** a ride from the UI: there is no scheduling drawer, so `scheduleRide`,
-`cancelRide`, `assignVolunteer` and `bookRider` are reached only from `prisma/seed.ts` and
-the facade tests. When the scheduling drawer lands, its Server Action owns the
-authorization — the facade takes `chapterId` from its input and checks nothing, by design —
-so it must sit behind `requireChapterAdmin(chapterId)`, not `requireAdminScope()`.
-
-Ride *requests* (lifecycle phase 1), the Ride Request List, recurrence,
-cancellation reason codes, waivers, storage locations and care centers are all still absent —
-see COD-155 / COD-179 / COD-151. The `.ics` **email attachment** half of COD-182 (a file sent
-when a ride is booked or accepted) is not built; the live feed is, below.
+Recurrence, waivers, guest booking without an account, trishaw-type choice, pilot matching and
+the negotiation loop (stories 11–23) are still absent — see COD-155 / COD-179 / COD-151.
 
 ### Calendar feed (COD-182)
 
@@ -1198,7 +1538,7 @@ own gate, like `/api/chat/stream`. What makes the address safe to keep showing:
 
 **What a feed may contain** is the union of `/pilot` and `/passenger`, under the same rules.
 Piloted rides follow `/pilot` exactly: the reader must hold the pilot role in some chapter
-(`requirePerspective("pilot")`), and the ride must be in a chapter they are still a member of
+(`requirePerspective("pilot")`), and the ride must be in a chapter where they still hold the pilot role
 (`findRidesForPilot`). The use case reads both from `membership.listMembershipsOfUser` and hands
 the rides query a list of chapter ids, so a demoted or departed pilot drops out on the next poll
 even though their `RideAssignment` rows remain. Ridden rides are those rostering a `Passenger`
@@ -1252,9 +1592,14 @@ Overview strip.
 ### Units
 
 - **Ride**: one roster entry on a trip that is not cancelled and has already ended
-  (`status != cancelled AND endsAt < now`). Two riders on one trip are two rides, the RFP's
-  counting rule. `status = completed` is never written, so "ridden" is derived, not stored.
-- **Trip**: one such `Ride` row. **Riders**: unique passengers on them. **Hours**: the sum of
+  (`status != cancelled AND endsAt < now`), whose attendance is neither `cancelled` (the seat
+  was given up) nor `noShow` (the closed roster says they never came). Two riders on one trip
+  are two rides, the RFP's counting rule, and a walk-up is one too. "Ridden" is still derived
+  from the clock, so a ride nobody completed counts its booked riders; closing the roster
+  (`status = completed`, COD-263) only sharpens who rode. A pilot marked `noShow` is no pilot of
+  the trip.
+- **Trip**: one such `Ride` row. **Riders**: unique passengers on them (a walk-up has no
+  passenger and is not one). **Hours**: the sum of
   the scheduled `endsAt - startsAt` of those trips.
 - **Cancellations**: cancelled rides in the period, grouped by `Ride.cancellationReasonCode`
   (`weather`, `rider`, `facility`, `volunteers`, `equipment`, `noRiders`, `other`; null is "uncategorised"). The rate is

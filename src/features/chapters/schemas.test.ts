@@ -1,4 +1,11 @@
-import { chapterInput, slugify } from "./schemas";
+import {
+  DEFAULT_CHAPTER_SETTINGS,
+  DEMAND_CHECK_LEAD_HOURS,
+  REMINDER_LEAD_MINUTES,
+  chapterInput,
+  chapterSettingsInput,
+  slugify,
+} from "./schemas";
 
 describe("slugify", () => {
   it.each([
@@ -27,5 +34,42 @@ describe("chapter logo", () => {
     expect(parse("https://example.org/logo.png")).toBe(true);
     expect(parse("javascript:alert(1)")).toBe(false);
     expect(parse("data:image/png;base64,AAAA")).toBe(false);
+  });
+});
+
+describe("the reminder leads", () => {
+  it("takes every lead the Reminders card offers", () => {
+    for (const minutes of REMINDER_LEAD_MINUTES)
+      expect(
+        chapterSettingsInput.safeParse({
+          riderReminderLeadMinutes: minutes,
+          volunteerReminderLeadMinutes: minutes,
+        }).success,
+      ).toBe(true);
+    for (const hours of DEMAND_CHECK_LEAD_HOURS)
+      expect(
+        chapterSettingsInput.safeParse({ demandCheckLeadHours: hours }).success,
+      ).toBe(true);
+  });
+
+  it("refuses a lead the card does not offer", () => {
+    for (const value of [60, 1440.5, "1440"])
+      expect(
+        chapterSettingsInput.safeParse({ riderReminderLeadMinutes: value })
+          .success,
+      ).toBe(false);
+    expect(
+      chapterSettingsInput.safeParse({ demandCheckLeadHours: 72 }).success,
+    ).toBe(false);
+  });
+
+  it("starts every chapter on a lead the card offers", () => {
+    const { riderReminderLeadMinutes, volunteerReminderLeadMinutes } =
+      DEFAULT_CHAPTER_SETTINGS;
+    expect(REMINDER_LEAD_MINUTES).toContain(riderReminderLeadMinutes);
+    expect(REMINDER_LEAD_MINUTES).toContain(volunteerReminderLeadMinutes);
+    expect(DEMAND_CHECK_LEAD_HOURS).toContain(
+      DEFAULT_CHAPTER_SETTINGS.demandCheckLeadHours,
+    );
   });
 });

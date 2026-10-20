@@ -38,7 +38,7 @@ export function MemberPageShell({
   );
 }
 
-export type MemberPageKey = "rides" | "calendar";
+export type MemberPageKey = "calendar";
 
 export async function MemberPageBody({
   perspective,
