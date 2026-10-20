@@ -4,6 +4,7 @@
     "footer": "Du modtager denne e-mail, fordi du har søgt om at være pilot i en Cycling Without Age-afdeling.",
     "heading": "Velkommen om bord",
     "intro": "{chapter} har godkendt dig som pilot. Næste skridt: træningsvideoerne, en workshop med en af kaptajnerne — og så din første tur.",
+    "introInPerson": "{chapter} har godkendt dig som pilot. Næste skridt: en workshop med en af kaptajnerne — og så din første tur.",
     "noteHeading": "Fra din afdeling",
     "preview": "Din afdeling siger ja",
     "subject": "Du er pilot i {chapter}"
@@ -141,6 +142,138 @@
     "subject": "{chapter} vil gerne bruge {pool}",
     "unnamed": "puljen"
   },
+  "rideAnnounced": {
+    "cta": "Se arrangementet",
+    "footer": "Du modtager denne e-mail, fordi du hjælper en passager i en Cycling Without Age-afdeling. Du kan slå dem fra i dine notifikationer.",
+    "heading": "Et nyt arrangement at køre med til",
+    "intro": "{chapter} inviterer til {ride} {date}, {time}, ved {place}. Der er et begrænset antal pladser, og du kan booke en i appen.",
+    "preview": "{ride} · {time}",
+    "subject": "{ride} {date}"
+  },
+  "rideBookingCancelled": {
+    "cta": "Åbn turen",
+    "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling.",
+    "heading": "En plads er blevet ledig",
+    "headingEmpty": "Ingen er tilbage at køre med",
+    "intro": "{rider} er ikke længere med på turen {date}, {time}, ved {place}. Måske er der nu plads til en anden – eller ingen tilbage at køre med.",
+    "introBoth": "{rider} er ikke længere med på turen ud og hjem {date}, udturen {time} fra {place}. Måske er der nu plads til en anden – eller ingen tilbage at køre med.",
+    "introEmpty": "{rider} har givet den sidste plads på turen {date}, {time}, ved {place} fri. Der er ingen tilbage at køre med – måske vil du aflyse den, så piloterne og rickshawen bliver fri igen.",
+    "introEmptyBoth": "{rider} har givet den sidste plads på turen ud og hjem {date} fri, udturen {time} fra {place}. Der er ingen tilbage at køre med nogen af vejene – måske vil du aflyse den, så piloterne og rickshawen bliver fri igen.",
+    "introEmptyRemoved": "{rider} er taget af turen {date}, {time}, ved {place}, og der er ingen tilbage at køre med. Måske vil du aflyse den, så piloterne og rickshawen bliver fri igen.",
+    "preview": "{ride} · {time}",
+    "someone": "En passager",
+    "subject": "{rider} er ikke længere med {date}",
+    "subjectEmpty": "Ingen er tilbage på turen {date}"
+  },
+  "rideBookingConfirmed": {
+    "cta": "Se turen",
+    "footer": "Du modtager denne e-mail, fordi du hjælper en passager i en Cycling Without Age-afdeling.",
+    "heading": "En plads er booket",
+    "intro": "{rider} er booket på en tur {date}, {time}, med start ved {place}. Appen viser, hvem der kører, så snart en pilot er sat på.",
+    "introBoth": "{rider} er booket ud og hjem {date}: turen starter {time} ved {place}. Appen viser, hvem der kører, så snart en pilot er sat på.",
+    "preview": "{ride} · {time}",
+    "someone": "Din passager",
+    "subject": "{rider} er booket {date}"
+  },
+  "rideCancelled": {
+    "cta": "Åbn turen",
+    "footer": "Du modtager denne e-mail, fordi du er med på denne tur i en Cycling Without Age-afdeling.",
+    "heading": "Turen er aflyst",
+    "intro": "Turen {date}, {time}, med start ved {place}, bliver ikke til noget. Årsag: {reason}.",
+    "introBoth": "Turen {date}, {time}, med start ved {place}, og hjemturen bliver ikke til noget. Årsag: {reason}.",
+    "preview": "{time} · {place}",
+    "subject": "Aflyst: tur {date}"
+  },
+  "rideCommon": {
+    "aRide": "En tur",
+    "byTheChapter": "din afdeling",
+    "meetingPoint": "det sædvanlige mødested",
+    "models": {
+      "event": "Fællestur",
+      "functional": "Ærindetur",
+      "pleasure": "Fornøjelsestur"
+    },
+    "reasons": {
+      "equipment": "et problem med rickshawen",
+      "facility": "en ændring på plejehjemmet eller institutionen",
+      "noRiders": "ingen var tilmeldt turen",
+      "other": "der kom noget i vejen",
+      "rider": "passageren meldte afbud",
+      "volunteers": "der var ingen pilot til rådighed",
+      "weather": "vejret"
+    },
+    "soon": "en dato, der følger",
+    "theChapter": "Din afdeling",
+    "theDestination": "målet",
+    "timeToFollow": "tidspunkt følger"
+  },
+  "rideOpened": {
+    "cta": "Se turen",
+    "footer": "Du modtager denne e-mail, fordi du er pilot i en Cycling Without Age-afdeling. Du kan slå dem fra i dine notifikationer.",
+    "heading": "En tur mangler en pilot",
+    "intro": "{chapter} søger en pilot {date}, {time}, med start ved {place} ({ride}). Har du tid, så tilmeld dig i appen.",
+    "introBoth": "{chapter} søger en pilot til en tur ud og hjem {date}: udturen er {time} fra {place} ({ride}). Har du tid, så tilmeld dig i appen.",
+    "preview": "{ride} · {time}",
+    "subject": "Turen {date} mangler en pilot"
+  },
+  "ridePilotAssigned": {
+    "cta": "Åbn turen",
+    "footer": "Du modtager denne e-mail, fordi du er pilot i en Cycling Without Age-afdeling.",
+    "heading": "Du er sat på en tur",
+    "intro": "Du kører {date}, {time} – sat på af {actor}. Turen starter ved {place} ({ride}). Passagerer, rickshaw og noten til piloter finder du i appen.",
+    "introBoth": "Du kører ud og hjem {date} – sat på af {actor}. Udturen er {time} fra {place} ({ride}). Passagerer, rickshaw og noten til piloter finder du i appen.",
+    "preview": "{ride} · {time}",
+    "subject": "Du kører {date}"
+  },
+  "ridePilotFound": {
+    "cta": "Se turen",
+    "footer": "Du modtager denne e-mail, fordi du hjælper en passager i en Cycling Without Age-afdeling.",
+    "heading": "Din tur har en pilot",
+    "intro": "{pilot} kører turen {date}, {time}, med start ved {place} ({ride}). Telefonnummeret står ved turen i appen, og der er også en chat med alle, der er med.",
+    "introBoth": "{pilot} kører turen ud og hjem {date}: udturen er {time} fra {place} ({ride}). Telefonnummeret står ved turen i appen, og der er også en chat med alle, der er med.",
+    "preview": "{ride} · {time}",
+    "someone": "En pilot",
+    "subject": "{pilot} kører din tur {date}"
+  },
+  "ridePilotWithdrew": {
+    "cta": "Åbn turen",
+    "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling. Du kan slå dem fra i dine notifikationer.",
+    "heading": "En pilot har meldt fra",
+    "intro": "{pilot} kører ikke længere turen {date}, {time}, ved {place} ({ride}). Måske skal der findes en anden nu.",
+    "introBoth": "{pilot} kører ikke længere turen ud og hjem {date}: udturen er {time} ved {place} ({ride}). Måske skal der findes en anden til begge veje nu.",
+    "preview": "{ride} · {time}",
+    "someone": "En pilot",
+    "subject": "{pilot} har meldt fra til turen {date}"
+  },
+  "rideRescheduled": {
+    "cta": "Åbn turen",
+    "footer": "Du modtager denne e-mail, fordi du er med på denne tur i en Cycling Without Age-afdeling.",
+    "heading": "Turen er ændret",
+    "introDestination": "Turen {date}, {time}, går nu til {destination}.",
+    "introPlace": "Turen {date}, {time}, starter nu ved {place}.",
+    "introTime": "Turen er nu {date}, {time}, med start ved {place}.",
+    "introTimeBoth": "Udturen og hjemturen er flyttet. Turen starter nu {date}, {time}, ved {place}.",
+    "preview": "Nu {time} · {place}",
+    "subject": "Ændret: tur {date}"
+  },
+  "rideSignedUp": {
+    "cta": "Åbn turen",
+    "footer": "Du modtager denne e-mail, fordi du er pilot i en Cycling Without Age-afdeling.",
+    "heading": "Du er tilmeldt",
+    "intro": "Du kører {date}, {time}, med start ved {place} ({ride}). Passagererne, hvordan du får fat i dem, og chatten til turen finder du i appen.",
+    "introBoth": "Du kører ud og hjem {date}: udturen er {time} fra {place} ({ride}). Passagererne, hvordan du får fat i dem, og chatten til turen finder du i appen.",
+    "preview": "{ride} · {time}",
+    "subject": "Du kører {date}"
+  },
+  "rideUnderstaffed": {
+    "cta": "Åbn turen",
+    "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling.",
+    "heading": "En tur mangler stadig piloter",
+    "intro": "Turen {date}, {time}, ved {place} ({ride}) har {assigned} af {required, plural, one {# pilot} other {# piloter}}. Find nogen snart, eller giv passagererne besked i god tid.",
+    "introBoth": "Turen ud og hjem {date} mangler stadig piloter begge veje: Udturen {time} fra {place} ({ride}) har {assigned} af {required, plural, one {# pilot} other {# piloter}}. Find nogen snart, eller giv passagererne besked i god tid.",
+    "preview": "{ride} · {time}",
+    "subject": "Turen {date} mangler piloter"
+  },
   "roleDemoted": {
     "cta": "Åbn Cycling Without Age",
     "footer": "Du modtager denne e-mail, fordi din rolle i en Cycling Without Age-afdeling er ændret.",
@@ -208,6 +341,7 @@
     "noteHeading": "En hilsen fra {chapter}",
     "preview": "Din pilotansøgning er hos afdelingen",
     "subject": "Velkommen om bord — tre skridt til din første tur",
+    "subjectInPerson": "Velkommen om bord — to skridt til din første tur",
     "title": "Velkommen til {chapter}"
   },
   "careRequested": {
@@ -244,5 +378,107 @@
     "imprint": "Kolofon",
     "privacy": "Privatlivspolitik",
     "terms": "Brugsvilkår"
+  },
+  "rideRequestCommon": {
+    "someone": "en passager",
+    "someoneAsking": "Nogen"
+  },
+  "rideRequestSubmitted": {
+    "subject": "Turønske for {riders} {date}",
+    "preview": "{date} · {time}",
+    "heading": "Et nyt turønske",
+    "intro": "{requester} beder {chapter} om en tur for {riders} {date}, {time}, fra {place}. Planlæg den, eller giv besked, hvis det ikke kan lade sig gøre.",
+    "introThere": "{requester} beder {chapter} om at køre {riders} fra {place} til {destination} {date}, {time}. Planlæg turen, eller giv besked, hvis det ikke kan lade sig gøre.",
+    "introThereAndBack": "{requester} beder {chapter} om at køre {riders} fra {place} til {destination} og hjem igen {date}, {time}. Planlæg turen, eller giv besked, hvis det ikke kan lade sig gøre.",
+    "cta": "Åbn ønsket",
+    "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling."
+  },
+  "rideRequestWithdrawn": {
+    "subject": "{requester} har trukket turønsket til {date} tilbage",
+    "preview": "{date} · {time}",
+    "heading": "Et turønske er trukket tilbage",
+    "intro": "{requester} har ikke længere brug for turen for {riders} {date}, {time}. Der er ikke mere at gøre.",
+    "cta": "Åbn ønsket",
+    "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling.",
+    "subjectClosed": "Turønsket til {date} er lukket",
+    "headingClosed": "Et turønske er lukket",
+    "introClosed": "Ønsket for {riders} {date}, {time}, blev lukket, fordi en passager eller den, der bad om turen, ikke længere er med. Der er ikke mere at gøre."
+  },
+  "rideRequestDeclined": {
+    "subject": "{chapter} kan ikke tilbyde turen {date}",
+    "preview": "{date} · {time}",
+    "heading": "Ikke denne gang",
+    "intro": "{chapter} har set på dit ønske for {riders} {date}, {time}, og kan desværre ikke tilbyde turen. Du er velkommen til at ønske en tur en anden dag.",
+    "noteHeading": "En besked fra {chapter}",
+    "cta": "Se dit ønske",
+    "footer": "Du modtager denne e-mail, fordi du har bedt en Cycling Without Age-afdeling om en tur."
+  },
+  "rideRequestScheduled": {
+    "subject": "Din tur {date} er booket",
+    "preview": "{ride} · {time}",
+    "heading": "Din tur er booket",
+    "intro": "{chapter} har booket turen for {riders}: {date}, {time}, fra {place}. Appen viser, hvem der kører, så snart en pilot er sat på.",
+    "introBoth": "{chapter} har booket turen ud og hjem for {riders} {date}: ud {time} fra {place}, hjem {back}. Appen viser, hvem der kører, så snart en pilot er sat på.",
+    "calendarHeading": "I din kalender",
+    "calendarText": "Åbn den vedhæftede kalenderfil for at lægge turen i din kalender.",
+    "calendarSummary": "{ride} med {chapter}",
+    "calendarFile": "tur.ics",
+    "cta": "Se turen",
+    "footer": "Du modtager denne e-mail, fordi du har bedt en Cycling Without Age-afdeling om en tur."
+  },
+  "riderHandedOver": {
+    "subject": "Nu booker du ture for {rider}",
+    "preview": "{chapter} har overdraget {rider} til dig",
+    "heading": "Du tager dig nu af {rider}",
+    "intro": "{chapter} har overdraget {rider} til dig. Fra nu af er det dig, der ønsker ture for {rider}, og alle bekræftelser kommer til dig.",
+    "cta": "Se dine passagerer",
+    "footer": "Du modtager denne e-mail, fordi en Cycling Without Age-afdeling har ændret, hvem der booker ture for en passager."
+  },
+  "riderHandedAway": {
+    "subject": "{chapter} har overdraget {rider}",
+    "preview": "Ny kontaktperson for {rider}",
+    "heading": "Ny kontaktperson for {rider}",
+    "intro": "{chapter} har overdraget {rider} til en anden. Du booker ikke længere ture for {rider}, og beskeder om turønsker og ture for {rider} kommer ikke længere til dig.",
+    "cta": "Åbn appen",
+    "footer": "Du modtager denne e-mail, fordi en Cycling Without Age-afdeling har ændret, hvem der booker ture for en passager."
+  },
+  "rideReminder": {
+    "cta": "Bekræft eller aflys pladsen",
+    "footer": "Du modtager denne e-mail, fordi du booker ture i en Cycling Without Age-afdeling.",
+    "heading": "Din tur nærmer sig",
+    "intro": "Din tur {date}, {time}, starter ved {place} ({ride}). Bekræft pladsen i appen – eller giv den fri, hvis planerne har ændret sig, så afdelingen kan tilbyde den til en anden.",
+    "introBoth": "Din tur ud og hjem {date}: udturen er {time} fra {place} ({ride}). Bekræft pladsen i appen – eller giv den fri, hvis planerne har ændret sig, så afdelingen kan tilbyde den til en anden.",
+    "preview": "{ride} · {time}",
+    "subject": "Din tur {date}"
+  },
+  "pilotReminder": {
+    "cta": "Åbn turen",
+    "footer": "Du modtager denne e-mail, fordi du er pilot i en Cycling Without Age-afdeling.",
+    "heading": "Din tur bliver til noget",
+    "intro": "Alt er som aftalt: du kører {date}, {time}, med start ved {place} ({ride}). Passagererne, hvordan du får fat i dem, adgangskoden og chatten til turen finder du i appen.",
+    "introBoth": "Alt er som aftalt: du kører ud og hjem {date}, udturen {time} fra {place} ({ride}). Passagererne, hvordan du får fat i dem, adgangskoden og chatten til turen finder du i appen.",
+    "pickupAsk": "{trishaw} – spørg afdelingen, hvor den står",
+    "pickupAt": "{trishaw} står ved {place}",
+    "pickupHeading": "Hent rickshawen",
+    "preview": "{ride} · {time}",
+    "subject": "Påmindelse: du kører {date}"
+  },
+  "rideNoDemand": {
+    "cta": "Åbn turen",
+    "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling.",
+    "heading": "Ingen er booket endnu",
+    "intro": "Turen {date}, {time}, ved {place} ({ride}) har stadig ingen passagerer. Book passagerer snart, eller aflys den med grunden “Ingen passagerer”, så piloterne og rickshawen bliver fri igen.",
+    "introBoth": "Turen ud og hjem {date} har stadig ingen passagerer nogen af vejene: udturen {time} fra {place} ({ride}). Book passagerer snart, eller aflys den med grunden “Ingen passagerer”, så piloterne og rickshawen bliver fri igen.",
+    "preview": "{ride} · {time}",
+    "subject": "Ingen er booket {date}"
+  },
+  "rideRosterRefilled": {
+    "cta": "Åbn turen",
+    "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling.",
+    "heading": "En passager er med igen",
+    "intro": "{rider} har taget pladsen tilbage på turen {date}, {time}, ved {place}. Turen har nogen at køre med igen.",
+    "preview": "{ride} · {time}",
+    "someone": "En passager",
+    "subject": "{rider} kører alligevel med {date}"
   }
 }

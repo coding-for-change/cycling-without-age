@@ -20,11 +20,12 @@ running, the mailer prints the code to the `next dev` console instead.)
 | `superadmin@cwa.local` | superadmin — passes every guard |
 | `country.de@cwa.local` | country admin **DE** — chapter admin over München + Hamburg, nothing in DK |
 | `admin.muenchen@cwa.local` | chapter admin of **München** |
-| `pilot@cwa.local` | approved pilot in **München and Hamburg** (multi-chapter case) |
-| `pilot.pending@cwa.local` | pending pilot application for **München**, no membership yet |
+| `pilot@cwa.local` | approved pilot in **München and Hamburg** (multi-chapter case), training-exempt and in-person training confirmed, so they can ride |
+| `pilot.training@cwa.local` | approved pilot in **München** who is **not** exempt and has **no** in-person training — the training gate case |
+| `pilot.pending@cwa.local` | pending pilot application for **München**, no membership yet, not exempt — the applicant training path |
 | `passenger@cwa.local` | passenger in **München**, phone `+4915112345678` (pre-verified) |
 | `caretaker@cwa.local` | caretaker in **München** who doesn't ride: books for Inge (care home) and Walter (own address) |
-| `multi@cwa.local` | pilot **and** chapter admin in **Hamburg**, plus country admin **DK** (role-stacking case) |
+| `multi@cwa.local` | pilot **and** chapter admin in **Hamburg**, plus country admin **DK** (role-stacking case), training-exempt and in-person training confirmed |
 
 ## Feature environments
 
@@ -113,6 +114,40 @@ so the week grid and both agendas always have something whichever day that is.
 
 Nothing schedules a ride from the UI yet — the "New ride" button just opens the calendar.
 
+## Walking pilot training
+
+The seed publishes one **global** course family with an English and a German variant and
+makes it a **global requirement**, so every pilot everywhere needs it:
+
+| Variant | Lessons | Quiz |
+| --- | --- | --- |
+| *Basic Pilot Training* (`en`) | 1 · *Before you ride* (video) · 2 · *Riding with a passenger* (reading) | 3 questions, single + multiple choice, each with an explanation |
+| *Grundlagen für Pilot:innen* (`de`) | 1 · *Bevor du losfährst* (video) · 2 · *Fahren mit Fahrgast* (reading) | the same 3 questions in du-form |
+
+The video is a fixture, not a real training film: when `ffmpeg` is on `PATH` the seed
+renders a 20-second 720p test pattern with a sine tone, uploads it through the same
+multipart path as the admin uploader and runs the media worker's transcode job in-process,
+so `S3_MEDIA_BUCKET` gets the real layout — `training/v/<mediaKey>/1/master.m3u8`, the
+`360p/` and `720p/` renditions and `poster-<ms>.webp` / `poster-<ms>-480.webp` — readable
+at `MEDIA_PUBLIC_URL` (needs `rustfs` and the `rustfs-init` bucket policy from
+`docker compose up`). Without `ffmpeg` or storage the seed prints one "Training video
+fixture skipped" line and lesson 1 becomes a reading lesson; the course still publishes.
+A later run with `ffmpeg` attaches the video.
+
+Re-running never duplicates anything: the family is found by its English title, lessons by
+title, the quiz is only written into an empty course and the video by its title — a
+video whose files no longer answer at `MEDIA_PUBLIC_URL` is replaced.
+
+- `pilot@cwa.local` and `multi@cwa.local` hold a blanket `migration` exemption and a
+  confirmed in-person training, so their rides keep working.
+- `pilot.training@cwa.local` (Tara Training) has neither: `/pilot/training` shows the
+  course, the quiz and the missing in-person step. Confirm it as `admin.muenchen@cwa.local`
+  on her page at `/admin/members/[userId]`.
+- `pilot.pending@cwa.local` (Pernille) can take the course before she is approved.
+
+Every run puts Tara and Pernille back to that state — it revokes any exemption and
+in-person confirmation they picked up while you were testing.
+
 ## The demo org structure
 
 | Country | Chapters |
@@ -126,4 +161,5 @@ Nothing schedules a ride from the UI yet — the "New ride" button just opens th
 never with raw Prisma inserts, so `user`/`account` rows stay consistent. It passes no
 password, so no credential account is created. Countries, chapters, memberships and
 applications go through the `chapters` and `membership` facades — the same code paths the
-app uses.
+app uses. The training content lives in `prisma/seed-training.ts` and goes through the
+`training` and `personProfiles` facades.

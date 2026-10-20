@@ -30,7 +30,7 @@ export type AccountData = {
   };
   perspectives: PerspectiveChoice[];
   canDeleteAccount: boolean;
-  ridersRemovedWithAccount: number;
+  ridersRemovedWithAccount: { id: string; name: string }[];
   notifications: {
     push: boolean;
     email: boolean;
@@ -43,6 +43,7 @@ export type AccountData = {
   legal: Dictionary["legal"];
   signOutLabel: string;
   cancelLabel: string;
+  riderNeeds: Dictionary["passenger"]["riderNeeds"] | null;
 };
 
 export type AccountChromeProps = {

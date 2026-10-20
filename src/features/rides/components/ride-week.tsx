@@ -18,13 +18,19 @@ import {
   type Locale,
 } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
+import {
+  closedRanges,
+  NO_HOURS,
+  openingBand,
+  type OperatingHours,
+} from "@/lib/operating-hours";
 import { cn } from "@/lib/utils";
 import type { RideCalendarRow } from "../facade";
 import { DayHeading } from "./day-heading";
 import {
   rideGroundedNote,
   rideHeadline,
-  ridePilots,
+  seatedPilots,
   rideTone,
   rideTrishawNames,
   type CalendarStrings,
@@ -60,6 +66,7 @@ type Props = {
   link: RideLink;
   interaction: Omit<RideWeekStrings, "open" | "cancelled" | "grounded">;
   dayNav: DayNav;
+  openingHours?: OperatingHours;
 };
 
 const HOUR_REM = 3.5;
@@ -77,6 +84,7 @@ export function RideWeek({
   link,
   interaction,
   dayNav,
+  openingHours = NO_HOURS,
 }: Props) {
   const days: WeekDay[] = weekDays(anchor, timeZone, weekStartsOn).map(
     (day) => {
@@ -88,11 +96,13 @@ export function RideWeek({
       };
     },
   );
-  const band = visibleBand(
-    days.flatMap((day) =>
+  const opening = openingBand(openingHours);
+  const band = visibleBand([
+    ...days.flatMap((day) =>
       segmentsOf(rides, day, timeZone).map(({ segment }) => segment),
     ),
-  );
+    ...(opening ? [opening] : []),
+  ]);
   const hours = Array.from(
     { length: band.to - band.from },
     (_, i) => band.from + i,
@@ -106,13 +116,19 @@ export function RideWeek({
     cancelled: ride.status === "cancelled",
     tone: rideTone(ride),
     where: rideHeadline(ride, strings),
-    detail: `${rideTrishawNames(ride, strings)} · ${
+    detail: [
+      rideTrishawNames(ride, strings),
       ride._count.roster
         ? formatMessage(strings.riders, { count: ride._count.roster }, words)
-        : ridePilots(ride).length
-          ? strings.roles.pilot
-          : strings.pilotNeeded
-    }`,
+        : null,
+      formatMessage(
+        strings.staffing,
+        { assigned: seatedPilots(ride).length, required: ride.requiredPilots },
+        words,
+      ),
+    ]
+      .filter(Boolean)
+      .join(" · "),
     grounded: rideGroundedNote(ride, now, fleet, words),
     href: link.href(ride.id),
     movable: ride.status === "scheduled",
@@ -234,7 +250,11 @@ export function RideWeek({
         </div>
 
         <RideWeekColumns
-          days={days.map((day) => ({ ...day, isToday: day.key === todayKey }))}
+          days={days.map((day) => ({
+            ...day,
+            isToday: day.key === todayKey,
+            closed: closedRanges(openingHours, day.key),
+          }))}
           selectedDay={selected.key}
           band={band}
           hourRem={HOUR_REM}

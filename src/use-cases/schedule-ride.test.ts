@@ -2,12 +2,15 @@ import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
+import { personProfiles } from "@/features/person-profiles";
+import { rideLocations } from "@/features/ride-locations";
+import { training, type FamilyStatusName } from "@/features/training";
 import {
   rides,
   scheduleRideForm,
   type ScheduleRideForm,
 } from "@/features/rides";
-import { domainCode } from "@/lib/domain-error";
+import { DomainError, domainCode } from "@/lib/domain-error";
 import {
   allocateTrishaws,
   freeTrishawsInWindow,
@@ -15,7 +18,21 @@ import {
 } from "@/use-cases/schedule-ride";
 
 jest.mock("@/features/chapters", () => ({
-  chapters: { getChapter: jest.fn() },
+  chapters: {
+    getChapter: jest.fn(),
+    getChapterCountryId: jest.fn(async () => "country-de"),
+    getSettings: jest.fn(),
+  },
+}));
+jest.mock("@/features/training", () => ({
+  ...jest.requireActual("@/features/training/requirements"),
+  training: { readinessFacts: jest.fn() },
+}));
+jest.mock("@/features/person-profiles", () => ({
+  personProfiles: { inPersonTrainingOf: jest.fn() },
+}));
+jest.mock("@/use-cases/training-access", () => ({
+  trainingContext: jest.fn(),
 }));
 jest.mock("@/features/fleet", () => ({
   fleet: {
@@ -25,6 +42,9 @@ jest.mock("@/features/fleet", () => ({
 }));
 jest.mock("@/features/passengers", () => ({
   passengers: { getPassengers: jest.fn() },
+}));
+jest.mock("@/features/ride-locations", () => ({
+  rideLocations: { requireUsableRideLocation: jest.fn() },
 }));
 jest.mock("@/features/membership", () => ({
   membership: { getMembersRoles: jest.fn() },
@@ -49,6 +69,40 @@ const RIDE = {
   trishawIds: ["grounded-since"],
 };
 
+const trained = (
+  pilots: Record<string, { course: FamilyStatusName; inPerson: boolean }>,
+) => {
+  (training.readinessFacts as jest.Mock).mockResolvedValue({
+    families: new Map(),
+    requirements: new Map([[CHAPTER, [{ familyId: "basics" }]]]),
+    statuses: new Map([
+      [
+        CHAPTER,
+        new Map(
+          Object.entries(pilots).map(([userId, { course }]) => [
+            userId,
+            [{ familyId: "basics", title: "Basics", status: course }],
+          ]),
+        ),
+      ],
+    ]),
+    exemptions: new Map(),
+  });
+  (personProfiles.inPersonTrainingOf as jest.Mock).mockResolvedValue(
+    new Map(
+      Object.entries(pilots)
+        .filter(([, pilot]) => pilot.inPerson)
+        .map(([userId]) => [
+          userId,
+          {
+            confirmedAt: new Date(),
+            confirmedByUserId: ADMIN,
+          },
+        ]),
+    ),
+  );
+};
+
 const scheduleAt = (form: ScheduleRideForm) =>
   scheduleRideAt(scheduleRideForm.parse(form), ADMIN);
 
@@ -58,6 +112,11 @@ beforeEach(() => {
   (chapters.getChapter as jest.Mock).mockResolvedValue({
     id: CHAPTER,
     timeZone: "Europe/Berlin",
+  });
+  (chapters.getSettings as jest.Mock).mockResolvedValue({
+    pilotsMaySelfAssign: true,
+    staffingCheckLeadHours: 48,
+    demandCheckLeadHours: 24,
   });
   scheduleRide.mockResolvedValue({ id: "ride-new" });
   (passengers.getPassengers as jest.Mock).mockResolvedValue([]);
@@ -102,7 +161,22 @@ describe("scheduleRideAt", () => {
         returnLeg: undefined,
       }),
       ADMIN,
+      { opensForSignUp: true, staffingLeadHours: 48, demandLeadHours: 24 },
     );
+  });
+
+  it("opens the ride to pilots only where the chapter lets them sign up", async () => {
+    (chapters.getSettings as jest.Mock).mockResolvedValue({
+      pilotsMaySelfAssign: false,
+      staffingCheckLeadHours: 24,
+      demandCheckLeadHours: 2,
+    });
+    await scheduleAt(form);
+    expect(scheduleRide.mock.calls[0][2]).toEqual({
+      opensForSignUp: false,
+      staffingLeadHours: 24,
+      demandLeadHours: 2,
+    });
   });
 
   it("books the way back after the stay, as long as the way there", async () => {
@@ -197,6 +271,43 @@ describe("people at scheduling", () => {
   beforeEach(() => {
     getPassengers.mockResolvedValue([{ id: "p-1", chapterId: CHAPTER }]);
     getMembersRoles.mockResolvedValue(new Map([["pilot-1", ["pilot"]]]));
+    trained({ "pilot-1": { course: "passed", inPerson: true } });
+  });
+
+  it("refuses a pilot who hasn't finished a required course", async () => {
+    trained({ "pilot-1": { course: "notStarted", inPerson: true } });
+    expect(await codeOf(scheduleAt(form))).toBe("pilotNotReady");
+    expect(scheduleRide).not.toHaveBeenCalled();
+  });
+
+  it("schedules an exempt pilot", async () => {
+    trained({ "pilot-1": { course: "exempt", inPerson: true } });
+    expect(await codeOf(scheduleAt(form))).toBeNull();
+    expect(scheduleRide).toHaveBeenCalled();
+  });
+
+  it("refuses a pilot whose in-person training isn't confirmed", async () => {
+    trained({ "pilot-1": { course: "passed", inPerson: false } });
+    expect(await codeOf(scheduleAt(form))).toBe("pilotNotReady");
+    expect(scheduleRide).not.toHaveBeenCalled();
+  });
+
+  it("schedules a not-ready pilot when training isn't required", async () => {
+    process.env.TRAINING_REQUIRED = "false";
+    try {
+      trained({ "pilot-1": { course: "notStarted", inPerson: false } });
+      expect(await codeOf(scheduleAt(form))).toBeNull();
+      expect(scheduleRide).toHaveBeenCalled();
+      expect(training.readinessFacts).not.toHaveBeenCalled();
+    } finally {
+      process.env.TRAINING_REQUIRED = "true";
+    }
+  });
+
+  it("checks readiness only after the role check", async () => {
+    getMembersRoles.mockResolvedValue(new Map([["pilot-1", ["passenger"]]]));
+    expect(await codeOf(scheduleAt(form))).toBe("notPilot");
+    expect(training.readinessFacts).not.toHaveBeenCalled();
   });
 
   it("passes riders and pilots of the ride's chapter on", async () => {
@@ -228,5 +339,84 @@ describe("people at scheduling", () => {
     getMembersRoles.mockResolvedValue(new Map([["pilot-1", ["passenger"]]]));
     expect(await codeOf(scheduleAt(form))).toBe("notPilot");
     expect(scheduleRide).not.toHaveBeenCalled();
+  });
+});
+
+describe("scheduling at a Ride Location", () => {
+  const SOLGARDEN = {
+    id: "loc-solgarden",
+    chapterId: CHAPTER,
+    name: "Solgården",
+    address: "Havnegade 1",
+    latitude: 48.14,
+    longitude: 11.58,
+  };
+  const requireUsable = rideLocations.requireUsableRideLocation as jest.Mock;
+  const form = {
+    chapterId: CHAPTER,
+    model: "event" as const,
+    title: "Sommerfest",
+    capacity: 6,
+    slot: { date: "2026-10-27", start: "10:00", durationMinutes: 60 },
+    locationName: "Typed by hand",
+    rideLocationId: SOLGARDEN.id,
+  };
+
+  beforeEach(() => {
+    requireUsable.mockImplementation(async (id: string, chapterId: string) => {
+      if (id !== SOLGARDEN.id) throw new DomainError("unknownLocation");
+      if (chapterId !== SOLGARDEN.chapterId)
+        throw new DomainError("locationNotInChapter");
+      return SOLGARDEN;
+    });
+  });
+
+  it("copies the location's snapshot onto the ride and links it", async () => {
+    await scheduleAt(form);
+    expect(requireUsable).toHaveBeenCalledWith(SOLGARDEN.id, CHAPTER);
+    expect(scheduleRide).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rideLocationId: SOLGARDEN.id,
+        locationName: "Solgården",
+        locationAddress: "Havnegade 1",
+        latitude: 48.14,
+        longitude: 11.58,
+      }),
+      ADMIN,
+      expect.anything(),
+    );
+  });
+
+  it("refuses a location of another chapter before writing", async () => {
+    const other = { ...form, chapterId: "chapter-other" };
+    (chapters.getChapter as jest.Mock).mockResolvedValue({
+      id: "chapter-other",
+      timeZone: "Europe/Berlin",
+    });
+    const error = await scheduleAt(other).catch((caught) => caught);
+    expect(domainCode(error)).toBe("locationNotInChapter");
+    expect(scheduleRide).not.toHaveBeenCalled();
+  });
+
+  it("refuses an unknown or archived location", async () => {
+    const error = await scheduleAt({
+      ...form,
+      rideLocationId: "loc-gone",
+    }).catch((caught) => caught);
+    expect(domainCode(error)).toBe("unknownLocation");
+    expect(scheduleRide).not.toHaveBeenCalled();
+  });
+
+  it("keeps a typed place and links nothing without a location", async () => {
+    await scheduleAt({ ...form, rideLocationId: null });
+    expect(requireUsable).not.toHaveBeenCalled();
+    expect(scheduleRide).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rideLocationId: null,
+        locationName: "Typed by hand",
+      }),
+      ADMIN,
+      expect.anything(),
+    );
   });
 });

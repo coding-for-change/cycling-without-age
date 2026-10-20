@@ -12,17 +12,19 @@ export async function notify({ id, event }: Envelope) {
     kind.recipients(event),
     kind.params(event),
   ]);
-  const payload = kind.payload.parse(params);
+  const shared = kind.payload.parse(params);
   const href = kind.href(event);
   const collapseKey = kind.collapseKey?.(event);
 
   await Promise.all(
-    recipients.map(async (recipientUserId) => {
+    [...new Set(recipients)].map(async (recipientUserId) => {
       const notification = await notifications.create({
         eventId: id,
         recipientUserId,
         category: kind.category,
-        payload,
+        payload: kind.forRecipient
+          ? kind.payload.parse(kind.forRecipient(shared, recipientUserId))
+          : shared,
         href,
         ...(collapseKey ? { collapseKey } : {}),
       });

@@ -49,10 +49,13 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
+        S3="aws --endpoint-url http://rustfs:9000 s3api"
         for i in 1 2 3 4 5 6 7 8 9 10; do
-          aws --endpoint-url http://rustfs:9000 s3api head-bucket --bucket cwa-local 2>/dev/null ||
-            aws --endpoint-url http://rustfs:9000 s3 mb s3://cwa-local &&
-            aws --endpoint-url http://rustfs:9000 s3api put-bucket-cors --bucket cwa-local --cors-configuration '{"CORSRules":[{"AllowedOrigins":["*"],"AllowedMethods":["GET","PUT","HEAD"],"AllowedHeaders":["*"],"MaxAgeSeconds":3600}]}' &&
+          { $$S3 head-bucket --bucket cwa-local 2>/dev/null || aws --endpoint-url http://rustfs:9000 s3 mb s3://cwa-local; } &&
+            $$S3 put-bucket-cors --bucket cwa-local --cors-configuration '{"CORSRules":[{"AllowedOrigins":["*"],"AllowedMethods":["GET","PUT","HEAD"],"AllowedHeaders":["*"],"ExposeHeaders":["ETag"],"MaxAgeSeconds":3600}]}' &&
+            { $$S3 head-bucket --bucket cwa-media-local 2>/dev/null || aws --endpoint-url http://rustfs:9000 s3 mb s3://cwa-media-local; } &&
+            $$S3 put-bucket-policy --bucket cwa-media-local --policy '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":"*","Action":["s3:GetObject"],"Resource":["arn:aws:s3:::cwa-media-local/*"]}]}' &&
+            $$S3 put-bucket-cors --bucket cwa-media-local --cors-configuration '{"CORSRules":[{"AllowedOrigins":["*"],"AllowedMethods":["GET","HEAD"],"AllowedHeaders":["*"],"ExposeHeaders":["ETag","Content-Length","Content-Range"],"MaxAgeSeconds":3600}]}' &&
             exit 0
           sleep 2
         done

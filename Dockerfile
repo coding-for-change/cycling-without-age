@@ -5,6 +5,8 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
+FROM mwader/static-ffmpeg:9.0.2@sha256:7d9bdaaf887f7e6ce6151f67325c344074b5ff1fb75316011c3376503e449a7b AS ffmpeg
+
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -69,24 +71,46 @@ RUN node scripts/docker-runtime-deps.mjs .next/standalone worker.js worker-instr
   && mv src/generated/prisma /out/app/src/generated/prisma \
   && find /out/app/src/generated/prisma -name '*.d.ts' -delete
 
-FROM base AS runner
+FROM base AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=3000
-ENV HOSTNAME=0.0.0.0
-ENV PATH=/opt/prisma/node_modules/.bin:$PATH
 
 RUN groupadd --system --gid 1001 nodejs \
   && useradd --system --uid 1001 --gid nodejs --no-create-home nextjs
 
-COPY --link --from=prisma-cli /opt/prisma /opt/prisma
 COPY --link --from=builder /out/node_modules ./node_modules
 COPY --link --from=builder --chown=1001:1001 /out/app ./
 
 ARG SENTRY_RELEASE=""
 ENV SENTRY_RELEASE=$SENTRY_RELEASE
 ENV NEXT_PUBLIC_SENTRY_RELEASE=$SENTRY_RELEASE
+
+# Transcoding runs in its own image so the app image never carries ffmpeg.
+FROM runtime AS media-worker
+
+COPY --link --from=ffmpeg /ffmpeg /ffprobe /usr/local/bin/
+
+ENV FFMPEG_PATH=/usr/local/bin/ffmpeg
+ENV FFPROBE_PATH=/usr/local/bin/ffprobe
+ENV WORKER_ROLE=media
+ENV MEDIA_SCRATCH_DIR=/scratch
+
+RUN mkdir -p /scratch && chown 1001:1001 /scratch
+
+USER nextjs
+
+EXPOSE 9464
+
+CMD ["node", "--require", "./worker-instrument.js", "worker.js"]
+
+FROM runtime AS runner
+
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+ENV PATH=/opt/prisma/node_modules/.bin:$PATH
+
+COPY --link --from=prisma-cli /opt/prisma /opt/prisma
 
 USER nextjs
 

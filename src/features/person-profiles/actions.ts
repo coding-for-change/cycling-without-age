@@ -15,25 +15,18 @@ import {
   type PersonTarget,
   type Relation,
 } from "@/use-cases/person-access";
-import { tickPilotStep } from "@/use-cases/pilot-steps";
 import {
   accessibilityInput,
   healthConsentInput,
   personProfiles,
   photoUploadCommit,
   photoUploadRequest,
-  pilotStepInput,
   profilePatch,
   subjectRef,
 } from "./index";
 
 export type PersonProfileError =
-  | "invalid"
-  | "generic"
-  | "rateLimited"
-  | "consentRequired"
-  | "uploadRejected"
-  | "pilotStepConfirmed";
+  "invalid" | "generic" | "rateLimited" | "consentRequired" | "uploadRejected";
 
 export type PersonProfileResult<T = object> =
   ({ ok: true } & T) | { ok: false; error: PersonProfileError };
@@ -66,7 +59,6 @@ async function attempt<T extends object>(
     return actionFailure(error, {
       healthConsentRequired: "consentRequired",
       uploadRejected: "uploadRejected",
-      pilotStepConfirmed: "pilotStepConfirmed",
     });
   }
 }
@@ -200,21 +192,6 @@ export async function removeProfilePhotoAction(
 
   return attempt(async () => {
     await personProfiles.removePhoto(at.subject);
-    return {};
-  });
-}
-
-export async function tickPilotStepAction(
-  input: unknown,
-): Promise<PersonProfileResult> {
-  const parsed = pilotStepInput.safeParse(input);
-  if (!parsed.success) return INVALID;
-  const session = await requireAuth();
-  if (!withinRateLimit(`person-profile:${session.user.id}`, SAVE_LIMIT))
-    return RATE_LIMITED;
-
-  return attempt(async () => {
-    await tickPilotStep(session.user.id, parsed.data.step, parsed.data.done);
     return {};
   });
 }

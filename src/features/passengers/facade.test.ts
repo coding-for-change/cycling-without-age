@@ -2,6 +2,7 @@ import { passengers } from "@/features/passengers";
 import {
   deletePassengerWithoutAccount,
   findPassengersManagedBy,
+  insertPassenger,
   findPassengersWithOtherAccountManagedBy,
   insertPassengers,
   setPassengerManagers,
@@ -14,6 +15,8 @@ import {
   findInvitedRidersOfChapters,
   insertCareRequest,
   insertPassengerIn,
+  findPassengerById,
+  moveRiderToManager,
 } from "@/features/passengers/services/passengers";
 
 jest.mock("@/features/passengers/services/passengers", () => ({
@@ -36,6 +39,8 @@ jest.mock("@/features/passengers/services/passengers", () => ({
   findInvitedRidersOfChapters: jest.fn(),
   insertCareRequest: jest.fn(),
   insertPassengerIn: jest.fn(),
+  findPassengerById: jest.fn(),
+  moveRiderToManager: jest.fn(),
 }));
 
 const emitted: unknown[] = [];
@@ -93,6 +98,34 @@ describe("updateOwnRiderDetails", () => {
       passengers.updateOwnRiderDetails(USER, { birthDate: "1899-04-02" }),
     ).rejects.toThrow();
     expect(updateRow).not.toHaveBeenCalled();
+  });
+});
+
+describe("addPassenger", () => {
+  it("writes the rider's needs in the same insert as the rider", async () => {
+    (findPassengersManagedBy as jest.Mock).mockResolvedValue([]);
+
+    await passengers.addPassenger(
+      {
+        chapterId: "chapter-aarhus",
+        managedByUserId: USER,
+        userId: null,
+        firstName: "Pernille",
+        lastName: "Holm",
+        birthDate: new Date("1948-04-02"),
+        gender: "female",
+      },
+      { needsWheelchairBike: true, note: "  ", rideLocationId: "loc-1" },
+    );
+
+    expect(insertPassenger).toHaveBeenCalledTimes(1);
+    expect(insertPassenger).toHaveBeenCalledWith(
+      expect.objectContaining({
+        needsWheelchairBike: true,
+        note: null,
+        rideLocationId: "loc-1",
+      }),
+    );
   });
 });
 
@@ -462,5 +495,66 @@ describe("listWaitingRiders", () => {
     await expect(passengers.listWaitingRiders([])).resolves.toEqual([]);
     expect(pendingRequests).not.toHaveBeenCalled();
     expect(invited).not.toHaveBeenCalled();
+  });
+});
+
+describe("handOverRider", () => {
+  const rider = {
+    id: "erna",
+    chapterId: "chapter-muenchen",
+    managedByUserId: "user-old",
+    userId: null,
+  };
+
+  beforeEach(() => {
+    emitted.length = 0;
+    (findPassengerById as jest.Mock).mockResolvedValue(rider);
+    (findPassengersManagedBy as jest.Mock).mockResolvedValue([]);
+    (moveRiderToManager as jest.Mock).mockResolvedValue({ count: 1 });
+  });
+
+  it("moves the rider from the old manager and says who moved them", async () => {
+    await passengers.handOverRider("erna", "user-new", "user-admin");
+    expect(moveRiderToManager).toHaveBeenCalledWith(
+      "erna",
+      "user-old",
+      "user-new",
+      {},
+    );
+    expect(emitted).toEqual([
+      {
+        type: "rider.handedOver",
+        passengerId: "erna",
+        chapterId: "chapter-muenchen",
+        actorUserId: "user-admin",
+        fromUserId: "user-old",
+        toUserId: "user-new",
+        invited: false,
+      },
+    ]);
+  });
+
+  it("refuses the manager they already have", async () => {
+    await expect(
+      passengers.handOverRider("erna", "user-old", "user-admin"),
+    ).rejects.toMatchObject({ code: "sameManager" });
+  });
+
+  it("refuses a new manager whose riders ride with another chapter", async () => {
+    (findPassengersManagedBy as jest.Mock).mockResolvedValue([
+      { chapterId: "chapter-hamburg", userId: null },
+    ]);
+    await expect(
+      passengers.handOverRider("erna", "user-new", "user-admin"),
+    ).rejects.toMatchObject({ code: "passengerChapterMismatch" });
+    expect(moveRiderToManager).not.toHaveBeenCalled();
+  });
+
+  it("refuses when someone else moved the rider first", async () => {
+    (moveRiderToManager as jest.Mock).mockResolvedValue({ count: 0 });
+    await expect(
+      passengers.handOverRider("erna", "user-new", "user-admin"),
+    ).rejects.toMatchObject({ code: "unknownPassenger" });
+    expect(emitted).toEqual([]);
   });
 });

@@ -8,6 +8,7 @@ import { AdminChrome } from "./_components/admin-chrome";
 import { AdminCommandBar } from "./_components/admin-command-bar";
 import { AdminSidebar } from "./_components/admin-sidebar";
 import { AdminSidebarSkeleton } from "./_components/sidebar-skeleton";
+import { AdminUploadTray } from "./_components/admin-upload-tray";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
@@ -32,6 +33,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
       <Suspense fallback={null}>
         <AccountPanel activePerspective="admin" />
+      </Suspense>
+      <Suspense fallback={null}>
+        <AdminUploadTray />
       </Suspense>
     </SidebarProvider>
   );

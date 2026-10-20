@@ -9,6 +9,7 @@ import {
   perspectiveViewerSession,
   requireAdminScope,
   requireAuth,
+  requireCatalogueOwner,
   requireChapterAdmin,
   requireChapterRole,
   requireCountryAdmin,
@@ -308,6 +309,22 @@ describe("a country admin of Germany", () => {
     await denied(() => requireChapterRole(AARHUS, "pilot"));
     await denied(() => requireCountryAdmin(DK));
     await denied(requireSuperAdmin);
+  });
+
+  it("owns the German catalogue and its chapters, never the global one", async () => {
+    await expect(
+      requireCatalogueOwner({ scope: "country", countryId: DE }),
+    ).resolves.toBeTruthy();
+    await expect(
+      requireCatalogueOwner({ scope: "chapter", chapterId: BERLIN }),
+    ).resolves.toBeTruthy();
+    await denied(() => requireCatalogueOwner({ scope: "global" }));
+    await denied(() =>
+      requireCatalogueOwner({ scope: "country", countryId: DK }),
+    );
+    await denied(() =>
+      requireCatalogueOwner({ scope: "chapter", chapterId: AARHUS }),
+    );
   });
 
   it("cannot administrate a chapter with no resolvable country", async () => {

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { birthDate, gender } from "@/features/profile/schemas";
-import { pickupInput } from "@/features/passengers/schemas";
+import { pickupInput, riderNeedsInput } from "@/features/passengers/schemas";
 
 const email = z
   .string()
@@ -32,6 +32,7 @@ export const assistedPassengerInput = z
     contact: contact.optional(),
     helper: helperInput.optional(),
     pickup: pickupInput.optional(),
+    needs: riderNeedsInput.optional(),
   })
   .refine((input) => input.contact || input.helper, { path: ["contact"] });
 export type AssistedPassengerInput = z.infer<typeof assistedPassengerInput>;
@@ -49,5 +50,6 @@ export const inviteInput = z.object({
     .min(1)
     .max(inviteRole.options.length)
     .transform((roles) => [...new Set(roles)]),
+  skipTraining: z.boolean().optional(),
 });
 export type InviteInput = z.infer<typeof inviteInput>;

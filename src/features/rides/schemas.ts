@@ -30,6 +30,8 @@ export const RIDE_DESCRIPTION_MAX = 5000;
 export const RIDE_MAX_CAPACITY = 100;
 export const RIDE_MAX_PHOTOS = 6;
 export const RIDE_LIST_PAGE_MAX = 100;
+export const OPEN_RIDES_DAYS = 60;
+export const SEAT_BOOKING_MAX = 10;
 export const PLEASURE_LIMITS = {
   passengers: 2,
   trishaws: 1,
@@ -60,6 +62,7 @@ export function modelLimits(
 export function shapedForModel<
   T extends {
     model: RideModelName;
+    announced?: boolean;
     title?: string | null;
     description?: string | null;
     capacity?: number | null;
@@ -73,7 +76,7 @@ export function shapedForModel<
     ...ride,
     ...(ride.model === "event"
       ? {}
-      : { title: null, description: null, capacity: null }),
+      : { title: null, description: null, capacity: null, announced: false }),
     ...(ride.model === "functional"
       ? {}
       : {
@@ -123,6 +126,7 @@ const eventFields = {
   title: rideTitle,
   description: rideDescription,
   capacity,
+  announced: z.boolean().default(false),
   photoFileIds: uniqueIds(RIDE_MAX_PHOTOS).default([]),
   passengerIds: uniqueIds(RIDE_MAX_CAPACITY).default([]),
   pilotIds: uniqueIds(RIDE_MAX_PILOTS).default([]),
@@ -275,6 +279,7 @@ export const rideInput = z
      * and roster.
      */
     returnLeg: rideTimes.optional(),
+    rideLocationId: id.nullable().optional(),
   })
   .superRefine(checkWindow)
   .superRefine(checkModel)
@@ -325,6 +330,11 @@ export const pilotInput = rideRef.extend({ userId: id });
 export const riderInput = rideRef.extend({ passengerId: id });
 export const noteInput = rideRef.extend({ text: rideLogNote });
 export const rideTrishawsInput = rideRef.extend({ trishawIds: trishawIdList });
+export const announceInput = rideRef.extend({ announced: z.boolean() });
+export const seatBookingInput = rideRef.extend({
+  passengerIds: uniqueIds(SEAT_BOOKING_MAX).min(1),
+});
+export type SeatBookingInput = z.input<typeof seatBookingInput>;
 
 export const bookRiderInput = z.object({
   rideId: id,
@@ -338,6 +348,77 @@ export const reorderRosterInput = z.object({
   passengerIds: uniqueIds(RIDE_MAX_CAPACITY).min(1),
 });
 export type ReorderRosterInput = z.input<typeof reorderRosterInput>;
+
+export const ROSTER_ATTENDANCES = [
+  "booked",
+  "confirmed",
+  "checkedIn",
+  "completed",
+  "noShow",
+  "cancelled",
+] as const;
+export type RosterAttendanceName = (typeof ROSTER_ATTENDANCES)[number];
+export const ASSIGNMENT_ATTENDANCES = [
+  "signedUp",
+  "completed",
+  "noShow",
+] as const;
+export type AssignmentAttendanceName = (typeof ASSIGNMENT_ATTENDANCES)[number];
+
+/** Pilots meet before the first rider arrives, so the door opens early. */
+export const CHECK_IN_LEAD_MINUTES = 120;
+export const GUEST_NAME_MAX = 80;
+
+export const checkInInput = rideRef.extend({
+  entryId: id,
+  checkedIn: z.boolean(),
+});
+export type CheckInInput = z.input<typeof checkInInput>;
+
+const guestName = z.string().trim().max(GUEST_NAME_MAX);
+
+export const walkUpInput = rideRef.extend({
+  firstName: guestName.min(1),
+  lastName: guestName.default(""),
+});
+export type WalkUpInput = z.input<typeof walkUpInput>;
+
+export const rosterEntryRef = rideRef.extend({ entryId: id });
+export const pilotNoShowInput = pilotInput.extend({ noShow: z.boolean() });
+
+export const DEBRIEF_NOTE_MAX = 2000;
+export const DEBRIEF_MAX_KM = 1000;
+
+export const debriefInput = rideRef.extend({
+  distanceKm: z
+    .number()
+    .min(0)
+    .max(DEBRIEF_MAX_KM)
+    .transform((km) => Math.round(km * 100) / 100)
+    .nullable()
+    .default(null),
+  note: z
+    .string()
+    .trim()
+    .max(DEBRIEF_NOTE_MAX)
+    .transform((note) => note || null)
+    .nullable()
+    .default(null),
+});
+export type DebriefInput = z.input<typeof debriefInput>;
+export type DebriefData = z.output<typeof debriefInput>;
+
+/**
+ * A decimal typed by hand, in either notation: "12,50" in Munich and "12.50"
+ * in Denver are the same twelve and a half. Thousands separators are refused
+ * rather than guessed at.
+ */
+export function parseDecimal(raw: string): number | null {
+  const text = raw.trim();
+  if (!text) return null;
+  if (!/^\d+([.,]\d{1,2})?$/.test(text)) return Number.NaN;
+  return Number(text.replace(",", "."));
+}
 
 export const ridePhotosInput = z.object({
   rideId: id,
@@ -412,6 +493,7 @@ export const scheduleRideForm = z
     requiredPilots: requiredPilots.default(1),
     note: rideNote,
     ...eventFields,
+    rideLocationId: id.nullable().optional(),
   })
   .superRefine(checkModel);
 export type ScheduleRideForm = z.input<typeof scheduleRideForm>;

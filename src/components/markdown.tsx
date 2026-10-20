@@ -56,6 +56,24 @@ const VARIANT = {
       "[&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:bg-current/10 [&_pre]:p-2 [&_pre]:font-mono [&_pre]:text-2sm",
     ),
   },
+  /**
+   * A teaser inside a card that is itself a link: an anchor in an anchor
+   * breaks the card, so links keep only their text, and headings read as text.
+   */
+  preview: {
+    disallowed: [
+      ...DOCUMENT_DISALLOWED,
+      "a",
+      "h1",
+      "h2",
+      "h3",
+      "h4",
+      "h5",
+      "h6",
+      "hr",
+    ],
+    className: "",
+  },
 } satisfies Record<string, Variant>;
 
 const SAFE_HREF = /^(https?:|mailto:|tel:|\/(?!\/))/i;

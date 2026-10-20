@@ -60,10 +60,6 @@ export const updatePassengerWithoutAccount = (
 export const deletePassengerWithoutAccount = (id: string) =>
   prisma.passenger.deleteMany({ where: { id, userId: null } });
 
-export const countPassengersWithoutAccountManagedBy = (
-  managedByUserId: string,
-) => prisma.passenger.count({ where: { managedByUserId, userId: null } });
-
 export const findPassengersWithOtherAccountManagedBy = (
   managedByUserId: string,
 ) =>
@@ -92,6 +88,12 @@ export const findPassengersByIds = (ids: string[]) =>
 
 export const findPassengerOfUser = (userId: string) =>
   prisma.passenger.findUnique({ where: { userId } });
+
+export const findPassengersOfAccount = (userId: string) =>
+  prisma.passenger.findMany({
+    where: { OR: [{ managedByUserId: userId }, { userId }] },
+    orderBy: { createdAt: "asc" },
+  });
 
 export const findPassengersManagedBy = (managedByUserId: string) =>
   prisma.passenger.findMany({
@@ -133,6 +135,13 @@ export const findPassengersOfChapters = (chapterIds: string[]) =>
     },
   });
 
+export const findBookingAccountsOfChapters = (chapterIds: string[]) =>
+  prisma.passenger.findMany({
+    where: { chapterId: { in: chapterIds } },
+    select: { managedByUserId: true },
+    distinct: ["managedByUserId"],
+  });
+
 export const countPassengersManagedBy = (managedByUserId: string) =>
   prisma.passenger.count({ where: { managedByUserId } });
 
@@ -148,6 +157,24 @@ export const findPassengerNames = (ids: string[]) =>
   prisma.passenger.findMany({
     where: { id: { in: ids } },
     select: { id: true, firstName: true, lastName: true },
+  });
+
+export const updatePassengerNeeds = (
+  id: string,
+  data: Pick<
+    Prisma.PassengerUncheckedUpdateInput,
+    "needsWheelchairBike" | "note" | "rideLocationId"
+  >,
+) =>
+  prisma.passenger.update({
+    where: { id },
+    data,
+    select: {
+      id: true,
+      needsWheelchairBike: true,
+      note: true,
+      rideLocationId: true,
+    },
   });
 
 export const insertCareRequest = (
@@ -231,3 +258,22 @@ export const findInvitedRidersOfChapters = (chapterIds: string[]) =>
 
 export const findPassengersOfUsers = (userIds: string[]) =>
   prisma.passenger.findMany({ where: { userId: { in: userIds } } });
+
+export const moveRiderToManager = (
+  id: string,
+  fromUserId: string,
+  toUserId: string,
+  db: Prisma.TransactionClient,
+) =>
+  db.passenger.updateMany({
+    where: { id, userId: null, managedByUserId: fromUserId },
+    data: { managedByUserId: toUserId },
+  });
+
+export const deletePassengersWithoutAccountManagedBy = (
+  managedByUserId: string,
+  ids: string[],
+) =>
+  prisma.passenger.deleteMany({
+    where: { id: { in: ids }, managedByUserId, userId: null },
+  });

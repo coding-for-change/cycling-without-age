@@ -3,8 +3,14 @@ import { transaction, type DomainEvent } from "@/lib/events";
 import type { FileReadRule } from "@/lib/access";
 import type { $Enums, Prisma } from "@/generated/prisma";
 import {
+  CHECK_IN_LEAD_MINUTES,
+  OPEN_RIDES_DAYS,
   PLEASURE_LIMITS,
   bookRiderInput,
+  debriefInput,
+  walkUpInput,
+  type DebriefInput,
+  type WalkUpInput,
   cancelRideInput,
   modelLimits,
   reorderRosterInput,
@@ -38,13 +44,20 @@ import {
 } from "./services/log";
 import { findRidePhotoFile, findStoredFiles } from "./services/photos";
 import {
+  countUpcomingRidesByLocation,
+  findUpcomingRidesAtLocation,
+} from "./services/at-location";
+import {
   conflictsUnderLock,
+  countBookingsBetween,
   countFutureRidesWithTrishaws,
   deleteAssignment,
   deleteRideById,
   deleteRosterEntry,
   findLogNames,
   countPastRidesOfPilot,
+  countRidesOfVolunteer,
+  findLastRideOfVolunteer,
   findLatestRideForPilot,
   findPastRidesForList,
   findReservations,
@@ -53,6 +66,7 @@ import {
   findRideById,
   findRideDetail,
   findRideIdsWithTrishawFrom,
+  findUpcomingBookingsOf,
   findRideLegIds,
   findRideScope,
   findRidesForCalendarFeed,
@@ -71,7 +85,45 @@ import {
   replaceRideTrishaws,
   updateRide,
   updateRosterPositions,
+  findPassengerRidesOn,
+  findPilotRidesOn,
+  FINISH_WINDOW_MS,
+  findStillPiloting,
+  findRideFacts,
+  findRideForPassengers,
+  findRideForPilot,
+  findRideIdForPassengers,
+  findRideIdForPilot,
+  findRideIdForRunningPilot,
+  findRideParticipants,
+  findAnnouncedEvent,
+  findAnnouncedEvents,
+  findBookingsOn,
+  findOpenRide,
+  findOpenRidesFor,
+  findChaptersWithUncheckedRides,
+  findStaffingCandidates,
+  clearStaffingChecksOfPilot,
+  deleteRosterEntryById,
+  findChaptersWithRidesDue,
+  findDebrief,
+  findDebriefsOfRide,
+  findEntryNames,
+  findRidesDue,
+  insertWalkUp,
+  updateAssignmentAttendance,
+  updateRosterAttendance,
+  updateRosterEntry,
+  upsertDebrief,
+  type RideDebriefRow,
+  type RideMarker,
+  type AnnouncedEventRow,
   type FeedAudience,
+  type OpenRideQueryRow,
+  type RideCursor,
+  type PassengerRideDetailRow,
+  type PassengerRideRow,
+  type PilotRideDetailRow,
   type PilotRideRow,
   type RideCalendarRow,
   type RideDetailRow,
@@ -99,7 +151,12 @@ import {
 import type { ReportScope } from "./report-zones";
 
 export type {
+  RideMarker,
+  AnnouncedEventRow,
   FeedAudience,
+  PassengerRideDetailRow,
+  PassengerRideRow,
+  PilotRideDetailRow,
   PilotRideRow,
   RideCalendarRow,
   RideDetailRow,
@@ -108,22 +165,26 @@ export type {
   TrishawRideRow,
 };
 
-export const listRidesInRange = (chapterIds: string[], from: Date, to: Date) =>
+export const listRidesInRange = async (
+  chapterIds: string[],
+  from: Date,
+  to: Date,
+) =>
   chapterIds.length
-    ? findRidesInRange(chapterIds, from, to)
-    : Promise.resolve([]);
+    ? withPilotStanding(await findRidesInRange(chapterIds, from, to))
+    : [];
 
-export const listRidesForPilot = (userId: string, from: Date, to: Date) =>
-  findRidesForPilot(userId, from, to);
+export const listRidesForPilot = async (userId: string, from: Date, to: Date) =>
+  withActiveCrew(await findRidesForPilot(userId, from, to));
 
-export const listRidesForPassengers = (
+export const listRidesForPassengers = async (
   passengerIds: string[],
   from: Date,
   to: Date,
 ) =>
   passengerIds.length
-    ? findRidesForPassengers(passengerIds, from, to)
-    : Promise.resolve([]);
+    ? withActiveCrew(await findRidesForPassengers(passengerIds, from, to))
+    : [];
 
 /**
  * A feed is polled over and over, so it is capped. A care home with fifty
@@ -159,6 +220,205 @@ export async function listRidesForCalendarFeed(
 
 export const getRide = (id: string) => findRideById(id);
 
+const UPCOMING_ON_PAGE = 50;
+const PAST_ON_PAGE = 20;
+
+type Crewed = {
+  chapterId: string;
+  assignments: { user: { id: string } }[];
+};
+
+/**
+ * Members see only the crew still piloting in the ride's chapter: a co-pilot
+ * who was demoted or left keeps their assignment row, but is no longer
+ * riding along as far as anyone on the ride is told.
+ */
+async function withActiveCrew<T extends Crewed>(rows: T[]): Promise<T[]> {
+  const userIds = [
+    ...new Set(rows.flatMap((row) => row.assignments.map((a) => a.user.id))),
+  ];
+  if (!userIds.length) return rows;
+  const active = await findStillPiloting(
+    [...new Set(rows.map((row) => row.chapterId))],
+    userIds,
+  );
+  return rows.map((row) => ({
+    ...row,
+    assignments: row.assignments.filter((a) =>
+      active.has(`${row.chapterId}:${a.user.id}`),
+    ),
+  }));
+}
+
+const withActiveCrewOf = async <T extends Crewed>(row: T | null) =>
+  row ? (await withActiveCrew([row]))[0] : null;
+
+/**
+ * Admins still see a pilot who was demoted or left on the ride, so they can
+ * take them off, but that seat counts as empty — as it does for signing up
+ * and for the staffing check.
+ */
+type WithStanding<T extends Crewed> = Omit<T, "assignments"> & {
+  assignments: (T["assignments"][number] & { stillPiloting: boolean })[];
+};
+
+async function withPilotStanding<T extends Crewed>(
+  rows: T[],
+): Promise<WithStanding<T>[]> {
+  const userIds = [
+    ...new Set(rows.flatMap((row) => row.assignments.map((a) => a.user.id))),
+  ];
+  const active = userIds.length
+    ? await findStillPiloting(
+        [...new Set(rows.map((row) => row.chapterId))],
+        userIds,
+      )
+    : new Set<string>();
+  return rows.map((row) => ({
+    ...row,
+    assignments: row.assignments.map((a) => ({
+      ...a,
+      stillPiloting: active.has(`${row.chapterId}:${a.user.id}`),
+    })),
+  }));
+}
+
+export async function listPilotRides(userId: string, now = new Date()) {
+  const [upcoming, past] = await Promise.all([
+    findPilotRidesOn(userId, now, "upcoming", UPCOMING_ON_PAGE).then(
+      withActiveCrew,
+    ),
+    findPilotRidesOn(userId, now, "past", PAST_ON_PAGE).then(withActiveCrew),
+  ]);
+  return { upcoming, past };
+}
+
+export async function listPassengerRides(
+  passengerIds: string[],
+  now = new Date(),
+) {
+  if (!passengerIds.length) return { upcoming: [], past: [] };
+  const [upcoming, past] = await Promise.all([
+    findPassengerRidesOn(passengerIds, now, "upcoming", UPCOMING_ON_PAGE).then(
+      withActiveCrew,
+    ),
+    findPassengerRidesOn(passengerIds, now, "past", PAST_ON_PAGE).then(
+      withActiveCrew,
+    ),
+  ]);
+  return { upcoming, past };
+}
+
+export const getRideFacts = (rideId: string) => findRideFacts(rideId);
+
+/** Whether any of these riders is already on a ride that overlaps the window. */
+export const ridersBookedBetween = async (
+  passengerIds: string[],
+  window: { startsAt: Date; endsAt: Date },
+) =>
+  passengerIds.length > 0 &&
+  (await countBookingsBetween(passengerIds, window)) > 0;
+
+export const pilotCanOpen = async (rideId: string, userId: string) =>
+  (await findRideIdForPilot(rideId, userId)) !== null;
+
+/**
+ * Who may run the ride on the day as its pilot: assigned, still a pilot in its
+ * chapter, and not marked as never having come.
+ */
+export const pilotCanRun = async (rideId: string, userId: string) =>
+  (await findRideIdForRunningPilot(rideId, userId)) !== null;
+
+export const passengersCanOpen = async (
+  rideId: string,
+  passengerIds: string[],
+  now = new Date(),
+) =>
+  passengerIds.length > 0 &&
+  (await findRideIdForPassengers(rideId, passengerIds, now)) !== null;
+
+/**
+ * The finish page shows a storage access code, so a ride can be finished
+ * from its start until a day after it ended — the same window
+ * `getFinishableRideForPilot` reads under.
+ */
+export const isFinishable = (
+  ride: { status: string; startsAt: Date; endsAt: Date },
+  now = new Date(),
+) =>
+  ride.status !== "cancelled" &&
+  ride.startsAt <= now &&
+  ride.endsAt.getTime() >= now.getTime() - FINISH_WINDOW_MS;
+
+/** Only a pilot assigned to the ride, and still a pilot in its chapter. */
+export const getRideForPilot = async (rideId: string, userId: string) =>
+  withActiveCrewOf(await findRideForPilot(rideId, userId));
+
+/**
+ * Only a ride one of these riders is on, showing only these riders. A pilot's
+ * number is for the riders who still hold a seat: an account that gave every
+ * seat up sees the crew's names, not how to reach them.
+ */
+export async function getRideForPassengers(
+  rideId: string,
+  passengerIds: string[],
+  now = new Date(),
+) {
+  if (!passengerIds.length) return null;
+  const ride = await withActiveCrewOf(
+    await findRideForPassengers(rideId, passengerIds, now),
+  );
+  if (!ride || ride.roster.some((entry) => entry.attendance !== "cancelled"))
+    return ride;
+  return {
+    ...ride,
+    assignments: ride.assignments.map((assignment) => ({
+      ...assignment,
+      user: { ...assignment.user, phoneNumber: null },
+    })),
+  };
+}
+
+type ParticipantSeat = {
+  passenger: { managedByUserId: string; userId: string | null } | null;
+};
+
+const accountsOf = (seats: ParticipantSeat[]) => [
+  ...new Set(
+    seats.flatMap(({ passenger }) =>
+      passenger
+        ? [passenger.managedByUserId, passenger.userId].filter(
+            (id): id is string => Boolean(id),
+          )
+        : [],
+    ),
+  ),
+];
+
+/**
+ * Who the ride concerns now — its pilots and the accounts behind the seats
+ * still taken — and every household ever booked on it. A seat given up still
+ * counts as a household: one family's answer never lets another into what was
+ * said about it.
+ */
+export async function listRideParticipants(rideId: string) {
+  const ride = await findRideParticipants(rideId);
+  if (!ride) return null;
+  const seated = ride.roster.filter(
+    (entry) => entry.attendance !== "cancelled",
+  );
+  return {
+    chapterId: ride.chapterId,
+    pilotUserIds: [...new Set(ride.assignments.map((a) => a.userId))],
+    riderCount: seated.length,
+    riderAccountUserIds: accountsOf(seated),
+    household: {
+      riders: ride.roster.length,
+      accountUserIds: accountsOf(ride.roster),
+    },
+  };
+}
+
 export const listRidesOfTrishaw = (trishawId: string, take = 50) =>
   findRidesOfTrishaw(trishawId, take);
 
@@ -188,13 +448,37 @@ export const hasPilotedRide = async (userId: string, now = new Date()) =>
 export const latestRideForPilot = (userId: string, now = new Date()) =>
   findLatestRideForPilot(userId, now);
 
-export const getRideDetail = (id: string) => findRideDetail(id);
+export async function volunteerRideStats(
+  userId: string,
+  chapterIds: string[],
+  now = new Date(),
+) {
+  if (chapterIds.length === 0)
+    return { done: 0, upcoming: 0, lastRideAt: null };
+  const [done, upcoming, last] = await Promise.all([
+    countRidesOfVolunteer(userId, chapterIds, { endedBy: now }),
+    countRidesOfVolunteer(userId, chapterIds, { startsAfter: now }),
+    findLastRideOfVolunteer(userId, chapterIds, now),
+  ]);
+  return { done, upcoming, lastRideAt: last?.startsAt ?? null };
+}
+
+export const getRideDetail = async (id: string) => {
+  const ride = await findRideDetail(id);
+  return ride ? (await withPilotStanding([ride]))[0] : null;
+};
 
 export const countRideLog = (rideId: string) => countLogOfRide(rideId);
 
 const NAMED_IN_LOG = {
-  userId: ["pilotAssigned", "pilotUnassigned"],
-  passengerId: ["riderBooked", "riderRemoved"],
+  userId: ["pilotAssigned", "pilotUnassigned", "pilotNoShow"],
+  passengerId: [
+    "riderBooked",
+    "riderRemoved",
+    "seatConfirmed",
+    "seatCancelled",
+  ],
+  entryId: ["checkedIn", "checkInUndone", "walkUpAdded"],
 } as const;
 
 const idIn = (entry: RideLogRow, key: keyof typeof NAMED_IN_LOG) =>
@@ -217,21 +501,22 @@ export async function listRideLog(rideId: string, take = 200) {
   const passengerIds = entries.flatMap(
     (entry) => idIn(entry, "passengerId") ?? [],
   );
-  const names = await findLogNames(
-    [...new Set(userIds)],
-    [...new Set(passengerIds)],
-  );
+  const entryIds = entries.flatMap((entry) => idIn(entry, "entryId") ?? []);
+  const [names, entryNames] = await Promise.all([
+    findLogNames([...new Set(userIds)], [...new Set(passengerIds)]),
+    findEntryNames([...new Set(entryIds)]),
+  ]);
   return entries.map((entry) => {
     const id = idIn(entry, "userId") ?? idIn(entry, "passengerId");
-    return id === null
-      ? entry
-      : {
-          ...entry,
-          payload: {
-            ...(entry.payload as Prisma.JsonObject),
-            name: names.get(id) ?? null,
-          },
-        };
+    const entryId = idIn(entry, "entryId");
+    if (id === null && entryId === null) return entry;
+    return {
+      ...entry,
+      payload: {
+        ...(entry.payload as Prisma.JsonObject),
+        name: (id ? names.get(id) : entryNames.get(entryId!)) ?? null,
+      },
+    };
   });
 }
 
@@ -259,6 +544,7 @@ export const bookedTrishawIds = async (
   );
 
 type Actor = string | null;
+type RidePair = Extract<DomainEvent, { type: "ride.cancelled" }>["pair"];
 type Tx = Prisma.TransactionClient;
 type Emit = Parameters<Parameters<typeof transaction>[0]>[1];
 type RideEvent = Extract<DomainEvent, { rideId: string }>;
@@ -316,11 +602,22 @@ async function requireRide(id: string, tx: Tx) {
   return ride;
 }
 
-const modelShapeOf = (ride: RideDetailRow): RideModelShape => ({
+type RosterEntry = RideDetailRow["roster"][number];
+
+const seatedOn = (ride: { roster: RosterEntry[] }) =>
+  ride.roster.filter((entry) => entry.attendance !== "cancelled");
+
+const entryOf = (ride: RideDetailRow, passengerId: string) =>
+  ride.roster.find(({ passenger }) => passenger?.id === passengerId);
+
+const modelShapeOf = async (
+  ride: RideDetailRow,
+  tx: Tx,
+): Promise<RideModelShape> => ({
   ...ride,
-  passengers: ride.roster.length,
+  passengers: seatedOn(ride).length,
   trishaws: ride.trishaws.length,
-  pilots: ride.assignments.length,
+  pilots: await pilotsOn(ride, tx),
   photos: ride.photos.length,
 });
 
@@ -360,6 +657,28 @@ async function requireScheduled(id: string, tx: Tx) {
   return ride;
 }
 
+/** Trishaws a ride may take, and how many of them it needs. */
+export type TrishawPick = { candidates: string[]; count: number };
+
+/**
+ * Picks free trishaws while holding their locks, so a ride scheduled without
+ * an admin choosing the bikes can never take one another write is booking.
+ */
+async function pickFreeUnderLock(
+  tx: Tx,
+  { candidates, count }: TrishawPick,
+  windows: { startsAt: Date; endsAt: Date }[],
+) {
+  const taken = new Set(
+    (await conflictsUnderLock(tx, candidates, windows)).map(
+      ({ trishawId }) => trishawId,
+    ),
+  );
+  const free = candidates.filter((id) => !taken.has(id)).slice(0, count);
+  if (free.length < count) throw new DomainError("noTrishawFree");
+  return free;
+}
+
 async function reserveOrRefuse(
   tx: Tx,
   trishawIds: string[],
@@ -381,31 +700,64 @@ async function reserveOrRefuse(
  * cancelled ride releases it. Whether the chapter may use the trishaw at all is
  * the fleet's question, asked by the use case before this runs.
  *
+ * A ride scheduled already inside its chapter's staffing window counts as
+ * checked, and one inside its demand window as checked for riders: the admin
+ * scheduling it sees what it is short of, and the sweep would only repeat it
+ * to them minutes later.
+ *
  * A round trip is two rows written together: both windows are checked under
  * the same lock, so the way there can never be booked without the way back.
  */
-export async function scheduleRide(input: RideData, actorUserId: Actor) {
+export async function scheduleRide(
+  input: RideData,
+  actorUserId: Actor,
+  {
+    opensForSignUp = false,
+    staffingLeadHours = null,
+    requestId = null,
+    pickTrishaws = null,
+    demandLeadHours = null,
+  }: {
+    opensForSignUp?: boolean;
+    staffingLeadHours?: number | null;
+    requestId?: string | null;
+    pickTrishaws?: TrishawPick | null;
+    demandLeadHours?: number | null;
+  } = {},
+) {
   const {
     trishawIds,
     returnLeg,
     passengerIds,
     pilotIds,
     photoFileIds,
-    ...data
+    ...fields
   } = shapedForModel(input);
+  const now = new Date();
+  const ahead = fields.startsAt > now;
+  const inside = (leadHours: number | null) =>
+    leadHours !== null &&
+    fields.startsAt.getTime() - now.getTime() <= leadHours * HOUR_MS;
+  const data = {
+    ...fields,
+    announcedAt: fields.announced && ahead ? now : null,
+    staffingCheckedAt: inside(staffingLeadHours) ? now : null,
+    demandCheckedAt: inside(demandLeadHours) ? now : null,
+  };
   return rideWrite(async (tx, emit) => {
     await requireRidePhotos(photoFileIds, actorUserId, null, tx);
-    await reserveOrRefuse(tx, trishawIds, [
-      data,
-      ...(returnLeg ? [returnLeg] : []),
-    ]);
+    const windows = [data, ...(returnLeg ? [returnLeg] : [])];
+    const reserved = pickTrishaws
+      ? await pickFreeUnderLock(tx, pickTrishaws, windows)
+      : trishawIds;
+    if (!pickTrishaws) await reserveOrRefuse(tx, trishawIds, windows);
 
-    const ride = await insertRide(data, trishawIds, tx);
+    const ride = await insertRide(data, reserved, tx);
     await insertRideLogEntry(
       ride.id,
       actorUserId,
       "scheduled",
-      { ...span(ride), trishawIds },
+      { ...span(ride), trishawIds: reserved },
       tx,
     );
     if (photoFileIds.length) await attachPhotos(ride.id, photoFileIds, tx);
@@ -424,8 +776,9 @@ export async function scheduleRide(input: RideData, actorUserId: Actor) {
             destinationLatitude: data.latitude,
             destinationLongitude: data.longitude,
             returnLegOfId: ride.id,
+            rideLocationId: null,
           },
-          trishawIds,
+          reserved,
           tx,
         )
       : null;
@@ -434,7 +787,7 @@ export async function scheduleRide(input: RideData, actorUserId: Actor) {
         back.id,
         actorUserId,
         "scheduled",
-        { ...span(back), trishawIds, returnLegOf: ride.id },
+        { ...span(back), trishawIds: reserved, returnLegOf: ride.id },
         tx,
       );
 
@@ -444,9 +797,53 @@ export async function scheduleRide(input: RideData, actorUserId: Actor) {
       chapterId: ride.chapterId,
       actorUserId,
       returnLegId: back?.id ?? null,
+      requestId,
     });
-    for (const leg of back ? [ride, back] : [ride])
-      await staffAndBook(leg, passengerIds, pilotIds, actorUserId, tx, emit);
+    await staffAndBook(
+      ride,
+      passengerIds,
+      pilotIds,
+      actorUserId,
+      tx,
+      emit,
+      back ? { role: "lead", otherRideId: back.id } : null,
+      requestId,
+    );
+    if (back)
+      await staffAndBook(
+        back,
+        passengerIds,
+        pilotIds,
+        actorUserId,
+        tx,
+        emit,
+        { role: "follow", otherRideId: ride.id },
+        requestId,
+      );
+    if (ahead && opensForSignUp && pilotIds.length < data.requiredPilots) {
+      await emit({
+        type: "ride.opened",
+        rideId: ride.id,
+        chapterId: ride.chapterId,
+        actorUserId,
+        pair: back ? { role: "lead", otherRideId: back.id } : null,
+      });
+      if (back)
+        await emit({
+          type: "ride.opened",
+          rideId: back.id,
+          chapterId: back.chapterId,
+          actorUserId,
+          pair: { role: "follow", otherRideId: ride.id },
+        });
+    }
+    if (data.announcedAt)
+      await emit({
+        type: "ride.announced",
+        rideId: ride.id,
+        chapterId: ride.chapterId,
+        actorUserId,
+      });
     return { ...ride, returnLegId: back?.id ?? null };
   });
 }
@@ -458,6 +855,8 @@ async function staffAndBook(
   actorUserId: Actor,
   tx: Tx,
   emit: Emit,
+  pair: RidePair,
+  requestId: string | null = null,
 ) {
   if (passengerIds.length)
     await insertRosterEntries(ride.id, passengerIds, actorUserId, tx);
@@ -480,13 +879,20 @@ async function staffAndBook(
   );
   const scope = { rideId: ride.id, chapterId: ride.chapterId, actorUserId };
   for (const passengerId of passengerIds)
-    await emit({ type: "ride.riderBooked", ...scope, passengerId });
+    await emit({
+      type: "ride.riderBooked",
+      ...scope,
+      passengerId,
+      pair,
+      requestId,
+    });
   for (const userId of pilotIds)
     await emit({
       type: "ride.pilotAssigned",
       ...scope,
       userId,
       self: actorUserId === userId,
+      pair,
     });
 }
 
@@ -591,8 +997,21 @@ export async function rescheduleRide(
       );
 
     let updated = null;
+    const pairOf = (legId: string): RidePair =>
+      moves.length < 2
+        ? null
+        : legId === id
+          ? { role: "lead", otherRideId: moves[1].leg.id }
+          : { role: "follow", otherRideId: id };
     for (const { leg, to } of moves) {
-      const row = await updateRide(leg.id, to, tx);
+      const startMoved = leg.startsAt.getTime() !== to.startsAt.getTime();
+      const row = await updateRide(
+        leg.id,
+        { ...to, ...(startMoved ? UNSWEPT : { staffingCheckedAt: null }) },
+        tx,
+      );
+      if (startMoved && leg.startsAt.getTime() - CHECK_IN_LEAD_MS > Date.now())
+        await askSeatsAgain(leg.id, tx);
       updated ??= row;
       await record(
         tx,
@@ -605,7 +1024,7 @@ export async function rescheduleRide(
           to: span(to),
           ...(leg.id === id ? {} : { withLegOf: id }),
         },
-        { type: "ride.rescheduled", changes: ["time"] },
+        { type: "ride.rescheduled", changes: ["time"], pair: pairOf(leg.id) },
       );
     }
     return { ride: updated!, changed: true, movedReturnLeg: moves.length > 1 };
@@ -656,6 +1075,10 @@ export async function updateRideDetails(
       parsed.model !== undefined &&
       parsed.model !== "functional" &&
       ride.model === "functional";
+    const leavingEvent =
+      parsed.model !== undefined &&
+      parsed.model !== "event" &&
+      ride.model === "event";
     if (
       parsed.model !== undefined &&
       parsed.model !== ride.model &&
@@ -673,7 +1096,7 @@ export async function updateRideDetails(
         ? Object.fromEntries(DESTINATION_FIELDS.map((field) => [field, null]))
         : {}),
     };
-    const current = modelShapeOf(ride);
+    const current = await modelShapeOf(ride, tx);
     refuseNewModelIssues(current, {
       ...current,
       ...Object.fromEntries(
@@ -690,9 +1113,17 @@ export async function updateRideDetails(
     );
     if (!changed.length) return ride;
 
-    const data = Object.fromEntries(
-      changed.map((field) => [field, blankToNull(wanted[field])]),
-    ) as Prisma.RideUncheckedUpdateInput;
+    const data = {
+      ...Object.fromEntries(
+        changed.map((field) => [field, blankToNull(wanted[field])]),
+      ),
+      ...(changed.some((f) =>
+        (LOCATION_FIELDS as readonly string[]).includes(f),
+      )
+        ? { rideLocationId: null }
+        : {}),
+      ...(leavingEvent && ride.announced ? { announced: false } : {}),
+    } as Prisma.RideUncheckedUpdateInput;
     const updated = await updateRide(id, data, tx);
     const shown = changed.filter(
       (field) =>
@@ -727,7 +1158,9 @@ export async function updateRideDetails(
           shown.map((field) => [field, blankToNull(wanted[field])]),
         ),
       } as Prisma.InputJsonObject,
-      changes.length ? { type: "ride.rescheduled", changes } : undefined,
+      changes.length
+        ? { type: "ride.rescheduled", changes, pair: null }
+        : undefined,
     );
     return updated;
   });
@@ -777,7 +1210,16 @@ export async function cancelRide(
         actorUserId,
         "cancelled",
         { reasonCode, note: note?.trim() || null },
-        { type: "ride.cancelled", reasonCode },
+        {
+          type: "ride.cancelled",
+          reasonCode,
+          pair:
+            ids.length < 2
+              ? null
+              : rideId === ride.id
+                ? { role: "lead", otherRideId: ids[1] }
+                : { role: "follow", otherRideId: ride.id },
+        },
       );
     }
     return { cancelledIds: ids };
@@ -825,7 +1267,7 @@ export async function setRideTrishaws(
     const kept = new Set(before.map((trishaw) => trishaw.id));
     if (before.length === ids.length && ids.every((id) => kept.has(id)))
       return ride;
-    const current = modelShapeOf(ride);
+    const current = await modelShapeOf(ride, tx);
     refuseNewModelIssues(current, { ...current, trishaws: ids.length });
 
     await reserveOrRefuse(tx, ids, [ride], [rideId]);
@@ -848,8 +1290,43 @@ const isAssigned = (ride: RideDetailRow, userId: string, role: RideRole) =>
     (assignment) => assignment.user.id === userId && assignment.role === role,
   );
 
-const isBooked = (ride: RideDetailRow, passengerId: string) =>
-  ride.roster.some(({ passenger }) => passenger.id === passengerId);
+const isBooked = (ride: RideDetailRow, passengerId: string) => {
+  const entry = entryOf(ride, passengerId);
+  return entry !== undefined && entry.attendance !== "cancelled";
+};
+
+/**
+ * A rider who gave their seat up keeps the row, so booking them again takes
+ * the same row back rather than adding a second one.
+ */
+async function takeSeat(
+  ride: RideDetailRow,
+  passengerId: string,
+  actorUserId: Actor,
+  position: number,
+  tx: Tx,
+  at?: number,
+) {
+  const given = entryOf(ride, passengerId);
+  if (given)
+    return updateRosterEntry(
+      given.id,
+      {
+        attendance: "booked",
+        cancelledAt: null,
+        confirmedAt: null,
+        bookedByUserId: actorUserId,
+      },
+      tx,
+    );
+  const entry = { rideId: ride.id, passengerId, bookedByUserId: actorUserId };
+  return at === undefined
+    ? insertRosterEntry({ ...entry, position }, tx)
+    : insertRosterEntryAt({ ...entry, position: at }, tx);
+}
+
+const nextPosition = (ride: RideDetailRow) =>
+  Math.max(-1, ...ride.roster.map((entry) => entry.position)) + 1;
 
 /**
  * Lifecycle phase 3 — a volunteer commits to a role on this ride. The actor is
@@ -864,7 +1341,7 @@ export async function assignVolunteer(
   return rideWrite(async (tx, emit) => {
     const ride = await requireScheduled(rideId, tx);
     if (isAssigned(ride, userId, role)) return false;
-    requireRoom(ride, "pilots", ride.assignments.length);
+    requireRoom(ride, "pilots", await pilotsOn(ride, tx));
     const self = actorUserId === userId;
     await insertAssignment(
       { rideId, userId, role, assignedByUserId: self ? null : actorUserId },
@@ -877,7 +1354,7 @@ export async function assignVolunteer(
       actorUserId,
       "pilotAssigned",
       { userId, role },
-      { type: "ride.pilotAssigned", userId, self },
+      { type: "ride.pilotAssigned", userId, self, pair: null },
     );
     return true;
   });
@@ -900,7 +1377,12 @@ export async function unassignVolunteer(
       actorUserId,
       "pilotUnassigned",
       { userId, role },
-      { type: "ride.pilotUnassigned", userId, self: actorUserId === userId },
+      {
+        type: "ride.pilotUnassigned",
+        userId,
+        self: actorUserId === userId,
+        pair: null,
+      },
     );
     return true;
   });
@@ -920,24 +1402,18 @@ export async function bookRider(
   return rideWrite(async (tx, emit) => {
     const ride = await requireScheduled(rideId, tx);
     if (isBooked(ride, passengerId)) return false;
-    requireRoom(ride, "passengers", ride.roster.length);
+    const seated = seatedOn(ride);
+    requireRoom(ride, "passengers", seated.length);
 
-    const before = at === undefined ? undefined : ride.roster[at];
-    const entry = {
-      rideId,
+    const before = at === undefined ? undefined : seated[at];
+    await takeSeat(
+      ride,
       passengerId,
-      bookedByUserId: actorUserId,
-    };
-    if (before)
-      await insertRosterEntryAt({ ...entry, position: before.position }, tx);
-    else
-      await insertRosterEntry(
-        {
-          ...entry,
-          position: Math.max(-1, ...ride.roster.map((e) => e.position)) + 1,
-        },
-        tx,
-      );
+      actorUserId,
+      nextPosition(ride),
+      tx,
+      before?.position,
+    );
     await record(
       tx,
       emit,
@@ -945,7 +1421,7 @@ export async function bookRider(
       actorUserId,
       "riderBooked",
       { passengerId },
-      { type: "ride.riderBooked", passengerId },
+      { type: "ride.riderBooked", passengerId, pair: null, requestId: null },
     );
     return true;
   });
@@ -958,7 +1434,9 @@ export async function reorderRoster(
   const { rideId, passengerIds } = reorderRosterInput.parse(input);
   return rideWrite(async (tx, emit) => {
     const ride = await requireScheduled(rideId, tx);
-    const current = ride.roster.map(({ passenger }) => passenger.id);
+    const current = seatedOn(ride).flatMap(({ passenger }) =>
+      passenger ? [passenger.id] : [],
+    );
     const known = new Set(current);
     if (
       current.length !== passengerIds.length ||
@@ -1003,7 +1481,8 @@ export async function setRidePhotos(
 
 /**
  * Null for any file that is not a ride photo. A photo on a ride is for the
- * admins of that ride's chapter; one not on a ride yet only for its uploader.
+ * admins of that ride's chapter, and for all its members once the ride is an
+ * announced event; one not on a ride yet only for its uploader.
  */
 export async function photoReadRule(fileId: string) {
   const file = await findRidePhotoFile(fileId);
@@ -1013,7 +1492,10 @@ export async function photoReadRule(fileId: string) {
     ? {
         kind: "members",
         chapterIds: [ride.chapterId],
-        roles: ["admin"],
+        roles:
+          ride.model === "event" && ride.announced
+            ? ["admin", "pilot", "passenger"]
+            : ["admin"],
         admins: {
           chapters: [
             { chapterId: ride.chapterId, countryId: ride.chapter.countryId },
@@ -1063,8 +1545,10 @@ export async function cancelBooking(
 ) {
   return rideWrite(async (tx, emit) => {
     const ride = await requireScheduled(rideId, tx);
-    if (!isBooked(ride, passengerId)) return false;
+    const entry = entryOf(ride, passengerId);
+    if (!entry) return false;
     await deleteRosterEntry(rideId, passengerId, tx);
+    const seated = entry.attendance !== "cancelled";
     await record(
       tx,
       emit,
@@ -1072,10 +1556,45 @@ export async function cancelBooking(
       actorUserId,
       "riderRemoved",
       { passengerId },
-      { type: "ride.riderRemoved", passengerId },
+      {
+        type: "ride.riderRemoved",
+        passengerId,
+        self:
+          actorUserId !== null &&
+          (entry.passenger?.managedByUserId === actorUserId ||
+            entry.passenger?.userId === actorUserId),
+        rosterNowEmpty: seated && seatedOn(ride).length === 1,
+        pair: null,
+      },
     );
     return true;
   });
+}
+
+export async function upcomingRideIdsOf(
+  passengerIds: string[],
+  now = new Date(),
+) {
+  if (!passengerIds.length) return [];
+  const bookings = await findUpcomingBookingsOf(passengerIds, now);
+  return [...new Set(bookings.map((booking) => booking.rideId))];
+}
+
+/**
+ * A rider about to be deleted gives up every seat still ahead first, each as
+ * a cancelled booking, so the ride's history, its chat and — when their own
+ * side let go — its admins hear of it instead of the row just vanishing.
+ */
+export async function cancelUpcomingBookings(
+  passengerIds: string[],
+  actorUserId: Actor,
+  now = new Date(),
+) {
+  if (!passengerIds.length) return 0;
+  const bookings = await findUpcomingBookingsOf(passengerIds, now);
+  for (const { rideId, passengerId } of bookings)
+    if (passengerId) await cancelBooking(rideId, passengerId, actorUserId);
+  return bookings.length;
 }
 
 /** A note in the ride's history. Unlike the note for pilots, it never changes. */
@@ -1087,6 +1606,1043 @@ export async function addRideNote(
   const note = rideLogNote.parse(text);
   if (!(await findRideScope(rideId))) throw new DomainError("unknownRide");
   return insertRideLogEntry(rideId, actorUserId, "note", { text: note });
+}
+
+const MINUTE_MS = 60 * 1000;
+const HOUR_MS = 60 * MINUTE_MS;
+const DAY_MS = 24 * HOUR_MS;
+
+/**
+ * A ride whose start moves is reminded and checked again for its new time, and
+ * a seat confirmed or checked in for the old one is asked about again — while
+ * the ride is still ahead of its door: once check-in has opened, who came
+ * stands. A walk-up was there in person and has nobody to answer for them, so
+ * they stay.
+ */
+const askSeatsAgain = (rideId: string, tx: Tx) =>
+  updateRosterAttendance(
+    rideId,
+    ["confirmed", "checkedIn"],
+    { attendance: "booked", confirmedAt: null, checkedInAt: null },
+    tx,
+    { passengerId: { not: null } },
+  );
+
+const UNSWEPT = {
+  staffingCheckedAt: null,
+  riderReminderSentAt: null,
+  volunteerReminderSentAt: null,
+  demandCheckedAt: null,
+} as const;
+const OPEN_RIDES_ON_PAGE = 30;
+const OPEN_RIDES_BATCH = OPEN_RIDES_ON_PAGE * 2;
+const STAFFING_BATCH = 200;
+
+/**
+ * A pilot who was demoted or left the chapter keeps their assignment row but
+ * no longer fills a seat: only pilots still piloting in the ride's chapter
+ * count, as in the crew lists.
+ */
+async function pilotCounter(chapterIds: string[], pilotIds: string[], db?: Tx) {
+  const active = pilotIds.length
+    ? await findStillPiloting(
+        [...new Set(chapterIds)],
+        [...new Set(pilotIds)],
+        db,
+      )
+    : new Set<string>();
+  return (chapterId: string, ids: string[]) =>
+    ids.filter((id) => active.has(`${chapterId}:${id}`)).length;
+}
+
+async function pilotsOn(ride: RideDetailRow, tx: Tx) {
+  const pilotIds = ride.assignments
+    .filter((assignment) => assignment.role === "pilot")
+    .map((assignment) => assignment.user.id);
+  const count = await pilotCounter([ride.chapterId], pilotIds, tx);
+  return count(ride.chapterId, pilotIds);
+}
+
+const pilotIdsOf = (row: OpenRideQueryRow) =>
+  row.assignments.map((assignment) => assignment.userId);
+
+async function withPilotsOn(rows: OpenRideQueryRow[]) {
+  const count = await pilotCounter(
+    rows.map((row) => row.chapterId),
+    rows.flatMap(pilotIdsOf),
+  );
+  return rows.map(({ assignments, ...row }) => ({
+    ...row,
+    _count: {
+      ...row._count,
+      assignments: count(
+        row.chapterId,
+        assignments.map((assignment) => assignment.userId),
+      ),
+    },
+  }));
+}
+
+export type OpenRideRow = Awaited<ReturnType<typeof withPilotsOn>>[number];
+
+const stillNeedsPilots = (ride: OpenRideRow) =>
+  ride._count.assignments < ride.requiredPilots;
+
+/**
+ * Rides in these chapters that still need a pilot and this pilot is not on
+ * yet, soonest first. The rows carry how many ride along, never who. Whether
+ * a ride is staffed is only known once its pilots are counted, so the window
+ * is read in batches until the page is full: a run of staffed rides never
+ * hides an open one behind it.
+ */
+export async function listOpenRidesForPilot(
+  userId: string,
+  chapterIds: string[],
+  now = new Date(),
+) {
+  if (!chapterIds.length) return [];
+  const until = new Date(now.getTime() + OPEN_RIDES_DAYS * DAY_MS);
+  const open: OpenRideRow[] = [];
+  let after: RideCursor | undefined;
+  while (open.length < OPEN_RIDES_ON_PAGE) {
+    const rows = await findOpenRidesFor(
+      userId,
+      chapterIds,
+      now,
+      until,
+      OPEN_RIDES_BATCH,
+      after,
+    );
+    open.push(...(await withPilotsOn(rows)).filter(stillNeedsPilots));
+    if (rows.length < OPEN_RIDES_BATCH) break;
+    after = rows[rows.length - 1];
+  }
+  return open.slice(0, OPEN_RIDES_ON_PAGE);
+}
+
+export async function getOpenRideForPilot(
+  rideId: string,
+  chapterIds: string[],
+  now = new Date(),
+) {
+  if (!chapterIds.length) return null;
+  const row = await findOpenRide(rideId, chapterIds, now);
+  if (!row) return null;
+  const [ride] = await withPilotsOn([row]);
+  return stillNeedsPilots(ride) ? ride : null;
+}
+
+/**
+ * A round trip is one outing for whoever pilots it: signing up for one leg
+ * takes the other too while it still needs a pilot, and stepping back from
+ * one leaves the other while there is still time. Both legs are locked by
+ * `requireRide`, so the other leg is read under the same lock.
+ */
+async function otherLegOf(ride: RideDetailRow, tx: Tx) {
+  const other = ride.returnLeg ?? ride.returnLegOf;
+  return other?.status === "scheduled" ? findRideDetail(other.id, tx) : null;
+}
+
+const pairOfLegs = (legs: RideDetailRow[], leg: RideDetailRow): RidePair =>
+  legs.length < 2
+    ? null
+    : leg.returnLeg
+      ? { role: "lead", otherRideId: leg.returnLeg.id }
+      : { role: "follow", otherRideId: leg.returnLegOf!.id };
+
+/**
+ * Lifecycle 3B-b: a pilot takes a seat on the saddle. The ride row is locked
+ * before the pilots are counted, so two pilots signing up for the last place
+ * at once queue up, and the second one finds the ride staffed.
+ */
+export async function selfAssign(
+  rideId: string,
+  userId: string,
+  now = new Date(),
+) {
+  return rideWrite(async (tx, emit) => {
+    const ride = await requireScheduled(rideId, tx);
+    if (ride.startsAt <= now) throw new DomainError("rideClosed");
+    if (isAssigned(ride, userId, "pilot")) return false;
+    if ((await pilotsOn(ride, tx)) >= ride.requiredPilots)
+      throw new DomainError("rideFullyStaffed");
+    const other = await otherLegOf(ride, tx);
+    const legs = [
+      ride,
+      ...(other &&
+      other.startsAt > now &&
+      !isAssigned(other, userId, "pilot") &&
+      (await pilotsOn(other, tx)) < other.requiredPilots
+        ? [other]
+        : []),
+    ];
+    for (const leg of legs) {
+      await insertAssignment(
+        { rideId: leg.id, userId, role: "pilot", assignedByUserId: null },
+        tx,
+      );
+      await record(
+        tx,
+        emit,
+        leg,
+        userId,
+        "pilotAssigned",
+        { userId, role: "pilot" },
+        {
+          type: "ride.pilotAssigned",
+          userId,
+          self: true,
+          pair: pairOfLegs(legs, leg),
+        },
+      );
+    }
+    return true;
+  });
+}
+
+/**
+ * A pilot steps back from a ride, but only from their own seat and only
+ * while there is time to find someone else. Inside the staffing window it is
+ * a phone call to the chapter instead.
+ */
+export async function withdraw(
+  rideId: string,
+  userId: string,
+  leadHours: number,
+  now = new Date(),
+) {
+  const tooLate = (leg: RideDetailRow) =>
+    leg.startsAt.getTime() - now.getTime() < leadHours * HOUR_MS;
+  return rideWrite(async (tx, emit) => {
+    const ride = await requireScheduled(rideId, tx);
+    if (!isAssigned(ride, userId, "pilot"))
+      throw new DomainError("notAssigned");
+    if (tooLate(ride)) throw new DomainError("tooLateToWithdraw");
+    const other = await otherLegOf(ride, tx);
+    const legs = [
+      ride,
+      ...(other && isAssigned(other, userId, "pilot") && !tooLate(other)
+        ? [other]
+        : []),
+    ];
+    for (const leg of legs) {
+      await deleteAssignment(leg.id, userId, "pilot", tx);
+      if (leg.staffingCheckedAt)
+        await updateRide(leg.id, { staffingCheckedAt: null }, tx);
+      await record(
+        tx,
+        emit,
+        leg,
+        userId,
+        "pilotUnassigned",
+        { userId, role: "pilot" },
+        {
+          type: "ride.pilotUnassigned",
+          userId,
+          self: true,
+          pair: pairOfLegs(legs, leg),
+        },
+      );
+    }
+    return true;
+  });
+}
+
+export const withdrawalClosesAt = (startsAt: Date, leadHours: number) =>
+  new Date(startsAt.getTime() - leadHours * HOUR_MS);
+
+/** Chapters with a ride not checked yet that could be inside some staffing window. */
+export const listChaptersToCheck = (maxLeadHours: number, now = new Date()) =>
+  findChaptersWithUncheckedRides(
+    now,
+    new Date(now.getTime() + maxLeadHours * HOUR_MS),
+  );
+
+/**
+ * Rides of these chapters already inside a staffing window of `leadHours` and
+ * not checked yet. Every one is due, so a full batch still makes progress.
+ */
+export const listStaffingCandidates = async (
+  chapterIds: string[],
+  leadHours: number,
+  now = new Date(),
+  take = STAFFING_BATCH,
+) =>
+  chapterIds.length && take > 0
+    ? findStaffingCandidates(
+        chapterIds,
+        now,
+        new Date(now.getTime() + leadHours * HOUR_MS),
+        take,
+      )
+    : [];
+
+/**
+ * A pilot who stops piloting in a chapter leaves their seats empty, so the
+ * upcoming rides they were on are checked again: the next sweep warns about
+ * those now short and quietly stamps the rest.
+ */
+export const reopenStaffingChecksOf = async (
+  userId: string,
+  chapterId: string,
+  now = new Date(),
+) => (await clearStaffingChecksOfPilot(userId, chapterId, now)).count;
+
+/**
+ * Lifecycle 3D: the check runs once per ride. The stamp and the warning are
+ * written in one transaction under the ride's lock, so a retried sweep finds
+ * the stamp and stays quiet, and a ride staffed in the meantime is stamped
+ * without a warning. The way there takes its way back along: both legs short
+ * are one warning, through the events' `pair`.
+ */
+export async function checkStaffing(rideId: string, now = new Date()) {
+  return rideWrite(async (tx, emit) => {
+    const ride = await requireRide(rideId, tx);
+    if (
+      ride.status !== "scheduled" ||
+      ride.startsAt <= now ||
+      ride.staffingCheckedAt
+    )
+      return false;
+    const back =
+      ride.returnLeg?.status === "scheduled"
+        ? await findRideDetail(ride.returnLeg.id, tx)
+        : null;
+    const legs = [ride, ...(back && !back.staffingCheckedAt ? [back] : [])];
+    const short: { leg: RideDetailRow; assigned: number }[] = [];
+    for (const leg of legs) {
+      await updateRide(leg.id, { staffingCheckedAt: now }, tx);
+      const assigned = await pilotsOn(leg, tx);
+      if (assigned < leg.requiredPilots) short.push({ leg, assigned });
+    }
+    const shortLegs = short.map(({ leg }) => leg);
+    for (const { leg, assigned } of short)
+      await emit({
+        type: "ride.understaffed",
+        rideId: leg.id,
+        chapterId: leg.chapterId,
+        actorUserId: null,
+        assigned,
+        required: leg.requiredPilots,
+        pair: pairOfLegs(shortLegs, leg),
+      });
+    return short.length > 0;
+  });
+}
+
+/**
+ * Only an event ride still ahead can be announced to the chapter's riders.
+ * They are told the first time; taking it back and announcing it again tells
+ * nobody twice.
+ */
+export async function setAnnounced(
+  rideId: string,
+  announced: boolean,
+  actorUserId: Actor,
+  now = new Date(),
+) {
+  return rideWrite(async (tx, emit) => {
+    const ride = await requireScheduled(rideId, tx);
+    if (announced && ride.model !== "event")
+      throw new DomainError("eventsOnly");
+    if (announced && ride.startsAt <= now) throw new DomainError("rideClosed");
+    if (ride.announced === announced) return false;
+    const firstTime = announced && !ride.announcedAt;
+    await updateRide(
+      rideId,
+      { announced, ...(firstTime ? { announcedAt: now } : {}) },
+      tx,
+    );
+    await record(
+      tx,
+      emit,
+      ride,
+      actorUserId,
+      "edited",
+      { fields: ["announced"] },
+      firstTime ? { type: "ride.announced" } : undefined,
+    );
+    return true;
+  });
+}
+
+/**
+ * The announced events in the chapters of these riders that still have one
+ * of them to bring along: an event every rider of its chapter is booked on
+ * is already among the account's own rides.
+ */
+export async function listAnnouncedEvents(
+  riders: { id: string; chapterId: string }[],
+  now = new Date(),
+  take = 20,
+) {
+  if (!riders.length) return [];
+  const events = await findAnnouncedEvents(
+    [...new Set(riders.map((rider) => rider.chapterId))],
+    now,
+    take,
+  );
+  if (!events.length) return events;
+  const booked = new Set(
+    (
+      await findBookingsOn(
+        events.map((event) => event.id),
+        riders.map((rider) => rider.id),
+      )
+    ).map((entry) => `${entry.rideId}:${entry.passengerId}`),
+  );
+  return events.filter((event) =>
+    riders.some(
+      (rider) =>
+        rider.chapterId === event.chapterId &&
+        !booked.has(`${event.id}:${rider.id}`),
+    ),
+  );
+}
+
+export const getAnnouncedEvent = (
+  rideId: string,
+  chapterIds: string[],
+  now = new Date(),
+) =>
+  chapterIds.length
+    ? findAnnouncedEvent(rideId, chapterIds, now)
+    : Promise.resolve(null);
+
+export const seatsLeft = (ride: {
+  capacity: number | null;
+  _count: { roster: number };
+}) =>
+  ride.capacity === null
+    ? null
+    : Math.max(0, ride.capacity - ride._count.roster);
+
+/**
+ * Lifecycle 4B-b: riders enrol themselves on an announced event. The ride is
+ * locked and the roster recounted before any seat is taken, and a booking that
+ * would overfill it is refused whole rather than seating half the family.
+ */
+export async function bookSeats(
+  rideId: string,
+  passengerIds: string[],
+  actorUserId: string,
+  now = new Date(),
+) {
+  return rideWrite(async (tx, emit) => {
+    const ride = await requireScheduled(rideId, tx);
+    if (ride.model !== "event" || !ride.announced || ride.startsAt <= now)
+      throw new DomainError("unknownRide");
+    const fresh = passengerIds.filter((id) => !isBooked(ride, id));
+    if (!fresh.length) return 0;
+    if (
+      ride.capacity !== null &&
+      seatedOn(ride).length + fresh.length > ride.capacity
+    )
+      throw new DomainError("rideFull");
+    let position = nextPosition(ride);
+    for (const passengerId of fresh) {
+      await takeSeat(ride, passengerId, actorUserId, position++, tx);
+      await record(
+        tx,
+        emit,
+        ride,
+        actorUserId,
+        "riderBooked",
+        { passengerId },
+        { type: "ride.riderBooked", passengerId, pair: null, requestId: null },
+      );
+    }
+    return fresh.length;
+  });
+}
+
+/** Who runs the ride on the day: one of its pilots, or an admin of its chapter. */
+export type Executor = "pilot" | "admin";
+
+const CHECK_IN_LEAD_MS = CHECK_IN_LEAD_MINUTES * MINUTE_MS;
+
+const withinPilotWindow = (ride: { endsAt: Date }, now: Date) =>
+  ride.endsAt.getTime() >= now.getTime() - FINISH_WINDOW_MS;
+
+/**
+ * Lifecycle 6B: the door opens two hours before the start. A pilot keeps it
+ * until the finish page closes a day after the ride; an admin may still record
+ * a ride afterwards, for as long as its roster is not closed.
+ */
+export const checkInOpen = (
+  ride: { status: string; startsAt: Date; endsAt: Date },
+  as: Executor,
+  now = new Date(),
+) =>
+  ride.status === "scheduled" &&
+  now.getTime() >= ride.startsAt.getTime() - CHECK_IN_LEAD_MS &&
+  (as === "admin" || withinPilotWindow(ride, now));
+
+/** A roster closes once the ride has started, by the same people and window. */
+export const canComplete = (
+  ride: { status: string; startsAt: Date; endsAt: Date },
+  as: Executor,
+  now = new Date(),
+) =>
+  ride.status === "scheduled" &&
+  ride.startsAt <= now &&
+  (as === "admin" || withinPilotWindow(ride, now));
+
+function requireCheckInOpen(ride: RideDetailRow, as: Executor, now: Date) {
+  if (ride.status !== "scheduled") throw new DomainError("rideClosed");
+  if (!checkInOpen(ride, as, now)) throw new DomainError("checkInClosed");
+}
+
+/**
+ * A rider's seat on this ride and, for a round trip, on the other leg while
+ * that one is still ahead: a seat given up or confirmed is given up or
+ * confirmed for the whole outing.
+ */
+async function seatLegs(
+  ride: RideDetailRow,
+  passengerId: string,
+  now: Date,
+  tx: Tx,
+) {
+  const other = await otherLegOf(ride, tx);
+  const otherEntry =
+    other && other.startsAt > now ? entryOf(other, passengerId) : undefined;
+  return [
+    { leg: ride, entry: entryOf(ride, passengerId) },
+    ...(other && otherEntry ? [{ leg: other, entry: otherEntry }] : []),
+  ];
+}
+
+/** Whether one more rider fits, as the ride's model and numbers allow. */
+const hasRoom = (ride: RideDetailRow) => {
+  const limit = modelLimits(
+    ride.model,
+    ride.capacity,
+    ride.requiredPilots,
+  ).passengers;
+  return limit === null || seatedOn(ride).length < limit;
+};
+
+/**
+ * Lifecycle 5B-b: the rider's side confirms the seat, or takes back a seat
+ * they gave up while there is still room. Taking it back is a booking again
+ * for the ride's chat and the rider's side; when it fills a roster that had
+ * emptied, the chapter's admins — told it was empty — hear it is not. The other leg of
+ * a round trip is confirmed with it when it is booked, and taken back with it
+ * only when this one is being taken back and that one still has room.
+ */
+export async function confirmSeat(
+  rideId: string,
+  passengerId: string,
+  actorUserId: string,
+  now = new Date(),
+) {
+  return rideWrite(async (tx, emit) => {
+    const ride = await requireScheduled(rideId, tx);
+    if (ride.startsAt <= now) throw new DomainError("rideClosed");
+    const [here, ...others] = await seatLegs(ride, passengerId, now, tx);
+    if (!here.entry) throw new DomainError("unknownPassenger");
+    const retaking = here.entry.attendance === "cancelled";
+    if (retaking) requireRoom(ride, "passengers", seatedOn(ride).length);
+    const changing = [here, ...others].filter(
+      ({ leg, entry }) =>
+        entry?.attendance === "booked" ||
+        (entry?.attendance === "cancelled" &&
+          (leg === ride || (retaking && hasRoom(leg)))),
+    );
+    const retaken = changing
+      .filter(({ entry }) => entry!.attendance === "cancelled")
+      .map(({ leg }) => leg);
+    const refilledLeg = retaken.find((leg) => seatedOn(leg).length === 0);
+    for (const { leg, entry } of changing) {
+      await updateRosterEntry(
+        entry!.id,
+        { attendance: "confirmed", confirmedAt: now, cancelledAt: null },
+        tx,
+      );
+      await record(
+        tx,
+        emit,
+        leg,
+        actorUserId,
+        "seatConfirmed",
+        { passengerId },
+        retaken.includes(leg)
+          ? {
+              type: "ride.riderBooked",
+              passengerId,
+              pair: pairOfLegs(retaken, leg),
+              requestId: null,
+            }
+          : undefined,
+      );
+      if (leg === refilledLeg)
+        await emit({
+          type: "ride.rosterRefilled",
+          rideId: leg.id,
+          chapterId: leg.chapterId,
+          actorUserId,
+          passengerId,
+        });
+    }
+    return changing.length > 0;
+  });
+}
+
+/**
+ * Lifecycle 5B-b: the rider's side gives the seat up before the ride. The row
+ * stays, marked, so the rider still counts as signed up for Report 2; the
+ * seat is free again, and when nobody is left to ride the chapter is told.
+ */
+export async function cancelSeat(
+  rideId: string,
+  passengerId: string,
+  actorUserId: string,
+  now = new Date(),
+) {
+  return rideWrite(async (tx, emit) => {
+    const ride = await requireScheduled(rideId, tx);
+    if (ride.startsAt <= now) throw new DomainError("rideClosed");
+    const legs = await seatLegs(ride, passengerId, now, tx);
+    if (!legs[0].entry) throw new DomainError("unknownPassenger");
+    const leaving = legs.filter(
+      ({ entry }) =>
+        entry?.attendance === "booked" || entry?.attendance === "confirmed",
+    );
+    const leftEmpty = (leg: RideDetailRow) => seatedOn(leg).length === 1;
+    const oneMessage =
+      leaving.length === 2 &&
+      leftEmpty(leaving[0].leg) === leftEmpty(leaving[1].leg);
+    const leavingLegs = oneMessage ? leaving.map(({ leg }) => leg) : [];
+    for (const { leg, entry } of leaving) {
+      await updateRosterEntry(
+        entry!.id,
+        { attendance: "cancelled", cancelledAt: now, confirmedAt: null },
+        tx,
+      );
+      await record(
+        tx,
+        emit,
+        leg,
+        actorUserId,
+        "seatCancelled",
+        { passengerId },
+        {
+          type: "ride.riderRemoved",
+          passengerId,
+          self: true,
+          rosterNowEmpty: leftEmpty(leg),
+          pair: pairOfLegs(leavingLegs, leg),
+        },
+      );
+    }
+    return leaving.length > 0;
+  });
+}
+
+/** Lifecycle 6B: a rider on the roster is marked as here, or not after all. */
+export async function setCheckedIn(
+  rideId: string,
+  entryId: string,
+  checkedIn: boolean,
+  actorUserId: string,
+  as: Executor,
+  now = new Date(),
+) {
+  return rideWrite(async (tx, emit) => {
+    const ride = await requireRide(rideId, tx);
+    requireCheckInOpen(ride, as, now);
+    const entry = ride.roster.find((candidate) => candidate.id === entryId);
+    if (!entry || entry.attendance === "cancelled")
+      throw new DomainError("unknownPassenger");
+    if (checkedIn === (entry.attendance === "checkedIn")) return false;
+    await updateRosterEntry(
+      entry.id,
+      checkedIn
+        ? { attendance: "checkedIn", checkedInAt: now }
+        : {
+            attendance: entry.confirmedAt ? "confirmed" : "booked",
+            checkedInAt: null,
+          },
+      tx,
+    );
+    await record(
+      tx,
+      emit,
+      ride,
+      actorUserId,
+      checkedIn ? "checkedIn" : "checkInUndone",
+      { entryId },
+    );
+    return true;
+  });
+}
+
+/**
+ * Lifecycle 6B: someone who turns up without a booking rides anyway. They have
+ * no rider record, so the roster keeps only the name the pilot typed, and only
+ * the ride's own crew and admins ever read it.
+ */
+export async function addWalkUp(
+  input: WalkUpInput,
+  actorUserId: string,
+  as: Executor,
+  now = new Date(),
+) {
+  const { rideId, firstName, lastName } = walkUpInput.parse(input);
+  return rideWrite(async (tx, emit) => {
+    const ride = await requireRide(rideId, tx);
+    requireCheckInOpen(ride, as, now);
+    requireRoom(ride, "passengers", seatedOn(ride).length);
+    const { id } = await insertWalkUp(
+      {
+        rideId,
+        guestName: [firstName, lastName].filter(Boolean).join(" "),
+        position: nextPosition(ride),
+        bookedByUserId: actorUserId,
+        checkedInAt: now,
+      },
+      tx,
+    );
+    await record(tx, emit, ride, actorUserId, "walkUpAdded", { entryId: id });
+    return id;
+  });
+}
+
+/** A walk-up added by mistake goes again, as long as the door is open. */
+export async function removeWalkUp(
+  rideId: string,
+  entryId: string,
+  actorUserId: string,
+  as: Executor,
+  now = new Date(),
+) {
+  return rideWrite(async (tx, emit) => {
+    const ride = await requireRide(rideId, tx);
+    requireCheckInOpen(ride, as, now);
+    const entry = ride.roster.find((candidate) => candidate.id === entryId);
+    if (!entry || entry.passenger) throw new DomainError("unknownPassenger");
+    await deleteRosterEntryById(entry.id, tx);
+    await record(tx, emit, ride, actorUserId, "walkUpRemoved", { entryId });
+    return true;
+  });
+}
+
+/**
+ * Lifecycle 6D, the statistics moment: whoever was checked in rode, whoever
+ * was booked and never came is a no-show, and every pilot not marked as
+ * missing piloted. A second tap on a closed roster changes nothing.
+ */
+export async function closeRoster(
+  rideId: string,
+  actorUserId: string,
+  as: Executor,
+  now = new Date(),
+) {
+  return rideWrite(async (tx, emit) => {
+    const ride = await requireRide(rideId, tx);
+    if (ride.status === "completed") return null;
+    if (ride.status !== "scheduled") throw new DomainError("rideClosed");
+    if (ride.startsAt > now) throw new DomainError("rideNotStarted");
+    if (!canComplete(ride, as, now)) throw new DomainError("rideClosed");
+
+    const riders = ride.roster.filter((e) => e.attendance === "checkedIn");
+    const missing = ride.roster.filter(
+      (e) => e.attendance === "booked" || e.attendance === "confirmed",
+    );
+    await updateRosterAttendance(
+      ride.id,
+      ["checkedIn"],
+      { attendance: "completed" },
+      tx,
+    );
+    await updateRosterAttendance(
+      ride.id,
+      ["booked", "confirmed"],
+      { attendance: "noShow" },
+      tx,
+    );
+    await updateAssignmentAttendance(
+      { rideId: ride.id },
+      ["signedUp"],
+      "completed",
+      tx,
+    );
+    await updateRide(
+      ride.id,
+      { status: "completed", completedAt: now, completedByUserId: actorUserId },
+      tx,
+    );
+    const tally = { riders: riders.length, noShows: missing.length };
+    await record(tx, emit, ride, actorUserId, "completed", tally, {
+      type: "ride.completed",
+      ...tally,
+    });
+    return tally;
+  });
+}
+
+/**
+ * An admin takes a closed roster back to correct it: everyone stands where
+ * they stood on the day, and the ride counts again once it is closed again.
+ * A pilot marked as missing stays marked.
+ */
+export async function reopenRide(rideId: string, actorUserId: string) {
+  return rideWrite(async (tx, emit) => {
+    const ride = await requireRide(rideId, tx);
+    if (ride.status !== "completed") throw new DomainError("rideNotCompleted");
+    await updateRosterAttendance(
+      ride.id,
+      ["completed"],
+      { attendance: "checkedIn" },
+      tx,
+    );
+    await updateRosterAttendance(
+      ride.id,
+      ["noShow"],
+      { attendance: "confirmed" },
+      tx,
+      { confirmedAt: { not: null } },
+    );
+    await updateRosterAttendance(
+      ride.id,
+      ["noShow"],
+      { attendance: "booked" },
+      tx,
+    );
+    await updateAssignmentAttendance(
+      { rideId: ride.id },
+      ["completed"],
+      "signedUp",
+      tx,
+    );
+    await updateRide(
+      ride.id,
+      { status: "scheduled", completedAt: null, completedByUserId: null },
+      tx,
+    );
+    await record(
+      tx,
+      emit,
+      ride,
+      actorUserId,
+      "reopened",
+      {},
+      { type: "ride.reopened" },
+    );
+    return true;
+  });
+}
+
+/** Report 1: a pilot who was on the ride but never came. */
+export async function setPilotNoShow(
+  rideId: string,
+  userId: string,
+  noShow: boolean,
+  actorUserId: string,
+  now = new Date(),
+) {
+  return rideWrite(async (tx, emit) => {
+    const ride = await requireRide(rideId, tx);
+    if (ride.status === "cancelled") throw new DomainError("rideClosed");
+    if (ride.startsAt > now) throw new DomainError("rideNotStarted");
+    const assignment = ride.assignments.find(
+      (candidate) => candidate.user.id === userId && candidate.role === "pilot",
+    );
+    if (!assignment) throw new DomainError("notAssigned");
+    const target = noShow
+      ? "noShow"
+      : ride.status === "completed"
+        ? "completed"
+        : "signedUp";
+    if (assignment.attendance === target) return false;
+    await updateAssignmentAttendance(
+      { rideId: ride.id, userId },
+      [assignment.attendance],
+      target,
+      tx,
+    );
+    await record(tx, emit, ride, actorUserId, "pilotNoShow", {
+      userId,
+      noShow,
+    });
+    return true;
+  });
+}
+
+const debriefView = (row: RideDebriefRow) => ({
+  ...row,
+  distanceKm: row.distanceKm === null ? null : Number(row.distanceKm),
+});
+export type RideDebriefView = ReturnType<typeof debriefView>;
+
+/**
+ * Story 31 and lifecycle 7E: one report per pilot and ride, written again as
+ * often as they like while the finish page is open; an admin's, any time.
+ * The form saves as it goes, so the history notes the first version only.
+ * Distance is measured only on a functional ride (Report 11).
+ */
+export async function submitDebrief(
+  input: DebriefInput,
+  userId: string,
+  as: Executor,
+  now = new Date(),
+) {
+  const data = debriefInput.parse(input);
+  return rideWrite(async (tx, emit) => {
+    const ride = await findRideById(data.rideId, tx);
+    if (!ride) throw new DomainError("unknownRide");
+    if (ride.status === "cancelled") throw new DomainError("rideClosed");
+    if (ride.startsAt > now) throw new DomainError("rideNotStarted");
+    if (as === "pilot" && !withinPilotWindow(ride, now))
+      throw new DomainError("rideClosed");
+    const written = await findDebrief(ride.id, userId, tx);
+    const row = await upsertDebrief(
+      ride.id,
+      userId,
+      {
+        distanceKm: ride.model === "functional" ? data.distanceKm : null,
+        note: data.note,
+      },
+      tx,
+    );
+    if (!written) await record(tx, emit, ride, userId, "debriefed", {});
+    return debriefView(row);
+  });
+}
+
+export const getDebrief = async (rideId: string, userId: string) => {
+  const row = await findDebrief(rideId, userId);
+  return row ? debriefView(row) : null;
+};
+
+export const listDebriefs = async (rideId: string) =>
+  (await findDebriefsOfRide(rideId)).map(debriefView);
+
+/** Chapters with a ride not swept yet for this marker, within the furthest lead. */
+export const listChaptersDue = (
+  marker: RideMarker,
+  maxLeadMinutes: number,
+  now = new Date(),
+) =>
+  findChaptersWithRidesDue(
+    marker,
+    now,
+    new Date(now.getTime() + maxLeadMinutes * MINUTE_MS),
+  );
+
+export const listRidesDue = async (
+  marker: RideMarker,
+  chapterIds: string[],
+  leadMinutes: number,
+  now = new Date(),
+  take = STAFFING_BATCH,
+) =>
+  chapterIds.length && take > 0
+    ? findRidesDue(
+        marker,
+        chapterIds,
+        now,
+        new Date(now.getTime() + leadMinutes * MINUTE_MS),
+        take,
+      )
+    : [];
+
+/**
+ * The legs a once-per-ride sweep covers in one go, stamped before anything is
+ * said: the way there takes its way back along while that one is unstamped.
+ * The lead is read again under the lock, so a ride moved away after the sweep
+ * listed it waits for its new time.
+ */
+async function sweepLegs(
+  rideId: string,
+  marker: RideMarker,
+  leadMinutes: number,
+  now: Date,
+  tx: Tx,
+) {
+  const ride = await requireRide(rideId, tx);
+  if (
+    ride.status !== "scheduled" ||
+    ride.startsAt <= now ||
+    ride.startsAt.getTime() > now.getTime() + leadMinutes * MINUTE_MS ||
+    ride[marker]
+  )
+    return [];
+  const back =
+    ride.returnLeg?.status === "scheduled"
+      ? await findRideDetail(ride.returnLeg.id, tx)
+      : null;
+  const legs = [ride, ...(back && !back[marker] ? [back] : [])];
+  for (const leg of legs) await updateRide(leg.id, { [marker]: now }, tx);
+  return legs;
+}
+
+const REMINDED_BY = {
+  riderReminderSentAt: {
+    type: "ride.riderReminderDue",
+    reaches: (leg: RideDetailRow) =>
+      seatedOn(leg).some((entry) => entry.passenger),
+  },
+  volunteerReminderSentAt: {
+    type: "ride.volunteerReminderDue",
+    reaches: (leg: RideDetailRow) => leg.assignments.length > 0,
+  },
+} as const;
+
+/**
+ * Lifecycle 5B: the reminder before a ride, to its riders' side or to its
+ * pilots. The stamp and the event are written in one transaction under the
+ * ride's lock, so a retried sweep finds the stamp and sends nothing twice;
+ * each reminder is its own event, because a notification is once per event
+ * and reader.
+ */
+export async function sendReminder(
+  marker: keyof typeof REMINDED_BY,
+  rideId: string,
+  leadMinutes: number,
+  now = new Date(),
+) {
+  return rideWrite(async (tx, emit) => {
+    const { type, reaches } = REMINDED_BY[marker];
+    const reached = (
+      await sweepLegs(rideId, marker, leadMinutes, now, tx)
+    ).filter(reaches);
+    for (const leg of reached)
+      await emit({
+        type,
+        rideId: leg.id,
+        chapterId: leg.chapterId,
+        actorUserId: null,
+        pair: pairOfLegs(reached, leg),
+      });
+    return reached.length > 0;
+  });
+}
+
+/**
+ * Lifecycle 4C: at the chapter's interval before the ride, a roster with
+ * nobody left on it is flagged to the schedulers for cancellation, once.
+ */
+export async function checkDemand(
+  rideId: string,
+  leadMinutes: number,
+  now = new Date(),
+) {
+  return rideWrite(async (tx, emit) => {
+    const empty = (
+      await sweepLegs(rideId, "demandCheckedAt", leadMinutes, now, tx)
+    ).filter((leg) => seatedOn(leg).length === 0);
+    for (const leg of empty)
+      await emit({
+        type: "ride.noDemand",
+        rideId: leg.id,
+        chapterId: leg.chapterId,
+        actorUserId: null,
+        pair: pairOfLegs(empty, leg),
+      });
+    return empty.length > 0;
+  });
 }
 
 const tallyRow = (row: TallyFactRow) => ({
@@ -1158,6 +2714,27 @@ export async function activeParticipants(
 
 export const earliestRideStart = async (chapterIds: string[]) =>
   chapterIds.length ? findEarliestRideStart(chapterIds) : null;
+
+export async function countRidesAt(
+  locationIds: string[],
+  from = new Date(),
+): Promise<Map<string, number>> {
+  if (!locationIds.length) return new Map();
+  const rows = await countUpcomingRidesByLocation(locationIds, from);
+  return new Map(
+    rows.flatMap((row) =>
+      row.rideLocationId
+        ? [[row.rideLocationId, row._count._all] as const]
+        : [],
+    ),
+  );
+}
+
+export const listUpcomingRidesAt = (
+  locationId: string,
+  from = new Date(),
+  take = 20,
+) => findUpcomingRidesAtLocation(locationId, from, take);
 
 export {
   aggregateActivity,

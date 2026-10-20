@@ -10,7 +10,7 @@ import { useKeyboardOpen } from "@/lib/native/keyboard";
 import { cn } from "@/lib/utils";
 import {
   activeTabKey,
-  isConversationPath,
+  hidesTabBar,
   type MemberNavKey,
   type ResolvedMemberNavItem,
 } from "../nav";
@@ -35,7 +35,7 @@ export function MobileTabBar({
   const active = intent && intent.from === pathname ? intent.key : settled;
   const activeIndex = tabs.findIndex((item) => item.key === active);
 
-  if (keyboardOpen || isConversationPath(pathname)) return null;
+  if (keyboardOpen || hidesTabBar(pathname)) return null;
 
   return (
     <nav

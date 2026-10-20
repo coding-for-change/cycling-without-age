@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { resolveAdminScope } from "@/lib/access";
 import type {
   Access,
@@ -59,11 +61,19 @@ const navigateHrefs = (commands: ResolvedCommand[]) =>
     c.run.kind === "navigate" ? [c.run.href] : [],
   );
 
+const NESTED_VIEWS = ["/admin/rides/requests"];
+
+const isView = (href: string) =>
+  href.includes("?") || NESTED_VIEWS.includes(href);
+
+const pageOf = (href: string) =>
+  href.split("?")[0].split("/").slice(0, 3).join("/");
+
 const hrefs = (commands: ResolvedCommand[]) =>
-  navigateHrefs(commands).filter((href) => !href.includes("?"));
+  navigateHrefs(commands).filter((href) => !isView(href));
 
 const views = (commands: ResolvedCommand[]) =>
-  navigateHrefs(commands).filter((href) => href.includes("?"));
+  navigateHrefs(commands).filter(isView);
 
 const labels = (commands: ResolvedCommand[], group: string) =>
   inGroup(commands, group).map((c) => c.label);
@@ -109,11 +119,19 @@ describe("views of a destination", () => {
     const pages = new Set(navFor(berlinAdmin).map((item) => item.href));
     expect(views(run(berlinAdmin)).length).toBeGreaterThan(0);
     for (const href of views(run(berlinAdmin)))
-      expect(pages.has(href.split("?")[0])).toBe(true);
+      expect(pages.has(pageOf(href))).toBe(true);
   });
 
   it("offers the rides list view", () => {
     expect(views(run(berlinAdmin))).toContain("/admin/rides?view=list");
+  });
+
+  it("offers the Ride Request List as a view of Rides", () => {
+    expect(views(run(berlinAdmin))).toContain("/admin/rides/requests");
+  });
+
+  it.each(NESTED_VIEWS)("opens %s, a page that exists", (href) => {
+    expect(existsSync(path.join(__dirname, "..", href, "page.tsx"))).toBe(true);
   });
 });
 
@@ -174,6 +192,12 @@ describe("create group", () => {
 
   it("stays out of the navigate group, so NAV parity is untouched", () => {
     expect(hrefs(run(superadmin))).not.toContain("/admin/chapters?new=1");
+  });
+
+  it("offers a new training course and no retired training pages", () => {
+    expect(ids(superadmin)).toContain("new-course");
+    expect(ids(superadmin)).not.toContain("upload-training-video");
+    expect(ids(superadmin)).not.toContain("add-training-requirement");
   });
 });
 

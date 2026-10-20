@@ -6,10 +6,11 @@ import { notifications } from "@/features/notifications";
 import { profile } from "@/features/profile";
 import { activity } from "@/lib/activity";
 import { APP_URL } from "@/lib/app-url";
+import { renderIcs } from "@/lib/ics";
 import { MailRateLimitedError, sendMail } from "@/lib/mailer";
 import { worker as workerMetrics } from "@/lib/observability/metrics";
-import { kindOf, renderMessage } from "./kinds";
-import type { Message } from "./kinds/types";
+import { kindOf, renderMail } from "./kinds";
+import type { CalendarAttachment, Message } from "./kinds/types";
 
 const CHANNEL = "email";
 
@@ -60,7 +61,11 @@ export async function deliverEmail(notificationId: string) {
 
   try {
     const locale = resolveEmailLocale(account.locale);
-    const message = renderMessage(kind, notification.payload, locale);
+    const { message, attachments } = await renderMail(
+      kind,
+      notification.payload,
+      locale,
+    );
     const href = `${APP_URL}${notification.href}`;
     const replyTo = await replyToOf(notification.event.chapterId);
 
@@ -70,6 +75,9 @@ export async function deliverEmail(notificationId: string) {
       text: plainText(message, href),
       react: createElement(NotificationEmail, { locale, message, href }),
       ...(replyTo ? { replyTo } : {}),
+      ...(attachments.length
+        ? { attachments: attachments.map(calendarFile) }
+        : {}),
     });
     await notifications.deliverySent(delivery.id, null);
     recordSent(notification.event.createdAt);
@@ -105,6 +113,12 @@ async function reasonToSkip(
   const push = await notifications.getDelivery(notification.id, "push");
   return push?.status === "sent" ? "push delivered" : null;
 }
+
+const calendarFile = ({ filename, calendar }: CalendarAttachment) => ({
+  filename,
+  content: renderIcs(calendar),
+  contentType: "text/calendar; charset=utf-8; method=PUBLISH",
+});
 
 const replyToOf = async (chapterId: string | null) =>
   chapterId ? (await chapters.getSettings(chapterId)).replyToEmail : null;

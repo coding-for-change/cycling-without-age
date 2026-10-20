@@ -4,7 +4,10 @@ import { commands as fleetCommands } from "@/features/fleet/commands";
 import { commands as membershipCommands } from "@/features/membership/commands";
 import { commands as passengerCommands } from "@/features/passengers/commands";
 import { commands as profileCommands } from "@/features/profile/commands";
+import { commands as rideLocationCommands } from "@/features/ride-locations/commands";
+import { commands as rideRequestCommands } from "@/features/ride-requests/commands";
 import { commands as rideCommands } from "@/features/rides/commands";
+import { commands as trainingCommands } from "@/features/training/commands";
 import type { AdminScope, Perspective } from "@/lib/access";
 import { collectCommands } from "@/lib/commands";
 import type {
@@ -32,6 +35,9 @@ const CONTRIBUTORS: readonly CommandContributor[] = [
   chapterCommands,
   chatCommands,
   rideCommands,
+  trainingCommands,
+  rideRequestCommands,
+  rideLocationCommands,
   fleetCommands,
   profileCommands,
 ];

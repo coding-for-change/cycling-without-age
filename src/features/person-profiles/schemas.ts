@@ -69,7 +69,7 @@ export const ACCESSIBILITY_TAGS = Object.values(ACCESSIBILITY_GROUPS).flat();
 export type AccessibilityTag =
   (typeof ACCESSIBILITY_GROUPS)[AccessibilityGroup][number];
 
-export const PILOT_STEPS = ["trainingVideos", "workshop"] as const;
+export const PILOT_STEPS = ["inPersonTraining"] as const;
 export type PilotStep = (typeof PILOT_STEPS)[number];
 
 export const BIO_MAX = 160;
@@ -152,11 +152,6 @@ export const photoUploadCommit = z.object({
 export const healthConsentInput = z.object({
   subject: subjectRef,
   attest: z.literal(true),
-});
-
-export const pilotStepInput = z.object({
-  step: z.enum(PILOT_STEPS),
-  done: z.boolean(),
 });
 
 export const photoUrl = (fileId: string | null) =>

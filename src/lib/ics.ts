@@ -6,6 +6,8 @@
  * from the tz database for every zone a chapter uses.
  */
 
+import { APP_URL } from "./app-url";
+
 export type IcsStatus = "CONFIRMED" | "TENTATIVE" | "CANCELLED";
 
 export type IcsEvent = {
@@ -29,6 +31,10 @@ export type IcsCalendar = {
   refreshMinutes?: number;
   events: IcsEvent[];
 };
+
+const UID_HOST = new URL(APP_URL).host;
+
+export const rideUid = (rideId: string) => `ride-${rideId}@${UID_HOST}`;
 
 const CRLF = "\r\n";
 const MAX_OCTETS = 75;

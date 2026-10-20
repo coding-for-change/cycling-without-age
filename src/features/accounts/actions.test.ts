@@ -1,10 +1,13 @@
-import { requireChapterAdmin } from "@/lib/auth-guards";
+import { canDeleteOwnAccount } from "@/lib/access";
+import { requireAuth, requireChapterAdmin } from "@/lib/auth-guards";
 import { DomainError } from "@/lib/domain-error";
+import { deleteAccount } from "@/use-cases/delete-account";
 import { provisionAssistedPassenger } from "@/use-cases/provision-assisted-passenger";
-import { addAssistedPassenger } from "./actions";
+import { addAssistedPassenger, deleteOwnAccountAction } from "./actions";
 
 jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }));
 jest.mock("@/lib/cache-tags", () => ({
+  expirePasskeys: jest.fn(),
   invalidateReports: jest.fn(),
   invalidateAccess: jest.fn(),
 }));
@@ -31,6 +34,14 @@ jest.mock("@/use-cases/provision-assisted-passenger", () => ({
 
 const guard = requireChapterAdmin as jest.Mock;
 const provision = provisionAssistedPassenger as jest.Mock;
+const signedIn = requireAuth as jest.Mock;
+const removeAccount = deleteAccount as jest.Mock;
+
+const signInAs = (id: string) =>
+  signedIn.mockResolvedValue({
+    user: { id },
+    access: { role: null, countryAdminOf: [], memberships: [] },
+  });
 
 const ADMINS_CHAPTER = "chapter-muenchen";
 const input = (chapterId: string) => ({
@@ -60,6 +71,8 @@ beforeEach(() => {
     return { user: { id: "admin-1" } };
   });
   provision.mockResolvedValue({ userId: "user-hilde", outcome: "sent" });
+  (canDeleteOwnAccount as jest.Mock).mockReturnValue(true);
+  removeAccount.mockResolvedValue(undefined);
 });
 
 describe("addAssistedPassenger", () => {
@@ -88,6 +101,52 @@ describe("addAssistedPassenger", () => {
     await expect(addAssistedPassenger(input(ADMINS_CHAPTER))).resolves.toEqual({
       ok: false,
       error: "exists",
+    });
+  });
+});
+
+describe("deleteOwnAccountAction", () => {
+  it("forwards the riders the account holder confirmed to the delete", async () => {
+    signInAs("daughter-lena");
+
+    await expect(
+      deleteOwnAccountAction({ removeRiders: ["managed-greta"] }),
+    ).resolves.toEqual({ ok: true });
+    expect(removeAccount).toHaveBeenCalledWith(
+      "daughter-lena",
+      "daughter-lena",
+      { removeRiders: ["managed-greta"] },
+    );
+  });
+
+  it("removes no riders when none were confirmed", async () => {
+    signInAs("pilot-anna");
+
+    await expect(deleteOwnAccountAction()).resolves.toEqual({ ok: true });
+    expect(removeAccount).toHaveBeenCalledWith("pilot-anna", "pilot-anna", {
+      removeRiders: [],
+    });
+  });
+
+  it("deletes nothing when the confirmed riders are not a list of ids", async () => {
+    signInAs("son-jens");
+
+    await expect(
+      deleteOwnAccountAction({ removeRiders: true }),
+    ).resolves.toEqual({ ok: false, error: "generic" });
+    await expect(
+      deleteOwnAccountAction({ removeRiders: [""] }),
+    ).resolves.toEqual({ ok: false, error: "generic" });
+    expect(removeAccount).not.toHaveBeenCalled();
+  });
+
+  it("answers managesRiders when riders are left the holder did not confirm", async () => {
+    signInAs("carer-mette");
+    removeAccount.mockRejectedValue(new DomainError("managesRiders"));
+
+    await expect(deleteOwnAccountAction()).resolves.toEqual({
+      ok: false,
+      error: "managesRiders",
     });
   });
 });

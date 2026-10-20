@@ -4,6 +4,7 @@ import { activity } from "@/lib/activity";
 import { DomainError } from "@/lib/domain-error";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
+import { rideLocations } from "@/features/ride-locations";
 import { profile } from "@/features/profile";
 
 const riderOf = ({
@@ -20,10 +21,12 @@ export async function provisionAssistedPassenger({
   adminUserId: string;
   input: AssistedPassengerInput;
 }) {
-  const { chapterId, firstName, lastName, helper, pickup } = input;
+  const { chapterId, firstName, lastName, helper, pickup, needs } = input;
   const owner = helper ?? null;
   const contact = owner ? owner.contact : input.contact;
   if (!contact) throw new DomainError("notFound");
+  if (needs?.rideLocationId)
+    await rideLocations.requireCareCenter(needs.rideLocationId, chapterId);
 
   if (owner) {
     const existing = await accounts.findUserIdByContact(contact);
@@ -48,13 +51,16 @@ export async function provisionAssistedPassenger({
   });
 
   await membership.joinAsPassenger(userId, chapterId, adminUserId);
-  const passenger = await passengers.addPassenger({
-    chapterId,
-    managedByUserId: userId,
-    userId: owner ? null : userId,
-    ...riderOf(input),
-    ...(owner && pickup ? { pickup } : {}),
-  });
+  const passenger = await passengers.addPassenger(
+    {
+      chapterId,
+      managedByUserId: userId,
+      userId: owner ? null : userId,
+      ...riderOf(input),
+      ...(owner && pickup ? { pickup } : {}),
+    },
+    needs,
+  );
   if (!owner && pickup) {
     await (pickup.residence === "home"
       ? profile.setResidence(userId, "home", pickup)

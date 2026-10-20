@@ -24,8 +24,17 @@ export const MONITORS = {
     recoveryThreshold: 1,
     timezone: TIMEZONE,
   },
+  "ride-sweep": {
+    schedule: { type: "interval", value: 5, unit: "minute" },
+    checkinMargin: 5,
+    maxRuntime: 5,
+    failureIssueThreshold: 2,
+    recoveryThreshold: 1,
+    timezone: TIMEZONE,
+  },
   "prune-devices": daily("0 4 * * *"),
   "prune-chat": daily("0 3 * * *"),
+  "prune-training-uploads": daily("30 3 * * *"),
 } satisfies Record<string, MonitorConfig>;
 
 export type MaintenanceName = keyof typeof MONITORS;

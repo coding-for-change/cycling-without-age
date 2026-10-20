@@ -41,6 +41,8 @@ export type InviteLabels = {
   emailPlaceholder: string;
   role: Record<Role, string>;
   roleHint: Record<Role, string>;
+  skipTraining: string;
+  skipTrainingHint: string;
   submit: string;
   sending: string;
   cancel: string;
@@ -54,12 +56,14 @@ export function InviteDrawer({
   roleLabel,
   labels,
   locale,
+  trainingRequired,
 }: {
   chapterId: string;
   chapterName: string;
   roleLabel: string;
   labels: InviteLabels;
   locale: Locale;
+  trainingRequired: boolean;
 }) {
   const formId = useId();
   const { creating: open, close: clearParam } = useDrawerParam();
@@ -67,14 +71,24 @@ export function InviteDrawer({
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", email: "", roles: ["pilot"] },
+    defaultValues: {
+      name: "",
+      email: "",
+      roles: ["pilot"],
+      skipTraining: false,
+    },
   });
   const email = useWatch({ control: form.control, name: "email" });
   const roles = useWatch({ control: form.control, name: "roles" });
 
   const submit = form.handleSubmit((data) => {
     startTransition(async () => {
-      const result = await inviteChapterUser({ ...data, chapterId });
+      const result = await inviteChapterUser({
+        ...data,
+        skipTraining:
+          trainingRequired && data.roles.includes("pilot") && data.skipTraining,
+        chapterId,
+      });
       notify(result, {
         done: formatMessage(labels.sent, { name: data.name }, locale),
         errors: labels.errors,
@@ -202,6 +216,34 @@ export function InviteDrawer({
               </FormItem>
             )}
           />
+
+          {trainingRequired && roles.includes("pilot") ? (
+            <FormField
+              control={form.control}
+              name="skipTraining"
+              render={({ field }) => (
+                <FormItem>
+                  <label className="flex cursor-pointer items-start gap-3 rounded-(--r-card) border border-dashed border-line p-3.5 transition-colors hover:bg-canvas-deep has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50 has-data-[state=checked]:border-solid has-data-[state=checked]:border-ink has-data-[state=checked]:bg-mint-tint has-data-[state=checked]:hover:bg-mint-tint">
+                    <Checkbox
+                      checked={field.value ?? false}
+                      onCheckedChange={(checked) =>
+                        field.onChange(checked === true)
+                      }
+                      className="mt-px border-ink-faint"
+                    />
+                    <span className="grid gap-1.25">
+                      <span className="text-sm leading-none font-medium">
+                        {labels.skipTraining}
+                      </span>
+                      <span className="text-xs text-pretty text-ink-soft">
+                        {labels.skipTrainingHint}
+                      </span>
+                    </span>
+                  </label>
+                </FormItem>
+              )}
+            />
+          ) : null}
         </form>
       </Form>
     </AdminDrawer>

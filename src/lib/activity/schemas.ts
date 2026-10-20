@@ -17,6 +17,11 @@ export const activityType = z.enum([
   "chapterUpdated",
   "chapterDeleted",
   "countryDeleted",
+  "trainingPassed",
+  "trainingExemptionGranted",
+  "trainingExemptionRevoked",
+  "inPersonTrainingConfirmed",
+  "riderHandedOver",
 ]);
 export type ActivityType = z.infer<typeof activityType>;
 
@@ -25,6 +30,7 @@ export const recordEventInput = z.object({
   type: activityType,
   actorUserId: z.string().min(1).optional(),
   chapterId: z.string().min(1).optional(),
+  passengerId: z.string().min(1).optional(),
   payload: z.record(z.string(), z.string().max(500)).optional(),
 });
 export type RecordEventInput = z.infer<typeof recordEventInput>;

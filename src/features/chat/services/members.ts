@@ -131,6 +131,25 @@ export const stampMutedUntil = (
     select: { mutedUntil: true },
   });
 
+export const insertConversationMembers = (
+  conversationId: string,
+  userIds: string[],
+  db: Prisma.TransactionClient = prisma,
+) =>
+  db.conversationMember.createMany({
+    data: userIds.map((userId) => ({ conversationId, userId })),
+    skipDuplicates: true,
+  });
+
+export const deleteConversationMembers = (
+  conversationId: string,
+  userIds: string[],
+  db: Prisma.TransactionClient = prisma,
+) =>
+  db.conversationMember.deleteMany({
+    where: { conversationId, userId: { in: userIds } },
+  });
+
 export const deleteConversationMember = (
   conversationId: string,
   userId: string,

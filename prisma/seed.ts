@@ -6,8 +6,14 @@ import { passengers } from "@/features/passengers";
 import type { ManagedRiderInput } from "@/features/passengers";
 import { profile } from "@/features/profile";
 import { fleet } from "@/features/fleet";
+import { rideLocations } from "@/features/ride-locations";
+import { rideRequests } from "@/features/ride-requests";
 import { rideInput, rides } from "@/features/rides";
-import { defaultLocationFor } from "@/use-cases/manage-chapter";
+import {
+  careHomeRideLocationFor,
+  defaultLocationFor,
+} from "@/use-cases/manage-chapter";
+import { seedTraining } from "./seed-training";
 import type { ChapterRole } from "@/lib/access";
 
 if (process.env.NODE_ENV === "production" && !process.env.FEATURE_BRANCH) {
@@ -125,6 +131,11 @@ const PERSONAS: Persona[] = [
     chapterRoles: { muenchen: ["pilot"], hamburg: ["pilot"] },
   },
   {
+    email: address("pilot.training"),
+    name: "Tara Training",
+    chapterRoles: { muenchen: ["pilot"] },
+  },
+  {
     email: address("pilot.pending"),
     name: "Pernille Pending",
     pendingPilotApplications: ["muenchen"],
@@ -225,9 +236,12 @@ async function seedChapters(countryIds: Map<string, string>) {
     );
   }
   for (const id of ids.values()) {
-    if (await fleet.getDefaultLocation(id)) continue;
     const chapter = (await chapters.getChapter(id))!;
-    await fleet.createDefaultLocation(defaultLocationFor(chapter));
+    if (!(await fleet.getDefaultLocation(id)))
+      await fleet.createDefaultLocation(defaultLocationFor(chapter));
+    const careHome = careHomeRideLocationFor(chapter);
+    if (careHome && (await rideLocations.countChapterRideLocations(id)) === 0)
+      await rideLocations.createRideLocation(careHome);
   }
   return ids;
 }
@@ -501,7 +515,7 @@ async function seedRides(
         destinationName: item.destination ?? null,
         title: item.title ?? null,
         capacity: item.model === "event" ? 8 : null,
-        requiredPilots: Math.max(1, item.staff.length),
+        requiredPilots: Math.max(item.staff.length, 1),
       }),
       null,
     );
@@ -520,6 +534,109 @@ async function seedRides(
   }
 
   return plan.length;
+}
+
+/**
+ * München gets riding hours, two Ride Locations and two waiting Ride
+ * Requests, so the Ride Request Form and the Ride Request List have something
+ * to show. Requests are rebuilt on every run, like the rides.
+ */
+async function seedRideRequests(
+  chapterId: (slug: string) => string,
+  userIds: Map<string, string>,
+) {
+  const muenchen = chapterId("muenchen");
+  await prisma.rideRequest.deleteMany({ where: { chapterId: muenchen } });
+
+  if (!(await chapters.listOperatingWindows(muenchen)).length)
+    await chapters.setOperatingWindows(
+      muenchen,
+      [2, 3, 4, 5, 6].flatMap((weekday) => [
+        { weekday, startMinute: 10 * 60, endMinute: 12 * 60 },
+        { weekday, startMinute: 14 * 60, endMinute: 17 * 60 + 30 },
+      ]),
+    );
+
+  const places = await rideLocations.listRideLocations([muenchen]);
+  const sonnenhof =
+    places.find((place) => place.name === "Seniorenheim Sonnenhof") ??
+    (await rideLocations.createRideLocation({
+      chapterId: muenchen,
+      kind: "careCenter",
+      name: "Seniorenheim Sonnenhof",
+      address: "Sonnenstraße 12, 80331 München",
+      latitude: 48.1371,
+      longitude: 11.5654,
+    }));
+  if (!places.some((place) => place.name === "Englischer Garten"))
+    await rideLocations.createRideLocation({
+      chapterId: muenchen,
+      kind: "publicPlace",
+      name: "Englischer Garten",
+      address: "Englischer Garten, 80538 München",
+      latitude: 48.1642,
+      longitude: 11.6056,
+    });
+
+  const today = startOfToday();
+  const caretaker = userIds.get(address("caretaker"))!;
+  const passenger = userIds.get(address("passenger"))!;
+  const [inge] = (await passengers.listPassengersManagedBy(caretaker)).filter(
+    (managed) => managed.userId === null,
+  );
+  const own = await passengers.getOwnPassenger(passenger);
+  const ridingDay = (from: number) => {
+    let day = from;
+    while ([0, 1].includes(at(today, day, 12).getDay())) day += 1;
+    return day;
+  };
+  const window = (after: number, from: number, to: number) => ({
+    requestedStartsAt: at(today, ridingDay(after), from),
+    requestedEndsAt: at(today, ridingDay(after), to),
+  });
+  const none = {
+    destinationName: null,
+    destinationAddress: null,
+    destinationLatitude: null,
+    destinationLongitude: null,
+  };
+
+  if (inge)
+    await rideRequests.submit({
+      chapterId: muenchen,
+      requesterUserId: caretaker,
+      model: "pleasure",
+      passengerIds: [inge.id],
+      rideLocationId: sonnenhof.id,
+      pickupName: sonnenhof.name,
+      pickupAddress: sonnenhof.address,
+      pickupLatitude: sonnenhof.latitude,
+      pickupLongitude: sonnenhof.longitude,
+      ...none,
+      roundTrip: false,
+      ...window(6, 14, 17),
+      note: "Inge loves the river. A blanket helps, she gets cold quickly.",
+    });
+  if (own)
+    await rideRequests.submit({
+      chapterId: muenchen,
+      requesterUserId: passenger,
+      model: "functional",
+      passengerIds: [own.id],
+      rideLocationId: null,
+      pickupName: "Lindwurmstraße 88",
+      pickupAddress: "Lindwurmstraße 88, 80337 München",
+      pickupLatitude: 48.1259,
+      pickupLongitude: 11.5513,
+      destinationName: "Hausarzt Dr. Weber",
+      destinationAddress: "Goethestraße 20, 80336 München",
+      destinationLatitude: 48.1355,
+      destinationLongitude: 11.5615,
+      roundTrip: true,
+      ...window(3, 10, 11),
+      note: null,
+    });
+  return (inge ? 1 : 0) + (own ? 1 : 0);
 }
 
 function describeRoles(persona: Persona) {
@@ -628,12 +745,31 @@ async function seed() {
   }
 
   const rideCount = await seedRides(chapterId, userIds);
+  const requestCount = await seedRideRequests(chapterId, userIds);
+
+  const user = (name: string) => userIds.get(address(name))!;
+  const course = await seedTraining({
+    actorUserId: superAdminId ?? user("superadmin"),
+    experiencedPilots: [
+      {
+        userId: user("pilot"),
+        chapterId: chapterId("muenchen"),
+        confirmedBy: user("admin.muenchen"),
+      },
+      {
+        userId: user("multi"),
+        chapterId: chapterId("hamburg"),
+        confirmedBy: user("country.de"),
+      },
+    ],
+    trainees: [user("pilot.training"), user("pilot.pending")],
+  });
 
   console.table(
     PERSONAS.map((p) => ({ email: p.email, roles: describeRoles(p) })),
   );
   console.log(
-    `${COUNTRIES.length} countries, ${CHAPTERS.length} chapters, ${PERSONAS.length} accounts, ${rideCount} rides. Sign in with an email OTP — see docs-internal/DEV-ACCOUNTS.md.`,
+    `${COUNTRIES.length} countries, ${CHAPTERS.length} chapters, ${PERSONAS.length} accounts, ${rideCount} rides, ${requestCount} ride requests, ${course.courseIds.size} training courses (${course.videoId ? "with" : "without"} video). Sign in with an email OTP — see docs-internal/DEV-ACCOUNTS.md.`,
   );
 }
 
