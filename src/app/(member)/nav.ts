@@ -132,6 +132,14 @@ const CONVERSATION_PATH = /^\/(?:pilot|passenger)\/chat\/[^/]+\/?$/;
 export const isConversationPath = (pathname: string): boolean =>
   CONVERSATION_PATH.test(pathname);
 
+const TRAINING_STEP_PATH = /^\/pilot\/training\/[^/]+\/[^/]+\/?$/;
+
+export const isTrainingStepPath = (pathname: string): boolean =>
+  TRAINING_STEP_PATH.test(pathname);
+
+export const hidesTabBar = (pathname: string): boolean =>
+  isConversationPath(pathname) || isTrainingStepPath(pathname);
+
 export type MemberPrimaryAction = { href: string; icon: IconKey };
 
 export const primaryAction = (

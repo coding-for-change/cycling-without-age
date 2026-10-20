@@ -4,6 +4,7 @@
     "footer": "You received this email because you asked to pilot for a Cycling Without Age chapter.",
     "heading": "Welcome aboard",
     "intro": "{chapter} has approved you as a pilot. Next: the training videos, a workshop with one of the captains — and then your first ride.",
+    "introInPerson": "{chapter} has approved you as a pilot. Next: a workshop with one of the captains — and then your first ride.",
     "noteHeading": "From your chapter",
     "preview": "Your chapter said yes",
     "subject": "You're a pilot at {chapter}"
@@ -340,6 +341,7 @@
     "noteHeading": "A note from {chapter}",
     "preview": "Your pilot request is with the chapter",
     "subject": "Welcome aboard — three steps to your first ride",
+    "subjectInPerson": "Welcome aboard — two steps to your first ride",
     "title": "Welcome to {chapter}"
   },
   "careRequested": {

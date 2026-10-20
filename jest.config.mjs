@@ -6,6 +6,7 @@ const ESM_PACKAGES = ["intl-messageformat", "@formatjs"];
 
 const nextJestConfig = createJestConfig({
   testEnvironment: "node",
+  setupFiles: ["<rootDir>/jest.env.ts"],
   // `.claude/worktrees/*` holds sibling git worktrees whose test copies resolve
   // `@/*` back to this src, so their module mocks never apply.
   modulePathIgnorePatterns: [

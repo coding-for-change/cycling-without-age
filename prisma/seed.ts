@@ -13,6 +13,7 @@ import {
   careHomeRideLocationFor,
   defaultLocationFor,
 } from "@/use-cases/manage-chapter";
+import { seedTraining } from "./seed-training";
 import type { ChapterRole } from "@/lib/access";
 
 if (process.env.NODE_ENV === "production" && !process.env.FEATURE_BRANCH) {
@@ -128,6 +129,11 @@ const PERSONAS: Persona[] = [
     email: address("pilot"),
     name: "Piet Pilot",
     chapterRoles: { muenchen: ["pilot"], hamburg: ["pilot"] },
+  },
+  {
+    email: address("pilot.training"),
+    name: "Tara Training",
+    chapterRoles: { muenchen: ["pilot"] },
   },
   {
     email: address("pilot.pending"),
@@ -741,11 +747,29 @@ async function seed() {
   const rideCount = await seedRides(chapterId, userIds);
   const requestCount = await seedRideRequests(chapterId, userIds);
 
+  const user = (name: string) => userIds.get(address(name))!;
+  const course = await seedTraining({
+    actorUserId: superAdminId ?? user("superadmin"),
+    experiencedPilots: [
+      {
+        userId: user("pilot"),
+        chapterId: chapterId("muenchen"),
+        confirmedBy: user("admin.muenchen"),
+      },
+      {
+        userId: user("multi"),
+        chapterId: chapterId("hamburg"),
+        confirmedBy: user("country.de"),
+      },
+    ],
+    trainees: [user("pilot.training"), user("pilot.pending")],
+  });
+
   console.table(
     PERSONAS.map((p) => ({ email: p.email, roles: describeRoles(p) })),
   );
   console.log(
-    `${COUNTRIES.length} countries, ${CHAPTERS.length} chapters, ${PERSONAS.length} accounts, ${rideCount} rides, ${requestCount} ride requests. Sign in with an email OTP — see docs-internal/DEV-ACCOUNTS.md.`,
+    `${COUNTRIES.length} countries, ${CHAPTERS.length} chapters, ${PERSONAS.length} accounts, ${rideCount} rides, ${requestCount} ride requests, ${course.courseIds.size} training courses (${course.videoId ? "with" : "without"} video). Sign in with an email OTP — see docs-internal/DEV-ACCOUNTS.md.`,
   );
 }
 

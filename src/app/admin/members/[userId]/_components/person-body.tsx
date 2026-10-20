@@ -28,15 +28,18 @@ import { accounts } from "@/features/accounts";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
 import { profile } from "@/features/profile";
+import { rides } from "@/features/rides";
+import { chapters as chapterFeature } from "@/features/chapters";
 import { personProfiles, photoUrl } from "@/features/person-profiles";
 import { ProfileView } from "@/features/person-profiles/components/profile-view";
 import { accessPerson, seesHealthDetails } from "@/use-cases/person-access";
-import { getSetupChecklist } from "@/use-cases/setup-checklist";
+import { memberTrainingPanel } from "@/use-cases/training-progress";
 import type { ChapterRole } from "@/lib/access";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { formatDate, resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
+import { FALLBACK_TIME_ZONE } from "@/lib/time-zone";
 import { cn } from "@/lib/utils";
 import { historyShown } from "../../../_components/history-more";
 import {
@@ -47,7 +50,10 @@ import { SidePanel } from "../../../_components/side-panel";
 import { readActiveScope } from "../../../active-scope";
 import { MemberActions } from "../../_components/member-actions";
 import { deleteUserAction } from "../../actions";
-import { PilotReadiness, type ReadinessStep } from "./pilot-readiness";
+import { PilotTraining } from "./pilot-training";
+import { pilotTrainingProps } from "./pilot-training-props";
+import { MemberOverviewStrip } from "./member-overview-strip";
+import { memberOverviewProps } from "./member-overview-props";
 import { pickupLabel } from "../../../passengers/_components/pickup-label";
 import type { AdminSearchParams } from "../../../active-scope";
 
@@ -74,6 +80,7 @@ export async function PersonBody({
     head,
     managedRows,
     helper,
+    rideStats,
   ] = await Promise.all([
     profile.getProfile(userId),
     membership.listMembershipsOfUser(userId),
@@ -87,6 +94,7 @@ export async function PersonBody({
     headers(),
     passengers.listPassengersManagedBy(userId),
     accounts.getHelperDetails(userId),
+    rides.volunteerRideStats(userId, chapterIds),
   ]);
 
   const inScope = memberships.filter((m) => chapterIds.includes(m.chapterId));
@@ -107,21 +115,50 @@ export async function PersonBody({
 
   const isPilot = memberships.some((m) => m.roles.includes("pilot"));
   const piloting = isPilot || applications.some((a) => a.status === "pending");
-  const [access, ownProfile, checklist] = await Promise.all([
+  const words = await getLocale();
+  const [access, ownProfile, trainingPanel] = await Promise.all([
     accessPerson(session, { kind: "user", id: userId }),
     personProfiles.getProfile({ kind: "user", id: userId }),
-    piloting ? getSetupChecklist(userId, "pilot") : null,
+    piloting ? memberTrainingPanel(userId, session.access, words) : null,
   ]);
-  const readiness = (checklist?.steps ?? []).flatMap((step): ReadinessStep[] =>
-    step.key === "trainingVideos" ||
-    step.key === "workshop" ||
-    step.key === "firstRide"
-      ? [{ key: step.key, done: step.done, confirmed: step.confirmed ?? false }]
-      : [],
-  );
 
   const notation = resolveLocale(head.get("accept-language"));
-  const words = await getLocale();
+  const training = trainingPanel
+    ? await pilotTrainingProps({
+        panel: trainingPanel,
+        dict,
+        notation,
+        words,
+      })
+    : null;
+  const timeZone =
+    training?.timeZone ??
+    (
+      await chapterFeature.getChapterTimeZones(
+        inScope.slice(0, 1).map((entry) => entry.chapterId),
+      )
+    )[0]?.timeZone ??
+    FALLBACK_TIME_ZONE;
+  const overview = memberOverviewProps({
+    dict,
+    notation,
+    words,
+    timeZone,
+    now: new Date(),
+    training: training
+      ? {
+          trainingRequired: training.trainingRequired,
+          chapters: training.chapters,
+          inPerson: training.inPerson,
+          courses: training.courses,
+          readyLabels: {
+            ready: training.labels.ready,
+            notReady: training.labels.notReady,
+          },
+        }
+      : null,
+    rides: rideStats,
+  });
   const chapterNames = new Map(chapters.map((c) => [c.id, c.name]));
   const roleLabel = (role: ChapterRole) =>
     role === "admin" ? dict.admin.roles.chapterAdmin : dict.admin.roles[role];
@@ -211,12 +248,14 @@ export async function PersonBody({
                       key={entry.chapterId}
                       className="grid gap-2"
                     >
-                      <span className="inline-flex items-center gap-2 text-2sm font-medium">
+                      <span className="flex min-w-0 items-start gap-2 text-2sm font-medium">
                         <Building2
                           aria-hidden
-                          className="size-4 shrink-0 text-ink-soft"
+                          className="mt-0.5 size-4 shrink-0 text-ink-soft"
                         />
-                        {chapterNames.get(entry.chapterId)}
+                        <span className="min-w-0 break-words">
+                          {chapterNames.get(entry.chapterId)}
+                        </span>
                       </span>
                       <div className="flex flex-wrap gap-1">
                         {entry.roles.map((role) => (
@@ -244,28 +283,11 @@ export async function PersonBody({
                 </DetailEmpty>
               )}
             </SidePanel>
-
-            {readiness.length > 0 ? (
-              <SidePanel title={dict.admin.person.readiness.title}>
-                <PilotReadiness
-                  userId={userId}
-                  steps={readiness}
-                  canConfirm={piloting}
-                  labels={{
-                    ...dict.admin.person.readiness,
-                    steps: {
-                      trainingVideos: dict.setupChecklist.steps.trainingVideos,
-                      workshop: dict.setupChecklist.steps.workshop,
-                      firstRide: dict.setupChecklist.steps.firstRide,
-                    },
-                    errors: dict.admin.members.errors,
-                  }}
-                />
-              </SidePanel>
-            ) : null}
           </>
         }
       >
+        <MemberOverviewStrip view={overview} />
+
         {open.length > 0 ? (
           <ul className="grid gap-2">
             {open.map((application) => (
@@ -304,6 +326,20 @@ export async function PersonBody({
               </li>
             ))}
           </ul>
+        ) : null}
+
+        {training ? (
+          <DetailSection title={dict.admin.members.training.title}>
+            <PilotTraining
+              userId={userId}
+              trainingRequired={training.trainingRequired}
+              inPerson={training.inPerson}
+              blanket={training.blanket}
+              courses={training.courses}
+              labels={training.labels}
+              locale={words}
+            />
+          </DetailSection>
         ) : null}
 
         {showCaretaker ? (

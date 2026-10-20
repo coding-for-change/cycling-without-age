@@ -10,6 +10,7 @@ import {
 } from "@/features/person-profiles";
 import { parseRoles, type ChapterRole } from "@/lib/access";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
+import { isTrainingRequired } from "@/lib/feature-flags";
 import { formatDate, formatNumber, resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
@@ -184,6 +185,7 @@ export async function MemberInvite({ searchParams }: Props) {
       roleLabel={dict.admin.members.columns.role}
       labels={dict.admin.members.invite}
       locale={locale}
+      trainingRequired={isTrainingRequired()}
     />
   );
 }

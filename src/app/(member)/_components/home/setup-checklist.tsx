@@ -33,6 +33,7 @@ export async function SetupChecklist({
       steps={checklist.steps}
       managedRiders={checklist.managedRiders}
       aboutYou={checklist.aboutYou}
+      trainingRequired={checklist.trainingRequired}
       home={PERSPECTIVE_HOME[perspective]}
       strings={dict.setupChecklist}
       errors={dict.personProfile.errors}

@@ -12,12 +12,15 @@ import {
 } from "@/features/person-profiles";
 import { profile } from "@/features/profile";
 import { rides } from "@/features/rides";
+import { isTrainingRequired } from "@/lib/feature-flags";
+import { ownReadiness } from "./pilot-readiness";
 
 export type SetupChecklist = {
   steps: ChecklistStep[];
   visible: boolean;
   managedRiders: ManagedRidersSummary;
   aboutYou: boolean;
+  trainingRequired: boolean;
 };
 
 const refOf = (rider: { id: string }): SubjectRef => ({
@@ -37,14 +40,17 @@ export async function getSetupChecklist(
     passengers.getOwnPassenger(userId),
   ]);
 
+  const trainingRequired = isTrainingRequired();
   const others = passengers
     .othersOf(managed)
     .map((rider) => ({ name: rider.firstName, ref: refOf(rider) }));
-  const [managedProfiles, pilotSteps, firstRideDone] = await Promise.all([
-    personProfiles.getProfiles(others.map((rider) => rider.ref)),
-    perspective === "pilot" ? personProfiles.getPilotSteps(userId) : null,
-    perspective === "pilot" ? rides.hasPilotedRide(userId) : false,
-  ]);
+  const [managedProfiles, pilotSteps, firstRideDone, readiness] =
+    await Promise.all([
+      personProfiles.getProfiles(others.map((rider) => rider.ref)),
+      perspective === "pilot" ? personProfiles.getPilotSteps(userId) : null,
+      perspective === "pilot" ? rides.hasPilotedRide(userId) : false,
+      perspective === "pilot" && trainingRequired ? ownReadiness(userId) : null,
+    ]);
 
   const managedRiders = summarizeManagedRiders(
     others.map((rider) => ({
@@ -62,6 +68,7 @@ export async function getSetupChecklist(
     hasPasskey: (account?._count.passkeys ?? 0) > 0,
     pushOn: Boolean(account?.notifyPush) && devices.length > 0,
     pilotSteps,
+    trainingDone: trainingRequired ? (readiness?.coursesDone ?? false) : null,
     firstRideDone,
   });
 
@@ -73,5 +80,6 @@ export async function getSetupChecklist(
       perspective === "passenger" &&
       !ridesThemself &&
       (others.length > 0 || Boolean(account?.managesOthers)),
+    trainingRequired,
   };
 }

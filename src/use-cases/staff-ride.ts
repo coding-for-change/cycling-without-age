@@ -1,6 +1,7 @@
 import { membership } from "@/features/membership";
 import { rides, type RideScope } from "@/features/rides";
 import { DomainError } from "@/lib/domain-error";
+import { assertPilotsReady } from "./pilot-readiness";
 
 /**
  * An admin puts a pilot on a ride. Only someone who holds the pilot role in the
@@ -14,5 +15,6 @@ export async function staffRide(
 ) {
   const roles = await membership.getMemberRoles(userId, ride.chapterId);
   if (!roles.includes("pilot")) throw new DomainError("notPilot");
+  await assertPilotsReady([userId], ride.chapterId);
   return rides.assignVolunteer(ride.id, userId, actorUserId);
 }

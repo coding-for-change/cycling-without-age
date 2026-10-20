@@ -112,32 +112,26 @@ export const findPilotSteps = (userId: string) =>
     select: { step: true, tickedAt: true, confirmedAt: true },
   });
 
+export const findStepOfUsers = (userIds: string[], step: PilotStep) =>
+  prisma.pilotStepTick.findMany({
+    where: { userId: { in: userIds }, step },
+    select: {
+      userId: true,
+      confirmedAt: true,
+      confirmedByUserId: true,
+    },
+  });
+
 export const upsertPilotStep = (
   userId: string,
   step: PilotStep,
-  confirmedByUserId?: string,
+  confirmedByUserId: string,
 ) =>
   prisma.pilotStepTick.upsert({
     where: { userId_step: { userId, step } },
-    create: {
-      userId,
-      step,
-      ...(confirmedByUserId
-        ? { confirmedByUserId, confirmedAt: new Date() }
-        : {}),
-    },
-    update: confirmedByUserId
-      ? { confirmedByUserId, confirmedAt: new Date() }
-      : {},
-  });
-
-export const clearPilotStepConfirmation = (userId: string, step: PilotStep) =>
-  prisma.pilotStepTick.updateMany({
-    where: { userId, step },
-    data: { confirmedByUserId: null, confirmedAt: null },
+    create: { userId, step, confirmedByUserId, confirmedAt: new Date() },
+    update: { confirmedByUserId, confirmedAt: new Date() },
   });
 
 export const deletePilotStep = (userId: string, step: PilotStep) =>
-  prisma.pilotStepTick.deleteMany({
-    where: { userId, step, confirmedAt: null },
-  });
+  prisma.pilotStepTick.deleteMany({ where: { userId, step } });

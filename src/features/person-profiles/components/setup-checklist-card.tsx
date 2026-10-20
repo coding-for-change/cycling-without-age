@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useOptimistic, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   Accessibility,
@@ -12,6 +12,7 @@ import {
   ChevronRight,
   GraduationCap,
   Heart,
+  Hourglass,
   KeyRound,
   MessageCircle,
   PenLine,
@@ -25,13 +26,13 @@ import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { haptics } from "@/lib/native/haptics";
 import { cn } from "@/lib/utils";
-import { dismissSetupAction, tickPilotStepAction } from "../actions";
+import { dismissSetupAction } from "../actions";
 import type {
   ChecklistStep,
   ChecklistStepKey,
   ManagedRidersSummary,
 } from "../checklist";
-import { PILOT_STEPS, subjectSlug, type PilotStep } from "../schemas";
+import { subjectSlug } from "../schemas";
 
 type Strings = Dictionary["setupChecklist"];
 type Errors = Dictionary["personProfile"]["errors"];
@@ -45,8 +46,8 @@ const ICONS: Record<ChecklistStepKey, LucideIcon> = {
   managedRiders: UsersRound,
   passkey: KeyRound,
   push: Bell,
-  trainingVideos: GraduationCap,
-  workshop: Users,
+  training: GraduationCap,
+  inPersonTraining: Users,
   firstRide: Bike,
 };
 
@@ -59,20 +60,19 @@ const PROFILE_STEPS = new Set<ChecklistStepKey>([
   "managedRiders",
 ]);
 
-const isPilotStep = (key: ChecklistStepKey): key is PilotStep =>
-  (PILOT_STEPS as readonly string[]).includes(key);
-
 const ABOUT_YOU_STEPS = new Set<ChecklistStepKey>(["photo", "bio"]);
 
 const hrefOf = (
   key: ChecklistStepKey,
   home: string,
   riders: ManagedRidersSummary,
+  trainingRequired: boolean,
 ) => {
   if (key === "managedRiders" && riders.missing === 1 && riders.focus)
     return `${home}/profile/${subjectSlug(riders.focus.ref)}`;
   if (PROFILE_STEPS.has(key)) return `${home}/profile`;
-  if (key === "trainingVideos") return "/pilot/training";
+  if (trainingRequired && (key === "training" || key === "inPersonTraining"))
+    return "/pilot/training";
   return null;
 };
 
@@ -87,6 +87,7 @@ export function SetupChecklistCard({
   steps,
   managedRiders,
   aboutYou,
+  trainingRequired,
   home,
   strings,
   errors,
@@ -95,6 +96,7 @@ export function SetupChecklistCard({
   steps: ChecklistStep[];
   managedRiders: ManagedRidersSummary;
   aboutYou: boolean;
+  trainingRequired: boolean;
   home: string;
   strings: Strings;
   errors: Errors;
@@ -102,14 +104,6 @@ export function SetupChecklistCard({
 }) {
   const [hidden, setHidden] = useState(false);
   const [dismissing, startDismiss] = useTransition();
-  const [, startTick] = useTransition();
-  const [ticked, setTicked] = useOptimistic(
-    steps,
-    (current, change: { key: PilotStep; done: boolean }) =>
-      current.map((step) =>
-        step.key === change.key ? { ...step, done: change.done } : step,
-      ),
-  );
 
   if (hidden) return null;
 
@@ -125,22 +119,14 @@ export function SetupChecklistCard({
         )
       : strings.steps[key];
 
-  const done = ticked.filter((step) => step.done);
-  const open = ticked.filter((step) => !step.done);
-  const percent = Math.round((done.length / ticked.length) * 100);
+  const done = steps.filter((step) => step.done);
+  const open = steps.filter((step) => !step.done);
+  const percent = Math.round((done.length / steps.length) * 100);
 
   const fail = (error: keyof Errors | string) => {
     haptics.error();
     toast.error(errors[error as keyof Errors] ?? errors.generic);
   };
-
-  const tick = (key: PilotStep, next: boolean) =>
-    startTick(async () => {
-      setTicked({ key, done: next });
-      const result = await tickPilotStepAction({ step: key, done: next });
-      if (!result.ok) return fail(result.error);
-      if (next) haptics.success();
-    });
 
   const dismiss = () =>
     startDismiss(async () => {
@@ -167,7 +153,7 @@ export function SetupChecklistCard({
           <p className="text-sm text-ink-soft">
             {formatMessage(
               strings.progress,
-              { done: done.length, total: ticked.length },
+              { done: done.length, total: steps.length },
               language,
             )}
           </p>
@@ -186,7 +172,7 @@ export function SetupChecklistCard({
       <div
         role="progressbar"
         aria-valuemin={0}
-        aria-valuemax={ticked.length}
+        aria-valuemax={steps.length}
         aria-valuenow={done.length}
         aria-label={strings.title}
         className="h-1 overflow-hidden rounded-full bg-canvas"
@@ -203,10 +189,13 @@ export function SetupChecklistCard({
             key={step.key}
             step={step}
             label={labelOf(step.key)}
-            hint={hintOf(step.key, strings, aboutYou)}
-            href={hrefOf(step.key, home, managedRiders)}
+            hint={
+              step.waiting
+                ? strings.waiting
+                : hintOf(step.key, strings, aboutYou)
+            }
+            href={hrefOf(step.key, home, managedRiders, trainingRequired)}
             strings={strings}
-            onTick={isPilotStep(step.key) ? tick : undefined}
           />
         ))}
       </ul>
@@ -221,7 +210,6 @@ export function SetupChecklistCard({
               hint={null}
               href={null}
               strings={strings}
-              onTick={isPilotStep(step.key) ? tick : undefined}
             />
           ))}
         </ul>
@@ -236,45 +224,25 @@ function StepRow({
   hint,
   href,
   strings,
-  onTick,
 }: {
   step: ChecklistStep;
   label: string;
   hint: string | null;
   href: string | null;
   strings: Strings;
-  onTick?: (key: PilotStep, next: boolean) => void;
 }) {
   const Icon = ICONS[step.key];
-  const toggleable = onTick && isPilotStep(step.key) && !step.confirmed;
-
-  const marker = toggleable ? (
-    <button
-      type="button"
-      role="checkbox"
-      aria-checked={step.done}
-      aria-label={`${step.done ? strings.markUndone : strings.markDone}: ${label}`}
-      onClick={() => onTick(step.key as PilotStep, !step.done)}
-      className={cn(
-        "grid size-6 shrink-0 place-items-center rounded-full border outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:transition-none",
-        step.done
-          ? "border-transparent bg-mint-deep text-white"
-          : "border-ink/30 bg-canvas hover:border-ink",
-      )}
-    >
-      {step.done ? (
-        <Check
-          aria-hidden
-          className="size-3.5"
-        />
-      ) : null}
-    </button>
-  ) : (
+  const waiting = !step.done && step.waiting === true;
+  const marker = (
     <span
       aria-hidden
       className={cn(
         "grid size-6 shrink-0 place-items-center rounded-full",
-        step.done ? "bg-mint-deep text-white" : "bg-canvas text-ink",
+        step.done
+          ? "bg-mint-deep text-white"
+          : waiting
+            ? "border border-dashed border-ink-faint bg-canvas text-ink-soft"
+            : "bg-canvas text-ink",
       )}
     >
       {step.done ? (
@@ -297,7 +265,17 @@ function StepRow({
       >
         {label}
       </span>
-      {hint ? <span className="text-xs text-ink-soft">{hint}</span> : null}
+      {hint ? (
+        <span className="flex items-center gap-1 text-xs text-ink-soft">
+          {waiting ? (
+            <Hourglass
+              aria-hidden
+              className="size-3 shrink-0"
+            />
+          ) : null}
+          {hint}
+        </span>
+      ) : null}
     </span>
   );
 
@@ -317,7 +295,7 @@ function StepRow({
       {href ? (
         <Link
           href={href}
-          className="-my-1 flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-xl px-2 -mx-2 outline-none transition-colors hover:bg-mint/40 focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:transition-none"
+          className="-mx-2 flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-1 outline-none transition-colors hover:bg-mint/40 focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:transition-none"
         >
           {text}
           <ChevronRight

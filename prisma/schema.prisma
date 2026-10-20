@@ -9,83 +9,88 @@ datasource db {
 }
 
 model User {
-  id                   String               @id
-  name                 String               @db.Text
+  id                   String                   @id
+  name                 String                   @db.Text
   email                String
-  emailVerified        Boolean              @default(false)
-  image                String?              @db.Text
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
+  emailVerified        Boolean                  @default(false)
+  image                String?                  @db.Text
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
   phoneNumber          String?
   phoneNumberVerified  Boolean?
-  role                 String?              @db.Text
-  banned               Boolean?             @default(false)
-  banReason            String?              @db.Text
+  role                 String?                  @db.Text
+  banned               Boolean?                 @default(false)
+  banReason            String?                  @db.Text
   banExpires           DateTime?
-  birthDate            DateTime?            @db.Date
+  birthDate            DateTime?                @db.Date
   gender               Gender?
-  locale               String?              @db.VarChar(5)
+  locale               String?                  @db.VarChar(5)
   residence            Residence?
-  address              String?              @db.Text
+  address              String?                  @db.Text
   latitude             Float?
   longitude            Float?
-  managesOthers        Boolean              @default(false)
-  notifyEmail          Boolean              @default(false)
-  notifyPush           Boolean              @default(false)
-  notifyChatPush       Boolean              @default(true)
-  notifyChatEmail      Boolean              @default(true)
+  managesOthers        Boolean                  @default(false)
+  notifyEmail          Boolean                  @default(false)
+  notifyPush           Boolean                  @default(false)
+  notifyChatPush       Boolean                  @default(true)
+  notifyChatEmail      Boolean                  @default(true)
   consentSafetyAt      DateTime?
   consentDataAt        DateTime?
   passkeyPromptedAt    DateTime?
   pilotNextStepsSeenAt DateTime?
   onboardedAt          DateTime?
   createdByUserId      String?
-  createdBy            User?                @relation("createdUsers", fields: [createdByUserId], references: [id], onDelete: SetNull)
-  createdUsers         User[]               @relation("createdUsers")
+  createdBy            User?                    @relation("createdUsers", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdUsers         User[]                   @relation("createdUsers")
   claimedAt            DateTime?
-  helperName           String?              @db.Text
-  helperRelationship   String?              @db.Text
-  helperContact        String?              @db.Text
+  helperName           String?                  @db.Text
+  helperRelationship   String?                  @db.Text
+  helperContact        String?                  @db.Text
   sessions             Session[]
   accounts             Account[]
   passkeys             Passkey[]
   members              Member[]
   invitations          Invitation[]
   countryAdminOf       CountryAdmin[]
-  applications         ChapterApplication[] @relation("applicant")
-  decidedApplications  ChapterApplication[] @relation("decider")
-  passengers           Passenger[]          @relation("manages")
-  passengerProfile     Passenger?           @relation("self")
-  activityEvents       ActivityEvent[]      @relation("activitySubject")
-  activityActions      ActivityEvent[]      @relation("activityActor")
-  eventActions         Event[]              @relation("eventActor")
-  notifications        Notification[]       @relation("notificationRecipient")
+  applications         ChapterApplication[]     @relation("applicant")
+  decidedApplications  ChapterApplication[]     @relation("decider")
+  passengers           Passenger[]              @relation("manages")
+  passengerProfile     Passenger?               @relation("self")
+  activityEvents       ActivityEvent[]          @relation("activitySubject")
+  activityActions      ActivityEvent[]          @relation("activityActor")
+  eventActions         Event[]                  @relation("eventActor")
+  notifications        Notification[]           @relation("notificationRecipient")
   devices              Device[]
-  conversationsCreated Conversation[]       @relation("conversationCreator")
+  conversationsCreated Conversation[]           @relation("conversationCreator")
   conversations        ConversationMember[]
-  chatMessages         ChatMessage[]        @relation("chatMessageSender")
+  chatMessages         ChatMessage[]            @relation("chatMessageSender")
   chatReactions        ChatReaction[]
-  rideAssignments      RideAssignment[]     @relation("rideAssignee")
-  rideAssignmentsMade  RideAssignment[]     @relation("rideAssigner")
-  rideRequests         RideRequest[]        @relation("rideRequester")
-  rideRequestsDecided  RideRequest[]        @relation("rideRequestDecider")
-  rideBookingsMade     RideRosterEntry[]    @relation("rideBooker")
-  ridesCancelled       Ride[]               @relation("rideCanceller")
-  ridesCompleted       Ride[]               @relation("rideCompleter")
-  rideDebriefs         RideDebrief[]        @relation("rideDebriefs")
-  rideLogEntries       RideLogEntry[]       @relation("rideLogActor")
+  rideAssignments      RideAssignment[]         @relation("rideAssignee")
+  rideAssignmentsMade  RideAssignment[]         @relation("rideAssigner")
+  rideRequests         RideRequest[]            @relation("rideRequester")
+  rideRequestsDecided  RideRequest[]            @relation("rideRequestDecider")
+  rideBookingsMade     RideRosterEntry[]        @relation("rideBooker")
+  ridesCancelled       Ride[]                   @relation("rideCanceller")
+  ridesCompleted       Ride[]                   @relation("rideCompleter")
+  rideDebriefs         RideDebrief[]            @relation("rideDebriefs")
+  rideLogEntries       RideLogEntry[]           @relation("rideLogActor")
   calendarFeed         CalendarFeed?
-  uploadedFiles        StoredFile[]         @relation("fileUploader")
-  reportedDamages      TrishawDamage[]      @relation("damageReporter")
-  clearedDamages       TrishawDamage[]      @relation("damageClearer")
-  trishawLogEntries    TrishawLogEntry[]    @relation("trishawLogActor")
-  personProfile        PersonProfile?       @relation("profileOfUser")
-  photoAgreements      PersonProfile[]      @relation("profilePhotoAgreedBy")
-  healthConsentsGiven  PersonProfile[]      @relation("profileHealthConsentBy")
-  pilotSteps           PilotStepTick[]      @relation("pilotStepOwner")
-  careRequests         CareRequest[]        @relation("careRequestCaretaker")
-  careRequestsMade     CareRequest[]        @relation("careRequestRequester")
-  confirmedPilotSteps  PilotStepTick[]      @relation("pilotStepConfirmer")
+  uploadedFiles        StoredFile[]             @relation("fileUploader")
+  reportedDamages      TrishawDamage[]          @relation("damageReporter")
+  trainingEnrollments  TrainingEnrollment[]
+  trainingProgress     TrainingLessonProgress[]
+  trainingAttempts     TrainingQuizAttempt[]
+  clearedDamages       TrishawDamage[]          @relation("damageClearer")
+  trishawLogEntries    TrishawLogEntry[]        @relation("trishawLogActor")
+  personProfile        PersonProfile?           @relation("profileOfUser")
+  photoAgreements      PersonProfile[]          @relation("profilePhotoAgreedBy")
+  healthConsentsGiven  PersonProfile[]          @relation("profileHealthConsentBy")
+  pilotSteps           PilotStepTick[]          @relation("pilotStepOwner")
+  careRequests         CareRequest[]            @relation("careRequestCaretaker")
+  careRequestsMade     CareRequest[]            @relation("careRequestRequester")
+  confirmedPilotSteps  PilotStepTick[]          @relation("pilotStepConfirmer")
+  trainingExemptions   TrainingExemption[]      @relation("trainingExemptionOwner")
+  grantedExemptions    TrainingExemption[]      @relation("trainingExemptionGranter")
 
   @@unique([email])
   @@unique([phoneNumber])
@@ -173,30 +178,34 @@ model Organization {
   members     Member[]
   invitations Invitation[]
 
-  countryId        String
-  country          Country                  @relation(fields: [countryId], references: [id])
-  city             String                   @db.Text
-  address          String?                  @db.Text
-  careHomeName     String?                  @db.Text
-  latitude         Float
-  longitude        Float
-  applications     ChapterApplication[]
-  passengers       Passenger[]
-  careRequests     CareRequest[]
-  events           ActivityEvent[]
-  domainEvents     Event[]
-  serviceRadiusKm  Int                      @default(10)
-  timeZone         String                   @db.VarChar(64)
-  settings         ChapterSettings?
-  conversations    Conversation[]
-  trishawTypes     TrishawType[]
-  rides            Ride[]
-  storageSites     StorageLocationChapter[]
-  ownedLocations   StorageLocation[]        @relation("ownedLocations")
-  rideLocations    RideLocation[]
-  operatingWindows ChapterOperatingWindow[]
-  closures         ChapterClosure[]
-  rideRequests     RideRequest[]
+  countryId            String
+  country              Country                  @relation(fields: [countryId], references: [id])
+  city                 String                   @db.Text
+  address              String?                  @db.Text
+  careHomeName         String?                  @db.Text
+  latitude             Float
+  longitude            Float
+  applications         ChapterApplication[]
+  passengers           Passenger[]
+  careRequests         CareRequest[]
+  events               ActivityEvent[]
+  domainEvents         Event[]
+  serviceRadiusKm      Int                      @default(10)
+  timeZone             String                   @db.VarChar(64)
+  settings             ChapterSettings?
+  conversations        Conversation[]
+  trishawTypes         TrishawType[]
+  trainingVideos       TrainingVideo[]
+  trainingFamilies     TrainingCourseFamily[]
+  trainingRequirements TrainingRequirement[]
+  trainingExemptions   TrainingExemption[]
+  rides                Ride[]
+  storageSites         StorageLocationChapter[]
+  ownedLocations       StorageLocation[]        @relation("ownedLocations")
+  rideLocations        RideLocation[]
+  operatingWindows     ChapterOperatingWindow[]
+  closures             ChapterClosure[]
+  rideRequests         RideRequest[]
 
   @@unique([slug])
   @@index([countryId])
@@ -255,10 +264,13 @@ model Country {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  chapters     Organization[]
-  admins       CountryAdmin[]
-  trishawTypes TrishawType[]
-  pools        StorageLocation[]
+  chapters             Organization[]
+  admins               CountryAdmin[]
+  trishawTypes         TrishawType[]
+  trainingVideos       TrainingVideo[]
+  trainingFamilies     TrainingCourseFamily[]
+  trainingRequirements TrainingRequirement[]
+  pools                StorageLocation[]
 
   @@unique([code])
   @@map("country")
@@ -300,15 +312,15 @@ model ChapterSettings {
   staffingCheckLeadHours Int     @default(48)
 
   /// Whether a Ride Request waits for an admin or becomes a ride when a trishaw is free.
-  schedulingMethod SchedulingMethod @default(scheduler)
+  schedulingMethod             SchedulingMethod @default(scheduler)
   /// Admins get a push for each new Ride Request.
-  requestAlertPush Boolean          @default(true)
+  requestAlertPush             Boolean          @default(true)
   /// How long before a ride its riders' accounts are reminded and asked to confirm their seat.
-  riderReminderLeadMinutes     Int @default(1440)
+  riderReminderLeadMinutes     Int              @default(1440)
   /// How long before a ride its pilots are reminded, with the pickup pack.
-  volunteerReminderLeadMinutes Int @default(1440)
+  volunteerReminderLeadMinutes Int              @default(1440)
   /// How far ahead of a ride an empty roster is flagged for cancellation.
-  demandCheckLeadHours         Int @default(24)
+  demandCheckLeadHours         Int              @default(24)
 
   @@map("chapter_settings")
 }
@@ -490,8 +502,7 @@ model PersonProfile {
 }
 
 enum PilotStep {
-  trainingVideos
-  workshop
+  inPersonTraining
 }
 
 model PilotStepTick {
@@ -526,6 +537,10 @@ enum ActivityType {
   chapterUpdated
   chapterDeleted
   countryDeleted
+  trainingPassed
+  trainingExemptionGranted
+  trainingExemptionRevoked
+  inPersonTrainingConfirmed
   riderHandedOver
 }
 
@@ -833,6 +848,7 @@ enum StoredFileKind {
   damagePhoto
   ridePhoto
   profilePhoto
+  trainingAttachment
 }
 
 /// An object in the private bucket. Served only through `/api/files/[id]`,
@@ -847,15 +863,16 @@ model StoredFile {
   uploadedBy       User?          @relation("fileUploader", fields: [uploadedByUserId], references: [id], onDelete: SetNull)
   createdAt        DateTime       @default(now())
 
-  typePhotos     TrishawType[]      @relation("typePhoto")
-  typeManuals    TrishawType[]      @relation("typeManual")
-  trishawPhotos  Trishaw[]          @relation("trishawPhoto")
-  entrancePhotos StorageLocation[]  @relation("entrancePhoto")
-  damagePhotos   TrishawDamage[]    @relation("damagePhoto")
-  typeGallery    TrishawTypePhoto[]
-  trishawGallery TrishawPhoto[]
-  ridePhotos     RidePhoto[]
-  profilePhoto   PersonProfile?     @relation("profilePhoto")
+  typePhotos          TrishawType[]      @relation("typePhoto")
+  typeManuals         TrishawType[]      @relation("typeManual")
+  trishawPhotos       Trishaw[]          @relation("trishawPhoto")
+  entrancePhotos      StorageLocation[]  @relation("entrancePhoto")
+  damagePhotos        TrishawDamage[]    @relation("damagePhoto")
+  typeGallery         TrishawTypePhoto[]
+  trishawGallery      TrishawPhoto[]
+  ridePhotos          RidePhoto[]
+  profilePhoto        PersonProfile?     @relation("profilePhoto")
+  trainingAttachments TrainingLesson[]   @relation("trainingAttachment")
 
   @@map("stored_file")
 }
@@ -1318,6 +1335,294 @@ model CalendarFeed {
   updatedAt     DateTime  @updatedAt
 
   @@map("calendar_feed")
+}
+
+enum TrainingVideoStatus {
+  uploading
+  queued
+  processing
+  ready
+  failed
+}
+
+/**
+ * A training video in the same global / country / chapter catalogue as trishaw
+ * models. The original stays in the private bucket under `sourceKey` so it can
+ * be transcoded again; the HLS renditions live in the public media bucket under
+ * `training/v/<mediaKey>/<revision>/`, where the unguessable `mediaKey` is the
+ * only thing standing between the CDN and a stranger. A retry bumps `revision`
+ * so a stale CDN copy is never served for the new output.
+ */
+model TrainingVideo {
+  id               String              @id @default(cuid())
+  scope            CatalogueScope      @default(global)
+  scopeKey         String              @default("global") @db.VarChar(200)
+  countryId        String?
+  country          Country?            @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  chapterId        String?
+  chapter          Organization?       @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  language         String              @db.VarChar(16)
+  title            String              @db.VarChar(160)
+  description      String?             @db.Text
+  status           TrainingVideoStatus @default(uploading)
+  progress         Int                 @default(0)
+  failureCode      String?             @db.VarChar(40)
+  sourceKey        String              @unique @db.VarChar(255)
+  sourceMime       String              @db.VarChar(100)
+  sourceSize       BigInt
+  uploadId         String?             @db.VarChar(1024)
+  mediaKey         String              @unique @db.VarChar(32)
+  revision         Int                 @default(1)
+  durationSeconds  Float?
+  width            Int?
+  height           Int?
+  renditions       Json?
+  posterSeconds    Float?
+  uploadedByUserId String?
+  readyAt          DateTime?
+  archivedAt       DateTime?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  lessons          TrainingLesson[]
+
+  @@index([scopeKey, status])
+  @@index([countryId])
+  @@index([chapterId])
+  @@index([status, updatedAt])
+  @@map("training_video")
+}
+
+enum TrainingQuestionKind {
+  single
+  multiple
+}
+
+/// One course in several languages: "Basic Pilot Training" in English, German
+/// and Danish is one family with three courses. Ownership sits on the family,
+/// in the same catalogue scope as videos, so every language variant has the same
+/// owner. Requirements and exemptions (Phase 3) point at the family, so passing
+/// any language variant counts.
+model TrainingCourseFamily {
+  id              String                @id @default(cuid())
+  scope           CatalogueScope        @default(global)
+  scopeKey        String                @default("global") @db.VarChar(200)
+  countryId       String?
+  country         Country?              @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  chapterId       String?
+  chapter         Organization?         @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  createdByUserId String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  courses         TrainingCourse[]
+  requirements    TrainingRequirement[]
+  exemptions      TrainingExemption[]
+
+  @@index([scopeKey])
+  @@index([countryId])
+  @@index([chapterId])
+  @@map("training_course_family")
+}
+
+/// One language variant of a family: ordered lessons and one final quiz. Hidden
+/// from pilots until `publishedAt` is set; edits after that are live.
+model TrainingCourse {
+  id              String                @id @default(cuid())
+  familyId        String
+  family          TrainingCourseFamily  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  language        String                @db.VarChar(16)
+  title           String                @db.VarChar(160)
+  summary         String?               @db.Text
+  publishedAt     DateTime?
+  createdByUserId String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  lessons         TrainingLesson[]
+  enrollments     TrainingEnrollment[]
+  attempts        TrainingQuizAttempt[]
+
+  @@unique([familyId, language])
+  @@map("training_course")
+}
+
+enum TrainingElementKind {
+  lesson
+  quiz
+}
+
+model TrainingLesson {
+  id               String                   @id @default(cuid())
+  courseId         String
+  course           TrainingCourse           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  kind             TrainingElementKind      @default(lesson)
+  position         Int
+  title            String                   @db.VarChar(160)
+  body             String?                  @db.Text
+  videoId          String?
+  video            TrainingVideo?           @relation(fields: [videoId], references: [id], onDelete: Restrict)
+  attachmentFileId String?
+  attachment       StoredFile?              @relation("trainingAttachment", fields: [attachmentFileId], references: [id], onDelete: SetNull)
+  quizShuffle      Boolean                  @default(true)
+  quizDrawCount    Int?
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+  progress         TrainingLessonProgress[]
+  lastOf           TrainingEnrollment[]
+  questions        TrainingQuestion[]
+  attempts         TrainingQuizAttempt[]
+
+  @@index([courseId, position])
+  @@index([videoId])
+  @@index([attachmentFileId])
+  @@map("training_lesson")
+}
+
+model TrainingQuestion {
+  id          String               @id @default(cuid())
+  lessonId    String
+  lesson      TrainingLesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  position    Int
+  kind        TrainingQuestionKind @default(single)
+  prompt      String               @db.Text
+  explanation String?              @db.Text
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  options     TrainingOption[]
+
+  @@index([lessonId, position])
+  @@map("training_question")
+}
+
+model TrainingOption {
+  id         String           @id @default(cuid())
+  questionId String
+  question   TrainingQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  position   Int
+  text       String           @db.VarChar(500)
+  correct    Boolean          @default(false)
+
+  @@index([questionId, position])
+  @@map("training_option")
+}
+
+/// A person's run through one course. `passedAt` is set once by the first
+/// passing attempt and never cleared by later edits to the course.
+model TrainingEnrollment {
+  id             String                @id @default(cuid())
+  userId         String
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId       String
+  course         TrainingCourse        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  startedAt      DateTime              @default(now())
+  lastActivityAt DateTime              @default(now())
+  lastLessonId   String?
+  lastLesson     TrainingLesson?       @relation(fields: [lastLessonId], references: [id], onDelete: SetNull)
+  passedAt       DateTime?
+  attemptCount   Int                   @default(0)
+  attempts       TrainingQuizAttempt[]
+
+  @@unique([userId, courseId])
+  @@index([courseId])
+  @@index([lastLessonId])
+  @@map("training_enrollment")
+}
+
+/// How far someone watched a lesson. `furthestSeconds` only grows, and by no more
+/// than the wall clock allows (`watch.ts`); `completedAt` sticks once set.
+model TrainingLessonProgress {
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId        String
+  lesson          TrainingLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  furthestSeconds Float          @default(0)
+  positionSeconds Float          @default(0)
+  heartbeatAt     DateTime       @default(now())
+  completedAt     DateTime?
+  createdAt       DateTime       @default(now())
+
+  @@id([userId, lessonId])
+  @@index([lessonId])
+  @@map("training_lesson_progress")
+}
+
+/// One quiz attempt. `questionOrder` is the drawn questions with their option
+/// order, fixed at start, so grading never depends on what the browser sent.
+model TrainingQuizAttempt {
+  id            String             @id @default(cuid())
+  enrollmentId  String
+  enrollment    TrainingEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId      String
+  course        TrainingCourse     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessonId      String
+  lesson        TrainingLesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  number        Int
+  questionOrder Json
+  startedAt     DateTime           @default(now())
+  submittedAt   DateTime?
+  answers       Json?
+  correctCount  Int?
+  total         Int
+  passed        Boolean?
+
+  @@unique([enrollmentId, lessonId, number])
+  @@index([userId, courseId])
+  @@index([courseId])
+  @@index([lessonId])
+  @@map("training_quiz_attempt")
+}
+
+enum TrainingExemptionReason {
+  experienced
+  manual
+  migration
+}
+
+/// A family every pilot under the owner must pass (or be exempt from) before
+/// riding. A chapter's effective set is global ∪ its country ∪ its own; a
+/// chapter can add to what its country requires but never take away.
+model TrainingRequirement {
+  id              String               @id @default(cuid())
+  familyId        String
+  family          TrainingCourseFamily @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  scope           CatalogueScope       @default(global)
+  scopeKey        String               @default("global") @db.VarChar(200)
+  countryId       String?
+  country         Country?             @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  chapterId       String?
+  chapter         Organization?        @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  createdByUserId String?
+  createdAt       DateTime             @default(now())
+
+  @@unique([scopeKey, familyId])
+  @@index([familyId])
+  @@index([countryId])
+  @@index([chapterId])
+  @@map("training_requirement")
+}
+
+/// A person who needn't pass a family to ride: `familyKey` is "all" for a
+/// blanket exemption (experienced pilots, the Phase 3 migration) or the
+/// family's id. `chapterId` records where it was granted, for the audit trail.
+model TrainingExemption {
+  id              String                  @id @default(cuid())
+  userId          String
+  user            User                    @relation("trainingExemptionOwner", fields: [userId], references: [id], onDelete: Cascade)
+  familyKey       String                  @db.VarChar(64)
+  familyId        String?
+  family          TrainingCourseFamily?   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  reason          TrainingExemptionReason
+  grantedByUserId String?
+  grantedBy       User?                   @relation("trainingExemptionGranter", fields: [grantedByUserId], references: [id], onDelete: SetNull)
+  chapterId       String?
+  chapter         Organization?           @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  grantedAt       DateTime                @default(now())
+
+  @@unique([userId, familyKey])
+  @@index([familyId])
+  @@index([grantedByUserId])
+  @@index([chapterId])
+  @@map("training_exemption")
 }
 
 enum RideRequestStatus {

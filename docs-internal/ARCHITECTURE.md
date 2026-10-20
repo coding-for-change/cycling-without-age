@@ -38,7 +38,8 @@ Four queues, not one: `events` (dispatch + the 60 s sweeper), `handlers` (one jo
 listener), and two delivery queues — `email`, rate limited to Resend's budget and parked by
 `Worker.RateLimitError` when Resend answers `429`, and `push`, which sends through FCM
 (`lib/push.ts`, `firebase-admin`) at concurrency 5. Mail is throttled; push is not held
-behind it.
+behind it. A fifth queue, `media`, carries the training-video transcodes and is consumed by
+a separate container (see Training → Worker role split).
 
 Sentry is loaded into the worker by preload (`node --require ./worker-instrument.js`), never
 by an import in `index.ts`.
@@ -341,8 +342,8 @@ position. Per chapter rather than a constant — a rural chapter covers more gro
 one, and the number is a policy, not a fact about geography.
 
 Onboarding ends at the passkey step for everyone. The pilot "next steps" screen is gone: the
-training videos, the workshop and the first ride are steps of the home-screen setup checklist
-instead, where they can actually be ticked off (see Person profiles).
+training courses (derived from the training gate), the in-person training and the first ride are
+steps of the home-screen setup checklist instead (see Person profiles and Training). The in-person step is confirmed by an admin only.
 
 ## Person profiles
 
@@ -1672,3 +1673,309 @@ allocation is the only ride write from the UI today and is not part of the repor
 not invalidate. The scheduling, cancel and roster actions must call
 `invalidateReports(chapterId)` when they land.
 Everything else ages out within the `minutes` profile.
+
+## Training (pilot onboarding)
+
+One slice, `src/features/training/`: the video library, courses and their elements (lessons
+and quizzes), learner progress, requirements, exemptions and the riding gate. It stays one
+slice because lessons reference videos and a split would turn every lesson write into a use case.
+
+### Video library and ownership
+
+`TrainingVideo` uses the same `CatalogueScope` + `scopeKey` model as trishaw models: a
+superadmin owns the global library, a country admin their country's, a chapter admin their
+chapter's. A chapter sees global ∪ its country ∪ its own. The uploader never picks the owner:
+`startVideoUploadAction` takes the active admin scope (an optional `scope` arg such as
+`chapter:<slug>`, else the scope cookie) and derives the **highest level the uploader holds in
+it** (`uploadOwnerOf` in `scope-owner.ts`: a superadmin → global, a country admin → that
+country, also while looking at one of its chapters, a chapter admin → the chapter; an ambiguous
+"all" for a multi-country admin is `scopeAmbiguous`), then runs `requireCatalogueOwner(owner)`
+(`lib/auth-guards`, shared with fleet); every other write goes
+through `requireAdminOf(training.videoAuthority(id))`, where a global video's authority is
+empty so only a superadmin passes. `videoStatusesAction` filters each row by
+`allowsAdmin` instead of aggregating authorities, so polling a mixed list never leaks the state
+of a video the caller does not manage. One language per video (`CONTENT_LANGUAGES`, names via
+`Intl.DisplayNames`).
+
+### Upload → transcode → CDN
+
+| Step | Where | What |
+| --- | --- | --- |
+| Start | `startVideoUploadAction` → `createVideo` | mime allowlist, size ≤ `TRAINING_MAX_UPLOAD_BYTES`, S3 multipart upload at `training/sources/<mediaKey>` in the private bucket, row `uploading` |
+| Parts | `signVideoPartsAction` | presigned `UploadPart` URLs (1 h), 16 MiB parts, the browser PUTs them directly (4 in parallel) and reads `ETag` (exposed by bucket CORS) |
+| Complete | `completeVideoUploadAction` → `markUploaded` | every part present, `CompleteMultipartUpload`, `HeadObject` size must equal the announced size, row `queued`, emits `trainingVideo.uploaded` |
+| Transcode | worker `media` queue, job `transcode-<id>-<revision>` | `markProcessing` → download with a byte cap → magic bytes → `ffprobe` (timeout, format allowlist, ≤ max duration, ≤ 4K, ≤ 60 fps) → `ffmpeg` fMP4 HLS 360/720/1080 (never above the source) under `nice` with a hard kill → poster frame at min(3 s, 10 %) as WebP 1280 + 480 via sharp → upload to the media bucket → `markReady` |
+| Failure | worker | `markFailed(code)`; only the code is stored (`MEDIA_FAILURE_CODES`), stderr never leaves the worker; the revision's partial output is deleted; the scratch directory is always removed |
+| Retry | `retryVideoAction` | bumps `revision`, re-emits `trainingVideo.uploaded` |
+| Poster | `setPosterFrameAction` → `trainingVideo.posterRequested` | the worker cuts the frame from the top rendition's init + one segment (no source download) and writes `poster-<ms>.webp`; the row's `posterSeconds` changes only after the files exist |
+| Delete | `deleteVideoAction` → `trainingVideo.deleted` | the event carries `mediaKey`, `sourceKey` and `uploadId`, because the row is gone when the `purge` job runs |
+| Prune | maintenance `prune-training-uploads` (03:30 UTC) | aborts multipart uploads still `uploading` after 24 h and drops their rows |
+
+Every transition is a conditional update on `(id, revision, status)`, so a stale or duplicate
+job is a no-op (`markProcessing` returns `null`).
+
+### Public CDN, unguessable keys
+
+Renditions and posters live in a separate **public** bucket (`S3_MEDIA_BUCKET`, served from
+`MEDIA_PUBLIC_URL`) under `training/v/<mediaKey>/<revision>/`. `mediaKey` is 128 random bits
+in base32; the URL is the capability. Training videos are instructional, not personal, so a
+leaked link exposes nothing worth signing every segment for — and signed URLs would defeat
+the edge cache and make HLS playlists rewrite per viewer. Every object is written with
+`Cache-Control: public, max-age=31536000, immutable`; nothing at a URL ever changes, which is
+why a retry bumps `revision` and a new poster gets a new `poster-<ms>` name instead of
+overwriting. The originals stay private in `S3_BUCKET` so a video can be transcoded again.
+The S3 client runs with `requestChecksumCalculation: "WHEN_REQUIRED"`: the SDK's default
+CRC32 on presigned `UploadPart` URLs is something a browser PUT cannot satisfy.
+
+### Worker role split
+
+`WORKER_ROLE` (`events` · `media` · `all`, default `all`) decides which queues a worker
+process consumes. Production runs two containers from two images: `worker`
+(`WORKER_ROLE=events`, the app image) and `media-worker` (`WORKER_ROLE=media`, the
+`media-worker` Docker target with a pinned static ffmpeg/ffprobe, `cpus: 2`,
+`mem_limit: 1536m`, a scratch volume, concurrency 1, 5-minute lock). A transcode can take
+minutes of CPU; on its own container it can neither starve mail and push delivery nor the
+web app. Only the events role registers the maintenance schedulers and the queue gauges.
+Local development runs `all`, using the ffmpeg on `PATH` (`FFMPEG_PATH`/`FFPROBE_PATH`).
+
+### Families, courses and elements
+
+A **family** (`TrainingCourseFamily`) is one course in several languages; a **course**
+(`TrainingCourse`, unique per family and language) is one variant: an ordered list of
+**elements**. An element (`TrainingLesson`, `kind` `lesson` | `quiz`) is either a lesson (title,
+Markdown body, optional video and PDF attachment) or a quiz (title, optional intro body, its
+questions, `quizShuffle` and `quizDrawCount`). A course may hold any number of quizzes at any
+position. Ownership sits on the family in the same `CatalogueScope` + `scopeKey` model as
+videos, so every variant has one owner and `courseAuthority` mirrors `videoAuthority`;
+`elementAuthority` and `questionAuthority` resolve to the course's. Creating a family goes
+through `requireCatalogueOwner(owner)`; a translation through
+`requireCatalogueOwner(familyOwner(familyId))`. `publishedAt` hides a course from pilots until
+it has at least one element, every quiz has at least one question and every question is
+complete (`courseEmpty`, `quizInvalid`); edits after that are live, and a pass
+(`TrainingEnrollment.passedAt`) is never taken back.
+
+**A course is immutable below its owner.** There is no chapter overlay, no chapter-only lesson
+and no hiding: every element, question and setting write runs
+`requireAdminOf(courseAuthority)`, and a global course's authority is empty, so only a
+superadmin edits global courses, a country admin (or superadmin) a country's, a chapter admin
+(or that country's admin, or a superadmin) a chapter's. A lower admin builds their own course at
+their own level instead, and may still **require** a higher course in their own scope (see
+Requirements) — that doesn't change the course.
+
+Element writes: `createElement({ courseId, kind, title, position })` inserts at `position` and
+shifts the rest in one transaction (`courseFull` beyond 100); `updateElement` refuses
+lesson-only fields (`videoId`, `attachmentFileId`) on a quiz and quiz settings on a lesson
+(`elementKindMismatch`); `reorderElements` needs exactly the course's element ids; questions
+are created only on a quiz element (`createQuestion(elementId)`, `quizFull` beyond 100).
+
+A lesson may only use a `ready` video its owner could pick: a global course global videos, a
+country course global and that country's, a chapter course global, the chapter's country and
+the chapter's own (`videoSearchFor`, `videoNotAllowed`). A video a lesson uses can't be deleted
+(`videoInUse`, FK `Restrict`).
+
+### Checkpoints and passing (`elements.ts`)
+
+A quiz is a **checkpoint**. `elementGates` is pure and decides every element's lock for one
+learner:
+
+| Element | Locked when |
+| --- | --- |
+| Lesson | any earlier quiz is not passed |
+| Quiz | any earlier element (lesson or quiz) is not complete |
+| Anything already complete | never — completions stick, even if the owner later inserts a quiz before it |
+
+A lesson is complete at 90 % watched or when marked read; a quiz element is complete when an
+attempt passes (`TrainingLessonProgress.completedAt` on the quiz element, written once by
+`completeElementOnce`). The course is **passed** when every element is complete:
+`passIfComplete` runs in the same transaction as the completing write (a quiz submit, or the
+heartbeat / mark-read that completes the last lesson), sets `passedAt` once and emits
+`training.coursePassed` (`attemptId` is the passing attempt, `null` when a lesson finished the
+course). Heartbeats, mark-read and quiz starts on a locked element are refused (`quizLocked`),
+and heartbeats or mark-read on a quiz element are `elementKindMismatch`, so a quiz can only be
+completed by passing it. Progress is `completed elements / elements` (`percentComplete`), the
+"current" title is the first incomplete element's.
+
+Migration `20261017100000_training_elements` dropped overlays, placements, chapter lessons and
+`mandatory`, moved `quizShuffle` / `quizDrawCount` to the element, turned every course's
+questions into one quiz element appended at the end (only where questions existed), moved the
+attempts onto it and marked it complete for every learner with a passed attempt.
+
+### Quiz grading (`grade.ts`)
+
+Questions are single or multiple choice; `questionIssues` is the one validation the editor shows
+live and publishing enforces. An attempt's questions and option order are drawn with a
+**seeded** shuffle (`userId:elementId:attemptNumber`), optionally only `quizDrawCount` of them,
+so the quiz page can render the next attempt's questions without a write and "Start" is instant;
+`startQuizAction(courseId, elementId)` then stores the same draw as
+`TrainingQuizAttempt.questionOrder` (attempts are numbered per quiz element and enrollment;
+`TrainingEnrollment.attemptCount` counts all submitted attempts of the course). What reaches the
+browser is `toAttemptView`, which builds new objects without `correct` or `explanation`.
+`submitAttempt` grades on the server against the stored order: exact set match per question, a
+question deleted since the draw doesn't count, pass = all correct. It refuses while the quiz is
+locked (`quizLocked`), marks the attempt submitted conditionally (a double submit is
+`quizAttemptClosed`), completes the quiz element on a pass and passes the course when it was the
+last open element. Only the result carries the right answers and explanations, `firstPass`
+(this quiz), `coursePassed`, plus the next attempt's questions so "Try again" needs no request.
+
+### Watching and heartbeats (`watch.ts`)
+
+A video lesson is complete at 90 % of its duration, a lesson without video when the pilot marks
+it read (`acknowledgeLessonAction`). `acceptHeartbeat` lets `furthestSeconds` grow by at most
+`2 × elapsed + 5 s` since the last beat, never shrink and never pass the duration; `completedAt`
+sticks. Until then the player's `seekLimit` is the furthest point; afterwards it is gone.
+
+Heartbeats go to the Route Handler `POST /api/training/progress`, not a Server Action: an action
+call queues behind navigation and can't be sent from `pagehide`, while a route accepts
+`fetch(…, { keepalive: true })` and `navigator.sendBeacon` (a `text/plain` JSON body). The route
+checks the Origin against `APP_URL` (sendBeacon can't send a custom header, so this is the CSRF
+check), the session (401), a 30/min per-user rate limit (429), a 1 KiB body and zod, then calls
+`training-access.recordLessonProgress`, which re-checks that the lesson belongs to a course the
+person may take, and answers 204 `private, no-store`. Unexpected errors propagate to
+`onRequestError`.
+
+### Learner access (`use-cases/training-access.ts`)
+
+Who learns where is membership's (pilot roles and pending applications) and chapters' (the
+chapter's country); what is visible is training's. `trainingContext` lists the person's pilot
+and applicant chapters with their countries; `visibleCourses` takes the published families
+visible to any of them, picks one variant per family (the one already started, else the UI
+language, else English, else the first) and gates its elements with `elementGates`. Every pilot
+page, action and heartbeat goes through `courseOverview`, so an element of an unpublished course
+is simply not there. The pilot routes are `/pilot/training/[courseId]` (overview and outline)
+and `/pilot/training/[courseId]/[elementId]`, which renders the lesson view, the quiz flow or a
+"pass the quiz first" panel by kind and lock (`elementPage`). "Next" goes to the next element
+(the quiz intro when it is a quiz, the overview after the last one); a passed checkpoint
+continues to the next element, the last one back to the training home. The next element is
+prefetched with the current one, so the quiz intro is instant.
+
+### Requirements (`requirements.ts`, `TrainingRequirement`)
+
+A requirement names a **family** a pilot must pass before riding, owned in the same
+`CatalogueScope` + `scopeKey` model (unique per `scopeKey` + family). A chapter's effective set
+is global ∪ its country ∪ its own (`effectiveRequirements`, a family listed once by its
+broadest source). A chapter can add to what its country requires, never take away: the
+country's and the global rows simply aren't the chapter's to remove
+(`removeRequirementAction` runs `requireAdminOf(requirementAuthority(id))`, and a global row's
+authority is empty, so only a superadmin passes). What may be required is what the owner sees
+(`familyAllowedFor`): global only global families; a country global and its own; a chapter
+everything visible to it (`familyNotAllowed`). Setting runs `requireCatalogueOwner(owner)`.
+The course table sets it per family for the **active scope** with
+`setCourseRequiredAction({ familyId, required, scope? })`: the owner is derived on the server
+from the active scope (`requirementOwnerOf`: a chapter scope → that chapter, a country scope →
+that country, "all" → global for a superadmin), never sent by the client.
+`listCourseCatalogue(search, activeOwner)` returns per family the variants with lesson / quiz
+counts, published state, `required` (a row for the active owner), `requiredEffective` (also
+inherited from global or the chapter's country) and every visible requirement row with its
+relation (`own` · `inherited` · `other`).
+A family without a published variant doesn't count until it has one. Before saving, the
+drawer asks `requirementImpactAction`, which counts the pilots in scope who are ready today
+and would not be (`use-cases/training-requirements.ts`).
+
+### The riding gate (`use-cases/pilot-readiness.ts`)
+
+A pilot may ride for a chapter when **every effective family is `passed` or `exempt`** and the
+**in-person training** (`PilotStepTick` step `inPersonTraining`, formerly `workshop`) has an
+admin's `confirmedAt`. `familyStatus` is pure: a pass of **any** published language variant
+satisfies the family (`TrainingEnrollment.passedAt` is never taken back, so elements the owner
+adds after the pass don't re-gate), otherwise an exemption makes it `exempt`, otherwise
+`inProgress` (an enrollment exists) or `notStarted`. `training.readinessFacts` answers for any
+number of chapters and pilots in **six queries** (requirements, published variants,
+exemptions, elements, enrollments, completions); `personProfiles.inPersonTrainingOf`
+adds one more. A chapter without a country is read through the global and chapter requirements
+only, so a ride page never fails on it.
+
+**Every path that puts a pilot on a ride or roster must call `assertPilotsReady(userIds,
+chapterId)`** after its role check; it throws `pilotNotReady`. Today that is `staff-ride` and
+`schedule-ride`. A future pilot self sign-up must call it too.
+
+### Feature flag `TRAINING_REQUIRED`
+
+Until the media pipeline runs in production, the whole gate sits behind the server-only env var
+`TRAINING_REQUIRED`, read through `isTrainingRequired()` in `src/lib/feature-flags.ts` (only the
+exact value `"true"` turns it on; unset means off). Client components get it as a prop, and it is
+read only after a request-time API (session, cookies) so the build never bakes it into a shell.
+
+- **On**: everything in this section applies.
+- **Off**: riding works as before the feature. `assertPilotsReady` is a no-op and
+  `readinessOfPilots` / `readinessForChapters` report every pilot ready without evaluating any
+  requirement, so chapter approval alone lets a pilot ride. Pilots see no courses: no home card,
+  no `training` checklist step (the admin-confirmed `inPersonTraining` step stays, without a
+  link), `/pilot/training/**` is `notFound()`, `/api/training/progress` answers 404, the pilot
+  training actions refuse, and the approval copy and emails drop the videos. Admins keep Courses
+  and the video library to prepare content; the course list's "Required in" column and
+  mandatory menu items, the course page's Progress section, the
+  member panel's course rows, exemptions and Ready badges, and the invite's "Skip training"
+  (also ignored server-side) disappear. Tests run with the flag on (`jest.env.ts`).
+
+### Exemptions (`TrainingExemption`)
+
+Per person, `familyKey` either `"all"` (blanket) or a family id, with a reason (`experienced`
+from the invite drawer's "Skip training" when the pilot role is invited, `manual` from the
+member page, `migration` from the Phase 3 backfill), who granted it (null = system) and the
+chapter it was granted in (audit only). Granting and revoking emit
+`training.exemptionGranted` / `training.exemptionRevoked`, which the worker turns into history
+lines. An exemption covers courses only. The in-person training is never ticked by the pilot: only an
+admin confirms it (`pilot-steps.confirmInPersonTraining`, `inPersonTrainingConfirmed` history
+line), and revoking deletes the tick. Until then the checklist row shows "waiting for
+confirmation from your chapter". Inviting with "Skip training" and the pilot role does both in
+one go: a blanket `experienced` exemption and an in-person confirmation by the inviter, so an
+invited experienced pilot can ride right away. The
+admin actions guard through `requireTrainingAdminOf(pilot, chapterId)`: an admin of a chapter
+where the person is a pilot or applicant. Migration `20261016300000_training_gate` gave every
+approved pilot a blanket `migration` exemption and a confirmed in-person tick, so nobody who
+rode before the gate is suddenly grounded.
+
+### Tracking (`use-cases/training-progress.ts`)
+
+`trainingProgressTable` is the admin table: one row per pilot and effective family of the
+chosen chapters, plus a summary per pilot. Names only at chapter scope (`includeNames`), the
+Reports rule. `courseProgress({ courseId, chapterIds, includeNames })` serves the progress
+section of a course's admin page: the same facts for that course's family (required or not),
+counts per status always and per-pilot rows only with `includeNames`. `memberTrainingPanel` is
+the member page panel: readiness per chapter the
+viewer administers (`allowsAdmin` filters, so the panel never shows another chapter), the
+in-person state and every exemption with its granter.
+
+Deleting a chapter or a country cascades its training videos and its courses; `manage-chapter` and
+`manage-country` collect the owners' media first (`training.ownerMedia`) and afterwards
+`purgeOwnerMedia` deletes orphaned lesson attachments and emits `trainingVideo.deleted` (with
+`chapterId: null`, the chapter is gone) so the `purge` job removes renditions and sources.
+
+### Admin editing: element modal, library modal, upload tray
+
+Lessons and quizzes have no page of their own. The course page renders
+`ElementModalSlot` (`courses/[courseId]/_components/element-modal-slot.tsx`) behind
+`<Suspense>`; with `?element=<id>` in the URL it opens a large modal (nearly full viewport on
+desktop, a full-screen sheet on phones) over the course, so the admin never leaves the course.
+The slot re-reads the active scope, shows the element only when the course is visible in it, and
+offers edits only when `allowsAdmin(access, elementAuthority)`; every write still re-checks in
+its Action. Closing (✕, Esc outside a field, ⌘↵, a click on the course in the breadcrumb)
+removes `element` from the URL. Fields autosave (`SaveStatus` in the modal header); deleting the
+element is the header's typed confirm.
+
+- **Lesson**: Title → Text (Markdown editor, toolbar on top) → Video → Handout, grouped in cards.
+  An empty video field offers "Upload new" (file picker straight into the library, the video is
+  assigned once it is `ready`) and "Select existing" (the library modal).
+- **Library modal** (`features/training/components/video-library-modal.tsx`): search, a language
+  filter defaulting to the course language, a drop zone and a grid of the videos the course may
+  use (`courseVideoLibrary`). Uploads started there appear as tiles with live progress; picking an
+  upload that is still running assigns it when it becomes ready. There is no owner selector —
+  `startVideoUploadAction` derives the owner (see Video library and ownership).
+- **Quiz**: settings (shuffle, questions per attempt, "Preview as pilot") under the header, then
+  the questions full-width — a sortable question rail and the editing card side by side on wide
+  screens. The pilot preview is `/admin/training/courses/[courseId]/preview/[elementId]`.
+- **Upload tray** (`upload-tray.tsx`, mounted once in the admin layout) is the only progress
+  indicator — there are no upload toasts. Its store (`upload-store.ts`) keeps each row's server
+  status and an optional `assignTo` element id, and the tray performs that assignment
+  (`updateElementAction`) when the video turns `ready`, so it survives closing the modal. The
+  tray sits beneath an open modal; the modal's own tiles and video field show the same state.
+
+### Player
+
+`src/components/training-player.tsx` wraps Video.js 10 (`@videojs/react` +
+`@videojs/hlsjs-video`, exact pins) with the shadcn-ejected skin in
+`src/components/videojs/`, restyled to brand tokens. `seekLimit` clamps seeking to the
+furthest watched point (Phase 2's first-watch rule); the admin preview passes none. It loads
+through `next/dynamic` (`training-player-lazy.tsx`) with the poster as an immediate
+placeholder.
+

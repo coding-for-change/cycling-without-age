@@ -2,6 +2,7 @@ import { z } from "zod";
 import { chapters } from "@/features/chapters";
 import { passengers } from "@/features/passengers";
 import { profile } from "@/features/profile";
+import { isTrainingRequired } from "@/lib/feature-flags";
 import { formatMessage } from "@/lib/i18n/format";
 import { defineKind } from "./types";
 import { ORG_NAME } from "@/lib/brand";
@@ -48,8 +49,11 @@ export const userOnboarded = defineKind({
           ? strings.welcomeCaretaker
           : strings.welcomePassenger;
     const chapter = chapterName ?? ORG_NAME;
+    const inPersonOnly = role === "pilot" && !isTrainingRequired();
     return {
-      subject: copy.subject,
+      subject: inPersonOnly
+        ? strings.welcomePilot.subjectInPerson
+        : copy.subject,
       title: formatMessage(copy.title, { chapter }, locale),
       preview: copy.preview,
       heading: copy.heading,
@@ -60,7 +64,12 @@ export const userOnboarded = defineKind({
             text: welcomeNote,
           }
         : null,
-      steps: { heading: copy.howHeading, items: Object.values(copy.how) },
+      steps: {
+        heading: copy.howHeading,
+        items: inPersonOnly
+          ? Object.values(copy.how).slice(1)
+          : Object.values(copy.how),
+      },
       cta: copy.cta,
       footer: copy.footer,
       template: "welcome",

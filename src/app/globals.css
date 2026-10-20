@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "../components/videojs/styles/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -17,6 +18,7 @@
 
   --mint: #92d2c6; /* caretaking — blocks, accents, progress. Text on it: ink. */
   --mint-tint: #e4f3ef;
+  --mint-bright: #92d2c6; /* mint that stays light on dark surfaces (video chrome) */
   --mint-deep: #28584e; /* darkened mint for surfaces that need white type */
   --mint-ink: #28584e;
   --red: #ed1c24; /* energy, action — RESERVED for primary actions & alerts */
@@ -135,6 +137,7 @@
 
   --mint: #2a6458;
   --mint-tint: #1f2f2b;
+  --mint-bright: #8fd0c3;
   --mint-deep: #2f7466;
   --mint-ink: #8fd0c3;
   --red-hover: #f23a41;
@@ -212,6 +215,7 @@
   --color-line: var(--line);
   --color-mint: var(--mint);
   --color-mint-tint: var(--mint-tint);
+  --color-mint-bright: var(--mint-bright);
   --color-mint-deep: var(--mint-deep);
   --color-mint-ink: var(--mint-ink);
   --color-red: var(--red);
@@ -771,4 +775,103 @@ body {
 :root[data-theme-switch]::view-transition-new(*) {
   animation-duration: 220ms;
   animation-timing-function: ease;
+}
+
+::view-transition-old(.quiz-next) {
+  --slide-offset: -48px;
+  animation:
+    140ms ease-in both member-fade reverse,
+    320ms cubic-bezier(0.32, 0.72, 0, 1) both flow-slide reverse;
+}
+::view-transition-new(.quiz-next) {
+  --slide-offset: 48px;
+  animation:
+    200ms ease-out 80ms both member-fade,
+    320ms cubic-bezier(0.32, 0.72, 0, 1) both flow-slide;
+}
+::view-transition-old(.quiz-back) {
+  --slide-offset: 48px;
+  animation:
+    140ms ease-in both member-fade reverse,
+    320ms cubic-bezier(0.32, 0.72, 0, 1) both flow-slide reverse;
+}
+::view-transition-new(.quiz-back) {
+  --slide-offset: -48px;
+  animation:
+    200ms ease-out 80ms both member-fade,
+    320ms cubic-bezier(0.32, 0.72, 0, 1) both flow-slide;
+}
+::view-transition-old(.quiz-fade) {
+  animation: 180ms ease-in both member-fade reverse;
+}
+::view-transition-new(.quiz-fade) {
+  animation: 260ms ease-out 120ms both member-fade;
+}
+
+@keyframes training-sweep {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes training-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--mint) 70%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 14px color-mix(in srgb, var(--mint) 0%, transparent);
+  }
+}
+
+@keyframes training-check {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@utility animate-training-sweep {
+  animation: training-sweep 700ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  transform-origin: left;
+}
+
+@utility animate-training-pulse {
+  animation: training-pulse 900ms ease-out 1;
+}
+
+@utility animate-training-check {
+  animation: training-check 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-training-sweep,
+  .animate-training-pulse,
+  .animate-training-check {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-ua-transition])::view-transition-old(.quiz-next),
+  :root:not([data-ua-transition])::view-transition-old(.quiz-back),
+  :root:not([data-ua-transition])::view-transition-old(.quiz-fade),
+  :root:not([data-ua-transition])::view-transition-old(.training-motion) {
+    animation: 120ms ease-in both member-fade reverse !important;
+  }
+  :root:not([data-ua-transition])::view-transition-new(.quiz-next),
+  :root:not([data-ua-transition])::view-transition-new(.quiz-back),
+  :root:not([data-ua-transition])::view-transition-new(.quiz-fade),
+  :root:not([data-ua-transition])::view-transition-new(.training-motion) {
+    animation: 180ms ease-out both member-fade !important;
+  }
 }

@@ -14,7 +14,7 @@ import {
 import { isSettlingFromSwipeBack } from "@/lib/native/swipe-back";
 import {
   activeTabKey,
-  isConversationPath,
+  hidesTabBar,
   type MemberNavKey,
   type ResolvedMemberNavItem,
 } from "../nav";
@@ -34,7 +34,7 @@ export function NativeTabBar({
   const narrow = useIsMobile();
 
   const selectedId = activeTabKey(pathname, items);
-  const hidden = !narrow || keyboardOpen || isConversationPath(pathname);
+  const hidden = !narrow || keyboardOpen || hidesTabBar(pathname);
 
   const tabs = useMemo<NativeTab[]>(
     () =>

@@ -41,3 +41,23 @@ export function rankChapters<T extends RankableChapter>({
         a.name.localeCompare(b.name, locale),
     );
 }
+
+export const SHORTLIST_SIZE = 6;
+
+export function shortlist<T extends { id: string }>({
+  rows,
+  query,
+  selected,
+  size = SHORTLIST_SIZE,
+}: {
+  rows: T[];
+  query: string;
+  selected: string[];
+  size?: number;
+}): { shown: T[]; hidden: number } {
+  if (query.trim()) return { shown: rows, hidden: 0 };
+  const shown = rows.filter(
+    (row, index) => index < size || selected.includes(row.id),
+  );
+  return { shown, hidden: rows.length - shown.length };
+}

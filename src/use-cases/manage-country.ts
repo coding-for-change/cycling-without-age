@@ -1,6 +1,7 @@
 import { activity } from "@/lib/activity";
 import { DomainError } from "@/lib/domain-error";
 import { chapters } from "@/features/chapters";
+import { training } from "@/features/training";
 
 export async function deleteCountry({
   countryId,
@@ -13,7 +14,12 @@ export async function deleteCountry({
   if (!country) throw new DomainError("unknownCountry");
 
   const inCountry = await chapters.listChapters(countryId);
+  const media = await training.ownerMedia({
+    chapterIds: inCountry.map((chapter) => chapter.id),
+    countryIds: [countryId],
+  });
   await chapters.deleteCountry(countryId);
+  await training.purgeOwnerMedia(media, actorUserId);
 
   await activity.record({
     userId: actorUserId,

@@ -7,6 +7,7 @@ describe("worker monitors", () => {
       "ride-sweep",
       "prune-devices",
       "prune-chat",
+      "prune-training-uploads",
     ]);
   });
 

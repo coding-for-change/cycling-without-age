@@ -18,7 +18,7 @@ env:
     GATEWAYAPI_TOKEN GATEWAYAPI_SENDER GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET
     FIREBASE_SERVICE_ACCOUNT PASSKEY_ANDROID_ORIGINS ANDROID_CERT_SHA256_FINGERPRINTS
     CHAT_MASTER_KEY SENTRY_DSN_WEB SENTRY_DSN_WORKER
-    S3_BUCKET S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY
+    S3_BUCKET S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY S3_MEDIA_BUCKET MEDIA_PUBLIC_URL TRAINING_REQUIRED
   SENTRY_ORG: codingforchange
   SENTRY_PROJECT: cycling-without-age
   HEALTH_URL: https://cwa.codingforchange.com/api/health
@@ -96,24 +96,38 @@ jobs:
             -u "$(jq -r '.REGISTRY_USERNAME // empty' "$SECRETS_DIR/decrypted.json")" \
             --password-stdin
 
-      - name: Build and push Docker image
+      - name: Build and push Docker images
         run: |
           SENTRY_AUTH_TOKEN="$(jq -r '.SENTRY_AUTH_TOKEN // empty' "$SECRETS_DIR/decrypted.json")"
           export SENTRY_AUTH_TOKEN
 
+          BUILD_ARGS=(
+            --build-arg NEXT_PUBLIC_APP_URL=https://cwa.codingforchange.com
+            --build-arg NEXT_PUBLIC_MAPBOX_TOKEN="$(jq -r '.NEXT_PUBLIC_MAPBOX_TOKEN // empty' "$SECRETS_DIR/decrypted.json")"
+            --build-arg NEXT_PUBLIC_SENTRY_DSN="$(jq -r '.NEXT_PUBLIC_SENTRY_DSN // empty' "$SECRETS_DIR/decrypted.json")"
+            --build-arg NEXT_PUBLIC_SENTRY_ENVIRONMENT=production
+            --build-arg SENTRY_RELEASE=${{ github.sha }}
+            --build-arg SENTRY_ORG="$SENTRY_ORG"
+            --build-arg SENTRY_PROJECT="$SENTRY_PROJECT"
+            --secret id=sentry_token,env=SENTRY_AUTH_TOKEN
+          )
+
           docker buildx build \
             --cache-from type=gha,scope=cwa-main \
             --cache-to type=gha,scope=cwa-main,mode=max \
-            --build-arg NEXT_PUBLIC_APP_URL=https://cwa.codingforchange.com \
-            --build-arg NEXT_PUBLIC_MAPBOX_TOKEN="$(jq -r '.NEXT_PUBLIC_MAPBOX_TOKEN // empty' "$SECRETS_DIR/decrypted.json")" \
-            --build-arg NEXT_PUBLIC_SENTRY_DSN="$(jq -r '.NEXT_PUBLIC_SENTRY_DSN // empty' "$SECRETS_DIR/decrypted.json")" \
-            --build-arg NEXT_PUBLIC_SENTRY_ENVIRONMENT=production \
-            --build-arg SENTRY_RELEASE=${{ github.sha }} \
-            --build-arg SENTRY_ORG="$SENTRY_ORG" \
-            --build-arg SENTRY_PROJECT="$SENTRY_PROJECT" \
-            --secret id=sentry_token,env=SENTRY_AUTH_TOKEN \
+            "${BUILD_ARGS[@]}" \
             -t registry.infra.codingforchange.com/cwa:${{ github.sha }} \
             -t registry.infra.codingforchange.com/cwa:latest \
+            --push \
+            .
+
+          # Same build arguments, so every stage up to the runtime comes from the cache above.
+          docker buildx build \
+            --cache-from type=gha,scope=cwa-main \
+            --target media-worker \
+            "${BUILD_ARGS[@]}" \
+            -t registry.infra.codingforchange.com/cwa-media-worker:${{ github.sha }} \
+            -t registry.infra.codingforchange.com/cwa-media-worker:latest \
             --push \
             .
 

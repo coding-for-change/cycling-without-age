@@ -50,5 +50,6 @@ export const inviteInput = z.object({
     .min(1)
     .max(inviteRole.options.length)
     .transform((roles) => [...new Set(roles)]),
+  skipTraining: z.boolean().optional(),
 });
 export type InviteInput = z.infer<typeof inviteInput>;

@@ -7,6 +7,7 @@ export type NavKey =
   | "rides"
   | "rideLocations"
   | "members"
+  | "training"
   | "passengers"
   | "bikes"
   | "locations"
@@ -37,6 +38,12 @@ export const NAV: readonly NavItem[] = [
     icon: "mapPin",
   },
   { key: "members", href: "/admin/members", group: "main", icon: "members" },
+  {
+    key: "training",
+    href: "/admin/training",
+    group: "main",
+    icon: "training",
+  },
   {
     key: "passengers",
     href: "/admin/passengers",

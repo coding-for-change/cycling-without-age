@@ -116,26 +116,39 @@ jobs:
             -u "$(jq -r '.REGISTRY_USERNAME // empty' "$SECRETS_DIR/decrypted.json")" \
             --password-stdin
 
-      - name: Build and push Docker image
+      - name: Build and push Docker images
         run: |
           SENTRY_AUTH_TOKEN="$(jq -r '.SENTRY_AUTH_TOKEN // empty' "$SECRETS_DIR/decrypted.json")"
           export SENTRY_AUTH_TOKEN
+          BUILD_ARGS=(
+            --build-arg NEXT_PUBLIC_APP_URL=https://${{ env.BRANCH_NAME_SAFE }}.cwa.codingforchange.com
+            --build-arg NEXT_PUBLIC_MAPBOX_TOKEN="$(jq -r '.NEXT_PUBLIC_MAPBOX_TOKEN // empty' "$SECRETS_DIR/decrypted.json")"
+            --build-arg NEXT_PUBLIC_SENTRY_ENVIRONMENT=preview
+            --build-arg SENTRY_RELEASE=${{ github.sha }}
+            --build-arg NEXT_PUBLIC_SENTRY_DSN="$(jq -r '.NEXT_PUBLIC_SENTRY_DSN // empty' "$SECRETS_DIR/decrypted.json")"
+            --build-arg SENTRY_ORG=codingforchange
+            --build-arg SENTRY_PROJECT=cycling-without-age
+            --build-arg NEXT_PUBLIC_TRANSLATOR_MODE=${{ inputs.translator_mode && '1' || '' }}
+            --build-arg NEXT_PUBLIC_TOLGEE_PROJECT_ID="$(jq -r '.TOLGEE_PROJECT_ID // empty' "$SECRETS_DIR/decrypted.json")"
+            --secret id=sentry_token,env=SENTRY_AUTH_TOKEN
+          )
+
           docker buildx build \
             --cache-from type=gha,scope=cwa-main \
             --cache-from type=gha,scope=cwa-${{ env.BRANCH_NAME_SAFE }} \
             --cache-to type=gha,scope=cwa-${{ env.BRANCH_NAME_SAFE }},mode=max \
-            --build-arg NEXT_PUBLIC_APP_URL=https://${{ env.BRANCH_NAME_SAFE }}.cwa.codingforchange.com \
-            --build-arg NEXT_PUBLIC_MAPBOX_TOKEN="$(jq -r '.NEXT_PUBLIC_MAPBOX_TOKEN // empty' "$SECRETS_DIR/decrypted.json")" \
-            --build-arg NEXT_PUBLIC_SENTRY_ENVIRONMENT=preview \
-            --build-arg SENTRY_RELEASE=${{ github.sha }} \
-            --build-arg NEXT_PUBLIC_SENTRY_DSN="$(jq -r '.NEXT_PUBLIC_SENTRY_DSN // empty' "$SECRETS_DIR/decrypted.json")" \
-            --build-arg SENTRY_ORG=codingforchange \
-            --build-arg SENTRY_PROJECT=cycling-without-age \
-            --build-arg NEXT_PUBLIC_TRANSLATOR_MODE=${{ inputs.translator_mode && '1' || '' }} \
-            --build-arg NEXT_PUBLIC_TOLGEE_PROJECT_ID="$(jq -r '.TOLGEE_PROJECT_ID // empty' "$SECRETS_DIR/decrypted.json")" \
-            --secret id=sentry_token,env=SENTRY_AUTH_TOKEN \
+            "${BUILD_ARGS[@]}" \
             -t registry.infra.codingforchange.com/cwa-${{ env.BRANCH_NAME_SAFE }}:${{ github.sha }} \
             -t registry.infra.codingforchange.com/cwa-${{ env.BRANCH_NAME_SAFE }}:latest \
+            --push \
+            .
+
+          docker buildx build \
+            --cache-from type=gha,scope=cwa-${{ env.BRANCH_NAME_SAFE }} \
+            --target media-worker \
+            "${BUILD_ARGS[@]}" \
+            -t registry.infra.codingforchange.com/cwa-${{ env.BRANCH_NAME_SAFE }}-media-worker:${{ github.sha }} \
+            -t registry.infra.codingforchange.com/cwa-${{ env.BRANCH_NAME_SAFE }}-media-worker:latest \
             --push \
             .
 
@@ -183,7 +196,7 @@ jobs:
             echo "TOLGEE_READ_KEY=$TOLGEE_READ_KEY" >> .env
             echo "TOLGEE_PROJECT_ID=$(jq -r '.TOLGEE_PROJECT_ID // empty' "$SECRETS_DIR/decrypted.json")" >> .env
           fi
-          for key in NEXT_PUBLIC_SENTRY_DSN SENTRY_DSN_WEB SENTRY_DSN_WORKER RESEND_API_KEY MAPBOX_TOKEN; do
+          for key in NEXT_PUBLIC_SENTRY_DSN SENTRY_DSN_WEB SENTRY_DSN_WORKER RESEND_API_KEY MAPBOX_TOKEN TRAINING_REQUIRED; do
             value=$(jq -r --arg k "$key" '.[$k] // empty' "$SECRETS_DIR/decrypted.json")
             if [ -n "$value" ]; then echo "$key=$value" >> .env; fi
           done

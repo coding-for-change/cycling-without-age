@@ -14,9 +14,14 @@ import {
   requireSuperAdmin,
 } from "@/lib/auth-guards";
 import { membership } from "@/features/membership";
-import { PILOT_STEPS } from "@/features/person-profiles";
+import { exemptionInput, inPersonInput } from "@/features/training";
 import { deleteAccount } from "@/use-cases/delete-account";
-import { confirmPilotStep, revokePilotStep } from "@/use-cases/pilot-steps";
+import {
+  confirmInPersonTraining,
+  grantTrainingExemption,
+  revokeInPersonTraining,
+  revokeTrainingExemption,
+} from "@/use-cases/pilot-steps";
 
 export type AdminActionResult =
   | { ok: true }
@@ -43,11 +48,6 @@ const roleChangeInput = z.object({
 const deleteUserInput = z.object({
   userId: id,
   removeRiders: z.array(id).max(50).default([]),
-});
-
-const pilotStepConfirmInput = z.object({
-  userId: id,
-  step: z.enum(PILOT_STEPS),
 });
 
 const failed = (error: unknown): AdminActionResult =>
@@ -134,32 +134,74 @@ export async function deleteUserAction(
   }
 }
 
-export async function confirmPilotStepAction(
-  input: z.input<typeof pilotStepConfirmInput>,
-): Promise<AdminActionResult> {
-  const parsed = pilotStepConfirmInput.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "generic" };
+export type TrainingAdminResult =
+  | { ok: true }
+  | {
+      ok: false;
+      error:
+        "notMember" | "familyNotAllowed" | "unknownTrainingCourse" | "generic";
+    };
 
+const trainingFailed = (error: unknown): TrainingAdminResult =>
+  actionFailure(error, {
+    notMember: "notMember",
+    familyNotAllowed: "familyNotAllowed",
+    unknownTrainingCourse: "unknownTrainingCourse",
+  });
+
+const trainingDone = (): TrainingAdminResult => {
+  revalidatePath("/", "layout");
+  return { ok: true };
+};
+
+export async function confirmInPersonAction(
+  input: z.input<typeof inPersonInput>,
+): Promise<TrainingAdminResult> {
+  const parsed = inPersonInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "generic" };
   try {
-    await confirmPilotStep(parsed.data.userId, parsed.data.step);
-    revalidatePath("/", "layout");
-    return { ok: true };
+    await confirmInPersonTraining(parsed.data.userId, parsed.data.chapterId);
+    return trainingDone();
   } catch (error) {
-    return failed(error);
+    return trainingFailed(error);
   }
 }
 
-export async function revokePilotStepAction(
-  input: z.input<typeof pilotStepConfirmInput>,
-): Promise<AdminActionResult> {
-  const parsed = pilotStepConfirmInput.safeParse(input);
+export async function revokeInPersonAction(
+  input: z.input<typeof inPersonInput>,
+): Promise<TrainingAdminResult> {
+  const parsed = inPersonInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: "generic" };
-
   try {
-    await revokePilotStep(parsed.data.userId, parsed.data.step);
-    revalidatePath("/", "layout");
-    return { ok: true };
+    await revokeInPersonTraining(parsed.data.userId, parsed.data.chapterId);
+    return trainingDone();
   } catch (error) {
-    return failed(error);
+    return trainingFailed(error);
+  }
+}
+
+export async function grantExemptionAction(
+  input: z.input<typeof exemptionInput>,
+): Promise<TrainingAdminResult> {
+  const parsed = exemptionInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "generic" };
+  try {
+    await grantTrainingExemption(parsed.data);
+    return trainingDone();
+  } catch (error) {
+    return trainingFailed(error);
+  }
+}
+
+export async function revokeExemptionAction(
+  input: z.input<typeof exemptionInput>,
+): Promise<TrainingAdminResult> {
+  const parsed = exemptionInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "generic" };
+  try {
+    await revokeTrainingExemption(parsed.data);
+    return trainingDone();
+  } catch (error) {
+    return trainingFailed(error);
   }
 }

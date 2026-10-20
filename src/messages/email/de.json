@@ -4,6 +4,7 @@
     "footer": "Du erhältst diese E-Mail, weil du dich als Pilot für eine Cycling-Without-Age-Ortsgruppe beworben hast.",
     "heading": "Willkommen an Bord",
     "intro": "{chapter} hat dich als Pilot freigegeben. Als Nächstes: die Trainingsvideos, ein Workshop mit einer der Captains — und dann deine erste Ausfahrt.",
+    "introInPerson": "{chapter} hat dich als Pilot freigegeben. Als Nächstes: ein Workshop mit einer der Captains — und dann deine erste Ausfahrt.",
     "noteHeading": "Von deiner Ortsgruppe",
     "preview": "Deine Ortsgruppe sagt ja",
     "subject": "Du bist Pilot bei {chapter}"
@@ -340,6 +341,7 @@
     "noteHeading": "Ein paar Zeilen von {chapter}",
     "preview": "Deine Pilotanfrage liegt beim Chapter",
     "subject": "Willkommen an Bord — drei Schritte bis zur ersten Ausfahrt",
+    "subjectInPerson": "Willkommen an Bord — zwei Schritte bis zur ersten Ausfahrt",
     "title": "Willkommen bei {chapter}"
   },
   "careRequested": {

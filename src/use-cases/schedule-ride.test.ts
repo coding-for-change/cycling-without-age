@@ -2,7 +2,9 @@ import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
+import { personProfiles } from "@/features/person-profiles";
 import { rideLocations } from "@/features/ride-locations";
+import { training, type FamilyStatusName } from "@/features/training";
 import {
   rides,
   scheduleRideForm,
@@ -16,7 +18,21 @@ import {
 } from "@/use-cases/schedule-ride";
 
 jest.mock("@/features/chapters", () => ({
-  chapters: { getChapter: jest.fn(), getSettings: jest.fn() },
+  chapters: {
+    getChapter: jest.fn(),
+    getChapterCountryId: jest.fn(async () => "country-de"),
+    getSettings: jest.fn(),
+  },
+}));
+jest.mock("@/features/training", () => ({
+  ...jest.requireActual("@/features/training/requirements"),
+  training: { readinessFacts: jest.fn() },
+}));
+jest.mock("@/features/person-profiles", () => ({
+  personProfiles: { inPersonTrainingOf: jest.fn() },
+}));
+jest.mock("@/use-cases/training-access", () => ({
+  trainingContext: jest.fn(),
 }));
 jest.mock("@/features/fleet", () => ({
   fleet: {
@@ -51,6 +67,40 @@ const RIDE = {
   id: "ride-1",
   chapterId: CHAPTER,
   trishawIds: ["grounded-since"],
+};
+
+const trained = (
+  pilots: Record<string, { course: FamilyStatusName; inPerson: boolean }>,
+) => {
+  (training.readinessFacts as jest.Mock).mockResolvedValue({
+    families: new Map(),
+    requirements: new Map([[CHAPTER, [{ familyId: "basics" }]]]),
+    statuses: new Map([
+      [
+        CHAPTER,
+        new Map(
+          Object.entries(pilots).map(([userId, { course }]) => [
+            userId,
+            [{ familyId: "basics", title: "Basics", status: course }],
+          ]),
+        ),
+      ],
+    ]),
+    exemptions: new Map(),
+  });
+  (personProfiles.inPersonTrainingOf as jest.Mock).mockResolvedValue(
+    new Map(
+      Object.entries(pilots)
+        .filter(([, pilot]) => pilot.inPerson)
+        .map(([userId]) => [
+          userId,
+          {
+            confirmedAt: new Date(),
+            confirmedByUserId: ADMIN,
+          },
+        ]),
+    ),
+  );
 };
 
 const scheduleAt = (form: ScheduleRideForm) =>
@@ -221,6 +271,43 @@ describe("people at scheduling", () => {
   beforeEach(() => {
     getPassengers.mockResolvedValue([{ id: "p-1", chapterId: CHAPTER }]);
     getMembersRoles.mockResolvedValue(new Map([["pilot-1", ["pilot"]]]));
+    trained({ "pilot-1": { course: "passed", inPerson: true } });
+  });
+
+  it("refuses a pilot who hasn't finished a required course", async () => {
+    trained({ "pilot-1": { course: "notStarted", inPerson: true } });
+    expect(await codeOf(scheduleAt(form))).toBe("pilotNotReady");
+    expect(scheduleRide).not.toHaveBeenCalled();
+  });
+
+  it("schedules an exempt pilot", async () => {
+    trained({ "pilot-1": { course: "exempt", inPerson: true } });
+    expect(await codeOf(scheduleAt(form))).toBeNull();
+    expect(scheduleRide).toHaveBeenCalled();
+  });
+
+  it("refuses a pilot whose in-person training isn't confirmed", async () => {
+    trained({ "pilot-1": { course: "passed", inPerson: false } });
+    expect(await codeOf(scheduleAt(form))).toBe("pilotNotReady");
+    expect(scheduleRide).not.toHaveBeenCalled();
+  });
+
+  it("schedules a not-ready pilot when training isn't required", async () => {
+    process.env.TRAINING_REQUIRED = "false";
+    try {
+      trained({ "pilot-1": { course: "notStarted", inPerson: false } });
+      expect(await codeOf(scheduleAt(form))).toBeNull();
+      expect(scheduleRide).toHaveBeenCalled();
+      expect(training.readinessFacts).not.toHaveBeenCalled();
+    } finally {
+      process.env.TRAINING_REQUIRED = "true";
+    }
+  });
+
+  it("checks readiness only after the role check", async () => {
+    getMembersRoles.mockResolvedValue(new Map([["pilot-1", ["passenger"]]]));
+    expect(await codeOf(scheduleAt(form))).toBe("notPilot");
+    expect(training.readinessFacts).not.toHaveBeenCalled();
   });
 
   it("passes riders and pilots of the ride's chapter on", async () => {

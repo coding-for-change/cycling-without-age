@@ -193,6 +193,12 @@ describe("create group", () => {
   it("stays out of the navigate group, so NAV parity is untouched", () => {
     expect(hrefs(run(superadmin))).not.toContain("/admin/chapters?new=1");
   });
+
+  it("offers a new training course and no retired training pages", () => {
+    expect(ids(superadmin)).toContain("new-course");
+    expect(ids(superadmin)).not.toContain("upload-training-video");
+    expect(ids(superadmin)).not.toContain("add-training-requirement");
+  });
 });
 
 describe("scope group", () => {

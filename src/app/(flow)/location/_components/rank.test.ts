@@ -1,4 +1,4 @@
-import { rankChapters } from "./rank";
+import { rankChapters, shortlist } from "./rank";
 
 const chapter = (
   id: string,
@@ -70,5 +70,35 @@ describe("rankChapters", () => {
       locale: "de",
     });
     expect(ids(rows)).toEqual(["m"]);
+  });
+});
+
+describe("shortlist", () => {
+  const rows = Array.from({ length: 9 }, (_, i) => ({ id: `c${i}` }));
+
+  it("shows the first six and counts the rest", () => {
+    const { shown, hidden } = shortlist({ rows, query: "", selected: [] });
+    expect(shown.map((row) => row.id)).toEqual([
+      "c0",
+      "c1",
+      "c2",
+      "c3",
+      "c4",
+      "c5",
+    ]);
+    expect(hidden).toBe(3);
+  });
+
+  it("keeps a selected chapter visible beyond the shortlist", () => {
+    const { shown, hidden } = shortlist({ rows, query: "", selected: ["c8"] });
+    expect(shown.map((row) => row.id)).toContain("c8");
+    expect(hidden).toBe(2);
+  });
+
+  it("shows every match while searching", () => {
+    expect(shortlist({ rows, query: "mü", selected: [] })).toEqual({
+      shown: rows,
+      hidden: 0,
+    });
   });
 });

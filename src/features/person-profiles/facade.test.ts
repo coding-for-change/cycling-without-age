@@ -4,11 +4,12 @@ import * as services from "./services/profiles";
 import {
   EMPTY_PROFILE,
   ageOn,
+  confirmPilotStep,
+  getPilotSteps,
   getProfile,
   revokePilotStep,
   setAccessibility,
   setPhoto,
-  setPilotStep,
   toPublicProfile,
   transferPassengerProfileToUser,
   updateProfile,
@@ -34,7 +35,6 @@ jest.mock("./services/profiles", () => ({
   findPilotSteps: jest.fn(),
   upsertPilotStep: jest.fn(),
   deletePilotStep: jest.fn(),
-  clearPilotStepConfirmation: jest.fn(),
 }));
 
 const db = services as unknown as Record<keyof typeof services, jest.Mock>;
@@ -215,30 +215,33 @@ describe("transferPassengerProfileToUser", () => {
 describe("pilot steps", () => {
   const PILOT = "pilot-jens";
 
-  it("lets the pilot untick a step the chapter has not confirmed", async () => {
+  it("reads a step as done only once the chapter confirmed it", async () => {
     db.findPilotSteps.mockResolvedValue([
-      { step: "workshop", tickedAt: new Date(), confirmedAt: null },
+      { step: "inPersonTraining", tickedAt: new Date(), confirmedAt: null },
     ]);
-    await setPilotStep(PILOT, "workshop", false);
-    expect(db.deletePilotStep).toHaveBeenCalledWith(PILOT, "workshop");
+    await expect(getPilotSteps(PILOT)).resolves.toEqual({
+      inPersonTraining: { confirmed: false },
+    });
+    db.findPilotSteps.mockResolvedValue([
+      {
+        step: "inPersonTraining",
+        tickedAt: new Date(),
+        confirmedAt: new Date(),
+      },
+    ]);
+    await expect(getPilotSteps(PILOT)).resolves.toEqual({
+      inPersonTraining: { confirmed: true },
+    });
   });
 
-  it("keeps a confirmed step when the pilot unticks it", async () => {
-    db.findPilotSteps.mockResolvedValue([
-      { step: "workshop", tickedAt: new Date(), confirmedAt: new Date() },
-    ]);
-    await expect(setPilotStep(PILOT, "workshop", false)).rejects.toEqual(
-      new DomainError("pilotStepConfirmed"),
-    );
-    expect(db.deletePilotStep).not.toHaveBeenCalled();
-  });
-
-  it("revokes only the confirmation and keeps the pilot's tick", async () => {
-    await revokePilotStep(PILOT, "trainingVideos");
-    expect(db.clearPilotStepConfirmation).toHaveBeenCalledWith(
+  it("confirms with the admin and revokes by removing the step", async () => {
+    await confirmPilotStep(PILOT, "inPersonTraining", "admin-1");
+    expect(db.upsertPilotStep).toHaveBeenCalledWith(
       PILOT,
-      "trainingVideos",
+      "inPersonTraining",
+      "admin-1",
     );
-    expect(db.deletePilotStep).not.toHaveBeenCalled();
+    await revokePilotStep(PILOT, "inPersonTraining");
+    expect(db.deletePilotStep).toHaveBeenCalledWith(PILOT, "inPersonTraining");
   });
 });

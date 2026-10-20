@@ -307,7 +307,8 @@
       "toggleSidebar": "Toggle the sidebar",
       "viewAsAdmin": "View as admin",
       "viewAsPassenger": "View as passenger",
-      "viewAsPilot": "View as pilot"
+      "viewAsPilot": "View as pilot",
+      "newCourse": "Create a training course"
     },
     "countries": {
       "admins": "Country admins",
@@ -367,7 +368,11 @@
       "riders": "{count, plural, one {1 rider booking} other {# rider bookings}}",
       "rides": "{count, plural, one {1 ride, past ones included} other {# rides, past ones included}}",
       "roles": "{count, plural, one {1 chapter membership} other {# chapter memberships}}",
-      "trishaws": "{count, plural, one {1 trishaw} other {# trishaws}}"
+      "trishaws": "{count, plural, one {1 trishaw} other {# trishaws}}",
+      "lessons": "{count, plural, one {1 lesson} other {# lessons}}",
+      "questions": "{count, plural, one {1 quiz question} other {# quiz questions}}",
+      "enrollments": "{count, plural, one {the progress of 1 pilot} other {the progress of # pilots}}",
+      "completions": "{count, plural, one {1 passed course record} other {# passed course records}}"
     },
     "history": {
       "accountClaimed": "This person took the account over",
@@ -438,7 +443,11 @@
         "rideRosterRefilled": "Rider back"
       },
       "you": "You",
-      "riderHandedOver": "{direction, select, in {{self, select, yes {You} other {{actor}}} handed {riderGone, select, yes {a former rider} other {{rider}}} over to this account from {previousGone, select, yes {a former member} other {{previous}}}} other {{self, select, yes {You} other {{actor}}} handed {riderGone, select, yes {a former rider} other {{rider}}} over to {nextGone, select, yes {a former member} other {{next}}}}}"
+      "riderHandedOver": "{direction, select, in {{self, select, yes {You} other {{actor}}} handed {riderGone, select, yes {a former rider} other {{rider}}} over to this account from {previousGone, select, yes {a former member} other {{previous}}}} other {{self, select, yes {You} other {{actor}}} handed {riderGone, select, yes {a former rider} other {{rider}}} over to {nextGone, select, yes {a former member} other {{next}}}}}",
+      "trainingPassed": "{actor} passed the course {name}",
+      "trainingExemptionGranted": "{actor} exempted this person from {scope, select, all {all training courses} other {the course {name}}}",
+      "trainingExemptionRevoked": "{actor} took back the exemption from {scope, select, all {all training courses} other {the course {name}}}",
+      "inPersonTrainingConfirmed": "{actor} confirmed the in-person training"
     },
     "members": {
       "actions": "Actions for {name}",
@@ -484,7 +493,9 @@
         "sending": "Sending…",
         "sent": "Invitation sent to {name}.",
         "submit": "Send the invitation",
-        "title": "Invite someone"
+        "title": "Invite someone",
+        "skipTraining": "Skip training (experienced pilot)",
+        "skipTrainingHint": "They can ride right away: every course counts as done and this invite confirms their in-person training."
       },
       "promote": "Make chapter admin",
       "promoteBody": "They can approve pilots, book rides and see everyone's details.",
@@ -494,7 +505,47 @@
       "removeBody": "Access to the chapter goes. The rides already ridden stay on the record.",
       "removed": "{name} has left the chapter.",
       "removeTitle": "Remove {name} from the chapter?",
-      "title": "Everyone in the chapter"
+      "title": "Everyone in the chapter",
+      "training": {
+        "title": "Training",
+        "description": "The courses this pilot has to pass and the in-person training an admin confirms.",
+        "descriptionInPerson": "The in-person training an admin confirms before this pilot rides.",
+        "ready": "Ready to ride",
+        "notReady": "Not ready",
+        "inPerson": "In-person training",
+        "inPersonBy": "Confirmed by {name} · {date}",
+        "inPersonSystem": "System (migration) · {date}",
+        "inPersonWaiting": "Waiting for an admin to confirm it",
+        "confirm": "Confirm",
+        "revoke": "Revoke",
+        "confirmed": "In-person training confirmed.",
+        "revoked": "In-person training revoked.",
+        "experienced": "Experienced pilot — skip training",
+        "experiencedHint": "Every course counts as done. The in-person training still needs confirming.",
+        "experiencedOn": "Exempt from every course.",
+        "experiencedOff": "Training exemption revoked.",
+        "exempt": "Exempt",
+        "revokeExemption": "Revoke exemption",
+        "exempted": "{course}: exempt.",
+        "exemptionRevoked": "{course}: exemption revoked.",
+        "grantedBy": "{reason} · granted by {name} · {date}",
+        "grantedBySystem": "{reason} · System (migration) · {date}",
+        "reasons": {
+          "experienced": "Experienced pilot",
+          "manual": "Exempt",
+          "migration": "Rode before training existed"
+        },
+        "coveredByBlanket": "Covered by the experienced-pilot exemption",
+        "currentLesson": "Now at {lesson}",
+        "attempts": "{count, plural, =0 {No quiz attempt yet} one {1 quiz attempt} other {# quiz attempts}}",
+        "passedOn": "Passed {date}",
+        "startedOn": "Started {date}",
+        "noCourses": "No course is required yet. The in-person training is all they need.",
+        "inPersonConfirmed": "Confirmed",
+        "inPersonOpen": "Not confirmed",
+        "details": "Details for {name}",
+        "formerAdmin": "a former admin"
+      }
     },
     "nav": {
       "bikes": "Trishaws",
@@ -509,7 +560,8 @@
       "reports": "Reports",
       "rides": "Rides",
       "settings": "Settings",
-      "rideLocations": "Ride locations"
+      "rideLocations": "Ride locations",
+      "training": "Training"
     },
     "navGroups": {
       "footer": "Account",
@@ -563,6 +615,10 @@
       "settings": {
         "body": "How far your chapter will ride, who to reach, and the details on the chapter's own page.",
         "title": "Settings"
+      },
+      "training": {
+        "title": "Training",
+        "body": "Courses and videos that get new pilots ready to ride."
       }
     },
     "passengers": {
@@ -691,16 +747,25 @@
       "noPhone": "No phone number",
       "noRoles": "No role yet",
       "roles": "Roles",
-      "readiness": {
-        "title": "Pilot readiness",
-        "confirm": "Confirm",
-        "confirmed": "Confirmed",
-        "ticked": "Ticked by the pilot",
-        "open": "Not yet",
-        "done": "Confirmed.",
-        "rode": "Done",
-        "revoke": "Revoke",
-        "revoked": "Confirmation revoked."
+      "overview": {
+        "label": "Overview",
+        "training": "Training",
+        "ready": "Ready",
+        "notReady": "Not ready",
+        "readyIn": "Ready in {ready} of {total}",
+        "percentDone": "{percent} of the training done",
+        "rides": "Rides",
+        "upcoming": "{count, plural, =0 {None planned} one {# upcoming} other {# upcoming}}",
+        "lastRide": "Last ride",
+        "noRide": "No ride yet",
+        "attention": "Needs attention",
+        "allGood": "All good",
+        "more": "{count, plural, one {+# more} other {+# more}}",
+        "items": {
+          "inPerson": "In-person training not confirmed",
+          "notStarted": "{course} not started",
+          "inProgress": "{course} not finished"
+        }
       },
       "profile": "Profile",
       "caretaker": {
@@ -1341,6 +1406,421 @@
       "errors": {
         "requestNotPending": "Someone already decided on this request. Reload to see what happened.",
         "unknownRequest": "This request no longer exists."
+      }
+    },
+    "training": {
+      "status": {
+        "uploading": "Uploading",
+        "queued": "Queued",
+        "processing": "Processing",
+        "ready": "Ready",
+        "failed": "Failed"
+      },
+      "failure": {
+        "unsupportedFormat": "This file isn't a video format we can play. Try an MP4, MOV or WebM.",
+        "noVideoStream": "The file has no picture, only sound or metadata.",
+        "tooLong": "The video is longer than the limit allows.",
+        "tooLarge": "The video's resolution, frame rate or size is above the limit (4K, 60 fps).",
+        "sourceMissing": "The uploaded file went missing. Upload it again.",
+        "transcodeFailed": "Something went wrong while preparing the video. Try again.",
+        "timeout": "Preparing the video took too long. Try again."
+      },
+      "errors": {
+        "unknownTrainingVideo": "This video no longer exists.",
+        "uploadRejected": "The upload was rejected. Check the file type and size.",
+        "videoNotFailed": "Only a failed video can be retried.",
+        "videoNotReady": "The video isn't ready yet.",
+        "videoNotUploading": "This upload has already finished or was cancelled.",
+        "rateLimited": "Too many uploads at once. Wait a few minutes and try again.",
+        "generic": "Something went wrong. Try again.",
+        "courseEmpty": "Add at least one lesson before publishing.",
+        "courseLanguageTaken": "This course already exists in that language.",
+        "invalidFile": "That file can't be used here. Upload it again.",
+        "quizInvalid": "Some quiz questions aren't finished yet. Fix them before publishing.",
+        "unknownTrainingCourse": "This course no longer exists.",
+        "unknownTrainingLesson": "This lesson no longer exists.",
+        "unknownTrainingQuestion": "This question no longer exists.",
+        "videoInUse": "Lessons still use this video. Pick another video for them first.",
+        "videoNotAllowed": "This video isn't available for this lesson.",
+        "familyNotAllowed": "This course can't be required or exempted here.",
+        "unknownTrainingRequirement": "This requirement no longer exists.",
+        "notMember": "This person isn't a pilot or applicant in this chapter.",
+        "unknownChapter": "This chapter no longer exists.",
+        "elementKindMismatch": "That doesn't fit this kind of element.",
+        "courseFull": "This course can't hold more elements.",
+        "quizFull": "This quiz can't hold more questions.",
+        "scopeAmbiguous": "Pick a chapter or country at the top first."
+      },
+      "upload": {
+        "invalid": {
+          "type": "This isn't a video type we accept.",
+          "size": "Larger than {size}.",
+          "duration": "Longer than {duration}.",
+          "empty": "This file is empty."
+        },
+        "new": "Upload new",
+        "select": "Select existing",
+        "hint": "MP4, MOV or WebM · up to {size}",
+        "dropFiles": "Drag and drop videos",
+        "dropRelease": "Release to upload"
+      },
+      "tray": {
+        "label": "Uploads",
+        "active": "{count, plural, one {Uploading # video} other {Uploading # videos}}",
+        "processing": "{count, plural, one {Preparing # video} other {Preparing # videos}}",
+        "idle": "{count, plural, one {# upload} other {# uploads}}",
+        "collapse": "Collapse uploads",
+        "expand": "Expand uploads",
+        "progress": "{percent} · {loaded} of {total}",
+        "remaining": "{time} left",
+        "calculating": "Estimating time…",
+        "starting": "Starting…",
+        "paused": "Paused · {percent}",
+        "finishing": "Finishing upload…",
+        "queued": "Waiting to be prepared…",
+        "transcoding": "Preparing video · {percent}",
+        "ready": "Ready to use",
+        "cancelled": "Cancelled",
+        "pause": "Pause",
+        "resume": "Resume",
+        "cancel": "Cancel upload",
+        "retry": "Retry",
+        "dismiss": "Dismiss",
+        "interrupted": "Upload interrupted",
+        "resumePick": "Choose the same file to resume",
+        "wrongFile": "That's a different file. Choose “{name}” again.",
+        "leaveWarning": "Videos are still uploading. Leave anyway?",
+        "errors": {
+          "network": "The connection dropped. Check your network and retry.",
+          "invalid": "This file can't be uploaded."
+        }
+      },
+      "courses": {
+        "emptyTitle": "No courses yet",
+        "empty": "A course is a few short lessons, each with a video and a little text, and a quiz at the end. Create the first one and new pilots can start the moment it's published."
+      },
+      "library": {
+        "archived": "Archived",
+        "owners": {
+          "global": "Global — every chapter everywhere",
+          "country": "{name} — every chapter in the country",
+          "chapter": "{name} — this chapter only"
+        },
+        "pick": {
+          "title": "Select video",
+          "search": "Search videos",
+          "allLanguages": "All languages",
+          "languageFilter": "Language",
+          "none": "No video matches your search.",
+          "empty": "No videos yet. Upload the first one and it shows up here right away.",
+          "cancel": "Cancel",
+          "done": "Done",
+          "selected": "Selected",
+          "uploading": "Uploading · {percent}",
+          "preparing": "Preparing · {percent}",
+          "queued": "Waiting …",
+          "failed": "Failed",
+          "notReady": "Can be picked once it's ready"
+        }
+      },
+      "detail": {
+        "back": "Library",
+        "title": "Title",
+        "description": "About this video",
+        "descriptionPlaceholder": "Nothing written yet. Add what pilots learn here …",
+        "preview": "Preview",
+        "properties": "Properties",
+        "status": "Status",
+        "language": "Language",
+        "owner": "Library",
+        "duration": "Length",
+        "resolution": "Resolution",
+        "renditions": "Qualities",
+        "uploaded": "Added",
+        "size": "Original file",
+        "processingTitle": "Preparing the video",
+        "processingBody": "We're turning the upload into versions for every screen. You can leave this page, it keeps going.",
+        "queuedBody": "Waiting for its turn. This usually takes only a moment.",
+        "uploadingBody": "The file is still being uploaded.",
+        "failedTitle": "The video couldn't be prepared",
+        "retry": "Try again",
+        "retryDone": "Trying again. This takes a few minutes.",
+        "posterFromFrame": "Use current frame as poster",
+        "posterDone": "The poster will update in a moment.",
+        "posterHint": "Pause where the picture says the most, then use that frame.",
+        "readOnly": "This video belongs to the {owner} library. Only its admins can change it.",
+        "archive": "Archive",
+        "restore": "Restore",
+        "archiveHint": "An archived video stays in the courses that use it but can't be picked for new lessons.",
+        "archivedDone": "{name} is archived.",
+        "restoredDone": "{name} is back in the library.",
+        "archivedBadge": "Archived",
+        "cancel": "Cancel",
+        "delete": {
+          "open": "Delete video",
+          "title": "Delete {name}?",
+          "body": "The video and every prepared version of it are removed for good.",
+          "label": "Type {word} to confirm",
+          "word": "DELETE",
+          "submit": "Delete video",
+          "done": "{name} is deleted."
+        }
+      },
+      "create": {
+        "open": "New course",
+        "title": "New course",
+        "body": "Start with a title and a language. Lessons and the quiz come next, on the course page.",
+        "kindLabel": "What are you creating?",
+        "kinds": {
+          "family": "A new course",
+          "translation": "A translation"
+        },
+        "family": "Translation of",
+        "familyHint": "Pilots get the course in their own language. Passing any language counts.",
+        "language": "Language",
+        "languageTaken": "{language} (already exists)",
+        "courseTitle": "Title",
+        "titlePlaceholder": "e.g. Basic pilot training",
+        "owner": "Library",
+        "ownerHint": "Who can use this course. The owner decides its lessons and quiz.",
+        "submit": "Create course",
+        "created": "“{name}” is ready for its first lesson.",
+        "titleRequired": "Give the course a title.",
+        "familyRequired": "Pick the course to translate.",
+        "noFreeLanguage": "This course already exists in every language."
+      },
+      "course": {
+        "back": "Courses",
+        "title": "Title",
+        "summary": "Summary",
+        "summaryPlaceholder": "Two sentences on what pilots learn here …",
+        "lessonCount": "{count, plural, =0 {No lessons yet} one {1 lesson} other {# lessons}}",
+        "newLesson": "New lesson",
+        "noVideo": "Reading",
+        "orderSaved": "Order saved.",
+        "properties": "Properties",
+        "language": "Language",
+        "languages": "Languages",
+        "owner": "Library",
+        "published": "Published",
+        "publishedHint": "Pilots see the course once it's published. Changes after that are live straight away.",
+        "questionCount": "{count, plural, =0 {No questions yet} one {1 question} other {# questions}}",
+        "danger": "Danger zone",
+        "dangerHint": "Deleting removes this language for good. Other languages of the course stay.",
+        "cancel": "Cancel",
+        "delete": {
+          "open": "Delete course",
+          "title": "Delete {name}?",
+          "body": "The course in this language, its lessons and its quiz are removed for good. Videos stay in the library.",
+          "label": "Type {word} to confirm",
+          "word": "DELETE",
+          "submit": "Delete course",
+          "done": "{name} is deleted."
+        },
+        "elements": "Lessons and quizzes",
+        "elementsHint": "Pilots go through them in this order. A quiz is a checkpoint: what comes after it opens once it is passed.",
+        "addElement": "Add element",
+        "addElementHere": "Add element here",
+        "kinds": {
+          "lesson": "Lesson",
+          "quiz": "Quiz"
+        },
+        "newQuiz": "New quiz",
+        "dragElement": "Move {name}",
+        "noElements": "Nothing here yet. Start with a lesson, then add a quiz as a checkpoint.",
+        "addLanguage": "Add a language",
+        "managedBy": "Managed by {owner}. Only its admins can change it.",
+        "managedByRequire": "Managed by {owner}. Only its admins can change it, but you can make it mandatory for {scope} in the course list.",
+        "consequenceQuizzes": "{count, plural, one {1 quiz} other {# quizzes}}",
+        "progress": {
+          "title": "Progress",
+          "description": "{count, plural, =0 {No pilot in {scope} has started yet.} one {1 pilot in {scope}} other {# pilots in {scope}}}",
+          "privacy": "Pick a chapter to see individual pilots. Across chapters you see totals only.",
+          "empty": "No pilots here yet.",
+          "statuses": {
+            "passed": "Passed",
+            "exempt": "Exempt",
+            "inProgress": "In progress",
+            "notStarted": "Not started"
+          },
+          "columns": {
+            "pilot": "Pilot",
+            "status": "Status",
+            "progress": "Progress",
+            "current": "Now at",
+            "attempts": "Quiz attempts",
+            "lastActivity": "Last activity"
+          },
+          "unnamed": "Unnamed pilot"
+        }
+      },
+      "lesson": {
+        "title": "Title",
+        "body": "Lesson text",
+        "bodyPlaceholder": "What should pilots take away? A few lines are enough …",
+        "video": "Video",
+        "videoNone": "No video yet. Pick one from the library, or keep this as a reading lesson.",
+        "videoRemove": "Remove video",
+        "videoSet": "Video set.",
+        "attachment": "Handout",
+        "attachmentLabels": {
+          "add": "Add a PDF",
+          "hint": "Drop a PDF here, up to 20 MB",
+          "name": "Handout (PDF)",
+          "remove": "Remove handout",
+          "open": "Open in a new tab",
+          "uploading": "Uploading …",
+          "failed": "That PDF couldn't be uploaded."
+        },
+        "readOnly": "This lesson belongs to {owner}. Only its admins can change it.",
+        "cancel": "Cancel",
+        "delete": {
+          "open": "Delete lesson",
+          "title": "Delete {name}?",
+          "body": "The lesson and everyone's progress on it are removed. The video stays in the library.",
+          "label": "Type {word} to confirm",
+          "word": "DELETE",
+          "submit": "Delete lesson",
+          "done": "{name} is deleted."
+        },
+        "titlePlaceholder": "Braking on a slope",
+        "videoUploading": "Uploading · {percent}",
+        "videoPreparing": "Preparing · {percent}",
+        "videoPending": "It's added to the lesson as soon as it's ready.",
+        "videoReplace": "Replace",
+        "videoRemoved": "Video removed.",
+        "videoArchived": "Archived in the library"
+      },
+      "quiz": {
+        "body": "Every answer has to be right to pass. Pilots can try again as often as they like.",
+        "preview": "Preview as pilot",
+        "add": "Add question",
+        "emptyTitle": "No questions yet",
+        "empty": "Ask what really matters on the road: braking, the passenger's blanket, what to do when it rains.",
+        "number": "Question {number}",
+        "kindLabel": "Answer type",
+        "kinds": {
+          "single": "One answer",
+          "multiple": "Several answers"
+        },
+        "prompt": "Question",
+        "promptPlaceholder": "What do you check before every ride?",
+        "options": "Answers",
+        "optionPlaceholder": "Answer {number}",
+        "addOption": "Add answer",
+        "removeOption": "Remove answer {number}",
+        "markCorrect": "Mark answer {number} as correct",
+        "correct": "Correct",
+        "explanation": "Explanation",
+        "explanationPlaceholder": "Shown after the attempt: why is this the right answer?",
+        "delete": "Delete question",
+        "deleted": "Question deleted.",
+        "drag": "Move question {number}",
+        "readOnly": "Only the admins of {owner} can change this quiz.",
+        "issues": {
+          "promptMissing": "Write the question.",
+          "tooFewOptions": "Add at least two answers.",
+          "optionTextMissing": "Every answer needs a text.",
+          "noCorrect": "Mark the correct answer.",
+          "singleNeedsOneCorrect": "With one answer, mark exactly one as correct."
+        },
+        "settings": "Settings",
+        "shuffle": "Shuffle",
+        "shuffleHint": "Questions and answers come in a new order every attempt.",
+        "draw": "Per attempt",
+        "drawAll": "All questions",
+        "drawCount": "{count, plural, one {1 question} other {# questions}}",
+        "questions": "Questions",
+        "untitled": "Untitled question",
+        "needsWork": "Needs attention"
+      },
+      "picker": {
+        "trainingIncomplete": "Training incomplete",
+        "inPersonMissing": "In-person training missing"
+      },
+      "progress": {
+        "statuses": {
+          "passed": "Passed",
+          "exempt": "Exempt",
+          "inProgress": "In progress",
+          "notStarted": "Not started"
+        }
+      },
+      "list": {
+        "columns": {
+          "course": "Course",
+          "languages": "Languages",
+          "owner": "Owner",
+          "status": "Status",
+          "required": "Required in",
+          "elements": "Content"
+        },
+        "scopes": {
+          "global": "Global",
+          "country": "Country",
+          "chapter": "Chapter"
+        },
+        "published": "Published",
+        "draft": "Draft",
+        "partly": "{published} of {total} published",
+        "statuses": {
+          "published": "Published",
+          "draft": "Draft"
+        },
+        "requiredTag": "Required",
+        "requiredFilter": {
+          "required": "Required",
+          "optional": "Optional"
+        },
+        "inherited": "{name} (inherited)",
+        "everywhere": "Everywhere",
+        "lessonCount": "{count, plural, =0 {No lessons} one {1 lesson} other {# lessons}}",
+        "quizCount": "{count, plural, =0 {no quiz} one {1 quiz} other {# quizzes}}",
+        "everyone": "all chapters",
+        "menu": {
+          "label": "Actions for {name}",
+          "open": "Open course",
+          "publish": "Publish",
+          "unpublish": "Unpublish",
+          "publishLanguage": "Publish {language}",
+          "unpublishLanguage": "Unpublish {language}",
+          "require": "Make mandatory for {scope}",
+          "unrequire": "Not mandatory for {scope}",
+          "inheritedFrom": "Mandatory through {name}"
+        },
+        "confirm": {
+          "title": "Make {name} mandatory?",
+          "body": "Pilots in {scope} need to pass it before they ride.",
+          "impact": "{count, plural, one {Makes 1 pilot not ready to ride} other {Makes # pilots not ready to ride}}",
+          "impactHint": "They can ride again once they pass it, or once you exempt them on their member page.",
+          "submit": "Make mandatory",
+          "cancel": "Cancel"
+        },
+        "done": {
+          "published": "{name} is published.",
+          "unpublished": "{name} is a draft again.",
+          "required": "{name} is now mandatory for {scope}.",
+          "notRequired": "{name} is no longer mandatory for {scope}."
+        }
+      },
+      "element": {
+        "kinds": {
+          "lesson": "Lesson",
+          "quiz": "Quiz"
+        },
+        "close": "Close",
+        "trail": "Course and element",
+        "shortcut": "Done",
+        "missing": "This element doesn't exist anymore.",
+        "deleteQuiz": {
+          "open": "Delete quiz",
+          "title": "Delete {name}?",
+          "body": "The quiz, its questions and everyone's attempts are removed for good.",
+          "label": "Type {word} to confirm",
+          "word": "DELETE",
+          "submit": "Delete quiz",
+          "done": "{name} is deleted."
+        }
       }
     }
   },
@@ -2144,6 +2624,7 @@
     "mapUnavailable": "The map isn't available right now. The list still works.",
     "next": "Next",
     "noResults": "No chapter matches that.",
+    "moreHint": "{count, plural, one {# more chapter} other {# more chapters}}: search by name or city to find them.",
     "pending": "Just a moment…",
     "permissionDenied": "Without your location we can't sort by distance — here is every chapter instead.",
     "request": "Request to join",
@@ -2585,11 +3066,21 @@
     "home": {
       "celebration": {
         "body": "{chapter} says welcome. Watch the training videos, then meet a captain for your first ride.",
+        "bodyInPerson": "{chapter} says welcome. Meet a captain for your first ride.",
         "dismiss": "Got it",
         "title": "You're in."
       },
       "title": "Ready when you are",
-      "yourChapters": "Your chapters"
+      "yourChapters": "Your chapters",
+      "training": {
+        "title": "Finish your training to ride",
+        "steps": "{done} of {total} steps done",
+        "next": "Next: {title}",
+        "nextInPerson": "Next: your in-person training",
+        "waiting": "Your chapter confirms the in-person training once you've been.",
+        "continue": "Continue",
+        "view": "View training"
+      }
     },
     "rides": {
       "detail": {
@@ -2679,8 +3170,122 @@
       }
     },
     "training": {
-      "body": "The videos are still being filmed. The moment they're ready they show up here — about 20 minutes, then a workshop with one of the captains.",
-      "title": "Training while you wait"
+      "title": "Training",
+      "intro": "A few short videos, then a quiz. Pause whenever you like, we keep your place on every device.",
+      "ring": {
+        "label": "{percent}% of your training done",
+        "done": "Done"
+      },
+      "sections": {
+        "courses": "Courses",
+        "required": "Required",
+        "inPerson": "In person",
+        "optional": "Optional"
+      },
+      "readiness": {
+        "title": "Finish your training to ride",
+        "steps": "{done} of {total} steps done",
+        "readyTitle": "You're ready to ride",
+        "readyBody": "Every course is done and your chapter has confirmed your in-person training. See you on the road.",
+        "applicant": "Your application is still being reviewed, and you can already start your training.",
+        "next": "Up next: {title}",
+        "nextInPerson": "Up next: your in-person training",
+        "chapterReady": "Ready to ride",
+        "chapterNotReady": "Not ready yet"
+      },
+      "inPerson": {
+        "title": "In-person training",
+        "confirmed": "Confirmed by your chapter · {date}",
+        "waiting": "Waiting for confirmation from your chapter",
+        "hint": "Your chapter shows you the trishaw and rides along with you. Once you've been, they confirm it here."
+      },
+      "emptyTitle": "No course here yet",
+      "empty": "Your chapter hasn't published a course yet. The moment it does, it shows up right here.",
+      "card": {
+        "lessons": "{count, plural, one {# lesson} other {# lessons}}",
+        "progress": "{done} of {total} steps",
+        "passed": "Passed",
+        "notStarted": "Not started",
+        "quizReady": "Quiz unlocked",
+        "exempt": "Exempt",
+        "exemptHint": "Not needed for you"
+      },
+      "course": {
+        "back": "Training",
+        "start": "Start course",
+        "resume": "Continue",
+        "takeQuiz": "Take the quiz",
+        "watchAgain": "Watch again",
+        "outline": "Lessons",
+        "quiz": "Final quiz",
+        "quizHint": "{count, plural, one {# question} other {# questions}} · every answer must be right",
+        "quizLocked": "Unlocks once everything before it is done",
+        "passedOn": "Passed on {date}",
+        "done": "Done",
+        "upNext": "Up next",
+        "reading": "Reading",
+        "lessonNumber": "Lesson {index}",
+        "lockedHint": "Pass the quiz before it first"
+      },
+      "lesson": {
+        "back": "Course",
+        "of": "Step {index} of {total}",
+        "next": "Next lesson",
+        "toQuiz": "Go to the quiz",
+        "keepWatching": "Keep watching to continue",
+        "markRead": "I've read this",
+        "outline": "Lessons",
+        "resume": "Continue from {time}",
+        "startOver": "Start over",
+        "completed": "Lesson done",
+        "attachment": "Handout (PDF)",
+        "attachmentHint": "Opens in a new tab",
+        "previous": "Previous lesson",
+        "nextHint": "Press N for the next lesson",
+        "lockedTitle": "Pass the quiz first",
+        "lockedBody": "This part opens once you've passed the quiz before it.",
+        "finish": "Finish course"
+      },
+      "quiz": {
+        "title": "Final quiz",
+        "introTitle": "Ready for the quiz?",
+        "introBody": "{count, plural, one {# question} other {# questions}}. All answers must be right, and you can retry as often as you like.",
+        "start": "Start quiz",
+        "lockedTitle": "Finish the lessons first",
+        "lockedBody": "The quiz opens once everything before it is done.",
+        "toLesson": "Go to the next lesson",
+        "questionOf": "Question {index} of {total}",
+        "pickOne": "Pick one answer",
+        "pickAll": "Select all that apply",
+        "keys": "Tip: press 1–{max} to choose",
+        "next": "Next",
+        "back": "Back",
+        "review": "Review answers",
+        "reviewTitle": "Check your answers",
+        "reviewBody": "Tap a question to change it.",
+        "unanswered": "Not answered yet",
+        "submit": "Submit answers",
+        "checking": "Checking your answers…",
+        "score": "{correct} of {total}",
+        "passTitle": "You passed!",
+        "passBody": "Every answer was right. Next up: the in-person training with your chapter.",
+        "passNext": "Back to training",
+        "failTitle": "Almost there",
+        "failBody": "{correct} of {total} right. Have another look at these:",
+        "yourAnswer": "Your answer",
+        "rightAnswer": "Right answer",
+        "noAnswer": "No answer",
+        "tryAgain": "Try again",
+        "alreadyPassed": "You passed this quiz on {date}. You can take it again anytime.",
+        "error": "We couldn't check your answers. Check your connection and try again.",
+        "preview": "Preview",
+        "previewBody": "This is what pilots see. Nothing you answer here is saved.",
+        "progress": "Quiz progress",
+        "exit": "Leave quiz",
+        "outOf": "of {total}",
+        "checkpointBody": "Every answer was right. On to the next part.",
+        "continue": "Continue"
+      }
     }
   },
   "profile": {
@@ -2890,7 +3495,8 @@
       "unknownPassenger": "That passenger no longer exists.",
       "unknownRide": "This ride no longer exists.",
       "unknownTrishaw": "That trishaw no longer exists.",
-      "uploadRejected": "That file was not accepted. Use a JPEG, PNG or WebP up to 10 MB."
+      "uploadRejected": "That file was not accepted. Use a JPEG, PNG or WebP up to 10 MB.",
+      "pilotNotReady": "This pilot hasn't finished their training yet."
     },
     "history": {
       "cancelled": "{who, select, you {You} other {{actor}}} cancelled the ride",
@@ -3369,8 +3975,7 @@
       "invalid": "That doesn't look right.",
       "rateLimited": "Slow down a little and try again in a minute.",
       "consentRequired": "Agree to sharing health details first.",
-      "uploadRejected": "That photo didn't work. Try a JPG, PNG or WebP under 10 MB.",
-      "pilotStepConfirmed": "Your chapter confirmed this step. Ask them if it needs changing."
+      "uploadRejected": "That photo didn't work. Try a JPG, PNG or WebP under 10 MB."
     }
   },
   "setupChecklist": {
@@ -3378,9 +3983,8 @@
     "progress": "{done} of {total} done",
     "dismiss": "Hide",
     "dismissed": "Hidden. Your profile is always one tap away.",
-    "markDone": "Mark as done",
-    "markUndone": "Mark as not done",
     "confirmed": "Confirmed by the chapter",
+    "waiting": "Waiting for confirmation from your chapter",
     "steps": {
       "photo": "Add a profile photo",
       "bio": "Write a few words about yourself",
@@ -3390,14 +3994,14 @@
       "managedRiders": "{count, plural, one {Fill in {name}'s profile} other {Fill in # riders' profiles}}",
       "passkey": "Set up a passkey",
       "push": "Turn on notifications",
-      "trainingVideos": "Watch the training videos",
-      "workshop": "Join a practical workshop",
+      "training": "Finish your training courses",
+      "inPersonTraining": "Join the in-person training",
       "firstRide": "Ride with a captain for the first time"
     },
     "aboutYou": "About you, so pilots know who's booking.",
     "hints": {
-      "trainingVideos": "About 20 minutes, right in this app.",
-      "workshop": "With one of the captains.",
+      "training": "Short videos and a quiz, right in this app.",
+      "inPersonTraining": "Your chapter confirms it once you've been.",
       "firstRide": "A captain rides along the first time."
     }
   },
@@ -3415,6 +4019,34 @@
       "passengerChapterMismatch": "You already look after people in another chapter, so {rider} can't be added here.",
       "tooManyRiders": "You can look after up to 10 people.",
       "generic": "That didn't work. Try again."
+    }
+  },
+  "training": {
+    "player": {
+      "label": "Video player",
+      "play": "Play",
+      "pause": "Pause",
+      "replay": "Play again",
+      "mute": "Mute",
+      "unmute": "Unmute",
+      "fullscreenEnter": "Full screen",
+      "fullscreenExit": "Exit full screen",
+      "pipEnter": "Picture in picture",
+      "pipExit": "Exit picture in picture",
+      "seekForward": "Forward {seconds} seconds",
+      "seekBackward": "Back {seconds} seconds",
+      "seek": "Seek",
+      "settings": "Settings",
+      "speed": "Speed",
+      "quality": "Quality",
+      "auto": "Auto",
+      "errorTitle": "This video won't play right now",
+      "errorNetwork": "The video couldn't load. Check your connection and try again.",
+      "errorSource": "This video isn't available at the moment.",
+      "errorUnexpected": "Something went wrong while playing the video.",
+      "close": "Close",
+      "watchFirst": "Watch up to here first",
+      "loading": "Loading video"
     }
   }
 }
