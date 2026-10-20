@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,12 @@ const DOCUMENT_DISALLOWED = [
   "th",
 ];
 
+type Variant = {
+  disallowed: string[];
+  className: string;
+  localLinksInPlace?: boolean;
+};
+
 const VARIANT = {
   document: {
     disallowed: DOCUMENT_DISALLOWED,
@@ -21,6 +28,15 @@ const VARIANT = {
       "[&_h1]:text-base [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:font-semibold [&_h4]:font-semibold",
       "[&_blockquote]:border-current/30 [&_blockquote]:pl-3",
       "[&_hr]:border-border",
+    ),
+  },
+  legal: {
+    disallowed: DOCUMENT_DISALLOWED,
+    localLinksInPlace: true,
+    className: cn(
+      "text-base text-ink [&_p]:mt-3 [&_ol]:mt-3 [&_ol]:ml-5 [&_ul]:mt-3 [&_ul]:ml-5 [&_li]:mt-1",
+      "[&_h2]:mt-10 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h3]:mt-6 [&_h3]:font-semibold",
+      "[&_a]:break-words *:first:mt-0",
     ),
   },
   chat: {
@@ -58,9 +74,10 @@ const VARIANT = {
     ],
     className: "",
   },
-};
+} satisfies Record<string, Variant>;
 
 const SAFE_HREF = /^(https?:|mailto:|tel:|\/(?!\/))/i;
+const LOCAL_HREF = /^\/(?![/\\])/;
 
 export function RichText({
   text,
@@ -71,11 +88,13 @@ export function RichText({
   className?: string;
   variant?: keyof typeof VARIANT;
 }) {
+  const config: Variant = VARIANT[variant];
+  const inPlace = config.localLinksInPlace === true;
   return (
     <div
       className={cn(
         "text-pretty *:last:mb-0 [&_ol]:list-decimal [&_ul]:list-disc [&_blockquote]:border-l-2",
-        VARIANT[variant].className,
+        config.className,
         className,
       )}
     >
@@ -83,19 +102,27 @@ export function RichText({
         remarkPlugins={[remarkGfm]}
         skipHtml
         unwrapDisallowed
-        disallowedElements={VARIANT[variant].disallowed}
+        disallowedElements={config.disallowed}
         urlTransform={(url) => (SAFE_HREF.test(url) ? url : "")}
         components={{
-          a: ({ children, href }) => (
-            <a
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer nofollow"
-              className="underline underline-offset-2"
-            >
-              {children}
-            </a>
-          ),
+          a: ({ children, href }) =>
+            inPlace && href && LOCAL_HREF.test(href) ? (
+              <Link
+                href={href}
+                className="underline underline-offset-2"
+              >
+                {children}
+              </Link>
+            ) : (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="underline underline-offset-2"
+              >
+                {children}
+              </a>
+            ),
           code: ({ children }) => (
             <code className="text-2sm rounded bg-current/10 px-1 py-0.5 font-mono">
               {children}

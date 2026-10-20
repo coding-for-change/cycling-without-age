@@ -82,6 +82,9 @@
       "body": "Emails and notifications come in this language too.",
       "title": "Language"
     },
+    "legal": {
+      "title": "Legal"
+    },
     "notifications": {
       "body": "The essentials — a ride confirmed, a chapter answering — always reach you. These are the extras.",
       "chat": {
@@ -2029,7 +2032,7 @@
     "imprint": "Imprint",
     "joining": "You're joining {chapter}.",
     "notifications": "I agree to receive email and push notifications for important messages.",
-    "privacy": "Data processing agreement",
+    "privacy": "Privacy notice",
     "required": "Tick all of them to continue.",
     "safety": "I understand that rides are provided by trained volunteers, and I agree to the safety guidelines of the chapter.",
     "setUpBy": "{name} set this account up for you. Check the details and agree to continue.",
@@ -2588,15 +2591,16 @@
     }
   },
   "legal": {
-    "imprint": {
-      "body": "The chapter's legal details go here.",
-      "title": "Imprint"
+    "documents": {
+      "imprint": "Imprint",
+      "privacy": "Privacy notice",
+      "terms": "Terms of use"
     },
-    "pending": "This page is still being written. Ask your chapter for the details in the meantime.",
-    "privacy": {
-      "body": "What we store, why we store it, and how to have it removed goes here.",
-      "title": "Data processing agreement"
-    }
+    "draft": "This is a draft. The final text is still being reviewed.",
+    "edition": "Version {version} · Last updated {date}",
+    "label": "Legal",
+    "loadFailed": "We couldn't load this page. Check your connection and try again.",
+    "retry": "Try again"
   },
   "location": {
     "distanceAway": "{distance} away",

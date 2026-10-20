@@ -66,6 +66,8 @@ RUN node scripts/docker-runtime-deps.mjs .next/standalone worker.js worker-instr
   && mkdir -p /out/app/.next/cache \
   && mv .next/static /out/app/.next/static \
   && mv public prisma worker.js worker-instrument.js seed.js /out/app/ \
+  && mkdir -p /out/app/src/messages \
+  && mv src/messages/legal /out/app/src/messages/legal \
   && mv src/generated/prisma /out/app/src/generated/prisma \
   && find /out/app/src/generated/prisma -name '*.d.ts' -delete
 

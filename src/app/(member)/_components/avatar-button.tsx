@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { AccountSurface } from "@/components/account/account-surface";
+import { openAccount } from "@/components/account/account-state";
 import type { AccountData } from "@/components/account/types";
 import { PersonAvatar } from "@/components/person-avatar";
 import type { Perspective } from "@/lib/access";
@@ -24,7 +24,6 @@ export function AvatarButton({
   className?: string;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const rotation = nextPerspective(
@@ -44,7 +43,7 @@ export function AvatarButton({
 
   const handleClick = () => {
     if (!rotateTo) {
-      setOpen(true);
+      openAccount();
       return;
     }
 
@@ -58,37 +57,29 @@ export function AvatarButton({
 
     timer.current = setTimeout(() => {
       timer.current = null;
-      setOpen(true);
+      openAccount();
     }, DOUBLE_TAP_MS);
   };
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={handleClick}
-        aria-label={strings.account}
-        title={
-          rotateTo
-            ? `${strings.account} · ${strings.switchHint}`
-            : strings.account
-        }
-        className={cn(
-          "flex size-11 shrink-0 touch-manipulation items-center justify-center rounded-full outline-none transition-colors hover:bg-canvas-deep focus-visible:ring-[3px] focus-visible:ring-ring/50 active:bg-canvas-deeper motion-reduce:transition-none",
-          className,
-        )}
-      >
-        <PersonAvatar
-          svg={data.profile.avatarAnimated}
-          photoUrl={data.profile.photoUrl}
-        />
-      </button>
-      <AccountSurface
-        data={data}
-        activePerspective={activePerspective}
-        open={open}
-        onOpenChange={setOpen}
+    <button
+      type="button"
+      onClick={handleClick}
+      aria-label={strings.account}
+      title={
+        rotateTo
+          ? `${strings.account} · ${strings.switchHint}`
+          : strings.account
+      }
+      className={cn(
+        "flex size-11 shrink-0 touch-manipulation items-center justify-center rounded-full outline-none transition-colors hover:bg-canvas-deep focus-visible:ring-[3px] focus-visible:ring-ring/50 active:bg-canvas-deeper motion-reduce:transition-none",
+        className,
+      )}
+    >
+      <PersonAvatar
+        svg={data.profile.avatarAnimated}
+        photoUrl={data.profile.photoUrl}
       />
-    </>
+    </button>
   );
 }

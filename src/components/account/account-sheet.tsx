@@ -1,6 +1,5 @@
 "use client";
 
-import type { ReactNode } from "react";
 import {
   Drawer,
   DrawerContent,
@@ -10,11 +9,11 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { SaveStatus } from "@/components/save-status";
-import type { Perspective } from "@/lib/access";
+import { LegalDocumentPane } from "./legal-document-pane";
 import { PerspectiveRow } from "./perspective-row";
 import { ProfileHeader } from "./profile-header";
 import { accountSections, AccountSectionBody, sectionTitle } from "./sections";
-import { profileHref, type AccountData } from "./types";
+import { profileHref, type AccountChromeProps } from "./types";
 
 export function AccountSheet({
   data,
@@ -22,13 +21,9 @@ export function AccountSheet({
   open,
   onOpenChange,
   trigger,
-}: {
-  data: AccountData;
-  activePerspective?: Perspective;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  trigger?: ReactNode;
-}) {
+  legalDocument,
+  onCloseLegalDocument,
+}: AccountChromeProps) {
   const strings = data.strings;
 
   return (
@@ -39,7 +34,14 @@ export function AccountSheet({
       repositionInputs={false}
     >
       {trigger && <DrawerTrigger asChild>{trigger}</DrawerTrigger>}
-      <DrawerContent className="bg-canvas-deep data-[vaul-drawer-direction=bottom]:max-h-[94svh] data-[vaul-drawer-direction=bottom]:rounded-t-(--r-tile)">
+      <DrawerContent
+        onEscapeKeyDown={(event) => {
+          if (!legalDocument) return;
+          event.preventDefault();
+          onCloseLegalDocument();
+        }}
+        className="bg-canvas-deep data-[vaul-drawer-direction=bottom]:max-h-[94svh] data-[vaul-drawer-direction=bottom]:rounded-t-(--r-tile)"
+      >
         <DrawerHeader className="shrink-0 gap-1 border-b border-line px-4 py-4 text-left">
           <div className="flex items-center justify-between gap-3">
             <DrawerTitle className="font-display text-lg font-bold tracking-tight text-ink">
@@ -54,30 +56,44 @@ export function AccountSheet({
             {strings.description}
           </DrawerDescription>
         </DrawerHeader>
-        <div className="grid min-h-0 flex-1 content-start gap-5 overflow-y-auto px-4 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-          <ProfileHeader
-            name={data.profile.name}
-            email={data.profile.email}
-            avatar={data.profile.avatarAnimated}
-            photoUrl={data.profile.photoUrl}
-            href={profileHref(data.profile.href, activePerspective)}
-            linkLabel={data.profile.linkLabel}
-            people={data.profile.people}
-            onNavigate={() => onOpenChange(false)}
-          />
-          <PerspectiveRow
-            data={data}
-            activePerspective={activePerspective}
-            onOpenChange={onOpenChange}
-          />
-          {accountSections(data).map((item) => (
-            <AccountSectionBody
-              key={item.key}
-              section={item.key}
-              label={sectionTitle(strings, item.key)}
-              data={data}
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          <div
+            inert={legalDocument !== null}
+            className="grid min-h-0 flex-1 content-start gap-5 overflow-y-auto px-4 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+          >
+            <ProfileHeader
+              name={data.profile.name}
+              email={data.profile.email}
+              avatar={data.profile.avatarAnimated}
+              photoUrl={data.profile.photoUrl}
+              href={profileHref(data.profile.href, activePerspective)}
+              linkLabel={data.profile.linkLabel}
+              people={data.profile.people}
+              onNavigate={() => onOpenChange(false)}
             />
-          ))}
+            <PerspectiveRow
+              data={data}
+              activePerspective={activePerspective}
+              onOpenChange={onOpenChange}
+            />
+            {accountSections(data).map((item) => (
+              <AccountSectionBody
+                key={item.key}
+                section={item.key}
+                label={sectionTitle(strings, item.key)}
+                data={data}
+              />
+            ))}
+          </div>
+          {legalDocument ? (
+            <div className="absolute inset-0 overflow-y-auto bg-canvas px-4 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+              <LegalDocumentPane
+                legalDocument={legalDocument}
+                data={data}
+                onBack={onCloseLegalDocument}
+              />
+            </div>
+          ) : null}
         </div>
       </DrawerContent>
     </Drawer>

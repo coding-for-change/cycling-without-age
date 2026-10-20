@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { arrivedFromApp, currentArrival } from "@/lib/arrival";
 import { minimizeApp, onBackButton } from "@/lib/native/app";
 import { decideBack } from "@/lib/native/back-policy";
 
@@ -34,6 +35,7 @@ export function NativeBackHandler() {
           overlayOpen: Boolean(document.querySelector(OVERLAY)),
           depth: historyDepth(),
           pathname: current.current,
+          arrivedFromApp: arrivedFromApp(currentArrival()),
         });
 
         if (decision === "close-overlay") dismissOverlay();

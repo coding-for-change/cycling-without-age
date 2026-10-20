@@ -1,4 +1,5 @@
 import { Suspense, type ReactNode } from "react";
+import { AccountPanel } from "@/components/account/account-panel";
 import { CollapseSidebarOn } from "@/components/collapse-sidebar-on";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
@@ -37,6 +38,10 @@ export function MemberShell({
 
       <Suspense fallback={<TabBarSkeleton />}>
         <MemberTabBar perspective={perspective} />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <AccountPanel activePerspective={perspective} />
       </Suspense>
     </SidebarProvider>
   );

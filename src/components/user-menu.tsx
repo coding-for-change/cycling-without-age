@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import {
   CircleUserRound,
@@ -22,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useSignOut } from "@/components/sign-out-button";
 import { PersonAvatar } from "@/components/person-avatar";
-import { AccountSurface } from "@/components/account/account-surface";
+import { openAccount } from "@/components/account/account-state";
 import { profileHref, type AccountData } from "@/components/account/types";
 import type { Perspective } from "@/lib/access";
 
@@ -36,7 +35,6 @@ export function UserMenu({
   strings: { menuLabel: string; account: string; signOut: string };
 }) {
   const { signOut, pending } = useSignOut();
-  const [accountOpen, setAccountOpen] = useState(false);
   const {
     name,
     email,
@@ -115,7 +113,7 @@ export function UserMenu({
               </DropdownMenuItem>
             ) : null}
             <DropdownMenuItem
-              onSelect={() => setAccountOpen(true)}
+              onSelect={() => openAccount()}
               className="gap-3 rounded-xl py-2.5"
             >
               <CircleUserRound
@@ -137,12 +135,6 @@ export function UserMenu({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <AccountSurface
-          data={data}
-          activePerspective={activePerspective}
-          open={accountOpen}
-          onOpenChange={setAccountOpen}
-        />
       </SidebarMenuItem>
     </SidebarMenu>
   );

@@ -374,6 +374,11 @@
     "footer": "You received this email because a Cycling Without Age chapter admin entered your address as someone who helps a passenger.",
     "someone": "someone"
   },
+  "legal": {
+    "imprint": "Imprint",
+    "privacy": "Privacy notice",
+    "terms": "Terms of use"
+  },
   "rideRequestCommon": {
     "someone": "a rider",
     "someoneAsking": "Someone"

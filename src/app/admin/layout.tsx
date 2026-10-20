@@ -1,4 +1,5 @@
 import { Suspense, type ReactNode } from "react";
+import { AccountPanel } from "@/components/account/account-panel";
 import { CollapseSidebarOn } from "@/components/collapse-sidebar-on";
 import { NotificationBellSkeleton } from "@/components/notifications/notification-bell-skeleton";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -28,6 +29,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
       <Suspense fallback={null}>
         <AdminCommandBar />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <AccountPanel activePerspective="admin" />
       </Suspense>
       <Suspense fallback={null}>
         <AdminUploadTray />

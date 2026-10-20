@@ -374,6 +374,11 @@
     "footer": "Sie erhalten diese E-Mail, weil eine Admin einer Cycling-Without-Age-Ortsgruppe Ihre Adresse als Begleitperson eines Fahrgasts eingetragen hat.",
     "someone": "jemand"
   },
+  "legal": {
+    "imprint": "Impressum",
+    "privacy": "Datenschutzerklärung",
+    "terms": "Nutzungsbedingungen"
+  },
   "rideRequestCommon": {
     "someone": "einen Fahrgast",
     "someoneAsking": "Jemand"
