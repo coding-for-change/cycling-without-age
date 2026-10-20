@@ -1,25 +1,39 @@
 ## Provider
 
-[Name of the organisation]
+Cycling Without Age
 
-[Street and number]
+Rentemestervej 80, st.
 
-[Postcode and city]
+2400 København NV
 
-[Country]
+Denmark
+
+Cycling Without Age is a non-profit association (forening) under Danish law.
 
 ## Represented by
 
-[Names of the people authorised to represent the organisation]
+Pernille Bussone, Director
 
 ## Contact
 
-Email: [contact@example.org]
+Email: [support@cyklingudenalder.dk](mailto:support@cyklingudenalder.dk)
+
+Phone: +45 53 62 19 79
+
+Website: [cyclingwithoutage.org](https://cyclingwithoutage.org)
 
 ## Register
 
-[Register court and register number]
+Danish Central Business Register (CVR), CVR no. 36655305
 
 ## Responsible for content
 
-[Name and address]
+Pernille Bussone, Rentemestervej 80, st., 2400 København NV, Denmark
+
+## Development and hosting
+
+The app is developed and hosted on behalf of Cycling Without Age by Coding for Change e.V., Enzianstraße 3, 85748 Garching, Germany (Amtsgericht München, VR 211582).
+
+## Local chapters
+
+Rides are organised by local Cycling Without Age chapters. Each chapter is responsible for the rides, notes and messages it publishes in the app.

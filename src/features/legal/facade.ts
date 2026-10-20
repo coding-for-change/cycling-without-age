@@ -9,9 +9,9 @@ export type LegalEdition = {
 };
 
 const LEGAL_EDITIONS: Record<LegalDocument, LegalEdition> = {
-  privacy: { version: "0.1", updatedOn: "2026-10-15", draft: true },
-  terms: { version: "0.1", updatedOn: "2026-10-15", draft: true },
-  imprint: { version: "0.1", updatedOn: "2026-10-15", draft: true },
+  privacy: { version: "1.0", updatedOn: "2026-10-21", draft: false },
+  terms: { version: "1.0", updatedOn: "2026-10-21", draft: false },
+  imprint: { version: "1.0", updatedOn: "2026-10-21", draft: false },
 };
 
 export type LegalText = LegalEdition & {
