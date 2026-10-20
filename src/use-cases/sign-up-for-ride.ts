@@ -2,6 +2,7 @@ import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { rides } from "@/features/rides";
 import { DomainError } from "@/lib/domain-error";
+import { assertPilotsReady } from "./pilot-readiness";
 
 async function rideChapter(rideId: string) {
   const ride = await rides.getRideScope(rideId);
@@ -14,6 +15,7 @@ async function rideChapter(rideId: string) {
  * pilot role in the ride's own chapter, and only where the chapter lets its
  * pilots sign up themselves. A country admin is not a pilot by virtue of being
  * an admin, so the membership row is asked, not the session's admin reach.
+ * The training gate holds here as it does when an admin staffs the ride.
  */
 export async function signUpForRide(rideId: string, userId: string) {
   const chapterId = await rideChapter(rideId);
@@ -23,6 +25,7 @@ export async function signUpForRide(rideId: string, userId: string) {
   ]);
   if (!roles.includes("pilot")) throw new DomainError("notPilot");
   if (!settings.pilotsMaySelfAssign) throw new DomainError("selfSignUpOff");
+  await assertPilotsReady([userId], chapterId);
   return rides.selfAssign(rideId, userId);
 }
 

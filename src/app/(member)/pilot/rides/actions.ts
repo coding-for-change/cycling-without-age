@@ -11,6 +11,7 @@ import { signUpForRide, withdrawFromRide } from "@/use-cases/sign-up-for-ride";
 const MAPPED_ERRORS = [
   "notAssigned",
   "notPilot",
+  "pilotNotReady",
   "rideClosed",
   "rideFullyStaffed",
   "selfSignUpOff",

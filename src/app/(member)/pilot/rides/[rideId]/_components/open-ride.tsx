@@ -4,6 +4,7 @@ import {
   ArrowLeftRight,
   CalendarClock,
   CircleCheck,
+  GraduationCap,
   MapPin,
   UsersRound,
 } from "lucide-react";
@@ -22,6 +23,7 @@ import {
 import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { getOpenRide } from "@/use-cases/open-rides";
+import { pilotReadiness } from "@/use-cases/pilot-readiness";
 import { SignUpButton } from "./sign-up-button";
 
 /**
@@ -34,12 +36,14 @@ import { SignUpButton } from "./sign-up-button";
  */
 export async function OpenRide({
   rideId,
+  userId,
   pilotChapterIds,
   dict,
   locale,
   words,
 }: {
   rideId: string;
+  userId: string;
   pilotChapterIds: string[];
   dict: Dictionary;
   locale: Locale;
@@ -75,7 +79,10 @@ export async function OpenRide({
 
   const zone = ride.chapter.timeZone;
   const missing = Math.max(0, ride.requiredPilots - ride._count.assignments);
-  const settings = await chapters.getSettings(ride.chapterId);
+  const [settings, readiness] = await Promise.all([
+    chapters.getSettings(ride.chapterId),
+    pilotReadiness(userId, ride.chapterId),
+  ]);
   const now = new Date();
   const late =
     now >=
@@ -202,13 +209,38 @@ export async function OpenRide({
         </p>
       ) : null}
 
-      <div className="mt-auto flex flex-col pt-4">
-        <SignUpButton
-          rideId={ride.id}
-          label={strings.signUp.cta}
-          done={strings.signUp.done}
-          errors={{ ...dict.common.errors, ...strings.errors }}
-        />
+      <div className="mt-auto flex flex-col gap-3 pt-4">
+        {readiness.ready ? (
+          <SignUpButton
+            rideId={ride.id}
+            label={strings.signUp.cta}
+            done={strings.signUp.done}
+            errors={{ ...dict.common.errors, ...strings.errors }}
+          />
+        ) : (
+          <>
+            <p className="text-2sm text-ink-soft border-line flex items-start gap-3 rounded-2xl border p-4">
+              <GraduationCap
+                aria-hidden
+                className="text-mint-ink mt-0.5 size-4 shrink-0"
+              />
+              <span>
+                {formatMessage(
+                  strings.signUp.notReady,
+                  { chapter: ride.chapter.name },
+                  words,
+                )}
+              </span>
+            </p>
+            <Button
+              asChild
+              variant="brand"
+              size="hero"
+            >
+              <Link href="/pilot/training">{strings.signUp.notReadyCta}</Link>
+            </Button>
+          </>
+        )}
       </div>
     </>
   );

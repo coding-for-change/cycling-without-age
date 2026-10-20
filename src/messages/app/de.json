@@ -3124,6 +3124,7 @@
       "errors": {
         "notAssigned": "Du bist nicht mehr für diese Fahrt eingetragen.",
         "notPilot": "Eintragen können sich nur Piloten dieser Ortsgruppe.",
+        "pilotNotReady": "Schließ zuerst deine Schulung ab, dann kannst du dich eintragen.",
         "rateLimited": "Das war viel auf einmal. Warte kurz und versuch es noch einmal.",
         "rideClosed": "Diese Fahrt ist nicht mehr offen.",
         "rideFullyStaffed": "Jemand war schneller: Die Fahrt hat jetzt alle Piloten.",
@@ -3149,7 +3150,9 @@
         "done": "Du bist dabei. Danke dir!",
         "intro": "{chapter} sucht einen Piloten. Sobald du dich einträgst, siehst du, mit wem du fährst, wie du sie erreichst, und einen Chat mit allen, die dabei sind.",
         "to": "nach {destination}",
-        "late": "Die Fahrt ist in weniger als {hours, plural, one {# Stunde} other {# Stunden}}. Sobald du dich einträgst, kannst du nur noch telefonisch bei {chapter} absagen."
+        "late": "Die Fahrt ist in weniger als {hours, plural, one {# Stunde} other {# Stunden}}. Sobald du dich einträgst, kannst du nur noch telefonisch bei {chapter} absagen.",
+        "notReady": "Dir fehlt noch die Schulung, die du für Fahrten mit {chapter} brauchst. Sobald du sie abgeschlossen hast, kannst du dich hier eintragen.",
+        "notReadyCta": "Zur Schulung"
       },
       "upcomingEmpty": "Gerade steht nichts an. Sobald deine Ortsgruppe dich für eine Ausfahrt einteilt, taucht sie hier auf."
     },

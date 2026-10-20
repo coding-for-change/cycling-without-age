@@ -3124,6 +3124,7 @@
       "errors": {
         "notAssigned": "Du er ikke længere på turen.",
         "notPilot": "Kun piloter i denne afdeling kan tilmelde sig.",
+        "pilotNotReady": "Gør din træning færdig først, så kan du melde dig.",
         "rateLimited": "Det var meget på én gang. Vent lidt, og prøv igen.",
         "rideClosed": "Turen er ikke åben længere.",
         "rideFullyStaffed": "En anden var hurtigere: Turen har alle sine piloter nu.",
@@ -3149,7 +3150,9 @@
         "done": "Du er med på turen. Tak!",
         "intro": "{chapter} søger en pilot. Når du tilmelder dig, kan du se, hvem du kører med, hvordan du får fat i dem, og en chat med alle på turen.",
         "to": "til {destination}",
-        "late": "Turen er om mindre end {hours, plural, one {# time} other {# timer}}, så når du har tilmeldt dig, sker afmelding over telefonen til {chapter}."
+        "late": "Turen er om mindre end {hours, plural, one {# time} other {# timer}}, så når du har tilmeldt dig, sker afmelding over telefonen til {chapter}.",
+        "notReady": "Du mangler stadig den træning, du skal have for at køre med {chapter}. Når du er færdig, kan du melde dig her.",
+        "notReadyCta": "Fortsæt træningen"
       },
       "upcomingEmpty": "Der er ikke noget på vej lige nu. Når din afdeling sætter dig på en tur, dukker den op her."
     },

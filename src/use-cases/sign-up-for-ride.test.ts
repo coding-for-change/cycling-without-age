@@ -1,7 +1,8 @@
 import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { rides } from "@/features/rides";
-import { domainCode } from "@/lib/domain-error";
+import { DomainError, domainCode } from "@/lib/domain-error";
+import { assertPilotsReady } from "./pilot-readiness";
 import { signUpForRide, withdrawFromRide } from "./sign-up-for-ride";
 
 jest.mock("@/features/chapters", () => ({
@@ -17,10 +18,12 @@ jest.mock("@/features/rides", () => ({
     withdraw: jest.fn(),
   },
 }));
+jest.mock("./pilot-readiness", () => ({ assertPilotsReady: jest.fn() }));
 
 const CHAPTER = "chapter-muenchen";
 const getMemberRoles = membership.getMemberRoles as jest.Mock;
 const getSettings = chapters.getSettings as jest.Mock;
+const assertReady = assertPilotsReady as jest.Mock;
 
 const codeOf = (run: Promise<unknown>) =>
   run.then(
@@ -41,6 +44,7 @@ beforeEach(() => {
     staffingCheckLeadHours: 24,
   });
   (rides.selfAssign as jest.Mock).mockResolvedValue(true);
+  assertReady.mockResolvedValue(undefined);
 });
 
 describe("signUpForRide", () => {
@@ -48,6 +52,15 @@ describe("signUpForRide", () => {
     expect(await signUpForRide("ride-1", "pilot-1")).toBe(true);
     expect(getMemberRoles).toHaveBeenCalledWith("pilot-1", CHAPTER);
     expect(rides.selfAssign).toHaveBeenCalledWith("ride-1", "pilot-1");
+    expect(assertReady).toHaveBeenCalledWith(["pilot-1"], CHAPTER);
+  });
+
+  it("refuses a pilot who has not finished the chapter's training", async () => {
+    assertReady.mockRejectedValue(new DomainError("pilotNotReady"));
+    expect(await codeOf(signUpForRide("ride-1", "pilot-1"))).toBe(
+      "pilotNotReady",
+    );
+    expect(rides.selfAssign).not.toHaveBeenCalled();
   });
 
   // A country admin reaches the chapter, but holds no pilot role in it.

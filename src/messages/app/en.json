@@ -3124,6 +3124,7 @@
       "errors": {
         "notAssigned": "You're not on this ride anymore.",
         "notPilot": "Only pilots of this chapter can sign up.",
+        "pilotNotReady": "Finish your training first, then you can sign up.",
         "rateLimited": "That was a lot at once. Wait a moment and try again.",
         "rideClosed": "This ride isn't open anymore.",
         "rideFullyStaffed": "Someone was quicker: this ride has all its pilots now.",
@@ -3149,7 +3150,9 @@
         "done": "You're on the ride. Thank you!",
         "intro": "{chapter} is looking for a pilot. Once you sign up you'll see who you're riding with, how to reach them and a chat with everyone on the ride.",
         "to": "to {destination}",
-        "late": "The ride is less than {hours, plural, one {# hour} other {# hours}} away, so once you sign up, stepping back is a phone call to {chapter}."
+        "late": "The ride is less than {hours, plural, one {# hour} other {# hours}} away, so once you sign up, stepping back is a phone call to {chapter}.",
+        "notReady": "You haven't finished the training you need to ride with {chapter} yet. Once you're through, you can sign up here.",
+        "notReadyCta": "Continue training"
       },
       "upcomingEmpty": "Nothing coming up right now. When your chapter puts you on a ride, it lands here."
     },

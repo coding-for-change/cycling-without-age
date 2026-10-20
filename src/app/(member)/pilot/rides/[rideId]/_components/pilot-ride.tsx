@@ -68,6 +68,7 @@ export async function PilotRide({
     return (
       <OpenRide
         rideId={rideId}
+        userId={userId}
         pilotChapterIds={pilotChapterIds(session.access)}
         dict={dict}
         locale={locale}
