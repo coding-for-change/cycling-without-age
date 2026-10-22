@@ -64,6 +64,8 @@ services:
     environment:
       WORKER_ROLE: events
     depends_on:
+      app:
+        condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
@@ -106,6 +108,8 @@ services:
     volumes:
       - media-scratch:/scratch
     depends_on:
+      app:
+        condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
