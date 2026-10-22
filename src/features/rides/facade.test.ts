@@ -2533,6 +2533,50 @@ describe("photoReadRule", () => {
   });
 });
 
+describe("publicEventPhoto", () => {
+  const NOW = new Date("2026-10-22T12:00:00Z");
+  const file = (ride: Record<string, unknown>) => ({
+    id: "f-1",
+    key: "files/ridePhoto/f-1.webp",
+    mime: "image/webp",
+    kind: "ridePhoto",
+    ridePhotos: [
+      {
+        ride: {
+          model: "event",
+          announced: true,
+          status: "scheduled",
+          startsAt: new Date("2026-10-23T09:00:00Z"),
+          ...ride,
+        },
+      },
+    ],
+  });
+
+  it("serves the photo of an announced event that is still ahead", async () => {
+    db.storedFile.findUnique.mockResolvedValue(file({}));
+    expect((await rides.publicEventPhoto("f-1", NOW))?.id).toBe("f-1");
+  });
+
+  it.each([
+    ["not announced", { announced: false }],
+    ["not an event", { model: "functional" }],
+    ["cancelled", { status: "cancelled" }],
+    ["already over", { startsAt: new Date("2026-10-21T09:00:00Z") }],
+  ])("keeps the photo private when the ride is %s", async (_, ride) => {
+    db.storedFile.findUnique.mockResolvedValue(file(ride));
+    expect(await rides.publicEventPhoto("f-1", NOW)).toBeNull();
+  });
+
+  it("keeps a photo that is on no ride private", async () => {
+    db.storedFile.findUnique.mockResolvedValue({
+      ...file({}),
+      ridePhotos: [],
+    });
+    expect(await rides.publicEventPhoto("f-1", NOW)).toBeNull();
+  });
+});
+
 describe("listRidesForList", () => {
   const NOW = new Date("2026-10-06T12:00:00Z");
   const row = (id: string, startsAt: string) => ({

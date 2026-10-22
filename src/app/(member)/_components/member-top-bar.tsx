@@ -123,15 +123,6 @@ export function MemberTopBar({
         {title}
       </span>
 
-      {parent ? (
-        <BackButton
-          parentHref={parent.href}
-          canGoBack={canGoBack}
-          label={backLabel}
-          className="-ml-2 hidden size-9 md:flex"
-        />
-      ) : null}
-
       <Breadcrumb className="hidden min-w-0 md:block">
         <BreadcrumbList className="flex-nowrap">
           {parent && current ? (

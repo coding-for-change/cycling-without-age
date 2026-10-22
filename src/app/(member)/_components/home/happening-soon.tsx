@@ -10,7 +10,7 @@ import { resolveLocale, wordsLocale, type Locale } from "@/lib/format";
 import { readGuestChapterId } from "@/lib/guest-chapter";
 import { getDictionary, getLocale, type Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
-import { PERSPECTIVE_HOME, signInHref } from "@/lib/redirects";
+import { PERSPECTIVE_HOME } from "@/lib/redirects";
 import { cn } from "@/lib/utils";
 import { loadUpcomingEvents } from "../../passenger/rides/_components/upcoming-events";
 import { MEMBER_LIFE } from "../instant";
@@ -78,7 +78,7 @@ function EventCard({
 }) {
   const strings = dict.passenger.rides.events;
   const title = event.title?.trim() || dict.calendar.models.event;
-  const photo = guest ? null : (event.photos[0]?.fileId ?? null);
+  const photo = event.photos[0]?.fileId ?? null;
   const left = rides.seatsLeft(event);
   const detail = `${PERSPECTIVE_HOME.passenger}/rides/${event.id}`;
   const seats =
@@ -88,7 +88,7 @@ function EventCard({
 
   return (
     <Link
-      href={guest ? signInHref(detail) : detail}
+      href={detail}
       prefetch={!guest}
       transitionTypes={["push"]}
       className="group flex h-full flex-col gap-3 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-4 focus-visible:ring-offset-paper"
@@ -97,7 +97,7 @@ function EventCard({
         id={event.id}
         photo={photo}
         title={title}
-        morph={!guest}
+        morph
       />
       <span className="flex flex-col gap-1 px-1">
         <span className="line-clamp-2 font-display text-base leading-snug font-semibold text-balance">

@@ -95,6 +95,7 @@ import {
   findRideIdForRunningPilot,
   findRideParticipants,
   findAnnouncedEvent,
+  findPublicEvent,
   findAnnouncedEvents,
   findBookingsOn,
   findOpenRide,
@@ -1507,6 +1508,18 @@ export async function photoReadRule(fileId: string) {
   return { file, rule };
 }
 
+export async function publicEventPhoto(fileId: string, now = new Date()) {
+  const file = await findRidePhotoFile(fileId);
+  const ride = file?.kind === "ridePhoto" ? file.ridePhotos[0]?.ride : null;
+  return ride &&
+    ride.model === "event" &&
+    ride.announced &&
+    ride.status === "scheduled" &&
+    ride.startsAt > now
+    ? file
+    : null;
+}
+
 const PAST_ON_LIST = 3;
 
 const encodeCursor = (ride: { startsAt: Date; id: string }) =>
@@ -2011,6 +2024,9 @@ export const listChapterEvents = (
   chapterIds.length
     ? findAnnouncedEvents(chapterIds, now, take)
     : Promise.resolve([]);
+
+export const getPublicEvent = (rideId: string, now = new Date()) =>
+  findPublicEvent(rideId, now);
 
 export const getAnnouncedEvent = (
   rideId: string,

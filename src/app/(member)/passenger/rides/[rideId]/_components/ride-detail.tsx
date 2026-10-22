@@ -6,7 +6,8 @@ import { chat } from "@/features/chat";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
 import { rides, type PassengerRideDetailRow } from "@/features/rides";
-import { requirePerspective } from "@/lib/auth-guards";
+import { perspectiveViewerSession } from "@/lib/auth-guards";
+import { signInHref } from "@/lib/redirects";
 import { resolveLocale, wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale, type Dictionary } from "@/lib/i18n";
 import type { Locale as UiLocale } from "@/lib/i18n/locales";
@@ -15,6 +16,7 @@ import { MEMBER_LIFE } from "../../../../_components/instant";
 import { EventBookingBar } from "./event-booking-bar";
 import { EventDetail } from "./event-detail";
 import { EventInvite, seatLabels } from "./event-invite";
+import { GuestEvent } from "./guest-event";
 import { PersonalRide, RideState } from "./personal-ride";
 import { pilotFaces } from "./pilot-faces";
 import { SeatAnswers } from "./seat-answers";
@@ -32,7 +34,22 @@ async function PassengerRide({ rideId }: { rideId: string }) {
   "use cache: private";
   cacheLife(MEMBER_LIFE);
 
-  const session = await requirePerspective("passenger");
+  const session = await perspectiveViewerSession("passenger");
+  if (!session) {
+    const [event, dict, head] = await Promise.all([
+      rides.getPublicEvent(rideId),
+      getDictionary(),
+      headers(),
+    ]);
+    if (!event) redirect(signInHref(`/passenger/rides/${rideId}`));
+    return (
+      <GuestEvent
+        event={event}
+        dict={dict}
+        locale={resolveLocale(head.get("accept-language"))}
+      />
+    );
+  }
   const [mine, dict, language, head] = await Promise.all([
     passengers.listRidersOfAccount(session.user.id),
     getDictionary(),

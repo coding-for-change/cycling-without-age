@@ -2708,6 +2708,13 @@
       "subtitle": "Sie sehen sich um",
       "tagline": "Sehen Sie sich erst einmal um — die gewählte Ortsgruppe steht gleich hier."
     },
+    "guestLocked": {
+      "calendar": "Ihre Fahrten und die Veranstaltungen, bei denen Sie mitfahren können, Tag für Tag.",
+      "chat": "Schreiben Sie mit Ihren Pilot:innen und Ihrer Ortsgruppe.",
+      "cta": "Konto erstellen",
+      "rides": "Hier erscheinen Ihre gebuchten Fahrten und Anfragen.",
+      "title": "Verfügbar, sobald Sie ein Konto haben"
+    },
     "home": {
       "greeting": {
         "default": "Hallo {name}",
@@ -2873,28 +2880,6 @@
         "wayThereAt": "Hinfahrt um {time}"
       },
       "events": {
-        "book": {
-          "done": "{count, plural, one {Platz gebucht} other {# Plätze gebucht}}. Wir freuen uns auf Sie!",
-          "hint": "Wählen Sie, wer mitkommen möchte. Um den Rest kümmert sich die Ortsgruppe.",
-          "pick": "Wählen Sie, wer mitkommt",
-          "submit": "{count, plural, one {# Platz buchen} other {# Plätze buchen}}",
-          "title": "Platz buchen",
-          "tooMany": "{count, plural, one {Nur noch # Platz frei, bitte eine Person wählen} other {Nur noch # Plätze frei, bitte höchstens # wählen}}"
-        },
-        "errors": {
-          "rateLimited": "Das war viel auf einmal. Bitte warten Sie kurz und versuchen Sie es erneut.",
-          "rideClosed": "Für diese Ausfahrt sind keine Buchungen mehr möglich.",
-          "rideFull": "Die Ausfahrt ist inzwischen ausgebucht. Das tut uns leid.",
-          "riderNotInChapter": "Dieser Fahrgast fährt bei einer anderen Ortsgruppe.",
-          "unknownPassenger": "Für diesen Fahrgast buchen Sie nicht.",
-          "unknownRide": "Diese Ausfahrt ist nicht mehr verfügbar."
-        },
-        "open": "Plätze frei",
-        "seatsLeft": "{count, plural, =0 {Ausgebucht} one {Noch # Platz frei} other {Noch # Plätze frei}}",
-        "whoComing": "Wer kommt",
-        "going": "{count, plural, =0 {Noch hat niemand gebucht} one {# Person kommt} other {# Personen kommen}}",
-        "groupChat": "Gruppenchat",
-        "groupChatLabel": "Allen schreiben, die zu dieser Veranstaltung kommen",
         "bar": {
           "spotsLeft": "{count, plural, =0 {Ausgebucht} one {Noch # Platz frei} other {Noch # Plätze frei}}",
           "open": "Plätze frei",
@@ -2911,7 +2896,30 @@
             "cancel": "Platz behalten",
             "done": "Buchung abgesagt. Die Ortsgruppe weiß Bescheid."
           }
-        }
+        },
+        "book": {
+          "done": "{count, plural, one {Platz gebucht} other {# Plätze gebucht}}. Wir freuen uns auf Sie!",
+          "hint": "Wählen Sie, wer mitkommen möchte. Um den Rest kümmert sich die Ortsgruppe.",
+          "pick": "Wählen Sie, wer mitkommt",
+          "submit": "{count, plural, one {# Platz buchen} other {# Plätze buchen}}",
+          "title": "Platz buchen",
+          "tooMany": "{count, plural, one {Nur noch # Platz frei, bitte eine Person wählen} other {Nur noch # Plätze frei, bitte höchstens # wählen}}"
+        },
+        "errors": {
+          "rateLimited": "Das war viel auf einmal. Bitte warten Sie kurz und versuchen Sie es erneut.",
+          "rideClosed": "Für diese Ausfahrt sind keine Buchungen mehr möglich.",
+          "rideFull": "Die Ausfahrt ist inzwischen ausgebucht. Das tut uns leid.",
+          "riderNotInChapter": "Dieser Fahrgast fährt bei einer anderen Ortsgruppe.",
+          "unknownPassenger": "Für diesen Fahrgast buchen Sie nicht.",
+          "unknownRide": "Diese Ausfahrt ist nicht mehr verfügbar."
+        },
+        "going": "{count, plural, =0 {Noch hat niemand gebucht} one {# Person kommt} other {# Personen kommen}}",
+        "groupChat": "Gruppenchat",
+        "groupChatLabel": "Allen schreiben, die zu dieser Veranstaltung kommen",
+        "guestBook": "Anmelden und Platz buchen",
+        "open": "Plätze frei",
+        "seatsLeft": "{count, plural, =0 {Ausgebucht} one {Noch # Platz frei} other {Noch # Plätze frei}}",
+        "whoComing": "Wer kommt"
       },
       "reasons": {
         "equipment": "Die Rikscha braucht erst etwas Pflege, bevor sie wieder losfahren kann.",

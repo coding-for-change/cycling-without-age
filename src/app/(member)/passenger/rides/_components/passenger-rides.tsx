@@ -8,11 +8,12 @@ import { passengers } from "@/features/passengers";
 import { rides } from "@/features/rides";
 import { PastRides } from "@/features/rides/components/past-rides";
 import { RideAgenda, RideCard } from "@/features/rides/components/ride-agenda";
-import { requirePerspective } from "@/lib/auth-guards";
+import { perspectiveViewerSession } from "@/lib/auth-guards";
 import { resolveLocale, wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { MEMBER_LIFE } from "../../../_components/instant";
+import { GuestLocked } from "../../../_components/guest-locked";
 import { pilotAvatars } from "../../../_components/pilot-avatars";
 import { RequestCard } from "./request-card";
 import { loadRideRequests } from "./ride-requests-list";
@@ -25,7 +26,8 @@ export async function PassengerRides() {
   "use cache: private";
   cacheLife(MEMBER_LIFE);
 
-  const session = await requirePerspective("passenger");
+  const session = await perspectiveViewerSession("passenger");
+  if (!session) return <GuestLocked page="rides" />;
   const [mine, requests, dict, language, head] = await Promise.all([
     passengers.listRidersOfAccount(session.user.id),
     loadRideRequests(session.user.id),

@@ -2708,6 +2708,13 @@
       "subtitle": "Du kigger dig omkring",
       "tagline": "Se dig omkring først — afdelingen, du valgte, står lige her."
     },
+    "guestLocked": {
+      "calendar": "Dine ture og de arrangementer, du kan være med til, dag for dag.",
+      "chat": "Skriv med dine piloter og din afdeling.",
+      "cta": "Opret din konto",
+      "rides": "Dine bookede ture og forespørgsler vises her.",
+      "title": "Tilgængelig, når du har en konto"
+    },
     "home": {
       "greeting": {
         "default": "Hej {name}",
@@ -2873,28 +2880,6 @@
         "wayThereAt": "Turen ud kl. {time}"
       },
       "events": {
-        "book": {
-          "done": "{count, plural, one {Plads booket} other {# pladser booket}}. Vi glæder os til at køre med dig!",
-          "hint": "Vælg, hvem der skal med. Afdelingen sørger for resten.",
-          "pick": "Vælg, hvem der kommer",
-          "submit": "{count, plural, one {Book # plads} other {Book # pladser}}",
-          "title": "Book en plads",
-          "tooMany": "{count, plural, one {Kun # plads tilbage, vælg én} other {Kun # pladser tilbage, vælg højst #}}"
-        },
-        "errors": {
-          "rateLimited": "Det var meget på én gang. Vent lidt, og prøv igen.",
-          "rideClosed": "Arrangementet tager ikke imod bookinger længere.",
-          "rideFull": "Arrangementet er blevet fuldt imens. Det er vi kede af.",
-          "riderNotInChapter": "Denne passager kører med en anden afdeling.",
-          "unknownPassenger": "Du booker ikke for denne passager.",
-          "unknownRide": "Arrangementet er ikke tilgængeligt længere."
-        },
-        "open": "Ledige pladser",
-        "seatsLeft": "{count, plural, =0 {Fuldt booket} one {# plads tilbage} other {# pladser tilbage}}",
-        "whoComing": "Hvem kommer",
-        "going": "{count, plural, =0 {Book som den første} one {# kommer} other {# kommer}}",
-        "groupChat": "Gruppechat",
-        "groupChatLabel": "Skriv til alle, der kommer til arrangementet",
         "bar": {
           "spotsLeft": "{count, plural, =0 {Fuldt booket} one {# plads tilbage} other {# pladser tilbage}}",
           "open": "Ledige pladser",
@@ -2911,7 +2896,30 @@
             "cancel": "Behold min plads",
             "done": "Bookingen er aflyst. Afdelingen ved det."
           }
-        }
+        },
+        "book": {
+          "done": "{count, plural, one {Plads booket} other {# pladser booket}}. Vi glæder os til at køre med dig!",
+          "hint": "Vælg, hvem der skal med. Afdelingen sørger for resten.",
+          "pick": "Vælg, hvem der kommer",
+          "submit": "{count, plural, one {Book # plads} other {Book # pladser}}",
+          "title": "Book en plads",
+          "tooMany": "{count, plural, one {Kun # plads tilbage, vælg én} other {Kun # pladser tilbage, vælg højst #}}"
+        },
+        "errors": {
+          "rateLimited": "Det var meget på én gang. Vent lidt, og prøv igen.",
+          "rideClosed": "Arrangementet tager ikke imod bookinger længere.",
+          "rideFull": "Arrangementet er blevet fuldt imens. Det er vi kede af.",
+          "riderNotInChapter": "Denne passager kører med en anden afdeling.",
+          "unknownPassenger": "Du booker ikke for denne passager.",
+          "unknownRide": "Arrangementet er ikke tilgængeligt længere."
+        },
+        "going": "{count, plural, =0 {Book som den første} one {# kommer} other {# kommer}}",
+        "groupChat": "Gruppechat",
+        "groupChatLabel": "Skriv til alle, der kommer til arrangementet",
+        "guestBook": "Log ind for at booke en plads",
+        "open": "Ledige pladser",
+        "seatsLeft": "{count, plural, =0 {Fuldt booket} one {# plads tilbage} other {# pladser tilbage}}",
+        "whoComing": "Hvem kommer"
       },
       "reasons": {
         "equipment": "Rickshawen skal lige have lidt omsorg, før den kan køre igen.",

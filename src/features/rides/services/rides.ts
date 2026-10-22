@@ -1468,6 +1468,29 @@ export const findAnnouncedEvents = (
     take,
   });
 
+export const findPublicEvent = (rideId: string, now: Date) =>
+  prisma.ride.findFirst({
+    where: {
+      id: rideId,
+      model: "event",
+      announced: true,
+      status: "scheduled",
+      startsAt: { gt: now },
+    },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      startsAt: true,
+      endsAt: true,
+      chapter: { select: { name: true, timeZone: true } },
+      photos: {
+        orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+        select: { fileId: true },
+      },
+    },
+  });
+
 export const findBookingsOn = (rideIds: string[], passengerIds: string[]) =>
   prisma.rideRosterEntry.findMany({
     where: {

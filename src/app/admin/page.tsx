@@ -37,22 +37,34 @@ export default function OverviewPage({ searchParams }: PageProps) {
       <Suspense fallback={<OverviewSkeleton />}>
         <OverviewFrame
           tiles={
-            <Suspense fallback={<KpiTilesSkeleton />}>
+            <Suspense
+              key="tiles"
+              fallback={<KpiTilesSkeleton />}
+            >
               <OverviewKpis searchParams={searchParams} />
             </Suspense>
           }
           attention={
-            <Suspense fallback={<AttentionSkeleton />}>
+            <Suspense
+              key="attention"
+              fallback={<AttentionSkeleton />}
+            >
               <OverviewAttention searchParams={searchParams} />
             </Suspense>
           }
           week={
-            <Suspense fallback={<WeekSkeleton />}>
+            <Suspense
+              key="week"
+              fallback={<WeekSkeleton />}
+            >
               <OverviewWeek searchParams={searchParams} />
             </Suspense>
           }
           activity={
-            <Suspense fallback={<ActivitySkeleton />}>
+            <Suspense
+              key="activity"
+              fallback={<ActivitySkeleton />}
+            >
               <OverviewActivity searchParams={searchParams} />
             </Suspense>
           }

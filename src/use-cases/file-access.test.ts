@@ -2,12 +2,14 @@ import { fleet } from "@/features/fleet";
 import { personProfiles } from "@/features/person-profiles";
 import { rides } from "@/features/rides";
 import { fileKindOf } from "@/lib/storage";
-import { readableFile } from "./file-access";
+import { publicFile, readableFile } from "./file-access";
 import { accessPerson } from "./person-access";
 import { readableTrainingAttachment } from "./training-access";
 
 jest.mock("@/features/fleet", () => ({ fleet: { fileReadRule: jest.fn() } }));
-jest.mock("@/features/rides", () => ({ rides: { photoReadRule: jest.fn() } }));
+jest.mock("@/features/rides", () => ({
+  rides: { photoReadRule: jest.fn(), publicEventPhoto: jest.fn() },
+}));
 jest.mock("@/lib/storage", () => ({ fileKindOf: jest.fn() }));
 jest.mock("@/features/person-profiles", () => ({
   personProfiles: { findPhoto: jest.fn() },
@@ -82,5 +84,19 @@ describe("readableFile", () => {
     (fileKindOf as jest.Mock).mockResolvedValue(null);
     expect(await readableFile(viewer, "nope")).toBeNull();
     expect(fleet.fileReadRule).not.toHaveBeenCalled();
+  });
+});
+
+describe("publicFile", () => {
+  it("asks the rides feature about a ride photo", async () => {
+    (fileKindOf as jest.Mock).mockResolvedValue("ridePhoto");
+    (rides.publicEventPhoto as jest.Mock).mockResolvedValue(photo);
+    expect(await publicFile("file-1")).toBe(photo);
+  });
+
+  it("never serves any other kind of file without a session", async () => {
+    (fileKindOf as jest.Mock).mockResolvedValue("trishawPhoto");
+    expect(await publicFile("file-1")).toBeNull();
+    expect(rides.publicEventPhoto).not.toHaveBeenCalled();
   });
 });

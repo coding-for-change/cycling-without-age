@@ -2708,6 +2708,13 @@
       "subtitle": "Looking around",
       "tagline": "Have a look around first — the chapter you picked is right here."
     },
+    "guestLocked": {
+      "calendar": "Your rides and the events you can join, day by day.",
+      "chat": "Talk to your pilots and your chapter.",
+      "cta": "Create your account",
+      "rides": "Your booked rides and requests will show up here.",
+      "title": "Available once you have an account"
+    },
     "home": {
       "greeting": {
         "default": "Hi {name}",
@@ -2873,28 +2880,6 @@
         "wayThereAt": "Way there at {time}"
       },
       "events": {
-        "book": {
-          "done": "{count, plural, one {Seat booked} other {# seats booked}}. We look forward to riding with you!",
-          "hint": "Pick who you'd like to bring along. The chapter takes care of the rest.",
-          "pick": "Pick who's coming",
-          "submit": "{count, plural, one {Book # seat} other {Book # seats}}",
-          "title": "Book a seat",
-          "tooMany": "{count, plural, one {Only # seat left, pick one} other {Only # seats left, pick up to #}}"
-        },
-        "errors": {
-          "rateLimited": "That was a lot at once. Please wait a moment and try again.",
-          "rideClosed": "This event isn't taking bookings anymore.",
-          "rideFull": "This event filled up in the meantime. We're sorry.",
-          "riderNotInChapter": "This rider rides with another chapter.",
-          "unknownPassenger": "That rider isn't one you book for.",
-          "unknownRide": "This event isn't available anymore."
-        },
-        "open": "Seats available",
-        "seatsLeft": "{count, plural, =0 {Full} one {# seat left} other {# seats left}}",
-        "whoComing": "Who's coming",
-        "going": "{count, plural, =0 {Be the first to book} one {# rider is going} other {# riders are going}}",
-        "groupChat": "Group chat",
-        "groupChatLabel": "Message everyone going to this event",
         "bar": {
           "spotsLeft": "{count, plural, =0 {Full} one {# spot left} other {# spots left}}",
           "open": "Spots available",
@@ -2911,7 +2896,30 @@
             "cancel": "Keep my spot",
             "done": "Booking cancelled. The chapter knows."
           }
-        }
+        },
+        "book": {
+          "done": "{count, plural, one {Seat booked} other {# seats booked}}. We look forward to riding with you!",
+          "hint": "Pick who you'd like to bring along. The chapter takes care of the rest.",
+          "pick": "Pick who's coming",
+          "submit": "{count, plural, one {Book # seat} other {Book # seats}}",
+          "title": "Book a seat",
+          "tooMany": "{count, plural, one {Only # seat left, pick one} other {Only # seats left, pick up to #}}"
+        },
+        "errors": {
+          "rateLimited": "That was a lot at once. Please wait a moment and try again.",
+          "rideClosed": "This event isn't taking bookings anymore.",
+          "rideFull": "This event filled up in the meantime. We're sorry.",
+          "riderNotInChapter": "This rider rides with another chapter.",
+          "unknownPassenger": "That rider isn't one you book for.",
+          "unknownRide": "This event isn't available anymore."
+        },
+        "going": "{count, plural, =0 {Be the first to book} one {# rider is going} other {# riders are going}}",
+        "groupChat": "Group chat",
+        "groupChatLabel": "Message everyone going to this event",
+        "guestBook": "Sign in to book a spot",
+        "open": "Seats available",
+        "seatsLeft": "{count, plural, =0 {Full} one {# seat left} other {# seats left}}",
+        "whoComing": "Who's coming"
       },
       "reasons": {
         "equipment": "The trishaw needs some care before it can go out again.",

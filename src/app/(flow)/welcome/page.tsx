@@ -42,7 +42,7 @@ async function Welcome() {
         <LegalLinks
           label={dict.legal.label}
           links={legalLinks(dict.legal.documents)}
-          className="mt-5"
+          className="pt-5"
         />
       }
     />
