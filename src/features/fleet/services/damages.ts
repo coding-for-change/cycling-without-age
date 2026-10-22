@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma";
+import { reachableLocationWhere } from "./locations";
 
 const person = { select: { id: true, name: true } } as const;
 
@@ -57,6 +58,43 @@ export const findDamagesOfTrishaw = (trishawId: string, take = 100) =>
     select: damageSelect,
     take,
   });
+
+const openReachingWhere = (chapterIds: string[]) =>
+  ({
+    clearedAt: null,
+    trishaw: { storageLocation: reachableLocationWhere(chapterIds) },
+  }) satisfies Prisma.TrishawDamageWhereInput;
+
+export const findOpenDamagesReaching = (chapterIds: string[], take: number) =>
+  prisma.trishawDamage.findMany({
+    where: openReachingWhere(chapterIds),
+    orderBy: [{ grounding: "desc" }, { reportedAt: "asc" }],
+    select: {
+      id: true,
+      trishawId: true,
+      description: true,
+      grounding: true,
+      reportedAt: true,
+      trishaw: {
+        select: {
+          name: true,
+          storageLocation: {
+            select: {
+              ownerChapterId: true,
+              chapters: {
+                where: { chapterId: { in: chapterIds }, status: "approved" },
+                select: { chapterId: true },
+              },
+            },
+          },
+        },
+      },
+    },
+    take,
+  });
+
+export const countOpenDamagesReaching = (chapterIds: string[]) =>
+  prisma.trishawDamage.count({ where: openReachingWhere(chapterIds) });
 
 export const findDamagesOfRide = (rideId: string, reportedByUserId: string) =>
   prisma.trishawDamage.findMany({

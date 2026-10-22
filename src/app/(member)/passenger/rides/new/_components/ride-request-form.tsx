@@ -11,11 +11,9 @@ import {
   type Ref,
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { da, de, enGB, enUS } from "react-day-picker/locale";
 import {
   Building2,
   Check,
-  ChevronLeft,
   Flag,
   History,
   House,
@@ -31,32 +29,27 @@ import { notify } from "@/components/action-feedback";
 import { AddressSearch } from "@/components/address-search";
 import { StepDots, withStepLabel } from "@/components/step-dots";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { resolveAddress, suggestAddresses } from "@/features/profile/actions";
-import type { RideLocationKind } from "@/features/ride-locations/schemas";
 import {
+  changeRideRequestAction,
   submitRideRequestAction,
-  type RideRequestError,
 } from "@/features/ride-requests/actions";
+import { rescheduleRideAction } from "../../actions";
 import {
   REQUEST_LIMITS,
   type RequestModel,
 } from "@/features/ride-requests/schemas";
 import { routeLine } from "@/features/ride-requests/components/request-words";
-import {
-  formatList,
-  toIsoDateLocal,
-  wordsLocale,
-  type Locale as Notation,
-} from "@/lib/format";
+import { formatList, wordsLocale, type Locale as Notation } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
 import { haptics } from "@/lib/native/haptics";
 import { useKeyboardOpen } from "@/lib/native/keyboard";
 import { cn } from "@/lib/utils";
+import { RoutePreview } from "./route-preview";
 
 type Place = {
   name: string;
@@ -68,23 +61,20 @@ type Place = {
 export type RequestFormData = {
   chapterName: string;
   automatic: boolean;
-  weekStartsOn: number;
+  closedDays: Record<string, string>;
+  outsideDays: string;
   maxRiders: number;
   riders: {
     id: string;
     firstName: string;
     name: string;
-    careCenterId: string | null;
+    atCareHome: boolean;
     home: Place | null;
   }[];
   stranded: string[];
-  locations: {
-    id: string;
-    name: string;
-    address: string | null;
-    kind: RideLocationKind;
-  }[];
+  careHome: Place & { named: boolean };
   destinations: Place[];
+  prefill?: RequestPrefill | null;
   days: {
     date: string;
     label: string;
@@ -92,15 +82,27 @@ export type RequestFormData = {
   }[];
 };
 
+export type RequestStart =
+  { kind: "careHome" } | { kind: "home" } | { kind: "place"; place: Place };
+
+export type RequestPrefill = {
+  source: { kind: "ride" | "request"; id: string };
+  label: string;
+  riderIds: string[];
+  model: RequestModel;
+  start: RequestStart | null;
+  destination: Place | null;
+  roundTrip: boolean;
+  window: { date: string; startMinute: number; endMinute: number } | null;
+  note: string | null;
+};
+
 type Strings = Dictionary["passenger"]["request"];
 type Step = "who" | "where" | "when" | "note" | "review";
-type Start =
-  | { kind: "location"; id: string }
-  | { kind: "home" }
-  | { kind: "place"; place: Place };
+type Start = RequestStart;
 type Window = { startMinute: number; endMinute: number };
 
-const WHEN_ERRORS: readonly RideRequestError[] = [
+const WHEN_ERRORS: readonly string[] = [
   "leadTime",
   "beyondHorizon",
   "closedDate",
@@ -110,26 +112,7 @@ const WHEN_ERRORS: readonly RideRequestError[] = [
 const CARD =
   "flex w-full items-start gap-3 rounded-2xl border border-line bg-canvas p-4 text-left transition-colors hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none aria-checked:border-mint-deep aria-checked:bg-mint-tint disabled:pointer-events-none disabled:opacity-50";
 
-const startValue = (start: Start | null) =>
-  start === null
-    ? ""
-    : start.kind === "location"
-      ? `location:${start.id}`
-      : start.kind;
-
-const asLocalDate = (iso: string) => {
-  const [year, month, day] = iso.split("-").map(Number);
-  return new Date(year, month - 1, day);
-};
-
-const pickerLocale = (language: string, notation: Notation) =>
-  language === "de"
-    ? de
-    : language === "da"
-      ? da
-      : notation === "en-US"
-        ? enUS
-        : enGB;
+const startValue = (start: Start | null) => start?.kind ?? "";
 
 export function RideRequestForm({
   data,
@@ -165,24 +148,43 @@ export function RideRequestForm({
   const steps: Step[] = single
     ? ["where", "when", "note", "review"]
     : ["who", "where", "when", "note", "review"];
+  const prefill = data.prefill ?? null;
 
   const [riderIds, setRiderIds] = useState<string[]>(
-    single ? [data.riders[0].id] : [],
+    prefill?.riderIds.length
+      ? prefill.riderIds
+      : single
+        ? [data.riders[0].id]
+        : [],
   );
-  const [model, setModel] = useState<RequestModel | null>(null);
-  const [start, setStart] = useState<Start | null>(null);
-  const [destination, setDestination] = useState<Place | null>(null);
-  const [roundTrip, setRoundTrip] = useState(true);
-  const [date, setDate] = useState<string | null>(null);
-  const [slot, setSlot] = useState<Window | null>(null);
-  const [note, setNote] = useState("");
+  const [model, setModel] = useState<RequestModel | null>(
+    prefill?.model ?? null,
+  );
+  const [start, setStart] = useState<Start | null>(prefill?.start ?? null);
+  const [startPicked, setStartPicked] = useState(Boolean(prefill?.start));
+  const [destination, setDestination] = useState<Place | null>(
+    prefill?.destination ?? null,
+  );
+  const [roundTrip, setRoundTrip] = useState(prefill?.roundTrip ?? true);
+  const [date, setDate] = useState<string | null>(
+    prefill?.window?.date ?? null,
+  );
+  const [slot, setSlot] = useState<Window | null>(
+    prefill?.window
+      ? {
+          startMinute: prefill.window.startMinute,
+          endMinute: prefill.window.endMinute,
+        }
+      : null,
+  );
+  const [note, setNote] = useState(prefill?.note ?? "");
 
   const chosen = data.riders.filter((rider) => riderIds.includes(rider.id));
   const lead = chosen[0] ?? data.riders[0];
   const home = lead.home;
-  const careCenter = data.locations.find(
-    (location) => location.id === lead.careCenterId,
-  );
+  const careHome =
+    data.careHome.named || lead.atCareHome ? data.careHome : null;
+  const livesAtCareHome = lead.atCareHome;
 
   const complete: Record<Step, boolean> = {
     who: riderIds.length > 0,
@@ -190,13 +192,24 @@ export function RideRequestForm({
       model !== null &&
       start !== null &&
       (start.kind !== "home" || home !== null) &&
+      (start.kind !== "careHome" || careHome !== null) &&
       (model === "pleasure" || destination !== null),
-    when: date !== null && slot !== null,
+    when:
+      date !== null &&
+      slot !== null &&
+      data.days.some((day) => day.date === date),
     note: true,
     review: true,
   };
   const asked = searchParams.get("step") as Step | null;
-  const requested = asked && steps.includes(asked) ? asked : steps[0];
+  const requested =
+    asked && steps.includes(asked)
+      ? asked
+      : prefill?.window
+        ? "review"
+        : prefill
+          ? "when"
+          : steps[0];
   const blocking = steps.find(
     (step) => !complete[step] && steps.indexOf(step) < steps.indexOf(requested),
   );
@@ -208,6 +221,14 @@ export function RideRequestForm({
     params.set("step", next);
     return `?${params.toString()}`;
   };
+
+  useEffect(() => {
+    const popped = () => {
+      if (pushed.current > 0) pushed.current -= 1;
+    };
+    window.addEventListener("popstate", popped);
+    return () => window.removeEventListener("popstate", popped);
+  }, []);
 
   useEffect(() => {
     if (asked === null || asked === step) return;
@@ -222,34 +243,17 @@ export function RideRequestForm({
     window.scrollTo({ top: 0 });
   };
 
-  const back = () => {
-    if (pushed.current > 0) {
-      pushed.current -= 1;
-      window.history.back();
-    } else if (index > 0) {
-      window.history.replaceState(null, "", hrefFor(steps[index - 1]));
-    } else if (window.history.length > 1) router.back();
-    else router.replace("/passenger/rides", { transitionTypes: ["pop"] });
-  };
-
   const pickModel = (next: RequestModel) => {
     setModel(next);
-    if (next === "pleasure")
-      setStart(
-        careCenter
-          ? { kind: "location", id: careCenter.id }
-          : home
-            ? { kind: "home" }
-            : null,
-      );
-    else
-      setStart(
-        home
-          ? { kind: "home" }
-          : careCenter
-            ? { kind: "location", id: careCenter.id }
-            : null,
-      );
+    if (startPicked) return;
+    setStart(
+      livesAtCareHome ? { kind: "careHome" } : home ? { kind: "home" } : null,
+    );
+  };
+
+  const pickStart = (next: Start) => {
+    setStartPicked(true);
+    setStart(next);
   };
 
   const toggleRider = (id: string) =>
@@ -264,30 +268,58 @@ export function RideRequestForm({
   const pickup = (): Place | null =>
     start?.kind === "home"
       ? home
-      : start?.kind === "place"
-        ? start.place
-        : null;
+      : start?.kind === "careHome"
+        ? careHome
+        : start?.kind === "place"
+          ? start.place
+          : null;
 
   const send = () =>
     startTransition(async () => {
       if (!model || !date || !slot) return;
-      const result = await submitRideRequestAction({
+      const request = {
         passengerIds: riderIds,
         model,
-        rideLocationId: start?.kind === "location" ? start.id : null,
         pickup: pickup(),
         destination: model === "functional" ? destination : null,
         roundTrip: model === "functional" && roundTrip,
         window: { date, ...slot },
         note: note.trim() || null,
-      });
+      };
+      const source = prefill?.source ?? null;
+      const result =
+        source?.kind === "ride"
+          ? await rescheduleRideAction({ fromRideId: source.id, request })
+          : source?.kind === "request"
+            ? await changeRideRequestAction({
+                fromRequestId: source.id,
+                request,
+              })
+            : await submitRideRequestAction(request);
+      const done =
+        source?.kind === "ride"
+          ? result.ok && "oldSeatsKept" in result && result.oldSeatsKept
+            ? strings.reschedule.doneKept
+            : strings.reschedule.done
+          : source?.kind === "request" &&
+              result.ok &&
+              "oldRequestKept" in result &&
+              result.oldRequestKept
+            ? strings.change.doneKept
+            : result.ok && result.rideId
+              ? strings.booked
+              : source?.kind === "request"
+                ? strings.change.done
+                : strings.sent;
       notify(result, {
-        done: formatMessage(
-          result.ok && result.rideId ? strings.booked : strings.sent,
-          { chapter: data.chapterName },
-          language,
-        ),
-        errors: { generic: errors.generic, ...errors },
+        done: formatMessage(done, { chapter: data.chapterName }, language),
+        errors: {
+          generic: errors.generic,
+          ...errors,
+          ...(source?.kind === "request"
+            ? strings.change.errors
+            : strings.reschedule.errors),
+        },
       });
       if (!result.ok) {
         if (WHEN_ERRORS.includes(result.error)) {
@@ -325,30 +357,19 @@ export function RideRequestForm({
 
   return (
     <div
-      className="flex flex-1 flex-col gap-6 pb-24 md:pb-0"
+      className="flex flex-1 flex-col gap-6"
       onFocusCapture={(event) =>
         setTyping(event.target instanceof HTMLInputElement)
       }
       onBlurCapture={() => setTyping(false)}
     >
-      <div className="relative flex min-h-11 items-center justify-center">
-        <button
-          type="button"
-          onClick={back}
-          aria-label={strings.back}
-          className="absolute left-0 -ml-2 flex size-11 items-center justify-center rounded-full text-ink-soft transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none"
-        >
-          <ChevronLeft
-            aria-hidden
-            className="size-5"
-          />
-        </button>
+      <div className="flex min-h-11 items-center justify-center">
         <StepDots {...progress} />
       </div>
 
       <header className="flex flex-col gap-2">
         <p className="text-xs font-semibold tracking-wide text-ink-soft uppercase">
-          {data.chapterName}
+          {prefill?.label ?? data.chapterName}
         </p>
         <h1
           ref={heading}
@@ -390,14 +411,16 @@ export function RideRequestForm({
           model={model}
           onModel={pickModel}
           start={start}
-          onStart={setStart}
+          onStart={pickStart}
           destination={destination}
           onDestination={setDestination}
           roundTrip={roundTrip}
           onRoundTrip={setRoundTrip}
+          pickupPlace={pickup()}
+          notation={notation}
           home={home}
-          careCenterId={careCenter?.id ?? null}
-          locations={data.locations}
+          careHome={careHome}
+          careHomeFirst={livesAtCareHome}
           destinations={data.destinations}
           strings={strings}
           address={address}
@@ -408,7 +431,8 @@ export function RideRequestForm({
       {step === "when" ? (
         <WhenStep
           days={data.days}
-          weekStartsOn={data.weekStartsOn}
+          closedDays={data.closedDays}
+          outsideDays={data.outsideDays}
           date={date}
           onDate={(next) => {
             setDate(next);
@@ -418,7 +442,6 @@ export function RideRequestForm({
           onSlot={setSlot}
           strings={strings}
           language={language}
-          notation={notation}
         />
       ) : null}
 
@@ -450,7 +473,7 @@ export function RideRequestForm({
               value: routeLine(
                 strings.models[model],
                 {
-                  from: placeName(start, home, data.locations),
+                  from: pickup()?.name ?? null,
                   to:
                     model === "functional" ? (destination?.name ?? null) : null,
                   back: model === "functional" && roundTrip,
@@ -495,7 +518,7 @@ export function RideRequestForm({
 
       <div
         className={cn(
-          "fixed inset-x-0 z-30 flex justify-center px-4 md:static md:mt-auto md:px-0",
+          "sticky z-30 -mx-4 mt-auto flex justify-center bg-linear-to-t from-canvas from-60% to-transparent px-4 pt-3 md:static md:mx-0 md:bg-none md:px-0 md:pt-0",
           typing && "max-md:hidden",
           keyboardOpen
             ? "bottom-[calc(var(--keyboard-inset,0px)+0.75rem)]"
@@ -521,17 +544,6 @@ export function RideRequestForm({
       </div>
     </div>
   );
-}
-
-function placeName(
-  start: Start | null,
-  home: Place | null,
-  locations: RequestFormData["locations"],
-) {
-  if (!start) return null;
-  if (start.kind === "home") return home?.name ?? null;
-  if (start.kind === "place") return start.place.name;
-  return locations.find((location) => location.id === start.id)?.name ?? null;
 }
 
 function RiderMark({ on, name }: { on: boolean; name: string }) {
@@ -820,9 +832,11 @@ function WhereStep({
   onDestination,
   roundTrip,
   onRoundTrip,
+  pickupPlace,
+  notation,
   home,
-  careCenterId,
-  locations,
+  careHome,
+  careHomeFirst,
   destinations,
   strings,
   address,
@@ -836,9 +850,11 @@ function WhereStep({
   onDestination: (place: Place | null) => void;
   roundTrip: boolean;
   onRoundTrip: (on: boolean) => void;
+  pickupPlace: Place | null;
+  notation: Notation;
   home: Place | null;
-  careCenterId: string | null;
-  locations: RequestFormData["locations"];
+  careHome: Place | null;
+  careHomeFirst: boolean;
   destinations: Place[];
   strings: Strings;
   address: Dictionary["common"]["address"];
@@ -855,10 +871,22 @@ function WhereStep({
   const focusSoon = (target: { current: HTMLButtonElement | null }) =>
     requestAnimationFrame(() => target.current?.focus());
   const where = strings.where;
-  const ordered = [
-    ...locations.filter((location) => location.id === careCenterId),
-    ...locations.filter((location) => location.id !== careCenterId),
-  ];
+  const homeCard = home ? (
+    <ChoiceCard
+      value="home"
+      icon={House}
+      title={where.home}
+      body={home.address}
+    />
+  ) : null;
+  const careHomeCard = careHome ? (
+    <ChoiceCard
+      value="careHome"
+      icon={Building2}
+      title={formatMessage(where.careHome, { name: careHome.name }, language)}
+      body={careHome.address}
+    />
+  ) : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -888,9 +916,9 @@ function WhereStep({
           onValue={(next) => {
             setSearching(false);
             if (next === "home") onStart({ kind: "home" });
+            else if (next === "careHome") onStart({ kind: "careHome" });
             else if (next === "place" && custom)
               onStart({ kind: "place", place: custom });
-            else onStart({ kind: "location", id: next.slice(9) });
           }}
           after={
             searching ? (
@@ -921,27 +949,8 @@ function WhereStep({
             )
           }
         >
-          {ordered.map((location) => (
-            <ChoiceCard
-              key={location.id}
-              value={`location:${location.id}`}
-              icon={location.kind === "publicPlace" ? MapPin : Building2}
-              title={location.name}
-              body={
-                location.id === careCenterId
-                  ? where.careCenter
-                  : (location.address ?? where.kinds[location.kind])
-              }
-            />
-          ))}
-          {home ? (
-            <ChoiceCard
-              value="home"
-              icon={House}
-              title={where.home}
-              body={home.address}
-            />
-          ) : null}
+          {careHomeFirst ? careHomeCard : homeCard}
+          {careHomeFirst ? homeCard : careHomeCard}
           {custom ? (
             <ChoiceCard
               ref={customCard}
@@ -1009,6 +1018,22 @@ function WhereStep({
               ) : null}
             </>
           )}
+          {destination &&
+          pickupPlace &&
+          destination.latitude !== null &&
+          destination.longitude !== null &&
+          pickupPlace.latitude !== null &&
+          pickupPlace.longitude !== null ? (
+            <RoutePreview
+              from={{ lat: pickupPlace.latitude, lng: pickupPlace.longitude }}
+              to={{ lat: destination.latitude, lng: destination.longitude }}
+              fromName={pickupPlace.name}
+              toName={destination.name}
+              strings={where}
+              language={language}
+              notation={notation}
+            />
+          ) : null}
           <div className="flex min-h-11 items-center justify-between gap-3 rounded-2xl border border-line px-4 py-3">
             <label
               htmlFor={roundTripId}
@@ -1033,27 +1058,27 @@ function WhereStep({
 
 function WhenStep({
   days,
-  weekStartsOn,
+  closedDays,
+  outsideDays,
   date,
   onDate,
   slot,
   onSlot,
   strings,
   language,
-  notation,
 }: {
   days: RequestFormData["days"];
-  weekStartsOn: number;
+  closedDays: Record<string, string>;
+  outsideDays: string;
   date: string | null;
-  onDate: (date: string) => void;
+  onDate: (date: string | null) => void;
   slot: Window | null;
   onSlot: (slot: Window) => void;
   strings: Strings;
   language: Locale;
-  notation: Notation;
 }) {
-  const open = useMemo(() => new Set(days.map((day) => day.date)), [days]);
-  const day = days.find((candidate) => candidate.date === date) ?? null;
+  const inputId = useId();
+  const hintId = useId();
 
   if (!days.length)
     return (
@@ -1062,28 +1087,47 @@ function WhenStep({
       </p>
     );
 
-  const firstDay = asLocalDate(days[0].date);
-  const lastDay = asLocalDate(days[days.length - 1].date);
+  const day = days.find((candidate) => candidate.date === date) ?? null;
+  const blocked = date && !day ? (closedDays[date] ?? outsideDays) : null;
 
   return (
     <div className="flex flex-col gap-6">
-      <Calendar
-        mode="single"
-        selected={date ? asLocalDate(date) : undefined}
-        defaultMonth={date ? asLocalDate(date) : firstDay}
-        startMonth={firstDay}
-        endMonth={lastDay}
-        onSelect={(picked) => {
-          if (!picked) return;
-          haptics.selectionChanged();
-          onDate(toIsoDateLocal(picked));
-        }}
-        disabled={(candidate) => !open.has(toIsoDateLocal(candidate))}
-        locale={pickerLocale(language, notation)}
-        weekStartsOn={weekStartsOn as 0 | 1 | 2 | 3 | 4 | 5 | 6}
-        showOutsideDays={false}
-        className="self-start rounded-2xl border border-line p-3 [--cell-size:--spacing(11)] [&_button[data-selected-single=true]]:bg-mint-deep [&_button[data-selected-single=true]]:text-white"
-      />
+      <div className="flex flex-col gap-2">
+        <label
+          htmlFor={inputId}
+          className="text-sm font-medium"
+        >
+          {strings.when.dayLabel}
+        </label>
+        <input
+          id={inputId}
+          type="date"
+          min={days[0].date}
+          max={days[days.length - 1].date}
+          value={date ?? ""}
+          onChange={(event) => {
+            const next = event.target.value || null;
+            if (next && days.some((candidate) => candidate.date === next))
+              haptics.selectionChanged();
+            onDate(next);
+          }}
+          aria-invalid={blocked ? true : undefined}
+          aria-describedby={day ? undefined : hintId}
+          className="flex min-h-12 w-full appearance-none items-center rounded-2xl border border-line bg-paper px-4 text-left text-base text-ink tabular-nums focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none aria-invalid:border-red [&::-webkit-date-and-time-value]:text-left"
+        />
+        {day ? null : (
+          <p
+            id={hintId}
+            role={blocked ? "alert" : undefined}
+            className={cn(
+              "text-2sm",
+              blocked ? "text-red-ink" : "text-ink-soft",
+            )}
+          >
+            {blocked ?? strings.when.pickDay}
+          </p>
+        )}
+      </div>
 
       {day ? (
         <section className="flex flex-col gap-3">
@@ -1112,9 +1156,7 @@ function WhenStep({
           </RadioGroupPrimitive.Root>
           <p className="text-2sm text-ink-soft">{strings.when.confirm}</p>
         </section>
-      ) : (
-        <p className="text-2sm text-ink-soft">{strings.when.pickDay}</p>
-      )}
+      ) : null}
     </div>
   );
 }

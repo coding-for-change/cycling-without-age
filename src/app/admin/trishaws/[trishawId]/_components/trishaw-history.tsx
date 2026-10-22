@@ -55,6 +55,7 @@ export function TrishawHistory({
   empty,
   notation,
   words,
+  timeZone,
 }: {
   items: TrishawHistoryItem[];
   viewerId: string;
@@ -67,6 +68,7 @@ export function TrishawHistory({
   empty: string;
   notation: Locale;
   words: string;
+  timeZone: string;
 }) {
   const now = new Date();
   const actorName = (actor: { id: string; name: string } | null) =>
@@ -82,6 +84,7 @@ export function TrishawHistory({
       notation={notation}
       words={words}
       now={now}
+      timeZone={timeZone}
     />
   );
 
@@ -92,6 +95,7 @@ export function TrishawHistory({
       notation={notation}
       words={words}
       now={now}
+      timeZone={timeZone}
     />
   );
 

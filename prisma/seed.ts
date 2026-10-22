@@ -6,13 +6,9 @@ import { passengers } from "@/features/passengers";
 import type { ManagedRiderInput } from "@/features/passengers";
 import { profile } from "@/features/profile";
 import { fleet } from "@/features/fleet";
-import { rideLocations } from "@/features/ride-locations";
 import { rideRequests } from "@/features/ride-requests";
 import { rideInput, rides } from "@/features/rides";
-import {
-  careHomeRideLocationFor,
-  defaultLocationFor,
-} from "@/use-cases/manage-chapter";
+import { defaultLocationFor } from "@/use-cases/manage-chapter";
 import { seedTraining } from "./seed-training";
 import type { ChapterRole } from "@/lib/access";
 
@@ -239,9 +235,6 @@ async function seedChapters(countryIds: Map<string, string>) {
     const chapter = (await chapters.getChapter(id))!;
     if (!(await fleet.getDefaultLocation(id)))
       await fleet.createDefaultLocation(defaultLocationFor(chapter));
-    const careHome = careHomeRideLocationFor(chapter);
-    if (careHome && (await rideLocations.countChapterRideLocations(id)) === 0)
-      await rideLocations.createRideLocation(careHome);
   }
   return ids;
 }
@@ -557,26 +550,12 @@ async function seedRideRequests(
       ]),
     );
 
-  const places = await rideLocations.listRideLocations([muenchen]);
-  const sonnenhof =
-    places.find((place) => place.name === "Seniorenheim Sonnenhof") ??
-    (await rideLocations.createRideLocation({
-      chapterId: muenchen,
-      kind: "careCenter",
-      name: "Seniorenheim Sonnenhof",
-      address: "Sonnenstraße 12, 80331 München",
-      latitude: 48.1371,
-      longitude: 11.5654,
-    }));
-  if (!places.some((place) => place.name === "Englischer Garten"))
-    await rideLocations.createRideLocation({
-      chapterId: muenchen,
-      kind: "publicPlace",
-      name: "Englischer Garten",
-      address: "Englischer Garten, 80538 München",
-      latitude: 48.1642,
-      longitude: 11.6056,
-    });
+  const sonnenhof = {
+    name: "Seniorenheim Sonnenhof",
+    address: "Sonnenstraße 12, 80331 München",
+    latitude: 48.1371,
+    longitude: 11.5654,
+  };
 
   const today = startOfToday();
   const caretaker = userIds.get(address("caretaker"))!;
@@ -607,7 +586,6 @@ async function seedRideRequests(
       requesterUserId: caretaker,
       model: "pleasure",
       passengerIds: [inge.id],
-      rideLocationId: sonnenhof.id,
       pickupName: sonnenhof.name,
       pickupAddress: sonnenhof.address,
       pickupLatitude: sonnenhof.latitude,
@@ -623,7 +601,6 @@ async function seedRideRequests(
       requesterUserId: passenger,
       model: "functional",
       passengerIds: [own.id],
-      rideLocationId: null,
       pickupName: "Lindwurmstraße 88",
       pickupAddress: "Lindwurmstraße 88, 80337 München",
       pickupLatitude: 48.1259,

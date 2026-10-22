@@ -37,6 +37,9 @@ import type { Dictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
+import type { Locale as Notation } from "@/lib/format";
+import { formatInstantDate } from "@/lib/instant-date";
+import { useViewerTimeZone } from "@/lib/viewer-time";
 import { formatBadge, type InboxRow } from "./inbox-row";
 import type { NotificationCategory } from "@/features/notifications";
 
@@ -55,15 +58,18 @@ export function NotificationBellMenu({
   unseen,
   strings,
   locale,
+  notation,
   className,
 }: {
   rows: InboxRow[];
   unseen: number;
   strings: Dictionary["notifications"];
   locale: Locale;
+  notation: Notation;
   className?: string;
 }) {
   const router = useRouter();
+  const timeZone = useViewerTimeZone();
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [readIds, setReadIds] = useState<readonly string[]>([]);
@@ -225,7 +231,11 @@ export function NotificationBellMenu({
                       </span>
                       <time
                         dateTime={row.dateTime}
-                        title={row.whenExact}
+                        title={formatInstantDate(
+                          row.dateTime,
+                          notation,
+                          timeZone,
+                        )}
                         className="mt-1 block text-2sm text-ink-faint"
                       >
                         {row.when}

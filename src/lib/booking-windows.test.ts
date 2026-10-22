@@ -2,6 +2,7 @@ import {
   bookableDays,
   bookingDates,
   bookingRefusal,
+  dayClosure,
   horizonEnd,
   instantOn,
   partOfDay,
@@ -475,5 +476,28 @@ describe("windowLabel", () => {
 
   it("writes the chapter's clock in de-DE notation", () => {
     expect(windowLabel(window, "de-DE", BERLIN)).toBe("09:00 – 12:00");
+  });
+});
+
+describe("dayClosure", () => {
+  it("names a closure before the weekday", () => {
+    expect(
+      dayClosure({ ...MORNINGS, closures: ["2026-10-12"] }, "2026-10-12"),
+    ).toBe("closedDate");
+  });
+
+  it("names a weekday the chapter never rides", () => {
+    const noSundays: OperatingHours = {
+      windows: MORNINGS.windows.filter((window) => window.weekday !== 7),
+      closures: [],
+    };
+    expect(dayClosure(noSundays, "2026-10-11")).toBe("closedWeekday");
+  });
+
+  it("falls back to no times left on an open day", () => {
+    expect(dayClosure(MORNINGS, "2026-10-12")).toBe("noTimesLeft");
+    expect(dayClosure({ windows: [], closures: [] }, "2026-10-11")).toBe(
+      "noTimesLeft",
+    );
   });
 });

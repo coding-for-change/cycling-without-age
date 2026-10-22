@@ -1,27 +1,35 @@
 "use client";
 
-import { useSyncExternalStore, type ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import { Fragment, useSyncExternalStore, type ReactNode } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { ChevronLeft } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
+  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
+  BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { LanguagePicker } from "@/components/language-picker";
 import { ThemePicker, type ThemeStrings } from "@/components/theme-picker";
 import type { AccountData } from "@/components/account/types";
+import { markReplace, useCanGoBack } from "@/hooks/use-can-go-back";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
   activeItem,
   isConversationPath,
+  isDrillDown,
+  parentItem,
   type MemberPerspective,
   type ResolvedMemberNavItem,
 } from "../nav";
 import { AvatarButton } from "./avatar-button";
+import { usePageTitle } from "./member-title";
 import { SignInLink } from "./sign-in-link";
 
 const subscribeScroll = (onChange: () => void) => {
@@ -41,6 +49,7 @@ export function MemberTopBar({
   account,
   activePerspective,
   strings,
+  backLabel,
   signIn,
   locale,
   languageLabel,
@@ -51,6 +60,7 @@ export function MemberTopBar({
   account: AccountData | null;
   activePerspective: MemberPerspective;
   strings: { account: string; switchHint: string };
+  backLabel: string;
   signIn: { href: string; label: string };
   locale: Locale;
   languageLabel: string;
@@ -58,8 +68,16 @@ export function MemberTopBar({
   bell: ReactNode;
 }) {
   const pathname = usePathname();
-  const title = activeItem(pathname, items)?.label;
   const scrolled = useScrolled();
+  const pageTitle = usePageTitle();
+  const canGoBack = useCanGoBack();
+  const item = activeItem(pathname, items);
+  const parent = isDrillDown(pathname, items)
+    ? parentItem(pathname, items)
+    : null;
+  const current =
+    pageTitle ?? (item && item.href !== parent?.href ? item.label : null);
+  const title = current ?? item?.label;
 
   return (
     <header
@@ -70,7 +88,14 @@ export function MemberTopBar({
         isConversationPath(pathname) && "hidden md:flex",
       )}
     >
-      {account ? (
+      {parent ? (
+        <BackButton
+          parentHref={parent.href}
+          canGoBack={canGoBack}
+          label={backLabel}
+          className="-ml-2 md:hidden"
+        />
+      ) : account ? (
         <AvatarButton
           data={account}
           activePerspective={activePerspective}
@@ -91,8 +116,6 @@ export function MemberTopBar({
         className="mr-2 hidden bg-line data-[orientation=vertical]:h-4 md:block"
       />
 
-      {/* The page's own h1 announces the section; this is the same word drawn
-          where a phone expects it, so it is decoration. */}
       <span
         aria-hidden
         className="pointer-events-none absolute inset-x-0 truncate px-16 text-center font-semibold md:hidden"
@@ -100,10 +123,25 @@ export function MemberTopBar({
         {title}
       </span>
 
-      <Breadcrumb className="hidden md:block">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbPage>{title}</BreadcrumbPage>
+      <Breadcrumb className="hidden min-w-0 md:block">
+        <BreadcrumbList className="flex-nowrap">
+          {parent && current ? (
+            <Fragment>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link
+                    href={parent.href}
+                    transitionTypes={["pop"]}
+                  >
+                    {parent.label}
+                  </Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+            </Fragment>
+          ) : null}
+          <BreadcrumbItem className="min-w-0">
+            <BreadcrumbPage className="truncate">{title}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -121,5 +159,43 @@ export function MemberTopBar({
         />
       </div>
     </header>
+  );
+}
+
+function BackButton({
+  parentHref,
+  canGoBack,
+  label,
+  className,
+}: {
+  parentHref: string;
+  canGoBack: boolean;
+  label: string;
+  className?: string;
+}) {
+  const router = useRouter();
+
+  const goBack = () => {
+    if (canGoBack) return router.back();
+    markReplace();
+    router.replace(parentHref, { transitionTypes: ["pop"] });
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={goBack}
+      aria-label={label}
+      className={cn(
+        "flex size-11 shrink-0 items-center justify-center rounded-full text-ink transition-colors hover:bg-canvas-deep focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:transition-none",
+        className,
+      )}
+    >
+      <ChevronLeft
+        aria-hidden
+        className="size-6"
+        strokeWidth={2.25}
+      />
+    </button>
   );
 }

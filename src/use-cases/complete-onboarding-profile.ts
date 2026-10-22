@@ -1,7 +1,7 @@
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
 import { profile } from "@/features/profile";
-import type { ManagedRiderInput } from "@/features/passengers";
+import type { NewManagedRiderInput } from "@/features/passengers";
 import type { PersonalDetailsInput } from "@/features/profile";
 import { DomainError } from "@/lib/domain-error";
 import type { Locale } from "@/lib/i18n/locales";
@@ -44,7 +44,7 @@ export async function completeCaretakerOnboarding({
   userId: string;
   name: string;
   relationship?: string;
-  riders: ManagedRiderInput[];
+  riders: NewManagedRiderInput[];
   locale: Locale;
 }) {
   const chapterId = (await membership.listMembershipsOfUser(userId)).find((m) =>

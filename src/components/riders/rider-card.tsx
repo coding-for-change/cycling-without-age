@@ -9,10 +9,14 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { haptics } from "@/lib/native/haptics";
 import { cn } from "@/lib/utils";
 import type { PlaceSuggestion } from "@/lib/mapbox";
+import { useViewerToday } from "@/lib/viewer-time";
+import { RIDER_NOTE_MAX } from "@/features/passengers/schemas";
 
 type Pickup = { address: string; latitude: number; longitude: number };
 
@@ -24,6 +28,14 @@ export type RiderDraft = {
   gender: Gender | null;
   residence: "careHome" | "home";
   home: Pickup | null;
+  needsWheelchairBike: boolean;
+  note: string;
+};
+
+export type RiderNeedsStrings = {
+  title: string;
+  wheelchair: { label: string; hint: string };
+  note: { label: string; hint: string; placeholder: string };
 };
 
 export type RiderCardStrings = {
@@ -44,6 +56,7 @@ export type RiderCardStrings = {
     searching: string;
     noResults: string;
   };
+  needs?: RiderNeedsStrings;
 };
 
 export type AddressLookup = {
@@ -65,6 +78,8 @@ export const emptyRider = (): RiderDraft => ({
   gender: null,
   residence: "careHome",
   home: null,
+  needsWheelchairBike: false,
+  note: "",
 });
 
 export const isRiderComplete = (rider: RiderDraft) =>
@@ -85,6 +100,10 @@ export const riderPayload = (rider: RiderDraft) => ({
     rider.residence === "home" && rider.home
       ? { residence: "home" as const, ...rider.home }
       : { residence: "careHome" as const },
+  needs: {
+    needsWheelchairBike: rider.needsWheelchairBike,
+    note: rider.note.trim() || null,
+  },
 });
 
 export function RiderCard({
@@ -107,7 +126,7 @@ export function RiderCard({
   const sessionToken = useMemo(() => crypto.randomUUID(), []);
   const [resolving, setResolving] = useState(false);
   const id = (field: string) => `${rider.key}-${field}`;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = useViewerToday();
 
   const pick = (suggestion: PlaceSuggestion) => {
     setResolving(true);
@@ -284,6 +303,49 @@ export function RiderCard({
           </div>
         )}
       </fieldset>
+
+      {strings.needs && (
+        <fieldset className="space-y-3">
+          <legend className="mb-1.5 text-sm font-medium text-ink-soft">
+            {strings.needs.title}
+          </legend>
+          <div className="flex items-start justify-between gap-5">
+            <label
+              htmlFor={id("wheelchair")}
+              className="grid gap-1"
+            >
+              <span className="text-base text-ink">
+                {strings.needs.wheelchair.label}
+              </span>
+              <span className="text-sm text-ink-soft">
+                {strings.needs.wheelchair.hint}
+              </span>
+            </label>
+            <Switch
+              id={id("wheelchair")}
+              checked={rider.needsWheelchairBike}
+              onCheckedChange={(checked) =>
+                onChange({ needsWheelchairBike: checked })
+              }
+              className="mt-1"
+            />
+          </div>
+          <Field
+            id={id("note")}
+            label={strings.needs.note.label}
+          >
+            <Textarea
+              id={id("note")}
+              value={rider.note}
+              rows={2}
+              maxLength={RIDER_NOTE_MAX}
+              placeholder={strings.needs.note.placeholder}
+              onChange={(event) => onChange({ note: event.target.value })}
+              className="min-h-16 rounded-(--r-card) border-line text-base"
+            />
+          </Field>
+        </fieldset>
+      )}
     </section>
   );
 }

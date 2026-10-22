@@ -5,9 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { arrivedFromApp, currentArrival } from "@/lib/arrival";
 import { minimizeApp, onBackButton } from "@/lib/native/app";
 import { decideBack } from "@/lib/native/back-policy";
-
-const OVERLAY =
-  '[role="dialog"][data-state="open"], [role="menu"][data-state="open"], [data-vaul-drawer][data-state="open"]';
+import { isOverlayOpen } from "@/lib/native/overlay";
 
 const dismissOverlay = () =>
   document.dispatchEvent(
@@ -32,7 +30,7 @@ export function NativeBackHandler() {
     () =>
       onBackButton(() => {
         const decision = decideBack({
-          overlayOpen: Boolean(document.querySelector(OVERLAY)),
+          overlayOpen: isOverlayOpen(),
           depth: historyDepth(),
           pathname: current.current,
           arrivedFromApp: arrivedFromApp(currentArrival()),

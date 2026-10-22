@@ -8,7 +8,7 @@ import { resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { courseOverview } from "@/use-cases/training-access";
 import { CourseFrame, CourseOutlinePanel } from "../_components/course-frame";
-import { TRAINING_LIFE, courseHref } from "../_components/format";
+import { TRAINING_LIFE } from "../_components/format";
 import { outlineOf } from "../_components/outline";
 import { OutlineSkeleton } from "../_components/skeletons";
 
@@ -66,8 +66,6 @@ async function OutlineBody({ courseId }: { courseId: string }) {
   return (
     <CourseOutlinePanel
       title={card.title}
-      courseHref={courseHref(courseId)}
-      backLabel={dict.pilot.training.lesson.back}
       {...outline}
     />
   );

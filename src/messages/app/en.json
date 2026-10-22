@@ -311,18 +311,22 @@
       "viewAsAdmin": "View as admin",
       "viewAsPassenger": "View as passenger",
       "viewAsPilot": "View as pilot",
-      "newCourse": "Create a training course"
+      "newCourse": "Create a training course",
+      "inviteSuperadmin": "Invite a superadmin"
     },
     "countries": {
       "admins": "Country admins",
       "appoint": "Add a country admin",
-      "appointBody": "They need to have signed in once.",
-      "appointed": "{email} runs this country now.",
+      "appointBody": "We email them an invitation, and create an account if they don't have one. They become a country admin once they accept it with a passkey.",
+      "appointed": "Invitation sent to {email}.",
       "appointLabel": "Email address",
+      "appointNameLabel": "Name",
+      "appointNamePlaceholder": "First and last name",
       "appointPlaceholder": "name@example.com",
       "appointShort": "Add admin",
       "cancel": "Cancel",
       "confirmRemoveAdmin": "Remove {name} as country admin?",
+      "confirmRevokeInvite": "Withdraw the invitation for {name}?",
       "created": "{name} joined the movement.",
       "delete": {
         "body": "Every chapter in this country goes with it, and everything that belongs to them. This cannot be undone.",
@@ -336,9 +340,10 @@
       "edit": "Edit country",
       "empty": "No countries yet.",
       "errors": {
+        "alreadyAdmin": "They look after this country already.",
         "codeTaken": "That country code is taken.",
         "generic": "That didn't work. Try again.",
-        "noAccount": "Nobody with that email address has an account yet."
+        "inviteClosed": "That invitation was already accepted or withdrawn."
       },
       "fields": {
         "code": "Country code",
@@ -346,12 +351,15 @@
       },
       "nameHint": "How it reads in the sidebar and on chapter pages.",
       "new": "New country",
+      "pendingInvite": "{name} · invited",
       "pick": {
         "empty": "No country goes by that name.",
         "label": "Country",
         "placeholder": "Type a country"
       },
       "removeAdmin": "Remove {name}",
+      "revoked": "Invitation withdrawn.",
+      "revokeInvite": "Withdraw the invitation for {name}",
       "save": "Save country",
       "saved": "Saved."
     },
@@ -367,7 +375,6 @@
       "passengers": "{count, plural, one {1 passenger} other {# passengers}}",
       "pending": "{count, plural, one {1 open application} other {# open applications}}",
       "pilots": "{count, plural, one {1 pilot assignment} other {# pilot assignments}}",
-      "rideLocations": "{count, plural, one {1 ride location} other {# ride locations}}",
       "riders": "{count, plural, one {1 rider booking} other {# rider bookings}}",
       "rides": "{count, plural, one {1 ride, past ones included} other {# rides, past ones included}}",
       "roles": "{count, plural, one {1 chapter membership} other {# chapter memberships}}",
@@ -389,6 +396,8 @@
       "chapterUpdated": "{actor} changed {field}",
       "countryAdminAppointed": "{actor} made this person a country admin",
       "countryAdminRemoved": "{actor} stepped this person down as country admin",
+      "superadminGranted": "{actor} made this person a superadmin",
+      "superadminRemoved": "{actor} stepped this person down as superadmin",
       "countryDeleted": "{actor} deleted the country {name}",
       "emailSent": "An email went out — {template}",
       "fields": {
@@ -433,6 +442,7 @@
         "welcome": "Welcome",
         "careRequested": "Care request",
         "careDecided": "Care answer",
+        "careLinked": "Carer linked",
         "careInvited": "Caretaker invite",
         "rideRequestSubmitted": "New ride request",
         "rideRequestWithdrawn": "Ride request withdrawn",
@@ -443,7 +453,9 @@
         "rideReminder": "Rider reminder",
         "pilotReminder": "Pilot reminder",
         "rideNoDemand": "Nobody booked",
-        "rideRosterRefilled": "Rider back"
+        "rideRosterRefilled": "Rider back",
+        "adminInvite": "Admin invitation",
+        "superadminRemoved": "Superadmin stepped down"
       },
       "you": "You",
       "riderHandedOver": "{direction, select, in {{self, select, yes {You} other {{actor}}} handed {riderGone, select, yes {a former rider} other {{rider}}} over to this account from {previousGone, select, yes {a former member} other {{previous}}}} other {{self, select, yes {You} other {{actor}}} handed {riderGone, select, yes {a former rider} other {{rider}}} over to {nextGone, select, yes {a former member} other {{next}}}}}",
@@ -551,6 +563,7 @@
       }
     },
     "nav": {
+      "admins": "Admins",
       "bikes": "Trishaws",
       "chapters": "Chapters",
       "chat": "Messages",
@@ -563,7 +576,6 @@
       "reports": "Reports",
       "rides": "Rides",
       "settings": "Settings",
-      "rideLocations": "Ride locations",
       "training": "Training"
     },
     "navGroups": {
@@ -574,7 +586,60 @@
     "navLabel": "Admin sections",
     "newRide": "Schedule a ride",
     "openMenu": "Open menu",
+    "overview": {
+      "activity": {
+        "empty": "Nothing has happened here yet. Every change in your chapters lands here.",
+        "title": "Recent activity"
+      },
+      "attention": {
+        "application": {
+          "action": "Review",
+          "text": "{name} wants to pilot in {chapter}"
+        },
+        "damage": {
+          "action": "Check",
+          "grounded": "Grounded",
+          "text": "{trishaw}: {description}"
+        },
+        "empty": {
+          "body": "Nothing is waiting on you right now. New requests and open ends show up here.",
+          "title": "All caught up"
+        },
+        "finish": {
+          "action": "Close",
+          "text": "{ride} is over and still needs closing"
+        },
+        "more": "{count, plural, one {# more} other {# more}}",
+        "notReady": {
+          "action": "Open",
+          "coursesDone": "{name} finished the courses and still needs the in-person training",
+          "someone": "A pilot",
+          "text": "{name} isn't ready to ride yet"
+        },
+        "request": {
+          "action": "Review",
+          "someone": "Someone",
+          "text": "{name} asked for a ride on {date}"
+        },
+        "title": "Needs attention",
+        "unstaffed": {
+          "action": "Staff",
+          "text": "{ride} needs {missing, plural, one {# more pilot} other {# more pilots}}"
+        }
+      },
+      "showAll": "Show all · {count} more",
+      "showLess": "Show less",
+      "week": {
+        "empty": "No rides in the next seven days.",
+        "open": "Open calendar",
+        "title": "This week"
+      }
+    },
     "pages": {
+      "admins": {
+        "title": "Admins",
+        "body": "Who runs the platform and who looks after each country. Only a superadmin sees this."
+      },
       "bikes": {
         "body": "Each trishaw your chapter looks after, who last had it out, and when it next needs a service.",
         "title": "Trishaws"
@@ -775,6 +840,21 @@
         "title": "Looks after",
         "relationship": "Relationship: {relationship}",
         "handOverHint": "Deleting this account deletes the riders here who have no account of their own. Hand them over to someone else from their own page first to keep them riding."
+      },
+      "carer": {
+        "title": "Carer",
+        "none": "Books their own rides.",
+        "open": "Link a carer…",
+        "drawerTitle": "Link a carer for {rider}",
+        "drawerBody": "Pick someone in {chapter} who will book rides for {rider}. They get a request, and nothing changes until they say yes. {rider} keeps their own account and still sees their rides.",
+        "noMembers": "Nobody else in {chapter} can be linked yet. The carer needs to join the chapter first.",
+        "submit": "Send request",
+        "done": "{name} got a request to look after {rider}",
+        "pending": "Waiting for {name} to answer",
+        "errors": {
+          "unknownPassenger": "{rider} already has a carer. Reload the page.",
+          "sameManager": "{rider} can't be their own carer."
+        }
       }
     },
     "perspectives": {
@@ -1071,7 +1151,7 @@
         "minutes": "{count, plural, one {# minute before} other {# minutes before}}",
         "days": "{count, plural, one {# day before} other {# days before}}",
         "rider": {
-          "hint": "Riders, or whoever books for them, are asked to confirm the seat or give it up.",
+          "hint": "Riders, or whoever books for them, hear the ride is coming up and can cancel if plans have changed.",
           "label": "Remind riders"
         },
         "title": "Reminders",
@@ -1196,119 +1276,6 @@
     "user": {
       "account": "Account",
       "menuLabel": "Your account"
-    },
-    "rideLocations": {
-      "title": "Ride locations",
-      "body": "Where your rides start: Care Centers, residences and public places. Pick one when you schedule, and its address and usual length come along.",
-      "new": "New ride location",
-      "commandNew": "Add a ride location",
-      "pickChapter": "Pick a chapter to add a ride location.",
-      "empty": "No ride locations yet. Add the Care Centers and places your chapter rides from.",
-      "kinds": {
-        "careCenter": "Care Center",
-        "residence": "Residence",
-        "publicPlace": "Public place",
-        "other": "Other"
-      },
-      "columns": {
-        "name": "Name",
-        "kind": "Kind",
-        "address": "Address",
-        "contact": "Contact",
-        "upcoming": "Upcoming rides",
-        "chapter": "Chapter",
-        "status": "Status"
-      },
-      "statuses": {
-        "active": "Active",
-        "archived": "Archived"
-      },
-      "noAddress": "No address yet",
-      "noContact": "No contact yet",
-      "upcomingCount": "{count, plural, =0 {None} one {1 ride} other {# rides}}",
-      "create": {
-        "title": "New ride location",
-        "body": "A place your chapter rides from. You can fill in the rest later on its page.",
-        "chapter": "Chapter",
-        "name": "Name",
-        "namePlaceholder": "Solgården Care Center",
-        "nameRequired": "Give the ride location a name.",
-        "kind": "Kind",
-        "address": "Address",
-        "addressPlaceholder": "Search for the address",
-        "contact": "Contact on site",
-        "contactName": "Name",
-        "contactPhone": "Phone",
-        "contactEmail": "Email",
-        "invalidEmail": "That email address does not look right.",
-        "defaults": "When you schedule here",
-        "defaultsHint": "It fills in the scheduling drawer. You can still change it for each ride.",
-        "defaultMinutes": "Usual ride length",
-        "chapterDefault": "Chapter default",
-        "notes": "Notes for pilots",
-        "notesPlaceholder": "Where to wait, who opens the door, which entrance has the ramp …",
-        "submit": "Add ride location",
-        "created": "{name} is ready.",
-        "addressHint": "Pick the address riders leave from, then drag the pin to the right door."
-      },
-      "detail": {
-        "back": "Ride locations",
-        "name": "Name",
-        "properties": "Properties",
-        "kind": "Kind",
-        "chapter": "Chapter",
-        "added": "Added {date}",
-        "place": "Address",
-        "map": "Map of the ride location",
-        "mapUnavailable": "The map is not available right now.",
-        "openInGoogleMaps": "Open in Google Maps",
-        "contact": "Contact on site",
-        "contactName": "Name",
-        "contactNamePlaceholder": "Who to ask for",
-        "contactPhone": "Phone",
-        "contactPhonePlaceholder": "+45 …",
-        "contactEmail": "Email",
-        "contactEmailPlaceholder": "name@example.org",
-        "defaults": "When you schedule here",
-        "defaultMinutes": "Usual ride length",
-        "typicalRideKm": "Typical distance",
-        "typicalRideKmPlaceholder": "Kilometres per ride",
-        "km": "{km} km",
-        "notes": "Notes for pilots",
-        "notesPlaceholder": "Where to wait, who opens the door, which entrance has the ramp …",
-        "upcoming": "Upcoming rides here",
-        "noUpcoming": "No rides scheduled here yet.",
-        "riders": "{count, plural, =0 {No riders yet} one {1 rider} other {# riders}}",
-        "scheduleHere": "Schedule a ride here",
-        "archivedNotice": "This ride location is archived. It no longer appears when you schedule, and past rides keep its name and address.",
-        "danger": "Archive",
-        "dangerBody": "Archiving hides the place from the scheduling drawer. Rides keep their own copy of the name and address, so nothing on the calendar changes.",
-        "archive": {
-          "open": "Archive ride location",
-          "title": "Archive {name}?",
-          "body": "It disappears from the scheduling drawer. Rides already scheduled here keep their place.",
-          "submit": "Archive",
-          "done": "{name} is archived."
-        },
-        "restore": {
-          "open": "Restore",
-          "done": "{name} is back."
-        },
-        "cancel": "Cancel",
-        "status": {
-          "saving": "Saving …",
-          "saved": "Saved"
-        }
-      },
-      "picker": {
-        "placeholder": "Ride location or address",
-        "hint": "{kind} · {address}",
-        "defaults": "Usual length at {name}: {length}."
-      },
-      "errors": {
-        "unknownLocation": "That ride location is gone. Reload the page and try again.",
-        "locationArchived": "That ride location is archived. Restore it first."
-      }
     },
     "rideRequests": {
       "title": "Ride requests",
@@ -1825,13 +1792,79 @@
           "done": "{name} is deleted."
         }
       }
+    },
+    "admins": {
+      "invite": "Invite superadmin",
+      "inviteBody": "We email them an invitation. They become a superadmin once they accept it, signed in with a passkey. The invitation runs out after 7 days.",
+      "fields": {
+        "name": "Name",
+        "email": "Email address"
+      },
+      "namePlaceholder": "First and last name",
+      "emailPlaceholder": "name@example.com",
+      "send": "Send invitation",
+      "cancel": "Cancel",
+      "invited": "Invitation sent to {email}.",
+      "superadmins": "Superadmins",
+      "superadminsBody": "They see and change everything, in every country. Granting and removing the role asks for your passkey.",
+      "countryAdmins": "Country admins",
+      "countryAdminsBody": "Each one looks after a single country. Invite and remove them on the Countries page.",
+      "noCountryAdmins": "Nobody yet",
+      "noCountries": "No countries yet.",
+      "manage": "Open Countries",
+      "empty": "No superadmins. That shouldn't happen.",
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "since": "Since",
+        "invitedBy": "Invited by",
+        "passkey": "Passkey",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Active",
+        "pending": "Invited · until {date}"
+      },
+      "passkey": {
+        "yes": "Set up",
+        "no": "Missing"
+      },
+      "unknown": "—",
+      "you": "you",
+      "invitedBadge": "Invited",
+      "revoke": "Withdraw",
+      "revokeLabel": "Withdraw the invitation for {name}",
+      "revokeTitle": "Withdraw the invitation for {name}?",
+      "revokeBody": "The link in their email stops working. You can invite them again any time.",
+      "revoked": "Invitation withdrawn.",
+      "remove": {
+        "open": "Remove",
+        "title": "Remove {name} as superadmin?",
+        "body": "They keep their account, but lose every right that came with the role. Invitations they sent that nobody accepted yet are withdrawn.",
+        "label": "Type {word} to confirm",
+        "word": "REMOVE",
+        "submit": "Remove superadmin",
+        "done": "{name} is no longer a superadmin."
+      },
+      "lastSuperadmin": "The platform needs at least one superadmin.",
+      "errors": {
+        "generic": "That didn't work. Try again.",
+        "alreadyAdmin": "They're a superadmin already.",
+        "lastSuperadmin": "The platform needs at least one superadmin, so this one stays.",
+        "inviteClosed": "That invitation was already accepted or withdrawn.",
+        "stepUpFailed": "Your passkey wasn't confirmed, so nothing changed."
+      }
     }
   },
   "calendar": {
     "agendaEmpty": "Nothing booked yet. When a ride is scheduled for you, it turns up here.",
-    "agendaEmptyCaretaker": "{who, select, one {Nothing booked yet. When a ride is scheduled for {name}, it turns up here.} withOne {Nothing booked yet. When a ride is scheduled for you or {name}, it turns up here.} withMany {Nothing booked yet. When a ride is scheduled for you or someone you look after, it turns up here.} other {Nothing booked yet. When a ride is scheduled for someone you look after, it turns up here.}}",
     "bookedElsewhere": "Booked by another chapter",
     "cancelledOn": "Cancelled",
+    "card": {
+      "findingPilot": "Finding a pilot",
+      "rideFrom": "Ride from {place}",
+      "rideTo": "Ride to {destination}"
+    },
     "models": {
       "event": "Event ride",
       "functional": "Functional ride",
@@ -1934,15 +1967,19 @@
       "announcementOff": "{name} opened the group up again",
       "announcementOn": "{name} turned this into an announcement channel",
       "continued": "{name} kept the conversation going",
+      "departed": "{name} left",
+      "joined": "{name} joined",
       "left": "{name} left the group"
     },
     "thread": {
       "announcementLocked": "Only the person who started this group writes here. You still get every announcement.",
+      "announcementLockedAdmins": "Only the chapter's admins write here.",
       "back": "All chats",
       "deleted": "Message deleted",
       "edited": "edited",
       "frozen": {
         "body": "It closed when the ride was completed. Anyone in it can pick it up again.",
+        "cancelled": "It closed when the event was cancelled. Only the chapter's admins can open it again.",
         "continued": "The chat is open again.",
         "keepChatting": "Keep chatting",
         "title": "This chat has wrapped up"
@@ -2133,8 +2170,7 @@
       "entrance": "Entrance",
       "entrancePhoto": "Entrance of {location}",
       "homeCard": {
-        "body": "Bring the trishaw back and tell us if anything broke.",
-        "title": "Finish your last ride"
+        "body": "Bring the trishaw back and tell us if anything broke."
       },
       "intro": "Thanks for riding! Here is how to bring everything back.",
       "noLocation": "No return location is set for this trishaw. Ask your chapter where it goes.",
@@ -2558,6 +2594,11 @@
     "title": "Hello World"
   },
   "join": {
+    "start": {
+      "title": "Take part with this chapter",
+      "body": "Ride along, book rides for someone you look after, or do the pedalling. Sign in and choose how you'd like to take part.",
+      "cta": "Get started"
+    },
     "app": {
       "appStore": "Download on the App Store",
       "playStore": "Get it on Google Play",
@@ -2651,6 +2692,14 @@
       "passenger": "Book a ride",
       "pilot": "Find open rides"
     },
+    "calendar": {
+      "dayItems": "{count, plural, one {# entry} other {# entries}}",
+      "emptyDay": "Nothing planned for this day.",
+      "next": "Next month",
+      "nextUp": "Next: {date}",
+      "previous": "Previous month",
+      "today": "Today"
+    },
     "guest": {
       "greeting": "Welcome",
       "hero": "Create your account",
@@ -2659,28 +2708,36 @@
       "subtitle": "Looking around",
       "tagline": "Have a look around first — the chapter you picked is right here."
     },
+    "guestLocked": {
+      "calendar": "Your rides and the events you can join, day by day.",
+      "chat": "Talk to your pilots and your chapter.",
+      "cta": "Create your account",
+      "rides": "Your booked rides and requests will show up here.",
+      "title": "Available once you have an account"
+    },
     "home": {
-      "greeting": "Hi {name}",
-      "nextRide": {
-        "passenger": {
-          "caretakerEmpty": "{who, select, one {Nothing booked for {name} yet. When you book a ride, the day, the time and the pilot who's coming to collect {name} land here.} withOne {Nothing booked yet. When you book a ride for yourself or {name}, the day, the time and the pilot who's pedalling land here.} withMany {Nothing booked yet. When you book a ride for yourself or someone you look after, the day, the time and the pilot who's pedalling land here.} other {Nothing booked yet. When you book a ride for someone you look after, the day, the time and the pilot who's coming to collect them land here.}}",
-          "empty": "Nothing booked yet. When you book a ride, the day, the time and the pilot who's coming to collect you land here."
-        },
-        "pilot": {
-          "empty": "Nothing on your list yet. When your chapter posts open rides, the next one you take shows up here — date, passenger, meeting point."
-        },
-        "title": "Next ride"
+      "greeting": {
+        "default": "Hi {name}",
+        "morning": "Good morning, {name}",
+        "afternoon": "Good afternoon, {name}",
+        "evening": "Good evening, {name}",
+        "night": "Still up, {name}?"
+      },
+      "hero": {
+        "bookBody": "{who, select, one {A pilot collects {name} at the door and does the pedalling. All {name} has to do is enjoy the wind in their hair.} self {A pilot picks you up at your door and does the pedalling. All you have to do is enjoy the wind in your hair.} other {A pilot picks everyone up at the door and does the pedalling. All that is left is the wind in your hair.}}",
+        "bookTitle": "{who, select, one {Where shall we take {name}?} self {Where shall we ride?} other {Where shall we ride next?}}",
+        "eyebrow": "{who, select, one {{name}'s ride with {pilot}} self {Your ride with {pilot}} other {Next ride with {pilot}}}",
+        "eyebrowNoPilot": "{who, select, one {{name}'s next ride} self {Your next ride} other {Next ride}}",
+        "more": "{count, plural, one {+# more ride} other {+# more rides}}",
+        "when": "{weekday} {date} · {time}"
       },
       "passenger": {
-        "caretakerTagline": "{who, select, one {{name}'s next ride starts here.} withOne {Rides for you and {name} start here.} withMany {Rides for you and the people you look after start here.} other {Rides for the people you look after start here.}}",
-        "chooseChapter": "Choose a chapter",
-        "tagline": "Your next ride starts here."
+        "chooseChapter": "Choose a chapter"
       },
-      "pilot": {
-        "tagline": "Ready when you are."
-      },
-      "yourChapter": "Your chapter",
-      "yourChapters": "Your chapters"
+      "soon": {
+        "date": "{weekday} {date}",
+        "title": "Happening soon"
+      }
     },
     "nav": {
       "calendar": "Calendar",
@@ -2692,16 +2749,6 @@
     },
     "navLabel": "Sections",
     "pages": {
-      "calendar": {
-        "passenger": {
-          "body": "Nothing planned yet. Your upcoming rides appear here, with the date and the time your pilot arrives.",
-          "caretakerBody": "{who, select, one {Nothing planned for {name} yet. Upcoming rides appear here, with the date and the time the pilot arrives.} withOne {Nothing planned yet. Upcoming rides for you and {name} appear here, with the date and the time the pilot arrives.} withMany {Nothing planned yet. Upcoming rides for you and the people you look after appear here, with the date and the time the pilot arrives.} other {Nothing planned yet. Upcoming rides for the people you look after appear here, with the date and the time the pilot arrives.}}"
-        },
-        "pilot": {
-          "body": "An empty week, for now. Your rides, training dates and chapter meet-ups will line up here."
-        },
-        "title": "Calendar"
-      },
       "rides": {
         "pilot": {
           "body": "Your first ride isn't on the list yet. When your chapter posts open rides, the ones that need a pilot appear here — pick one, and the trishaw is yours for the afternoon."
@@ -2714,6 +2761,26 @@
       "label": "Perspective",
       "noChapter": "No chapter yet",
       "switchLabel": "Switch perspective"
+    },
+    "rides": {
+      "countdown": {
+        "days": "{count, plural, one {day} other {days}}",
+        "in": "In",
+        "today": "Today",
+        "tomorrow": "Tomorrow"
+      },
+      "map": {
+        "appleMaps": "Apple Maps",
+        "copied": "Address copied",
+        "copyAddress": "Copy address",
+        "copyFailed": "Couldn't copy the address",
+        "googleMaps": "Google Maps",
+        "open": "Open {place} in maps",
+        "title": "Open in"
+      },
+      "upcoming": {
+        "requested": "Requested · waiting for confirmation"
+      }
     },
     "tabBarLabel": "Main",
     "topBar": {
@@ -2772,8 +2839,6 @@
     "noChapter": "No chapter chosen yet",
     "rides": {
       "detail": {
-        "about": "About this ride",
-        "andBack": "and back at {time}",
         "call": "Call {name}",
         "cancelled": "This ride is cancelled",
         "cancelledHint": "We're sorry it won't happen this time. Your chapter is happy to help you plan the next one.",
@@ -2782,21 +2847,59 @@
         "message": "Message everyone on this ride",
         "openInMaps": "Open in maps",
         "pilot": "{count, plural, one {Your pilot} other {Your pilots}}",
-        "pilotPending": "Not assigned yet",
         "pilotPendingHint": "Your chapter is finding the right pilot for this ride.",
         "placeTbd": "Your chapter will let you know where the ride starts.",
-        "returnOfRideAt": "The way back from your ride at {time}",
         "riders": "Who's riding",
-        "startsAt": "Starts at {place}",
         "subject": "Our ride on {date}",
-        "to": "to {destination}"
+        "state": {
+          "cancelled": "Cancelled",
+          "completed": "Completed"
+        },
+        "yourPilot": "Your pilot is {name}",
+        "yourPilots": "Your pilots",
+        "findingPilot": "Finding your pilot",
+        "chat": "Chat",
+        "callShort": "Call",
+        "day": "Your day",
+        "pickupAt": "Pickup at {time}",
+        "arriveAt": "Arrive at {destination}",
+        "mapOf": "Map of {place}",
+        "trishaw": "You're riding in {name}",
+        "trishawHint": "One of {chapter}'s trishaws",
+        "changeTime": "Change time",
+        "cancelRide": {
+          "label": "Cancel ride",
+          "title": "Cancel this ride?",
+          "body": "Your chapter is told right away and can offer the trishaw to someone else.",
+          "confirm": "Cancel ride",
+          "cancel": "Keep the ride",
+          "done": "Ride cancelled. Your chapter knows."
+        },
+        "help": "Need help?",
+        "returnAt": "Way back at {time}",
+        "wayThereAt": "Way there at {time}"
       },
       "events": {
-        "badge": "Event",
+        "bar": {
+          "spotsLeft": "{count, plural, =0 {Full} one {# spot left} other {# spots left}}",
+          "open": "Spots available",
+          "book": "Book a spot",
+          "going": "You're going",
+          "add": "Add someone",
+          "pickTitle": "Who's coming along?",
+          "cancel": {
+            "label": "Cancel",
+            "aria": "Cancel your booking",
+            "title": "Cancel your booking?",
+            "body": "Your spots go back to the chapter so someone else can come along.",
+            "confirm": "Cancel booking",
+            "cancel": "Keep my spot",
+            "done": "Booking cancelled. The chapter knows."
+          }
+        },
         "book": {
           "done": "{count, plural, one {Seat booked} other {# seats booked}}. We look forward to riding with you!",
           "hint": "Pick who you'd like to bring along. The chapter takes care of the rest.",
-          "more": "Bring someone else along",
           "pick": "Pick who's coming",
           "submit": "{count, plural, one {Book # seat} other {Book # seats}}",
           "title": "Book a seat",
@@ -2810,12 +2913,14 @@
           "unknownPassenger": "That rider isn't one you book for.",
           "unknownRide": "This event isn't available anymore."
         },
+        "going": "{count, plural, =0 {Be the first to book} one {# rider is going} other {# riders are going}}",
+        "groupChat": "Group chat",
+        "groupChatLabel": "Message everyone going to this event",
+        "guestBook": "Sign in to book a spot",
         "open": "Seats available",
         "seatsLeft": "{count, plural, =0 {Full} one {# seat left} other {# seats left}}",
-        "title": "Upcoming events"
+        "whoComing": "Who's coming"
       },
-      "past": "Past rides",
-      "pastCount": "{count, plural, one {# ride} other {# rides}}",
       "reasons": {
         "equipment": "The trishaw needs some care before it can go out again.",
         "facility": "The care home couldn't make this day work.",
@@ -2828,16 +2933,13 @@
       "seat": {
         "cancel": {
           "aria": "Cancel seat for {name}",
-          "body": "The chapter can offer the seat to someone else. You can take it back here as long as there is room.",
+          "body": "The chapter can offer the seat to someone else.",
           "cancel": "Keep the seat",
           "confirm": "Give up the seat",
           "done": "Seat given up. The chapter knows.",
           "label": "Cancel seat",
           "title": "Give up {name}'s seat?"
         },
-        "confirm": "Confirm seat",
-        "confirmAria": "Confirm seat for {name}",
-        "confirmed": "Seat confirmed. See you there!",
         "errors": {
           "pleasureLimit": "This ride is full again. Your chapter is happy to help.",
           "rateLimited": "That was a lot at once. Please wait a moment and try again.",
@@ -2847,20 +2949,23 @@
           "unknownPassenger": "That rider isn't one you book for.",
           "unknownRide": "This ride isn't available anymore."
         },
-        "hint": "Please confirm each seat — or give it up if plans have changed, so someone else can ride.",
-        "retake": "Take the seat back",
-        "retakeAria": "Take the seat back for {name}",
-        "retaken": "Seat taken back. See you there!",
         "states": {
-          "booked": "Not confirmed yet",
+          "booked": "Booked",
           "cancelled": "Seat given up",
           "checkedIn": "Checked in",
           "completed": "Rode along",
-          "confirmed": "Confirmed",
           "noShow": "Didn't ride"
         }
       },
-      "write": "Write an email"
+      "write": "Write an email",
+      "list": {
+        "requested": "Requested",
+        "declined": "Not possible",
+        "showPast": "{count, plural, one {Show # past ride} other {Show # past rides}}",
+        "hidePast": "Hide past rides",
+        "emptyTitle": "No rides yet",
+        "emptyBody": "Where shall we ride? Ask your chapter for a ride, it only takes a minute."
+      }
     },
     "riderNeeds": {
       "title": "Riding needs",
@@ -2872,12 +2977,6 @@
         "label": "Note for pilots",
         "hint": "Anything that helps on the ride.",
         "placeholder": "Hard of hearing, loves the harbour route …"
-      },
-      "careCenter": {
-        "label": "Care Center",
-        "hint": "Where the rider lives, if the chapter rides from there.",
-        "gone": "{name} (no longer offered)",
-        "none": "None"
       }
     },
     "request": {
@@ -2938,14 +3037,8 @@
         "from": "Starting from",
         "pickup": "Pick up from",
         "to": "Going to",
-        "careCenter": "Care center",
-        "kinds": {
-          "careCenter": "Care center",
-          "residence": "Residence",
-          "publicPlace": "Meeting point",
-          "other": "Place"
-        },
         "home": "Home",
+        "careHome": "From {name}",
         "change": "Change",
         "elsewhere": "Somewhere else",
         "elsewhereBody": "Search for an address",
@@ -2954,7 +3047,10 @@
         "searchFailed": "That address couldn't be found. Try another one.",
         "previous": "Been there before",
         "roundTrip": "And back again",
-        "roundTripHint": "The chapter brings everyone home after the visit."
+        "roundTripHint": "The chapter brings everyone home after the visit.",
+        "routeMap": "The way from {from} to {to} on a map",
+        "routeSummary": "{distance} · about {duration} by trishaw",
+        "mapUnavailable": "The map isn't available right now."
       },
       "when": {
         "parts": {
@@ -2965,6 +3061,11 @@
         "windows": "Times on {date}",
         "confirm": "These are windows, not appointments — the chapter confirms the exact time.",
         "pickDay": "Pick a day to see its times.",
+        "dayLabel": "Day",
+        "closedDate": "{chapter} isn't riding on {date} — please pick another day.",
+        "closedWeekday": "{chapter} doesn't ride on {weekday, select, 1 {Mondays} 2 {Tuesdays} 3 {Wednesdays} 4 {Thursdays} 5 {Fridays} 6 {Saturdays} other {Sundays}} — please pick another day.",
+        "noTimesLeft": "There are no times left on {date} — please pick another day.",
+        "outsideRange": "Requests are open from {first} to {last} — please pick a day in between.",
         "none": "No days are open for requests right now. Ask the chapter directly."
       },
       "note": {
@@ -2980,14 +3081,6 @@
         "change": "Change",
         "waiting": "Nothing is booked yet. {chapter} looks at your request and confirms the exact time — you'll get a message either way.",
         "waitingAuto": "If a trishaw is free for that time, {chapter} books the ride straight away and you get the confirmation. If not, {chapter} looks at your request and gets back to you."
-      },
-      "list": {
-        "title": "Your requests",
-        "empty": "No rides booked yet. Ask the chapter for one — it only takes a minute.",
-        "status": {
-          "pending": "Waiting for {chapter}",
-          "declined": "{chapter} can't make it"
-        }
       },
       "page": {
         "title": "Ride request",
@@ -3015,7 +3108,11 @@
         "when": "Requested for",
         "note": "Your note",
         "seeRide": "See the ride",
+        "change": "Change request",
         "askAgain": "Ask for another ride",
+        "pickupBetween": "Pickup between {from} and {to}",
+        "wayBack": "Way back",
+        "wayBackHint": "{chapter} sets the time when it confirms your ride.",
         "cancel": {
           "label": "Cancel request",
           "title": "Cancel this request?",
@@ -3030,8 +3127,6 @@
         "closedDate": "The chapter is closed that day. Pick another one.",
         "leadTime": "That's too soon for the chapter to plan. Pick a later time.",
         "outsideHours": "The chapter doesn't ride then. Pick one of the times shown.",
-        "locationNotInChapter": "That place is no longer offered. Pick another one.",
-        "unknownLocation": "That place is no longer offered. Pick another one.",
         "notChapterMember": "You're no longer a member of this chapter.",
         "riderNotInChapter": "These riders ride with different chapters. Ask for each one separately.",
         "tooManyRiders": "That's more riders than one trishaw takes.",
@@ -3049,6 +3144,23 @@
         "title": "No days open for requests",
         "body": "{chapter} isn't taking ride requests for the coming weeks right now. Write to them, and they'll find a way.",
         "subject": "A ride with Cycling Without Age"
+      },
+      "reschedule": {
+        "eyebrow": "Changing your ride on {date}",
+        "done": "Your new time is with {chapter}. The old ride is cancelled.",
+        "doneKept": "Your new time is with {chapter}. Please cancel the old ride on its page.",
+        "errors": {
+          "rideClosed": "This ride can't be changed anymore.",
+          "unknownRide": "This ride isn't available anymore."
+        }
+      },
+      "change": {
+        "eyebrow": "Changing your request for {date}",
+        "done": "Your changed request is with {chapter}. The old one is withdrawn.",
+        "doneKept": "Your changed request is with {chapter}, but the old one is still open. Please cancel it on its page.",
+        "errors": {
+          "requestNotPending": "This request can't be changed anymore."
+        }
       }
     }
   },
@@ -3074,31 +3186,40 @@
         "dismiss": "Got it",
         "title": "You're in."
       },
-      "title": "Ready when you are",
-      "yourChapters": "Your chapters",
-      "training": {
-        "title": "Finish your training to ride",
-        "steps": "{done} of {total} steps done",
-        "next": "Next: {title}",
-        "nextInPerson": "Next: your in-person training",
-        "waiting": "Your chapter confirms the in-person training once you've been.",
-        "continue": "Continue",
-        "view": "View training"
+      "today": {
+        "upcoming": "Today · {time}",
+        "now": "Riding now · until {time}",
+        "ended": "Ended {when}",
+        "riders": "{count, plural, =0 {No riders booked yet} one {# rider} other {# riders}}",
+        "navigate": "Navigate",
+        "finish": "Finish ride",
+        "details": "Open ride"
+      },
+      "next": {
+        "eyebrow": "Your next ride"
+      },
+      "open": {
+        "title": "Rides that need a pilot",
+        "seeAll": "See all"
       }
     },
     "rides": {
       "detail": {
         "about": "About this ride",
-        "back": "My rides",
         "call": "Call {name}",
+        "cantMake": {
+          "body": "Step back while there's still time, so your chapter can find someone else.",
+          "subject": "Can't make the ride on {date}",
+          "title": "Can't make it?",
+          "write": "Write to {chapter}"
+        },
         "cancelled": "This ride is off.",
         "cancelledBody": "It stays on your list so you know it isn't happening.",
         "chat": "Ride chat",
         "chatHint": "Everyone on this ride, and your chapter.",
+        "completed": "This ride has taken place. Thanks for piloting it.",
         "crew": "Riding with you",
-        "destination": "Destination",
-        "map": "Map of the ride",
-        "mapUnavailable": "The map isn't available right now.",
+        "day": "Your ride",
         "noPlace": "No place set yet.",
         "noRiders": "Nobody is booked yet.",
         "note": "Note for pilots",
@@ -3108,12 +3229,9 @@
           "title": "Picking up the trishaw"
         },
         "riders": "Riders",
-        "roundTrip": "Round trip",
         "solo": "Just you on this one.",
-        "start": "Start",
         "trishaws": "Trishaws",
         "via": "via {name}",
-        "where": "Where",
         "withdraw": {
           "body": "Your chapter will be told and can look for someone else.",
           "bodyBoth": "You'll step back from both legs of the round trip, as far as there is still time. Your chapter will be told and can look for someone else.",
@@ -3146,7 +3264,6 @@
         "goneBody": "Someone else may have taken it, or the ride was moved or cancelled. Your chapter's other open rides are on My rides.",
         "goneCta": "See open rides"
       },
-      "past": "Past rides",
       "signUp": {
         "alsoWayBack": "Part of a round trip: you'll pilot the way back too, {time}, if it still needs a pilot.",
         "alsoWayThere": "Part of a round trip: you'll pilot the way there too, {time}, if it still needs a pilot.",
@@ -3158,7 +3275,12 @@
         "notReady": "You haven't finished the training you need to ride with {chapter} yet. Once you're through, you can sign up here.",
         "notReadyCta": "Continue training"
       },
-      "upcomingEmpty": "Nothing coming up right now. When your chapter puts you on a ride, it lands here."
+      "upcomingEmpty": "Nothing coming up right now. When your chapter puts you on a ride, it lands here.",
+      "list": {
+        "showPast": "{count, plural, one {Show # past ride} other {Show # past rides}}",
+        "hidePast": "Hide past rides",
+        "emptyTitle": "No rides yet"
+      }
     },
     "status": {
       "appliedOn": "Asked on {date}",
@@ -3218,7 +3340,6 @@
         "exemptHint": "Not needed for you"
       },
       "course": {
-        "back": "Training",
         "start": "Start course",
         "resume": "Continue",
         "takeQuiz": "Take the quiz",
@@ -3235,7 +3356,6 @@
         "lockedHint": "Pass the quiz before it first"
       },
       "lesson": {
-        "back": "Course",
         "of": "Step {index} of {total}",
         "next": "Next lesson",
         "toQuiz": "Go to the quiz",
@@ -3482,7 +3602,6 @@
       "eventsOnly": "Only an event ride can be shown to riders.",
       "invalidFile": "That photo can't be used here. Upload it again.",
       "legsOverlap": "The way there would run into the way back. Move the other leg first.",
-      "locationNotInChapter": "That ride location belongs to another chapter. Pick one of this chapter's places.",
       "notPilot": "Only a pilot of this chapter can be put on the ride.",
       "otherLegScheduled": "The other half of this round trip is still going ahead. Cancel it first, or keep this ride.",
       "partOfRoundTrip": "This ride is one leg of a round trip, so it stays a functional ride.",
@@ -3498,7 +3617,6 @@
       "titleRequired": "Give the event ride a title.",
       "tooManyPilots": "More pilots are already on the ride than that. Take some off first.",
       "unknownChapter": "That chapter is not available.",
-      "unknownLocation": "That ride location is gone. Reload the page and try again.",
       "unknownPassenger": "That passenger no longer exists.",
       "unknownRide": "This ride no longer exists.",
       "unknownTrishaw": "That trishaw no longer exists.",
@@ -3506,6 +3624,8 @@
       "pilotNotReady": "This pilot hasn't finished their training yet."
     },
     "history": {
+      "bookingClosed": "{who, select, you {You} other {{actor}}} closed booking for riders",
+      "bookingOpened": "{who, select, you {You} other {{actor}}} opened booking for riders",
       "cancelled": "{who, select, you {You} other {{actor}}} cancelled the ride",
       "checkInUndone": "{who, select, you {You} other {{actor}}} undid {name}'s check-in",
       "checkedIn": "{who, select, you {You} other {{actor}}} checked {name} in",
@@ -3675,7 +3795,6 @@
         "cancelled": "Gave up the seat",
         "checkedIn": "Checked in",
         "completed": "Rode",
-        "confirmed": "Confirmed",
         "noShow": "No-show"
       },
       "checkIn": "Check-in",
@@ -4010,6 +4129,23 @@
       "training": "Short videos and a quiz, right in this app.",
       "inPersonTraining": "Your chapter confirms it once you've been.",
       "firstRide": "A captain rides along the first time."
+    },
+    "row": {
+      "next": "Next: {step}",
+      "watch": "Watch “{title}”",
+      "resume": "Continue “{title}”",
+      "heroTitle": "Get ready to ride",
+      "continue": "Continue",
+      "sections": {
+        "training": "Training",
+        "setup": "Your setup"
+      },
+      "status": {
+        "notStarted": "Not started",
+        "inProgress": "{ratio, number, percent} done",
+        "passed": "Passed",
+        "exempt": "Exempt"
+      }
     }
   },
   "care": {
@@ -4054,6 +4190,39 @@
       "close": "Close",
       "watchFirst": "Watch up to here first",
       "loading": "Loading video"
+    }
+  },
+  "adminInvite": {
+    "superadmin": {
+      "title": "Help run Cycling Without Age",
+      "body": "{inviter} invited you to become a superadmin: every country, every chapter, every setting."
+    },
+    "countryAdmin": {
+      "title": "Look after {country}",
+      "body": "{inviter} invited you to become a country admin for {country}. Every chapter there is yours to support."
+    },
+    "accept": "Accept invitation",
+    "accepted": {
+      "title": "You're in",
+      "body": "Your new role is active. The dashboard is waiting.",
+      "open": "Open the dashboard"
+    },
+    "expired": {
+      "title": "This invitation ran out",
+      "body": "Invitations last 7 days. Ask {inviter} to send you a new one."
+    },
+    "revoked": {
+      "title": "This invitation was withdrawn",
+      "body": "Nothing to do here. If that's a surprise, ask {inviter}."
+    },
+    "passkeyTitle": "First, a passkey",
+    "passkeyBody": "Admins sign in with a passkey: a fingerprint, a face or a PIN on this device. Create one, then accept the invitation.",
+    "errors": {
+      "generic": "That didn't work. Try again.",
+      "notFound": "This invitation isn't for the account you're signed in with.",
+      "passkeyRequired": "Create a passkey first, then accept.",
+      "inviteClosed": "This invitation was already accepted or withdrawn.",
+      "inviteExpired": "This invitation ran out. Ask for a new one."
     }
   }
 }

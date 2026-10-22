@@ -37,18 +37,15 @@ import {
 } from "@/features/rides/report-range";
 import type { ScopeArg } from "@/lib/commands";
 import { formatMessage } from "@/lib/i18n/format";
-import {
-  formatPeriod,
-  formatTime,
-  toIsoDateLocal,
-  type Locale,
-} from "@/lib/format";
+import { formatPeriod, toIsoDateLocal, type Locale } from "@/lib/format";
 import { haptics } from "@/lib/native/haptics";
 import { cn } from "@/lib/utils";
+import { useNow } from "@/lib/viewer-time";
 import { Segmented } from "../../_components/segmented";
 import { StickyToolbar } from "../../_components/sticky-toolbar";
 import type { ScopeChoice } from "../../scopes";
 import { useReportNav } from "./report-nav";
+import { updatedLabel } from "./updated-label";
 
 export type FilterBarStrings = {
   label: string;
@@ -92,7 +89,6 @@ export function FilterBar({
   scopes,
   activeScope,
   generatedAt,
-  timeZone,
   locale,
   language,
   strings,
@@ -102,12 +98,12 @@ export function FilterBar({
   scopes: ScopeChoice[];
   activeScope: ScopeArg;
   generatedAt: string;
-  timeZone: string;
   locale: Locale;
   language: string;
   strings: FilterBarStrings;
 }) {
   const nav = useReportNav();
+  const now = useNow();
   const query = nav?.query;
   const requested = query?.get("range") ?? null;
   const optimistic: Preset =
@@ -192,13 +188,17 @@ export function FilterBar({
         <div className="ml-auto flex items-center gap-3">
           <time
             dateTime={generatedAt}
+            suppressHydrationWarning
             className="hidden text-xs text-ink-faint lg:block"
           >
-            {formatMessage(
-              strings.updated,
-              { time: formatTime(generatedAt, locale, timeZone) },
-              locale,
-            )}
+            {now === null
+              ? ""
+              : updatedLabel(
+                  strings.updated,
+                  generatedAt,
+                  language,
+                  new Date(now),
+                )}
           </time>
           {scope}
         </div>

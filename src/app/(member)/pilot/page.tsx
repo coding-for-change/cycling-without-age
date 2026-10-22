@@ -10,48 +10,43 @@ import { resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { getMemberHome } from "@/use-cases/member-home";
-import { ChapterCards } from "../_components/home/chapter-cards";
 import { Greeting } from "../_components/home/greeting";
-import {
-  GreetingFallback,
-  SectionFallback,
-} from "../_components/home/home-fallback";
-import { NextRideCard } from "../_components/home/next-ride-card";
-import { SetupChecklist } from "../_components/home/setup-checklist";
+import { GreetingFallback } from "../_components/home/home-fallback";
 import { MEMBER_LIFE } from "../_components/instant";
 import { MemberPageShell } from "../_components/member-page";
 import { ApprovalCelebration } from "./_components/approval-celebration";
-import { FinishRideCard } from "./_components/finish-ride-card";
-import { PendingChapterCard } from "./_components/pending-chapter-card";
-import { RejectedCard } from "./_components/rejected-card";
 import {
-  TrainingCard,
-  TrainingCardFallback,
-} from "./_components/training-card";
+  NeedsPilotCarousel,
+  NeedsPilotCarouselFallback,
+} from "./_components/needs-pilot-carousel";
+import { PendingChapterCard } from "./_components/pending-chapter-card";
+import {
+  PilotHero,
+  PilotHeroFallback,
+  PilotSetupRow,
+} from "./_components/pilot-hero";
+import { RejectedCard } from "./_components/rejected-card";
 
 export default function PilotHomePage() {
   return (
     <MemberPageShell>
-      <Suspense fallback={<GreetingFallback />}>
-        <Greeting perspective="pilot" />
+      <Suspense fallback={<GreetingFallback hero />}>
+        <Greeting
+          perspective="pilot"
+          hero
+        />
       </Suspense>
       <Suspense fallback={null}>
         <PilotStatus />
       </Suspense>
-      <Suspense fallback={<TrainingCardFallback />}>
-        <TrainingCard />
+      <Suspense fallback={<PilotHeroFallback />}>
+        <PilotHero />
+      </Suspense>
+      <Suspense fallback={<NeedsPilotCarouselFallback />}>
+        <NeedsPilotCarousel />
       </Suspense>
       <Suspense fallback={null}>
-        <FinishRideCard />
-      </Suspense>
-      <Suspense fallback={<SectionFallback />}>
-        <NextRideCard perspective="pilot" />
-      </Suspense>
-      <Suspense fallback={<SectionFallback />}>
-        <ChapterCards perspective="pilot" />
-      </Suspense>
-      <Suspense fallback={null}>
-        <SetupChecklist perspective="pilot" />
+        <PilotSetupRow />
       </Suspense>
     </MemberPageShell>
   );

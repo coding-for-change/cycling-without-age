@@ -3,10 +3,10 @@ import { storageAccessLabels } from "@/features/fleet/components/strings";
 import type { Locale } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
 import type { pickupView } from "@/use-cases/finish-ride";
+import { DetailSection } from "../../../../_components/ride-detail/detail-section";
 
 type Places = NonNullable<Awaited<ReturnType<typeof pickupView>>>;
 
-/** Where each trishaw on the ride waits, and how to get in. */
 export function PickupCard({
   places,
   dict,
@@ -23,17 +23,14 @@ export function PickupCard({
   };
 
   return (
-    <section className="flex flex-col gap-3">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-ink-soft text-xs font-semibold tracking-wide uppercase">
-          {strings.title}
-        </h2>
-        <p className="text-2sm text-ink-soft">{strings.hint}</p>
-      </div>
+    <DetailSection
+      title={strings.title}
+      hint={strings.hint}
+    >
       {places.map(({ trishaw, location }) => (
         <article
           key={trishaw.id}
-          className="border-line flex flex-col gap-4 rounded-2xl border p-4"
+          className="flex flex-col gap-4 rounded-2xl border border-line p-4"
         >
           <h3 className="text-sm font-semibold">{trishaw.name}</h3>
           {location ? (
@@ -51,6 +48,6 @@ export function PickupCard({
           )}
         </article>
       ))}
-    </section>
+    </DetailSection>
   );
 }

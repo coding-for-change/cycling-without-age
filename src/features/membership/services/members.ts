@@ -89,6 +89,21 @@ export const findAdminMembersOfChapter = (
     },
   });
 
+export const findAdminPhonesOfChapter = (chapterId: string) =>
+  prisma.member.findMany({
+    where: {
+      organizationId: chapterId,
+      role: { contains: "admin" },
+      user: { phoneNumber: { not: null } },
+    },
+    orderBy: { createdAt: "asc" },
+    select: {
+      userId: true,
+      role: true,
+      user: { select: { name: true, phoneNumber: true } },
+    },
+  });
+
 export const upsertMemberRole = (
   userId: string,
   chapterId: string,

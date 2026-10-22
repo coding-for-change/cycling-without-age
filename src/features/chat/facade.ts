@@ -13,6 +13,7 @@ import {
   CONVERSATION_PAGE_SIZE,
   EDIT_WINDOW_MS,
   GROUP_ANNOUNCEMENT_THRESHOLD,
+  GROUP_MAX_MEMBERS,
   MAX_MESSAGE_CHARS,
   MESSAGE_PAGE_SIZE,
   createGroupInput,
@@ -67,6 +68,7 @@ import {
   findMembershipsChangedSince,
   findMembershipsOfUser,
   stampLastRead,
+  stampMemberRole,
   stampMutedUntil,
 } from "./services/members";
 import {
@@ -110,9 +112,7 @@ const bodyText = (
   dek: Buffer,
   conversationId: string,
 ) =>
-  message.kind === "system" ||
-  message.deletedAt !== null ||
-  message.body.length === 0
+  message.deletedAt !== null || message.body.length === 0
     ? ""
     : decryptText(dek, buffer(message.body), conversationId);
 
@@ -249,6 +249,7 @@ const appendSystemMessage = async (
   conversation: { id: string; lastSeq: number },
   meta: SystemMeta,
   db: Prisma.TransactionClient,
+  body: Uint8Array = EMPTY_BODY,
 ) => {
   const seq = conversation.lastSeq + 1;
   const row = await insertMessage(
@@ -257,7 +258,7 @@ const appendSystemMessage = async (
       seq,
       senderId: null,
       kind: "system",
-      body: EMPTY_BODY,
+      body,
       meta: meta as unknown as Prisma.InputJsonObject,
     },
     db,
@@ -349,6 +350,8 @@ export type RideChat = {
   chapterId: string;
   title: string | null;
   memberUserIds: string[];
+  ownerUserIds: string[];
+  marksComingsAndGoings: boolean;
 };
 
 export type RideConversationInput = {
@@ -358,16 +361,26 @@ export type RideConversationInput = {
    * open (yet). `open` says whether the chat already exists.
    */
   load: (open: boolean) => Promise<RideChat | null>;
+  namesOf: (userIds: string[]) => Promise<Map<string, string>>;
 };
 
 const RIDE_CHAT_ROUNDS = 5;
 
+const rideMembers = (ride: RideChat | null) =>
+  [...new Set(ride?.memberUserIds ?? [])].slice(0, GROUP_MAX_MEMBERS);
+
+const crowded = (ride: RideChat, memberUserIds: string[]) =>
+  ride.ownerUserIds.length > 0 &&
+  memberUserIds.length > GROUP_ANNOUNCEMENT_THRESHOLD;
+
 /**
  * A ride's chat is the ride's own group: whoever is on the ride and the
- * chapter's admins. Its members follow the ride rather than anyone's choice,
- * so it may hold fewer people than a group someone makes by hand, and it has
- * no owner. Called again after every change on the ride, it adds whoever
- * joined and removes whoever left.
+ * chapter's admins. Its members and owners follow the ride rather than
+ * anyone's choice, so it may hold fewer people than a group someone makes by
+ * hand; past a group's cap it keeps the first the ride names. A chat with
+ * owners turns to announcements once it outgrows a conversation, as a group
+ * made by hand does. Called again after every change on the ride, it adds
+ * whoever joined and removes whoever left.
  */
 export async function syncRideConversation(
   input: RideConversationInput,
@@ -381,8 +394,9 @@ export async function syncRideConversation(
 
 async function openRideConversation(input: RideConversationInput) {
   const ride = await input.load(false);
-  const memberUserIds = [...new Set(ride?.memberUserIds ?? [])];
+  const memberUserIds = rideMembers(ride);
   if (!ride || !memberUserIds.length) return null;
+  const owners = new Set(ride.ownerUserIds);
   const { wrapped, keyVersion } = wrapDek(generateDek());
   try {
     const created = await insertConversation({
@@ -394,9 +408,10 @@ async function openRideConversation(input: RideConversationInput) {
       createdByUserId: null,
       dek: wrapped,
       keyVersion,
+      announcementOnly: crowded(ride, memberUserIds),
       members: memberUserIds.map((userId) => ({
         userId,
-        role: "member" as const,
+        role: owners.has(userId) ? ("owner" as const) : ("member" as const),
       })),
     });
     await publishToUsers(memberUserIds, {
@@ -424,23 +439,116 @@ async function followRide(
   for (let round = 0; round < RIDE_CHAT_ROUNDS; round++) {
     const ride = await input.load(true);
     if (!ride) return;
-    const memberUserIds = [...new Set(ride.memberUserIds)];
-    const { added, removed } = await transaction(async (tx) => {
+    const memberUserIds = rideMembers(ride);
+    const owners = new Set(ride.ownerUserIds);
+    const roleOf = (userId: string) =>
+      owners.has(userId) ? ("owner" as const) : ("member" as const);
+    const change = await transaction(async (tx) => {
       await lockConversation(conversationId, tx);
-      const current = await findMemberUserIds(conversationId, tx);
-      const have = new Set(current);
+      const conversation = await requireConversation(conversationId, tx);
+      const current = await findMembersOfConversation(conversationId, tx);
+      const have = new Set(current.map((member) => member.userId));
       const want = new Set(memberUserIds);
       const added = memberUserIds.filter((userId) => !have.has(userId));
-      const removed = current.filter((userId) => !want.has(userId));
+      const removed = current
+        .filter((member) => !want.has(member.userId))
+        .map((member) => member.userId);
+      const recast = current.filter(
+        (member) =>
+          want.has(member.userId) && member.role !== roleOf(member.userId),
+      );
+      const announcing =
+        !conversation.announcementOnly && crowded(ride, memberUserIds);
       if (added.length)
-        await insertConversationMembers(conversationId, added, tx);
+        await insertConversationMembers(
+          conversationId,
+          added.map((userId) => ({ userId, role: roleOf(userId) })),
+          tx,
+        );
       if (removed.length)
         await deleteConversationMembers(conversationId, removed, tx);
-      return { added, removed };
+      for (const role of ["owner", "member"] as const) {
+        const userIds = recast
+          .filter((member) => roleOf(member.userId) === role)
+          .map((member) => member.userId);
+        if (userIds.length)
+          await stampMemberRole(conversationId, userIds, role, tx);
+      }
+      if (announcing) await stampAnnouncementOnly(conversationId, true, tx);
+      return { added, removed, recast: recast.length > 0, announcing };
     });
-    if (!added.length && !removed.length) return;
-    await announceMemberChanges(conversationId, memberUserIds, added, removed);
+    const { added, removed } = change;
+    if (
+      !added.length &&
+      !removed.length &&
+      !change.recast &&
+      !change.announcing
+    )
+      return;
+    if (added.length || removed.length)
+      await announceMemberChanges(
+        conversationId,
+        memberUserIds,
+        added,
+        removed,
+      );
+    if (change.announcing)
+      await publishToUsers(memberUserIds, {
+        type: "conversation.updated",
+        conversationId,
+        patch: { announcementOnly: true },
+      });
+    if (ride.marksComingsAndGoings && (added.length || removed.length))
+      await markComingsAndGoings(
+        conversationId,
+        memberUserIds,
+        await input.namesOf([...added, ...removed]),
+        added,
+        removed,
+      );
   }
+}
+
+/**
+ * Whoever joins or leaves is named in the chat as they were then, sealed like
+ * any message, so the line still reads right once they are gone.
+ */
+async function markComingsAndGoings(
+  conversationId: string,
+  memberIds: string[],
+  names: Map<string, string>,
+  added: string[],
+  removed: string[],
+) {
+  const lines = [
+    ...added.map((userId) => ({ type: "joined" as const, userId })),
+    ...removed.map((userId) => ({ type: "departed" as const, userId })),
+  ];
+  const messages = await transaction(async (tx) => {
+    await lockConversation(conversationId, tx);
+    const conversation = await requireConversation(conversationId, tx);
+    const dek = dekOf(conversation);
+    let lastSeq = conversation.lastSeq;
+    const views: ChatMessageView[] = [];
+    for (const { type, userId } of lines) {
+      const name = names.get(userId);
+      const row = await appendSystemMessage(
+        { id: conversationId, lastSeq },
+        { type, actorUserId: userId },
+        tx,
+        name ? encryptText(dek, name, conversationId) : EMPTY_BODY,
+      );
+      lastSeq = row.seq;
+      views.push(toMessageView(row, dek));
+    }
+    return views;
+  });
+  for (const message of messages)
+    await publishToUsers(memberIds, {
+      type: "message.created",
+      conversationId,
+      message,
+    });
 }
 
 async function announceMemberChanges(
@@ -857,18 +965,25 @@ export async function freezeRideConversation(rideId: string) {
   return conversation.id;
 }
 
+export const rideIdOf = async (conversationId: string) =>
+  (await findConversationById(conversationId))?.rideId ?? null;
+
 export async function continueConversation({
   conversationId,
   userId,
+  ownersOnly = false,
 }: {
   conversationId: string;
   userId: string;
+  ownersOnly?: boolean;
 }): Promise<void> {
   const result = await transaction(async (tx) => {
     await lockConversation(conversationId, tx);
     const conversation = await requireConversation(conversationId, tx);
-    await requireMembership(conversationId, userId, tx);
+    const membership = await requireMembership(conversationId, userId, tx);
     if (!conversation.frozenAt) return null;
+    if (ownersOnly && membership.role !== "owner")
+      throw new DomainError("notOwner");
 
     await stampFrozenAt(conversationId, null, tx);
     const row = await appendSystemMessage(

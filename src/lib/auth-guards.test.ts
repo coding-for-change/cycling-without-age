@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { chapters } from "@/features/chapters";
+import { admins } from "@/features/admins";
 import { profile } from "@/features/profile";
 import {
   canReadFile,
@@ -17,6 +18,7 @@ import {
   readNextPath,
   requirePerspective,
   requireSuperAdmin,
+  requireSuperAdminStepUp,
 } from "@/lib/auth-guards";
 import { NEXT_COOKIE } from "@/lib/redirects";
 import type { Access, FileReadRule } from "@/lib/access";
@@ -50,7 +52,10 @@ jest.mock("@/lib/auth", () => ({
   auth: { api: { getSession: jest.fn() } },
 }));
 jest.mock("@/features/profile", () => ({
-  profile: { countPasskeys: jest.fn() },
+  profile: { countPasskeys: jest.fn(), sessionPasskeyVerifiedAt: jest.fn() },
+}));
+jest.mock("@/features/admins", () => ({
+  admins: { isSuperadmin: jest.fn() },
 }));
 jest.mock("@/features/chapters", () => ({
   chapters: {
@@ -553,5 +558,50 @@ describe("canReadFile", () => {
 
   it("shows catalogue material to anyone signed in", () => {
     expect(canReadFile(viewer("x"), { kind: "anyone" })).toBe(true);
+  });
+});
+
+describe("a superadmin changing who is superadmin", () => {
+  const verifiedAt = profile.sessionPasskeyVerifiedAt as jest.Mock;
+  const stillSuperadmin = admins.isSuperadmin as jest.Mock;
+
+  beforeEach(() => {
+    signedInAs({ role: "superadmin" });
+    stillSuperadmin.mockResolvedValue(true);
+  });
+
+  it("is fresh right after signing in with a passkey", async () => {
+    verifiedAt.mockResolvedValue(new Date(Date.now() - 60_000));
+    await expect(requireSuperAdminStepUp()).resolves.toMatchObject({
+      fresh: true,
+    });
+    expect(verifiedAt).toHaveBeenCalledWith("s1");
+  });
+
+  it("is stale five minutes after the passkey", async () => {
+    verifiedAt.mockResolvedValue(new Date(Date.now() - 5 * 60_000 - 1));
+    await expect(requireSuperAdminStepUp()).resolves.toMatchObject({
+      fresh: false,
+    });
+  });
+
+  it("is stale in a session no passkey opened", async () => {
+    verifiedAt.mockResolvedValue(null);
+    await expect(requireSuperAdminStepUp()).resolves.toMatchObject({
+      fresh: false,
+    });
+  });
+
+  it("is denied once the role is gone from the database, whatever the cookie says", async () => {
+    stillSuperadmin.mockResolvedValue(false);
+    verifiedAt.mockResolvedValue(new Date());
+    await denied(requireSuperAdminStepUp);
+  });
+
+  it("is denied to a country admin", async () => {
+    signedInAs({ countryAdminOf: [DE] });
+    verifiedAt.mockResolvedValue(new Date());
+    await denied(requireSuperAdminStepUp);
+    expect(stillSuperadmin).not.toHaveBeenCalled();
   });
 });

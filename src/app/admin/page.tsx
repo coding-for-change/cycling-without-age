@@ -17,7 +17,15 @@ import {
   type KpiMetric,
 } from "./_components/kpi-data";
 import { KpiTiles } from "./_components/kpi-tiles";
+import { OverviewActivity } from "./_components/overview-activity";
+import { OverviewAttention } from "./_components/overview-attention";
 import { OpenReportsLink } from "./_components/overview-header";
+import {
+  ActivitySkeleton,
+  AttentionSkeleton,
+  WeekSkeleton,
+} from "./_components/overview-skeletons";
+import { OverviewWeek } from "./_components/overview-week";
 import { readActiveScope, type AdminSearchParams } from "./active-scope";
 import { ADMIN_LIFE, adminViewer } from "./admin-viewer";
 
@@ -29,8 +37,35 @@ export default function OverviewPage({ searchParams }: PageProps) {
       <Suspense fallback={<OverviewSkeleton />}>
         <OverviewFrame
           tiles={
-            <Suspense fallback={<KpiTilesSkeleton />}>
+            <Suspense
+              key="tiles"
+              fallback={<KpiTilesSkeleton />}
+            >
               <OverviewKpis searchParams={searchParams} />
+            </Suspense>
+          }
+          attention={
+            <Suspense
+              key="attention"
+              fallback={<AttentionSkeleton />}
+            >
+              <OverviewAttention searchParams={searchParams} />
+            </Suspense>
+          }
+          week={
+            <Suspense
+              key="week"
+              fallback={<WeekSkeleton />}
+            >
+              <OverviewWeek searchParams={searchParams} />
+            </Suspense>
+          }
+          activity={
+            <Suspense
+              key="activity"
+              fallback={<ActivitySkeleton />}
+            >
+              <OverviewActivity searchParams={searchParams} />
             </Suspense>
           }
         />
@@ -39,12 +74,23 @@ export default function OverviewPage({ searchParams }: PageProps) {
   );
 }
 
-async function OverviewFrame({ tiles }: { tiles: ReactNode }) {
+async function OverviewFrame({
+  tiles,
+  attention,
+  week,
+  activity,
+}: {
+  tiles: ReactNode;
+  attention: ReactNode;
+  week: ReactNode;
+  activity: ReactNode;
+}) {
   "use cache: private";
   cacheLife(ADMIN_LIFE);
 
   const [viewer, dict] = await Promise.all([adminViewer(), getDictionary()]);
   const strings = dict.admin.reports.overview;
+  const overview = dict.admin.overview;
 
   return (
     <>
@@ -71,7 +117,92 @@ async function OverviewFrame({ tiles }: { tiles: ReactNode }) {
         </div>
         {tiles}
       </section>
+      <OverviewColumns
+        attention={
+          <OverviewSection
+            id="overview-attention"
+            title={overview.attention.title}
+          >
+            {attention}
+          </OverviewSection>
+        }
+        week={
+          <OverviewSection
+            id="overview-week"
+            title={overview.week.title}
+          >
+            {week}
+          </OverviewSection>
+        }
+        activity={
+          <OverviewSection
+            id="overview-activity"
+            title={overview.activity.title}
+          >
+            {activity}
+          </OverviewSection>
+        }
+      />
     </>
+  );
+}
+
+function OverviewColumns({
+  attention,
+  week,
+  activity,
+}: {
+  attention: ReactNode;
+  week: ReactNode;
+  activity: ReactNode;
+}) {
+  return (
+    <div className="grid gap-8 lg:grid-cols-2 lg:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_300px]">
+      <div className="min-w-0">{attention}</div>
+      <div className="min-w-0">{week}</div>
+      <aside className="min-w-0 lg:col-span-2 xl:col-span-1 xl:border-l xl:border-line xl:pl-6">
+        {activity}
+      </aside>
+    </div>
+  );
+}
+
+function OverviewSection({
+  id,
+  title,
+  subtitle,
+  children,
+}: {
+  id: string;
+  title: string;
+  subtitle?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      aria-labelledby={id}
+      className="flex flex-col gap-3"
+    >
+      <div className="flex flex-col">
+        <h2
+          id={id}
+          className="text-sm font-medium"
+        >
+          {title}
+        </h2>
+        {subtitle ? <p className="text-xs text-ink-soft">{subtitle}</p> : null}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function SectionHeadingSkeleton() {
+  return (
+    <div className="flex flex-col gap-1">
+      <Skeleton className="h-4 w-24" />
+      <Skeleton className="h-3 w-32" />
+    </div>
   );
 }
 
@@ -128,6 +259,26 @@ function OverviewSkeleton() {
         </div>
         <KpiTilesSkeleton />
       </div>
+      <OverviewColumns
+        attention={
+          <div className="flex flex-col gap-3">
+            <SectionHeadingSkeleton />
+            <AttentionSkeleton />
+          </div>
+        }
+        week={
+          <div className="flex flex-col gap-3">
+            <SectionHeadingSkeleton />
+            <WeekSkeleton />
+          </div>
+        }
+        activity={
+          <div className="flex flex-col gap-3">
+            <SectionHeadingSkeleton />
+            <ActivitySkeleton />
+          </div>
+        }
+      />
     </>
   );
 }

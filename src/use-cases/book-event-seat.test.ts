@@ -4,7 +4,7 @@ import { domainCode } from "@/lib/domain-error";
 import { bookEventSeats } from "./book-event-seat";
 
 jest.mock("@/features/passengers", () => ({
-  passengers: { listPassengersManagedBy: jest.fn() },
+  passengers: { listRidersOfAccount: jest.fn() },
 }));
 jest.mock("@/features/rides", () => ({
   rides: { getRideScope: jest.fn(), bookSeats: jest.fn() },
@@ -23,7 +23,7 @@ beforeEach(() => {
     chapterId: "chapter-1",
     trishawIds: [],
   });
-  (passengers.listPassengersManagedBy as jest.Mock).mockResolvedValue([
+  (passengers.listRidersOfAccount as jest.Mock).mockResolvedValue([
     { id: "mother", chapterId: "chapter-1" },
     { id: "uncle", chapterId: "chapter-2" },
   ]);
@@ -34,6 +34,20 @@ describe("bookEventSeats", () => {
   it("books riders this account manages in the event's chapter", async () => {
     expect(await bookEventSeats("ride-1", ["mother"], "carer")).toBe(1);
     expect(rides.bookSeats).toHaveBeenCalledWith("ride-1", ["mother"], "carer");
+  });
+
+  it("lets a rider with their own account book their own seat while a carer looks after them", async () => {
+    (passengers.listRidersOfAccount as jest.Mock).mockResolvedValue([
+      {
+        id: "erna",
+        chapterId: "chapter-1",
+        userId: "erna-user",
+        managedByUserId: "carer",
+      },
+    ]);
+
+    expect(await bookEventSeats("ride-1", ["erna"], "erna-user")).toBe(1);
+    expect(passengers.listRidersOfAccount).toHaveBeenCalledWith("erna-user");
   });
 
   it("refuses a rider someone else manages", async () => {

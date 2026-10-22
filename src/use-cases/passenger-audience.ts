@@ -38,7 +38,9 @@ export const getPassengerAudience = cache(
     return audienceOf({
       managesOthers: Boolean(account?.managesOthers),
       ridesThemself: own !== null,
-      riderNames: passengers.othersOf(managed).map((rider) => rider.firstName),
+      riderNames: managed
+        .filter((rider) => rider.userId !== userId)
+        .map((rider) => rider.firstName),
     });
   },
 );

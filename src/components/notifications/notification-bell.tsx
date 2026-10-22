@@ -24,9 +24,7 @@ export async function NotificationBell({ className }: { className?: string }) {
 
   const now = new Date();
   const notation = resolveLocale(head.get("accept-language"));
-  const rows = items.map((item) =>
-    toInboxRow(item, { words: language, notation, now }),
-  );
+  const rows = items.map((item) => toInboxRow(item, { words: language, now }));
 
   const stamp = [
     unseen,
@@ -42,6 +40,7 @@ export async function NotificationBell({ className }: { className?: string }) {
       unseen={unseen}
       strings={dict.notifications}
       locale={language}
+      notation={notation}
       className={className}
     />
   );

@@ -11,11 +11,13 @@ import {
 import { parseRoles, type ChapterRole } from "@/lib/access";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { isTrainingRequired } from "@/lib/feature-flags";
-import { formatDate, formatNumber, resolveLocale } from "@/lib/format";
+import { formatNumber, resolveLocale } from "@/lib/format";
+import { formatInstantDate } from "@/lib/instant-date";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { ICONS } from "@/components/icons";
 import { readActiveScope } from "../../active-scope";
+import { chapterZones } from "../../chapter-zones";
 import { InviteDrawer } from "./invite-dialog";
 import { MembersTable, type MemberRow } from "./members-table";
 import { RequestsTable, type RequestRow } from "./requests-table";
@@ -29,14 +31,16 @@ const loadMembers = cache(async (searchParams: Promise<AdminSearchParams>) => {
     "members",
   );
 
-  const [pending, members, riders, dict, head, locale] = await Promise.all([
-    membership.listApplications(chapterIds, "pending"),
-    membership.listMembersOfChapters(chapterIds),
-    passengers.listPassengersOfChapters(chapterIds),
-    getDictionary(),
-    headers(),
-    getLocale(),
-  ]);
+  const [pending, members, riders, dict, head, locale, zoneOf] =
+    await Promise.all([
+      membership.listApplications(chapterIds, "pending"),
+      membership.listMembersOfChapters(chapterIds),
+      passengers.listPassengersOfChapters(chapterIds),
+      getDictionary(),
+      headers(),
+      getLocale(),
+      chapterZones(chapterIds),
+    ]);
 
   const photos = await personProfiles.photoFileIdsOf(
     [...new Set(members.map((member) => member.userId))].map((id) => ({
@@ -69,7 +73,11 @@ const loadMembers = cache(async (searchParams: Promise<AdminSearchParams>) => {
     avatar: avatarSvg(avatarSeed(application.user.email)),
     message: application.message,
     chapterName: application.chapter.name,
-    applied: formatDate(application.createdAt, notation),
+    applied: formatInstantDate(
+      application.createdAt,
+      notation,
+      zoneOf(application.chapterId),
+    ),
     appliedIso: application.createdAt.toISOString(),
   }));
 
@@ -110,7 +118,11 @@ const loadMembers = cache(async (searchParams: Promise<AdminSearchParams>) => {
               locale,
             )
           : null,
-      since: formatDate(member.createdAt, notation),
+      since: formatInstantDate(
+        member.createdAt,
+        notation,
+        zoneOf(member.organizationId),
+      ),
       sinceIso: member.createdAt.toISOString(),
     };
   });

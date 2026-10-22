@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/empty-state";
 import { chapters } from "@/features/chapters";
 import { requireAuth } from "@/lib/auth-guards";
 import { isTrainingRequired } from "@/lib/feature-flags";
-import { formatDateMedium, resolveLocale } from "@/lib/format";
+import { resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { ownReadiness } from "@/use-cases/pilot-readiness";
 import { visibleCourses } from "@/use-cases/training-access";
@@ -102,11 +102,12 @@ async function TrainingHome() {
         columns={1}
       >
         <InPersonCard
-          confirmedOn={
+          confirmedAt={
             summary.inPersonConfirmedAt
-              ? formatDateMedium(summary.inPersonConfirmedAt, notation)
+              ? new Date(summary.inPersonConfirmedAt).toISOString()
               : null
           }
+          notation={notation}
           strings={strings.inPerson}
           language={language}
         />

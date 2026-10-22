@@ -5,8 +5,15 @@ import { usePathname } from "next/navigation";
 
 type Stamped = { cwaDepth?: number } | null;
 
-export function backDepth(state: Stamped, previous: number) {
-  return typeof state?.cwaDepth === "number" ? state.cwaDepth : previous + 1;
+let replacing = false;
+
+export function markReplace() {
+  replacing = true;
+}
+
+export function backDepth(state: Stamped, previous: number, replaced = false) {
+  if (typeof state?.cwaDepth === "number") return state.cwaDepth;
+  return replaced ? Math.max(previous, 0) : previous + 1;
 }
 
 export function useCanGoBack() {
@@ -16,7 +23,8 @@ export function useCanGoBack() {
 
   useEffect(() => {
     const state = window.history.state as Stamped;
-    depth.current = backDepth(state, depth.current);
+    depth.current = backDepth(state, depth.current, replacing);
+    replacing = false;
     if (state?.cwaDepth !== depth.current) {
       window.history.replaceState({ ...state, cwaDepth: depth.current }, "");
     }

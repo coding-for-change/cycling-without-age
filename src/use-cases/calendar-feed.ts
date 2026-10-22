@@ -69,7 +69,7 @@ async function audienceOf(userId: string): Promise<Audience> {
     passengers.getOwnPassenger(userId),
   ]);
   const pilots = memberships.some(({ roles }) => roles.includes("pilot"));
-  const others = passengers.othersOf(managed);
+  const others = managed.filter((rider) => rider.userId !== userId);
   return {
     pilotChapterIds: pilots
       ? memberships.map(({ chapterId }) => chapterId)

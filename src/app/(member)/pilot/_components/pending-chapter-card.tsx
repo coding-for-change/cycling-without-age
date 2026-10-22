@@ -1,10 +1,11 @@
 import { Check } from "lucide-react";
 import { membership } from "@/features/membership";
-import { formatDate, type Locale } from "@/lib/format";
+import type { Locale } from "@/lib/format";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { cn, firstName } from "@/lib/utils";
 import { formatMessage } from "@/lib/i18n/format";
 import { PersonAvatar } from "@/components/person-avatar";
+import { ViewerDate } from "@/components/viewer-date";
 import { getLocale, type Dictionary } from "@/lib/i18n";
 
 type StatusStrings = Dictionary["pilot"]["status"];
@@ -28,7 +29,7 @@ export async function PendingChapterCard({
   ]);
 
   return (
-    <article className="rounded-2xl border border-line p-5">
+    <article className="rounded-2xl border border-line bg-paper p-5">
       <h2 className="font-display text-lg font-bold">
         {formatMessage(
           strings.pendingTitle,
@@ -37,11 +38,12 @@ export async function PendingChapterCard({
         )}
       </h2>
       <p className="mt-1 text-sm text-ink-soft">
-        {formatMessage(
-          strings.appliedOn,
-          { date: formatDate(appliedAt, locale) },
-          language,
-        )}
+        <ViewerDate
+          value={appliedAt.toISOString()}
+          notation={locale}
+          template={strings.appliedOn}
+          language={language}
+        />
       </p>
 
       <ApplicationTimeline steps={strings.steps} />

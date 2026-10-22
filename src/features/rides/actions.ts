@@ -12,6 +12,7 @@ import { createAttempt, type ActionResult } from "@/lib/domain-error";
 import { wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { cyclingRoute, type Route } from "@/lib/mapbox";
+import { trishawRoute } from "@/lib/trishaw-pace";
 import { withinRateLimit } from "@/lib/rate-limit";
 import {
   commitUpload,
@@ -65,7 +66,6 @@ const MAPPED_ERRORS = [
   "eventsOnly",
   "invalidFile",
   "legsOverlap",
-  "locationNotInChapter",
   "notAssigned",
   "notPilot",
   "otherLegScheduled",
@@ -87,7 +87,6 @@ const MAPPED_ERRORS = [
   "trishawReserved",
   "trishawUnavailable",
   "unknownChapter",
-  "unknownLocation",
   "unknownPassenger",
   "unknownRide",
   "unknownTrishaw",
@@ -398,7 +397,7 @@ export async function estimateRouteAction(
     return { ok: false, error: "rateLimited" };
   return attempt(
     async () => ({
-      route: await cyclingRoute(parsed.data.from, parsed.data.to),
+      route: trishawRoute(await cyclingRoute(parsed.data.from, parsed.data.to)),
     }),
     { revalidate: false },
   );

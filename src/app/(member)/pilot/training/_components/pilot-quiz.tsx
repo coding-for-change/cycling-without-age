@@ -5,6 +5,8 @@ import {
   type QuizAttemptView,
   type QuizFlowStrings,
 } from "@/features/training/components/quiz-flow";
+import type { Locale } from "@/lib/format";
+import { useViewerDate } from "@/lib/viewer-time";
 import { startQuizAction, submitQuizAction } from "../actions";
 
 export function PilotQuiz({
@@ -13,7 +15,8 @@ export function PilotQuiz({
   initial,
   locked,
   lockedHref,
-  passedOn,
+  passedAt,
+  notation,
   continueHref,
   final,
   strings,
@@ -24,12 +27,15 @@ export function PilotQuiz({
   initial: QuizAttemptView;
   locked: boolean;
   lockedHref: string | null;
-  passedOn: string | null;
+  passedAt: string | null;
+  notation: Locale;
   continueHref: string;
   final: boolean;
   strings: QuizFlowStrings;
   language: string;
 }) {
+  const passedOn = useViewerDate(passedAt, notation);
+
   return (
     <QuizFlow
       mode="pilot"

@@ -4,7 +4,6 @@ import { activity } from "@/lib/activity";
 import { DomainError } from "@/lib/domain-error";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
-import { rideLocations } from "@/features/ride-locations";
 import { profile } from "@/features/profile";
 
 const riderOf = ({
@@ -25,8 +24,6 @@ export async function provisionAssistedPassenger({
   const owner = helper ?? null;
   const contact = owner ? owner.contact : input.contact;
   if (!contact) throw new DomainError("notFound");
-  if (needs?.rideLocationId)
-    await rideLocations.requireCareCenter(needs.rideLocationId, chapterId);
 
   if (owner) {
     const existing = await accounts.findUserIdByContact(contact);

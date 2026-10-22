@@ -5,6 +5,7 @@ import { Check, Phone, X } from "lucide-react";
 import { toast } from "sonner";
 import type { NotifyLabels } from "@/components/action-feedback";
 import { ConfirmButton } from "@/components/confirm-button";
+import { PersonAvatar } from "@/components/person-avatar";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
 import { haptics } from "@/lib/native/haptics";
@@ -21,6 +22,7 @@ export type CheckInEntry = {
   pickup?: string | null;
   phone?: string | null;
   via?: string | null;
+  avatar?: { svg: string; photoUrl: string | null };
 };
 
 export type CheckInLabels = {
@@ -167,6 +169,12 @@ export function CheckInList({
                     className={compact ? "size-4" : "size-5"}
                   />
                 </button>
+              ) : null}
+              {entry.avatar && !compact ? (
+                <PersonAvatar
+                  svg={entry.avatar.svg}
+                  photoUrl={entry.avatar.photoUrl}
+                />
               ) : null}
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className={cn("truncate", !compact && "font-medium")}>

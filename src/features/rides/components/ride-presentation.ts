@@ -47,16 +47,52 @@ export function rideWhere(
   return from ?? to;
 }
 
+export type HeadlinePhrases = {
+  rideTo: string;
+  rideFrom: string;
+  words: Locale;
+};
+
+type HeadlineRide = Pick<
+  RideCalendarRow,
+  "model" | "title" | "locationName" | "destinationName"
+>;
+
+function phrasedHeadline(
+  ride: HeadlineRide,
+  phrases: HeadlinePhrases,
+): string | null {
+  const from = ride.locationName?.trim() || null;
+  const to = ride.destinationName?.trim() || null;
+  if (ride.model === "functional" && to)
+    return formatMessage(phrases.rideTo, { destination: to }, phrases.words);
+  if (ride.model === "pleasure" && from)
+    return formatMessage(phrases.rideFrom, { place: from }, phrases.words);
+  return null;
+}
+
 export const rideHeadline = (
-  ride: Pick<
-    RideCalendarRow,
-    "model" | "title" | "locationName" | "destinationName"
-  >,
+  ride: HeadlineRide,
   strings: { via: string; models: Record<RideModelName, string> },
+  phrases?: HeadlinePhrases,
 ) =>
   (ride.model === "event" ? ride.title?.trim() : null) ||
+  (phrases ? phrasedHeadline(ride, phrases) : null) ||
   rideWhere(ride, strings) ||
   strings.models[ride.model];
+
+export function rideCardPlace(ride: HeadlineRide): string | null {
+  const from = ride.locationName?.trim() || null;
+  const to = ride.destinationName?.trim() || null;
+  switch (ride.model) {
+    case "functional":
+      return to ? from : null;
+    case "pleasure":
+      return from ? to : null;
+    case "event":
+      return ride.title?.trim() ? (from ?? to) : null;
+  }
+}
 
 export const trishawMeta = (option: {
   model: string | null;

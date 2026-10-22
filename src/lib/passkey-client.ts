@@ -107,3 +107,15 @@ export async function signInWithPasskey(): Promise<PasskeyResult> {
   authClient.$store.notify("$sessionSignal");
   return { error: null };
 }
+
+type StepUpResult = { ok: true } | { ok: false; error: string };
+
+export async function withPasskeyStepUp<R extends StepUpResult>(
+  run: () => Promise<R>,
+): Promise<R | { ok: false; error: "stepUpFailed" }> {
+  const first = await run();
+  if (first.ok || first.error !== "stepUp") return first;
+  const { error } = await signInWithPasskey();
+  if (error) return { ok: false, error: "stepUpFailed" };
+  return run();
+}

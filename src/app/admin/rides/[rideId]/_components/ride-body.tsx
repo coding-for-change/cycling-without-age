@@ -40,6 +40,7 @@ import type { Coords } from "@/lib/geo";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { cyclingRoute } from "@/lib/mapbox";
+import { trishawRoute } from "@/lib/trishaw-pace";
 import { avatarSvg } from "@/lib/avatar";
 import { pick } from "@/lib/utils";
 import { markdownToolLabels } from "@/components/markdown-editor";
@@ -76,7 +77,7 @@ const DETAIL_ONLY = { history: null };
 async function cachedRoute(from: Coords, to: Coords) {
   "use cache";
   cacheLife("days");
-  const route = await cyclingRoute(from, to);
+  const route = trishawRoute(await cyclingRoute(from, to));
   if (!route) throw new Error("route unavailable");
   return route;
 }
@@ -480,6 +481,7 @@ export async function RideBody({
                     notation={notation}
                     words={language}
                     now={new Date()}
+                    timeZone={zone}
                   />
                 </>
               ) : null}

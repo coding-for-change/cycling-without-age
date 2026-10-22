@@ -51,6 +51,7 @@ jest.mock("@/lib/events", () => ({
 }));
 
 const scope = findRideRequestScope as jest.Mock;
+const find = findRideRequest as jest.Mock;
 const close = closePendingRequest as jest.Mock;
 
 const REQUESTER = "user-carer";
@@ -67,12 +68,15 @@ const pending = {
   chapterId: MUNICH,
   status: "pending",
   requesterUserId: REQUESTER,
+  requestedEndsAt: new Date("2099-01-01T10:00:00Z"),
+  passengers: [{ passenger: { id: "mother", managedByUserId: REQUESTER } }],
 };
 
 beforeEach(() => {
   jest.clearAllMocks();
   emitted.length = 0;
   scope.mockResolvedValue(pending);
+  find.mockResolvedValue(pending);
   close.mockResolvedValue({ count: 1 });
 });
 
@@ -102,8 +106,34 @@ describe("withdraw", () => {
     expect(close).not.toHaveBeenCalled();
   });
 
+  it("lets the account booking for every rider take it back too", async () => {
+    find.mockResolvedValue({ ...pending, requesterUserId: "user-rider" });
+    await rideRequests.withdraw("request-1", REQUESTER);
+    expect(close).toHaveBeenCalledWith(
+      "request-1",
+      expect.objectContaining({ decidedByUserId: REQUESTER }),
+      "user-rider",
+      {},
+    );
+  });
+
+  it("refuses an account booking for only some of the riders", async () => {
+    find.mockResolvedValue({
+      ...pending,
+      requesterUserId: "user-rider",
+      passengers: [
+        ...pending.passengers,
+        { passenger: { id: "father", managedByUserId: "user-other" } },
+      ],
+    });
+    expect(await codeOf(rideRequests.withdraw("request-1", REQUESTER))).toBe(
+      "unknownRequest",
+    );
+    expect(close).not.toHaveBeenCalled();
+  });
+
   it("refuses once the chapter has decided", async () => {
-    scope.mockResolvedValue({ ...pending, status: "scheduled" });
+    find.mockResolvedValue({ ...pending, status: "scheduled" });
     expect(await codeOf(rideRequests.withdraw("request-1", REQUESTER))).toBe(
       "requestNotPending",
     );
@@ -202,7 +232,6 @@ describe("submit", () => {
     requesterUserId: REQUESTER,
     model: "pleasure" as const,
     passengerIds: ["mother"],
-    rideLocationId: null,
     pickupName: "Home",
     pickupAddress: null,
     pickupLatitude: null,
@@ -272,6 +301,38 @@ describe("handOverOpenRequests", () => {
     expect(setRequester).toHaveBeenCalledWith("alone", "user-new");
     expect(removeRequestRider).toHaveBeenCalledWith("shared", "erna");
     expect(setRequester).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("getChangeable", () => {
+  const now = new Date("2026-10-05T08:00:00Z");
+
+  it("hands its owner an open request", async () => {
+    await expect(
+      rideRequests.getChangeable("request-1", REQUESTER, now),
+    ).resolves.toEqual(pending);
+  });
+
+  it("reads someone else's request as a missing one", async () => {
+    expect(
+      await codeOf(
+        rideRequests.getChangeable("request-1", "user-stranger", now),
+      ),
+    ).toBe("unknownRequest");
+  });
+
+  it("refuses a decided or lapsed request", async () => {
+    find.mockResolvedValue({ ...pending, status: "declined" });
+    expect(
+      await codeOf(rideRequests.getChangeable("request-1", REQUESTER, now)),
+    ).toBe("requestNotPending");
+    find.mockResolvedValue({
+      ...pending,
+      requestedEndsAt: new Date("2026-10-05T07:00:00Z"),
+    });
+    expect(
+      await codeOf(rideRequests.getChangeable("request-1", REQUESTER, now)),
+    ).toBe("requestNotPending");
   });
 });
 
@@ -681,8 +742,17 @@ describe("asking within the limits", () => {
       window,
       now,
     );
-    expect(open).toHaveBeenCalledWith(REQUESTER, now);
-    expect(overlapping).toHaveBeenCalledWith(["mother", "father"], window);
+    expect(open).toHaveBeenCalledWith(REQUESTER, now, []);
+    expect(overlapping).toHaveBeenCalledWith(["mother", "father"], window, []);
+  });
+
+  it("leaves out the request being replaced", async () => {
+    open.mockResolvedValue(4);
+    await rideRequests.assertCanAsk(REQUESTER, ["mother"], window, now, [
+      "request-1",
+    ]);
+    expect(open).toHaveBeenCalledWith(REQUESTER, now, ["request-1"]);
+    expect(overlapping).toHaveBeenCalledWith(["mother"], window, ["request-1"]);
   });
 
   it("lets a fifth request through while four wait", async () => {

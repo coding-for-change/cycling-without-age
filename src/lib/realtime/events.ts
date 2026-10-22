@@ -7,7 +7,14 @@ export const reactionView = z.object({
 export type ReactionView = z.infer<typeof reactionView>;
 
 export const systemMeta = z.object({
-  type: z.enum(["left", "continued", "announcementOn", "announcementOff"]),
+  type: z.enum([
+    "left",
+    "continued",
+    "announcementOn",
+    "announcementOff",
+    "joined",
+    "departed",
+  ]),
   actorUserId: z.string().min(1).nullable(),
 });
 export type SystemMeta = z.infer<typeof systemMeta>;

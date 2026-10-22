@@ -4,7 +4,7 @@ import { DomainError } from "@/lib/domain-error";
 
 /**
  * Lifecycle 4B-b: an account books seats on an announced event for riders it
- * manages, and only riders of the event's own chapter. Which riders those are
+ * manages or rides as, and only riders of the event's own chapter. Which riders those are
  * is the passengers' rule; the seats are counted under the ride's lock.
  */
 export async function bookEventSeats(
@@ -14,7 +14,7 @@ export async function bookEventSeats(
 ) {
   const [ride, managed] = await Promise.all([
     rides.getRideScope(rideId),
-    passengers.listPassengersManagedBy(actorUserId),
+    passengers.listRidersOfAccount(actorUserId),
   ]);
   if (!ride) throw new DomainError("unknownRide");
   const chapterOf = new Map(

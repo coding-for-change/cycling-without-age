@@ -159,10 +159,30 @@ const EVENTS: Record<EventType, DomainEvent> = {
     countryId: COUNTRY,
     userId: SUBJECT,
     actorUserId: ACTOR,
+    viaInvite: false,
   },
   "countryAdmin.removed": {
     type: "countryAdmin.removed",
     countryId: COUNTRY,
+    userId: SUBJECT,
+    actorUserId: ACTOR,
+  },
+  "adminInvite.created": {
+    type: "adminInvite.created",
+    inviteId: "0b9f6a0e-6f7a-4c43-9a51-1f2c3d4e5f60",
+    kind: "countryAdmin",
+    countryId: COUNTRY,
+    userId: SUBJECT,
+    actorUserId: ACTOR,
+  },
+  "superadmin.granted": {
+    type: "superadmin.granted",
+    inviteId: "0b9f6a0e-6f7a-4c43-9a51-1f2c3d4e5f60",
+    userId: SUBJECT,
+    actorUserId: ACTOR,
+  },
+  "superadmin.removed": {
+    type: "superadmin.removed",
     userId: SUBJECT,
     actorUserId: ACTOR,
   },
@@ -202,6 +222,14 @@ const EVENTS: Record<EventType, DomainEvent> = {
   },
   "care.invited": {
     type: "care.invited",
+    chapterId: CHAPTER,
+    userId: SUBJECT,
+    actorUserId: ACTOR,
+    passengerId: "passenger-1",
+  },
+  "care.linked": {
+    type: "care.linked",
+    requestId: "care-1",
     chapterId: CHAPTER,
     userId: SUBJECT,
     actorUserId: ACTOR,
@@ -722,10 +750,12 @@ describe("the templates the history feed has to label", () => {
 
   it("are exactly these", async () => {
     expect(await collect()).toEqual([
+      "adminInvite",
       "applicationSubmitted",
       "approval",
       "careDecided",
       "careInvited",
+      "careLinked",
       "careRequested",
       "countryAdminAppointed",
       "countryAdminRemoved",
@@ -757,6 +787,7 @@ describe("the templates the history feed has to label", () => {
       "riderHandedAway",
       "riderHandedOver",
       "roleChanged",
+      "superadminRemoved",
       "welcome",
     ]);
   });

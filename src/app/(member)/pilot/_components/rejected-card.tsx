@@ -17,7 +17,7 @@ export function RejectedCard({
   strings: StatusStrings;
 }) {
   return (
-    <section className="flex items-start gap-3 rounded-2xl border border-line p-5">
+    <section className="flex items-start gap-3 rounded-2xl border border-line bg-paper p-5">
       <XCircle
         className="mt-0.5 size-5 shrink-0 text-ink-faint"
         aria-hidden

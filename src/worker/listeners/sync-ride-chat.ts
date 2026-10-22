@@ -2,6 +2,8 @@ import type { Envelope, EventType } from "@/lib/events/catalog";
 import { syncRideChat, syncRiderChats } from "@/use-cases/ride-chat";
 
 const ROSTER_CHANGES: readonly EventType[] = [
+  "ride.scheduled",
+  "ride.announced",
   "ride.pilotAssigned",
   "ride.pilotUnassigned",
   "ride.riderBooked",
@@ -16,4 +18,6 @@ export async function syncRideChatListener({ event }: Envelope) {
     return syncRiderChats(event.passengerId);
   if (!("rideId" in event)) return;
   await syncRideChat(event.rideId);
+  if (event.type === "ride.scheduled" && event.returnLegId)
+    await syncRideChat(event.returnLegId);
 }

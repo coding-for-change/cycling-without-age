@@ -232,9 +232,9 @@ export function WelcomeCarousel({
                 </Link>
               </Button>
             </div>
-            {legal}
           </div>
         </div>
+        {legal}
       </div>
     </div>
   );

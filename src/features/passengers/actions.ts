@@ -16,20 +16,18 @@ import { actionFailure } from "@/lib/domain-error";
 import { withinRateLimit } from "@/lib/rate-limit";
 import { addManagedRider as addRider } from "@/use-cases/add-managed-rider";
 import { handOverRider } from "@/use-cases/hand-over-rider";
+import { requestCarerLink } from "@/use-cases/link-carer";
 import {
   removeManagedRider,
   updateManagedRider,
 } from "@/use-cases/manage-rider";
-import {
-  getOwnRiderNeeds,
-  setOwnRiderNeeds,
-  type OwnRiderNeeds,
-} from "@/use-cases/set-own-rider-needs";
 import { passengers } from "./index";
+import type { OwnRiderNeeds } from "./facade";
 import { contact } from "@/features/accounts/schemas";
 import {
-  managedRiderInput,
+  carerLinkInput,
   managedRiderPatch,
+  newManagedRiderInput,
   riderNeedsInput,
 } from "./schemas";
 
@@ -53,7 +51,7 @@ export async function addManagedRider(input: unknown): Promise<AddRiderResult> {
     return { ok: false, error: "generic" };
   }
 
-  const parsed = managedRiderInput.safeParse(input);
+  const parsed = newManagedRiderInput.safeParse(input);
   if (!parsed.success) {
     const field = parsed.error.issues[0]?.path[0];
     return {
@@ -170,8 +168,11 @@ async function answer(
 
 export const acceptCareRequestAction = async (input: unknown) =>
   answer(input, async (args) => {
-    await acceptCareRequest(args);
-    invalidateAccess({ userIds: [args.userId] });
+    const { riderUserId } = await acceptCareRequest(args);
+    invalidateAccess({
+      userIds: riderUserId ? [args.userId, riderUserId] : [args.userId],
+    });
+    if (riderUserId) revalidatePath(`/admin/members/${riderUserId}`);
   });
 
 export const declineCareRequestAction = async (input: unknown) =>
@@ -185,7 +186,10 @@ export async function ownRiderNeedsAction(): Promise<
 > {
   const session = await requireAuth();
   try {
-    return { ok: true, rider: await getOwnRiderNeeds(session.user.id) };
+    return {
+      ok: true,
+      rider: await passengers.getOwnRiderNeeds(session.user.id),
+    };
   } catch (error) {
     return actionFailure(error, {});
   }
@@ -201,14 +205,35 @@ export async function updateOwnRiderNeedsAction(
     return { ok: false, error: "generic" };
 
   try {
-    await setOwnRiderNeeds(session.user.id, parsed.data);
+    await passengers.setOwnRiderNeeds(session.user.id, parsed.data);
     return { ok: true };
   } catch (error) {
-    return actionFailure(error, {
-      unknownLocation: "invalid",
-      locationNotInChapter: "invalid",
-      locationNotCareCenter: "invalid",
-    } as const);
+    return actionFailure(error, {});
+  }
+}
+
+export async function updateManagedRiderNeedsAction(
+  id: unknown,
+  input: unknown,
+): Promise<RiderNeedsResult> {
+  const session = await requireAuth();
+  const parsedId = passengerId.safeParse(id);
+  const parsed = riderNeedsInput.safeParse(input);
+  if (!parsedId.success || !parsed.success)
+    return { ok: false, error: "invalid" };
+  if (!withinRateLimit(`rider-needs:${session.user.id}`, SAVE_LIMIT))
+    return { ok: false, error: "generic" };
+
+  try {
+    const { chapterId } = await passengers.setManagedRiderNeeds(
+      parsedId.data,
+      session.user.id,
+      parsed.data,
+    );
+    refresh(chapterId);
+    return { ok: true };
+  } catch (error) {
+    return actionFailure(error, {});
   }
 }
 
@@ -266,6 +291,53 @@ export async function handOverRiderAction(
     refresh(moved.chapterId);
     revalidatePath("/admin/members", "layout");
     return { ok: true, invited: moved.invited };
+  } catch (error) {
+    return actionFailure(error, {
+      notChapterMember: "notChapterMember",
+      sameManager: "sameManager",
+      passengerChapterMismatch: "passengerChapterMismatch",
+      tooManyRiders: "tooManyRiders",
+      unknownPassenger: "unknownPassenger",
+    } as const);
+  }
+}
+
+export type CarerLinkResult =
+  | { ok: true }
+  | {
+      ok: false;
+      error:
+        | "notChapterMember"
+        | "sameManager"
+        | "passengerChapterMismatch"
+        | "tooManyRiders"
+        | "unknownPassenger"
+        | "rateLimited"
+        | "generic";
+    };
+
+const LINK_LIMIT = { max: 20, windowMs: 60 * 60_000 };
+
+export async function requestCarerLinkAction(
+  input: unknown,
+): Promise<CarerLinkResult> {
+  const parsed = carerLinkInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "generic" };
+  await requireAdminScope();
+  const rider = await passengers.getPassenger(parsed.data.passengerId);
+  if (!rider?.userId) return { ok: false, error: "unknownPassenger" };
+  const { user } = await requireChapterAdmin(rider.chapterId);
+  if (!withinRateLimit(`carer-link:${user.id}`, LINK_LIMIT))
+    return { ok: false, error: "rateLimited" };
+
+  try {
+    const linked = await requestCarerLink({
+      passengerId: rider.id,
+      caretakerUserId: parsed.data.caretakerUserId,
+      actorUserId: user.id,
+    });
+    revalidatePath(`/admin/members/${linked.riderUserId}`);
+    return { ok: true };
   } catch (error) {
     return actionFailure(error, {
       notChapterMember: "notChapterMember",

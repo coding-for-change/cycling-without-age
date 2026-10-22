@@ -32,8 +32,21 @@ describe("handlers", () => {
     expect(listenersOf("ride.riderBooked")).toEqual(["notify", "syncRideChat"]);
   });
 
+  it("opens an event's chat as soon as it is scheduled or announced", () => {
+    expect(listenersOf("ride.scheduled")).toEqual([
+      "linkRideRequest",
+      "syncRideChat",
+    ]);
+    expect(listenersOf("ride.announced")).toEqual(
+      expect.arrayContaining(["syncRideChat"]),
+    );
+  });
+
   it("wraps up the ride's chat once the roster is closed, retried until it holds", () => {
     expect(listenersOf("ride.completed")).toEqual(["freezeRideChat"]);
+    expect(listenersOf("ride.cancelled")).toEqual(
+      expect.arrayContaining(["freezeRideChat"]),
+    );
   });
 
   it("lets a reopened roster pass without a job", () => {

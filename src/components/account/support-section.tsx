@@ -5,6 +5,7 @@ import { BookOpen, LifeBuoy } from "lucide-react";
 import { ReportProblemDrawer } from "@/components/report-problem/report-problem-drawer";
 import {
   SettingsGroup,
+  SettingsItem,
   SettingsRow,
   SettingsRowLink,
 } from "@/components/settings-group";
@@ -26,13 +27,15 @@ export function SupportSection({
         label={label}
         footer={strings.body}
       >
-        <SettingsRowLink
-          icon={BookOpen}
-          label={strings.guides}
-          href={data.guidesHref}
-          external
-          chevron
-        />
+        <SettingsItem>
+          <SettingsRowLink
+            icon={BookOpen}
+            label={strings.guides}
+            href={data.guidesHref}
+            external
+            chevron
+          />
+        </SettingsItem>
         <SettingsRow
           icon={LifeBuoy}
           label={strings.open}

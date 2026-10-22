@@ -4,7 +4,6 @@ import { headers } from "next/headers";
 import { EmptyState } from "@/components/empty-state";
 import { chapters as chapterFeature } from "@/features/chapters";
 import { passengers } from "@/features/passengers";
-import { rideLocations } from "@/features/ride-locations";
 import {
   personProfiles,
   photoUrl,
@@ -13,6 +12,7 @@ import {
 } from "@/features/person-profiles";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { formatDate, formatNumber, resolveLocale } from "@/lib/format";
+import { formatInstantDate } from "@/lib/instant-date";
 import { formatMessage } from "@/lib/i18n/format";
 import { Badge } from "@/components/ui/badge";
 import { getDictionary, getLocale } from "@/lib/i18n";
@@ -25,6 +25,7 @@ import {
 import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
 import { ICONS } from "@/components/icons";
 import { readActiveScope, type AdminSearchParams } from "../active-scope";
+import { chapterZones } from "../chapter-zones";
 import { AddPassengerDrawer } from "./_components/add-passenger-drawer";
 import {
   PassengersTable,
@@ -85,16 +86,18 @@ const loadPassengers = cache(
       "passengers",
     );
 
-    const [list, waiting, dict, head, country, locale] = await Promise.all([
-      passengers.listPassengersOfChapters(chapterIds),
-      passengers.listWaitingRiders(chapterIds),
-      getDictionary(),
-      headers(),
-      active.kind === "chapter"
-        ? chapterFeature.getCountry(active.chapter.countryId)
-        : null,
-      getLocale(),
-    ]);
+    const [list, waiting, dict, head, country, locale, zoneOf] =
+      await Promise.all([
+        passengers.listPassengersOfChapters(chapterIds),
+        passengers.listWaitingRiders(chapterIds),
+        getDictionary(),
+        headers(),
+        active.kind === "chapter"
+          ? chapterFeature.getCountry(active.chapter.countryId)
+          : null,
+        getLocale(),
+        chapterZones(chapterIds),
+      ]);
 
     const subjectOf = (passenger: (typeof list)[number]): SubjectRef =>
       passenger.userId
@@ -147,7 +150,11 @@ const loadPassengers = cache(
         born: formatDate(passenger.birthDate, notation),
         bornIso: passenger.birthDate.toISOString(),
         chapterName: passenger.chapter.name,
-        joined: formatDate(passenger.createdAt, notation),
+        joined: formatInstantDate(
+          passenger.createdAt,
+          notation,
+          zoneOf(passenger.chapterId),
+        ),
         joinedIso: passenger.createdAt.toISOString(),
       };
     });
@@ -157,6 +164,7 @@ const loadPassengers = cache(
       scopeQuery,
       showChapter: chapters.length > 1,
       waiting,
+      scopeZone: zoneOf(),
       rows,
       dict,
       locale,
@@ -167,7 +175,7 @@ const loadPassengers = cache(
 );
 
 async function WaitingRiders({ searchParams }: PageProps) {
-  const { waiting, dict, locale, notation } =
+  const { waiting, scopeZone, dict, locale, notation } =
     await loadPassengers(searchParams);
   if (waiting.length === 0) return null;
 
@@ -195,7 +203,7 @@ async function WaitingRiders({ searchParams }: PageProps) {
                 dict.admin.passengers.waiting.row,
                 {
                   caretaker: rider.helperName.trim(),
-                  date: formatDate(rider.createdAt, notation),
+                  date: formatInstantDate(rider.createdAt, notation, scopeZone),
                 },
                 locale,
               )}
@@ -235,7 +243,6 @@ async function PassengerList({ searchParams }: PageProps) {
 async function PassengerAdd({ searchParams }: PageProps) {
   const { active, dialling, dict, locale } = await loadPassengers(searchParams);
   if (active.kind !== "chapter") return null;
-  const places = await rideLocations.listRideLocations([active.chapter.id]);
 
   return (
     <AddPassengerDrawer
@@ -244,9 +251,6 @@ async function PassengerAdd({ searchParams }: PageProps) {
       labels={dict.admin.passengers.add}
       relationships={dict.riders.relationship.options}
       needs={dict.passenger.riderNeeds}
-      careCenters={places
-        .filter((place) => place.kind !== "publicPlace")
-        .map((place) => ({ id: place.id, name: place.name }))}
       pickup={{
         ...dict.riders.pickup,
         missing: dict.admin.passengers.add.pickupMissing,

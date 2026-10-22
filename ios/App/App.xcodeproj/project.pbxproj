@@ -35,11 +35,11 @@
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		9582B6822FE993A50072D4E8 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		A1C0DE5E2F00000000000002 /* AppViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewController.swift; sourceTree = "<group>"; };
 		A1C0DE5E2F00000000000004 /* SwipeBackPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeBackPlugin.swift; sourceTree = "<group>"; };
-		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
-		C7A1B2C33060A1000031DC87 /* Sentry.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Sentry.xcconfig; path = Config/Sentry.xcconfig; sourceTree = SOURCE_ROOT; };
 		C7119A843050C3240031DC87 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		C7A1B2C33060A1000031DC87 /* Sentry.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Sentry.xcconfig; path = Config/Sentry.xcconfig; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -180,25 +180,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		F1A2432E168FF132F2BCA271 /* Strip environment plist keys */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Strip environment plist keys";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# Dev builds load the Next dev server over plain http from a LAN IP, which\n# needs the NSAppTransportSecurity exception in Info.plist. Release builds\n# only ever talk to https://cwa.codingforchange.com, so it is dropped here.\nPLIST=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\nif [ \"${CONFIGURATION}\" = \"Release\" ] && /usr/libexec/PlistBuddy -c \"Print :NSAppTransportSecurity\" \"$PLIST\" >/dev/null 2>&1; then\n  /usr/libexec/PlistBuddy -c \"Delete :NSAppTransportSecurity\" \"$PLIST\"\nfi\n# WKAppBoundDomains blocks the Capacitor bridge on every host it does not\n# list, so a shell synced against a LAN or feature server drops it again.\nif ! grep -q \"\\\"url\\\": \\\"https://cwa.codingforchange.com\\\"\" \"${SRCROOT}/App/capacitor.config.json\" && /usr/libexec/PlistBuddy -c \"Print :WKAppBoundDomains\" \"$PLIST\" >/dev/null 2>&1; then\n  /usr/libexec/PlistBuddy -c \"Delete :WKAppBoundDomains\" \"$PLIST\"\nfi\n";
-		};
 		B5D3F0A1C2E4468B9A7D1E2F /* Strip Finder metadata */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -237,6 +218,25 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "export PATH=\"$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH\"\nif [ \"$CONFIGURATION\" = \"Release\" ] && command -v sentry >/dev/null 2>&1; then\n  SENTRY_ORG=\"$SENTRY_ORG\" SENTRY_PROJECT=\"$SENTRY_PROJECT\" sentry debug-files upload --include-sources --type dsym \"$DWARF_DSYM_FOLDER_PATH\"\nfi\n";
+		};
+		F1A2432E168FF132F2BCA271 /* Strip environment plist keys */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Strip environment plist keys";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Dev builds load the Next dev server over plain http from a LAN IP, which\n# needs the NSAppTransportSecurity exception in Info.plist. Release builds\n# only ever talk to https://cwa.codingforchange.com, so it is dropped here.\nPLIST=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\nif [ \"${CONFIGURATION}\" = \"Release\" ] && /usr/libexec/PlistBuddy -c \"Print :NSAppTransportSecurity\" \"$PLIST\" >/dev/null 2>&1; then\n  /usr/libexec/PlistBuddy -c \"Delete :NSAppTransportSecurity\" \"$PLIST\"\nfi\n# WKAppBoundDomains blocks the Capacitor bridge on every host it does not\n# list, so a shell synced against a LAN or feature server drops it again.\nif ! grep -q \"\\\"url\\\": \\\"https://cwa.codingforchange.com\\\"\" \"${SRCROOT}/App/capacitor.config.json\" && /usr/libexec/PlistBuddy -c \"Print :WKAppBoundDomains\" \"$PLIST\" >/dev/null 2>&1; then\n  /usr/libexec/PlistBuddy -c \"Delete :WKAppBoundDomains\" \"$PLIST\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -401,7 +401,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 8TPMU6R9FN;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
@@ -409,7 +409,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = com.codingforchange.cwa;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -430,7 +430,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 8TPMU6R9FN;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
@@ -438,7 +438,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.codingforchange.cwa;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

@@ -30,12 +30,16 @@ export function BookSeats({
   seatsLeft,
   language,
   labels,
+  onBooked,
+  bare = false,
 }: {
   rideId: string;
   riders: { id: string; name: string }[];
   seatsLeft: number | null;
   language: Locale;
   labels: BookSeatsLabels;
+  onBooked?: () => void;
+  bare?: boolean;
 }) {
   const headingId = useId();
   const [picked, setPicked] = useState<ReadonlySet<string>>(
@@ -61,7 +65,10 @@ export function BookSeats({
         rideId,
         passengerIds: [...chosen],
       });
-      if (result.ok) setPicked(new Set());
+      if (result.ok) {
+        setPicked(new Set());
+        onBooked?.();
+      }
       notify(result, {
         done: formatMessage(
           labels.done,
@@ -74,18 +81,21 @@ export function BookSeats({
 
   return (
     <section
-      aria-labelledby={headingId}
+      aria-labelledby={bare ? undefined : headingId}
+      aria-label={bare ? labels.title : undefined}
       className="flex flex-col gap-3"
     >
-      <div className="flex flex-col gap-1">
-        <h2
-          id={headingId}
-          className="text-ink-soft text-xs font-semibold tracking-wide uppercase"
-        >
-          {labels.title}
-        </h2>
-        <p className="text-2sm text-ink-soft">{labels.hint}</p>
-      </div>
+      {bare ? null : (
+        <div className="flex flex-col gap-1">
+          <h2
+            id={headingId}
+            className="text-ink-soft text-xs font-semibold tracking-wide uppercase"
+          >
+            {labels.title}
+          </h2>
+          <p className="text-2sm text-ink-soft">{labels.hint}</p>
+        </div>
+      )}
       <ul className="border-line divide-line divide-y rounded-2xl border">
         {riders.map((rider) => (
           <li key={rider.id}>

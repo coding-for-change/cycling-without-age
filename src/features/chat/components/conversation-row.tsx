@@ -4,11 +4,13 @@ import Link from "next/link";
 import { BellOff, Bike } from "lucide-react";
 import { formatBadge } from "@/components/notifications/inbox-row";
 import { Badge } from "@/components/ui/badge";
-import { formatDate, type Locale } from "@/lib/format";
+import type { Locale } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
+import { useViewerTimeZone } from "@/lib/viewer-time";
 import { ChatAvatar } from "./chat-avatar";
 import { RelativeTime } from "./local-time";
+import { formatMessageDay } from "./message-day";
 import { previewLine } from "./preview";
 import type { ChatStrings } from "./strings";
 import type { InboxItem } from "./types";
@@ -25,7 +27,9 @@ export function conversationPreview(
   if (message.kind === "system") {
     if (!message.meta) return "";
     const actor =
-      message.meta.actorUserId === viewerId ? strings.list.you : null;
+      message.meta.actorUserId === viewerId
+        ? strings.list.you
+        : message.text || null;
     if (!actor) return "";
     return formatMessage(
       strings.system[message.meta.type],
@@ -66,6 +70,7 @@ export function ConversationRow({
   const unread = Math.max(0, item.lastSeq - item.me.lastReadSeq);
   const muted = item.me.mutedUntil !== null;
   const preview = conversationPreview(item, viewerId, strings, language);
+  const timeZone = useViewerTimeZone();
 
   return (
     <Link
@@ -99,7 +104,7 @@ export function ConversationRow({
             <RelativeTime
               value={item.lastMessageAt}
               words={language}
-              title={formatDate(item.lastMessageAt, notation)}
+              title={formatMessageDay(item.lastMessageAt, notation, timeZone)}
               className="shrink-0 text-xs text-ink-faint"
             />
           ) : null}

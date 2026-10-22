@@ -60,18 +60,16 @@ describe("when and where a request asks for", () => {
     );
   });
 
-  it("names the Ride Location rather than the place typed with it", () => {
+  it("names the pickup and the destination", () => {
     expect(
       requestedRoute({
-        pickupName: "Lindenweg 3",
-        rideLocation: { name: "Sonnenhof" },
+        pickupName: "Sonnenhof",
         destinationName: "Hausarzt Dr. Weber",
       }),
     ).toEqual({ from: "Sonnenhof", to: "Hausarzt Dr. Weber" });
     expect(
       requestedRoute({
         pickupName: "Lindenweg 3",
-        rideLocation: null,
         destinationName: null,
       }),
     ).toEqual({ from: "Lindenweg 3", to: null });

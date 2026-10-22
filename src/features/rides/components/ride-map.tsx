@@ -12,6 +12,7 @@ import {
   prefersReducedMotion,
   whenReady,
 } from "@/lib/mapbox-canvas";
+import { END_MARKER, START_MARKER } from "@/lib/map-markers";
 import { cn } from "@/lib/utils";
 
 export type RideMapProps = {
@@ -113,16 +114,8 @@ export default function RideMap({
     const end: [number, number] | null =
       toLat !== undefined && toLng !== undefined ? [toLng, toLat] : null;
 
-    place(
-      from,
-      start,
-      "size-5 rounded-full border-[3px] border-white bg-mint-deep shadow-lift",
-    );
-    place(
-      to,
-      end,
-      "size-5 rounded-md border-[3px] border-white bg-ink shadow-lift",
-    );
+    place(from, start, START_MARKER);
+    place(to, end, END_MARKER);
 
     whenReady(instance, () => {
       (

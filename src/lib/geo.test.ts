@@ -1,4 +1,4 @@
-import { circleRing, distanceMeters, googleMapsUrl } from "./geo";
+import { appleMapsUrl, circleRing, distanceMeters, googleMapsUrl } from "./geo";
 
 describe("circleRing", () => {
   const aarhus = { lat: 56.17, lng: 10.2 };
@@ -39,6 +39,45 @@ describe("googleMapsUrl", () => {
   it("returns null without a place", () => {
     expect(
       googleMapsUrl({ address: "  ", latitude: null, longitude: null }),
+    ).toBeNull();
+  });
+});
+
+describe("appleMapsUrl", () => {
+  it("pins the coordinates and labels the pin", () => {
+    expect(
+      appleMapsUrl({
+        address: "Sonnenstraße 12",
+        latitude: 48.1,
+        longitude: 11.5,
+        label: "Seniorenheim Sonnenhof",
+      }),
+    ).toBe("https://maps.apple.com/?ll=48.1%2C11.5&q=Seniorenheim+Sonnenhof");
+  });
+
+  it("labels the pin with the address when there is no name", () => {
+    expect(
+      appleMapsUrl({
+        address: "Sonnenstraße 12",
+        latitude: 48.1,
+        longitude: 11.5,
+      }),
+    ).toBe("https://maps.apple.com/?ll=48.1%2C11.5&q=Sonnenstra%C3%9Fe+12");
+  });
+
+  it("searches the address without coordinates", () => {
+    expect(
+      appleMapsUrl({
+        address: " Sonnenstraße 12 ",
+        latitude: null,
+        longitude: null,
+      }),
+    ).toBe("https://maps.apple.com/?address=Sonnenstra%C3%9Fe+12");
+  });
+
+  it("returns null without a place", () => {
+    expect(
+      appleMapsUrl({ address: null, latitude: null, longitude: null }),
     ).toBeNull();
   });
 });

@@ -1,7 +1,7 @@
 import { connection } from "next/server";
 import { getSession } from "@/lib/auth-guards";
 import { extensionOf, presignGet } from "@/lib/storage";
-import { readableFile } from "@/use-cases/file-access";
+import { publicFile, readableFile } from "@/use-cases/file-access";
 
 const PRIVATE = {
   "Cache-Control": "private, no-store",
@@ -21,11 +21,13 @@ export async function GET(
   if (!/^[a-z0-9]{1,64}$/i.test(id)) return notFound();
 
   const session = await getSession();
-  if (!session)
-    return new Response("Unauthorized", { status: 401, headers: PRIVATE });
-
-  const file = await readableFile(session, id);
-  if (!file) return notFound();
+  const file =
+    (session ? await readableFile(session, id) : null) ??
+    (await publicFile(id));
+  if (!file)
+    return session
+      ? notFound()
+      : new Response("Unauthorized", { status: 401, headers: PRIVATE });
 
   const url = await presignGet(
     file.key,

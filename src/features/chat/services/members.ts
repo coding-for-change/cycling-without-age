@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@/generated/prisma";
+import type { ConversationMemberRole, Prisma } from "@/generated/prisma";
 
 const withConversation = {
   conversation: {
@@ -133,12 +133,23 @@ export const stampMutedUntil = (
 
 export const insertConversationMembers = (
   conversationId: string,
-  userIds: string[],
+  members: { userId: string; role: ConversationMemberRole }[],
   db: Prisma.TransactionClient = prisma,
 ) =>
   db.conversationMember.createMany({
-    data: userIds.map((userId) => ({ conversationId, userId })),
+    data: members.map((member) => ({ conversationId, ...member })),
     skipDuplicates: true,
+  });
+
+export const stampMemberRole = (
+  conversationId: string,
+  userIds: string[],
+  role: ConversationMemberRole,
+  db: Prisma.TransactionClient = prisma,
+) =>
+  db.conversationMember.updateMany({
+    where: { conversationId, userId: { in: userIds } },
+    data: { role },
   });
 
 export const deleteConversationMembers = (

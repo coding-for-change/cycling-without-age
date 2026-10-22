@@ -3,12 +3,15 @@ import { DEFAULT_CHAPTER_SETTINGS } from "@/features/chapters/schemas";
 import { fleet } from "@/features/fleet";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
-import { rideLocations } from "@/features/ride-locations";
 import { rideRequests, type RideRequestInput } from "@/features/ride-requests";
 import { rides } from "@/features/rides";
 import { DomainError, domainCode } from "@/lib/domain-error";
 import { logger } from "@/lib/observability/logger";
-import { maxRidersFor, submitRideRequest } from "./submit-ride-request";
+import {
+  maxRidersFor,
+  ridersToBook,
+  submitRideRequest,
+} from "./submit-ride-request";
 
 jest.mock("@/features/chapters", () => {
   const getSettings = jest.fn();
@@ -41,13 +44,10 @@ jest.mock("@/features/membership", () => ({
 }));
 jest.mock("@/features/passengers", () => ({
   ...jest.requireActual("@/features/passengers/pickup"),
-  passengers: { listPassengersManagedBy: jest.fn() },
+  passengers: { listRidersOfAccount: jest.fn() },
 }));
 jest.mock("@/features/profile", () => ({
   profile: { getProfile: jest.fn().mockResolvedValue(null) },
-}));
-jest.mock("@/features/ride-locations", () => ({
-  rideLocations: { requireUsableRideLocation: jest.fn() },
 }));
 jest.mock("@/features/ride-requests", () => ({
   ...jest.requireActual("@/features/ride-requests/schemas"),
@@ -123,7 +123,6 @@ const pendingRequest = {
   roundTrip: false,
   requestedStartsAt: new Date("2026-10-08T08:00:00Z"),
   requestedEndsAt: new Date("2026-10-08T09:00:00Z"),
-  rideLocationId: null,
   pickupName: "Home",
   pickupAddress: "Lindenweg 3",
   pickupLatitude: 48.1,
@@ -137,7 +136,7 @@ const pendingRequest = {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  (passengers.listPassengersManagedBy as jest.Mock).mockResolvedValue([
+  (passengers.listRidersOfAccount as jest.Mock).mockResolvedValue([
     { id: "mother", firstName: "Erna", lastName: "Huber", chapterId: MUNICH },
     { id: "father", firstName: "Karl", lastName: "Huber", chapterId: MUNICH },
     {
@@ -181,33 +180,6 @@ describe("submitRideRequest", () => {
         roundTrip: false,
       }),
       { announce: true },
-    );
-  });
-
-  it("copies a Ride Location's place over the one the client sent", async () => {
-    (rideLocations.requireUsableRideLocation as jest.Mock).mockResolvedValue({
-      id: "location-1",
-      name: "Sonnenhof",
-      address: "Am Hof 1",
-      latitude: 48.2,
-      longitude: 11.6,
-    });
-    await submitRideRequest(
-      request({ rideLocationId: "location-1" }),
-      CARER,
-      NOW,
-    );
-    expect(rideLocations.requireUsableRideLocation).toHaveBeenCalledWith(
-      "location-1",
-      MUNICH,
-    );
-    expect(submit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        rideLocationId: "location-1",
-        pickupName: "Sonnenhof",
-        pickupAddress: "Am Hof 1",
-      }),
-      expect.anything(),
     );
   });
 
@@ -332,6 +304,7 @@ describe("submitRideRequest", () => {
         endsAt: new Date("2026-10-08T09:00:00Z"),
       },
       NOW,
+      [],
     );
     expect(submit).not.toHaveBeenCalled();
   });
@@ -356,6 +329,7 @@ describe("submitRideRequest", () => {
         startsAt: new Date("2026-10-08T08:00:00Z"),
         endsAt: new Date("2026-10-08T09:00:00Z"),
       },
+      [],
     );
   });
 
@@ -517,5 +491,40 @@ describe("submitRideRequest", () => {
       );
       expect(rideRequests.announce).toHaveBeenCalledWith("request-1");
     });
+  });
+});
+
+describe("ridersToBook", () => {
+  it("offers a linked rider to both the carer and the rider, picked up where the rider lives", async () => {
+    const linked = {
+      id: "erna",
+      firstName: "Erna",
+      lastName: "Lund",
+      chapterId: MUNICH,
+      userId: "user-erna",
+      managedByUserId: CARER,
+      residence: null,
+      address: null,
+      latitude: null,
+      longitude: null,
+      user: {
+        residence: "home",
+        address: "Hauptstr. 1",
+        latitude: 48.1,
+        longitude: 11.5,
+      },
+    };
+    (passengers.listRidersOfAccount as jest.Mock).mockResolvedValue([linked]);
+
+    for (const account of [CARER, "user-erna"]) {
+      expect(await ridersToBook(account)).toEqual([
+        expect.objectContaining({
+          id: "erna",
+          bookable: true,
+          home: expect.objectContaining({ address: "Hauptstr. 1" }),
+        }),
+      ]);
+      expect(passengers.listRidersOfAccount).toHaveBeenLastCalledWith(account);
+    }
   });
 });

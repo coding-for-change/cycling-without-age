@@ -27,3 +27,9 @@ export async function readableFile(
   if (!found || !canReadFile(viewer, found.rule)) return null;
   return found.file;
 }
+
+export async function publicFile(fileId: string): Promise<ReadableFile | null> {
+  return (await fileKindOf(fileId)) === "ridePhoto"
+    ? rides.publicEventPhoto(fileId)
+    : null;
+}

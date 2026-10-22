@@ -5,12 +5,12 @@ import { notFound } from "next/navigation";
 import { Check } from "lucide-react";
 import { requireAuth } from "@/lib/auth-guards";
 import { isTrainingRequired } from "@/lib/feature-flags";
-import { formatDate, resolveLocale } from "@/lib/format";
+import { ViewerDate } from "@/components/viewer-date";
+import { resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
-import { formatMessage } from "@/lib/i18n/format";
 import { courseOverview } from "@/use-cases/training-access";
 import { MemberPageShell } from "../../../_components/member-page";
-import { BackLink } from "../_components/back-link";
+import { MemberTitle } from "../../../_components/member-title";
 import { CoursePoster } from "../_components/course-poster";
 import { TRAINING_LIFE, courseMeta, elementHref } from "../_components/format";
 import { LessonOutline } from "../_components/lesson-outline";
@@ -77,10 +77,7 @@ async function OverviewBody({ courseId }: { courseId: string }) {
 
   return (
     <>
-      <BackLink
-        href="/pilot/training"
-        label={strings.course.back}
-      />
+      <MemberTitle title={card.title} />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-10">
         <div className="grid gap-6">
           <div className="relative">
@@ -100,11 +97,12 @@ async function OverviewBody({ courseId }: { courseId: string }) {
                   strokeWidth={3}
                   aria-hidden
                 />
-                {formatMessage(
-                  strings.course.passedOn,
-                  { date: formatDate(progress.passedAt!, notation) },
-                  language,
-                )}
+                <ViewerDate
+                  value={new Date(progress.passedAt!).toISOString()}
+                  notation={notation}
+                  template={strings.course.passedOn}
+                  language={language}
+                />
               </span>
             ) : null}
           </div>

@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { trainingPlayerStrings } from "@/components/training-player-strings";
 import { requireAuth } from "@/lib/auth-guards";
 import { isTrainingRequired } from "@/lib/feature-flags";
-import { formatDate, resolveLocale } from "@/lib/format";
+import { resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { fileUrl } from "@/lib/storage/file-url";
 import { elementPage } from "@/use-cases/training-access";
@@ -82,9 +82,12 @@ async function ElementBody({
           initial={{ number: page.quiz.number, questions: page.quiz.questions }}
           locked={element.locked}
           lockedHref={blockerHref}
-          passedOn={
-            page.quiz.passedAt ? formatDate(page.quiz.passedAt, notation) : null
+          passedAt={
+            page.quiz.passedAt
+              ? new Date(page.quiz.passedAt).toISOString()
+              : null
           }
+          notation={notation}
           continueHref={nextStep.href}
           final={next === null}
           strings={strings.quiz}
