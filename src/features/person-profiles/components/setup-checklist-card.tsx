@@ -33,6 +33,7 @@ import type {
   ManagedRidersSummary,
 } from "../checklist";
 import { subjectSlug } from "../schemas";
+import { EnablePushButton } from "./enable-push-button";
 
 type Strings = Dictionary["setupChecklist"];
 type Errors = Dictionary["personProfile"]["errors"];
@@ -312,6 +313,12 @@ function StepRow({
         >
           {text}
           {badge}
+          {step.key === "push" && !step.done ? (
+            <EnablePushButton
+              label={strings.enable}
+              deniedMessage={strings.denied}
+            />
+          ) : null}
         </div>
       )}
     </li>

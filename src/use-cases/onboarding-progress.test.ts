@@ -32,7 +32,7 @@ type Account = {
   managesOthers: boolean;
   birthDate: Date | null;
   gender: string | null;
-  consentDataAt: Date | null;
+  privacyReadAt: Date | null;
   consentSafetyAt: Date | null;
   passkeyPromptedAt: Date | null;
   onboardedAt: Date | null;
@@ -43,7 +43,7 @@ const DONE: Account = {
   managesOthers: false,
   birthDate: new Date("1950-04-01"),
   gender: "female",
-  consentDataAt: new Date("2026-01-01"),
+  privacyReadAt: new Date("2026-01-01"),
   consentSafetyAt: new Date("2026-01-01"),
   passkeyPromptedAt: null,
   onboardedAt: new Date("2026-01-01"),
@@ -86,7 +86,7 @@ describe("resolveDestination", () => {
 
   // Landing on a page the account is not ready for is worse than a detour.
   it("ignores it while a step is still open", async () => {
-    account({ consentDataAt: null });
+    account({ privacyReadAt: null });
     await expect(resolveDestination(session, EMPTY_PRESET, NEXT)).resolves.toBe(
       "/onboarding/consent",
     );

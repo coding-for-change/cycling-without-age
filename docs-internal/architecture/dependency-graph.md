@@ -28,7 +28,7 @@ calls that facade directly. Its old work is two listeners in the worker.
 | `build-session-access` | `chapters`, `membership` | The session payload needs the user's country-admin scopes (chapters) *and* their chapter memberships (membership). Two facades → a use case. |
 | `onboarding-progress` | `chapters`, `membership`, `profile` | How far someone got is spread across three tables: which chapter they joined, what they consented to, whether a rider profile exists. Read by the `/onboarding` resolver and by every step that draws the progress dots. |
 | `settle-passenger-location` | `membership`, `profile` | "Where do you live" and "which chapter serves you" are one answer given on one screen, but two features own the two halves. `settleCaretakerLocation` joins a caretaker the same way and marks the account `managesOthers`, so the profile step asks who will ride. |
-| `accept-onboarding-consent` | `membership`, `profile` | Records consent and, when a QR preset skipped the location step, performs the join it would have done. |
+| `accept-onboarding-consent` | `legal`, `membership`, `person-profiles`, `profile` | Records the safety agreement and the privacy notice version the person read, grants the optional health consent, and, when a QR preset skipped the location step, performs the join it would have done. |
 | `complete-onboarding-profile` | `membership`, `passengers`, `profile` | Writes the account's own details, creates the rider profile a ride will point at, and stamps `onboardedAt`. The welcome mail is no longer sent here: `profile.completeOnboarding` emits `user.onboarded` and the pipeline does the rest, exactly once. `completeCaretakerOnboarding` is the caretaker branch: it adds every rider they book for (each with its own pickup place), names the account and marks it `managesOthers`. |
 | `add-managed-rider` | `membership`, `passengers`, `profile` | A passenger starts or keeps booking for someone else after onboarding: the rider lands in the chapter of the riders already managed (or the caretaker's passenger membership), which only `membership` can confirm, and the account is marked `managesOthers`. |
 | `notifications/notify` | `notifications` (+ the kinds) | The generic listener. A kind names the recipients and the parameters; this writes one inbox row each and queues push and email per the kind's policy. Runs in the worker, from an event, with no session. |
@@ -291,7 +291,7 @@ manager, admins and the chapter's pilots only.
 push devices, managed riders, the first finished ride and the training gate. The in-person
 step is admin-only: `pilot-steps` lets an admin of one of the pilot's chapters confirm or revoke
 it through `requireAdminOf`; the pilot sees it waiting until then. The onboarding consent step (`accept-onboarding-consent`) records the
-optional health consent next to the data consent.
+optional health consent next to the safety agreement.
 
 `/profile` and `/profile/[ref]` only redirects to the viewer's member perspective, or to the
 admin detail page for an admin-only account; in-app links point at the perspective path

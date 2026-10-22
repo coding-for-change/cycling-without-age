@@ -1,4 +1,3 @@
-import { DomainError } from "@/lib/domain-error";
 import { transaction } from "@/lib/events";
 import type { OnboardingRole } from "@/lib/onboarding";
 import {
@@ -83,16 +82,15 @@ export async function setResidence(
 }
 
 export async function recordConsent(userId: string, input: ConsentInput) {
-  const { safety, notifications, data } = consentInput.parse(input);
-  if (!data) throw new DomainError("consentRequired");
+  const { safety, privacyVersion } = consentInput.parse(input);
 
   const existing = await findProfile(userId);
   const now = new Date();
+  const firstTime = !existing?.privacyReadAt;
   return updateProfile(userId, {
-    consentDataAt: existing?.consentDataAt ?? now,
+    ...(firstTime ? { privacyReadAt: now, privacyVersion } : {}),
     ...(safety ? { consentSafetyAt: existing?.consentSafetyAt ?? now } : {}),
-    notifyEmail: notifications,
-    notifyPush: notifications,
+    ...(firstTime ? { notifyEmail: true, notifyPush: true } : {}),
   });
 }
 

@@ -6,7 +6,7 @@
 1. Screen "What's your email or phone number?". Type `new.carer.docs@cwa.local` and tap **Continue**. Then type the 6-digit code from the email.
 2. Screen "How would you like to take part?". Tap **I want to be a Passenger**.
 3. Screen "Where should we pick you up?" with two tabs, **Care home** (selected) and **My own address**, the search "Chapter or city", and the chapters nearest first ("München – Seniorenheim Sonnenhof · 770 m away"). Tap **München – Seniorenheim Sonnenhof**, then **Next**.
-4. Screen "Three quick agreements". Tick all three (safety guidelines, notifications, data processing) and tap **Continue**.
+4. Screen "1 quick agreement". Tick the safety guidelines and tap **Continue**.
 5. Screen "A little about you". Leave the fields empty and tap the mint button **I'm creating this account for someone else to ride**.
 6. A select appears: **Your relationship to them** (Carer / Son or daughter / Friend / Other / Partner / Another relative). Choose **Son or daughter**. The mint button now reads **Continue**. Tap it.
 7. Screen "Create your passkey". Tap **Not now**.

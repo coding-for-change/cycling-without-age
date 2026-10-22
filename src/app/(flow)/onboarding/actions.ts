@@ -51,8 +51,6 @@ const onward = async (
 
 const consentSchema = z.object({
   safety: z.boolean(),
-  notifications: z.boolean(),
-  data: z.literal(true),
   health: z.boolean().optional(),
 });
 

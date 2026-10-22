@@ -35,7 +35,8 @@ model User {
   notifyChatPush       Boolean                  @default(true)
   notifyChatEmail      Boolean                  @default(true)
   consentSafetyAt      DateTime?
-  consentDataAt        DateTime?
+  privacyReadAt        DateTime?
+  privacyVersion       String?                  @db.VarChar(16)
   passkeyPromptedAt    DateTime?
   pilotNextStepsSeenAt DateTime?
   onboardedAt          DateTime?

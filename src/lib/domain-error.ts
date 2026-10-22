@@ -22,7 +22,6 @@ export type DomainErrorCode =
   | "checkInClosed"
   | "closedDate"
   | "codeTaken"
-  | "consentRequired"
   | "courseEmpty"
   | "courseFull"
   | "courseLanguageTaken"

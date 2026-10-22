@@ -2026,17 +2026,15 @@
     "dateTime": "{date}, {time}"
   },
   "consent": {
-    "data": "Ich stimme der Speicherung und Verarbeitung meiner Daten zu.",
-    "dataSuffix": "Siehe {imprint} und {privacy}.",
+    "notice": "Wenn Sie fortfahren, bestätigen Sie, dass Sie unsere {privacy} gelesen haben. Wir senden Ihnen wichtige Neuigkeiten zu Ihren Fahrten per E-Mail; das können Sie jederzeit in den Einstellungen ändern. Siehe auch {imprint}.",
     "error": "Das konnten wir nicht speichern. Versuchen Sie es erneut.",
     "imprint": "Impressum",
     "joining": "Sie treten {chapter} bei.",
-    "notifications": "Ich möchte E-Mails und Push-Nachrichten zu wichtigen Dingen erhalten.",
     "privacy": "Datenschutzerklärung",
-    "required": "Setzen Sie überall ein Häkchen, um fortzufahren.",
+    "required": "Setzen Sie das Häkchen, um fortzufahren.",
     "safety": "Mir ist klar, dass die Ausfahrten von geschulten Freiwilligen gefahren werden, und ich halte mich an die Sicherheitsregeln der Ortsgruppe.",
     "setUpBy": "{name} hat dieses Konto für Sie eingerichtet. Prüfen Sie die Angaben und stimmen Sie zu, um fortzufahren.",
-    "title": "{count, plural, one {1 kurze Zusage} other {# kurze Zusagen}}",
+    "title": "{count, plural, =0 {Bevor es losgeht} one {1 kurze Zusage} other {# kurze Zusagen}}",
     "health": "Freiwillig: Die Pilot:innen und Admins der Ortsgruppe dürfen sehen, was mir bei einer Fahrt hilft, etwa ein Rollstuhl oder schlechtes Hören. Das sind Gesundheitsangaben, und ich kann das jederzeit widerrufen."
   },
   "fleet": {
@@ -3992,6 +3990,8 @@
     "dismissed": "Ausgeblendet. Das Profil ist immer nur einen Tipp entfernt.",
     "confirmed": "Von der Ortsgruppe bestätigt",
     "waiting": "Wartet auf die Bestätigung deiner Ortsgruppe",
+    "enable": "Einschalten",
+    "denied": "Das Handy blockiert Benachrichtigungen. Erlaube sie in den Einstellungen und versuch es noch einmal.",
     "steps": {
       "photo": "Profilfoto hinzufügen",
       "bio": "Ein paar Worte über sich schreiben",
@@ -4009,7 +4009,8 @@
     "hints": {
       "training": "Kurze Videos und ein Quiz, direkt in der App.",
       "inPersonTraining": "Deine Ortsgruppe bestätigt sie, sobald du dabei warst.",
-      "firstRide": "Beim ersten Mal fährt ein Captain mit."
+      "firstRide": "Beim ersten Mal fährt ein Captain mit.",
+      "push": "Wir sagen dir Bescheid, wenn eine Ausfahrt bestätigt oder geändert wird."
     }
   },
   "care": {
