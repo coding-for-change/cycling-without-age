@@ -34,7 +34,8 @@ export default function NativePushRegistrar() {
         .catch(() => {});
     };
 
-    void getPushToken()
+    void hasNotificationPermission()
+      .then((granted) => (granted && active ? getPushToken() : null))
       .then(remember)
       .catch(() => {});
 

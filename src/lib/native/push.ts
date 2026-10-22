@@ -19,6 +19,9 @@ const breadcrumb = (site: string, error: unknown) =>
     level: "warning",
   });
 
+const isApnsNotReady = (error: unknown): boolean =>
+  /No APNS token specified/i.test(reasonOf(error));
+
 const nativePlatform = (): PushPlatform | null => {
   if (!Capacitor.isNativePlatform()) return null;
   const platform = Capacitor.getPlatform();
@@ -72,7 +75,10 @@ export async function getPushToken(): Promise<PushDevice | null> {
     return token ? { token, platform } : null;
   } catch (error) {
     breadcrumb("getToken", error);
-    Sentry.captureException(error);
+    // On iOS the APNS device token is registered asynchronously after permission
+    // is granted; until then Firebase rejects getToken(). This is an expected race:
+    // the FCM token is delivered later via the `tokenReceived` listener.
+    if (!isApnsNotReady(error)) Sentry.captureException(error);
     return null;
   }
 }
