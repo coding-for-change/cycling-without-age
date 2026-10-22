@@ -17,7 +17,8 @@ const countryAdminKind = (
       countryName: z.string().nullable(),
       actorName: z.string().nullable(),
     }),
-    recipients: async (event) => [event.userId],
+    recipients: async (event) =>
+      "viaInvite" in event && event.viaInvite ? [] : [event.userId],
     params: async (event) => {
       const [countryName, actorName] = await Promise.all([
         nameOfCountry(event.countryId),

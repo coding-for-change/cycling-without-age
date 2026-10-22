@@ -13,7 +13,9 @@ import { authClient } from "@/lib/auth-client";
 import { addPasskey } from "@/lib/passkey-client";
 import { finishSignOut } from "@/components/sign-out-button";
 import { haptics } from "@/lib/native/haptics";
-import { formatDate, type Locale } from "@/lib/format";
+import type { Locale } from "@/lib/format";
+import { formatInstantDate } from "@/lib/instant-date";
+import { useViewerTimeZone } from "@/lib/viewer-time";
 import { formatMessage } from "@/lib/i18n/format";
 import {
   AlertDialog,
@@ -65,6 +67,7 @@ export function PasskeyManager({
   footer?: ReactNode;
 }) {
   const { data, isPending } = authClient.useListPasskeys();
+  const timeZone = useViewerTimeZone();
   const nameId = useId();
   const [name, setName] = useState("");
   const [error, setError] = useState<"failed" | "stale" | null>(null);
@@ -146,7 +149,7 @@ export function PasskeyManager({
                 <span className="grid min-w-0 flex-1">
                   <span className="truncate text-sm font-medium">{name}</span>
                   <span className="truncate text-2sm text-ink-soft">
-                    {formatDate(passkey.createdAt, locale)} ·{" "}
+                    {formatInstantDate(passkey.createdAt, locale, timeZone)} ·{" "}
                     {passkey.deviceType === "multiDevice"
                       ? strings.synced
                       : strings.thisDevice}

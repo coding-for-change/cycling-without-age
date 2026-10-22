@@ -1,18 +1,21 @@
 import { Check, Hourglass, Users } from "lucide-react";
+import { ViewerDate } from "@/components/viewer-date";
+import type { Locale } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
-import { formatMessage } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
 
 export function InPersonCard({
-  confirmedOn,
+  confirmedAt,
+  notation,
   strings,
   language,
 }: {
-  confirmedOn: string | null;
+  confirmedAt: string | null;
+  notation: Locale;
   strings: Dictionary["pilot"]["training"]["inPerson"];
   language: string;
 }) {
-  const confirmed = confirmedOn !== null;
+  const confirmed = confirmedAt !== null;
 
   return (
     <div
@@ -43,7 +46,13 @@ export function InPersonCard({
         </p>
         {confirmed ? (
           <p className="text-sm text-ink-soft">
-            {formatMessage(strings.confirmed, { date: confirmedOn }, language)}
+            <ViewerDate
+              value={confirmedAt}
+              notation={notation}
+              dateStyle="medium"
+              template={strings.confirmed}
+              language={language}
+            />
           </p>
         ) : (
           <>

@@ -1,11 +1,6 @@
 import type { NotificationCategory } from "@/features/notifications";
 import type { InboxItem } from "@/use-cases/notifications/inbox";
-import {
-  formatDate,
-  formatRelativeTime,
-  wordsLocale,
-  type Locale,
-} from "@/lib/format";
+import { formatRelativeTime, wordsLocale } from "@/lib/format";
 
 export type InboxRow = {
   id: string;
@@ -16,12 +11,11 @@ export type InboxRow = {
   unread: boolean;
   dateTime: string;
   when: string;
-  whenExact: string;
 };
 
 export function toInboxRow(
   item: InboxItem,
-  { words, notation, now }: { words: string; notation: Locale; now: Date },
+  { words, now }: { words: string; now: Date },
 ): InboxRow {
   return {
     id: item.id,
@@ -32,7 +26,6 @@ export function toInboxRow(
     unread: item.readAt === null,
     dateTime: item.createdAt.toISOString(),
     when: formatRelativeTime(item.createdAt, wordsLocale(words), now),
-    whenExact: formatDate(item.createdAt, notation),
   };
 }
 

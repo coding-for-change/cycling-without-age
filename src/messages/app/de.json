@@ -311,18 +311,22 @@
       "viewAsAdmin": "Als Admin ansehen",
       "viewAsPassenger": "Als Passagier ansehen",
       "viewAsPilot": "Als Pilot ansehen",
-      "newCourse": "Schulungskurs anlegen"
+      "newCourse": "Schulungskurs anlegen",
+      "inviteSuperadmin": "Superadmin einladen"
     },
     "countries": {
       "admins": "Länder-Admins",
       "appoint": "Länder-Admin hinzufügen",
-      "appointBody": "Die Person muss sich einmal angemeldet haben.",
-      "appointed": "{email} verantwortet jetzt dieses Land.",
+      "appointBody": "Wir schicken eine Einladung per E-Mail und legen ein Konto an, falls es noch keins gibt. Länder-Admin wird die Person, sobald sie die Einladung mit einem Passkey annimmt.",
+      "appointed": "Einladung an {email} verschickt.",
       "appointLabel": "E-Mail-Adresse",
+      "appointNameLabel": "Name",
+      "appointNamePlaceholder": "Vor- und Nachname",
       "appointPlaceholder": "name@beispiel.de",
       "appointShort": "Admin hinzufügen",
       "cancel": "Abbrechen",
       "confirmRemoveAdmin": "{name} als Länder-Admin entfernen?",
+      "confirmRevokeInvite": "Einladung für {name} zurückziehen?",
       "created": "{name} ist Teil der Bewegung.",
       "delete": {
         "body": "Jede Ortsgruppe in diesem Land geht mit, samt allem, was zu ihr gehört. Das lässt sich nicht rückgängig machen.",
@@ -336,9 +340,10 @@
       "edit": "Land bearbeiten",
       "empty": "Noch keine Länder.",
       "errors": {
+        "alreadyAdmin": "Die Person betreut dieses Land schon.",
         "codeTaken": "Dieser Ländercode ist schon belegt.",
         "generic": "Das hat nicht geklappt. Versuch es noch mal.",
-        "noAccount": "Zu dieser E-Mail-Adresse gibt es noch kein Konto."
+        "inviteClosed": "Diese Einladung wurde schon angenommen oder zurückgezogen."
       },
       "fields": {
         "code": "Ländercode",
@@ -346,12 +351,15 @@
       },
       "nameHint": "So erscheint es in der Seitenleiste und auf den Seiten der Ortsgruppen.",
       "new": "Neues Land",
+      "pendingInvite": "{name} · eingeladen",
       "pick": {
         "empty": "Kein Land mit diesem Namen.",
         "label": "Land",
         "placeholder": "Land eintippen"
       },
       "removeAdmin": "{name} entfernen",
+      "revoked": "Einladung zurückgezogen.",
+      "revokeInvite": "Einladung für {name} zurückziehen",
       "save": "Land speichern",
       "saved": "Gespeichert."
     },
@@ -367,7 +375,6 @@
       "passengers": "{count, plural, one {1 Fahrgast} other {# Fahrgäste}}",
       "pending": "{count, plural, one {1 offene Anfrage} other {# offene Anfragen}}",
       "pilots": "{count, plural, one {1 Einteilung einer Pilot:in} other {# Einteilungen von Pilot:innen}}",
-      "rideLocations": "{count, plural, one {1 Abfahrtsort} other {# Abfahrtsorte}}",
       "riders": "{count, plural, one {1 Buchung eines Fahrgasts} other {# Buchungen von Fahrgästen}}",
       "rides": "{count, plural, one {1 Ausfahrt, vergangene eingeschlossen} other {# Ausfahrten, vergangene eingeschlossen}}",
       "roles": "{count, plural, one {1 Mitgliedschaft in einer Ortsgruppe} other {# Mitgliedschaften in Ortsgruppen}}",
@@ -389,6 +396,8 @@
       "chapterUpdated": "{actor} hat {field} geändert",
       "countryAdminAppointed": "{actor} hat diese Person zum Länder-Admin gemacht",
       "countryAdminRemoved": "{actor} hat diese Person als Länder-Admin abgelöst",
+      "superadminGranted": "{actor} hat diese Person zum Superadmin gemacht",
+      "superadminRemoved": "{actor} hat diese Person als Superadmin abgelöst",
       "countryDeleted": "{actor} hat das Land {name} gelöscht",
       "emailSent": "Eine E-Mail ist raus — {template}",
       "fields": {
@@ -433,6 +442,7 @@
         "welcome": "Willkommen",
         "careRequested": "Betreuungsanfrage",
         "careDecided": "Antwort auf Betreuung",
+        "careLinked": "Betreuung verknüpft",
         "careInvited": "Einladung Begleitperson",
         "rideRequestSubmitted": "Neue Fahrtanfrage",
         "rideRequestWithdrawn": "Fahrtanfrage zurückgezogen",
@@ -443,7 +453,9 @@
         "rideReminder": "Fahrgasterinnerung",
         "pilotReminder": "Pilotenerinnerung",
         "rideNoDemand": "Niemand gebucht",
-        "rideRosterRefilled": "Fahrgast wieder dabei"
+        "rideRosterRefilled": "Fahrgast wieder dabei",
+        "adminInvite": "Admin-Einladung",
+        "superadminRemoved": "Superadmin ausgeschieden"
       },
       "you": "Du",
       "riderHandedOver": "{direction, select, in {{self, select, yes {Du hast} other {{actor} hat}} {riderGone, select, yes {einen ehemaligen Fahrgast} other {{rider}}} von {previousGone, select, yes {einem ehemaligen Mitglied} other {{previous}}} an dieses Konto übergeben} other {{self, select, yes {Du hast} other {{actor} hat}} {riderGone, select, yes {einen ehemaligen Fahrgast} other {{rider}}} an {nextGone, select, yes {ein ehemaliges Mitglied} other {{next}}} übergeben}}",
@@ -551,9 +563,10 @@
       }
     },
     "nav": {
+      "admins": "Admins",
       "bikes": "Rikschas",
       "chapters": "Ortsgruppen",
-      "chat": "Nachrichten",
+      "chat": "Chat",
       "countries": "Länder",
       "help": "Hilfe holen",
       "locations": "Abstellorte",
@@ -563,7 +576,6 @@
       "reports": "Berichte",
       "rides": "Ausfahrten",
       "settings": "Einstellungen",
-      "rideLocations": "Abfahrtsorte",
       "training": "Training"
     },
     "navGroups": {
@@ -574,7 +586,60 @@
     "navLabel": "Admin-Bereiche",
     "newRide": "Fahrt planen",
     "openMenu": "Menü öffnen",
+    "overview": {
+      "activity": {
+        "empty": "Hier ist noch nichts passiert. Jede Änderung in deinen Ortsgruppen landet hier.",
+        "title": "Letzte Aktivität"
+      },
+      "attention": {
+        "application": {
+          "action": "Prüfen",
+          "text": "{name} möchte in {chapter} Pilot werden"
+        },
+        "damage": {
+          "action": "Ansehen",
+          "grounded": "Stillgelegt",
+          "text": "{trishaw}: {description}"
+        },
+        "empty": {
+          "body": "Gerade wartet nichts auf dich. Neue Anfragen und offene Enden tauchen hier auf.",
+          "title": "Alles erledigt"
+        },
+        "finish": {
+          "action": "Abschließen",
+          "text": "{ride} ist vorbei und muss noch abgeschlossen werden"
+        },
+        "more": "{count, plural, one {# weitere} other {# weitere}}",
+        "notReady": {
+          "action": "Öffnen",
+          "coursesDone": "{name} hat die Kurse geschafft, es fehlt noch die Einweisung vor Ort",
+          "someone": "Ein Pilot",
+          "text": "{name} ist noch nicht startklar"
+        },
+        "request": {
+          "action": "Prüfen",
+          "someone": "Jemand",
+          "text": "{name} wünscht sich eine Fahrt am {date}"
+        },
+        "title": "Braucht dich",
+        "unstaffed": {
+          "action": "Besetzen",
+          "text": "{ride} braucht noch {missing, plural, one {# Pilot} other {# Piloten}}"
+        }
+      },
+      "showAll": "Alle anzeigen · {count} weitere",
+      "showLess": "Weniger anzeigen",
+      "week": {
+        "empty": "In den nächsten sieben Tagen stehen keine Fahrten an.",
+        "open": "Kalender öffnen",
+        "title": "Diese Woche"
+      }
+    },
     "pages": {
+      "admins": {
+        "title": "Admins",
+        "body": "Wer die Plattform betreut und wer sich um welches Land kümmert. Nur Superadmins sehen das."
+      },
       "bikes": {
         "body": "Jede Rikscha, um die sich deine Ortsgruppe kümmert, wer sie zuletzt draußen hatte und wann sie wieder zur Wartung muss.",
         "title": "Rikschas"
@@ -775,6 +840,21 @@
         "title": "Kümmert sich um",
         "relationship": "Beziehung: {relationship}",
         "handOverHint": "Wird dieses Konto gelöscht, werden die Fahrgäste ohne eigenes Konto mit gelöscht. Übergib sie vorher auf ihrer eigenen Seite an jemand anderen, damit sie weiter mitfahren können."
+      },
+      "carer": {
+        "title": "Betreuung",
+        "none": "Bucht die eigenen Fahrten selbst.",
+        "open": "Betreuungsperson verknüpfen …",
+        "drawerTitle": "Betreuungsperson für {rider} verknüpfen",
+        "drawerBody": "Wähl jemanden aus {chapter}, der Fahrten für {rider} bucht. Die Person bekommt eine Anfrage, und bis sie zusagt, ändert sich nichts. {rider} behält das eigene Konto und sieht die eigenen Fahrten weiter.",
+        "noMembers": "In {chapter} gibt es noch niemanden, den du verknüpfen kannst. Die Betreuungsperson muss der Ortsgruppe zuerst beitreten.",
+        "submit": "Anfrage senden",
+        "done": "{name} hat eine Anfrage für {rider} bekommen",
+        "pending": "Wartet auf Antwort von {name}",
+        "errors": {
+          "unknownPassenger": "{rider} hat schon eine Betreuungsperson. Lade die Seite neu.",
+          "sameManager": "{rider} kann sich nicht selbst betreuen."
+        }
       }
     },
     "perspectives": {
@@ -852,16 +932,16 @@
       },
       "map": {
         "title": "Wo gefahren wurde",
-        "label": "Karte der Chapter, nach Fahrten gewichtet",
-        "hint": "Die Größe der Blase zeigt die Fahrten. Zoom mit Strg/⌘ + Scrollen oder zwei Fingern, wähl ein Chapter, um es zu öffnen.",
-        "unavailable": "Für die Karte fehlt ein Mapbox-Token. Die Rangliste zeigt trotzdem jedes Chapter."
+        "label": "Karte der Ortsgruppen, nach Fahrten gewichtet",
+        "hint": "Die Größe der Blase zeigt die Fahrten. Zoom mit Strg/⌘ + Scrollen oder zwei Fingern, wähl eine Ortsgruppe, um sie zu öffnen.",
+        "unavailable": "Für die Karte fehlt ein Mapbox-Token. Die Rangliste zeigt trotzdem jede Ortsgruppe."
       },
       "rankings": {
         "title": "Rangliste",
         "tabsLabel": "Was gerankt wird",
         "metricLabel": "Ranken nach",
         "tabs": {
-          "chapters": "Chapter",
+          "chapters": "Ortsgruppen",
           "countries": "Länder",
           "pilots": "Pilot:innen",
           "riders": "Fahrgäste"
@@ -888,7 +968,7 @@
           "body": "Die Rangliste füllt sich, sobald in diesem Zeitraum Fahrten zu Ende gehen."
         },
         "drawer": {
-          "chapters": "Alle Chapter",
+          "chapters": "Alle Ortsgruppen",
           "countries": "Alle Länder",
           "pilots": "Alle Pilot:innen",
           "riders": "Alle Fahrgäste",
@@ -954,7 +1034,7 @@
         "newRidersHint": "Erste Fahrt überhaupt im gewählten Zeitraum",
         "empty": {
           "title": "Noch keine Pilot:innen oder Fahrgäste",
-          "body": "Pilot:innen und Fahrgäste erscheinen hier, sobald sie einem Chapter in diesem Bereich beitreten."
+          "body": "Pilot:innen und Fahrgäste erscheinen hier, sobald sie einer Ortsgruppe in diesem Bereich beitreten."
         }
       },
       "delta": {
@@ -1071,7 +1151,7 @@
         "minutes": "{count, plural, one {# Minute vorher} other {# Minuten vorher}}",
         "days": "{count, plural, one {# Tag vorher} other {# Tage vorher}}",
         "rider": {
-          "hint": "Fahrgäste oder ihre Begleitpersonen werden gebeten, den Platz zu bestätigen oder freizugeben.",
+          "hint": "Fahrgäste oder ihre Begleitpersonen erfahren, dass die Fahrt bald ansteht, und können absagen, wenn sich etwas geändert hat.",
           "label": "Fahrgäste erinnern"
         },
         "title": "Erinnerungen",
@@ -1196,119 +1276,6 @@
     "user": {
       "account": "Konto",
       "menuLabel": "Dein Konto"
-    },
-    "rideLocations": {
-      "title": "Abfahrtsorte",
-      "body": "Wo eure Ausfahrten beginnen: Pflegeeinrichtungen, Wohnanlagen und öffentliche Orte. Wähl einen beim Planen aus, dann kommen Adresse und übliche Dauer gleich mit.",
-      "new": "Neuer Abfahrtsort",
-      "commandNew": "Abfahrtsort hinzufügen",
-      "pickChapter": "Wähl eine Ortsgruppe, um einen Abfahrtsort hinzuzufügen.",
-      "empty": "Noch keine Abfahrtsorte. Leg die Pflegeeinrichtungen und Orte an, von denen deine Ortsgruppe losfährt.",
-      "kinds": {
-        "careCenter": "Pflegeeinrichtung",
-        "residence": "Wohnanlage",
-        "publicPlace": "Öffentlicher Ort",
-        "other": "Sonstiges"
-      },
-      "columns": {
-        "name": "Name",
-        "kind": "Art",
-        "address": "Adresse",
-        "contact": "Kontakt",
-        "upcoming": "Kommende Ausfahrten",
-        "chapter": "Ortsgruppe",
-        "status": "Status"
-      },
-      "statuses": {
-        "active": "Aktiv",
-        "archived": "Archiviert"
-      },
-      "noAddress": "Noch keine Adresse",
-      "noContact": "Noch kein Kontakt",
-      "upcomingCount": "{count, plural, =0 {Keine} one {1 Ausfahrt} other {# Ausfahrten}}",
-      "create": {
-        "title": "Neuer Abfahrtsort",
-        "body": "Ein Ort, von dem deine Ortsgruppe losfährt. Den Rest kannst du später auf seiner Seite ergänzen.",
-        "chapter": "Ortsgruppe",
-        "name": "Name",
-        "namePlaceholder": "Pflegeheim Sonnenhof",
-        "nameRequired": "Gib dem Abfahrtsort einen Namen.",
-        "kind": "Art",
-        "address": "Adresse",
-        "addressPlaceholder": "Adresse suchen",
-        "contact": "Ansprechperson vor Ort",
-        "contactName": "Name",
-        "contactPhone": "Telefon",
-        "contactEmail": "E-Mail",
-        "invalidEmail": "Diese E-Mail-Adresse sieht nicht richtig aus.",
-        "defaults": "Wenn du hier planst",
-        "defaultsHint": "Das füllt die Planung vor. Für jede Ausfahrt kannst du es noch ändern.",
-        "defaultMinutes": "Übliche Dauer",
-        "chapterDefault": "Wie in der Ortsgruppe",
-        "notes": "Hinweise für Pilot:innen",
-        "notesPlaceholder": "Wo man wartet, wer die Tür öffnet, welcher Eingang die Rampe hat …",
-        "submit": "Abfahrtsort hinzufügen",
-        "created": "{name} ist bereit.",
-        "addressHint": "Wähl die Adresse, von der die Fahrgäste losfahren, und zieh die Nadel dann an die richtige Tür."
-      },
-      "detail": {
-        "back": "Abfahrtsorte",
-        "name": "Name",
-        "properties": "Eigenschaften",
-        "kind": "Art",
-        "chapter": "Ortsgruppe",
-        "added": "Angelegt am {date}",
-        "place": "Adresse",
-        "map": "Karte des Abfahrtsorts",
-        "mapUnavailable": "Die Karte ist gerade nicht verfügbar.",
-        "openInGoogleMaps": "In Google Maps öffnen",
-        "contact": "Ansprechperson vor Ort",
-        "contactName": "Name",
-        "contactNamePlaceholder": "Nach wem man fragt",
-        "contactPhone": "Telefon",
-        "contactPhonePlaceholder": "+49 …",
-        "contactEmail": "E-Mail",
-        "contactEmailPlaceholder": "name@example.org",
-        "defaults": "Wenn du hier planst",
-        "defaultMinutes": "Übliche Dauer",
-        "typicalRideKm": "Übliche Strecke",
-        "typicalRideKmPlaceholder": "Kilometer pro Ausfahrt",
-        "km": "{km} km",
-        "notes": "Hinweise für Pilot:innen",
-        "notesPlaceholder": "Wo man wartet, wer die Tür öffnet, welcher Eingang die Rampe hat …",
-        "upcoming": "Kommende Ausfahrten hier",
-        "noUpcoming": "Hier ist noch keine Ausfahrt geplant.",
-        "riders": "{count, plural, =0 {Noch keine Fahrgäste} one {1 Fahrgast} other {# Fahrgäste}}",
-        "scheduleHere": "Ausfahrt hier planen",
-        "archivedNotice": "Dieser Abfahrtsort ist archiviert. Er taucht beim Planen nicht mehr auf, und vergangene Ausfahrten behalten Name und Adresse.",
-        "danger": "Archivieren",
-        "dangerBody": "Archivieren blendet den Ort in der Planung aus. Ausfahrten behalten ihre eigene Kopie von Name und Adresse, im Kalender ändert sich also nichts.",
-        "archive": {
-          "open": "Abfahrtsort archivieren",
-          "title": "{name} archivieren?",
-          "body": "Er verschwindet aus der Planung. Bereits geplante Ausfahrten behalten ihren Ort.",
-          "submit": "Archivieren",
-          "done": "{name} ist archiviert."
-        },
-        "restore": {
-          "open": "Wiederherstellen",
-          "done": "{name} ist zurück."
-        },
-        "cancel": "Abbrechen",
-        "status": {
-          "saving": "Speichert …",
-          "saved": "Gespeichert"
-        }
-      },
-      "picker": {
-        "placeholder": "Abfahrtsort oder Adresse",
-        "hint": "{kind} · {address}",
-        "defaults": "Übliche Dauer bei {name}: {length}."
-      },
-      "errors": {
-        "unknownLocation": "Diesen Abfahrtsort gibt es nicht mehr. Lade die Seite neu und versuch es noch mal.",
-        "locationArchived": "Dieser Abfahrtsort ist archiviert. Stell ihn zuerst wieder her."
-      }
     },
     "rideRequests": {
       "title": "Fahrtanfragen",
@@ -1825,13 +1792,79 @@
           "done": "{name} ist gelöscht."
         }
       }
+    },
+    "admins": {
+      "invite": "Superadmin einladen",
+      "inviteBody": "Wir schicken eine Einladung per E-Mail. Superadmin wird die Person erst, wenn sie die Einladung mit einem Passkey annimmt. Die Einladung gilt 7 Tage.",
+      "fields": {
+        "name": "Name",
+        "email": "E-Mail-Adresse"
+      },
+      "namePlaceholder": "Vor- und Nachname",
+      "emailPlaceholder": "name@beispiel.de",
+      "send": "Einladung senden",
+      "cancel": "Abbrechen",
+      "invited": "Einladung an {email} verschickt.",
+      "superadmins": "Superadmins",
+      "superadminsBody": "Sie sehen und ändern alles, in jedem Land. Vergeben und Entziehen der Rolle fragt nach deinem Passkey.",
+      "countryAdmins": "Länder-Admins",
+      "countryAdminsBody": "Jede und jeder betreut ein Land. Einladen und entfernen kannst du sie auf der Seite Länder.",
+      "noCountryAdmins": "Noch niemand",
+      "noCountries": "Noch keine Länder.",
+      "manage": "Länder öffnen",
+      "empty": "Keine Superadmins. Das sollte nicht passieren.",
+      "columns": {
+        "name": "Name",
+        "email": "E-Mail",
+        "since": "Seit",
+        "invitedBy": "Eingeladen von",
+        "passkey": "Passkey",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Aktiv",
+        "pending": "Eingeladen · bis {date}"
+      },
+      "passkey": {
+        "yes": "Eingerichtet",
+        "no": "Fehlt"
+      },
+      "unknown": "—",
+      "you": "du",
+      "invitedBadge": "Eingeladen",
+      "revoke": "Zurückziehen",
+      "revokeLabel": "Einladung für {name} zurückziehen",
+      "revokeTitle": "Einladung für {name} zurückziehen?",
+      "revokeBody": "Der Link in der E-Mail funktioniert dann nicht mehr. Du kannst die Person jederzeit neu einladen.",
+      "revoked": "Einladung zurückgezogen.",
+      "remove": {
+        "open": "Entfernen",
+        "title": "{name} als Superadmin entfernen?",
+        "body": "Das Konto bleibt, aber alle Rechte der Rolle fallen weg. Einladungen dieser Person, die noch niemand angenommen hat, werden zurückgezogen.",
+        "label": "Tipp {word} zur Bestätigung",
+        "word": "REMOVE",
+        "submit": "Superadmin entfernen",
+        "done": "{name} ist kein Superadmin mehr."
+      },
+      "lastSuperadmin": "Die Plattform braucht mindestens einen Superadmin.",
+      "errors": {
+        "generic": "Das hat nicht geklappt. Versuch es noch mal.",
+        "alreadyAdmin": "Die Person ist schon Superadmin.",
+        "lastSuperadmin": "Die Plattform braucht mindestens einen Superadmin, deshalb bleibt diese Person.",
+        "inviteClosed": "Diese Einladung wurde schon angenommen oder zurückgezogen.",
+        "stepUpFailed": "Dein Passkey wurde nicht bestätigt, es hat sich nichts geändert."
+      }
     }
   },
   "calendar": {
     "agendaEmpty": "Noch nichts gebucht. Sobald eine Fahrt eingeplant ist, steht sie hier.",
-    "agendaEmptyCaretaker": "{who, select, one {Noch nichts gebucht. Sobald eine Fahrt für {name} eingeplant ist, steht sie hier.} withOne {Noch nichts gebucht. Sobald eine Fahrt für Sie oder {name} eingeplant ist, steht sie hier.} withMany {Noch nichts gebucht. Sobald eine Fahrt für Sie oder einen Menschen eingeplant ist, um den Sie sich kümmern, steht sie hier.} other {Noch nichts gebucht. Sobald eine Fahrt für einen Menschen eingeplant ist, um den Sie sich kümmern, steht sie hier.}}",
     "bookedElsewhere": "Von einer anderen Ortsgruppe gebucht",
     "cancelledOn": "Abgesagt",
+    "card": {
+      "findingPilot": "Pilot wird gesucht",
+      "rideFrom": "Ausfahrt ab {place}",
+      "rideTo": "Fahrt zu {destination}"
+    },
     "models": {
       "event": "Gruppenfahrt",
       "functional": "Zweckfahrt",
@@ -1934,15 +1967,19 @@
       "announcementOff": "{name} hat die Gruppe wieder für alle geöffnet",
       "announcementOn": "{name} hat daraus einen Ankündigungskanal gemacht",
       "continued": "{name} hat das Gespräch wieder aufgenommen",
+      "departed": "{name} ist nicht mehr dabei",
+      "joined": "{name} ist dabei",
       "left": "{name} hat die Gruppe verlassen"
     },
     "thread": {
       "announcementLocked": "Hier schreibt nur, wer die Gruppe gestartet hat. Jede Ankündigung erreicht dich trotzdem.",
+      "announcementLockedAdmins": "Hier schreiben nur die Admins der Ortsgruppe.",
       "back": "Alle Chats",
       "deleted": "Nachricht gelöscht",
       "edited": "bearbeitet",
       "frozen": {
         "body": "Er endete mit dem Abschluss der Fahrt. Alle hier können ihn wieder aufnehmen.",
+        "cancelled": "Er wurde geschlossen, als die Veranstaltung abgesagt wurde. Nur die Admins der Ortsgruppe können ihn wieder öffnen.",
         "continued": "Der Chat ist wieder offen.",
         "keepChatting": "Weiterschreiben",
         "title": "Dieser Chat ist abgeschlossen"
@@ -2133,8 +2170,7 @@
       "entrance": "Eingang",
       "entrancePhoto": "Eingang von {location}",
       "homeCard": {
-        "body": "Bring die Rikscha zurück und sag uns, falls etwas kaputt ist.",
-        "title": "Schließ deine letzte Fahrt ab"
+        "body": "Bring die Rikscha zurück und sag uns, falls etwas kaputt ist."
       },
       "intro": "Danke fürs Fahren! So bringst du alles zurück.",
       "noLocation": "Für diese Rikscha ist kein Rückgabeort hinterlegt. Frag deine Ortsgruppe, wo sie hinkommt.",
@@ -2558,6 +2594,11 @@
     "title": "Hallo Welt"
   },
   "join": {
+    "start": {
+      "title": "Bei dieser Ortsgruppe mitmachen",
+      "body": "Mitfahren, Fahrten für einen Menschen buchen, um den Sie sich kümmern, oder selbst in die Pedale treten. Melden Sie sich an und wählen Sie, wie Sie mitmachen möchten.",
+      "cta": "Los geht’s"
+    },
     "app": {
       "appStore": "Laden im App Store",
       "playStore": "Jetzt bei Google Play",
@@ -2651,6 +2692,14 @@
       "passenger": "Ausfahrt buchen",
       "pilot": "Offene Ausfahrten finden"
     },
+    "calendar": {
+      "dayItems": "{count, plural, one {# Eintrag} other {# Einträge}}",
+      "emptyDay": "An diesem Tag ist nichts geplant.",
+      "next": "Nächster Monat",
+      "nextUp": "Als Nächstes: {date}",
+      "previous": "Vorheriger Monat",
+      "today": "Heute"
+    },
     "guest": {
       "greeting": "Willkommen",
       "hero": "Konto anlegen",
@@ -2660,31 +2709,32 @@
       "tagline": "Sehen Sie sich erst einmal um — die gewählte Ortsgruppe steht gleich hier."
     },
     "home": {
-      "greeting": "Hallo {name}",
-      "nextRide": {
-        "passenger": {
-          "caretakerEmpty": "{who, select, one {Für {name} ist noch nichts gebucht. Wenn Sie eine Ausfahrt buchen, stehen hier der Tag, die Uhrzeit und der Pilot, der {name} abholt.} withOne {Noch nichts gebucht. Wenn Sie eine Ausfahrt für sich oder {name} buchen, stehen hier der Tag, die Uhrzeit und der Pilot, der in die Pedale tritt.} withMany {Noch nichts gebucht. Wenn Sie eine Ausfahrt für sich oder einen Menschen buchen, um den Sie sich kümmern, stehen hier der Tag, die Uhrzeit und der Pilot, der in die Pedale tritt.} other {Noch nichts gebucht. Wenn Sie eine Ausfahrt für einen Menschen buchen, um den Sie sich kümmern, stehen hier der Tag, die Uhrzeit und der Pilot, der zur Abholung kommt.}}",
-          "empty": "Noch nichts gebucht. Wenn Sie eine Ausfahrt buchen, stehen hier der Tag, die Uhrzeit und der Pilot, der Sie abholt."
-        },
-        "pilot": {
-          "empty": "Auf deiner Liste steht noch nichts. Sobald deine Ortsgruppe offene Ausfahrten ausschreibt, steht die nächste hier — Datum, Passagier, Treffpunkt."
-        },
-        "title": "Nächste Ausfahrt"
+      "greeting": {
+        "default": "Hallo {name}",
+        "morning": "Guten Morgen, {name}",
+        "afternoon": "Guten Tag, {name}",
+        "evening": "Guten Abend, {name}",
+        "night": "Noch wach, {name}?"
+      },
+      "hero": {
+        "bookBody": "{who, select, one {Ein Pilot holt {name} an der Haustür ab und tritt in die Pedale. {name} muss nur noch den Wind in den Haaren genießen.} self {Ein Pilot holt Sie an der Haustür ab und tritt in die Pedale. Sie müssen nur noch den Wind in den Haaren genießen.} other {Ein Pilot holt alle an der Haustür ab und tritt in die Pedale. Bleibt nur noch der Wind in den Haaren.}}",
+        "bookTitle": "{who, select, one {Wohin geht es mit {name}?} self {Wohin darf es gehen?} other {Wohin geht die nächste Ausfahrt?}}",
+        "eyebrow": "{who, select, one {Ausfahrt von {name} mit {pilot}} self {Ihre Ausfahrt mit {pilot}} other {Nächste Ausfahrt mit {pilot}}}",
+        "eyebrowNoPilot": "{who, select, one {Nächste Ausfahrt von {name}} self {Ihre nächste Ausfahrt} other {Nächste Ausfahrt}}",
+        "more": "{count, plural, one {+# weitere Ausfahrt} other {+# weitere Ausfahrten}}",
+        "when": "{weekday}, {date} · {time}"
       },
       "passenger": {
-        "caretakerTagline": "{who, select, one {Die nächste Ausfahrt für {name} beginnt hier.} withOne {Ausfahrten für Sie und {name} beginnen hier.} withMany {Ausfahrten für Sie und die Menschen, um die Sie sich kümmern, beginnen hier.} other {Ausfahrten für die Menschen, um die Sie sich kümmern, beginnen hier.}}",
-        "chooseChapter": "Ortsgruppe wählen",
-        "tagline": "Ihre nächste Ausfahrt beginnt hier."
+        "chooseChapter": "Ortsgruppe wählen"
       },
-      "pilot": {
-        "tagline": "Bereit, wenn du es bist."
-      },
-      "yourChapter": "Ortsgruppe",
-      "yourChapters": "Ortsgruppen"
+      "soon": {
+        "date": "{weekday}, {date}",
+        "title": "Demnächst"
+      }
     },
     "nav": {
       "calendar": "Kalender",
-      "chat": "Nachrichten",
+      "chat": "Chat",
       "home": "Start",
       "rides": "Meine Ausfahrten",
       "training": "Training",
@@ -2692,16 +2742,6 @@
     },
     "navLabel": "Bereiche",
     "pages": {
-      "calendar": {
-        "passenger": {
-          "body": "Noch nichts geplant. Ihre kommenden Ausfahrten stehen hier, mit dem Datum und der Uhrzeit, zu der Ihr Pilot kommt.",
-          "caretakerBody": "{who, select, one {Für {name} ist noch nichts geplant. Kommende Ausfahrten stehen hier, mit dem Datum und der Uhrzeit, zu der der Pilot kommt.} withOne {Noch nichts geplant. Kommende Ausfahrten für Sie und {name} stehen hier, mit dem Datum und der Uhrzeit, zu der der Pilot kommt.} withMany {Noch nichts geplant. Kommende Ausfahrten für Sie und die Menschen, um die Sie sich kümmern, stehen hier, mit dem Datum und der Uhrzeit, zu der der Pilot kommt.} other {Noch nichts geplant. Kommende Ausfahrten für die Menschen, um die Sie sich kümmern, stehen hier, mit dem Datum und der Uhrzeit, zu der der Pilot kommt.}}"
-        },
-        "pilot": {
-          "body": "Eine leere Woche, vorerst. Deine Ausfahrten, Trainingstermine und Treffen der Ortsgruppe reihen sich hier ein."
-        },
-        "title": "Kalender"
-      },
       "rides": {
         "pilot": {
           "body": "Deine erste Ausfahrt steht noch nicht auf der Liste. Sobald deine Ortsgruppe offene Ausfahrten ausschreibt, tauchen hier die auf, die einen Piloten brauchen — such dir eine aus, und die Rikscha gehört dir für den Nachmittag."
@@ -2714,6 +2754,26 @@
       "label": "Perspektive",
       "noChapter": "Noch keine Ortsgruppe",
       "switchLabel": "Perspektive wechseln"
+    },
+    "rides": {
+      "countdown": {
+        "days": "{count, plural, one {Tag} other {Tagen}}",
+        "in": "In",
+        "today": "Heute",
+        "tomorrow": "Morgen"
+      },
+      "map": {
+        "appleMaps": "Apple Karten",
+        "copied": "Adresse kopiert",
+        "copyAddress": "Adresse kopieren",
+        "copyFailed": "Die Adresse ließ sich nicht kopieren",
+        "googleMaps": "Google Maps",
+        "open": "{place} in einer Karten-App öffnen",
+        "title": "Öffnen in"
+      },
+      "upcoming": {
+        "requested": "Angefragt · wartet auf Bestätigung"
+      }
     },
     "tabBarLabel": "Hauptbereiche",
     "topBar": {
@@ -2772,8 +2832,6 @@
     "noChapter": "Sie haben noch keine Ortsgruppe gewählt",
     "rides": {
       "detail": {
-        "about": "Über diese Ausfahrt",
-        "andBack": "und um {time} zurück",
         "call": "{name} anrufen",
         "cancelled": "Diese Ausfahrt ist abgesagt",
         "cancelledHint": "Es tut uns leid, dass es diesmal nicht klappt. Ihre Ortsgruppe plant gern die nächste mit Ihnen.",
@@ -2782,21 +2840,42 @@
         "message": "Allen bei dieser Fahrt schreiben",
         "openInMaps": "In Karten öffnen",
         "pilot": "{count, plural, one {Wer Sie fährt} other {Wer Sie fährt}}",
-        "pilotPending": "Noch nicht eingeteilt",
         "pilotPendingHint": "Ihre Ortsgruppe sucht den passenden Piloten für diese Ausfahrt.",
         "placeTbd": "Ihre Ortsgruppe sagt Ihnen noch, wo die Ausfahrt beginnt.",
-        "returnOfRideAt": "Rückfahrt zu Ihrer Fahrt um {time}",
         "riders": "Wer mitfährt",
-        "startsAt": "Start: {place}",
         "subject": "Unsere Ausfahrt am {date}",
-        "to": "nach {destination}"
+        "state": {
+          "cancelled": "Abgesagt",
+          "completed": "Stattgefunden"
+        },
+        "yourPilot": "Mit Ihnen fährt {name}",
+        "yourPilots": "Wer Sie fährt",
+        "findingPilot": "Wir suchen Ihren Piloten",
+        "chat": "Chat",
+        "callShort": "Anrufen",
+        "day": "Ihr Tag",
+        "pickupAt": "Abholung um {time}",
+        "arriveAt": "Ankunft: {destination}",
+        "mapOf": "Karte von {place}",
+        "trishaw": "Sie fahren in {name}",
+        "trishawHint": "Eine Rikscha von {chapter}",
+        "changeTime": "Zeit ändern",
+        "cancelRide": {
+          "label": "Ausfahrt absagen",
+          "title": "Diese Ausfahrt absagen?",
+          "body": "Ihre Ortsgruppe erfährt es sofort und kann die Rikscha jemand anderem anbieten.",
+          "confirm": "Ausfahrt absagen",
+          "cancel": "Ausfahrt behalten",
+          "done": "Ausfahrt abgesagt. Ihre Ortsgruppe weiß Bescheid."
+        },
+        "help": "Brauchen Sie Hilfe?",
+        "returnAt": "Rückfahrt um {time}",
+        "wayThereAt": "Hinfahrt um {time}"
       },
       "events": {
-        "badge": "Ausfahrt",
         "book": {
           "done": "{count, plural, one {Platz gebucht} other {# Plätze gebucht}}. Wir freuen uns auf Sie!",
           "hint": "Wählen Sie, wer mitkommen möchte. Um den Rest kümmert sich die Ortsgruppe.",
-          "more": "Jemand weiteren mitbringen",
           "pick": "Wählen Sie, wer mitkommt",
           "submit": "{count, plural, one {# Platz buchen} other {# Plätze buchen}}",
           "title": "Platz buchen",
@@ -2812,10 +2891,28 @@
         },
         "open": "Plätze frei",
         "seatsLeft": "{count, plural, =0 {Ausgebucht} one {Noch # Platz frei} other {Noch # Plätze frei}}",
-        "title": "Kommende Ausfahrten"
+        "whoComing": "Wer kommt",
+        "going": "{count, plural, =0 {Noch hat niemand gebucht} one {# Person kommt} other {# Personen kommen}}",
+        "groupChat": "Gruppenchat",
+        "groupChatLabel": "Allen schreiben, die zu dieser Veranstaltung kommen",
+        "bar": {
+          "spotsLeft": "{count, plural, =0 {Ausgebucht} one {Noch # Platz frei} other {Noch # Plätze frei}}",
+          "open": "Plätze frei",
+          "book": "Platz buchen",
+          "going": "Sie sind dabei",
+          "add": "Jemanden hinzufügen",
+          "pickTitle": "Wer kommt mit?",
+          "cancel": {
+            "label": "Absagen",
+            "aria": "Ihre Buchung absagen",
+            "title": "Ihre Buchung absagen?",
+            "body": "Ihre Plätze gehen an die Ortsgruppe zurück, damit jemand anderes mitkommen kann.",
+            "confirm": "Buchung absagen",
+            "cancel": "Platz behalten",
+            "done": "Buchung abgesagt. Die Ortsgruppe weiß Bescheid."
+          }
+        }
       },
-      "past": "Vergangene Ausfahrten",
-      "pastCount": "{count, plural, one {# Ausfahrt} other {# Ausfahrten}}",
       "reasons": {
         "equipment": "Die Rikscha braucht erst etwas Pflege, bevor sie wieder losfahren kann.",
         "facility": "Das Pflegeheim konnte diesen Tag leider nicht einrichten.",
@@ -2828,16 +2925,13 @@
       "seat": {
         "cancel": {
           "aria": "Platz absagen für {name}",
-          "body": "Die Ortsgruppe kann den Platz dann jemand anderem anbieten. Solange noch Platz ist, können Sie ihn hier zurücknehmen.",
+          "body": "Die Ortsgruppe kann den Platz dann jemand anderem anbieten.",
           "cancel": "Platz behalten",
           "confirm": "Platz freigeben",
           "done": "Platz freigegeben. Die Ortsgruppe weiß Bescheid.",
           "label": "Platz absagen",
           "title": "Den Platz von {name} freigeben?"
         },
-        "confirm": "Platz bestätigen",
-        "confirmAria": "Platz bestätigen für {name}",
-        "confirmed": "Platz bestätigt. Bis bald!",
         "errors": {
           "pleasureLimit": "Diese Ausfahrt ist inzwischen wieder voll. Ihre Ortsgruppe hilft Ihnen gern.",
           "rateLimited": "Das war viel auf einmal. Bitte warten Sie kurz und versuchen Sie es noch einmal.",
@@ -2847,20 +2941,23 @@
           "unknownPassenger": "Für diesen Fahrgast können Sie nicht buchen.",
           "unknownRide": "Diese Ausfahrt ist nicht mehr verfügbar."
         },
-        "hint": "Bitte bestätigen Sie jeden Platz – oder geben Sie ihn frei, wenn sich etwas geändert hat, damit jemand anderes mitfahren kann.",
-        "retake": "Platz zurücknehmen",
-        "retakeAria": "Platz zurücknehmen für {name}",
-        "retaken": "Platz zurückgenommen. Bis bald!",
         "states": {
-          "booked": "Noch nicht bestätigt",
+          "booked": "Gebucht",
           "cancelled": "Platz freigegeben",
           "checkedIn": "Eingecheckt",
           "completed": "Mitgefahren",
-          "confirmed": "Bestätigt",
           "noShow": "Nicht mitgefahren"
         }
       },
-      "write": "E-Mail schreiben"
+      "write": "E-Mail schreiben",
+      "list": {
+        "requested": "Angefragt",
+        "declined": "Nicht möglich",
+        "showPast": "{count, plural, one {# vergangene Ausfahrt zeigen} other {# vergangene Ausfahrten zeigen}}",
+        "hidePast": "Vergangene Ausfahrten ausblenden",
+        "emptyTitle": "Noch keine Ausfahrten",
+        "emptyBody": "Wohin soll es gehen? Fragen Sie bei Ihrer Ortsgruppe eine Ausfahrt an, das dauert nur eine Minute."
+      }
     },
     "riderNeeds": {
       "title": "Beim Fahren wichtig",
@@ -2872,12 +2969,6 @@
         "label": "Hinweis für Pilot:innen",
         "hint": "Alles, was bei der Ausfahrt hilft.",
         "placeholder": "Hört schlecht, mag die Strecke am Hafen …"
-      },
-      "careCenter": {
-        "label": "Pflegeeinrichtung",
-        "hint": "Wo der Fahrgast wohnt, falls die Ortsgruppe von dort losfährt.",
-        "gone": "{name} (nicht mehr im Angebot)",
-        "none": "Keine"
       }
     },
     "request": {
@@ -2938,14 +3029,8 @@
         "from": "Start bei",
         "pickup": "Abholen bei",
         "to": "Ziel",
-        "careCenter": "Pflegeeinrichtung",
-        "kinds": {
-          "careCenter": "Pflegeeinrichtung",
-          "residence": "Wohnanlage",
-          "publicPlace": "Treffpunkt",
-          "other": "Ort"
-        },
         "home": "Zuhause",
+        "careHome": "Ab {name}",
         "change": "Ändern",
         "elsewhere": "Woanders",
         "elsewhereBody": "Nach einer Adresse suchen",
@@ -2954,7 +3039,10 @@
         "searchFailed": "Diese Adresse wurde nicht gefunden. Versuchen Sie eine andere.",
         "previous": "Schon einmal dort gewesen",
         "roundTrip": "Und wieder zurück",
-        "roundTripHint": "Die Ortsgruppe bringt alle nach dem Besuch wieder nach Hause."
+        "roundTripHint": "Die Ortsgruppe bringt alle nach dem Besuch wieder nach Hause.",
+        "routeMap": "Der Weg von {from} nach {to} auf der Karte",
+        "routeSummary": "{distance} · etwa {duration} mit der Rikscha",
+        "mapUnavailable": "Die Karte ist gerade nicht verfügbar."
       },
       "when": {
         "parts": {
@@ -2965,6 +3053,11 @@
         "windows": "Zeiten am {date}",
         "confirm": "Das sind Zeitfenster, keine Termine – die Ortsgruppe bestätigt die genaue Uhrzeit.",
         "pickDay": "Wählen Sie einen Tag, um die Zeiten zu sehen.",
+        "dayLabel": "Tag",
+        "closedDate": "{chapter} fährt am {date} nicht – bitte wählen Sie einen anderen Tag.",
+        "closedWeekday": "{chapter} fährt {weekday, select, 1 {montags} 2 {dienstags} 3 {mittwochs} 4 {donnerstags} 5 {freitags} 6 {samstags} other {sonntags}} nicht – bitte wählen Sie einen anderen Tag.",
+        "noTimesLeft": "Am {date} sind keine Zeiten mehr frei – bitte wählen Sie einen anderen Tag.",
+        "outsideRange": "Anfragen sind vom {first} bis zum {last} möglich – bitte wählen Sie einen Tag dazwischen.",
         "none": "Gerade sind keine Tage für Anfragen offen. Fragen Sie direkt bei der Ortsgruppe nach."
       },
       "note": {
@@ -2980,14 +3073,6 @@
         "change": "Ändern",
         "waiting": "Noch ist nichts gebucht. {chapter} sieht sich Ihre Anfrage an und bestätigt die genaue Uhrzeit – Sie bekommen in jedem Fall Bescheid.",
         "waitingAuto": "Ist zu der Zeit eine Rikscha frei, bucht {chapter} die Fahrt sofort und Sie bekommen die Bestätigung. Sonst sieht sich {chapter} Ihre Anfrage an und meldet sich bei Ihnen."
-      },
-      "list": {
-        "title": "Ihre Anfragen",
-        "empty": "Noch keine Fahrten gebucht. Fragen Sie bei der Ortsgruppe an – das dauert nur eine Minute.",
-        "status": {
-          "pending": "Wartet auf {chapter}",
-          "declined": "{chapter} kann leider nicht"
-        }
       },
       "page": {
         "title": "Fahrtanfrage",
@@ -3015,7 +3100,11 @@
         "when": "Angefragt für",
         "note": "Ihre Nachricht",
         "seeRide": "Fahrt ansehen",
+        "change": "Anfrage ändern",
         "askAgain": "Andere Fahrt anfragen",
+        "pickupBetween": "Abholung zwischen {from} und {to}",
+        "wayBack": "Rückweg",
+        "wayBackHint": "{chapter} legt die Uhrzeit fest, wenn Ihre Fahrt bestätigt wird.",
         "cancel": {
           "label": "Anfrage zurückziehen",
           "title": "Anfrage zurückziehen?",
@@ -3030,8 +3119,6 @@
         "closedDate": "An diesem Tag ist die Ortsgruppe geschlossen. Wählen Sie einen anderen.",
         "leadTime": "Das ist zu kurzfristig für die Planung. Wählen Sie einen späteren Zeitpunkt.",
         "outsideHours": "Zu dieser Zeit fährt die Ortsgruppe nicht. Wählen Sie eine der angezeigten Zeiten.",
-        "locationNotInChapter": "Dieser Ort wird nicht mehr angeboten. Wählen Sie einen anderen.",
-        "unknownLocation": "Dieser Ort wird nicht mehr angeboten. Wählen Sie einen anderen.",
         "notChapterMember": "Sie sind nicht mehr Mitglied dieser Ortsgruppe.",
         "riderNotInChapter": "Diese Fahrgäste fahren mit verschiedenen Ortsgruppen. Fragen Sie für jeden einzeln an.",
         "tooManyRiders": "Das sind mehr Fahrgäste, als auf eine Rikscha passen.",
@@ -3049,6 +3136,23 @@
         "title": "Gerade keine Tage frei für Anfragen",
         "body": "{chapter} nimmt für die nächsten Wochen gerade keine Fahrtanfragen an. Schreiben Sie der Ortsgruppe, sie findet einen Weg.",
         "subject": "Eine Fahrt mit Cycling Without Age"
+      },
+      "reschedule": {
+        "eyebrow": "Ihre Ausfahrt am {date} ändern",
+        "done": "Ihre neue Zeit liegt bei {chapter}. Die alte Ausfahrt ist abgesagt.",
+        "doneKept": "Ihre neue Zeit liegt bei {chapter}. Bitte sagen Sie die alte Ausfahrt auf ihrer Seite ab.",
+        "errors": {
+          "rideClosed": "Diese Ausfahrt lässt sich nicht mehr ändern.",
+          "unknownRide": "Diese Ausfahrt ist nicht mehr verfügbar."
+        }
+      },
+      "change": {
+        "eyebrow": "Ihre Anfrage für {date} ändern",
+        "done": "Ihre geänderte Anfrage liegt bei {chapter}. Die alte ist zurückgezogen.",
+        "doneKept": "Ihre geänderte Anfrage liegt bei {chapter}, die alte ist aber noch offen. Bitte ziehen Sie sie auf ihrer Seite zurück.",
+        "errors": {
+          "requestNotPending": "Diese Anfrage lässt sich nicht mehr ändern."
+        }
       }
     }
   },
@@ -3074,31 +3178,40 @@
         "dismiss": "Alles klar",
         "title": "Du bist dabei."
       },
-      "title": "Bereit, wenn du es bist",
-      "yourChapters": "Deine Ortsgruppen",
-      "training": {
-        "title": "Schließ dein Training ab, um zu fahren",
-        "steps": "{done} von {total} Schritten geschafft",
-        "next": "Als Nächstes: {title}",
-        "nextInPerson": "Als Nächstes: dein Training vor Ort",
-        "waiting": "Deine Ortsgruppe bestätigt das Training vor Ort, sobald du dort warst.",
-        "continue": "Weiter",
-        "view": "Zum Training"
+      "today": {
+        "upcoming": "Heute · {time}",
+        "now": "Unterwegs · bis {time}",
+        "ended": "Beendet {when}",
+        "riders": "{count, plural, =0 {Noch keine Fahrgäste} one {# Fahrgast} other {# Fahrgäste}}",
+        "navigate": "Navigation",
+        "finish": "Ausfahrt abschließen",
+        "details": "Ausfahrt öffnen"
+      },
+      "next": {
+        "eyebrow": "Deine nächste Ausfahrt"
+      },
+      "open": {
+        "title": "Ausfahrten, die einen Piloten suchen",
+        "seeAll": "Alle ansehen"
       }
     },
     "rides": {
       "detail": {
         "about": "Über diese Ausfahrt",
-        "back": "Meine Ausfahrten",
         "call": "{name} anrufen",
+        "cantMake": {
+          "body": "Trag dich aus, solange noch Zeit ist, damit deine Ortsgruppe jemand anderen finden kann.",
+          "subject": "Ich kann bei der Fahrt am {date} nicht",
+          "title": "Kannst du doch nicht?",
+          "write": "{chapter} schreiben"
+        },
         "cancelled": "Diese Ausfahrt fällt aus.",
         "cancelledBody": "Sie bleibt auf deiner Liste, damit du Bescheid weißt.",
         "chat": "Chat zur Fahrt",
         "chatHint": "Alle, die bei der Fahrt dabei sind, und deine Ortsgruppe.",
+        "completed": "Diese Ausfahrt hat stattgefunden. Danke, dass du sie gefahren bist.",
         "crew": "Mit dir unterwegs",
-        "destination": "Ziel",
-        "map": "Karte der Ausfahrt",
-        "mapUnavailable": "Die Karte ist gerade nicht verfügbar.",
+        "day": "Deine Fahrt",
         "noPlace": "Noch kein Ort festgelegt.",
         "noRiders": "Noch niemand gebucht.",
         "note": "Hinweis für Pilot:innen",
@@ -3108,12 +3221,9 @@
           "title": "Rikscha abholen"
         },
         "riders": "Fahrgäste",
-        "roundTrip": "Hin und zurück",
         "solo": "Diesmal fährst du allein.",
-        "start": "Start",
         "trishaws": "Rikschas",
         "via": "über {name}",
-        "where": "Wo",
         "withdraw": {
           "body": "Deine Ortsgruppe erfährt es und kann jemand anderen suchen.",
           "bodyBoth": "Du trägst dich von beiden Strecken der Fahrt aus, soweit noch Zeit ist. Deine Ortsgruppe erfährt es und kann jemand anderen suchen.",
@@ -3146,7 +3256,6 @@
         "goneBody": "Vielleicht hat schon jemand übernommen, oder die Fahrt wurde verschoben oder abgesagt. Die anderen offenen Fahrten deiner Ortsgruppe findest du unter Meine Ausfahrten.",
         "goneCta": "Offene Fahrten ansehen"
       },
-      "past": "Vergangene Ausfahrten",
       "signUp": {
         "alsoWayBack": "Teil einer Fahrt hin und zurück: Du fährst auch die Rückfahrt, {time}, wenn sie noch einen Piloten sucht.",
         "alsoWayThere": "Teil einer Fahrt hin und zurück: Du fährst auch die Hinfahrt, {time}, wenn sie noch einen Piloten sucht.",
@@ -3158,7 +3267,12 @@
         "notReady": "Dir fehlt noch die Schulung, die du für Fahrten mit {chapter} brauchst. Sobald du sie abgeschlossen hast, kannst du dich hier eintragen.",
         "notReadyCta": "Zur Schulung"
       },
-      "upcomingEmpty": "Gerade steht nichts an. Sobald deine Ortsgruppe dich für eine Ausfahrt einteilt, taucht sie hier auf."
+      "upcomingEmpty": "Gerade steht nichts an. Sobald deine Ortsgruppe dich für eine Ausfahrt einteilt, taucht sie hier auf.",
+      "list": {
+        "showPast": "{count, plural, one {# vergangene Ausfahrt zeigen} other {# vergangene Ausfahrten zeigen}}",
+        "hidePast": "Vergangene Ausfahrten ausblenden",
+        "emptyTitle": "Noch keine Ausfahrten"
+      }
     },
     "status": {
       "appliedOn": "Gefragt am {date}",
@@ -3218,7 +3332,6 @@
         "exemptHint": "Für dich nicht nötig"
       },
       "course": {
-        "back": "Training",
         "start": "Kurs starten",
         "resume": "Weitermachen",
         "takeQuiz": "Zum Quiz",
@@ -3235,7 +3348,6 @@
         "lockedHint": "Bestehe zuerst das Quiz davor"
       },
       "lesson": {
-        "back": "Kurs",
         "of": "Schritt {index} von {total}",
         "next": "Nächste Lektion",
         "toQuiz": "Zum Quiz",
@@ -3392,9 +3504,9 @@
     },
     "detail": {
       "addPilot": "Pilot:in einteilen",
-      "addPilotEmpty": "Keine weiteren Pilot:innen in diesem Chapter.",
+      "addPilotEmpty": "Keine weiteren Pilot:innen in dieser Ortsgruppe.",
       "addRider": "Fahrgast buchen",
-      "addRiderEmpty": "Kein Fahrgast dieses Chapters mehr frei.",
+      "addRiderEmpty": "Kein Fahrgast dieser Ortsgruppe mehr frei.",
       "addRiderFirst": "Fahrgast hinzufügen",
       "addRiderHere": "Hier einfügen",
       "addTrishaw": "Rikscha hinzufügen",
@@ -3482,8 +3594,7 @@
       "eventsOnly": "Nur eine Ausfahrt kann den Fahrgästen gezeigt werden.",
       "invalidFile": "Dieses Foto kann hier nicht verwendet werden. Lade es erneut hoch.",
       "legsOverlap": "Die Hinfahrt würde in die Rückfahrt hineinlaufen. Verschiebe zuerst die andere Fahrt.",
-      "locationNotInChapter": "Dieser Abfahrtsort gehört zu einer anderen Ortsgruppe. Wähl einen Ort dieser Ortsgruppe.",
-      "notPilot": "Nur Pilot:innen dieses Chapters können eingeteilt werden.",
+      "notPilot": "Nur Pilot:innen dieser Ortsgruppe können eingeteilt werden.",
       "otherLegScheduled": "Die andere Hälfte dieser Hin- und Rückfahrt findet noch statt. Sag sie zuerst ab oder behalte diese Fahrt.",
       "partOfRoundTrip": "Diese Fahrt ist Teil einer Hin- und Rückfahrt und bleibt deshalb eine Zweckfahrt.",
       "photosEventOnly": "Nur Gruppenfahrten haben Fotos.",
@@ -3493,12 +3604,11 @@
       "rideClosed": "Diese Fahrt findet nicht mehr statt und kann nicht mehr geändert werden.",
       "rideFull": "Diese Fahrt ist ausgebucht.",
       "rideNotCancelled": "Sag die Fahrt ab, bevor du sie löschst.",
-      "riderNotInChapter": "Dieser Fahrgast gehört zu einem anderen Chapter.",
+      "riderNotInChapter": "Dieser Fahrgast gehört zu einer anderen Ortsgruppe.",
       "rosterChanged": "Jemand anderes hat die Fahrgäste inzwischen geändert. Lade neu und versuch es noch einmal.",
       "titleRequired": "Gib der Gruppenfahrt einen Titel.",
       "tooManyPilots": "Es sind schon mehr Pilot:innen eingeteilt. Nimm zuerst einige heraus.",
-      "unknownChapter": "Dieses Chapter ist nicht verfügbar.",
-      "unknownLocation": "Diesen Abfahrtsort gibt es nicht mehr. Lade die Seite neu und versuch es noch mal.",
+      "unknownChapter": "Diese Ortsgruppe ist nicht verfügbar.",
       "unknownPassenger": "Diesen Fahrgast gibt es nicht mehr.",
       "unknownRide": "Diese Fahrt gibt es nicht mehr.",
       "unknownTrishaw": "Diese Rikscha gibt es nicht mehr.",
@@ -3506,6 +3616,8 @@
       "pilotNotReady": "Diese:r Pilot:in hat die Schulung noch nicht abgeschlossen."
     },
     "history": {
+      "bookingClosed": "{who, select, you {Du hast} other {{actor} hat}} die Buchung für Fahrgäste geschlossen",
+      "bookingOpened": "{who, select, you {Du hast} other {{actor} hat}} die Buchung für Fahrgäste geöffnet",
       "cancelled": "{who, select, you {Du hast} other {{actor} hat}} die Fahrt abgesagt",
       "checkInUndone": "{who, select, you {Du hast} other {{actor} hat}} den Check-in für {name} zurückgenommen",
       "checkedIn": "{who, select, you {Du hast} other {{actor} hat}} {name} eingecheckt",
@@ -3675,7 +3787,6 @@
         "cancelled": "Platz abgesagt",
         "checkedIn": "Eingecheckt",
         "completed": "Mitgefahren",
-        "confirmed": "Bestätigt",
         "noShow": "Nicht erschienen"
       },
       "checkIn": "Check-in",
@@ -4010,6 +4121,23 @@
       "training": "Kurze Videos und ein Quiz, direkt in der App.",
       "inPersonTraining": "Deine Ortsgruppe bestätigt sie, sobald du dabei warst.",
       "firstRide": "Beim ersten Mal fährt ein Captain mit."
+    },
+    "row": {
+      "next": "Als Nächstes: {step}",
+      "watch": "„{title}“ ansehen",
+      "resume": "„{title}“ fortsetzen",
+      "heroTitle": "Mach dich startklar",
+      "continue": "Weiter",
+      "sections": {
+        "training": "Schulungen",
+        "setup": "Einrichtung"
+      },
+      "status": {
+        "notStarted": "Noch nicht begonnen",
+        "inProgress": "{ratio, number, percent} geschafft",
+        "passed": "Bestanden",
+        "exempt": "Befreit"
+      }
     }
   },
   "care": {
@@ -4054,6 +4182,39 @@
       "close": "Schließen",
       "watchFirst": "Schau erst bis hierhin",
       "loading": "Video wird geladen"
+    }
+  },
+  "adminInvite": {
+    "superadmin": {
+      "title": "Hilf mit, Cycling Without Age zu betreuen",
+      "body": "{inviter} lädt dich ein, Superadmin zu werden: jedes Land, jede Ortsgruppe, jede Einstellung."
+    },
+    "countryAdmin": {
+      "title": "Kümmere dich um {country}",
+      "body": "{inviter} lädt dich ein, Länder-Admin für {country} zu werden. Jede Ortsgruppe dort kannst du dann unterstützen."
+    },
+    "accept": "Einladung annehmen",
+    "accepted": {
+      "title": "Du bist dabei",
+      "body": "Deine neue Rolle ist aktiv. Das Dashboard wartet.",
+      "open": "Dashboard öffnen"
+    },
+    "expired": {
+      "title": "Diese Einladung ist abgelaufen",
+      "body": "Einladungen gelten 7 Tage. Bitte {inviter} um eine neue."
+    },
+    "revoked": {
+      "title": "Diese Einladung wurde zurückgezogen",
+      "body": "Hier gibt es nichts zu tun. Falls dich das überrascht, frag {inviter}."
+    },
+    "passkeyTitle": "Zuerst ein Passkey",
+    "passkeyBody": "Admins melden sich mit einem Passkey an: Fingerabdruck, Gesicht oder PIN auf diesem Gerät. Leg einen an und nimm dann die Einladung an.",
+    "errors": {
+      "generic": "Das hat nicht geklappt. Versuch es noch mal.",
+      "notFound": "Diese Einladung gilt nicht für das Konto, mit dem du angemeldet bist.",
+      "passkeyRequired": "Leg zuerst einen Passkey an und nimm dann an.",
+      "inviteClosed": "Diese Einladung wurde schon angenommen oder zurückgezogen.",
+      "inviteExpired": "Diese Einladung ist abgelaufen. Bitte um eine neue."
     }
   }
 }

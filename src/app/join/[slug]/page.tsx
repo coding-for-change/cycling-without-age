@@ -142,34 +142,18 @@ async function Join({ params }: Params) {
           errors={dict.location.errors}
         />
       ) : (
-        <div className="mt-8 grid gap-4">
-          <a
-            href={`/join/${chapter.slug}/start?role=passenger`}
-            className="group rounded-(--r-card) border border-line p-5 transition-colors hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none"
-          >
-            <h2 className="font-display text-lg font-bold">
-              {strings.passenger.title}
-            </h2>
-            <p className="mt-1 text-sm text-ink-soft">
-              {strings.passenger.body}
-            </p>
-            <span className="mt-4 inline-flex min-h-11 items-center rounded-full bg-red px-8 text-sm font-medium text-white group-hover:bg-red-hover">
-              {strings.passenger.cta}
-            </span>
-          </a>
-          <a
-            href={`/join/${chapter.slug}/start?role=pilot`}
-            className="rounded-(--r-card) border border-line p-5 transition-colors hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none"
-          >
-            <h2 className="font-display text-lg font-bold">
-              {strings.pilot.title}
-            </h2>
-            <p className="mt-1 text-sm text-ink-soft">{strings.pilot.body}</p>
-            <span className="mt-4 inline-flex min-h-11 items-center rounded-full border border-ink px-8 text-sm font-medium">
-              {strings.pilot.cta}
-            </span>
-          </a>
-        </div>
+        <a
+          href={`/join/${chapter.slug}/start`}
+          className="group mt-8 block rounded-(--r-card) border border-line p-5 transition-colors hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none"
+        >
+          <h2 className="font-display text-lg font-bold">
+            {strings.start.title}
+          </h2>
+          <p className="mt-1 text-sm text-ink-soft">{strings.start.body}</p>
+          <span className="mt-4 inline-flex min-h-11 items-center rounded-full bg-red px-8 text-sm font-medium text-white group-hover:bg-red-hover">
+            {strings.start.cta}
+          </span>
+        </a>
       )}
 
       {session && !isMember ? null : (

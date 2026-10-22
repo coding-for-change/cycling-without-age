@@ -185,6 +185,7 @@ const pilotDetailSelect = {
       passenger: {
         select: {
           id: true,
+          userId: true,
           firstName: true,
           lastName: true,
           ...pickupColumns,
@@ -216,12 +217,11 @@ const passengerDetailSelect = (passengerIds: string[]) =>
       },
     },
     roster: {
-      where: { passengerId: { in: passengerIds } },
+      where: { passengerId: { in: passengerIds }, ...ACTIVE_SEAT },
       orderBy: { position: "asc" },
       select: {
         id: true,
         attendance: true,
-        confirmedAt: true,
         passenger: { select: { id: true, firstName: true, lastName: true } },
       },
     },
@@ -288,23 +288,6 @@ export const findRidesForPilot = (userId: string, from: Date, to: Date) =>
 const passengerRideWhere = (passengerIds: string[]) =>
   ({
     roster: { some: { passengerId: { in: passengerIds }, ...ACTIVE_SEAT } },
-  }) satisfies Prisma.RideWhereInput;
-
-/**
- * A rider whose seat is given up no longer has the ride on their agenda, but
- * the ride's own page still opens for them while the ride is ahead — it is
- * where they take the seat back. After that, the ride is no longer theirs.
- */
-const passengerPageWhere = (passengerIds: string[], now: Date) =>
-  ({
-    OR: [
-      passengerRideWhere(passengerIds),
-      {
-        status: "scheduled",
-        startsAt: { gt: now },
-        roster: { some: { passengerId: { in: passengerIds } } },
-      },
-    ],
   }) satisfies Prisma.RideWhereInput;
 
 export const findRidesForPassengers = (
@@ -404,10 +387,9 @@ export const findRideIdForRunningPilot = (rideId: string, userId: string) =>
 export const findRideIdForPassengers = (
   rideId: string,
   passengerIds: string[],
-  now: Date,
 ) =>
   prisma.ride.findFirst({
-    where: { id: rideId, ...passengerPageWhere(passengerIds, now) },
+    where: { id: rideId, ...passengerRideWhere(passengerIds) },
     select: { id: true },
   });
 
@@ -417,13 +399,9 @@ export const findRideForPilot = (rideId: string, userId: string) =>
     select: pilotDetailSelect,
   });
 
-export const findRideForPassengers = (
-  rideId: string,
-  passengerIds: string[],
-  now: Date,
-) =>
+export const findRideForPassengers = (rideId: string, passengerIds: string[]) =>
   prisma.ride.findFirst({
-    where: { id: rideId, ...passengerPageWhere(passengerIds, now) },
+    where: { id: rideId, ...passengerRideWhere(passengerIds) },
     select: passengerDetailSelect(passengerIds),
   });
 
@@ -433,6 +411,7 @@ export const findRideFacts = (rideId: string) =>
     select: {
       title: true,
       model: true,
+      status: true,
       startsAt: true,
       endsAt: true,
       locationName: true,
@@ -872,7 +851,6 @@ const detailSelect = {
       createdAt: true,
       guestName: true,
       attendance: true,
-      confirmedAt: true,
       cancelledAt: true,
       checkedInAt: true,
       passenger: {
@@ -989,12 +967,14 @@ export const findUpcomingBookingsOf = (passengerIds: string[], now: Date) =>
 export const countBookingsBetween = (
   passengerIds: string[],
   window: { startsAt: Date; endsAt: Date },
+  exceptRideIds: string[] = [],
 ) =>
   prisma.rideRosterEntry.count({
     where: {
       passengerId: { in: passengerIds },
       ...ACTIVE_SEAT,
       ride: {
+        ...(exceptRideIds.length ? { id: { notIn: exceptRideIds } } : {}),
         status: { not: "cancelled" },
         startsAt: { lt: window.endsAt },
         endsAt: { gt: window.startsAt },
@@ -1035,6 +1015,42 @@ export const findFinishableRideForPilot = (
     where: { id: rideId, ...runningPilotWhere(userId), ...finishableAt(now) },
     select: calendarSelect,
   });
+
+const awaitingFinishWhere = (chapterIds: string[], since: Date, now: Date) =>
+  ({
+    chapterId: { in: chapterIds },
+    status: "scheduled",
+    completedAt: null,
+    endsAt: { lte: now, gte: since },
+  }) satisfies Prisma.RideWhereInput;
+
+export const findRidesAwaitingFinish = (
+  chapterIds: string[],
+  since: Date,
+  now: Date,
+  take: number,
+) =>
+  prisma.ride.findMany({
+    where: awaitingFinishWhere(chapterIds, since, now),
+    orderBy: [{ endsAt: "asc" }, { id: "asc" }],
+    select: {
+      id: true,
+      chapterId: true,
+      model: true,
+      title: true,
+      locationName: true,
+      destinationName: true,
+      startsAt: true,
+      endsAt: true,
+    },
+    take,
+  });
+
+export const countRidesAwaitingFinish = (
+  chapterIds: string[],
+  since: Date,
+  now: Date,
+) => prisma.ride.count({ where: awaitingFinishWhere(chapterIds, since, now) });
 
 export const countPastRidesOfPilot = (userId: string, now: Date) =>
   prisma.ride.count({
@@ -1117,6 +1133,14 @@ export type OpenRideQueryRow = Prisma.RideGetPayload<{
   select: typeof openSelect;
 }>;
 
+const openDetailSelect = {
+  ...openSelect,
+  description: true,
+  latitude: true,
+  longitude: true,
+  photos: calendarSelect.photos,
+} satisfies Prisma.RideSelect;
+
 const stillAhead = (chapterIds: string[], now: Date) =>
   ({
     chapterId: { in: chapterIds },
@@ -1156,7 +1180,7 @@ export const findOpenRidesFor = (
 export const findOpenRide = (rideId: string, chapterIds: string[], now: Date) =>
   prisma.ride.findFirst({
     where: { id: rideId, ...stillAhead(chapterIds, now) },
-    select: openSelect,
+    select: openDetailSelect,
   });
 
 /**

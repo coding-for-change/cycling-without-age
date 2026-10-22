@@ -4,7 +4,6 @@ import { DEFAULT_CHAPTER_SETTINGS } from "@/features/chapters/schemas";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
 import { rideRequests, type RideRequestRow } from "@/features/ride-requests";
-import { rideLocations } from "@/features/ride-locations";
 import {
   RIDE_MAX_MINUTES,
   RIDE_MIN_MINUTES,
@@ -47,7 +46,6 @@ import {
   type ScheduleCrew,
 } from "./schedule-ride-drawer";
 import type { HoursPolicy } from "./hours-warnings";
-import type { RideLocationChoice } from "./ride-location-field";
 
 const STAYS = [15, 30, 45, 60, 90, 120, 180, 240, 360];
 const LAST_START_HOUR = 20;
@@ -145,19 +143,6 @@ async function loadPlanning(chapterIds: string[]) {
   );
 }
 
-const toChoice = (
-  location: Awaited<ReturnType<typeof rideLocations.listRideLocations>>[number],
-): RideLocationChoice => ({
-  id: location.id,
-  chapterId: location.chapterId,
-  kind: location.kind,
-  name: location.name,
-  address: location.address,
-  latitude: location.latitude,
-  longitude: location.longitude,
-  defaultMinutes: location.defaultMinutes,
-});
-
 async function loadCrew(
   chapterIds: string[],
   careHome: string,
@@ -232,7 +217,6 @@ function prefillOf(
     name: request.requester?.name ?? null,
     model: request.model === "functional" ? "functional" : "pleasure",
     slot,
-    rideLocationId: request.rideLocationId,
     origin: placeOf(
       request.pickupName,
       request.pickupAddress,
@@ -271,16 +255,14 @@ export async function ScheduleRide({
   if (!chapterIds.length) return null;
 
   const opening = params.new === "1";
-  const [found, dict, language, head, planning, places, request] =
-    await Promise.all([
-      chapterFeature.getChapters(chapterIds),
-      getDictionary(),
-      getLocale(),
-      headers(),
-      opening ? loadPlanning(chapterIds) : new Map<string, Planning>(),
-      opening ? rideLocations.listRideLocations(chapterIds) : [],
-      opening ? pendingRequest(first(params.request), chapterIds) : null,
-    ]);
+  const [found, dict, language, head, planning, request] = await Promise.all([
+    chapterFeature.getChapters(chapterIds),
+    getDictionary(),
+    getLocale(),
+    headers(),
+    opening ? loadPlanning(chapterIds) : new Map<string, Planning>(),
+    opening ? pendingRequest(first(params.request), chapterIds) : null,
+  ]);
   if (!found.length) return null;
 
   const locale = resolveLocale(head.get("accept-language"));
@@ -358,11 +340,6 @@ export async function ScheduleRide({
       markdown={dict.common.markdown}
       models={dict.calendar.models}
       errors={{ ...rideErrors(dict), ...dict.admin.rideRequests.errors }}
-      locations={places.map(toChoice)}
-      locationStrings={{
-        picker: dict.admin.rideLocations.picker,
-        kinds: dict.admin.rideLocations.kinds,
-      }}
       hoursStrings={{
         warnings: dict.admin.settings.hours.warnings,
         hours: dict.admin.settings.booking.hours,

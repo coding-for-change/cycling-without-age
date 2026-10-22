@@ -10,7 +10,6 @@ type Attendance = RosterAttendanceName | AssignmentAttendanceName;
 const TONE: Record<Attendance, string> = {
   booked: "border-line text-ink-soft",
   signedUp: "border-line text-ink-soft",
-  confirmed: "border-mint bg-mint-tint text-ink",
   checkedIn: "border-transparent bg-mint text-ink",
   completed: "border-transparent bg-mint text-ink",
   noShow: "border-transparent bg-canvas-deeper text-ink-soft",

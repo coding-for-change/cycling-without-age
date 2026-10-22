@@ -8,7 +8,7 @@ import { chapters } from "@/features/chapters";
 import { passengers } from "@/features/passengers";
 import { handOverRider } from "@/use-cases/hand-over-rider";
 import { deleteCountry } from "@/use-cases/manage-country";
-import { appointCountryAdminByEmail } from "@/use-cases/manage-country-admins";
+import { inviteAdmin } from "@/use-cases/invite-admin";
 import { inviteChapterUser as invite } from "@/use-cases/invite-chapter-user";
 import { provisionAssistedPassenger } from "@/use-cases/provision-assisted-passenger";
 import { createChapter } from "@/use-cases/manage-chapter";
@@ -18,9 +18,9 @@ import {
   deleteUserAction,
 } from "@/app/admin/members/actions";
 import {
-  appointCountryAdminAction,
   createCountryAction,
   deleteCountryAction,
+  inviteCountryAdminAction,
   removeCountryAdminAction,
   updateCountryAction,
 } from "@/app/admin/countries/actions";
@@ -120,8 +120,13 @@ jest.mock("@/use-cases/pilot-steps", () => ({
   revokeTrainingExemption: jest.fn(),
 }));
 jest.mock("@/use-cases/manage-country", () => ({ deleteCountry: jest.fn() }));
-jest.mock("@/use-cases/manage-country-admins", () => ({
-  appointCountryAdminByEmail: jest.fn(),
+jest.mock("@/use-cases/invite-admin", () => ({ inviteAdmin: jest.fn() }));
+jest.mock("@/features/admins", () => ({
+  countryAdminInviteInput: {
+    safeParse: (data: unknown) => ({ success: true, data }),
+  },
+  inviteId: { safeParse: (data: unknown) => ({ success: true, data }) },
+  admins: { revokeInvite: jest.fn() },
 }));
 jest.mock("@/use-cases/manage-chapter", () => ({
   createChapter: jest.fn(),
@@ -135,7 +140,7 @@ jest.mock("@/use-cases/provision-assisted-passenger", () => ({
   provisionAssistedPassenger: jest.fn(),
 }));
 jest.mock("@/use-cases/respond-care-request", () => ({
-  acceptCareRequest: jest.fn(),
+  acceptCareRequest: jest.fn(async () => ({ riderUserId: null })),
   declineCareRequest: jest.fn(),
 }));
 jest.mock("@/use-cases/add-managed-rider", () => ({
@@ -209,27 +214,19 @@ describe("every write that changes a session's access expires it", () => {
     expect(invalidateAdminScopes).toHaveBeenCalled();
   });
 
-  it("appointing a country admin", async () => {
-    (appointCountryAdminByEmail as jest.Mock).mockResolvedValue({
+  it("not expiring anyone for a country admin invitation nobody accepted yet", async () => {
+    (inviteAdmin as jest.Mock).mockResolvedValue({
       userId: "dana",
+      created: true,
+      inviteId: "invite-1",
     });
     await expect(
-      appointCountryAdminAction({
+      inviteCountryAdminAction({
         countryId: "country-de",
+        name: "Dana",
         email: "dana@example.com",
       }),
     ).resolves.toEqual({ ok: true });
-    expect(invalidated).toHaveBeenCalledWith({ userIds: ["dana"] });
-  });
-
-  it("not expiring anyone when the appointee has no account", async () => {
-    (appointCountryAdminByEmail as jest.Mock).mockResolvedValue(null);
-    await expect(
-      appointCountryAdminAction({
-        countryId: "country-de",
-        email: "nobody@example.com",
-      }),
-    ).resolves.toEqual({ ok: false, error: "noAccount" });
     expect(invalidated).not.toHaveBeenCalled();
   });
 

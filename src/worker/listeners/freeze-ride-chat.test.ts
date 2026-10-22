@@ -1,9 +1,14 @@
 import { chat } from "@/features/chat";
 import type { DomainEvent } from "@/lib/events/catalog";
+import { freezeCancelledEventChat } from "@/use-cases/ride-chat";
 import { freezeRideChatListener } from "@/worker/listeners/freeze-ride-chat";
 
 jest.mock("@/features/chat", () => ({
   chat: { freezeRideConversation: jest.fn() },
+}));
+
+jest.mock("@/use-cases/ride-chat", () => ({
+  freezeCancelledEventChat: jest.fn(),
 }));
 
 const freeze = chat.freezeRideConversation as jest.Mock;
@@ -34,6 +39,17 @@ describe("freezeRideChatListener", () => {
 
   it("leaves the chat alone for a reopened ride", async () => {
     await run({ type: "ride.reopened", ...scope });
+    expect(freeze).not.toHaveBeenCalled();
+  });
+
+  it("hands a cancelled ride to the rule that freezes an event's chat", async () => {
+    await run({
+      type: "ride.cancelled",
+      ...scope,
+      reasonCode: "weather",
+      pair: null,
+    });
+    expect(freezeCancelledEventChat).toHaveBeenCalledWith("ride-1");
     expect(freeze).not.toHaveBeenCalled();
   });
 });

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MINUTES_IN_DAY } from "@/lib/calendar";
+import { distanceMeters } from "@/lib/geo";
 import {
   FUNCTIONAL_MAX_PASSENGERS,
   PLEASURE_LIMITS,
@@ -92,7 +93,6 @@ export const rideRequestInput = z
   .object({
     passengerIds: uniqueIds,
     model: z.enum(REQUEST_MODELS),
-    rideLocationId: id.nullable().default(null),
     pickup: placeInput.nullable().default(null),
     destination: placeInput.nullable().default(null),
     roundTrip: z.boolean().default(true),
@@ -100,7 +100,7 @@ export const rideRequestInput = z
     note: optionalText(REQUEST_LIMITS.note),
   })
   .superRefine((request, ctx) => {
-    if (!request.rideLocationId && !request.pickup)
+    if (!request.pickup)
       ctx.addIssue({
         code: "custom",
         message: "pickupRequired",
@@ -122,7 +122,6 @@ export const newRideRequest = z.object({
   requesterUserId: id,
   model: z.enum(REQUEST_MODELS),
   passengerIds: uniqueIds,
-  rideLocationId: id.nullable(),
   pickupName: z.string().max(REQUEST_LIMITS.placeName).nullable(),
   pickupAddress: z.string().max(REQUEST_LIMITS.placeAddress).nullable(),
   pickupLatitude: z.number().min(-90).max(90).nullable(),
@@ -137,6 +136,20 @@ export const newRideRequest = z.object({
   note: z.string().max(REQUEST_LIMITS.note).nullable(),
 });
 export type NewRideRequest = z.infer<typeof newRideRequest>;
+
+export const ROUTE_PREVIEW_MAX_METERS = 50_000;
+
+const point = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+});
+
+export const routePreviewInput = z
+  .object({ from: point, to: point })
+  .refine(
+    ({ from, to }) => distanceMeters(from, to) <= ROUTE_PREVIEW_MAX_METERS,
+  );
+export type RoutePreviewInput = z.input<typeof routePreviewInput>;
 
 export const requestRef = z.object({ requestId: id });
 

@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import { cacheLife } from "next/cache";
 import { Skeleton } from "@/components/ui/skeleton";
+import { admins as adminRoles } from "@/features/admins";
 import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
-import { rideLocations } from "@/features/ride-locations";
 import { requireAdminScope } from "@/lib/auth-guards";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
@@ -65,13 +65,12 @@ async function Countries({ searchParams }: PageProps) {
     chapters.listCountries(),
   ]);
   const countryIds = countries.map((country) => country.id);
-  const [admins, footprints, fleetFootprints, rideLocationCounts] =
-    await Promise.all([
-      chapters.listAdminsByCountry(countryIds),
-      chapters.listCountryFootprints(countryIds),
-      fleet.listCountryFleetFootprints(countryIds),
-      rideLocations.countCountryRideLocations(countryIds),
-    ]);
+  const [admins, invites, footprints, fleetFootprints] = await Promise.all([
+    chapters.listAdminsByCountry(countryIds),
+    adminRoles.listPendingCountryAdminInvites(countryIds),
+    chapters.listCountryFootprints(countryIds),
+    fleet.listCountryFleetFootprints(countryIds),
+  ]);
 
   const rows: CountryRow[] = countries.map((country) => {
     const footprint = footprints.get(country.id);
@@ -80,13 +79,19 @@ async function Countries({ searchParams }: PageProps) {
       name: country.name,
       code: country.code,
       admins: admins.get(country.id) ?? [],
+      invites: invites
+        .filter((invite) => invite.countryId === country.id)
+        .map((invite) => ({
+          id: invite.id,
+          name: invite.user.name,
+          email: invite.user.email,
+        })),
       consequences: deletionConsequences(
         {
           chapters: footprint?.chapters,
           members: footprint?.members,
           passengers: footprint?.passengers,
           rides: footprint?.rides,
-          rideLocations: rideLocationCounts.get(country.id),
           ...fleetFootprints.get(country.id),
         },
         dict.admin.deletion,
@@ -106,6 +111,8 @@ async function Countries({ searchParams }: PageProps) {
           consequences: dict.admin.deletion.consequences,
         },
         appointDialog: {
+          nameLabel: dict.admin.countries.appointNameLabel,
+          namePlaceholder: dict.admin.countries.appointNamePlaceholder,
           emailLabel: dict.admin.countries.appointLabel,
           hint: dict.admin.countries.appointBody,
           placeholder: dict.admin.countries.appointPlaceholder,

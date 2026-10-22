@@ -13,6 +13,7 @@ import {
   GUEST_CHAPTER_MAX_AGE,
 } from "@/lib/guest-chapter";
 import { cyclingRoute, resolvePlaceFor } from "@/lib/mapbox";
+import { trishawRoute } from "@/lib/trishaw-pace";
 import { EMPTY_PRESET } from "@/lib/join-preset";
 import { resolveDestination } from "@/use-cases/onboarding-progress";
 import {
@@ -89,7 +90,7 @@ export async function resolveHomeAddress(
   // Only worth asking for a route we might actually draw — a 300 km line across
   // a country tells the person nothing the distance did not already say.
   const route = nearest.inRange
-    ? await cyclingRoute(place.coords, target)
+    ? trishawRoute(await cyclingRoute(place.coords, target))
     : null;
 
   return {

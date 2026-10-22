@@ -92,6 +92,15 @@ describe("stepProgress", () => {
     ).toEqual({ index: 0, total: 3 });
   });
 
+  it("asks for the role but skips the location when a QR code names the chapter", () => {
+    const at = { role: null, presetRole: false, presetChapter: true };
+    expect(stepProgress(at, "role")).toEqual({ index: 0, total: 4 });
+    expect(stepProgress(at, "location")).toBeNull();
+    expect(
+      stepProgress({ ...at, role: "passenger", presetRole: true }, "consent"),
+    ).toEqual({ index: 0, total: 3 });
+  });
+
   it("keeps the location step when only the role was preset", () => {
     expect(
       stepProgress(

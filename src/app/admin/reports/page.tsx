@@ -123,7 +123,6 @@ async function Reports({
                 scopes={scopeChoices(scope, dict, language)}
                 activeScope={scopeArg}
                 generatedAt={report.generatedAt}
-                timeZone={report.timeZone}
                 locale={notation}
                 language={language}
                 strings={strings.filters}

@@ -6,27 +6,39 @@ import {
   invalidateAdminScopes,
   invalidateReports,
 } from "@/lib/cache-tags";
-import { actionFailure, isUniqueViolation } from "@/lib/domain-error";
+import { actionFailure } from "@/lib/domain-error";
 import { z } from "zod";
 import {
   chapters,
   countryInput,
   countryUpdateInput,
 } from "@/features/chapters";
+import {
+  admins,
+  countryAdminInviteInput,
+  inviteId as inviteIdSchema,
+} from "@/features/admins";
 import { requireSuperAdmin } from "@/lib/auth-guards";
+import { getLocale } from "@/lib/i18n";
 import { deleteCountry } from "@/use-cases/manage-country";
-import { appointCountryAdminByEmail } from "@/use-cases/manage-country-admins";
+import { inviteAdmin } from "@/use-cases/invite-admin";
 
 export type CountryActionResult =
   | { ok: true; id?: string }
-  | { ok: false; error: "codeTaken" | "noAccount" | "generic" };
+  | {
+      ok: false;
+      error: "codeTaken" | "alreadyAdmin" | "inviteClosed" | "generic";
+    };
 
 const id = z.string().min(1).max(64);
-const appointInput = z.object({ countryId: id, email: z.email() });
 const removeInput = z.object({ countryId: id, userId: id });
 
 const failed = (error: unknown) =>
-  actionFailure(error, { codeTaken: "codeTaken" });
+  actionFailure(error, {
+    codeTaken: "codeTaken",
+    alreadyAdmin: "alreadyAdmin",
+    inviteClosed: "inviteClosed",
+  });
 
 export async function createCountryAction(
   input: z.input<typeof countryInput>,
@@ -92,25 +104,42 @@ export async function deleteCountryAction(
   }
 }
 
-export async function appointCountryAdminAction(
-  input: z.input<typeof appointInput>,
+export async function inviteCountryAdminAction(
+  input: z.input<typeof countryAdminInviteInput>,
 ): Promise<CountryActionResult> {
-  const parsed = appointInput.safeParse(input);
+  const parsed = countryAdminInviteInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: "generic" };
   const session = await requireSuperAdmin();
 
   try {
-    const appointed = await appointCountryAdminByEmail({
-      email: parsed.data.email,
-      countryId: parsed.data.countryId,
+    const { countryId, ...invitee } = parsed.data;
+    await inviteAdmin({
       actorUserId: session.user.id,
+      locale: await getLocale(),
+      invitee,
+      target: { kind: "countryAdmin", countryId },
     });
-    if (!appointed) return { ok: false, error: "noAccount" };
-    revalidatePath("/admin", "layout");
-    invalidateAccess({ userIds: [appointed.userId] });
+    revalidatePath("/admin/countries");
+    revalidatePath("/admin/admins");
     return { ok: true };
   } catch (error) {
-    if (isUniqueViolation(error)) return { ok: true };
+    return failed(error);
+  }
+}
+
+export async function revokeCountryAdminInviteAction(
+  inviteId: string,
+): Promise<CountryActionResult> {
+  const parsed = inviteIdSchema.safeParse(inviteId);
+  if (!parsed.success) return { ok: false, error: "generic" };
+  await requireSuperAdmin();
+
+  try {
+    await admins.revokeInvite(parsed.data, "countryAdmin");
+    revalidatePath("/admin/countries");
+    revalidatePath("/admin/admins");
+    return { ok: true };
+  } catch (error) {
     return failed(error);
   }
 }

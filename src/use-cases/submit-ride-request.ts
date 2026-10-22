@@ -3,13 +3,12 @@ import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
 import { membership } from "@/features/membership";
 import { passengers, pickupOf, type Pickup } from "@/features/passengers";
-import { profile } from "@/features/profile";
-import { rideLocations } from "@/features/ride-locations";
 import { rides } from "@/features/rides";
 import {
   REQUEST_LIMITS,
   rideRequestInput,
   rideRequests,
+  type RideRequestData,
   type RideRequestInput,
 } from "@/features/ride-requests";
 import { bookingRefusal, instantOn } from "@/lib/booking-windows";
@@ -32,21 +31,19 @@ export type BookableRider = {
   chapterId: string;
   bookable: boolean;
   home: Pickup | null;
-  careCenterId: string | null;
 };
 
 /**
  * The riders an account books for, and whether it may still book for each:
  * only while it is a member of the rider's chapter. A carer who left the
  * chapter keeps the rider until the chapter hands them over, but cannot send
- * requests for them. A rider who is the account itself is picked up where the
- * account lives.
+ * requests for them. A rider with an account of their own is picked up where
+ * that account lives, whether they book themself or a carer books for them.
  */
 export async function ridersToBook(userId: string): Promise<BookableRider[]> {
-  const [riders, memberships, own] = await Promise.all([
-    passengers.listPassengersManagedBy(userId),
+  const [riders, memberships] = await Promise.all([
+    passengers.listRidersOfAccount(userId),
     membership.listMembershipsOfUser(userId),
-    profile.getProfile(userId),
   ]);
   const member = new Set(
     memberships
@@ -59,44 +56,16 @@ export async function ridersToBook(userId: string): Promise<BookableRider[]> {
     lastName: rider.lastName,
     chapterId: rider.chapterId,
     bookable: member.has(rider.chapterId),
-    home: pickupOf(
-      rider.userId === userId && own ? { ...rider, user: own } : rider,
-    ),
-    careCenterId: rider.rideLocationId ?? null,
+    home: pickupOf(rider),
   }));
 }
 
-async function placeOf(
-  rideLocationId: string | null,
-  pickup: {
-    name: string;
-    address: string | null;
-    latitude: number | null;
-    longitude: number | null;
-  } | null,
-  chapterId: string,
-) {
-  if (rideLocationId) {
-    const location = await rideLocations.requireUsableRideLocation(
-      rideLocationId,
-      chapterId,
-    );
-    return {
-      rideLocationId: location.id,
-      pickupName: location.name,
-      pickupAddress: location.address,
-      pickupLatitude: location.latitude,
-      pickupLongitude: location.longitude,
-    };
-  }
-  return {
-    rideLocationId: null,
-    pickupName: pickup?.name ?? null,
-    pickupAddress: pickup?.address ?? null,
-    pickupLatitude: pickup?.latitude ?? null,
-    pickupLongitude: pickup?.longitude ?? null,
-  };
-}
+const placeOf = (pickup: RideRequestData["pickup"]) => ({
+  pickupName: pickup?.name ?? null,
+  pickupAddress: pickup?.address ?? null,
+  pickupLatitude: pickup?.latitude ?? null,
+  pickupLongitude: pickup?.longitude ?? null,
+});
 
 /**
  * Lifecycle 1B–1D. The chapter is the riders' own, read from the riders this
@@ -109,6 +78,10 @@ export async function submitRideRequest(
   input: RideRequestInput,
   userId: string,
   now = new Date(),
+  {
+    replacesRideIds = [],
+    replacesRequestIds = [],
+  }: { replacesRideIds?: string[]; replacesRequestIds?: string[] } = {},
 ) {
   const data = rideRequestInput.parse(input);
   const riders = await ridersToBook(userId);
@@ -146,8 +119,14 @@ export async function submitRideRequest(
 
   const window = { startsAt: requestedStartsAt, endsAt: requestedEndsAt };
   const riderIds = picked.map((rider) => rider.id);
-  await rideRequests.assertCanAsk(userId, riderIds, window, now);
-  if (await rides.ridersBookedBetween(riderIds, window))
+  await rideRequests.assertCanAsk(
+    userId,
+    riderIds,
+    window,
+    now,
+    replacesRequestIds,
+  );
+  if (await rides.ridersBookedBetween(riderIds, window, replacesRideIds))
     throw new DomainError("riderBooked");
 
   const functional = data.model === "functional";
@@ -158,7 +137,7 @@ export async function submitRideRequest(
       requesterUserId: userId,
       model: data.model,
       passengerIds: riderIds,
-      ...(await placeOf(data.rideLocationId, data.pickup, chapterId)),
+      ...placeOf(data.pickup),
       destinationName: functional ? (data.destination?.name ?? null) : null,
       destinationAddress: functional
         ? (data.destination?.address ?? null)

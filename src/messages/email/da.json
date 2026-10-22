@@ -364,6 +364,15 @@
     "footer": "Du får denne e-mail, fordi du har bedt nogen om at passe på en passager.",
     "someone": "nogen"
   },
+  "careLinked": {
+    "subject": "{caretaker} hjælper dig nu med dine ture",
+    "preview": "{caretaker} kan booke ture for dig hos {chapter}",
+    "heading": "{caretaker} hjælper dig nu med dine ture",
+    "intro": "{caretaker} sagde ja, da {chapter} spurgte, om de ville passe på dig. Fra nu af kan de booke ture for dig, og du kan stadig selv booke og se dine ture. Er det ikke rigtigt, så sig det til din afdeling.",
+    "cta": "Åbn dine ture",
+    "footer": "Du får denne e-mail, fordi nogen nu booker ture for dig hos en Cycling Without Age-afdeling.",
+    "someone": "nogen"
+  },
   "careInvited": {
     "subject": "Book ture for {rider} hos {chapter}",
     "preview": "En konto venter på dig",
@@ -443,11 +452,11 @@
     "footer": "Du modtager denne e-mail, fordi en Cycling Without Age-afdeling har ændret, hvem der booker ture for en passager."
   },
   "rideReminder": {
-    "cta": "Bekræft eller aflys pladsen",
+    "cta": "Åbn turen",
     "footer": "Du modtager denne e-mail, fordi du booker ture i en Cycling Without Age-afdeling.",
     "heading": "Din tur nærmer sig",
-    "intro": "Din tur {date}, {time}, starter ved {place} ({ride}). Bekræft pladsen i appen – eller giv den fri, hvis planerne har ændret sig, så afdelingen kan tilbyde den til en anden.",
-    "introBoth": "Din tur ud og hjem {date}: udturen er {time} fra {place} ({ride}). Bekræft pladsen i appen – eller giv den fri, hvis planerne har ændret sig, så afdelingen kan tilbyde den til en anden.",
+    "intro": "Din tur {date}, {time}, starter ved {place} ({ride}). Kan du ikke komme, så meld fra i appen, så afdelingen kan tilbyde pladsen til en anden.",
+    "introBoth": "Din tur ud og hjem {date}: udturen er {time} fra {place} ({ride}). Kan du ikke komme, så meld fra i appen, så afdelingen kan tilbyde pladsen til en anden.",
     "preview": "{ride} · {time}",
     "subject": "Din tur {date}"
   },
@@ -480,5 +489,29 @@
     "preview": "{ride} · {time}",
     "someone": "En passager",
     "subject": "{rider} kører alligevel med {date}"
+  },
+  "adminInvite": {
+    "superadmin": {
+      "subject": "Du er inviteret til at være med til at drive Cycling Without Age",
+      "heading": "Vær med til at drive Cycling Without Age",
+      "intro": "{inviter} har inviteret dig til at blive superadmin. Superadmins passer på alle lande, alle afdelinger og alle indstillinger."
+    },
+    "countryAdmin": {
+      "subject": "Du er inviteret til at passe på {country}",
+      "heading": "Pas på {country}",
+      "intro": "{inviter} har inviteret dig til at blive landeadmin for {country}. Du kan støtte alle afdelinger der."
+    },
+    "how": "Log ind med denne e-mailadresse og accepter invitationen. Du skal bruge en adgangsnøgle, og vi hjælper dig med at oprette den. Invitationen gælder i 7 dage.",
+    "cta": "Åbn invitationen",
+    "preview": "En invitation til at være med",
+    "footer": "Du modtager denne mail, fordi en superadmin hos Cycling Without Age har inviteret din adresse."
+  },
+  "superadminRemoved": {
+    "subject": "Du er ikke længere superadmin",
+    "preview": "Din rolle er ændret",
+    "heading": "Du er ikke længere superadmin",
+    "intro": "{actor} har fjernet din superadmin-rolle. Din konto bliver, som den er. Tak for alt, hvad du har gjort for bevægelsen.",
+    "cta": "Åbn Cycling Without Age",
+    "footer": "Du modtager denne mail, fordi din rolle hos Cycling Without Age er ændret."
   }
 }

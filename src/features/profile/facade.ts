@@ -29,6 +29,10 @@ import {
   stampOnboarded,
   updateProfile,
 } from "./services/profile";
+import {
+  findPasskeyVerifiedAt,
+  stampPasskeyVerified,
+} from "./services/sessions";
 
 export type Profile = NonNullable<Awaited<ReturnType<typeof findProfile>>>;
 
@@ -37,6 +41,12 @@ export type ProfileSummary = Awaited<ReturnType<typeof findProfiles>>[number];
 export const getProfile = (userId: string) => findProfile(userId);
 
 export const countPasskeys = (userId: string) => countPasskeysOf(userId);
+
+export const markSessionPasskeyVerified = (sessionId: string) =>
+  stampPasskeyVerified(sessionId, new Date());
+
+export const sessionPasskeyVerifiedAt = (sessionId: string) =>
+  findPasskeyVerifiedAt(sessionId);
 
 export const getProfiles = async (
   userIds: string[],

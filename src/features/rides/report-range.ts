@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { dayKey } from "@/lib/calendar";
 
 export const REPORT_RANGE_PRESETS = [
   "7d",
@@ -110,6 +111,11 @@ export const periodBounds = (period: ReportPeriod) => ({
   from: new Date(parse(period.from) - ZONE_SPREAD_MS),
   to: new Date(parse(period.to) + ZONE_SPREAD_MS),
 });
+
+export const reportToday = (now: Date, zones: string[]) =>
+  (zones.length ? zones : ["UTC"])
+    .map((zone) => dayKey(now, zone))
+    .reduce((latest, day) => (day > latest ? day : latest));
 
 const rangeParams = z.union([
   z.object({ from: isoDate.refine(realDate), to: isoDate.refine(realDate) }),

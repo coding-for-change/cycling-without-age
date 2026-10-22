@@ -349,6 +349,19 @@
 }
 
 @layer base {
+  [data-greeting] {
+    display: none;
+  }
+  html:not([data-daypart]) [data-greeting="default"],
+  html[data-daypart="morning"] [data-greeting="morning"],
+  html[data-daypart="afternoon"] [data-greeting="afternoon"],
+  html[data-daypart="evening"] [data-greeting="evening"],
+  html[data-daypart="night"] [data-greeting="night"] {
+    display: inline;
+  }
+}
+
+@layer base {
   input[type="date"] {
     appearance: none;
     -webkit-appearance: none;

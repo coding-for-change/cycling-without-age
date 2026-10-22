@@ -93,6 +93,16 @@ export const findPassengersOfAccount = (userId: string) =>
   prisma.passenger.findMany({
     where: { OR: [{ managedByUserId: userId }, { userId }] },
     orderBy: { createdAt: "asc" },
+    include: {
+      user: {
+        select: {
+          residence: true,
+          address: true,
+          latitude: true,
+          longitude: true,
+        },
+      },
+    },
   });
 
 export const findPassengersManagedBy = (managedByUserId: string) =>
@@ -163,7 +173,7 @@ export const updatePassengerNeeds = (
   id: string,
   data: Pick<
     Prisma.PassengerUncheckedUpdateInput,
-    "needsWheelchairBike" | "note" | "rideLocationId"
+    "needsWheelchairBike" | "note"
   >,
 ) =>
   prisma.passenger.update({
@@ -173,7 +183,6 @@ export const updatePassengerNeeds = (
       id: true,
       needsWheelchairBike: true,
       note: true,
-      rideLocationId: true,
     },
   });
 
@@ -206,8 +215,40 @@ export const findPendingCareRequest = (where: {
   birthDate: Date;
 }) =>
   prisma.careRequest.findFirst({
-    where: { ...where, status: "pending" },
+    where: { ...where, status: "pending", passengerId: null },
     select: { id: true },
+  });
+
+export const findPendingCareLinks = (passengerId: string) =>
+  prisma.careRequest.findMany({
+    where: { passengerId, status: "pending" },
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      caretakerUserId: true,
+      createdAt: true,
+      caretaker: { select: { name: true, email: true } },
+    },
+  });
+
+export const declinePendingCareLinks = (
+  passengerId: string,
+  db: Prisma.TransactionClient = prisma,
+) =>
+  db.careRequest.updateMany({
+    where: { passengerId, status: "pending" },
+    data: { status: "declined", decidedAt: new Date() },
+  });
+
+export const linkPassengerManager = (
+  passengerId: string,
+  userId: string,
+  toUserId: string,
+  db: Prisma.TransactionClient,
+) =>
+  db.passenger.updateMany({
+    where: { id: passengerId, userId, managedByUserId: userId },
+    data: { managedByUserId: toUserId },
   });
 
 export const closeCareRequest = (
@@ -228,7 +269,11 @@ export const insertPassengerIn = (
 
 export const findPendingCareRequestsOfChapters = (chapterIds: string[]) =>
   prisma.careRequest.findMany({
-    where: { chapterId: { in: chapterIds }, status: "pending" },
+    where: {
+      chapterId: { in: chapterIds },
+      status: "pending",
+      passengerId: null,
+    },
     orderBy: { createdAt: "asc" },
     select: {
       id: true,

@@ -12,7 +12,8 @@ import { damageStateOf } from "@/features/fleet/components/trishaw-badges";
 import { addTrishawNoteAction } from "@/features/fleet/actions";
 import { allowsAdmin } from "@/lib/access";
 import { requireAdminOf } from "@/lib/auth-guards";
-import { formatDate, wordsLocale } from "@/lib/format";
+import { wordsLocale } from "@/lib/format";
+import { formatInstantDate } from "@/lib/instant-date";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { trishawHistory } from "@/use-cases/trishaw-history";
@@ -159,7 +160,11 @@ export async function TrishawBody({
                 <span className="text-xs text-ink-soft">
                   {[
                     damage.grounding ? common.grounded : null,
-                    formatDate(damage.reportedAt, locale),
+                    formatInstantDate(
+                      damage.reportedAt,
+                      locale,
+                      calendar.timeZone,
+                    ),
                   ]
                     .filter(Boolean)
                     .join(" · ")}
@@ -263,7 +268,13 @@ export async function TrishawBody({
           pool: common.pool,
           since: formatMessage(
             detail.since,
-            { date: formatDate(trishaw.createdAt, locale) },
+            {
+              date: formatInstantDate(
+                trishaw.createdAt,
+                locale,
+                calendar.timeZone,
+              ),
+            },
             words,
           ),
           statuses: common.statuses,
@@ -352,6 +363,7 @@ export async function TrishawBody({
             empty={detail.historyEmpty}
             notation={locale}
             words={language}
+            timeZone={calendar.timeZone}
           />
         </HistorySection>
       </TrishawEditor>

@@ -5,6 +5,7 @@ import { forbidden, redirect } from "next/navigation";
 import { setTag, setUser } from "@sentry/nextjs";
 import { auth } from "@/lib/auth";
 import { chapters } from "@/features/chapters";
+import { admins } from "@/features/admins";
 import { profile } from "@/features/profile";
 import {
   allowsAdmin,
@@ -100,6 +101,29 @@ export async function requireSuperAdmin() {
   if (!isSuperAdmin(session.access)) deny();
   await ensureAdminPasskey(session.user.id);
   return session;
+}
+
+export const STEP_UP_WINDOW_MS = 5 * 60 * 1000;
+
+export async function hasFreshPasskey(session: Session) {
+  const verifiedAt = await profile.sessionPasskeyVerifiedAt(session.session.id);
+  return (
+    verifiedAt !== null &&
+    Date.now() - verifiedAt.getTime() <= STEP_UP_WINDOW_MS
+  );
+}
+
+export async function requireSuperAdminStepUp() {
+  const session = await requireSuperAdmin();
+  if (!(await admins.isSuperadmin(session.user.id))) deny();
+  return { session, fresh: await hasFreshPasskey(session) };
+}
+
+export async function refreshSessionCookie() {
+  await auth.api.getSession({
+    headers: await headers(),
+    query: { disableCookieCache: true },
+  });
 }
 
 export async function requireCountryAdmin(countryId: string) {

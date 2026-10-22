@@ -30,7 +30,7 @@ Vi sælger ikke data, viser ikke reklamer og laver ikke profiler til markedsfør
 
 ## Hvem vi deler det med
 
-I appen ser hver person det, der skal til for en tur: afdelingens admins ser dens medlemmer og ture, piloter ser passagererne på deres tur, og chatmedlemmer ser beskederne i deres chat.
+I appen ser hver person det, der skal til for en tur: afdelingens admins ser dens medlemmer og ture, piloter ser passagererne på deres tur, og chatmedlemmer ser beskederne i deres chat. De, der tilmelder sig det samme arrangement, ser hinandens navne i arrangementets gruppechat.
 
 Disse leverandører behandler data på vores vegne:
 

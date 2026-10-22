@@ -1,31 +1,33 @@
-import { CalendarHeart, ChevronDown, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { cacheLife } from "next/cache";
 import { headers } from "next/headers";
 import Link from "next/link";
-import { EmptyState } from "@/components/empty-state";
+import { BenchIllustration } from "@/components/illustrations";
 import { Button } from "@/components/ui/button";
 import { passengers } from "@/features/passengers";
 import { rides } from "@/features/rides";
-import { RideAgenda } from "@/features/rides/components/ride-agenda";
+import { PastRides } from "@/features/rides/components/past-rides";
+import { RideAgenda, RideCard } from "@/features/rides/components/ride-agenda";
 import { requirePerspective } from "@/lib/auth-guards";
 import { resolveLocale, wordsLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { MEMBER_LIFE } from "../../../_components/instant";
-import { RideRequestsList, loadRideRequests } from "./ride-requests-list";
-import { UpcomingEvents, loadUpcomingEvents } from "./upcoming-events";
+import { pilotAvatars } from "../../../_components/pilot-avatars";
+import { RequestCard } from "./request-card";
+import { loadRideRequests } from "./ride-requests-list";
 
 const rideHref = (rideId: string) => `/passenger/rides/${rideId}`;
 const PROFILE_BASE = "/passenger/profile";
+const NEW_RIDE = "/passenger/rides/new";
 
 export async function PassengerRides() {
   "use cache: private";
   cacheLife(MEMBER_LIFE);
 
   const session = await requirePerspective("passenger");
-  const [mine, events, requests, dict, language, head] = await Promise.all([
+  const [mine, requests, dict, language, head] = await Promise.all([
     passengers.listRidersOfAccount(session.user.id),
-    loadUpcomingEvents(session.user.id),
     loadRideRequests(session.user.id),
     getDictionary(),
     getLocale(),
@@ -34,12 +36,45 @@ export async function PassengerRides() {
   const { upcoming, past } = await rides.listPassengerRides(
     mine.map((passenger) => passenger.id),
   );
+  const avatars = await pilotAvatars([...upcoming, ...past]);
 
   const locale = resolveLocale(head.get("accept-language"));
   const words = wordsLocale(language);
-  const strings = dict.passenger.rides;
+  const strings = dict.passenger.rides.list;
+  const book = dict.member.action.passenger;
 
-  const empty = !upcoming.length && !requests.length;
+  const items = [
+    ...upcoming.map((ride) => ({
+      at: ride.startsAt.getTime(),
+      key: `ride:${ride.id}`,
+      node: (
+        <RideCard
+          key={`ride:${ride.id}`}
+          ride={ride}
+          strings={dict.calendar}
+          locale={locale}
+          words={words}
+          href={rideHref(ride.id)}
+          profileBase={PROFILE_BASE}
+          past={false}
+          pilotAvatars={avatars}
+        />
+      ),
+    })),
+    ...requests.map((request) => ({
+      at: request.requestedStartsAt.getTime(),
+      key: `request:${request.id}`,
+      node: (
+        <RequestCard
+          key={`request:${request.id}`}
+          request={request}
+          dict={dict}
+          locale={locale}
+          words={words}
+        />
+      ),
+    })),
+  ].sort((a, b) => a.at - b.at || a.key.localeCompare(b.key));
 
   return (
     <>
@@ -47,102 +82,69 @@ export async function PassengerRides() {
         <h1 className="text-2xl tracking-tight md:text-3xl">
           {dict.member.pages.rides.title}
         </h1>
-        {empty ? null : (
+        {items.length ? (
           <Button
             asChild
             variant="brand"
             className="min-h-11 gap-1.25 rounded-full px-5 md:hidden"
           >
             <Link
-              href="/passenger/rides/new"
+              href={NEW_RIDE}
               transitionTypes={["push"]}
             >
               <Plus
                 aria-hidden
                 className="size-4"
               />
-              {dict.member.action.passenger}
+              {book}
             </Link>
           </Button>
-        )}
+        ) : null}
       </div>
 
-      <RideRequestsList
-        requests={requests}
-        dict={dict}
-        notation={locale}
-        words={words}
-      />
-
-      <UpcomingEvents
-        events={events}
-        dict={dict}
-        locale={locale}
-        words={words}
-      />
-
-      {upcoming.length ? (
+      {items.length ? (
         <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold tracking-wide text-ink-soft uppercase">
-            {dict.calendar.upcoming}
-          </h2>
+          <h2 className="text-base">{dict.calendar.upcoming}</h2>
+          <ul className="flex flex-col gap-3">
+            {items.map((item) => item.node)}
+          </ul>
+        </section>
+      ) : (
+        <section className="flex flex-col items-center gap-3 pt-4 text-center">
+          <BenchIllustration className="w-48" />
+          <h2 className="text-xl tracking-tight">{strings.emptyTitle}</h2>
+          <p className="max-w-sm text-ink-soft">{strings.emptyBody}</p>
+          <Button
+            asChild
+            variant="brand"
+            className="mt-2 min-h-12 rounded-full px-6 text-base"
+          >
+            <Link
+              href={NEW_RIDE}
+              transitionTypes={["push"]}
+            >
+              {book}
+            </Link>
+          </Button>
+        </section>
+      )}
+
+      {past.length ? (
+        <PastRides
+          show={formatMessage(strings.showPast, { count: past.length }, words)}
+          hide={strings.hidePast}
+        >
           <RideAgenda
-            rides={upcoming}
+            rides={past}
             strings={dict.calendar}
             locale={locale}
             words={words}
             href={rideHref}
             profileBase={PROFILE_BASE}
+            past
+            pilotAvatars={avatars}
           />
-        </section>
-      ) : empty ? (
-        <EmptyState
-          icon={CalendarHeart}
-          className="flex-1 justify-start rounded-none border-none pt-16"
-          action={
-            <Button
-              asChild
-              variant="brand"
-              className="min-h-11 rounded-full px-6"
-            >
-              <Link
-                href="/passenger/rides/new"
-                transitionTypes={["push"]}
-              >
-                {dict.member.action.passenger}
-              </Link>
-            </Button>
-          }
-        >
-          {dict.passenger.request.list.empty}
-        </EmptyState>
-      ) : null}
-
-      {past.length ? (
-        <details className="group flex flex-col">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none [&::-webkit-details-marker]:hidden">
-            <h2 className="text-xs font-semibold tracking-wide text-ink-soft uppercase">
-              {strings.past}
-            </h2>
-            <span className="text-2sm flex items-center gap-1.25 text-ink-soft">
-              {formatMessage(strings.pastCount, { count: past.length }, words)}
-              <ChevronDown
-                aria-hidden
-                className="size-4 transition-transform group-open:rotate-180 motion-reduce:transition-none"
-              />
-            </span>
-          </summary>
-          <div className="pt-3">
-            <RideAgenda
-              rides={past}
-              strings={dict.calendar}
-              locale={locale}
-              words={words}
-              href={rideHref}
-              profileBase={PROFILE_BASE}
-            />
-          </div>
-        </details>
+        </PastRides>
       ) : null}
     </>
   );

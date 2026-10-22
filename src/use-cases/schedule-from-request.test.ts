@@ -30,9 +30,6 @@ jest.mock("@/features/membership", () => ({
 jest.mock("@/features/passengers", () => ({
   passengers: { getPassengers: jest.fn() },
 }));
-jest.mock("@/features/ride-locations", () => ({
-  rideLocations: { requireUsableRideLocation: jest.fn() },
-}));
 jest.mock("@/features/ride-requests", () => ({
   ...jest.requireActual("@/features/ride-requests/schemas"),
   rideRequests: {
@@ -203,7 +200,6 @@ describe("scheduleAutomatically", () => {
     roundTrip: false,
     requestedStartsAt: at("08:00"),
     requestedEndsAt: at("10:00"),
-    rideLocationId: null,
     pickupName: "Sonnenhof",
     pickupAddress: "Am Hof 1",
     pickupLatitude: 48.1,
@@ -384,10 +380,9 @@ describe("scheduleAutomatically", () => {
     );
   });
 
-  it("starts the ride at the request's Ride Location and its coordinates", async () => {
+  it("starts the ride at the request's pickup and its coordinates", async () => {
     asking(
       pending({
-        rideLocationId: "location-1",
         pickupLatitude: 48.15,
         pickupLongitude: 11.58,
       }),
@@ -395,7 +390,6 @@ describe("scheduleAutomatically", () => {
     await scheduleAutomatically("request-1");
     expect(scheduledRide()).toEqual(
       expect.objectContaining({
-        rideLocationId: "location-1",
         locationName: "Sonnenhof",
         locationAddress: "Am Hof 1",
         latitude: 48.15,

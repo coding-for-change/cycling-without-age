@@ -77,7 +77,7 @@ export function stepProgress(
 ): { index: number; total: number } | null {
   const run: OnboardingStep[] = [
     ...(presetRole ? [] : (["role"] as const)),
-    ...(presetRole && presetChapter ? [] : (["location"] as const)),
+    ...(presetChapter ? [] : (["location"] as const)),
     "consent",
     "profile",
     "passkey",

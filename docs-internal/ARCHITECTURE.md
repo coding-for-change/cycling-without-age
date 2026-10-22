@@ -118,6 +118,38 @@ the operational rules.
   `NativeBootstrap` suppresses the React transition after a popstate that WebKit already
   animated (`hasUAVisualTransition`) until the next pointer interaction.
 
+### Member homes and top-bar navigation
+
+- **Section order.** Each home section is its own async server component (`"use cache:
+  private"`) behind its own `<Suspense>` with a skeleton shaped like the card.
+  - Passenger (`/passenger`): `Greeting` → `HomeHero` (the next booked ride, else the pending
+    request, else the mint "Where shall we ride?" card with the single red Book button) →
+    `ChapterChoice` (guests and chapterless members only) → `HappeningSoon` (an event
+    carousel, hidden when empty) → `SetupRow`.
+  - Pilot (`/pilot`): `Greeting hero` (the red button to open rides) → `PilotStatus` →
+    `PilotHero` (training as `SetupRow variant="hero"` while not ready, else today's or
+    unfinished ride, else the next ride within 28 days) → `NeedsPilotCarousel` (open rides via
+    the same guarded use case as `/pilot/rides`) → `PilotSetupRow` (only when training is not
+    already the hero, so it never shows twice).
+- **Greeting by time of day.** `daypartScript` (`src/lib/daypart.ts`) runs in the pre-paint
+  script of the root layout and sets `<html data-daypart>`. `Greeting` renders all variants
+  and CSS shows the matching one, so the prerendered shell never reads the clock and never
+  mismatches on hydration. Without the attribute the neutral "Hi {name}" shows. Clock-dependent
+  cards (`CalendarTile`, `UpcomingRideCard`) take a server-computed `now` for the same reason.
+- **Event photo morph.** An event photo is wrapped in `EventPhotoTransition`
+  (`features/rides/components/event-photo-transition.tsx`, a named React `<ViewTransition>`)
+  on the home carousel, the Rides list and the event detail. React only pairs named
+  `ViewTransition`s with each other, so a CSS `view-transition-name` would not morph.
+- **Back arrow, not in-page back links.** On a drill-down `MemberTopBar` shows a ChevronLeft
+  (in place of the avatar on phones, before the "Parent › Title" breadcrumb on desktop).
+  It calls `router.back()` when `useCanGoBack` says there is in-app history, otherwise
+  `router.replace(parent.href, { transitionTypes: ["pop"] })`; `parentItem(pathname, items)` in
+  `(member)/nav.ts` is the parent (the owning tab, or the parent row). `useCanGoBack` stamps the
+  depth into `history.state.cwaDepth`, and `markReplace()` keeps a replace from counting as a
+  step. The same depth feeds `decideBack`, so Android's hardware back also walks history in the
+  member shell. Detail pages set the centred title with `<MemberTitle title=… />`
+  (`member-title.tsx`); pages no longer render their own back links.
+
 ## Observability
 
 `src/lib/observability/` is cross-cutting infrastructure, the same standing as
@@ -330,7 +362,9 @@ person administers (see [Admin shell](#admin-shell-cod-172)).
 
 ### Guards (`lib/auth-guards.ts`)
 
-`getSession`, `requireAuth`, `requireSuperAdmin`, `requireCountryAdmin(countryId)`,
+`getSession`, `requireAuth`, `requireSuperAdmin`, `requireSuperAdminStepUp()` (see
+[Admin invites](#admin-invites-featuresadmins)), `hasFreshPasskey(session)`,
+`refreshSessionCookie()`, `requireCountryAdmin(countryId)`,
 `requireChapterAdmin(chapterId)`, `requireCountryAdminOfChapter(chapterId)`,
 `requireChapterRole(chapterId, role)`, `requireAdminScope()`, `getHighestRole(session)`,
 `homeOf(session)`, `redirectIfElsewhere(session, perspective)`,
@@ -354,11 +388,54 @@ demo structure. See [DEV-ACCOUNTS.md](./DEV-ACCOUNTS.md) for the login table.
 
 | Role | May |
 | --- | --- |
-| superadmin | everything; create countries; appoint/remove country admins |
+| superadmin | everything; create countries; invite/remove country admins; invite/remove superadmins (`/admin/admins`) |
 | country admin | create/edit chapters in own country; appoint/remove chapter admins there; everything a chapter admin can, for own country's chapters |
 | chapter admin | approve/reject pilot applications for own chapter; promote members to chapter admin; manage own chapter |
 | pilot | free self-signup; membership per chapter requires approval; may belong to many chapters |
 | passenger | free self-signup; membership active immediately, no application |
+
+### Admin invites (`features/admins`)
+
+Nobody becomes a superadmin or a country admin by someone else's click alone. A superadmin
+invites by name and email: from `/admin/admins` for a superadmin, from the Countries table for a
+country admin. `use-cases/invite-admin` provisions an account for an unknown address
+(`accounts.provisionUser`, as chapter invites do) and `admins.createInvite` writes an
+`AdminInvite` row (`kind` `superadmin` | `countryAdmin`, `countryId` for the latter, a random
+UUID id, `expiresAt` seven days out) and emits `adminInvite.created`, whose kind mails the
+invitee and fills their bell with a link to `/admin-invite/<id>`. Inviting the same person to
+the same role again withdraws the earlier open invite.
+
+The role is granted only on acceptance, in `use-cases/accept-admin-invite`, and only when
+the signed-in user is the invitee, the invite is neither accepted, withdrawn nor expired, and
+the account has a passkey (the accept page offers to create one first). The claim is a
+conditional update (`acceptedAt` null, `revokedAt` null, `expiresAt` in the future), so a
+withdrawal racing an acceptance has exactly one winner. Accepting refreshes the session cookie
+cache (`refreshSessionCookie`), because `user.role` travels in the 5-minute cookie cache.
+
+`admins.removeSuperadmin` locks every superadmin row (`SELECT … FOR UPDATE`) and refuses to
+remove the last one, including oneself; it also withdraws the open invites the removed person
+sent. Granting (sending a superadmin invite) and removing need a **passkey step-up**:
+`lib/auth.ts` stamps `session.passkeyVerifiedAt` when better-auth's
+`/passkey/verify-authentication` opens a session, and `requireSuperAdminStepUp` accepts only
+a session stamped within `STEP_UP_WINDOW_MS` (5 minutes) whose user is still a superadmin in
+the database, not just in the cookie. Otherwise the Action answers `stepUp`, and the client's
+`withPasskeyStepUp` (`lib/passkey-client`) runs `signInWithPasskey` and retries once. Because
+a signed-in session limits `allowCredentials` to its own passkeys, the step-up re-opens a
+session for the same person.
+
+better-auth's own admin plugin endpoints (`/api/auth/admin/*`: set-role, create-user,
+remove-user, ban, impersonate, …) are refused over HTTP by a `hooks.before` in `lib/auth.ts`
+(`isBlockedOverHttp`), so none of the rules above can be sidestepped through the REST API.
+Server-side `auth.api.createUser` (account provisioning, seed) carries no request and still
+works.
+
+A brand-new account with an open admin invite skips the role-choice onboarding:
+`resolveDestination` sends anyone with an onboarding step still open and an open invite
+to `/admin-invite/<id>`, where the passkey step comes first. Admins need no onboarding
+fields beyond the name given in the invite. Accepting writes a `superadminGranted` history
+line (`superadminRemoved` on removal); a country admin appointed through an invite emits
+`countryAdmin.appointed` with `viaInvite: true`, which keeps the history line but drops the
+"you look after X now" mail the invitee would otherwise get right after accepting.
 
 ## Onboarding (COD-157)
 
@@ -650,6 +727,16 @@ Every admin list renders through one client primitive, `DataTable`
 column visibility, sortable headers, pagination and clickable rows. The server parent still
 does all the reading and hands it finished rows plus `dict.admin.table`; filtering and paging
 are client-side over the full scope list, which is the documented ceiling in that file.
+
+### Overview: needs attention, this week, recent activity
+
+Below the KPI strip `/admin` is a two-column grid: the *Needs attention* inbox and the
+*This week* agenda in the main column, *Recent activity* on the side. Each section is its own
+async server component in its own `<Suspense>`, each re-reads the scope with
+`readActiveScope(searchParams, "overview")`, and all three read through
+`use-cases/admin-overview.ts`, which asks every facade for the scope's chapters only and
+filters the results to them again (see the dependency graph). Inbox rows link to the existing
+detail pages with a visible action button; there is no edit drawer for these items.
 
 ## Core loop (COD-170)
 
@@ -981,7 +1068,7 @@ What is still to build, in order, with the verbs that already exist for it: [CHA
 ### What a Ride is
 
 CWA's own glossary is the authority here (`.agents/skills/cwa-context/references/02-glossary.md`).
-A **Ride** is the scheduled thing: a chapter, a window, a Ride Location, the equipment it
+A **Ride** is the scheduled thing: a chapter, a window, a starting place, the equipment it
 commits, and the rosters and volunteer slots that hang off it. The riders on it live in
 **`RideRosterEntry`** — and *that* is the counting unit, because the glossary is explicit that
 two people on one trip count as two rides. Every statistic in Report 1–20 therefore counts
@@ -1181,14 +1268,28 @@ starts a new ride with) and `staffingCheckLeadHours` (one of 12, 24, 48, 72 or 1
   is short of), and `20261013110000_ride_staffing_checked_backfill` stamps the rides already
   inside their window when this ships, so the first sweep does not flag them all at once.
 - **Ride chat.** A `Conversation` with `origin: ride` and a unique `rideId`, owned by nobody.
-  The `syncRideChat` worker listener (`ride.pilotAssigned`, `ride.pilotUnassigned`,
-  `ride.riderBooked`, `ride.riderRemoved`, and `rider.handedOver` for each ride still ahead of the
-  rider) runs `use-cases/ride-chat.ts`: once a pilot is on the
-  ride it opens the chat, and from then on keeps its members equal to the ride's pilots, its
-  riders' accounts and the chapter's admins. Riders never learn of each other, so the riders'
-  accounts join only when they are one household — a single rider, or one account booking every
-  rider on the ride; a ride with riders of different households, and every event, keeps only the
-  pilots and admins (`chat.syncRideConversation`, idempotent). A demotion or removal in the chapter (`member.roleChanged`) syncs every ride chat
+  The `syncRideChat` worker listener (`ride.scheduled` — both legs of a round trip —,
+  `ride.announced`, `ride.pilotAssigned`, `ride.pilotUnassigned`, `ride.riderBooked`,
+  `ride.riderRemoved`, and `rider.handedOver` for each ride still ahead of the rider) runs
+  `use-cases/ride-chat.ts`. An event's chat opens as soon as the event is scheduled, titled with
+  the event, holding its pilots and the chapter's admins, and every account behind a seat still
+  taken joins it: families who sign up for the same event deliberately see each other's names
+  there (product decision 2026-10-22). An account whose riders all gave their seats up leaves;
+  booking again rejoins. A personal ride's chat opens once a pilot is on it and keeps its
+  members equal to the ride's pilots, the chapter's admins and — only when they are one
+  household, a single rider or one account booking every rider on the ride — its riders'
+  accounts; a personal ride with riders of different households keeps only the pilots and
+  admins (`chat.syncRideConversation`, idempotent). A ride chat holds at most
+  `GROUP_MAX_MEMBERS` (1000): pilots and admins first, then the riders' accounts. In an event's
+  chat the chapter's admins are its owners, kept in step on every sync, so past
+  `GROUP_ANNOUNCEMENT_THRESHOLD` (100) the sync turns announcements on and the admins still
+  write. Everyone joining or leaving an event's chat gets a system line (`joined`, `departed`)
+  whose body is their name sealed with the chat's key, so the line still reads right after they
+  left; the whole history stays visible to late joiners. A cancelled event's chat is frozen
+  (`ride.cancelled` → `freezeCancelledEventChat`) and only its owners, the admins, may pick it up
+  again (`continueChat` passes `ownersOnly`; the thread hides "Keep chatting" from everyone
+  else); a cancelled personal ride's is left as is, and a completed ride's anyone in it may
+  reopen. Under announcements an event chat's hint names the chapter's admins as its writers. A demotion or removal in the chapter (`member.roleChanged`) syncs every ride chat
   the person is in, so a former pilot or admin leaves them at once. Two syncs may read the roster in one order and write it in the other, so a sync
   that changed the members reads the roster again and writes until a read finds nothing to
   change; the roster is read outside the conversation's lock, so a waiting sync never needs a
@@ -1211,16 +1312,20 @@ trishaws panel allocates trishaws in place.
 
 ### Ride day and after (COD-263)
 
-Lifecycle phases 4C to 7: reminders, seat confirmation, check-in, walk-ups, roster closure,
-debrief and the frozen ride chat. One migration, `20261016120000_ride_execution`.
+Lifecycle phases 4C to 7: reminders, giving a seat up, check-in, walk-ups, roster closure,
+debrief and the frozen ride chat. One migration, `20261016120000_ride_execution`; seat
+confirmation was taken out again by `20261022100000_remove_seat_confirmation`.
 
-- **Attendance.** `RideRosterEntry.attendance` is `booked → confirmed → checkedIn → completed`,
+- **Attendance.** `RideRosterEntry.attendance` is `booked → checkedIn → completed`,
   or `noShow`, or `cancelled`; `RideAssignment.attendance` is `signedUp → completed`, or
   `noShow`. A seat the rider's side gives up keeps its row as `cancelled`, so Report 2 still
   sees who signed up; `ACTIVE_SEAT` in `rides/services` keeps it out of everything that counts
   places or people — `_count.roster`, the room check, the agendas and calendar feed, the
-  ride's participants (so its chat and its notifications), the announced events' bookings.
-  Booking that rider again takes the same row back. An admin taking a rider off still deletes
+  ride's participants (so its chat and its notifications), the announced events' bookings —
+  and out of everything the rider's side reads: to the passenger the seat is simply gone.
+  Booking that rider again (`bookSeats` on an event, `bookRider` from an admin or a request)
+  takes the same row back through `takeSeat`, so the `(rideId, passengerId)` unique never
+  refuses it. An admin taking a rider off still deletes
   the row: that rider never signed up.
 - **Reminders and the demand check** (4C, 5B). `use-cases/ride-reminders.ts` runs three passes
   from `ride-sweep`, built like the staffing check: chapters grouped by their own lead, only the
@@ -1233,25 +1338,27 @@ debrief and the frozen ride chat. One migration, `20261016120000_ride_execution`
   itself. A ride with nobody to remind is stamped without an event, and the lead is read again
   under the lock, so a ride moved away after the sweep listed it waits. Moving a ride's start
   clears all three stamps with `staffingCheckedAt` and, while the ride is still ahead of its
-  door, asks every confirmed or checked-in seat again (`booked`, walk-ups excepted); a new end
+  door, turns every checked-in seat back to `booked` (walk-ups excepted); a new end
   only clears the staffing stamp. A ride scheduled already inside
   its demand window is stamped as checked, like the staffing check. The four checks of a sweep
   are independent: one that fails is logged, the others run, and the run then fails for the
   monitor. Rides already inside a window when this ships get their reminder on the first sweep:
   a late "your ride is coming up" still helps, so there is no backfill this time.
-- **Seat confirmation** (5B-b). The rider reminder links to `/passenger/rides/{id}`, where the
-  account answers per rider: Confirm seat, Cancel my seat, or take a given-up seat back while
-  there is room (`app/(member)/passenger/rides/actions.ts` → `use-cases/seat-confirmation.ts`,
-  which accepts only riders of `passengers.listRidersOfAccount`). Both answers close when the
-  ride starts and reach the other leg of a round trip still ahead — a confirmation confirms a
-  booked seat there, and takes a given-up one back only with this one and only while it has
-  room. The last seat given up emits `ride.riderRemoved` with `rosterNowEmpty`, which tells the
-  chapter's admins, and a seat taken back on an emptied roster emits `ride.rosterRefilled`, so
-  they hear it has a rider again; the two legs of a round trip are one message only when both are left empty
-  or both are not. A given-up seat keeps the ride's page open while the ride is ahead, without
-  the pilots' phone numbers; afterwards the ride is no longer the account's. For the ride
-  chat's one-household rule a given-up seat still counts (`listRideParticipants().household`),
-  so one family leaving never lets another into what was said in the chat about it.
+- **Giving a seat up** (5B-b). There is no confirmation step: a booked seat stands until the
+  rider's side cancels it. The rider reminder says the ride is coming up and links to
+  `/passenger/rides/{id}`, where the account cancels the whole ride for its riders or, with
+  several riders, one rider's seat (`app/(member)/passenger/rides/actions.ts` →
+  `use-cases/cancel-own-seat.ts` or `use-cases/reschedule-ride.ts`, which accept only riders of
+  `passengers.listRidersOfAccount`). Cancelling closes when the ride starts and reaches the other
+  leg of a round trip still ahead. The last seat given up emits `ride.riderRemoved` with
+  `rosterNowEmpty`, which tells the chapter's admins; the two legs of a round trip are one
+  message only when both are left empty or both are not. An event emptied that way and booked
+  again through `bookSeats` emits `ride.rosterRefilled`, so the admins hear it has a rider
+  again. Once none of the account's riders holds a seat, the ride is no longer the account's:
+  an event shows its invite again with "Book a spot", a personal ride sends the account back to
+  `/passenger/rides`. The admin's roster and history keep the given-up rows. For a personal
+  ride chat's one-household rule a given-up seat still counts (`listRideParticipants().household`), so one
+  family leaving never lets another into what was said in the chat about it.
 - **Check-in and walk-ups** (6B). The door opens two hours before the start
   (`CHECK_IN_LEAD_MINUTES`). A pilot keeps it until the finish page closes a day after the ride
   ends; an admin may still record a ride later, for as long as its roster is not closed
@@ -1265,7 +1372,7 @@ debrief and the frozen ride chat. One migration, `20261016120000_ride_execution`
   door", so its count of places taken matches its rows.
 - **Roster closure** (6D). "Complete ride" (`CompleteRideButton`, a confirm dialog that shows the
   tally: "3 riders checked in, 1 trishaw, 2 hr") calls `rides.closeRoster`, which sets `status: completed`, `completedAt`/`completedByUserId`, turns
-  `checkedIn` into `completed`, `booked`/`confirmed` into `noShow` and every pilot's `signedUp`
+  `checkedIn` into `completed`, `booked` into `noShow` and every pilot's `signedUp`
   into `completed`, and emits `ride.completed` — whose `freezeRideChat` worker listener freezes
   the ride's chat, retried with the event until it holds. A second tap changes nothing and emits
   nothing, so it leaves alone a chat its people kept going. An
@@ -1313,45 +1420,27 @@ reserved inside the write's transaction.
 Storage locations are managed at `/admin/locations`: chapter sites and the country-wide pools
 other chapters join by code.
 
-### Ride Locations: where a ride starts (COD-260)
+### Where a ride starts
 
-A `RideLocation` is the glossary's place a ride leaves from — a Care Center, a residence, a
-public place — and is a different thing from a storage location, which is where a trishaw is
-kept. The nav calls them "Ride locations" and "Storage locations" so the two never blur.
-`src/features/ride-locations` owns the table; every row belongs to one chapter.
+There is no table of starting places. A ride keeps its own name, address and pin in
+`locationName`/`locationAddress`/`latitude`/`longitude`, and a ride request its own
+`pickupName`/`pickupAddress`/`pickupLatitude`/`pickupLongitude`; nothing links them to a
+shared row, so editing one never rewrites another. (The `RideLocation` model of COD-260 was
+removed by the migration `remove_ride_locations`, which first set `Passenger.residence` to
+`careHome` for every rider linked to a Care Center location.)
 
-- **Snapshot wins.** `Ride.rideLocationId` is a nullable link (`SetNull`), but the ride keeps
-  its own copy of name, address and pin in `locationName`/`locationAddress`/`latitude`/
-  `longitude`. `use-cases/schedule-ride` resolves the location through
-  `rideLocations.requireUsableRideLocation(id, ride.chapterId)` — unknown or archived is
-  `unknownLocation`, another chapter's is `locationNotInChapter` — and copies the snapshot
-  over whatever the client sent. Editing or archiving a location never rewrites a ride, and
-  editing a ride's place on its detail page drops the link. The way back of a round trip
-  starts at the destination, so only the way there is linked.
-- **The care home comes first.** A chapter's `careHomeName` becomes a Care Center ride location
-  with the chapter's address and pin: `use-cases/manage-chapter` adds it when a chapter is
-  created with one, or when one is named later while the chapter has no ride location at all,
-  and the migration `ride_location_from_care_home` did the same once for the chapters that
-  existed. Renaming the care home or moving the chapter afterwards leaves the location alone.
-- **Archive, never delete.** Archived locations disappear from the drawer and the add-rider
-  form; past rides keep their snapshot. Archived rows are read-only until restored.
-- **Defaults.** `defaultMinutes` prefills the ride's length in the scheduling drawer when
-  the location is picked (or when it opens from "Schedule a ride here", `?rideLocation=<id>`);
-  the admin can still change it. A location carries no trishaw or pilot count: a ride needs
-  one pilot per trishaw, and the drawer takes the chapter's "Pilots per ride" whatever the
-  place. `typicalRideKm` is recorded for Report 11 (distance ridden); no report reads it yet.
-- **Riders.** `Passenger` gained `needsWheelchairBike`, `note` and `rideLocationId` (their
-  Care Center). An admin sets them when adding a rider; an account edits its own rider in the
-  account surface through `use-cases/set-own-rider-needs`. Both go through
-  `rideLocations.requireCareCenter`: a live location of the rider's chapter that is not a
-  public place (`locationNotCareCenter`). A link to a location that has since been archived
-  stays visible in the picker, marked "no longer offered", so the rider can clear it. The account surface loads that group only when it opens,
-  and only for an account with the passenger role, so `loadAccount` (which every sidebar
-  runs) never pays for it.
-- **Who may.** Creating needs `requireChapterAdmin(chapterId)`; updating, archiving and
-  restoring load the location first and guard on its stored `chapterId`, never on a chapter
-  the client names. The list and detail pages sit behind `readActiveScope(…, "rideLocations")`
-  and the detail page re-guards on the location's chapter.
+- **The admin drawer** starts the ride at the chapter's place (`chapterPlace`: the chapter's
+  name, address and pin) at the chapter's default ride length; the admin can clear it and
+  search any address. A drawer opened from a request starts at the request's pickup.
+- **The rider's form** offers "Home" (the rider's own address, when their residence is home),
+  the chapter's care home (`careHomeName` with the chapter's address and pin, only when the
+  chapter names one) and a free address search. It preselects the care home for a rider whose
+  `residence` is `careHome`, otherwise home. Whatever is picked is sent as the pickup snapshot.
+- **Riders.** `Passenger` carries `needsWheelchairBike` and `note`, set by an admin when adding
+  a rider and by the account itself in the account surface (`passengers.getOwnRiderNeeds` /
+  `setOwnRiderNeeds`, called straight from the Action). Where a rider lives is
+  `residence` (`careHome` or `home`), on the User for a rider with an own account and on the
+  Passenger otherwise.
 
 ### Time zones: the chapter's clock, never the server's or the reader's
 
@@ -1479,7 +1568,7 @@ needs no migration later; nothing writes the contact columns yet.
   URL through `history.pushState`, so Android back walks the steps without a server round trip.
   Who is skipped when the account books for one rider; at most the seats of the chapter's
   largest trishaw type, and never more than a ride of the model takes (2). Where is a ride out
-  from a Ride Location or the rider's home, or "get somewhere" with a pickup, a destination (the
+  from the rider's home, the chapter's care home or any address, or "get somewhere" with a pickup, a destination (the
   member address search, rate-limited, plus the account's earlier destinations) and "and back
   again". When is a month of bookable days and window chips from `lib/booking-windows`. The
   big red button sits above the tab bar (`bottom-above-tabbar`) and above the keyboard on
@@ -1536,6 +1625,20 @@ needs no migration later; nothing writes the contact columns yet.
   subscribed feed uses, so a calendar holding both shows one entry. `MailOptions.attachments`
   reaches Resend and Mailpit; a kind names `attachments` and `deliver-email` renders them with
   `lib/ics`.
+- **Changing a booked ride.** "Change time" opens the request form with `?from=<rideId>`,
+  prefilled on the server through the account's own riders and opened at the "when" step.
+  `rescheduleRideAction` → `use-cases/reschedule-ride.ts` submits the new request first
+  (`submitRideRequest(…, { replacesRideIds })`, so the old legs don't count as an overlap) and
+  only then gives up the account's held seats on both legs. A seat that cannot be given up is
+  reported as `oldSeatsKept` and the passenger is asked to cancel it on its page; nothing is
+  rolled back. "Cancel ride" is `cancelRideSeats` under the same ownership read.
+- **Changing a pending request.** "Change request" opens the request form with
+  `?fromRequest=<requestId>`, prefilled from `rideRequests.getChangeable` (requester, or the
+  account booking for every rider; pending and not lapsed) and opened at "review" when the
+  asked window is still offered. `changeRideRequestAction` → `use-cases/change-ride-request.ts`
+  submits the new request first (`submitRideRequest(…, { replacesRequestIds })`, so the old
+  request counts neither as an overlap nor towards the five waiting) and only then withdraws
+  the old one. A failed withdrawal is reported as `oldRequestKept`; both stay open.
 
 ### Not here yet
 
@@ -1928,8 +2031,8 @@ adds one more. A chapter without a country is read through the global and chapte
 only, so a ride page never fails on it.
 
 **Every path that puts a pilot on a ride or roster must call `assertPilotsReady(userIds,
-chapterId)`** after its role check; it throws `pilotNotReady`. Today that is `staff-ride` and
-`schedule-ride`. A future pilot self sign-up must call it too.
+chapterId)`** after its role check; it throws `pilotNotReady`. Today that is `staff-ride`,
+`schedule-ride` and `sign-up-for-ride` (a pilot taking an open ride themselves).
 
 ### Feature flag `TRAINING_REQUIRED`
 

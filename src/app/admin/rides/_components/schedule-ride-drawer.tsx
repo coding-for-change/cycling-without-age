@@ -98,11 +98,7 @@ import {
 } from "@/features/rides/schemas";
 import { useDrawerParam } from "@/hooks/use-drawer-param";
 import { clockLabel, clockToMinutes, DEFAULT_SLOT_MINUTES } from "@/lib/clock";
-import {
-  formatDuration,
-  wordsLocale,
-  type Locale as NotationLocale,
-} from "@/lib/format";
+import type { Locale as NotationLocale } from "@/lib/format";
 import type { RideErrors } from "@/features/rides/components/strings";
 import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
@@ -117,12 +113,6 @@ import {
   TrishawOptionRow,
   type TrishawOptionLabels,
 } from "./trishaw-option-row";
-import {
-  placeOfLocation,
-  RideLocationField,
-  type RideLocationChoice,
-  type RideLocationFieldStrings,
-} from "./ride-location-field";
 import {
   HoursWarnings,
   type HoursPolicy,
@@ -154,7 +144,6 @@ export type RequestPrefill = {
   name: string | null;
   model: "pleasure" | "functional";
   slot: WallSlot;
-  rideLocationId: string | null;
   origin: Place | null;
   destination: Place | null;
   roundTrip: boolean;
@@ -195,8 +184,6 @@ type Props = {
   models: Dictionary["calendar"]["models"];
   errors: RideErrors;
   fleet: FleetLabels;
-  locations?: RideLocationChoice[];
-  locationStrings: Pick<RideLocationFieldStrings, "picker" | "kinds">;
   hoursStrings: HoursWarningStrings;
 };
 
@@ -219,11 +206,6 @@ const chapterPlace = (chapter: ScheduleChapter): Place | null =>
         latitude: chapter.latitude,
         longitude: chapter.longitude,
       };
-
-type Prefilled = {
-  name: string;
-  minutes: number | null;
-};
 
 const minutesForRoute = (route: Route) => {
   const raw = route.durationSec / 60 + ROUTE_BUFFER_MINUTES;
@@ -282,8 +264,6 @@ function ScheduleRideSheet({
   models,
   errors,
   fleet,
-  locations = [],
-  locationStrings,
   hoursStrings,
 }: Props & { open: boolean }) {
   const router = useRouter();
@@ -303,20 +283,13 @@ function ScheduleRideSheet({
             {
               new: null,
               request: null,
-              rideLocation: null,
             },
           ),
           { scroll: false },
         )
       : go((params) => {
           params.delete("new");
-          params.delete("rideLocation");
         });
-  const requestedLocation = locations.find(
-    (candidate) =>
-      candidate.id ===
-      (request ? request.rideLocationId : searchParams.get("rideLocation")),
-  );
   const asker = request?.name ?? null;
   const formId = useId();
   const titleId = useId();
@@ -334,10 +307,7 @@ function ScheduleRideSheet({
   const [pending, startTransition] = useTransition();
 
   const [chapterId, setChapterId] = useState(
-    () =>
-      request?.chapterId ??
-      requestedLocation?.chapterId ??
-      rememberedChapter(chapters),
+    () => request?.chapterId ?? rememberedChapter(chapters),
   );
   const chapter =
     chapters.find((candidate) => candidate.id === chapterId) ?? chapters[0];
@@ -352,18 +322,11 @@ function ScheduleRideSheet({
       request?.slot ?? {
         date: chapter.date,
         start: chapter.start,
-        durationMinutes:
-          (!chapter.durationChosen && requestedLocation?.defaultMinutes) ||
-          (chapter.durationMinutes ?? DEFAULT_SLOT_MINUTES),
+        durationMinutes: chapter.durationMinutes ?? DEFAULT_SLOT_MINUTES,
       },
   );
-  const [rideLocation, setRideLocation] = useState<RideLocationChoice | null>(
-    requestedLocation ?? null,
-  );
   const [origin, setOrigin] = useState<Place | null>(() =>
-    requestedLocation
-      ? placeOfLocation(requestedLocation)
-      : (request?.origin ?? null),
+    request ? request.origin : home,
   );
   const [destination, setDestination] = useState<Place | null>(
     request?.destination ?? null,
@@ -371,16 +334,6 @@ function ScheduleRideSheet({
   const [roundTrip, setRoundTrip] = useState(request?.roundTrip ?? true);
   const [stay, setStay] = useState(chapter.stayMinutes ?? DEFAULT_STAY);
   const [pilotsNeeded, setPilotsNeeded] = useState(chapter.requiredPilots ?? 1);
-  const [prefilled, setPrefilled] = useState<Prefilled | null>(() =>
-    requestedLocation
-      ? {
-          name: requestedLocation.name,
-          minutes: chapter.durationChosen
-            ? null
-            : requestedLocation.defaultMinutes,
-        }
-      : null,
-  );
   const [announced, setAnnounced] = useState(false);
   const [passengerIds, setPassengerIds] = useState<string[]>(
     request?.passengerIds ?? [],
@@ -520,13 +473,11 @@ function ScheduleRideSheet({
     if (!next) return;
     setChapterId(id);
     rememberChapter(id);
-    setPrefilled(null);
     setPilotsNeeded(
       chapters.find((candidate) => candidate.id === id)?.requiredPilots ?? 1,
     );
     setSelected(new Set());
-    setRideLocation(null);
-    setOrigin(null);
+    setOrigin(chapterPlace(next));
     setDestination(null);
     setPassengerIds([]);
     setPilotIds([]);
@@ -541,21 +492,6 @@ function ScheduleRideSheet({
   const changeSlot = (next: WallSlot) => {
     if (next.durationMinutes !== slot.durationMinutes) endEdited.current = true;
     setSlot(next);
-  };
-
-  const pickPlace = (place: Place | null) => {
-    setPrefilled(null);
-    setRideLocation(null);
-    setOrigin(place);
-  };
-
-  const pickLocation = (location: RideLocationChoice) => {
-    setRideLocation(location);
-    setOrigin(placeOfLocation(location));
-    const minutes = endEdited.current ? null : location.defaultMinutes;
-    if (minutes)
-      setSlot((current) => ({ ...current, durationMinutes: minutes }));
-    setPrefilled({ name: location.name, minutes });
   };
 
   const changePilotsNeeded = (next: number) => {
@@ -594,7 +530,6 @@ function ScheduleRideSheet({
         chapterId: chapter.id,
         model,
         slot,
-        rideLocationId: rideLocation?.id ?? null,
         locationName: origin?.name ?? null,
         locationAddress: origin?.address ?? null,
         latitude: origin?.latitude ?? null,
@@ -635,7 +570,6 @@ function ScheduleRideSheet({
         router.replace(
           hrefWith(`/admin/rides/${result.id}`, searchParams, {
             new: null,
-            rideLocation: null,
             request: null,
           }),
         );
@@ -659,10 +593,6 @@ function ScheduleRideSheet({
   });
 
   const photoLabels: PhotoGalleryLabels = { ...gallery, errors };
-  const prefilledLength =
-    prefilled?.minutes && prefilled.minutes === slot.durationMinutes
-      ? formatDuration(prefilled.minutes * 60, wordsLocale(language))
-      : null;
   const showMap = Boolean(origin || (functional && destination));
   const trishawCount = picked.length;
 
@@ -845,34 +775,18 @@ function ScheduleRideSheet({
               />
             ) : null}
 
-            <RideLocationField
+            <PlaceRow
               key={`origin-${chapter.id}`}
-              locations={locations.filter(
-                (candidate) => candidate.chapterId === chapter.id,
-              )}
-              location={rideLocation}
-              place={origin}
-              home={home}
-              onLocation={pickLocation}
-              onPlace={pickPlace}
-              strings={{
-                ...locationStrings,
-                search: placeStrings(strings.origin, strings.originPlaceholder),
-                chapterLocation: strings.chapterLocation,
-                clear: strings.clearPlace,
-              }}
+              icon={MapPin}
+              value={origin}
+              onChange={setOrigin}
+              shortcut={home}
+              shortcutHint={strings.chapterLocation}
+              strings={placeStrings(strings.origin, strings.originPlaceholder)}
+              clearLabel={strings.clearPlace}
               language={language}
               failed={errors.generic}
             />
-            {prefilledLength ? (
-              <p className="pr-2 pl-9 text-xs text-ink-soft">
-                {formatMessage(
-                  locationStrings.picker.defaults,
-                  { name: prefilled?.name ?? "", length: prefilledLength },
-                  language,
-                )}
-              </p>
-            ) : null}
 
             {functional ? (
               <>

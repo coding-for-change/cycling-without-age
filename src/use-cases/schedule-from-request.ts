@@ -112,7 +112,6 @@ export async function scheduleAutomatically(requestId: string) {
     chapterId: request.chapterId,
     model: request.model,
     ...outbound,
-    rideLocationId: request.rideLocationId,
     locationName: request.pickupName,
     locationAddress: request.pickupAddress,
     latitude: request.pickupLatitude,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { ShieldCheck, ShieldMinus, UserMinus } from "lucide-react";
 import {
   AlertDialog,
@@ -61,12 +62,15 @@ export function MemberActions({
   labels,
   cancel,
   locale,
+  removedHref,
 }: {
   target: MemberActionTarget;
   labels: MemberActionLabels;
   cancel: string;
   locale: Locale;
+  removedHref: string;
 }) {
+  const router = useRouter();
   const [change, setChange] = useState<Change | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -90,6 +94,7 @@ export function MemberActions({
       notify(result, { done: named(done), errors: labels.errors });
       if (!result.ok) return;
       setChange(null);
+      if (change === "remove") router.push(removedHref);
     });
   };
 

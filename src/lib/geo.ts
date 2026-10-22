@@ -57,3 +57,22 @@ export function googleMapsUrl(place: {
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
     : null;
 }
+
+export function appleMapsUrl(place: {
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  label?: string | null;
+}): string | null {
+  const hasCoords = place.latitude != null && place.longitude != null;
+  const name = place.label?.trim() || place.address?.trim();
+  if (!hasCoords && !name) return null;
+  const params = new URLSearchParams();
+  if (hasCoords) {
+    params.set("ll", `${place.latitude},${place.longitude}`);
+    params.set("q", name || `${place.latitude},${place.longitude}`);
+  } else if (name) {
+    params.set("address", name);
+  }
+  return `https://maps.apple.com/?${params.toString()}`;
+}

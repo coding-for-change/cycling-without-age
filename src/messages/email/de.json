@@ -329,7 +329,7 @@
   },
   "welcomePilot": {
     "cta": "Cycling Without Age öffnen",
-    "footer": "Du erhältst diese E-Mail, weil du dich als Pilot für ein Cycling-Without-Age-Chapter beworben hast.",
+    "footer": "Du erhältst diese E-Mail, weil du dich als Pilot für eine Cycling-Without-Age-Ortsgruppe beworben hast.",
     "heading": "Willkommen an Bord",
     "how": {
       "1": "Schau die Trainingsvideos — rund 20 Minuten, direkt in der App.",
@@ -337,9 +337,9 @@
       "3": "Übernimm deine erste Ausfahrt — beim ersten Mal fährt eine Captain mit."
     },
     "howHeading": "So wirst du Pilot",
-    "intro": "Deine Anfrage, für {chapter} zu pilotieren, ist da. Eine Chapter-Admin schaut sie sich an — meist innerhalb weniger Tage.",
+    "intro": "Deine Anfrage, für {chapter} zu pilotieren, ist da. Eine Admin der Ortsgruppe schaut sie sich an — meist innerhalb weniger Tage.",
     "noteHeading": "Ein paar Zeilen von {chapter}",
-    "preview": "Deine Pilotanfrage liegt beim Chapter",
+    "preview": "Deine Pilotanfrage liegt bei der Ortsgruppe",
     "subject": "Willkommen an Bord — drei Schritte bis zur ersten Ausfahrt",
     "subjectInPerson": "Willkommen an Bord — zwei Schritte bis zur ersten Ausfahrt",
     "title": "Willkommen bei {chapter}"
@@ -362,6 +362,15 @@
     "introDeclined": "{caretaker} hat abgelehnt, deshalb wurde {rider} nicht hinzugefügt. Füge {rider} mit einer anderen Begleitperson neu hinzu.",
     "cta": "Fahrgäste öffnen",
     "footer": "Du erhältst diese E-Mail, weil du jemanden gebeten hast, sich um einen Fahrgast zu kümmern.",
+    "someone": "jemand"
+  },
+  "careLinked": {
+    "subject": "{caretaker} hilft Ihnen jetzt bei Ihren Fahrten",
+    "preview": "{caretaker} kann bei {chapter} Fahrten für Sie buchen",
+    "heading": "{caretaker} hilft Ihnen jetzt bei Ihren Fahrten",
+    "intro": "{chapter} hat {caretaker} gefragt, und {caretaker} hat zugesagt, sich um Sie zu kümmern. Ab jetzt kann {caretaker} Fahrten für Sie buchen, und Sie können Ihre Fahrten weiter selbst buchen und sehen. Stimmt etwas nicht, sagen Sie bitte Ihrer Ortsgruppe Bescheid.",
+    "cta": "Ihre Fahrten öffnen",
+    "footer": "Sie erhalten diese E-Mail, weil jetzt jemand bei einer Cycling-Without-Age-Ortsgruppe Fahrten für Sie bucht.",
     "someone": "jemand"
   },
   "careInvited": {
@@ -443,11 +452,11 @@
     "footer": "Sie erhalten diese E-Mail, weil eine Ortsgruppe von Cycling Without Age geändert hat, wer die Fahrten eines Fahrgasts bucht."
   },
   "rideReminder": {
-    "cta": "Platz bestätigen oder absagen",
+    "cta": "Fahrt öffnen",
     "footer": "Sie erhalten diese E-Mail, weil Sie bei einer Ortsgruppe von Cycling Without Age Fahrten buchen.",
     "heading": "Ihre Fahrt steht bald an",
-    "intro": "Ihre Fahrt am {date}, {time}, startet bei {place} ({ride}). Bitte bestätigen Sie den Platz in der App – oder geben Sie ihn frei, wenn sich etwas geändert hat, damit die Ortsgruppe ihn jemand anderem anbieten kann.",
-    "introBoth": "Ihre Fahrt am {date} hin und zurück: Hinfahrt {time} ab {place} ({ride}). Bitte bestätigen Sie den Platz in der App – oder geben Sie ihn frei, wenn sich etwas geändert hat, damit die Ortsgruppe ihn jemand anderem anbieten kann.",
+    "intro": "Ihre Fahrt am {date}, {time}, startet bei {place} ({ride}). Falls Sie nicht können, sagen Sie bitte in der App ab, damit die Ortsgruppe den Platz jemand anderem anbieten kann.",
+    "introBoth": "Ihre Fahrt am {date} hin und zurück: Hinfahrt {time} ab {place} ({ride}). Falls Sie nicht können, sagen Sie bitte in der App ab, damit die Ortsgruppe den Platz jemand anderem anbieten kann.",
     "preview": "{ride} · {time}",
     "subject": "Ihre Fahrt am {date}"
   },
@@ -480,5 +489,29 @@
     "preview": "{ride} · {time}",
     "someone": "Ein Fahrgast",
     "subject": "{rider} fährt am {date} doch mit"
+  },
+  "adminInvite": {
+    "superadmin": {
+      "subject": "Hilf mit, Cycling Without Age zu betreuen",
+      "heading": "Hilf mit, Cycling Without Age zu betreuen",
+      "intro": "{inviter} lädt dich ein, Superadmin zu werden. Superadmins kümmern sich um jedes Land, jede Ortsgruppe und jede Einstellung."
+    },
+    "countryAdmin": {
+      "subject": "Du bist eingeladen, dich um {country} zu kümmern",
+      "heading": "Kümmere dich um {country}",
+      "intro": "{inviter} lädt dich ein, Länder-Admin für {country} zu werden. Jede Ortsgruppe dort könntest du dann unterstützen."
+    },
+    "how": "Melde dich mit dieser E-Mail-Adresse an und nimm die Einladung an. Dafür brauchst du einen Passkey, wir helfen dir beim Einrichten. Die Einladung gilt 7 Tage.",
+    "cta": "Einladung öffnen",
+    "preview": "Eine Einladung zum Mitgestalten",
+    "footer": "Du erhältst diese E-Mail, weil dich ein Superadmin von Cycling Without Age eingeladen hat."
+  },
+  "superadminRemoved": {
+    "subject": "Du bist kein Superadmin mehr",
+    "preview": "Deine Rolle hat sich geändert",
+    "heading": "Du bist kein Superadmin mehr",
+    "intro": "{actor} hat dir die Superadmin-Rolle entzogen. Dein Konto bleibt, wie es ist. Danke für alles, was du für die Bewegung getan hast.",
+    "cta": "Cycling Without Age öffnen",
+    "footer": "Du erhältst diese E-Mail, weil sich deine Rolle bei Cycling Without Age geändert hat."
   }
 }

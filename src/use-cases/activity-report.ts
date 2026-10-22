@@ -4,6 +4,7 @@ import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
 import {
+  reportToday,
   resolveReportRange,
   rides,
   type ActivityAggregate,
@@ -82,7 +83,7 @@ async function resolveScope(params: ActivityReportParams, now: Date) {
   const zones = [...new Set(meta.map((c) => c.timeZone))];
   const timeZone = zones.length === 1 ? zones[0] : "UTC";
   const range = resolveReportRange(params, {
-    today: dayKey(now, timeZone),
+    today: reportToday(now, zones),
     earliest: earliest ? dayKey(earliest, timeZone) : null,
   });
   return {

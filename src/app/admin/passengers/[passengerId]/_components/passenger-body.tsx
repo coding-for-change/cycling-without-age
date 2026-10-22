@@ -40,6 +40,7 @@ import {
 } from "../../../_components/detail-page";
 import { SidePanel } from "../../../_components/side-panel";
 import { readActiveScope, type AdminSearchParams } from "../../../active-scope";
+import { chapterZones } from "../../../chapter-zones";
 import { HandOverRider } from "./hand-over-rider";
 import { RiderProperties } from "./rider-properties";
 
@@ -78,6 +79,7 @@ export async function PassengerBody({
     members,
     handOvers,
     country,
+    zoneOf,
   ] = await Promise.all([
     personProfiles.getProfile(target.subject),
     rider.managedByUserId ? profile.getProfile(rider.managedByUserId) : null,
@@ -88,6 +90,7 @@ export async function PassengerBody({
     admin ? membership.listMembersOfChapters([rider.chapterId]) : [],
     admin ? activity.listForPassenger(rider.id, 50) : [],
     admin && home ? chapterFeature.getCountry(home.countryId) : null,
+    chapterZones([rider.chapterId]),
   ]);
   const strings = dict.admin.passengers.detail;
   const notation = resolveLocale(head.get("accept-language"));
@@ -229,6 +232,7 @@ export async function PassengerBody({
               empty={strings.historyEmpty}
               notation={notation}
               words={language}
+              timeZone={zoneOf(rider.chapterId)}
             />
           </DetailSection>
         ) : null}

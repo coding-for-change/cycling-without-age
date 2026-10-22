@@ -4,6 +4,7 @@ import {
   addWalkUpAction,
   completeRideAction,
   deleteRideAction,
+  estimateRouteAction,
   reopenRideAction,
   removeWalkUpAction,
   rescheduleRideAction,
@@ -13,7 +14,8 @@ import {
   updateRideAction,
 } from "@/features/rides/actions";
 import { isChapterAdmin } from "@/lib/access";
-import { requireChapterAdmin } from "@/lib/auth-guards";
+import { requireAdminScope, requireChapterAdmin } from "@/lib/auth-guards";
+import { cyclingRoute } from "@/lib/mapbox";
 import { withinRateLimit } from "@/lib/rate-limit";
 
 jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }));
@@ -263,5 +265,36 @@ describe("how often a ride day may be written", () => {
     await expect(run()).resolves.toEqual({ ok: false, error: "rateLimited" });
     expect(withinRateLimit).toHaveBeenCalledWith(`${scope}:user-1`, limit);
     expect(facade()).not.toHaveBeenCalled();
+  });
+});
+
+describe("estimateRouteAction", () => {
+  const FROM = { lat: 48.1374, lng: 11.5755 };
+  const TO = { lat: 48.1642, lng: 11.6056 };
+
+  beforeEach(() => {
+    (requireAdminScope as jest.Mock).mockResolvedValueOnce({
+      session: { user: { id: "admin-1" } },
+    });
+  });
+
+  it("estimates at trishaw pace, not the cycling time", async () => {
+    (cyclingRoute as jest.Mock).mockResolvedValue({
+      path: [[11.5755, 48.1374]],
+      distanceM: 4200,
+      durationSec: 900,
+    });
+    await expect(estimateRouteAction({ from: FROM, to: TO })).resolves.toEqual({
+      ok: true,
+      route: { path: [[11.5755, 48.1374]], distanceM: 4200, durationSec: 1350 },
+    });
+  });
+
+  it("passes on that no route was found", async () => {
+    (cyclingRoute as jest.Mock).mockResolvedValue(null);
+    await expect(estimateRouteAction({ from: FROM, to: TO })).resolves.toEqual({
+      ok: true,
+      route: null,
+    });
   });
 });

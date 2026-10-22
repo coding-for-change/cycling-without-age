@@ -4,6 +4,7 @@ import { Capacitor } from "@capacitor/core";
 const keyboard = () => import("@capacitor/keyboard");
 
 let open = false;
+let inset = 0;
 let attached = false;
 const listeners = new Set<() => void>();
 
@@ -11,10 +12,9 @@ const isIos = () => Capacitor.getPlatform() === "ios";
 
 const setInset = (height: number) => {
   if (!isIos()) return;
-  document.documentElement.style.setProperty(
-    "--keyboard-inset",
-    `${Math.max(0, Math.round(height))}px`,
-  );
+  inset = Math.max(0, Math.round(height));
+  document.documentElement.style.setProperty("--keyboard-inset", `${inset}px`);
+  listeners.forEach((listener) => listener());
 };
 
 const set = (next: boolean) => {
@@ -60,9 +60,15 @@ const subscribe = (onStoreChange: () => void): (() => void) => {
 
 const snapshot = () => open;
 const serverSnapshot = () => false;
+const insetSnapshot = () => inset;
+const serverInset = () => 0;
 
 export function useKeyboardOpen(): boolean {
   return useSyncExternalStore(subscribe, snapshot, serverSnapshot);
+}
+
+export function useKeyboardInset(): number {
+  return useSyncExternalStore(subscribe, insetSnapshot, serverInset);
 }
 
 let scrollLocks = 0;

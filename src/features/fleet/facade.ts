@@ -38,8 +38,10 @@ import {
 } from "./schemas";
 import {
   clearDamageById,
+  countOpenDamagesReaching,
   countOpenGroundingDamages,
   findDamageById,
+  findOpenDamagesReaching,
   findDamagesOfRide,
   findDamagesOfTrishaw,
   insertDamage,
@@ -939,6 +941,26 @@ export async function clearDamages(
 
 export const listDamages = (trishawId: string) =>
   findDamagesOfTrishaw(trishawId);
+
+const OPEN_DAMAGES_SHOWN = 20;
+
+export async function listOpenDamages(chapterIds: string[]) {
+  if (!chapterIds.length) return { damages: [], total: 0 };
+  const [rows, total] = await Promise.all([
+    findOpenDamagesReaching(chapterIds, OPEN_DAMAGES_SHOWN),
+    countOpenDamagesReaching(chapterIds),
+  ]);
+  const wanted = new Set(chapterIds);
+  const damages = rows.map(({ trishaw, ...damage }) => ({
+    ...damage,
+    trishawName: trishaw.name,
+    chapterIds: [
+      trishaw.storageLocation.ownerChapterId,
+      ...trishaw.storageLocation.chapters.map((c) => c.chapterId),
+    ].filter((id): id is string => id !== null && wanted.has(id)),
+  }));
+  return { damages, total };
+}
 
 export const listDamagesReportedOnRide = (rideId: string, userId: string) =>
   findDamagesOfRide(rideId, userId);

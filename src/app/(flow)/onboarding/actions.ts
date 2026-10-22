@@ -6,7 +6,10 @@ import { accounts } from "@/features/accounts";
 import { z } from "zod";
 import { profile } from "@/features/profile";
 import { personalDetailsInput } from "@/features/profile";
-import { MAX_MANAGED_RIDERS, managedRiderInput } from "@/features/passengers";
+import {
+  MAX_MANAGED_RIDERS,
+  newManagedRiderInput,
+} from "@/features/passengers";
 import { readNextPath, requireAuth } from "@/lib/auth-guards";
 import { invalidateAccess } from "@/lib/cache-tags";
 import { actionFailure } from "@/lib/domain-error";
@@ -137,7 +140,7 @@ const ridersSchema = z.object({
   firstName: z.string().trim().min(1).max(80),
   lastName: z.string().trim().min(1).max(80),
   relationship: relationshipInput.optional(),
-  riders: z.array(managedRiderInput).min(1).max(MAX_MANAGED_RIDERS),
+  riders: z.array(newManagedRiderInput).min(1).max(MAX_MANAGED_RIDERS),
 });
 
 export async function submitRiders(input: unknown): Promise<StepResult> {

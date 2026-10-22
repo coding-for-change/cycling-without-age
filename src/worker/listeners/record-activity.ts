@@ -49,6 +49,16 @@ const builders: { [K in EventType]?: Builder<K> } = {
     actorUserId: event.actorUserId,
     type: "countryAdminRemoved",
   }),
+  "superadmin.granted": (event) => ({
+    userId: event.userId,
+    actorUserId: event.actorUserId,
+    type: "superadminGranted",
+  }),
+  "superadmin.removed": (event) => ({
+    userId: event.userId,
+    actorUserId: event.actorUserId,
+    type: "superadminRemoved",
+  }),
   "rider.handedOver": (event) =>
     (["in", "out"] as const).map((direction) => ({
       userId: direction === "in" ? event.toUserId : event.fromUserId,

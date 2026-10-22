@@ -242,3 +242,12 @@ export const windowLabel = (
   locale: Locale,
   timeZone: string,
 ) => formatTimeRange(window.startsAt, window.endsAt, locale, timeZone);
+
+export type DayClosure = "closedDate" | "closedWeekday" | "noTimesLeft";
+
+export function dayClosure(hours: OperatingHours, date: string): DayClosure {
+  if (isClosedOn(hours, date)) return "closedDate";
+  if (isConfigured(hours) && !windowsOn(hours, date).length)
+    return "closedWeekday";
+  return "noTimesLeft";
+}

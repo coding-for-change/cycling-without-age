@@ -100,6 +100,7 @@ export async function appointCountryAdmin(
   userId: string,
   countryId: string,
   actorUserId: string,
+  { viaInvite = false }: { viaInvite?: boolean } = {},
 ) {
   if (!(await findCountryById(countryId)))
     throw new DomainError("unknownCountry");
@@ -112,6 +113,7 @@ export async function appointCountryAdmin(
       countryId,
       userId,
       actorUserId,
+      viaInvite,
     });
     return true;
   });

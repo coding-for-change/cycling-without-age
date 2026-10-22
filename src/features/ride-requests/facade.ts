@@ -44,10 +44,11 @@ export async function assertCanAsk(
   passengerIds: string[],
   window: { startsAt: Date; endsAt: Date },
   now = new Date(),
+  replacesRequestIds: string[] = [],
 ) {
   const [overlapping, open] = await Promise.all([
-    countOpenRequestsOverlapping(passengerIds, window),
-    countOpenRequestsOfRequester(requesterUserId, now),
+    countOpenRequestsOverlapping(passengerIds, window, replacesRequestIds),
+    countOpenRequestsOfRequester(requesterUserId, now, replacesRequestIds),
   ]);
   if (overlapping > 0) throw new DomainError("alreadyRequested");
   if (open >= OPEN_REQUESTS_MAX) throw new DomainError("tooManyRequests");
@@ -184,19 +185,44 @@ export async function decline(
 }
 
 /**
- * Only the account that sent a request can take it back, and only while the
- * chapter has not decided. Someone else's request reads as a missing one.
+ * A request belongs to the account that sent it and to the account that books
+ * for every one of its riders. Anyone else reads it as a missing one.
  */
+export const ownsRequest = (
+  request: Pick<RideRequestRow, "requesterUserId" | "passengers">,
+  userId: string,
+) =>
+  request.requesterUserId === userId ||
+  (request.passengers.length > 0 &&
+    request.passengers.every(
+      ({ passenger }) => passenger.managedByUserId === userId,
+    ));
+
+/** A request its owner may still change: open, and its window not yet passed. */
+export async function getChangeable(
+  id: string,
+  userId: string,
+  now = new Date(),
+) {
+  const request = await findRideRequest(id);
+  if (!request || !ownsRequest(request, userId))
+    throw new DomainError("unknownRequest");
+  if (request.status !== "pending" || lapsed(request, now))
+    throw new DomainError("requestNotPending");
+  return request;
+}
+
+/** Its owner can take a request back only while the chapter has not decided. */
 export async function withdraw(id: string, userId: string, now = new Date()) {
-  const request = await findRideRequestScope(id);
-  if (!request || request.requesterUserId !== userId)
+  const request = await findRideRequest(id);
+  if (!request || !ownsRequest(request, userId))
     throw new DomainError("unknownRequest");
   if (request.status !== "pending") throw new DomainError("requestNotPending");
   return transaction(async (tx, emit) => {
     const { count } = await closePendingRequest(
       id,
       { status: "withdrawn", decidedByUserId: userId, decidedAt: now },
-      userId,
+      request.requesterUserId,
       tx,
     );
     if (count !== 1) throw new DomainError("requestNotPending");

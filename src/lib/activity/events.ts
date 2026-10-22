@@ -39,6 +39,14 @@ export const findEventsOfChapter = (chapterId: string, take: number) =>
     take,
   });
 
+export const findEventsOfChapters = (chapterIds: string[], take: number) =>
+  prisma.activityEvent.findMany({
+    where: { chapterId: { in: chapterIds }, ...ONCE_PER_HAND_OVER },
+    orderBy: { createdAt: "desc" },
+    include: { actor: { select: { name: true, email: true } } },
+    take,
+  });
+
 export const insertEvents = (data: Prisma.ActivityEventCreateManyInput[]) =>
   prisma.activityEvent.createMany({ data });
 

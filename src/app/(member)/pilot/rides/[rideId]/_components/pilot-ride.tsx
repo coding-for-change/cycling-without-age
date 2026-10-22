@@ -1,35 +1,40 @@
-import type { ReactNode } from "react";
 import Link from "next/link";
 import { headers } from "next/headers";
 import {
-  ArrowLeft,
   ArrowRight,
-  Ban,
   Bike,
-  CalendarClock,
   Flag,
   MessageCircle,
   Phone,
   StickyNote,
 } from "lucide-react";
 import { RichText } from "@/components/markdown";
+import { PersonAvatar } from "@/components/person-avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { chapters } from "@/features/chapters";
 import { chat } from "@/features/chat";
+import { membership } from "@/features/membership";
 import { pickupLabel, pickupOf } from "@/features/passengers";
 import { rides, type PilotRideDetailRow } from "@/features/rides";
 import { CheckInList } from "@/features/rides/components/check-in-list";
+import { OpenInMapsSheet } from "@/features/rides/components/open-in-maps-sheet";
+import { rideHeadline } from "@/features/rides/components/ride-presentation";
+import { StaticMap } from "@/features/rides/components/static-map";
+import { hasStaticMap } from "@/features/rides/components/static-map-url";
 import {
   checkInStrings,
   walkUpStrings,
 } from "@/features/rides/components/strings";
 import { WalkUpDrawer } from "@/features/rides/components/walk-up-drawer";
 import { requirePerspective } from "@/lib/auth-guards";
+import { avatarSvg } from "@/lib/avatar";
 import { calendarDate, sameDay } from "@/lib/calendar";
 import {
+  formatDateMedium,
   formatRelativeTime,
   formatShortDateWithWeekday,
-  formatTimeRange,
+  formatTime,
   resolveLocale,
   wordsLocale,
   type Locale,
@@ -38,13 +43,27 @@ import { getDictionary, getLocale, type Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { cn, fullName } from "@/lib/utils";
 import { pickupView } from "@/use-cases/finish-ride";
+import { ChapterMail } from "../../../../_components/chapter-mail";
+import { ChapterPhones } from "../../../../_components/chapter-phones";
+import { MemberTitle } from "../../../../_components/member-title";
+import {
+  personFaces,
+  userFaces,
+  type PersonFace,
+} from "../../../../_components/person-faces";
+import { DetailSection } from "../../../../_components/ride-detail/detail-section";
+import { EventHeader } from "../../../../_components/ride-detail/event-header";
+import { EventHero } from "../../../../_components/ride-detail/event-hero";
+import { PersonalHeader } from "../../../../_components/ride-detail/personal-header";
+import { PlaceCard } from "../../../../_components/ride-detail/place-card";
+import { TimelineStop } from "../../../../_components/ride-detail/timeline-stop";
 import { pilotChapterIds } from "../../_components/open-rides";
 import { OpenRide } from "./open-ride";
 import { PickupCard } from "./pickup-card";
-import { RideWhere } from "./ride-where";
 import { WithdrawButton } from "./withdraw-button";
 
 type Leg = NonNullable<PilotRideDetailRow["returnLeg"]>;
+type Strings = Dictionary["pilot"]["rides"]["detail"];
 
 export async function PilotRide({
   params,
@@ -78,14 +97,32 @@ export async function PilotRide({
 
   const now = new Date();
   const otherLeg = ride.returnLeg ?? ride.returnLegOf;
-  const [otherLegOpen, settings, chatId, running, pickup] = await Promise.all([
+  const crew = ride.assignments.filter(
+    (assignment) => assignment.user.id !== userId,
+  );
+  const ahead = ride.status === "scheduled" && ride.startsAt > now;
+  const [
+    otherLegOpen,
+    settings,
+    chatId,
+    running,
+    pickup,
+    crewFaces,
+    riders,
+    adminPhones,
+  ] = await Promise.all([
     otherLeg ? rides.pilotCanOpen(otherLeg.id, userId) : false,
     chapters.getSettings(ride.chapterId),
     chat.getRideConversationId(ride.id, userId),
     rides.pilotCanRun(ride.id, userId),
     pickupView(ride, now),
+    userFaces(
+      session,
+      crew.map(({ user }) => ({ id: user.id, name: user.name })),
+    ),
+    riderFaces(session, ride.roster),
+    ahead ? membership.listChapterAdminPhones(ride.chapterId) : [],
   ]);
-  const ahead = ride.status === "scheduled" && ride.startsAt > now;
   const mayWithdraw =
     ahead &&
     now <
@@ -93,227 +130,90 @@ export async function PilotRide({
   const strings = dict.pilot.rides.detail;
   const zone = ride.chapter.timeZone;
   const cancelled = ride.status === "cancelled";
+  const completed = ride.status === "completed";
+  const event = ride.model === "event";
   const canFinish = running && rides.isFinishable(ride, now);
   const doorOpen = running && rides.checkInOpen(ride, "pilot", now);
-  const completed = ride.status === "completed";
-  const crew = ride.assignments.filter(
-    (assignment) => assignment.user.id !== userId,
-  );
-  const headline = ride.title?.trim() || dict.calendar.models[ride.model];
+  const headline = event
+    ? ride.title?.trim() || dict.calendar.models.event
+    : rideHeadline(ride, dict.calendar, {
+        rideTo: dict.calendar.card.rideTo,
+        rideFrom: dict.calendar.card.rideFrom,
+        words,
+      });
+  const relative =
+    !cancelled && ride.endsAt > now
+      ? ` · ${formatRelativeTime(ride.startsAt, words, now)}`
+      : null;
+  const startPlace = {
+    name: ride.locationName,
+    address: ride.locationAddress,
+    latitude: ride.latitude,
+    longitude: ride.longitude,
+  };
+  const chapterEmail = settings.replyToEmail?.trim() || null;
+  const faceOf = new Map(riders.map((face) => [face.id, face]));
 
-  return (
-    <>
-      <Link
-        href="/pilot/rides"
-        transitionTypes={["pop"]}
-        className="text-2sm text-ink-soft hover:text-ink -my-2 inline-flex min-h-11 w-fit items-center gap-1.25 rounded-md transition-colors motion-reduce:transition-none"
+  const ridersSection =
+    doorOpen || completed ? (
+      <DetailSection
+        title={doorOpen ? dict.rides.execution.checkIn : strings.riders}
+        hint={doorOpen ? dict.rides.execution.checkInHint : null}
       >
-        <ArrowLeft
-          aria-hidden
-          className="size-4"
+        <CheckInList
+          rideId={ride.id}
+          entries={ride.roster.map((entry) => ({
+            id: entry.id,
+            name: entry.passenger
+              ? fullName(entry.passenger)
+              : (entry.guestName ?? ""),
+            walkUp: !entry.passenger,
+            attendance: entry.attendance,
+            pickup: entry.passenger
+              ? pickupLine(entry.passenger, dict, words)
+              : null,
+            phone: entry.passenger
+              ? (entry.passenger.user?.phoneNumber ??
+                entry.passenger.managedBy.phoneNumber)
+              : null,
+            via:
+              entry.passenger && !entry.passenger.user?.phoneNumber
+                ? entry.passenger.managedBy.name
+                : null,
+            avatar: avatarOf(faceOf.get(entry.id), entry.id),
+          }))}
+          open={doorOpen}
+          language={language}
+          labels={checkInStrings(dict, {
+            call: strings.call,
+            via: strings.via,
+          })}
         />
-        {strings.back}
-      </Link>
-
-      <header className="flex flex-col gap-1.25">
-        <StatusBadge
-          status={ride.status}
-          strings={dict.calendar.statuses}
-        />
-        <h1
-          className={cn(
-            "text-2xl tracking-tight md:text-3xl",
-            cancelled && "text-ink-soft line-through",
-          )}
-        >
-          {headline}
-        </h1>
-        <p className="flex flex-wrap items-center gap-x-1.25 text-ink-soft">
-          <CalendarClock
-            aria-hidden
-            className="size-4 shrink-0"
-          />
-          <span>
-            {formatShortDateWithWeekday(
-              calendarDate(ride.startsAt, zone),
-              locale,
-            )}
-          </span>
-          <span aria-hidden>·</span>
-          <time dateTime={ride.startsAt.toISOString()}>
-            {formatTimeRange(ride.startsAt, ride.endsAt, locale, zone)}
-          </time>
-          {!cancelled && ride.endsAt > now ? (
-            <>
-              <span aria-hidden>·</span>
-              <span>{formatRelativeTime(ride.startsAt, words, now)}</span>
-            </>
-          ) : null}
-        </p>
-        <p className="text-2sm text-ink-soft">
-          {ride.title?.trim()
-            ? [dict.calendar.models[ride.model], ride.chapter.name].join(" · ")
-            : ride.chapter.name}
-        </p>
-      </header>
-
-      {cancelled ? (
-        <section className="bg-canvas-deep flex items-start gap-3 rounded-2xl p-4">
-          <Ban
-            aria-hidden
-            className="text-ink mt-0.5 size-5 shrink-0"
-          />
-          <div className="flex min-w-0 flex-col gap-1">
-            <p className="font-medium">{strings.cancelled}</p>
-            <p className="text-2sm text-ink-soft">
-              {ride.cancellationReasonCode
-                ? dict.rides.reasons[ride.cancellationReasonCode]
-                : strings.cancelledBody}
-            </p>
-          </div>
-        </section>
-      ) : null}
-
-      {canFinish ? (
-        <Link
-          href={`/pilot/rides/${ride.id}/finish`}
-          transitionTypes={["push"]}
-          className="border-mint bg-mint-tint hover:bg-mint flex items-center gap-4 rounded-2xl border p-4 transition-colors motion-reduce:transition-none"
-        >
-          <Flag
-            aria-hidden
-            className="text-ink size-5 shrink-0"
-          />
-          <span className="min-w-0">
-            <span className="block font-medium">{dict.fleet.finish.title}</span>
-            <span className="text-ink-soft block text-sm">
-              {dict.fleet.finish.homeCard.body}
-            </span>
-          </span>
-          <ArrowRight
-            aria-hidden
-            className="text-ink-soft ml-auto size-4 shrink-0"
-          />
-        </Link>
-      ) : null}
-
-      {chatId ? (
-        <Link
-          href={`/pilot/chat/${chatId}`}
-          transitionTypes={["push"]}
-          className="border-line hover:bg-canvas-deep flex items-center gap-4 rounded-2xl border p-4 transition-colors motion-reduce:transition-none"
-        >
-          <MessageCircle
-            aria-hidden
-            className="text-ink size-5 shrink-0"
-          />
-          <span className="min-w-0">
-            <span className="block font-medium">{strings.chat}</span>
-            <span className="text-ink-soft block text-sm">
-              {strings.chatHint}
-            </span>
-          </span>
-          <ArrowRight
-            aria-hidden
-            className="text-ink-soft ml-auto size-4 shrink-0"
-          />
-        </Link>
-      ) : null}
-
-      {ride.note?.trim() ? (
-        <section
-          aria-label={strings.note}
-          className="bg-mint-tint flex items-start gap-3 rounded-2xl p-4"
-        >
-          <StickyNote
-            aria-hidden
-            className="text-ink mt-0.5 size-5 shrink-0"
-          />
-          <div className="flex min-w-0 flex-col gap-1">
-            <p className="text-2sm font-medium">{strings.note}</p>
-            <RichText
-              text={ride.note}
-              className="text-sm"
-            />
-          </div>
-        </section>
-      ) : null}
-
-      <RideWhere
-        ride={ride}
-        strings={strings}
-        openInMaps={dict.fleet.finish.openInMaps}
-      />
-
-      {pickup && running ? (
-        <PickupCard
-          places={pickup}
-          dict={dict}
-          words={words}
-        />
-      ) : null}
-
-      {doorOpen || completed ? (
-        <Section
-          title={doorOpen ? dict.rides.execution.checkIn : strings.riders}
-        >
-          {doorOpen ? (
-            <p className="text-2sm text-ink-soft">
-              {dict.rides.execution.checkInHint}
-            </p>
-          ) : null}
-          <CheckInList
+        {doorOpen ? (
+          <WalkUpDrawer
             rideId={ride.id}
-            entries={ride.roster.map((entry) => ({
-              id: entry.id,
-              name: entry.passenger
-                ? fullName(entry.passenger)
-                : (entry.guestName ?? ""),
-              walkUp: !entry.passenger,
-              attendance: entry.attendance,
-              pickup: entry.passenger
-                ? pickupLine(entry.passenger, dict, words)
-                : null,
-              phone: entry.passenger
-                ? (entry.passenger.user?.phoneNumber ??
-                  entry.passenger.managedBy.phoneNumber)
-                : null,
-              via:
-                entry.passenger && !entry.passenger.user?.phoneNumber
-                  ? entry.passenger.managedBy.name
-                  : null,
-            }))}
-            open={doorOpen}
             language={language}
-            labels={checkInStrings(dict, {
-              call: strings.call,
-              via: strings.via,
-            })}
+            labels={walkUpStrings(dict)}
+            triggerClassName="w-full sm:w-fit"
           />
-          {doorOpen ? (
-            <WalkUpDrawer
-              rideId={ride.id}
-              language={language}
-              labels={walkUpStrings(dict)}
-              triggerClassName="w-full sm:w-fit"
-            />
-          ) : null}
-        </Section>
-      ) : (
-        <Section title={strings.riders}>
-          {ride.roster.length > 0 ? (
-            <ol className="border-line divide-line divide-y rounded-2xl border">
-              {ride.roster.map(({ id, passenger, guestName }, index) => (
+        ) : null}
+      </DetailSection>
+    ) : (
+      <DetailSection title={strings.riders}>
+        {ride.roster.length > 0 ? (
+          <ul className="divide-y divide-line rounded-2xl border border-line">
+            {ride.roster.map(({ id, passenger, guestName }) => {
+              const avatar = avatarOf(faceOf.get(id), id);
+              return (
                 <li
                   key={id}
-                  className="flex min-h-12 items-center gap-3 px-4 py-3"
+                  className="flex min-h-14 items-center gap-3 px-4 py-3"
                 >
-                  <span
-                    aria-hidden
-                    className="bg-mint-tint text-ink flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums"
-                  >
-                    {index + 1}
-                  </span>
+                  <PersonAvatar
+                    svg={avatar.svg}
+                    photoUrl={avatar.photoUrl}
+                    size="lg"
+                  />
                   {passenger ? (
                     <RiderContact
                       name={fullName(passenger)}
@@ -331,20 +231,190 @@ export async function PilotRide({
                       words={words}
                     />
                   ) : (
-                    <span className="min-w-0 flex-1 truncate">{guestName}</span>
+                    <span className="min-w-0 flex-1 truncate font-medium">
+                      {guestName}
+                    </span>
                   )}
                 </li>
-              ))}
-            </ol>
-          ) : (
-            <Muted>{strings.noRiders}</Muted>
-          )}
-        </Section>
+              );
+            })}
+          </ul>
+        ) : (
+          <Muted>{strings.noRiders}</Muted>
+        )}
+      </DetailSection>
+    );
+
+  return (
+    <>
+      <MemberTitle title={headline} />
+      {event ? (
+        <>
+          <EventHero
+            rideId={ride.id}
+            title={headline}
+            photos={ride.photos}
+          />
+          <EventHeader
+            eyebrow={ride.chapter.name}
+            title={headline}
+            startsAt={ride.startsAt}
+            endsAt={ride.endsAt}
+            timeZone={zone}
+            locale={locale}
+            after={relative}
+          />
+        </>
+      ) : (
+        <PersonalHeader
+          badge={
+            cancelled || completed ? (
+              <Badge
+                className={cn(
+                  "w-fit",
+                  cancelled
+                    ? "bg-canvas-deeper text-ink"
+                    : "bg-mint-tint text-ink",
+                )}
+              >
+                {dict.calendar.statuses[ride.status]}
+              </Badge>
+            ) : null
+          }
+          title={headline}
+          startsAt={ride.startsAt}
+          endsAt={ride.endsAt}
+          timeZone={zone}
+          locale={locale}
+          after={relative}
+        >
+          <p className="text-2sm text-ink-soft">
+            {[dict.calendar.models[ride.model], ride.chapter.name].join(" · ")}
+          </p>
+        </PersonalHeader>
       )}
 
-      <Section title={strings.trishaws}>
+      {doorOpen ? ridersSection : null}
+
+      <PilotRideState
+        ride={ride}
+        strings={strings}
+        reasons={dict.rides.reasons}
+      />
+
+      {canFinish ? (
+        <Link
+          href={`/pilot/rides/${ride.id}/finish`}
+          transitionTypes={["push"]}
+          className="flex items-center gap-4 rounded-2xl border border-mint bg-mint-tint p-4 transition-colors hover:bg-mint motion-reduce:transition-none"
+        >
+          <Flag
+            aria-hidden
+            className="size-5 shrink-0 text-ink"
+          />
+          <span className="min-w-0">
+            <span className="block font-medium">{dict.fleet.finish.title}</span>
+            <span className="block text-sm text-ink-soft">
+              {dict.fleet.finish.homeCard.body}
+            </span>
+          </span>
+          <ArrowRight
+            aria-hidden
+            className="ml-auto size-4 shrink-0 text-ink-soft"
+          />
+        </Link>
+      ) : null}
+
+      {event ? (
+        <PlaceCard
+          place={startPlace}
+          mapOf={dict.passenger.rides.detail.mapOf}
+          strings={dict.member.rides.map}
+          words={words}
+        />
+      ) : null}
+
+      {event && ride.description?.trim() ? (
+        <RichText
+          text={ride.description}
+          className="text-base"
+        />
+      ) : null}
+
+      {ride.note?.trim() ? (
+        <section
+          aria-label={strings.note}
+          className="flex items-start gap-3 rounded-2xl bg-mint-tint p-4"
+        >
+          <StickyNote
+            aria-hidden
+            className="mt-0.5 size-5 shrink-0 text-ink"
+          />
+          <div className="flex min-w-0 flex-col gap-1">
+            <p className="text-2sm font-medium">{strings.note}</p>
+            <RichText
+              text={ride.note}
+              className="text-sm"
+            />
+          </div>
+        </section>
+      ) : null}
+
+      <RideDay
+        ride={ride}
+        event={event}
+        otherLeg={otherLeg && otherLegOpen ? otherLeg : null}
+        dict={dict}
+        locale={locale}
+        words={words}
+      />
+
+      {pickup && running ? (
+        <PickupCard
+          places={pickup}
+          dict={dict}
+          words={words}
+        />
+      ) : null}
+
+      {doorOpen ? null : ridersSection}
+
+      <DetailSection title={strings.crew}>
+        {crewFaces.length > 0 ? (
+          <ul className="flex flex-col gap-4">
+            {crewFaces.map((face) => (
+              <CrewRow
+                key={face.id}
+                face={face}
+              />
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-ink-soft">{strings.solo}</p>
+        )}
+        {chatId ? (
+          <div className="flex flex-col gap-1.25">
+            <Button
+              asChild
+              variant="outline"
+              className="min-h-11 w-full rounded-full border-line sm:w-fit"
+            >
+              <Link
+                href={`/pilot/chat/${chatId}`}
+                transitionTypes={["push"]}
+              >
+                <MessageCircle aria-hidden />
+                {strings.chat}
+              </Link>
+            </Button>
+            <p className="text-2sm text-ink-soft">{strings.chatHint}</p>
+          </div>
+        ) : null}
+      </DetailSection>
+
+      <DetailSection title={strings.trishaws}>
         {ride.trishaws.length > 0 ? (
-          <ul className="border-line divide-line divide-y rounded-2xl border">
+          <ul className="divide-y divide-line rounded-2xl border border-line">
             {ride.trishaws.map(({ trishaw }) => (
               <li
                 key={trishaw.id}
@@ -352,12 +422,12 @@ export async function PilotRide({
               >
                 <Bike
                   aria-hidden
-                  className="text-ink-soft size-4 shrink-0"
+                  className="size-4 shrink-0 text-ink-soft"
                 />
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate">{trishaw.name}</span>
                   {trishaw.type ? (
-                    <span className="text-2sm text-ink-soft truncate">
+                    <span className="truncate text-2sm text-ink-soft">
                       {trishaw.type.name}
                     </span>
                   ) : null}
@@ -365,7 +435,7 @@ export async function PilotRide({
                 {trishaw.status !== "active" ? (
                   <Badge
                     variant="outline"
-                    className="border-line text-ink-soft ml-auto"
+                    className="ml-auto border-line text-ink-soft"
                   >
                     {dict.calendar.trishawStatuses[trishaw.status]}
                   </Badge>
@@ -376,91 +446,303 @@ export async function PilotRide({
         ) : (
           <Muted>{strings.noTrishaws}</Muted>
         )}
-      </Section>
+      </DetailSection>
 
-      <Section title={strings.crew}>
-        {crew.length > 0 ? (
-          <ul className="border-line divide-line divide-y rounded-2xl border">
-            {crew.map(({ user }) => (
-              <li
-                key={user.id}
-                className="flex min-h-12 items-center gap-3 px-4 py-3"
-              >
-                <span
-                  aria-hidden
-                  className="bg-canvas-deep text-ink flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
-                >
-                  {initial(user.name)}
-                </span>
-                <span className="min-w-0 truncate">{user.name}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <Muted>{strings.solo}</Muted>
-        )}
-      </Section>
-
-      {otherLeg && otherLegOpen ? (
-        <Section title={strings.roundTrip}>
-          <OtherLeg
-            leg={otherLeg}
-            label={
-              ride.returnLeg
-                ? dict.rides.detail.wayBack
-                : dict.rides.detail.wayThere
-            }
-            sameDayAs={ride.startsAt}
-            timeZone={zone}
-            locale={locale}
-            cancelledLabel={dict.calendar.statuses.cancelled}
-          />
-        </Section>
-      ) : null}
-
-      {ride.description?.trim() ? (
-        <Section title={strings.about}>
+      {!event && ride.description?.trim() ? (
+        <DetailSection title={strings.about}>
           <RichText
             text={ride.description}
             className="text-sm"
           />
-        </Section>
+        </DetailSection>
       ) : null}
 
-      {mayWithdraw ? (
-        <div className="mt-auto flex flex-col pt-4">
-          <WithdrawButton
-            rideId={ride.id}
-            labels={{
-              ...strings.withdraw,
-              body:
-                otherLegOpen && otherLeg?.status === "scheduled"
-                  ? strings.withdraw.bodyBoth
-                  : strings.withdraw.body,
-            }}
-            errors={{ ...dict.common.errors, ...dict.pilot.rides.errors }}
-          />
-        </div>
-      ) : ahead ? (
-        <p className="text-2sm text-ink-soft border-line rounded-2xl border p-4">
-          {formatMessage(
-            strings.withdrawClosed,
-            {
-              hours: settings.staffingCheckLeadHours,
-              chapter: ride.chapter.name,
-            },
-            words,
+      {ahead ? (
+        <DetailSection title={strings.cantMake.title}>
+          <p className="text-sm text-ink-soft">
+            {mayWithdraw
+              ? strings.cantMake.body
+              : formatMessage(
+                  strings.withdrawClosed,
+                  {
+                    hours: settings.staffingCheckLeadHours,
+                    chapter: ride.chapter.name,
+                  },
+                  words,
+                )}
+          </p>
+          {mayWithdraw ? (
+            <WithdrawButton
+              rideId={ride.id}
+              labels={{
+                ...strings.withdraw,
+                body:
+                  otherLegOpen && otherLeg?.status === "scheduled"
+                    ? strings.withdraw.bodyBoth
+                    : strings.withdraw.body,
+              }}
+              errors={{ ...dict.common.errors, ...dict.pilot.rides.errors }}
+            />
+          ) : (
+            <>
+              <ChapterPhones
+                phones={adminPhones.filter((phone) => phone.userId !== userId)}
+                call={strings.call}
+                words={words}
+              />
+              {chapterEmail ? (
+                <ChapterMail
+                  email={chapterEmail}
+                  subject={formatMessage(
+                    strings.cantMake.subject,
+                    {
+                      date: formatDateMedium(
+                        calendarDate(ride.startsAt, zone),
+                        locale,
+                      ),
+                    },
+                    words,
+                  )}
+                  label={formatMessage(
+                    strings.cantMake.write,
+                    { chapter: ride.chapter.name },
+                    words,
+                  )}
+                />
+              ) : null}
+            </>
           )}
-        </p>
+        </DetailSection>
       ) : null}
     </>
   );
 }
 
-/**
- * The rider, where they are picked up, and the number that reaches them or
- * whoever books for them.
- */
+async function riderFaces(
+  viewer: Parameters<typeof personFaces>[0],
+  roster: PilotRideDetailRow["roster"],
+) {
+  return personFaces(
+    viewer,
+    roster.flatMap(({ id, passenger }) =>
+      passenger
+        ? [
+            {
+              id,
+              name: fullName(passenger),
+              ref: passenger.userId
+                ? { kind: "user" as const, id: passenger.userId }
+                : { kind: "passenger" as const, id: passenger.id },
+            },
+          ]
+        : [],
+    ),
+  );
+}
+
+const avatarOf = (face: PersonFace | undefined, entryId: string) =>
+  face
+    ? { svg: face.svg, photoUrl: face.photoUrl }
+    : { svg: avatarSvg(`guest:${entryId}`), photoUrl: null };
+
+function PilotRideState({
+  ride,
+  strings,
+  reasons,
+}: {
+  ride: PilotRideDetailRow;
+  strings: Strings;
+  reasons: Dictionary["rides"]["reasons"];
+}) {
+  if (ride.status === "cancelled")
+    return (
+      <section
+        role="status"
+        className="flex flex-col gap-1.25 rounded-2xl bg-canvas-deep p-4"
+      >
+        <h2 className="text-base">{strings.cancelled}</h2>
+        <p className="text-sm">
+          {ride.cancellationReasonCode
+            ? reasons[ride.cancellationReasonCode]
+            : strings.cancelledBody}
+        </p>
+      </section>
+    );
+
+  if (ride.status === "completed")
+    return (
+      <p className="rounded-2xl bg-mint-tint p-4 text-sm">
+        {strings.completed}
+      </p>
+    );
+
+  return null;
+}
+
+function RideDay({
+  ride,
+  event,
+  otherLeg,
+  dict,
+  locale,
+  words,
+}: {
+  ride: PilotRideDetailRow;
+  event: boolean;
+  otherLeg: Leg | null;
+  dict: Dictionary;
+  locale: Locale;
+  words: Locale;
+}) {
+  if (event && !otherLeg) return null;
+  const detail = dict.passenger.rides.detail;
+  const strings = dict.pilot.rides.detail;
+  const zone = ride.chapter.timeZone;
+  const start = ride.locationName?.trim() || ride.locationAddress?.trim();
+  const startAddress =
+    ride.locationName?.trim() && ride.locationAddress?.trim()
+      ? ride.locationAddress
+      : null;
+  const startPlace = {
+    name: ride.locationName,
+    address: ride.locationAddress,
+    latitude: ride.latitude,
+    longitude: ride.longitude,
+  };
+  const map = Boolean(start) && hasStaticMap(ride.latitude, ride.longitude);
+  const destination =
+    ride.model === "functional"
+      ? ride.destinationName?.trim() || ride.destinationAddress?.trim()
+      : null;
+  const destinationPlace = {
+    name: ride.destinationName,
+    address: ride.destinationAddress,
+    latitude: ride.destinationLatitude,
+    longitude: ride.destinationLongitude,
+  };
+  const mapsLink = (place: typeof startPlace) => (
+    <OpenInMapsSheet
+      place={place}
+      strings={dict.member.rides.map}
+      words={words}
+      className="w-fit"
+    >
+      <span className="text-2sm underline underline-offset-4">
+        {detail.openInMaps}
+      </span>
+    </OpenInMapsSheet>
+  );
+
+  return (
+    <>
+      {!event && map && start ? (
+        <OpenInMapsSheet
+          place={startPlace}
+          strings={dict.member.rides.map}
+          words={words}
+        >
+          <StaticMap
+            lat={ride.latitude}
+            lng={ride.longitude}
+            label={formatMessage(detail.mapOf, { place: start }, words)}
+          />
+        </OpenInMapsSheet>
+      ) : null}
+      <section className="flex flex-col gap-4">
+        <h2 className="text-base">{strings.day}</h2>
+        <ol className="flex flex-col">
+          {event ? null : (
+            <TimelineStop
+              kind="pickup"
+              title={formatMessage(
+                detail.pickupAt,
+                { time: formatTime(ride.startsAt, locale, zone) },
+                words,
+              )}
+            >
+              {start ? (
+                <>
+                  <span>{start}</span>
+                  {startAddress ? (
+                    <span className="text-2sm text-ink-soft">
+                      {startAddress}
+                    </span>
+                  ) : null}
+                  {map ? null : mapsLink(startPlace)}
+                </>
+              ) : (
+                <span className="text-ink-soft">{strings.noPlace}</span>
+              )}
+            </TimelineStop>
+          )}
+          {destination ? (
+            <TimelineStop
+              kind="arrive"
+              title={formatMessage(detail.arriveAt, { destination }, words)}
+            >
+              {ride.destinationName?.trim() &&
+              ride.destinationAddress?.trim() ? (
+                <span className="text-2sm text-ink-soft">
+                  {ride.destinationAddress}
+                </span>
+              ) : null}
+              {mapsLink(destinationPlace)}
+            </TimelineStop>
+          ) : null}
+          {otherLeg ? (
+            <TimelineStop
+              kind={ride.returnLeg ? "return" : "pickup"}
+              title={formatMessage(
+                ride.returnLeg ? detail.returnAt : detail.wayThereAt,
+                { time: formatTime(otherLeg.startsAt, locale, zone) },
+                words,
+              )}
+              href={`/pilot/rides/${otherLeg.id}`}
+            >
+              {sameDay(otherLeg.startsAt, ride.startsAt, zone) &&
+              otherLeg.status !== "cancelled" ? null : (
+                <span className="text-2sm text-ink-soft">
+                  {[
+                    sameDay(otherLeg.startsAt, ride.startsAt, zone)
+                      ? null
+                      : formatShortDateWithWeekday(
+                          calendarDate(otherLeg.startsAt, zone),
+                          locale,
+                        ),
+                    otherLeg.status === "cancelled"
+                      ? dict.calendar.statuses.cancelled
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+              )}
+            </TimelineStop>
+          ) : null}
+        </ol>
+      </section>
+    </>
+  );
+}
+
+function CrewRow({ face }: { face: PersonFace }) {
+  return (
+    <li className="flex items-center gap-3">
+      <PersonAvatar
+        svg={face.svg}
+        photoUrl={face.photoUrl}
+        size="lg"
+      />
+      <div className="flex min-w-0 flex-col">
+        <p className="truncate font-medium">{face.name}</p>
+        {face.bio ? (
+          <p className="line-clamp-2 text-2sm text-ink-soft">{face.bio}</p>
+        ) : null}
+      </div>
+    </li>
+  );
+}
+
 function RiderContact({
   name,
   pickup,
@@ -473,18 +755,18 @@ function RiderContact({
   pickup: string | null;
   phone: string | null;
   via: string | null;
-  strings: Dictionary["pilot"]["rides"]["detail"];
+  strings: Strings;
   words: Locale;
 }) {
   return (
     <>
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate">{name}</span>
+        <span className="truncate font-medium">{name}</span>
         {pickup ? (
-          <span className="text-2sm text-ink-soft truncate">{pickup}</span>
+          <span className="truncate text-2sm text-ink-soft">{pickup}</span>
         ) : null}
         {phone && via ? (
-          <span className="text-2sm text-ink-soft truncate">
+          <span className="truncate text-2sm text-ink-soft">
             {formatMessage(strings.via, { name: via }, words)}
           </span>
         ) : null}
@@ -493,7 +775,7 @@ function RiderContact({
         <a
           href={`tel:${phone.replace(/[^\d+]/g, "")}`}
           aria-label={formatMessage(strings.call, { name }, words)}
-          className="text-2sm border-line hover:bg-canvas-deep inline-flex min-h-11 shrink-0 items-center gap-1.25 rounded-full border px-3 tabular-nums transition-colors motion-reduce:transition-none"
+          className="inline-flex min-h-11 shrink-0 items-center gap-1.25 rounded-full border border-line px-3 text-2sm tabular-nums transition-colors hover:bg-canvas-deep motion-reduce:transition-none"
         >
           <Phone
             aria-hidden
@@ -517,98 +799,10 @@ function pickupLine(
     : null;
 }
 
-const initial = (name: string) =>
-  name.trim().charAt(0).toLocaleUpperCase() || "·";
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Muted({ children }: { children: string }) {
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-ink-soft text-xs font-semibold tracking-wide uppercase">
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
-
-function Muted({ children }: { children: ReactNode }) {
-  return (
-    <p className="text-2sm text-ink-soft border-line rounded-2xl border p-4">
+    <p className="rounded-2xl border border-line p-4 text-2sm text-ink-soft">
       {children}
     </p>
-  );
-}
-
-function StatusBadge({
-  status,
-  strings,
-}: {
-  status: PilotRideDetailRow["status"];
-  strings: Dictionary["calendar"]["statuses"];
-}) {
-  return (
-    <Badge
-      variant="outline"
-      className={cn(
-        "border-line",
-        status === "scheduled" && "border-mint bg-mint-tint text-ink",
-        status === "completed" && "bg-canvas-deep text-ink",
-        status === "cancelled" && "text-ink-soft",
-      )}
-    >
-      {strings[status]}
-    </Badge>
-  );
-}
-
-/** Only a leg the pilot is on too: its time is not theirs to know otherwise. */
-function OtherLeg({
-  leg,
-  label,
-  sameDayAs,
-  timeZone,
-  locale,
-  cancelledLabel,
-}: {
-  leg: Leg;
-  label: string;
-  sameDayAs: Date;
-  timeZone: string;
-  locale: Locale;
-  cancelledLabel: string;
-}) {
-  const cancelled = leg.status === "cancelled";
-  const body = (
-    <>
-      <span className="flex min-w-0 flex-col">
-        <span className="font-medium">{label}</span>
-        <span className="text-2sm text-ink-soft">
-          {sameDay(leg.startsAt, sameDayAs, timeZone)
-            ? null
-            : `${formatShortDateWithWeekday(calendarDate(leg.startsAt, timeZone), locale)} · `}
-          <time
-            dateTime={leg.startsAt.toISOString()}
-            className={cn(cancelled && "line-through")}
-          >
-            {formatTimeRange(leg.startsAt, leg.endsAt, locale, timeZone)}
-          </time>
-          {cancelled ? ` · ${cancelledLabel}` : null}
-        </span>
-      </span>
-      <ArrowRight
-        aria-hidden
-        className="text-ink-soft ml-auto size-4 shrink-0"
-      />
-    </>
-  );
-
-  return (
-    <Link
-      href={`/pilot/rides/${leg.id}`}
-      transitionTypes={["push"]}
-      className="border-line hover:bg-canvas-deep flex min-h-12 items-center gap-3 rounded-2xl border p-4 transition-colors motion-reduce:transition-none"
-    >
-      {body}
-    </Link>
   );
 }

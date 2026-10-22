@@ -12,6 +12,7 @@ import {
   startDirectChatWithUser,
 } from "@/use-cases/chat/start-direct-chat";
 import { createGroupChat } from "@/use-cases/chat/create-group-chat";
+import { continueChat } from "@/use-cases/ride-chat";
 import {
   GROUP_MAX_MEMBERS,
   GROUP_MIN_OTHER_MEMBERS,
@@ -289,10 +290,7 @@ export async function continueConversationAction(
   if (!parsed.success) return GENERIC;
 
   try {
-    await chat.continueConversation({
-      conversationId: parsed.data.conversationId,
-      userId: session.user.id,
-    });
+    await continueChat(parsed.data.conversationId, session.user.id);
     return { ok: true };
   } catch (error) {
     return failed(error);

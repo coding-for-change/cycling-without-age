@@ -8,6 +8,7 @@ import { Field, GenderChoice, type Gender } from "@/components/person-fields";
 import { useCharacter } from "@/components/character";
 import { haptics } from "@/lib/native/haptics";
 import type { OnboardingRole } from "@/lib/onboarding";
+import { useViewerToday } from "@/lib/viewer-time";
 import type { StepDefaults } from "./step-page";
 import { Step, StepError, type StepProgress } from "../../_components/step";
 import { submitProfile, type StepResult } from "../actions";
@@ -45,6 +46,7 @@ export function ProfileStep({
   const [gender, setGender] = useState<Gender | null>(defaults.gender);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const today = useViewerToday();
 
   const complete = Boolean(
     firstName.trim() && lastName.trim() && birthDate && gender,
@@ -124,7 +126,7 @@ export function ProfileStep({
             id="birth-date"
             type="date"
             value={birthDate}
-            max={new Date().toISOString().slice(0, 10)}
+            max={today}
             onChange={(event) => setBirthDate(event.target.value)}
             autoComplete="bday"
             className="h-12 rounded-(--r-card) border-line text-base"

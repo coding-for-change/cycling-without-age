@@ -1,12 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { riderInput, seatBookingInput } from "@/features/rides";
+import { z } from "zod";
+import { rideRequestInput } from "@/features/ride-requests";
+import { rideRef, riderInput, seatBookingInput } from "@/features/rides";
 import { requireAuth } from "@/lib/auth-guards";
 import { createAttempt, type ActionResult } from "@/lib/domain-error";
 import { withinRateLimit } from "@/lib/rate-limit";
 import { bookEventSeats } from "@/use-cases/book-event-seat";
-import { cancelOwnSeat, confirmOwnSeat } from "@/use-cases/seat-confirmation";
+import { cancelRideSeats, rescheduleRide } from "@/use-cases/reschedule-ride";
+import { cancelOwnSeat } from "@/use-cases/cancel-own-seat";
 
 const MAPPED_ERRORS = [
   "pleasureLimit",
@@ -82,13 +85,12 @@ export type SeatAnswerResult = ActionResult<
 >;
 
 /**
- * Lifecycle 5B-b, from the reminder's link: the account confirms or gives up
- * the seat of a rider it books for, or its own. The use case asks which riders
- * those are; the client only names the ride and the rider.
+ * Lifecycle 5B-b, from the reminder's link: the account gives up the seat of
+ * a rider it books for, or its own. The use case asks which riders those are;
+ * the client only names the ride and the rider.
  */
-async function answerSeat(
+export async function cancelSeatAction(
   input: unknown,
-  answer: typeof confirmOwnSeat,
 ): Promise<SeatAnswerResult> {
   const parsed = riderInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: "generic" };
@@ -96,7 +98,7 @@ async function answerSeat(
   if (!withinRateLimit(`seat-answer:${session.user.id}`, ANSWER_LIMIT))
     return { ok: false, error: "rateLimited" };
   const result = await attempt(async () => ({
-    changed: await answer(
+    changed: await cancelOwnSeat(
       parsed.data.rideId,
       parsed.data.passengerId,
       session.user.id,
@@ -106,14 +108,71 @@ async function answerSeat(
   return result;
 }
 
-export async function confirmSeatAction(
+export async function cancelRideAction(
   input: unknown,
-): Promise<SeatAnswerResult> {
-  return answerSeat(input, confirmOwnSeat);
+): Promise<ActionResult<SeatBookingError, { cancelled: number }>> {
+  const parsed = rideRef.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "generic" };
+  const session = await requireAuth();
+  if (!withinRateLimit(`seat-answer:${session.user.id}`, ANSWER_LIMIT))
+    return { ok: false, error: "rateLimited" };
+  const result = await attempt(async () => ({
+    cancelled: await cancelRideSeats(parsed.data.rideId, session.user.id),
+  }));
+  if (!result.ok && STALE.includes(result.error)) revalidateRides();
+  return result;
 }
 
-export async function cancelSeatAction(
+const RESCHEDULE_ERRORS = [
+  "alreadyRequested",
+  "beyondHorizon",
+  "closedDate",
+  "leadTime",
+  "notChapterMember",
+  "outsideHours",
+  "rideClosed",
+  "riderBooked",
+  "riderNotInChapter",
+  "tooManyRequests",
+  "tooManyRiders",
+  "unknownChapter",
+  "unknownPassenger",
+  "unknownRide",
+] as const;
+
+export type RescheduleError =
+  (typeof RESCHEDULE_ERRORS)[number] | "rateLimited" | "generic";
+
+const { attempt: rescheduleAttempt } = createAttempt(
+  RESCHEDULE_ERRORS,
+  revalidateRides,
+);
+
+const rescheduleInput = z.object({
+  fromRideId: rideRef.shape.rideId,
+  request: rideRequestInput,
+});
+
+const RESCHEDULE_LIMIT = { max: 10, windowMs: 60 * 60_000 };
+
+export async function rescheduleRideAction(
   input: unknown,
-): Promise<SeatAnswerResult> {
-  return answerSeat(input, cancelOwnSeat);
+): Promise<
+  ActionResult<
+    RescheduleError,
+    { id: string; rideId: string | null; oldSeatsKept: boolean }
+  >
+> {
+  const parsed = rescheduleInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "generic" };
+  const session = await requireAuth();
+  if (!withinRateLimit(`ride-request:${session.user.id}`, RESCHEDULE_LIMIT))
+    return { ok: false, error: "rateLimited" };
+  return rescheduleAttempt(() =>
+    rescheduleRide(
+      parsed.data.fromRideId,
+      parsed.data.request,
+      session.user.id,
+    ),
+  );
 }

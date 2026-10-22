@@ -279,7 +279,6 @@ export const rideInput = z
      * and roster.
      */
     returnLeg: rideTimes.optional(),
-    rideLocationId: id.nullable().optional(),
   })
   .superRefine(checkWindow)
   .superRefine(checkModel)
@@ -351,7 +350,6 @@ export type ReorderRosterInput = z.input<typeof reorderRosterInput>;
 
 export const ROSTER_ATTENDANCES = [
   "booked",
-  "confirmed",
   "checkedIn",
   "completed",
   "noShow",
@@ -493,7 +491,6 @@ export const scheduleRideForm = z
     requiredPilots: requiredPilots.default(1),
     note: rideNote,
     ...eventFields,
-    rideLocationId: id.nullable().optional(),
   })
   .superRefine(checkModel);
 export type ScheduleRideForm = z.input<typeof scheduleRideForm>;

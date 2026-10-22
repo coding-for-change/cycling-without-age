@@ -2,6 +2,7 @@ import {
   MAX_MANAGED_RIDERS,
   managedRiderInput,
   managedRiderPatch,
+  newManagedRiderInput,
   ownRiderDetailsPatch,
   passengerInput,
   riderNeedsInput,
@@ -11,6 +12,7 @@ import { transaction } from "@/lib/events";
 import type {
   ManagedRiderInput,
   ManagedRiderPatchInput,
+  NewManagedRiderInput,
   OwnRiderDetailsPatchInput,
   PassengerInput,
   RiderNeedsInput,
@@ -33,9 +35,12 @@ import {
   insertPassenger,
   insertPassengers,
   closeCareRequest,
+  declinePendingCareLinks,
   findCareRequest,
   findCareRequestPreview,
+  findPendingCareLinks,
   findPendingCareRequest,
+  linkPassengerManager,
   findPendingCareRequestsOfChapters,
   findInvitedRidersOfChapters,
   insertCareRequest,
@@ -140,20 +145,25 @@ const pickupColumns = (pickup: PassengerInput["pickup"]) =>
 export async function addManagedPassengers(
   managedByUserId: string,
   chapterId: string,
-  riders: ManagedRiderInput[],
+  riders: NewManagedRiderInput[],
 ) {
-  const data = riders.map((rider) =>
-    passengerInput.parse({
-      ...rider,
-      managedByUserId,
-      chapterId,
-      userId: null,
-    }),
-  );
+  const data = riders.map((rider) => {
+    const { needs, ...details } = newManagedRiderInput.parse(rider);
+    return {
+      rider: passengerInput.parse({
+        ...details,
+        managedByUserId,
+        chapterId,
+        userId: null,
+      }),
+      needs: riderNeedsInput.parse(needs ?? {}),
+    };
+  });
   await assertCanTakeOn(managedByUserId, chapterId, data.length);
   return insertPassengers(
-    data.map(({ pickup, ...rider }) => ({
+    data.map(({ rider: { pickup, ...rider }, needs }) => ({
       ...rider,
+      ...needs,
       userId: null,
       ...pickupColumns(pickup),
     })),
@@ -220,8 +230,11 @@ export async function removeManagedRider(passengerId: string) {
 export const countRiderBookings = (passengerId: string) =>
   countRosterEntriesOf(passengerId);
 
-export const removeOwnPassenger = (userId: string) =>
-  deletePassengerOfUser(userId);
+export async function removeOwnPassenger(userId: string) {
+  const own = await findPassengerOfUser(userId);
+  if (own) await declinePendingCareLinks(own.id);
+  return deletePassengerOfUser(userId);
+}
 
 export async function handRidersToTheirOwnAccounts(managedByUserId: string) {
   const riders = await findPassengersWithOtherAccountManagedBy(managedByUserId);
@@ -298,6 +311,49 @@ export async function setRiderNeeds(
   return updatePassengerNeeds(passengerId, data);
 }
 
+export async function getOwnRiderNeeds(userId: string) {
+  const own = await findPassengerOfUser(userId);
+  if (!own) return null;
+  return { needsWheelchairBike: own.needsWheelchairBike, note: own.note };
+}
+
+export type OwnRiderNeeds = NonNullable<
+  Awaited<ReturnType<typeof getOwnRiderNeeds>>
+>;
+
+export async function setOwnRiderNeeds(userId: string, input: RiderNeedsInput) {
+  const own = await findPassengerOfUser(userId);
+  if (!own) throw new DomainError("notFound");
+  await setRiderNeeds(own.id, input);
+}
+
+async function riderManagedBy(passengerId: string, managerUserId: string) {
+  const rider = (await findPassengersManagedBy(managerUserId)).find(
+    (candidate) =>
+      candidate.id === passengerId && candidate.userId !== managerUserId,
+  );
+  if (!rider) throw new DomainError("unknownPassenger");
+  return rider;
+}
+
+export async function getManagedRiderNeeds(
+  passengerId: string,
+  managerUserId: string,
+) {
+  const rider = await riderManagedBy(passengerId, managerUserId);
+  return { needsWheelchairBike: rider.needsWheelchairBike, note: rider.note };
+}
+
+export async function setManagedRiderNeeds(
+  passengerId: string,
+  managerUserId: string,
+  input: RiderNeedsInput,
+) {
+  const rider = await riderManagedBy(passengerId, managerUserId);
+  await setRiderNeeds(rider.id, input);
+  return { chapterId: rider.chapterId };
+}
+
 export async function requestCare(input: {
   chapterId: string;
   caretakerUserId: string;
@@ -357,6 +413,8 @@ export async function acceptCareRequest(id: string, caretakerUserId: string) {
   )
     throw new DomainError("notFound");
 
+  if (request.passengerId) return acceptCareLink(request, caretakerUserId);
+
   await assertCanTakeOn(caretakerUserId, request.chapterId, 1);
 
   return transaction(async (tx, emit) => {
@@ -395,9 +453,119 @@ export async function acceptCareRequest(id: string, caretakerUserId: string) {
       passengerId: passenger.id,
       relationship: request.relationship,
       chapterId: request.chapterId,
+      riderUserId: null,
     };
   });
 }
+
+async function acceptCareLink(
+  request: CareRequestRow,
+  caretakerUserId: string,
+) {
+  const rider = request.passengerId
+    ? await findPassengerById(request.passengerId)
+    : null;
+  if (
+    !rider?.userId ||
+    rider.managedByUserId !== rider.userId ||
+    rider.chapterId !== request.chapterId
+  )
+    throw new DomainError("notFound");
+  const riderUserId = rider.userId;
+
+  await assertCanTakeOn(caretakerUserId, request.chapterId, 1);
+
+  return transaction(async (tx, emit) => {
+    const linked = await linkPassengerManager(
+      rider.id,
+      riderUserId,
+      caretakerUserId,
+      tx,
+    );
+    if (linked.count !== 1) throw new DomainError("notFound");
+    const { count } = await closeCareRequest(
+      request.id,
+      caretakerUserId,
+      { status: "accepted", decidedAt: new Date() },
+      tx,
+    );
+    if (count !== 1) throw new DomainError("notFound");
+    await declinePendingCareLinks(rider.id, tx);
+    await emit({
+      type: "care.decided",
+      requestId: request.id,
+      chapterId: request.chapterId,
+      actorUserId: caretakerUserId,
+      requestedByUserId: request.requestedByUserId,
+      accepted: true,
+    });
+    await emit({
+      type: "care.linked",
+      requestId: request.id,
+      chapterId: request.chapterId,
+      userId: riderUserId,
+      actorUserId: caretakerUserId,
+      passengerId: rider.id,
+    });
+    return {
+      passengerId: rider.id,
+      relationship: request.relationship,
+      chapterId: request.chapterId,
+      riderUserId,
+    };
+  });
+}
+
+/**
+ * An admin asks someone with an account to look after a rider who already
+ * rides with an account of their own. Nothing changes until that person
+ * accepts; then they book for the rider, who keeps their own account.
+ */
+export async function requestCareLink(input: {
+  passengerId: string;
+  caretakerUserId: string;
+  requestedByUserId: string;
+}) {
+  const rider = await findPassengerById(input.passengerId);
+  if (!rider?.userId || rider.managedByUserId !== rider.userId)
+    throw new DomainError("unknownPassenger");
+  if (rider.userId === input.caretakerUserId)
+    throw new DomainError("sameManager");
+
+  const open = (await findPendingCareLinks(rider.id)).find(
+    (link) => link.caretakerUserId === input.caretakerUserId,
+  );
+  if (open) return { id: open.id, chapterId: rider.chapterId };
+
+  await assertCanTakeOn(input.caretakerUserId, rider.chapterId, 1);
+
+  return transaction(async (tx, emit) => {
+    const request = await insertCareRequest(
+      {
+        chapterId: rider.chapterId,
+        caretakerUserId: input.caretakerUserId,
+        requestedByUserId: input.requestedByUserId,
+        passengerId: rider.id,
+        firstName: rider.firstName,
+        lastName: rider.lastName,
+        birthDate: rider.birthDate,
+        gender: rider.gender,
+      },
+      tx,
+    );
+    await emit({
+      type: "care.requested",
+      requestId: request.id,
+      chapterId: rider.chapterId,
+      userId: input.caretakerUserId,
+      actorUserId: input.requestedByUserId,
+    });
+    return { id: request.id, chapterId: rider.chapterId };
+  });
+}
+
+export const listPendingCareLinks = (passengerId: string) =>
+  findPendingCareLinks(passengerId);
 
 export async function declineCareRequest(id: string, caretakerUserId: string) {
   const request = await findCareRequest(id);

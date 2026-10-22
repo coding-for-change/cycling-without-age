@@ -23,8 +23,10 @@ import { OtpEmail } from "@/emails/otp";
 import { sendSms } from "@/lib/sms";
 import { phoneTempEmail } from "@/lib/identity";
 import { buildSessionAccess } from "@/use-cases/build-session-access";
+import { profile } from "@/features/profile";
 import { ORG_NAME } from "@/lib/brand";
 import { authEventKind } from "@/lib/auth-events";
+import { isBlockedOverHttp } from "@/lib/auth-blocked-paths";
 import { expireAccess, expirePasskeys } from "@/lib/cache-tags";
 import { logDomainEvent } from "@/lib/observability/logger";
 import { web } from "@/lib/observability/metrics";
@@ -65,6 +67,8 @@ const PASSKEY_WRITES = new Set([
   "/passkey/delete-passkey",
 ]);
 
+const PASSKEY_SIGN_IN = "/passkey/verify-authentication";
+
 const ACCESS_WRITES = new Set([
   "/organization/leave",
   "/organization/remove-member",
@@ -72,7 +76,6 @@ const ACCESS_WRITES = new Set([
   "/organization/add-member",
   "/organization/accept-invitation",
   "/organization/delete",
-  "/admin/remove-user",
 ]);
 
 const bodyId = (body: unknown, key: string) => {
@@ -90,6 +93,10 @@ export const auth = betterAuth({
     cookieCache: { enabled: true, maxAge: 5 * 60, strategy: "jwe" },
   },
   hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (isBlockedOverHttp(ctx.path, Boolean(ctx.request)))
+        throw new APIError("NOT_FOUND");
+    }),
     after: createAuthMiddleware(async (ctx) => {
       const failed = ctx.context.returned instanceof APIError;
       web.authEvents.inc({
@@ -97,6 +104,10 @@ export const auth = betterAuth({
         outcome: failed ? "failure" : "success",
       });
       if (failed) return;
+
+      const opened = ctx.context.newSession;
+      if (ctx.path === PASSKEY_SIGN_IN && opened)
+        await profile.markSessionPasskeyVerified(opened.session.id);
 
       const session = ctx.context.session;
       if (PASSKEY_WRITES.has(ctx.path) && session)

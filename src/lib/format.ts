@@ -200,6 +200,19 @@ export function formatLongDateWithWeekday(
   }).format(toCalendarDate(value));
 }
 
+/** `Thu, Oct 24` (en-US) · `Do., 24. Okt.` (de-DE) */
+export function formatWeekdayDayMonthShort(
+  value: Date | string,
+  locale: Locale,
+): string {
+  return dateTimeFormatter(locale, {
+    ...CALENDAR_UTC,
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(toCalendarDate(value));
+}
+
 /** `M` — one letter for a day column too narrow for a word; the same in every supported locale */
 export function formatWeekdayNarrow(
   value: Date | string,
@@ -231,6 +244,18 @@ export function formatDayMonthShort(
     ...CALENDAR_UTC,
     day: "numeric",
     month: "short",
+  }).format(toCalendarDate(value));
+}
+
+/** `Mar` (en-US) · `März` (de-DE) */
+export function formatMonthName(
+  value: Date | string,
+  locale: Locale,
+  width: "long" | "short" = "short",
+): string {
+  return dateTimeFormatter(locale, {
+    ...CALENDAR_UTC,
+    month: width,
   }).format(toCalendarDate(value));
 }
 
@@ -351,14 +376,13 @@ export function formatRelativeTime(
   value: Date | string,
   locale: Locale,
   now: Date = new Date(),
+  style: Intl.RelativeTimeFormatStyle = "narrow",
 ): string {
-  let formatter = relativeTimeFormatters.get(locale);
+  const key = `${locale}|${style}`;
+  let formatter = relativeTimeFormatters.get(key);
   if (!formatter) {
-    formatter = new Intl.RelativeTimeFormat(locale, {
-      numeric: "auto",
-      style: "narrow",
-    });
-    relativeTimeFormatters.set(locale, formatter);
+    formatter = new Intl.RelativeTimeFormat(locale, { numeric: "auto", style });
+    relativeTimeFormatters.set(key, formatter);
   }
   const seconds = Math.round(
     (new Date(value).getTime() - now.getTime()) / 1000,

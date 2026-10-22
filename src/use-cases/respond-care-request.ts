@@ -9,10 +9,8 @@ export async function acceptCareRequest({
   userId: string;
   requestId: string;
 }) {
-  const { chapterId, relationship } = await passengers.acceptCareRequest(
-    requestId,
-    userId,
-  );
+  const { chapterId, relationship, riderUserId } =
+    await passengers.acceptCareRequest(requestId, userId);
 
   const joined = await membership.listMembershipsOfUser(userId);
   const isPassengerThere = joined.some(
@@ -21,7 +19,7 @@ export async function acceptCareRequest({
   if (!isPassengerThere) await membership.joinAsPassenger(userId, chapterId);
   await profile.markManagesOthers(userId);
   await profile.suggestHelperRelationship(userId, relationship);
-  return { chapterId };
+  return { chapterId, riderUserId };
 }
 
 export const declineCareRequest = ({

@@ -40,6 +40,11 @@ import {
   TimelineHeadline,
   TimelineList,
 } from "../../../_components/timeline";
+import {
+  bookingSwitch,
+  fieldsWithValues,
+  type ValueField,
+} from "./ride-history-values";
 
 type Entry = Awaited<ReturnType<typeof rides.listRideLog>>[number];
 type Labels = RideHistoryStrings;
@@ -136,7 +141,7 @@ export function RideHistory({
     return `${formatDateTime(startsAt, notation, timeZone)}–${formatTime(endsAt, notation, timeZone)}`;
   };
 
-  const shownValue = (field: Field, from: Json): string => {
+  const shownValue = (field: ValueField, from: Json): string => {
     const value =
       field === "location"
         ? text(from.locationName) || text(from.locationAddress)
@@ -208,28 +213,24 @@ export function RideHistory({
                 ),
               ),
             ];
-            sentence = say(labels.edited, {
-              ...actor,
-              fields: formatList(
-                fields.map((field) => labels.fields[field]),
-                list,
-              ),
-            });
             const from = record(payload.from);
             const to = record(payload.to);
-            details = fields
-              .filter(
-                (field) =>
-                  field !== "note" &&
-                  field !== "description" &&
-                  field !== "photos",
-              )
-              .map((field) =>
-                say(labels.change, {
-                  from: shownValue(field, from),
-                  to: shownValue(field, to),
-                }),
-              );
+            const booking = bookingSwitch(changed, to);
+            sentence = booking
+              ? say(labels[booking], actor)
+              : say(labels.edited, {
+                  ...actor,
+                  fields: formatList(
+                    fields.map((field) => labels.fields[field]),
+                    list,
+                  ),
+                });
+            details = fieldsWithValues(fields, from, to).map((field) =>
+              say(labels.change, {
+                from: shownValue(field, from),
+                to: shownValue(field, to),
+              }),
+            );
             break;
           }
           case "cancelled": {
@@ -342,6 +343,7 @@ export function RideHistory({
               notation={notation}
               words={words}
               now={now}
+              timeZone={timeZone}
             />
             {details.map((line, index) => (
               <p

@@ -1,6 +1,8 @@
 import { revalidatePath } from "next/cache";
 import {
+  changeRideRequestAction,
   declineRideRequestAction,
+  previewRequestRouteAction,
   scheduleRideRequestAction,
   submitRideRequestAction,
   withdrawRideRequestAction,
@@ -13,6 +15,8 @@ import {
   requireChapterAdmin,
 } from "@/lib/auth-guards";
 import { DomainError } from "@/lib/domain-error";
+import { cyclingRoute } from "@/lib/mapbox";
+import { changeRideRequest } from "@/use-cases/change-ride-request";
 import { scheduleFromRequest } from "@/use-cases/schedule-from-request";
 import { submitRideRequest } from "@/use-cases/submit-ride-request";
 
@@ -22,8 +26,12 @@ jest.mock("@/lib/auth-guards", () => ({
   requireAuth: jest.fn(),
   requireChapterAdmin: jest.fn(),
 }));
+jest.mock("@/lib/mapbox", () => ({ cyclingRoute: jest.fn() }));
 jest.mock("@/use-cases/schedule-from-request", () => ({
   scheduleFromRequest: jest.fn(),
+}));
+jest.mock("@/use-cases/change-ride-request", () => ({
+  changeRideRequest: jest.fn(),
 }));
 jest.mock("@/use-cases/submit-ride-request", () => ({
   submitRideRequest: jest.fn(),
@@ -290,5 +298,145 @@ describe("submitRideRequestAction", () => {
       error: "rateLimited",
     });
     expect(submit).toHaveBeenCalledTimes(10);
+  });
+});
+
+describe("previewRequestRouteAction", () => {
+  const route = cyclingRoute as jest.Mock;
+  const MARIENPLATZ = { lat: 48.1374, lng: 11.5755 };
+  const ENGLISCHER_GARTEN = { lat: 48.1642, lng: 11.6056 };
+  const BERLIN = { lat: 52.52, lng: 13.405 };
+
+  beforeEach(() => {
+    route.mockResolvedValue({
+      path: [
+        [11.5755, 48.1374],
+        [11.6056, 48.1642],
+      ],
+      durationSec: 900,
+      distanceM: 4200,
+      legs: ["internal"],
+    });
+  });
+
+  it("returns only the path, distance and duration of the cycling route", async () => {
+    signedIn.mockResolvedValue({ user: { id: "route-reader" } });
+
+    await expect(
+      previewRequestRouteAction({
+        from: MARIENPLATZ,
+        to: ENGLISCHER_GARTEN,
+        token: "leak",
+      }),
+    ).resolves.toEqual({
+      path: [
+        [11.5755, 48.1374],
+        [11.6056, 48.1642],
+      ],
+      durationSec: 1350,
+      distanceM: 4200,
+    });
+    expect(route).toHaveBeenCalledWith(MARIENPLATZ, ENGLISCHER_GARTEN);
+  });
+
+  it("asks who is signed in before anything else", async () => {
+    signedIn.mockRejectedValue(new Error("NEXT_REDIRECT"));
+
+    await expect(
+      previewRequestRouteAction({ from: MARIENPLATZ, to: ENGLISCHER_GARTEN }),
+    ).rejects.toThrow("NEXT_REDIRECT");
+    expect(route).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["a missing point", { from: MARIENPLATZ }],
+    [
+      "a latitude past the pole",
+      { from: { lat: 91, lng: 0 }, to: MARIENPLATZ },
+    ],
+    [
+      "a longitude off the globe",
+      { from: MARIENPLATZ, to: { lat: 0, lng: 181 } },
+    ],
+    ["text for a number", { from: { lat: "48", lng: "11" }, to: MARIENPLATZ }],
+    [
+      "two points further apart than a trishaw rides",
+      { from: MARIENPLATZ, to: BERLIN },
+    ],
+    ["no object at all", "Marienplatz"],
+  ])("answers null to %s without asking Mapbox", async (_, input) => {
+    await expect(previewRequestRouteAction(input)).resolves.toBeNull();
+    expect(route).not.toHaveBeenCalled();
+  });
+
+  it("stops asking Mapbox past thirty previews a minute", async () => {
+    signedIn.mockResolvedValue({ user: { id: "route-spammer" } });
+    for (let call = 0; call < 30; call++)
+      await previewRequestRouteAction({
+        from: MARIENPLATZ,
+        to: ENGLISCHER_GARTEN,
+      });
+
+    await expect(
+      previewRequestRouteAction({ from: MARIENPLATZ, to: ENGLISCHER_GARTEN }),
+    ).resolves.toBeNull();
+    expect(route).toHaveBeenCalledTimes(30);
+  });
+
+  it("answers null when Mapbox has no route", async () => {
+    signedIn.mockResolvedValue({ user: { id: "route-nowhere" } });
+    route.mockResolvedValue(null);
+
+    await expect(
+      previewRequestRouteAction({ from: MARIENPLATZ, to: ENGLISCHER_GARTEN }),
+    ).resolves.toBeNull();
+  });
+});
+
+describe("changeRideRequestAction", () => {
+  const change = changeRideRequest as jest.Mock;
+
+  beforeEach(() => {
+    change.mockResolvedValue({
+      id: "request-2",
+      rideId: null,
+      oldRequestKept: false,
+    });
+  });
+
+  it("changes the request as the signed-in account, never one the client names", async () => {
+    await expect(
+      changeRideRequestAction({
+        fromRequestId: "request-1",
+        request: ask(),
+        userId: "user-stranger",
+      }),
+    ).resolves.toEqual({
+      ok: true,
+      id: "request-2",
+      rideId: null,
+      oldRequestKept: false,
+    });
+    expect(change).toHaveBeenCalledWith(
+      "request-1",
+      expect.objectContaining({ passengerIds: ["mother"] }),
+      REQUESTER,
+    );
+    expect(revalidatePath).toHaveBeenCalledWith("/passenger", "layout");
+  });
+
+  it("turns away malformed input before asking who is signed in", async () => {
+    await expect(
+      changeRideRequestAction({ fromRequestId: "", request: ask() }),
+    ).resolves.toEqual({ ok: false, error: "generic" });
+    expect(signedIn).not.toHaveBeenCalled();
+    expect(change).not.toHaveBeenCalled();
+  });
+
+  it("reads someone else's request as a missing one", async () => {
+    change.mockRejectedValue(new DomainError("unknownRequest"));
+    await expect(
+      changeRideRequestAction({ fromRequestId: "request-1", request: ask() }),
+    ).resolves.toEqual({ ok: false, error: "unknownRequest" });
   });
 });

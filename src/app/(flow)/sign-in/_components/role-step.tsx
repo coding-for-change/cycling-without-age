@@ -1,11 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { Bike, HeartHandshake, Wind } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptics } from "@/lib/native/haptics";
 import { Step, type StepProgress } from "../../_components/step";
 import { useFlow, type FlowRole } from "../../_components/flow-state";
+import { chooseRoleAtChapter } from "../actions";
 
 type Strings = {
   title: string;
@@ -19,18 +21,32 @@ type Choice = FlowRole | "caretaker";
 export function RoleStep({
   strings,
   progress,
+  atChapter,
 }: {
   strings: Strings;
   progress: StepProgress | null;
+  atChapter: boolean;
 }) {
   const router = useRouter();
   const { update } = useFlow();
+  const [pending, startTransition] = useTransition();
+
+  const go = (next: string) =>
+    router.push(next, { transitionTypes: ["nav-forward"] });
 
   const choose = (choice: Choice) => {
+    if (pending) return;
     haptics.tap();
     update({ role: choice === "caretaker" ? "passenger" : choice });
 
-    router.push(`/location?as=${choice}`, { transitionTypes: ["nav-forward"] });
+    if (!atChapter) {
+      go(`/location?as=${choice}`);
+      return;
+    }
+    startTransition(async () => {
+      const result = await chooseRoleAtChapter(choice);
+      go(result.ok ? result.next : `/location?as=${choice}`);
+    });
   };
 
   const options = [
@@ -60,6 +76,8 @@ export function RoleStep({
             key={role}
             type="button"
             onClick={() => choose(role)}
+            disabled={pending}
+            aria-busy={pending}
             className={cn(
               "flex w-full items-start rounded-(--r-card) border text-left transition-colors focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none",
               hero

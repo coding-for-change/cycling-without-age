@@ -76,8 +76,8 @@ const readPickup = (raw: string | null | undefined) => {
 
 /**
  * Lifecycle 5B-b: the accounts behind the ride's riders are reminded before
- * it, and asked to confirm the seat or give it up — always, because a seat
- * nobody answers for is a trishaw waiting at the door.
+ * it, with the way to cancel when plans changed — always, because a seat
+ * nobody uses is a trishaw waiting at the door.
  */
 export const rideRiderReminder = defineKind({
   event: "ride.riderReminderDue",
@@ -195,7 +195,7 @@ export const rideNoDemand = defineKind({
 
 /**
  * 5B-b, the other way round: the admins were told nobody is left to ride,
- * and now a family took its seat back. One message per leg that filled again.
+ * and now a family booked a seat again.
  */
 export const rideRosterRefilled = defineKind({
   event: "ride.rosterRefilled",
