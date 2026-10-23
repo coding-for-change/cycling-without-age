@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useSyncExternalStore, type ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
@@ -18,6 +18,7 @@ import { LanguagePicker } from "@/components/language-picker";
 import { ThemePicker, type ThemeStrings } from "@/components/theme-picker";
 import type { AccountData } from "@/components/account/types";
 import { markReplace, useCanGoBack } from "@/hooks/use-can-go-back";
+import { useScrolled } from "@/hooks/use-scrolled";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
@@ -28,21 +29,9 @@ import {
   type MemberPerspective,
   type ResolvedMemberNavItem,
 } from "../nav";
-import { AvatarButton } from "./avatar-button";
+import { AvatarButton } from "@/components/account/avatar-button";
 import { usePageTitle } from "./member-title";
 import { SignInLink } from "./sign-in-link";
-
-const subscribeScroll = (onChange: () => void) => {
-  window.addEventListener("scroll", onChange, { passive: true });
-  return () => window.removeEventListener("scroll", onChange);
-};
-
-const useScrolled = () =>
-  useSyncExternalStore(
-    subscribeScroll,
-    () => window.scrollY > 0,
-    () => false,
-  );
 
 export function MemberTopBar({
   items,

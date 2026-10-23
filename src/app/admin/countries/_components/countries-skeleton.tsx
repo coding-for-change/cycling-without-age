@@ -1,4 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { TABLE_FRAME, TABLE_HEAD } from "../../_components/admin-skeletons";
 
 const ROWS = ["w-32", "w-28", "w-36", "w-24"];
 
@@ -8,8 +9,8 @@ export function CountryRowsSkeleton() {
   return (
     <div className="grid gap-3">
       <Skeleton className="h-9 w-64 max-w-full" />
-      <div className="overflow-hidden rounded-2xl border border-line">
-        <div className="h-11 bg-canvas-deep" />
+      <div className={TABLE_FRAME}>
+        <div className={TABLE_HEAD} />
         {ROWS.map((width, index) => (
           <div
             key={index}

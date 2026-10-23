@@ -66,6 +66,7 @@ export function RequestsTable({
         label: labels.when,
         searchValue: (row) =>
           `${row.date} ${row.riders} ${row.where} ${row.requester}`,
+        mobile: { subtitle: (row) => `${row.date}, ${row.time}` },
       },
       cell: ({ row }) => (
         <Link
@@ -84,7 +85,7 @@ export function RequestsTable({
       id: "riders",
       accessorFn: (row) => row.riders,
       enableSorting: true,
-      meta: { label: labels.riders },
+      meta: { label: labels.riders, mobile: { title: (row) => row.riders } },
       cell: ({ row }) => (
         <span className="grid">
           <span>{row.original.riders}</span>
@@ -97,7 +98,9 @@ export function RequestsTable({
     mutedColumn<RequestListRow>("model", labels.model, (row) => row.model, {
       sortable: true,
     }),
-    mutedColumn<RequestListRow>("where", labels.where, (row) => row.where),
+    mutedColumn<RequestListRow>("where", labels.where, (row) => row.where, {
+      mobile: "subtitle",
+    }),
     ...(showChapter
       ? [
           mutedColumn<RequestListRow>(
@@ -114,7 +117,7 @@ export function RequestsTable({
     {
       id: "status",
       accessorFn: (row) => row.status,
-      meta: { label: labels.status },
+      meta: { label: labels.status, mobile: "trailing" },
       cell: ({ row }) => (
         <Badge className={cn("font-normal", TONE[row.original.status])}>
           {strings.statuses[row.original.status]}

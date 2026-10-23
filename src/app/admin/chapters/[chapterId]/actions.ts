@@ -16,6 +16,11 @@ export type SettingsActionResult =
 
 const chapterId = z.string().min(1).max(64);
 
+const refresh = (id: string) => {
+  revalidatePath(`/admin/chapters/${id}`);
+  revalidatePath("/admin/rides");
+};
+
 export async function updateChapterSettingsAction(
   id: string,
   input: unknown,
@@ -29,8 +34,7 @@ export async function updateChapterSettingsAction(
 
   try {
     await chapters.updateSettings(parsedId.data, parsed.data);
-    revalidatePath("/admin/settings");
-    revalidatePath("/admin/rides");
+    refresh(parsedId.data);
     return { ok: true };
   } catch (error) {
     return actionFailure(error, {});
@@ -39,11 +43,6 @@ export async function updateChapterSettingsAction(
 
 export type HoursActionResult =
   { ok: true } | { ok: false; error: "invalidHours" | "generic" };
-
-const refreshHours = () => {
-  revalidatePath("/admin/settings");
-  revalidatePath("/admin/rides");
-};
 
 export async function setOperatingHoursAction(
   id: string,
@@ -58,7 +57,7 @@ export async function setOperatingHoursAction(
 
   try {
     await chapters.setOperatingWindows(parsedId.data, parsed.data);
-    refreshHours();
+    refresh(parsedId.data);
     return { ok: true };
   } catch (error) {
     return actionFailure(error, {});
@@ -82,7 +81,7 @@ export async function addClosureAction(
 
   try {
     const closure = await chapters.addClosure(parsedId.data, parsed.data);
-    refreshHours();
+    refresh(parsedId.data);
     return { ok: true, closure };
   } catch (error) {
     return actionFailure(error, {});
@@ -101,7 +100,7 @@ export async function removeClosureAction(
 
   try {
     await chapters.removeClosure(parsedId.data, parsedClosure.data);
-    refreshHours();
+    refresh(parsedId.data);
     return { ok: true };
   } catch (error) {
     return actionFailure(error, {});

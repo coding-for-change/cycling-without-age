@@ -49,7 +49,7 @@ export function PoolsTable({
       accessorFn: (row) => row.name,
       enableHiding: false,
       enableSorting: true,
-      meta: { label: labels.name },
+      meta: { label: labels.name, mobile: "title" },
       cell: ({ row }) => (
         <span className="font-medium">{row.original.name}</span>
       ),
@@ -58,7 +58,7 @@ export function PoolsTable({
       id: "waiting",
       accessorFn: (row) => row.waiting,
       enableSorting: true,
-      meta: { label: labels.waiting },
+      meta: { label: labels.waiting, mobile: "trailing" },
       cell: ({ row }) =>
         row.original.waiting > 0 ? (
           <Badge className="bg-mint-deep font-medium text-white tabular-nums">
@@ -74,11 +74,13 @@ export function PoolsTable({
             "country",
             labels.country,
             (row) => row.countryName,
-            { sortable: true },
+            { sortable: true, mobile: "subtitle" },
           ),
         ]
       : []),
-    mutedColumn<PoolTableRow>("address", labels.address, (row) => row.address),
+    mutedColumn<PoolTableRow>("address", labels.address, (row) => row.address, {
+      mobile: "subtitle",
+    }),
     mutedColumn<PoolTableRow>("members", labels.members, (row) => row.members, {
       sortable: true,
     }),

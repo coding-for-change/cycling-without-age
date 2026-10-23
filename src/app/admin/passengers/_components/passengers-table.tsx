@@ -63,6 +63,16 @@ export function PassengersTable({
         : { kind: "passenger", id: row.id },
     )}${scopeQuery}`;
 
+  const detail = (row: PassengerRow) =>
+    [
+      row.caretaker
+        ? formatMessage(labels.via, { name: row.caretaker.name }, locale)
+        : null,
+      row.email ?? row.phone ?? row.caretaker?.contact,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
   const columns: ColumnDef<PassengerRow, unknown>[] = [
     {
       id: "name",
@@ -73,13 +83,21 @@ export function PassengersTable({
         label: labels.name,
         searchValue: (row) =>
           `${row.firstName} ${row.lastName} ${row.email ?? ""} ${row.phone ?? ""} ${row.caretaker?.name ?? ""} ${row.caretaker?.contact ?? ""}`,
+        mobile: {
+          leading: (row) => (
+            <PersonAvatar
+              svg={row.avatar}
+              photoUrl={row.photoUrl}
+            />
+          ),
+          title: (row) => `${row.firstName} ${row.lastName}`,
+          subtitle: (row) => detail(row) || null,
+        },
       },
       cell: ({ row }) => {
         const link = href(row.original);
         const name = `${row.original.firstName} ${row.original.lastName}`;
-        const { caretaker } = row.original;
-        const contact =
-          row.original.email ?? row.original.phone ?? caretaker?.contact;
+        const text = detail(row.original);
         return (
           <div className="flex items-center gap-3">
             <PersonAvatar
@@ -94,21 +112,8 @@ export function PassengersTable({
               >
                 {name}
               </Link>
-              {caretaker || contact ? (
-                <span className="text-xs text-ink-soft">
-                  {[
-                    caretaker
-                      ? formatMessage(
-                          labels.via,
-                          { name: caretaker.name },
-                          locale,
-                        )
-                      : null,
-                    contact,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </span>
+              {text ? (
+                <span className="text-xs text-ink-soft">{text}</span>
               ) : null}
             </div>
           </div>
@@ -144,11 +149,13 @@ export function PassengersTable({
             "chapter",
             labels.chapter,
             (row) => row.chapterName,
+            { mobile: "subtitle" },
           ),
         ]
       : []),
     mutedColumn<PassengerRow>("joined", labels.joined, (row) => row.joined, {
       isoOf: (row) => row.joinedIso,
+      mobile: "trailing",
     }),
   ];
 

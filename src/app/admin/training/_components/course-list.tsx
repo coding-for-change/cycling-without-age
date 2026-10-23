@@ -185,6 +185,10 @@ export function CourseList({
         label: labels.columns.course,
         searchValue: (row) =>
           `${row.title} ${row.summary ?? ""} ${row.ownerName ?? ""}`,
+        mobile: {
+          title: (row) => row.title,
+          subtitle: (row) => row.summary,
+        },
       },
       cell: ({ row }) => (
         <div className="grid min-w-0">
@@ -257,7 +261,7 @@ export function CourseList({
       id: "status",
       accessorFn: (row) => row.status,
       filterFn: "equalsString",
-      meta: { label: labels.columns.status },
+      meta: { label: labels.columns.status, mobile: "badge" },
       cell: ({ row }) => {
         const { publishedCount, variants } = row.original;
         return publishedCount === 0 ? (
@@ -286,6 +290,14 @@ export function CourseList({
       meta: {
         label: labels.columns.required,
         searchValue: (row) => row.requiredIn.map((r) => r.label).join(" "),
+        mobile: {
+          badge: (row) =>
+            row.requiredEffective ? (
+              <Badge className="border-transparent bg-mint-deep font-normal text-white">
+                {labels.requiredTag}
+              </Badge>
+            ) : null,
+        },
       },
       cell: ({ row }) =>
         row.original.requiredIn.length > 0 ? (
@@ -317,6 +329,7 @@ export function CourseList({
     {
       id: "actions",
       enableHiding: false,
+      meta: { mobile: "actions" },
       cell: ({ row }) => (
         <div
           className="flex justify-end"

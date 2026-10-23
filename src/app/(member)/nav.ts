@@ -1,4 +1,3 @@
-import type { Perspective } from "@/lib/access";
 import type { IconKey } from "@/lib/commands";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
 import type { MemberPerspective } from "@/lib/redirects";
@@ -176,11 +175,4 @@ export const primaryAction = (
   icon: "rides",
 });
 
-export const nextPerspective = (
-  available: readonly Perspective[],
-  current: Perspective,
-): Perspective | null => {
-  if (available.length < 2) return null;
-  const index = available.indexOf(current);
-  return index === -1 ? null : available[(index + 1) % available.length];
-};
+export { nextPerspective } from "@/lib/perspectives";

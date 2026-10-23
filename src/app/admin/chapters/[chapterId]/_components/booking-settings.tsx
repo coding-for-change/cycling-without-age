@@ -3,7 +3,7 @@ import { formatDuration, wordsLocale } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
-import { BookingPolicyCard } from "./booking-policy-card";
+import { BookingPolicy } from "./booking-policy";
 
 const HOURS_PER_DAY = 24;
 
@@ -45,7 +45,7 @@ export function BookingSettings({
     }));
 
   return (
-    <BookingPolicyCard
+    <BookingPolicy
       chapterId={chapterId}
       settings={settings}
       choices={{
@@ -70,10 +70,8 @@ export function BookingSettings({
           duration,
         ),
       }}
-      language={language}
       labels={{
         strings,
-        status: dict.admin.settings.notifications.status,
         field: dict.admin.settings.notifications.field,
       }}
     />

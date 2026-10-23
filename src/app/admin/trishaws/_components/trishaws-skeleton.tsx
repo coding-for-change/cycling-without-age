@@ -2,6 +2,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   PageHeaderSkeleton,
   TabsSkeleton,
+  TABLE_FRAME,
+  TABLE_HEAD,
 } from "../../_components/admin-skeletons";
 
 const ROWS = ["w-40", "w-32", "w-44", "w-28", "w-36", "w-32"];
@@ -36,8 +38,8 @@ export function FleetHeaderSkeleton({
 
 export function TrishawRowsSkeleton() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-line">
-      <div className="h-11 bg-canvas-deep" />
+    <div className={TABLE_FRAME}>
+      <div className={TABLE_HEAD} />
       {ROWS.map((width, index) => (
         <div
           key={index}

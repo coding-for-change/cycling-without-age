@@ -15,6 +15,10 @@ import { Button } from "@/components/ui/button";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { LanguagePicker } from "@/components/language-picker";
 import { ThemePicker, type ThemeStrings } from "@/components/theme-picker";
+import { AvatarButton } from "@/components/account/avatar-button";
+import type { AccountData } from "@/components/account/types";
+import { useEdgeSwipe } from "@/hooks/use-edge-swipe";
+import { useScrolled } from "@/hooks/use-scrolled";
 import type { Locale } from "@/lib/i18n";
 import type { ScopeArg } from "@/lib/commands";
 import type { ResolvedNavItem } from "../nav";
@@ -30,6 +34,8 @@ export function AdminTopBar({
   languageLabel,
   themeStrings,
   menuLabel,
+  account,
+  accountStrings,
   bell,
 }: {
   items: ResolvedNavItem[];
@@ -39,11 +45,16 @@ export function AdminTopBar({
   languageLabel: string;
   themeStrings: ThemeStrings;
   menuLabel: string;
+  account: AccountData | null;
+  accountStrings: { account: string; switchHint: string };
   bell: ReactNode;
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, isMobile, openMobile, setOpenMobile } = useSidebar();
+  const scrolled = useScrolled();
+
+  useEdgeSwipe(() => setOpenMobile(true), isMobile && !openMobile);
 
   const activeScope = readScopeArg(
     searchParams,
@@ -58,16 +69,34 @@ export function AdminTopBar({
     ) ?? items.find((item) => item.href === "/admin");
 
   return (
-    <header className="flex min-h-16 shrink-0 items-center gap-2 px-4 pt-safe lg:px-6">
+    <header
+      data-slot="admin-top-bar"
+      data-scrolled={scrolled || undefined}
+      className="sticky top-0 z-30 flex min-h-16 shrink-0 items-center gap-1 border-b border-transparent bg-canvas/70 px-4 pt-safe backdrop-blur-md transition-colors duration-200 data-scrolled:border-line motion-reduce:transition-none md:relative md:gap-2 md:border-b-0 md:bg-transparent md:backdrop-blur-none lg:px-6"
+    >
       <Button
         variant="ghost"
         size="icon"
-        className="-ml-2 size-9 md:hidden"
+        className="-ml-2 size-11 md:hidden"
         aria-label={menuLabel}
         onClick={toggleSidebar}
       >
         <Menu className="size-5" />
       </Button>
+      {account ? (
+        <AvatarButton
+          data={account}
+          activePerspective="admin"
+          strings={accountStrings}
+          className="md:hidden"
+        />
+      ) : null}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 truncate px-28 text-center font-semibold md:hidden"
+      >
+        {section?.label}
+      </span>
       <SidebarTrigger className="-ml-1 hidden md:flex" />
       <Separator
         orientation="vertical"

@@ -1,11 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
+  Fragment,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
+  type ReactNode,
   type SyntheticEvent,
 } from "react";
 import {
@@ -19,6 +23,7 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
   type FilterFn,
+  type Row,
   type RowData,
   type SortingState,
   type VisibilityState,
@@ -27,6 +32,8 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
   Columns3,
   ListFilter,
   Search,
@@ -39,6 +46,7 @@ import {
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -63,10 +71,26 @@ import { cn } from "@/lib/utils";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
 
+export type DataTableMobileSlot =
+  | "leading"
+  | "title"
+  | "subtitle"
+  | "trailing"
+  | "badge"
+  | "actions"
+  | "hidden";
+
+type MobilePart = Exclude<DataTableMobileSlot, "hidden">;
+
+export type DataTableMobileCells<TData> = Partial<
+  Record<MobilePart, (row: TData) => ReactNode>
+>;
+
 declare module "@tanstack/react-table" {
   interface ColumnMeta<TData extends RowData, TValue> {
     label?: string;
     searchValue?: (row: TData) => string;
+    mobile?: DataTableMobileSlot | DataTableMobileCells<TData>;
   }
 }
 
@@ -82,6 +106,9 @@ export type DataTableStrings = {
   all: string;
   sortAria: string;
   filterAria: string;
+  sort: string;
+  ascending: string;
+  descending: string;
 };
 
 export type DataTableFilter = {
@@ -89,6 +116,24 @@ export type DataTableFilter = {
   label: string;
   options: { value: string; label: string }[];
 };
+
+const GUTTERS = {
+  page: { bleed: "-mx-4", inset: "pl-4", end: "pr-4" },
+  drawer: { bleed: "-mx-5", inset: "pl-5", end: "pr-5" },
+} as const;
+
+export type DataTableGutter = keyof typeof GUTTERS;
+
+const PARTS: MobilePart[] = [
+  "leading",
+  "title",
+  "subtitle",
+  "trailing",
+  "badge",
+  "actions",
+];
+
+const PILL = "h-8 rounded-full border-line px-3 text-2sm font-normal";
 
 const ALL = "__all__";
 const PAGE_SIZE = 25;
@@ -149,41 +194,26 @@ function ColumnsMenu<TData>({
   );
 }
 
-function HeaderFilter({
+function FilterMenu({
   filter,
   value,
   onChange,
   strings,
-  locale,
+  align,
+  children,
 }: {
   filter: DataTableFilter;
   value: string;
   onChange: (value: string) => void;
   strings: DataTableStrings;
-  locale: Locale;
+  align: "start" | "end";
+  children: ReactNode;
 }) {
-  const active = value !== ALL;
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={formatMessage(
-            strings.filterAria,
-            { column: filter.label },
-            locale,
-          )}
-          className={cn(
-            "size-8 text-ink-soft",
-            active && "bg-mint text-ink hover:bg-mint",
-          )}
-        >
-          <ListFilter aria-hidden />
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
       <DropdownMenuContent
-        align="start"
+        align={align}
         className="min-w-48 rounded-2xl border-line p-2"
       >
         <DropdownMenuRadioGroup
@@ -211,6 +241,296 @@ function HeaderFilter({
   );
 }
 
+function HeaderFilter({
+  filter,
+  value,
+  onChange,
+  strings,
+  locale,
+}: {
+  filter: DataTableFilter;
+  value: string;
+  onChange: (value: string) => void;
+  strings: DataTableStrings;
+  locale: Locale;
+}) {
+  const active = value !== ALL;
+  return (
+    <FilterMenu
+      filter={filter}
+      value={value}
+      onChange={onChange}
+      strings={strings}
+      align="start"
+    >
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={formatMessage(
+          strings.filterAria,
+          { column: filter.label },
+          locale,
+        )}
+        className={cn(
+          "size-8 text-ink-soft",
+          active && "bg-mint text-ink hover:bg-mint",
+        )}
+      >
+        <ListFilter aria-hidden />
+      </Button>
+    </FilterMenu>
+  );
+}
+
+function FilterPill({
+  filter,
+  value,
+  onChange,
+  strings,
+}: {
+  filter: DataTableFilter;
+  value: string;
+  onChange: (value: string) => void;
+  strings: DataTableStrings;
+}) {
+  const active = filter.options.find((option) => option.value === value);
+  return (
+    <FilterMenu
+      filter={filter}
+      value={value}
+      onChange={onChange}
+      strings={strings}
+      align="start"
+    >
+      <Button
+        variant="outline"
+        className={cn(
+          PILL,
+          "max-w-full",
+          active
+            ? "border-transparent bg-mint text-ink hover:bg-mint"
+            : "text-ink-soft",
+        )}
+      >
+        <ListFilter aria-hidden />
+        <span className="truncate">
+          {active ? `${filter.label}: ${active.label}` : filter.label}
+        </span>
+      </Button>
+    </FilterMenu>
+  );
+}
+
+function SortPill<TData>({
+  columns,
+  sorting,
+  onChange,
+  strings,
+  className,
+}: {
+  columns: Column<TData, unknown>[];
+  sorting: SortingState;
+  onChange: (sorting: SortingState) => void;
+  strings: DataTableStrings;
+  className?: string;
+}) {
+  const current = sorting[0];
+  const column = columns.find((candidate) => candidate.id === current?.id);
+  const label = column?.columnDef.meta?.label ?? strings.sort;
+  const Icon = column ? (current.desc ? ArrowDown : ArrowUp) : ArrowUpDown;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          className={cn(
+            PILL,
+            "max-w-40",
+            column
+              ? "border-transparent bg-mint text-ink hover:bg-mint"
+              : "text-ink-soft",
+            className,
+          )}
+        >
+          <Icon aria-hidden />
+          <span className="truncate">{label}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="min-w-48 rounded-2xl border-line p-2"
+      >
+        <DropdownMenuRadioGroup
+          value={current?.id ?? ""}
+          onValueChange={(id) =>
+            onChange([{ id, desc: current?.desc ?? false }])
+          }
+        >
+          {columns.map((candidate) => (
+            <DropdownMenuRadioItem
+              key={candidate.id}
+              value={candidate.id}
+              className="rounded-xl py-2.5"
+            >
+              {candidate.columnDef.meta?.label ?? candidate.id}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuRadioGroup
+          value={current ? (current.desc ? "desc" : "asc") : ""}
+          onValueChange={(direction) =>
+            onChange([
+              {
+                id: current?.id ?? columns[0].id,
+                desc: direction === "desc",
+              },
+            ])
+          }
+        >
+          <DropdownMenuRadioItem
+            value="asc"
+            className="rounded-xl py-2.5"
+          >
+            <ArrowUp aria-hidden />
+            {strings.ascending}
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem
+            value="desc"
+            className="rounded-xl py-2.5"
+          >
+            <ArrowDown aria-hidden />
+            {strings.descending}
+          </DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+const filled = (node: ReactNode) =>
+  node !== null && node !== undefined && node !== false && node !== "";
+
+function mobileParts<TData>(
+  row: Row<TData>,
+  firstColumnId: string | undefined,
+) {
+  const parts = Object.fromEntries(
+    PARTS.map((part) => [part, [] as ReactNode[]]),
+  ) as Record<MobilePart, ReactNode[]>;
+  for (const cell of row.getVisibleCells()) {
+    const mobile =
+      cell.column.columnDef.meta?.mobile ??
+      (cell.column.id === firstColumnId ? "title" : "hidden");
+    if (mobile === "hidden") continue;
+    if (typeof mobile === "string") {
+      parts[mobile].push(
+        <Fragment key={cell.id}>
+          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+        </Fragment>,
+      );
+      continue;
+    }
+    for (const part of PARTS) {
+      const node = mobile[part]?.(row.original);
+      if (filled(node))
+        parts[part].push(
+          <Fragment key={`${cell.id}:${part}`}>{node}</Fragment>,
+        );
+    }
+  }
+  return parts;
+}
+
+function MobileRow<TData>({
+  row,
+  href,
+  titleId,
+  firstColumnId,
+  gutter,
+}: {
+  row: Row<TData>;
+  href: string | undefined;
+  titleId: string;
+  firstColumnId: string | undefined;
+  gutter: DataTableGutter;
+}) {
+  const { leading, title, subtitle, trailing, badge, actions } = mobileParts(
+    row,
+    firstColumnId,
+  );
+  const { inset, end } = GUTTERS[gutter];
+  return (
+    <li
+      className={cn(
+        "group relative flex items-stretch gap-3",
+        inset,
+        href && "active:bg-canvas-deep",
+      )}
+    >
+      {href ? (
+        <Link
+          href={href}
+          aria-labelledby={titleId}
+          className="absolute inset-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-mint-deep"
+        />
+      ) : null}
+      {leading.length > 0 ? (
+        <div className="flex shrink-0 items-center py-2.75">{leading}</div>
+      ) : null}
+      <div
+        className={cn(
+          "flex min-h-11 min-w-0 flex-1 items-center gap-3 border-b border-line py-2.75 group-last:border-b-0",
+          end,
+        )}
+      >
+        <div className="grid min-w-0 flex-1 gap-0.5">
+          <div
+            id={titleId}
+            className="truncate text-sm font-medium text-ink"
+          >
+            {title}
+          </div>
+          {subtitle.length > 0 ? (
+            <div className="truncate text-2sm text-ink-soft">
+              {subtitle.map((part, index) => (
+                <Fragment key={index}>
+                  {index > 0 ? " · " : null}
+                  {part}
+                </Fragment>
+              ))}
+            </div>
+          ) : null}
+          {badge.length > 0 ? (
+            <div className="flex flex-wrap items-center gap-1.25 pt-1">
+              {badge}
+            </div>
+          ) : null}
+        </div>
+        {trailing.length > 0 ? (
+          <div className="flex shrink-0 flex-col items-end gap-0.5 text-right text-2sm text-ink-soft tabular-nums">
+            {trailing}
+          </div>
+        ) : null}
+        {actions.length > 0 ? (
+          <div
+            className="relative flex shrink-0 items-center gap-1.25"
+            onClick={stopRowClick}
+          >
+            {actions}
+          </div>
+        ) : null}
+        {href ? (
+          <ChevronRight
+            aria-hidden
+            className="-mr-1 size-4 shrink-0 text-ink-faint"
+          />
+        ) : null}
+      </div>
+    </li>
+  );
+}
+
 // ponytail: client-side paging over the full scope list; move filtering/paging to the service when a chapter exceeds a few thousand rows.
 export function DataTable<TData>({
   columns,
@@ -222,6 +542,7 @@ export function DataTable<TData>({
   rowHref,
   initialHidden = [],
   getRowId,
+  gutter = "page",
 }: {
   columns: ColumnDef<TData, unknown>[];
   data: TData[];
@@ -232,8 +553,10 @@ export function DataTable<TData>({
   rowHref?: (row: TData) => string | undefined;
   initialHidden?: string[];
   getRowId?: (row: TData) => string;
+  gutter?: DataTableGutter;
 }) {
   const router = useRouter();
+  const listId = useId();
   const searchRef = useRef<HTMLInputElement>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -293,6 +616,34 @@ export function DataTable<TData>({
     [filters],
   );
 
+  const firstColumnId = table.getAllLeafColumns()[0]?.id;
+  const visibleIds = new Set(
+    table.getVisibleLeafColumns().map((column) => column.id),
+  );
+  const pillFilters = filters.filter((filter) =>
+    visibleIds.has(filter.columnId),
+  );
+  const sortable = table
+    .getVisibleLeafColumns()
+    .filter((column) => column.getCanSort());
+  const filterValue = (columnId: string) =>
+    (table.getColumn(columnId)?.getFilterValue() as string | undefined) ?? ALL;
+  const setFilter = (columnId: string, value: string) =>
+    table
+      .getColumn(columnId)
+      ?.setFilterValue(value === ALL ? undefined : value);
+  const sortPill = (className?: string) =>
+    sortable.length > 0 ? (
+      <SortPill
+        columns={sortable}
+        sorting={sorting}
+        onChange={setSorting}
+        strings={strings}
+        className={className}
+      />
+    ) : null;
+  const pageInfo = formatMessage(strings.pageInfo, { from, to, total }, locale);
+
   const closeSearch = () => {
     setGlobalFilter("");
     setSearchOpen(false);
@@ -300,7 +651,80 @@ export function DataTable<TData>({
 
   return (
     <div className="grid gap-3">
-      <div className="overflow-hidden rounded-2xl border border-line">
+      {searchable || pillFilters.length > 0 || sortable.length > 0 ? (
+        <div className="grid gap-2 md:hidden">
+          {searchable ? (
+            <div className="flex items-center gap-1.25">
+              <div className="relative flex-1">
+                <Search
+                  aria-hidden
+                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-soft"
+                />
+                <Input
+                  type="search"
+                  value={globalFilter}
+                  onChange={(event) => setGlobalFilter(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") setGlobalFilter("");
+                  }}
+                  placeholder={strings.search}
+                  aria-label={strings.search}
+                  className="h-10 rounded-xl border-transparent bg-canvas-deep pr-10 pl-9 shadow-none [&::-webkit-search-cancel-button]:hidden"
+                />
+                {globalFilter ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={strings.clearSearch}
+                    onClick={() => setGlobalFilter("")}
+                    className="absolute top-1/2 right-1 size-8 -translate-y-1/2 text-ink-soft"
+                  >
+                    <X aria-hidden />
+                  </Button>
+                ) : null}
+              </div>
+              {sortPill("h-10 rounded-xl")}
+            </div>
+          ) : null}
+          {pillFilters.length > 0 || (!searchable && sortable.length > 0) ? (
+            <div className="flex flex-wrap items-center gap-1.25">
+              {pillFilters.map((filter) => (
+                <FilterPill
+                  key={filter.columnId}
+                  filter={filter}
+                  value={filterValue(filter.columnId)}
+                  onChange={(value) => setFilter(filter.columnId, value)}
+                  strings={strings}
+                />
+              ))}
+              {searchable ? null : <div className="ml-auto">{sortPill()}</div>}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className={cn("md:hidden", GUTTERS[gutter].bleed)}>
+        {rows.length === 0 ? (
+          <p className="border-y border-line px-4 py-10 text-center text-sm text-ink-soft">
+            {strings.noResults}
+          </p>
+        ) : (
+          <ul className="border-y border-line">
+            {rows.map((row) => (
+              <MobileRow
+                key={row.id}
+                row={row}
+                href={rowHref?.(row.original)}
+                titleId={`${listId}-${row.id}`}
+                firstColumnId={firstColumnId}
+                gutter={gutter}
+              />
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="hidden overflow-hidden rounded-2xl border border-line md:block">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((group) => (
@@ -488,7 +912,35 @@ export function DataTable<TData>({
         </Table>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 text-sm text-ink-soft">
+      <div className="flex items-center justify-between gap-3 text-sm text-ink-soft md:hidden">
+        {pageCount > 1 ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={strings.previous}
+            disabled={!table.getCanPreviousPage()}
+            onClick={() => table.previousPage()}
+            className="size-11 text-ink"
+          >
+            <ChevronLeft aria-hidden />
+          </Button>
+        ) : null}
+        <span className="flex-1 text-center tabular-nums">{pageInfo}</span>
+        {pageCount > 1 ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={strings.next}
+            disabled={!table.getCanNextPage()}
+            onClick={() => table.nextPage()}
+            className="size-11 text-ink"
+          >
+            <ChevronRight aria-hidden />
+          </Button>
+        ) : null}
+      </div>
+
+      <div className="hidden flex-wrap items-center gap-3 text-sm text-ink-soft md:flex">
         {pageCount > 1 ? (
           <Pagination className="mx-0 w-auto justify-start">
             <PaginationContent>
@@ -554,9 +1006,7 @@ export function DataTable<TData>({
             </PaginationContent>
           </Pagination>
         ) : null}
-        <span className="ml-auto">
-          {formatMessage(strings.pageInfo, { from, to, total }, locale)}
-        </span>
+        <span className="ml-auto">{pageInfo}</span>
       </div>
     </div>
   );

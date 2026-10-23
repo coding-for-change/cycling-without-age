@@ -13,7 +13,12 @@ import {
   DetailMeta,
   DetailSection,
 } from "../../../_components/detail-page";
-import { PropertyList, PropertyRow } from "../../../_components/properties";
+import {
+  PropertyList,
+  PropertyRow,
+  PropertyValue,
+} from "../../../_components/properties";
+import { SidePanel } from "../../../_components/side-panel";
 import {
   CHAPTER_DESCRIPTION_MAX,
   isHttpUrl,
@@ -24,6 +29,7 @@ import type { MapPin } from "../../_components/chapter-map";
 import { ChapterLogo } from "../../_components/chapter-logo";
 import { updateChapterAction } from "../../actions";
 import { ChapterLocation } from "./chapter-location";
+import { ChapterTimeZone } from "./chapter-time-zone";
 
 export type ChapterLabels = {
   field: InlineFieldLabels;
@@ -39,6 +45,10 @@ export type ChapterLabels = {
     description: string;
     logo: string;
   };
+  properties: string;
+  slug: string;
+  country: string;
+  createdLabel: string;
   location: string;
   about: string;
   address: AddressSearchStrings;
@@ -53,18 +63,21 @@ export type ChapterLabels = {
 export type ChapterEditorProps = {
   id: string;
   name: string;
+  slug: string;
   city: string;
   careHomeName: string | null;
   address: string | null;
   description: string | null;
   logo: string | null;
   countryName: string;
+  created: string;
   coords: Coords;
   radiusKm: number;
   timeZone: string;
   zones: readonly string[];
   others: MapPin[];
   mapEnabled: boolean;
+  editable: boolean;
   language: string;
   notation: Locale;
   labels: ChapterLabels;
@@ -73,21 +86,26 @@ export type ChapterEditorProps = {
   children: ReactNode;
 };
 
+const EMPTY = "–";
+
 export function ChapterEditor({
   id,
   name,
+  slug,
   city,
   careHomeName,
   address,
   description,
   logo,
   countryName,
+  created,
   coords,
   radiusKm,
   timeZone,
   zones,
   others,
   mapEnabled,
+  editable,
   language,
   notation,
   labels,
@@ -95,6 +113,11 @@ export function ChapterEditor({
   panels,
   children,
 }: ChapterEditorProps) {
+  const save = editable
+    ? (input: Parameters<typeof updateChapterAction>[1]) =>
+        updateChapterAction(id, input)
+    : null;
+
   return (
     <DetailEditorShell
       header={
@@ -110,7 +133,7 @@ export function ChapterEditor({
             <DetailTitle
               value={name}
               label={labels.fields.name}
-              onSave={(next) => updateChapterAction(id, { name: next })}
+              onSave={save ? (next) => save({ name: next }) : undefined}
               labels={labels.field}
             />
           }
@@ -129,74 +152,123 @@ export function ChapterEditor({
           </DetailMeta>
         </DetailHeader>
       }
-      panels={panels}
-    >
-      <ChapterLocation
-        id={id}
-        server={{ coords, address, city, radiusKm }}
-        timeZone={timeZone}
-        zones={zones}
-        others={others}
-        mapEnabled={mapEnabled}
-        language={language}
-        notation={notation}
-        labels={labels}
-      />
-
-      <DetailSection title={labels.about}>
-        <PropertyList className="gap-2">
-          <PropertyRow label={labels.fields.careHomeName}>
-            <InlineField
-              compact
-              value={careHomeName}
-              label={labels.fields.careHomeName}
-              placeholder={labels.placeholders.careHome}
-              onSave={(next) => updateChapterAction(id, { careHomeName: next })}
-              labels={labels.field}
-              className="text-2sm"
-            />
-          </PropertyRow>
-          <PropertyRow
-            label={labels.fields.description}
-            align="start"
-          >
-            <InlineField
-              compact
-              multiline
-              maxLength={CHAPTER_DESCRIPTION_MAX}
-              value={description}
-              label={labels.fields.description}
-              placeholder={labels.placeholders.description}
-              onSave={(next) => updateChapterAction(id, { description: next })}
-              labels={labels.field}
-              className="text-2sm"
-            />
-          </PropertyRow>
-          <PropertyRow
-            label={labels.fields.logo}
-            align="start"
-          >
-            <div className="flex items-start gap-3">
-              <ChapterLogo
-                logo={logo}
-                name={name}
-                className="mt-0.5 size-8"
-              />
-              <InlineField
-                compact
-                type="url"
-                inputMode="url"
-                value={logo}
+      panels={
+        <>
+          <SidePanel title={labels.properties}>
+            <PropertyList>
+              <PropertyRow label={labels.slug}>
+                <PropertyValue className="font-mono">{slug}</PropertyValue>
+              </PropertyRow>
+              <PropertyRow label={labels.country}>
+                <PropertyValue>{countryName || EMPTY}</PropertyValue>
+              </PropertyRow>
+              <PropertyRow label={labels.fields.careHomeName}>
+                {save ? (
+                  <InlineField
+                    compact
+                    value={careHomeName}
+                    label={labels.fields.careHomeName}
+                    placeholder={labels.placeholders.careHome}
+                    onSave={(next) => save({ careHomeName: next })}
+                    labels={labels.field}
+                    className="text-2sm"
+                  />
+                ) : (
+                  <PropertyValue muted={!careHomeName}>
+                    {careHomeName ?? EMPTY}
+                  </PropertyValue>
+                )}
+              </PropertyRow>
+              <PropertyRow
                 label={labels.fields.logo}
-                placeholder={labels.placeholders.logo}
-                validate={isHttpUrl}
-                onSave={(next) => updateChapterAction(id, { logo: next })}
-                labels={labels.field}
-                className="min-w-0 flex-1 font-mono text-2sm break-all"
-              />
-            </div>
-          </PropertyRow>
-        </PropertyList>
+                align="start"
+              >
+                {save ? (
+                  <InlineField
+                    compact
+                    type="url"
+                    inputMode="url"
+                    value={logo}
+                    label={labels.fields.logo}
+                    placeholder={labels.placeholders.logo}
+                    validate={isHttpUrl}
+                    onSave={(next) => save({ logo: next })}
+                    labels={labels.field}
+                    className="min-w-0 font-mono text-2sm break-all"
+                  />
+                ) : (
+                  <PropertyValue
+                    muted={!logo}
+                    className="font-mono"
+                  >
+                    {logo ?? EMPTY}
+                  </PropertyValue>
+                )}
+              </PropertyRow>
+              <PropertyRow
+                label={labels.timeZone}
+                htmlFor={save ? `time-zone-${id}` : undefined}
+              >
+                {save ? (
+                  <ChapterTimeZone
+                    id={id}
+                    value={timeZone}
+                    zones={zones}
+                    labels={{
+                      timeZoneHint: labels.timeZoneHint,
+                      field: labels.field,
+                    }}
+                  />
+                ) : (
+                  <PropertyValue>{timeZone.replace(/_/g, " ")}</PropertyValue>
+                )}
+              </PropertyRow>
+              <PropertyRow label={labels.createdLabel}>
+                <PropertyValue>{created}</PropertyValue>
+              </PropertyRow>
+            </PropertyList>
+          </SidePanel>
+
+          <ChapterLocation
+            id={id}
+            server={{ coords, address, city, radiusKm }}
+            others={others}
+            mapEnabled={mapEnabled}
+            editable={editable}
+            language={language}
+            notation={notation}
+            labels={labels}
+          />
+
+          {panels}
+        </>
+      }
+    >
+      <DetailSection
+        title={labels.about}
+        bordered={false}
+      >
+        {save ? (
+          <InlineField
+            multiline
+            maxLength={CHAPTER_DESCRIPTION_MAX}
+            value={description}
+            label={labels.fields.description}
+            placeholder={labels.placeholders.description}
+            onSave={(next) => save({ description: next })}
+            labels={labels.field}
+            className="text-sm"
+          />
+        ) : (
+          <p
+            className={cn(
+              "max-w-prose text-sm whitespace-pre-line",
+              !description && "text-ink-faint",
+            )}
+          >
+            {description ?? EMPTY}
+          </p>
+        )}
       </DetailSection>
 
       {children}

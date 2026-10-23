@@ -80,7 +80,7 @@ export function RankingDrawer({
       id,
       accessorFn: (row) => get(row) ?? -1,
       enableHiding: true,
-      meta: { label },
+      meta: { label, mobile: id === metric ? "trailing" : "hidden" },
       cell: ({ row }) => (
         <span className="text-ink tabular-nums">{render(row.original)}</span>
       ),
@@ -91,7 +91,16 @@ export function RankingDrawer({
         id: "rank",
         accessorFn: (row) => row.rank ?? LAST,
         enableHiding: false,
-        meta: { label: strings.columns.rank },
+        meta: {
+          label: strings.columns.rank,
+          mobile: {
+            leading: (row) => (
+              <span className="w-5 text-right text-2sm text-ink-faint tabular-nums">
+                {row.rank ?? "–"}
+              </span>
+            ),
+          },
+        },
         cell: ({ row }) => (
           <span className="text-ink-faint tabular-nums">
             {row.original.rank ?? "–"}
@@ -105,6 +114,10 @@ export function RankingDrawer({
         meta: {
           label: strings.columns.name,
           searchValue: (row) => `${row.name} ${row.detail ?? ""}`,
+          mobile: {
+            title: (row) => row.name,
+            subtitle: (row) => row.detail,
+          },
         },
         cell: ({ row }) => (
           <span className="grid">
@@ -180,7 +193,7 @@ export function RankingDrawer({
     return all.filter((column): column is ColumnDef<DrawerRow, unknown> =>
       Boolean(column),
     );
-  }, [tab, notation, language, strings]);
+  }, [tab, metric, notation, language, strings]);
 
   return (
     <AppDrawer
@@ -205,6 +218,7 @@ export function RankingDrawer({
           locale={language}
           rowHref={(row) => row.href}
           getRowId={(row) => row.key}
+          gutter="drawer"
         />
       ) : null}
     </AppDrawer>

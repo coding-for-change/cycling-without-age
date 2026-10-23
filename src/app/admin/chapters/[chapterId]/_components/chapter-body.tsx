@@ -1,16 +1,12 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { Armchair, Inbox, Users } from "lucide-react";
 import { QrCode } from "@/components/qr-code";
 import { BackLink } from "../../../_components/detail-page";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
-import {
-  PROPERTY_BUTTON,
-  PropertyList,
-  PropertyRow,
-  PropertyValue,
-} from "../../../_components/properties";
+import { PROPERTY_BUTTON } from "../../../_components/properties";
 import { ActivityFeed } from "../../../_components/activity-feed";
 import { withHandOverNames } from "../../../_components/hand-over-names";
 import { fieldLabels } from "../../../_components/field-labels";
@@ -30,8 +26,11 @@ import { resolveLocale } from "@/lib/format";
 import { formatInstantDate } from "@/lib/instant-date";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { supportedTimeZones } from "@/lib/time-zone";
+import { isCountryAdmin } from "@/lib/access";
 import { readActiveScope } from "../../../active-scope";
+import { canReach } from "../../../nav";
 import { ChapterEditor } from "./chapter-editor";
+import { ChapterSettings, ChapterSettingsSkeleton } from "./chapter-settings";
 import { deleteChapterAction } from "../../actions";
 import type { AdminSearchParams } from "../../../active-scope";
 
@@ -42,14 +41,10 @@ export async function ChapterBody({
   params: Promise<{ chapterId: string }>;
   searchParams: Promise<AdminSearchParams>;
 }) {
-  const [{ session, scopeQuery, chapters: inScope }, { chapterId }, query] =
-    await Promise.all([
-      readActiveScope(searchParams, "chapters"),
-      params,
-      searchParams,
-    ]);
+  const [{ session, scope, scopeQuery }, { chapterId }, query] =
+    await Promise.all([readActiveScope(searchParams), params, searchParams]);
   const shown = historyShown(query);
-  if (!inScope.some((entry) => entry.id === chapterId)) notFound();
+  if (!scope.chapters.some((entry) => entry.id === chapterId)) notFound();
 
   const [
     chapter,
@@ -78,11 +73,14 @@ export async function ChapterBody({
   const strings = dict.admin.chapters;
   const detail = strings.detail;
 
-  const backHref = `/admin/chapters${scopeQuery}`;
+  const canManage = isCountryAdmin(session.access, chapter.countryId);
+  const backHref = canReach(scope, "chapters")
+    ? `/admin/chapters${scopeQuery}`
+    : null;
   const url = joinUrl(chapter.slug);
   const chapterQuery = `?chapter=${encodeURIComponent(chapter.slug)}`;
 
-  const visible = new Set(inScope.map((entry) => entry.id));
+  const visible = new Set(scope.chapters.map((entry) => entry.id));
   const others = all
     .filter((entry) => entry.id !== chapterId && visible.has(entry.id))
     .map((entry) => ({
@@ -116,22 +114,25 @@ export async function ChapterBody({
 
   const panels = (
     <>
-      <SidePanel title={detail.properties}>
-        <PropertyList>
-          <PropertyRow label={detail.slug}>
-            <PropertyValue className="font-mono">{chapter.slug}</PropertyValue>
-          </PropertyRow>
-          <PropertyRow label={detail.country}>
-            <PropertyValue>{country?.name ?? "–"}</PropertyValue>
-          </PropertyRow>
-          <PropertyRow label={detail.createdLabel}>
-            <PropertyValue>
-              {formatInstantDate(chapter.createdAt, notation, chapter.timeZone)}
-            </PropertyValue>
-          </PropertyRow>
-        </PropertyList>
+      <SidePanel title={detail.joinLink}>
+        <div className="w-fit rounded-(--r-card) bg-mint-tint p-3">
+          <QrCode
+            value={url}
+            className="size-24"
+          />
+        </div>
+        <p className="text-2sm text-ink-soft">
+          {dict.admin.settings.joinLink.body}
+        </p>
+        <p className="font-mono text-xs break-all text-ink-soft">{url}</p>
+        <JoinLinkActions
+          url={url}
+          slug={chapter.slug}
+          labels={dict.admin.settings.joinLink}
+          className="grid gap-1"
+          buttonClassName={PROPERTY_BUTTON}
+        />
       </SidePanel>
-
       <SidePanel title={detail.people}>
         <ul className="grid gap-0.5">
           {people.map(({ icon: Icon, label, count, href }) => (
@@ -151,36 +152,28 @@ export async function ChapterBody({
           ))}
         </ul>
       </SidePanel>
-
-      <SidePanel title={detail.joinLink}>
-        <div className="w-fit rounded-(--r-card) bg-mint-tint p-3">
-          <QrCode
-            value={url}
-            className="size-24"
-          />
-        </div>
-        <p className="font-mono text-xs break-all text-ink-soft">{url}</p>
-        <JoinLinkActions
-          url={url}
-          slug={chapter.slug}
-          labels={dict.admin.settings.joinLink}
-          className="grid gap-1"
-          buttonClassName={PROPERTY_BUTTON}
-        />
-      </SidePanel>
     </>
   );
 
   return (
     <>
-      <BackLink
-        href={backHref}
-        label={detail.back}
-      />
+      {backHref ? (
+        <BackLink
+          href={backHref}
+          label={detail.back}
+        />
+      ) : null}
 
       <ChapterEditor
         id={chapter.id}
         name={chapter.name}
+        slug={chapter.slug}
+        created={formatInstantDate(
+          chapter.createdAt,
+          notation,
+          chapter.timeZone,
+        )}
+        editable={canManage}
         city={chapter.city}
         careHomeName={chapter.careHomeName}
         address={chapter.address}
@@ -208,6 +201,10 @@ export async function ChapterBody({
             logo: strings.fields.logo,
           },
           placeholders: detail.placeholders,
+          properties: detail.properties,
+          slug: detail.slug,
+          country: detail.country,
+          createdLabel: detail.createdLabel,
           location: detail.location,
           about: detail.about,
           address: strings.create.address,
@@ -219,35 +216,45 @@ export async function ChapterBody({
           timeZoneHint: detail.timeZoneHint,
         }}
         trash={
-          <ConfirmDeleteDialog
-            key="trash"
-            variant="icon"
-            name={chapter.name}
-            consequences={deletionConsequences(
-              {
-                members: footprint.members,
-                passengers: footprint.passengers,
-                pending: footprint.pendingApplications,
-                rides: footprint.rides,
-                ...fleetFootprint,
-              },
-              dict.admin.deletion,
-              language,
-            )}
-            labels={{
-              ...detail.delete,
-              consequences: dict.admin.deletion.consequences,
-              errors: strings.errors,
-            }}
-            cancel={strings.cancel}
-            locale={language}
-            action={deleteChapterAction}
-            input={chapter.id}
-            redirectTo={backHref}
-          />
+          canManage ? (
+            <ConfirmDeleteDialog
+              key="trash"
+              variant="icon"
+              name={chapter.name}
+              consequences={deletionConsequences(
+                {
+                  members: footprint.members,
+                  passengers: footprint.passengers,
+                  pending: footprint.pendingApplications,
+                  rides: footprint.rides,
+                  ...fleetFootprint,
+                },
+                dict.admin.deletion,
+                language,
+              )}
+              labels={{
+                ...detail.delete,
+                consequences: dict.admin.deletion.consequences,
+                errors: strings.errors,
+              }}
+              cancel={strings.cancel}
+              locale={language}
+              action={deleteChapterAction}
+              input={chapter.id}
+              redirectTo={backHref ?? "/admin"}
+            />
+          ) : null
         }
         panels={panels}
       >
+        <Suspense fallback={<ChapterSettingsSkeleton />}>
+          <ChapterSettings
+            chapterId={chapter.id}
+            dict={dict}
+            language={language}
+          />
+        </Suspense>
+
         <HistorySection
           title={detail.history}
           pathname={`/admin/chapters/${chapterId}`}

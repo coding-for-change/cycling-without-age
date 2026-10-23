@@ -4,11 +4,10 @@ import { commands as chatCommands } from "@/features/chat/commands";
 import { commands as fleetCommands } from "@/features/fleet/commands";
 import { commands as membershipCommands } from "@/features/membership/commands";
 import { commands as passengerCommands } from "@/features/passengers/commands";
-import { commands as profileCommands } from "@/features/profile/commands";
 import { commands as rideRequestCommands } from "@/features/ride-requests/commands";
 import { commands as rideCommands } from "@/features/rides/commands";
 import { commands as trainingCommands } from "@/features/training/commands";
-import type { AdminScope, Perspective } from "@/lib/access";
+import type { ActiveScope, AdminScope, Perspective } from "@/lib/access";
 import { collectCommands } from "@/lib/commands";
 import type {
   CommandContributor,
@@ -21,12 +20,13 @@ import { LOCALE_LABELS, locales } from "@/lib/i18n/locales";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
 import { formatMessage } from "@/lib/i18n/format";
 import { themes } from "@/lib/theme";
-import { NAV, type NavItem, type NavKey } from "./nav";
+import { NAV, navHref, type NavItem, type NavKey } from "./nav";
 import { scopeChoices } from "./scopes";
 
 export type AdminCommandContext = {
   perspectives: readonly Perspective[];
   locale: Locale;
+  active?: ActiveScope;
 };
 
 const CONTRIBUTORS: readonly CommandContributor[] = [
@@ -39,7 +39,6 @@ const CONTRIBUTORS: readonly CommandContributor[] = [
   trainingCommands,
   rideRequestCommands,
   fleetCommands,
-  profileCommands,
 ];
 
 /** Search-assist only, never displayed — English regardless of the dictionary. */
@@ -89,6 +88,22 @@ function staticEntries(dict: Dictionary): CommandEntry[] {
   const rest = contributed.filter((entry) => !navigate.includes(entry));
 
   return [...navigate, ...rest];
+}
+
+function withResolvedHrefs(
+  commands: ResolvedCommand[],
+  scope: AdminScope,
+  active?: ActiveScope,
+): ResolvedCommand[] {
+  return commands.flatMap((command) => {
+    const { run } = command;
+    if (command.group !== "navigate" || run.kind !== "navigate")
+      return [command];
+    const item = NAV.find((row) => row.resolve && row.href === run.href);
+    if (!item) return [command];
+    const href = navHref(item, scope, active);
+    return href ? [{ ...command, run: { kind: "navigate", href } }] : [];
+  });
 }
 
 const perspectiveCommands = (
@@ -187,7 +202,11 @@ export function adminCommands(
   ctx: AdminCommandContext,
 ): ResolvedCommand[] {
   return [
-    ...collectCommands(staticEntries(dict), scope),
+    ...withResolvedHrefs(
+      collectCommands(staticEntries(dict), scope),
+      scope,
+      ctx.active,
+    ),
     ...perspectiveCommands(dict, ctx.perspectives),
     ...scopeCommands(dict, scope, ctx.locale),
     ...accountCommands(dict, ctx.locale),

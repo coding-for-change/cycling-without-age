@@ -66,3 +66,12 @@ export function DetailSkeleton({
     </>
   );
 }
+
+export const CHAPTER_PANELS = ["h-64", "h-80", "h-72", "h-28"];
+export const CHAPTER_SECTIONS: ("text" | "list")[] = [
+  "text",
+  "list",
+  "list",
+  "list",
+  "text",
+];

@@ -11,7 +11,7 @@ import type {
 import type { ResolvedCommand } from "@/lib/commands";
 import en from "@/messages/app/en.json";
 import { adminCommands, type AdminCommandContext } from "./commands";
-import { navFor } from "./nav";
+import { resolveNav } from "./nav";
 
 const DE: ScopeCountry = { id: "c-de", code: "DE", name: "Germany" };
 const DK: ScopeCountry = { id: "c-dk", code: "DK", name: "Denmark" };
@@ -86,7 +86,7 @@ describe("navigate parity with NAV", () => {
     ["country admin + foreign chapter admin", stacked],
   ])("covers every visible row exactly once for a %s", (_label, scope) => {
     expect([...hrefs(run(scope))].sort()).toEqual(
-      navFor(scope)
+      resolveNav(scope, en.admin.nav)
         .map((item) => item.href)
         .sort(),
     );
@@ -94,7 +94,7 @@ describe("navigate parity with NAV", () => {
 
   it("keeps the sidebar's own order", () => {
     expect(hrefs(run(superadmin))).toEqual(
-      navFor(superadmin).map((item) => item.href),
+      resolveNav(superadmin, en.admin.nav).map((item) => item.href),
     );
   });
 
@@ -105,7 +105,7 @@ describe("navigate parity with NAV", () => {
         c.icon,
       ]),
     );
-    for (const item of navFor(superadmin))
+    for (const item of resolveNav(superadmin, en.admin.nav))
       expect(icons.get(item.href)).toBe(item.icon);
   });
 
@@ -116,7 +116,9 @@ describe("navigate parity with NAV", () => {
 
 describe("views of a destination", () => {
   it("only open a page the sidebar already lists", () => {
-    const pages = new Set(navFor(berlinAdmin).map((item) => item.href));
+    const pages = new Set(
+      resolveNav(berlinAdmin, en.admin.nav).map((item) => item.href),
+    );
     expect(views(run(berlinAdmin)).length).toBeGreaterThan(0);
     for (const href of views(run(berlinAdmin)))
       expect(pages.has(pageOf(href))).toBe(true);
@@ -283,5 +285,64 @@ describe("ids", () => {
   ])("are unique across every group for a %s", (_label, scope, context) => {
     const ids = run(scope, context).map((c) => c.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe("my chapter", () => {
+  const myChapter = (commands: ResolvedCommand[]) =>
+    inGroup(commands, "navigate").find((c) => c.id === "my-chapter");
+  const sidebarHref = (
+    scope: AdminScope,
+    active?: Parameters<typeof resolveNav>[2],
+  ) =>
+    resolveNav(scope, en.admin.nav, active).find((i) => i.key === "myChapter")
+      ?.href;
+
+  it("links a single-chapter admin straight to their chapter", () => {
+    expect(sidebarHref(berlinAdmin)).toBe("/admin/chapters/ch-berlin");
+    expect(myChapter(run(berlinAdmin))?.run).toEqual({
+      kind: "navigate",
+      href: "/admin/chapters/ch-berlin",
+    });
+  });
+
+  it("follows the active chapter for an admin of several", () => {
+    const active = { kind: "chapter" as const, chapter: AARHUS };
+    expect(sidebarHref(stacked, active)).toBe("/admin/chapters/ch-aarhus");
+    expect(myChapter(run(stacked, { ...ctx(), active }))?.run).toEqual({
+      kind: "navigate",
+      href: "/admin/chapters/ch-aarhus",
+    });
+  });
+
+  it("steps aside outside a chapter scope when the Chapters list is there", () => {
+    const active = { kind: "all" as const };
+    expect(sidebarHref(superadmin, active)).toBeUndefined();
+    expect(myChapter(run(superadmin, { ...ctx(), active }))).toBeUndefined();
+  });
+
+  it("falls back to the picker when the scope is unknown", () => {
+    expect(sidebarHref(superadmin)).toBe("/admin/settings");
+  });
+
+  it("sends a multi-chapter admin without the Chapters list to the picker", () => {
+    const twoChapters = scopeOf({
+      ...none,
+      memberships: [
+        { chapterId: BERLIN.id, roles: ["admin"] },
+        { chapterId: AARHUS.id, roles: ["admin"] },
+      ],
+    });
+    expect(sidebarHref(twoChapters, { kind: "all" })).toBe("/admin/settings");
+  });
+
+  it("is hidden when there is no chapter in reach", () => {
+    const empty = resolveAdminScope(
+      { ...none, countryAdminOf: ["c-xx"] },
+      [...COUNTRIES, { id: "c-xx", code: "XX", name: "Nowhere" }],
+      CHAPTERS,
+    );
+    expect(sidebarHref(empty)).toBeUndefined();
+    expect(myChapter(run(empty))).toBeUndefined();
   });
 });

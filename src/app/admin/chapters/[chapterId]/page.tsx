@@ -1,7 +1,11 @@
 import { Suspense } from "react";
 import { AdminPageShell } from "../../_components/admin-page";
 import { ChapterBody } from "./_components/chapter-body";
-import { DetailSkeleton } from "../../_components/detail-skeleton";
+import {
+  CHAPTER_PANELS,
+  CHAPTER_SECTIONS,
+  DetailSkeleton,
+} from "../../_components/detail-skeleton";
 import type { AdminSearchParams } from "../../active-scope";
 
 export default function ChapterPage({
@@ -16,8 +20,8 @@ export default function ChapterPage({
       <Suspense
         fallback={
           <DetailSkeleton
-            panels={["h-28", "h-24", "h-56"]}
-            sections={["text", "text"]}
+            panels={CHAPTER_PANELS}
+            sections={CHAPTER_SECTIONS}
           />
         }
       >

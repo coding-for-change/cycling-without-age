@@ -242,6 +242,10 @@
         "radius": "How far it rides",
         "saved": "Saved {when}",
         "saving": "Saving",
+        "sections": {
+          "booking": "Booking & riding hours",
+          "notifications": "Notifications & reminders"
+        },
         "slug": "Web address",
         "started": "Started {date}",
         "timeZone": "Time zone",
@@ -575,7 +579,7 @@
       "passengers": "Passengers",
       "reports": "Reports",
       "rides": "Rides",
-      "settings": "Settings",
+      "myChapter": "My chapter",
       "training": "Training"
     },
     "navGroups": {
@@ -680,9 +684,9 @@
         "body": "Every trip your chapter has booked, from the request to the wave goodbye at the door. Nothing booked yet.",
         "title": "Rides"
       },
-      "settings": {
-        "body": "How far your chapter will ride, who to reach, and the details on the chapter's own page.",
-        "title": "Settings"
+      "myChapter": {
+        "title": "My chapter",
+        "body": "Pick the chapter you look after. Its page holds the join link, riding hours, booking rules and everything else it runs on."
       },
       "training": {
         "title": "Training",
@@ -1085,8 +1089,7 @@
         "copied": "Link copied.",
         "copy": "Copy link",
         "downloadPng": "Save QR code as PNG",
-        "poster": "Print the poster",
-        "title": "Join link"
+        "poster": "Print the poster"
       },
       "notifications": {
         "applicationPush": {
@@ -1118,10 +1121,6 @@
           "label": "Reply-to address",
           "placeholder": "hello@example.com"
         },
-        "status": {
-          "saved": "Saved {when}",
-          "saving": "Saving"
-        },
         "title": "Notifications",
         "welcomeNote": {
           "hint": "A few lines from you, highlighted in the welcome mail every new pilot and passenger gets.",
@@ -1133,7 +1132,6 @@
           "hint": "Switch it off and new requests still wait in the inbox — with an email two minutes later, unless somebody has already read them in the app."
         }
       },
-      "pickChapter": "Pick a chapter in the sidebar to see its join link.",
       "postRide": {
         "body": "What pilots see when they finish a ride: where to return the trishaw, what to check, who to call.",
         "hint": "Markdown works: **bold**, lists, links.",
@@ -1179,21 +1177,6 @@
         },
         "title": "Staffing"
       },
-      "support": {
-        "body": "Something in the admin acting up? One sentence is enough — it lands with the people who look after this.",
-        "drawer": {
-          "cancel": "Cancel",
-          "description": "A sentence or two is plenty. It goes straight to the people who can fix it.",
-          "done": "Thank you. That helps more than you'd think.",
-          "failed": "That didn't send. Try again in a moment.",
-          "placeholder": "I tapped Save on my profile and the screen went blank.",
-          "submit": "Send it",
-          "title": "Tell us what happened",
-          "tooShort": "A few more words, please — at least ten characters."
-        },
-        "open": "Report a problem",
-        "title": "Report a problem"
-      },
       "hours": {
         "title": "Riding hours",
         "body": "When your chapter rides. The week shades the rest, and the scheduling drawer warns when a ride falls outside.",
@@ -1229,7 +1212,6 @@
         "shade": "Outside riding hours"
       },
       "booking": {
-        "title": "Booking",
         "body": "How far ahead rides are planned, and what a new ride starts from.",
         "leadTime": {
           "label": "Minimum notice",
@@ -1262,8 +1244,10 @@
     },
     "table": {
       "all": "All",
+      "ascending": "Ascending",
       "clearSearch": "Clear search",
       "columns": "Columns",
+      "descending": "Descending",
       "filterAria": "Filter by {column}",
       "next": "Next",
       "noResults": "Nothing matches.",
@@ -1271,6 +1255,7 @@
       "pageInfo": "{from}–{to} of {total}",
       "previous": "Previous",
       "search": "Search…",
+      "sort": "Sort",
       "sortAria": "Sort by {column}"
     },
     "user": {
