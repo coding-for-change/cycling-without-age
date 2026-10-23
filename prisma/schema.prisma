@@ -92,6 +92,8 @@ model User {
   confirmedPilotSteps  PilotStepTick[]          @relation("pilotStepConfirmer")
   trainingExemptions   TrainingExemption[]      @relation("trainingExemptionOwner")
   grantedExemptions    TrainingExemption[]      @relation("trainingExemptionGranter")
+  adminInvites         AdminInvite[]            @relation("adminInvitee")
+  adminInvitesSent     AdminInvite[]            @relation("adminInviter")
 
   @@unique([email])
   @@unique([phoneNumber])
@@ -100,17 +102,18 @@ model User {
 }
 
 model Session {
-  id                   String   @id
+  id                   String    @id
   expiresAt            DateTime
   token                String
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  ipAddress            String?  @db.Text
-  userAgent            String?  @db.Text
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  ipAddress            String?   @db.Text
+  userAgent            String?   @db.Text
   userId               String
-  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  impersonatedBy       String?  @db.Text
-  activeOrganizationId String?  @db.Text
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  impersonatedBy       String?   @db.Text
+  activeOrganizationId String?   @db.Text
+  passkeyVerifiedAt    DateTime?
 
   @@unique([token])
   @@index([userId])
@@ -203,7 +206,6 @@ model Organization {
   rides                Ride[]
   storageSites         StorageLocationChapter[]
   ownedLocations       StorageLocation[]        @relation("ownedLocations")
-  rideLocations        RideLocation[]
   operatingWindows     ChapterOperatingWindow[]
   closures             ChapterClosure[]
   rideRequests         RideRequest[]
@@ -272,6 +274,7 @@ model Country {
   trainingFamilies     TrainingCourseFamily[]
   trainingRequirements TrainingRequirement[]
   pools                StorageLocation[]
+  adminInvites         AdminInvite[]
 
   @@unique([code])
   @@map("country")
@@ -288,6 +291,31 @@ model CountryAdmin {
   @@unique([userId, countryId])
   @@index([countryId])
   @@map("country_admin")
+}
+
+enum AdminInviteKind {
+  superadmin
+  countryAdmin
+}
+
+model AdminInvite {
+  id              String          @id @default(uuid())
+  kind            AdminInviteKind
+  countryId       String?
+  country         Country?        @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User            @relation("adminInvitee", fields: [userId], references: [id], onDelete: Cascade)
+  invitedByUserId String?
+  invitedBy       User?           @relation("adminInviter", fields: [invitedByUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime        @default(now())
+  expiresAt       DateTime
+  acceptedAt      DateTime?
+  revokedAt       DateTime?
+
+  @@index([userId])
+  @@index([countryId])
+  @@index([invitedByUserId])
+  @@map("admin_invite")
 }
 
 model ChapterSettings {
@@ -419,14 +447,11 @@ model Passenger {
   rideRequests RideRequestPassenger[]
   activity     ActivityEvent[]
 
-  rideLocationId      String?
-  rideLocation        RideLocation? @relation(fields: [rideLocationId], references: [id], onDelete: SetNull)
-  needsWheelchairBike Boolean       @default(false)
-  note                String?       @db.Text
+  needsWheelchairBike Boolean @default(false)
+  note                String? @db.Text
 
   @@index([chapterId])
   @@index([managedByUserId])
-  @@index([rideLocationId])
   @@map("passenger")
 }
 
@@ -437,7 +462,9 @@ enum CareRequestStatus {
 }
 
 /// An admin asks someone who already has an account to look after a rider.
-/// The rider only becomes a Passenger once that person accepts.
+/// The rider only becomes a Passenger once that person accepts. A request
+/// that names its passengerId while pending links a rider who already rides
+/// with their own account; accepting makes that person the rider's manager.
 model CareRequest {
   id                String            @id @default(cuid())
   chapterId         String
@@ -543,6 +570,8 @@ enum ActivityType {
   trainingExemptionRevoked
   inPersonTrainingConfirmed
   riderHandedOver
+  superadminGranted
+  superadminRemoved
 }
 
 model ActivityEvent {
@@ -821,7 +850,6 @@ enum RideLogType {
 /// Where a rider stands on a ride, from booking to the closed roster.
 enum RosterAttendance {
   booked
-  confirmed
   checkedIn
   completed
   noShow
@@ -1161,9 +1189,6 @@ model Ride {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  rideLocationId String?
-  rideLocation   RideLocation? @relation(fields: [rideLocationId], references: [id], onDelete: SetNull)
-
   request RideRequest?
 
   @@index([chapterId, startsAt])
@@ -1171,42 +1196,7 @@ model Ride {
   @@index([seriesId])
   @@index([cancelledByUserId])
   @@index([completedByUserId])
-  @@index([rideLocationId, startsAt])
   @@map("ride")
-}
-
-enum RideLocationKind {
-  careCenter
-  residence
-  publicPlace
-  other
-}
-
-model RideLocation {
-  id             String           @id @default(cuid())
-  chapterId      String
-  chapter        Organization     @relation(fields: [chapterId], references: [id], onDelete: Cascade)
-  kind           RideLocationKind @default(careCenter)
-  name           String           @db.VarChar(160)
-  address        String?          @db.Text
-  latitude       Float?
-  longitude      Float?
-  contactName    String?          @db.VarChar(120)
-  contactPhone   String?          @db.VarChar(40)
-  contactEmail   String?          @db.VarChar(254)
-  notes          String?          @db.Text
-  typicalRideKm  Decimal?         @db.Decimal(6, 1)
-  defaultMinutes Int?
-  archivedAt     DateTime?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-
-  rides        Ride[]
-  passengers   Passenger[]
-  rideRequests RideRequest[]
-
-  @@index([chapterId, archivedAt])
-  @@map("ride_location")
 }
 
 model RidePhoto {
@@ -1290,7 +1280,6 @@ model RideRosterEntry {
   guestName      String?          @db.Text
   position       Int              @default(0)
   attendance     RosterAttendance @default(booked)
-  confirmedAt    DateTime?
   cancelledAt    DateTime?
   checkedInAt    DateTime?
   bookedByUserId String?
@@ -1650,10 +1639,8 @@ model RideRequest {
   contactPhone    String? @db.VarChar(40)
   contactEmail    String? @db.VarChar(254)
 
-  rideLocationId  String?
-  rideLocation    RideLocation? @relation(fields: [rideLocationId], references: [id], onDelete: SetNull)
-  pickupName      String?       @db.VarChar(160)
-  pickupAddress   String?       @db.Text
+  pickupName      String? @db.VarChar(160)
+  pickupAddress   String? @db.Text
   pickupLatitude  Float?
   pickupLongitude Float?
 
@@ -1687,7 +1674,6 @@ model RideRequest {
 
   @@index([chapterId, status, requestedStartsAt])
   @@index([requesterUserId, createdAt])
-  @@index([rideLocationId])
   @@index([trishawTypeId])
   @@index([decidedByUserId])
   @@map("ride_request")

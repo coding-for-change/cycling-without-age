@@ -2,6 +2,7 @@ import { recordEventInput } from "./schemas";
 import type { RecordEventInput } from "./schemas";
 import {
   findEventsOfChapter,
+  findEventsOfChapters,
   findEventsOfPassenger,
   findEventsOfUser,
   insertEvent,
@@ -42,6 +43,9 @@ export const listForUser = (
 
 export const listForChapter = (chapterId: string, take: number) =>
   findEventsOfChapter(chapterId, take);
+
+export const listForChapters = async (chapterIds: string[], take: number) =>
+  chapterIds.length ? findEventsOfChapters(chapterIds, take) : [];
 
 /** The history of a rider without an account of their own. */
 export const listForPassenger = (passengerId: string, take: number) =>

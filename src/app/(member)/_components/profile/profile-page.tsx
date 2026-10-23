@@ -15,6 +15,7 @@ import {
   type SubjectRef,
 } from "@/features/person-profiles";
 import { AddRiderDrawer } from "@/features/passengers/components/add-rider-drawer";
+import { ManagedRiderNeeds } from "@/features/passengers/components/managed-rider-needs";
 import { ProfileEditor } from "@/features/person-profiles/components/profile-editor";
 import {
   ProfileSection,
@@ -100,7 +101,12 @@ async function PeopleBody() {
         mode="list"
         add={
           <AddRiderDrawer
-            strings={{ ...dict.profile, ...dict.riders, open: dict.riders.add }}
+            strings={{
+              ...dict.profile,
+              ...dict.riders,
+              open: dict.riders.add,
+              needs: dict.passenger.riderNeeds,
+            }}
             lookup={{ search: suggestAddresses, resolve: resolveAddress }}
             locale={language}
           />
@@ -154,14 +160,24 @@ async function ProfileBody({
 
   if (!canEdit(relation))
     return (
-      <ProfileView
-        name={target.name}
-        avatar={avatar}
-        profile={personProfiles.toPublicProfile(own, target.birthDate)}
-        showAccessibility={seesHealthDetails(session, relation, target)}
-        strings={strings}
-        language={language}
-      />
+      <>
+        <ProfileView
+          name={target.name}
+          avatar={avatar}
+          profile={personProfiles.toPublicProfile(own, target.birthDate)}
+          showAccessibility={seesHealthDetails(session, relation, target)}
+          strings={strings}
+          language={language}
+        />
+        {target.managedByUserId === session.user.id ? (
+          <Suspense fallback={null}>
+            <NeedsForManager
+              subject={target.subject}
+              viewerId={session.user.id}
+            />
+          </Suspense>
+        ) : null}
+      </>
     );
 
   return (
@@ -196,6 +212,14 @@ async function ProfileBody({
           />
         </Suspense>
       ) : null}
+      {isOwn ? null : (
+        <Suspense fallback={null}>
+          <NeedsForManager
+            subject={target.subject}
+            viewerId={session.user.id}
+          />
+        </Suspense>
+      )}
       {isOwn ? (
         <Suspense fallback={null}>
           <ManagedRiders
@@ -212,6 +236,7 @@ async function ProfileBody({
                     ...dict.profile,
                     ...dict.riders,
                     open: dict.riders.add,
+                    needs: dict.passenger.riderNeeds,
                   }}
                   lookup={{ search: suggestAddresses, resolve: resolveAddress }}
                   locale={language}
@@ -222,6 +247,34 @@ async function ProfileBody({
         </Suspense>
       ) : null}
     </>
+  );
+}
+
+async function NeedsForManager({
+  subject,
+  viewerId,
+}: {
+  subject: SubjectRef;
+  viewerId: string;
+}) {
+  const passengerId =
+    subject.kind === "passenger"
+      ? subject.id
+      : (await passengers.getOwnPassenger(subject.id))?.id;
+  if (!passengerId) return null;
+  const [needs, dict] = await Promise.all([
+    passengers.getManagedRiderNeeds(passengerId, viewerId).catch(() => null),
+    getDictionary(),
+  ]);
+  if (!needs) return null;
+  return (
+    <ManagedRiderNeeds
+      key={passengerId}
+      passengerId={passengerId}
+      initial={needs}
+      strings={dict.passenger.riderNeeds}
+      labels={dict.account.field}
+    />
   );
 }
 

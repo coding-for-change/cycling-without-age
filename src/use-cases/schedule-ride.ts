@@ -2,7 +2,6 @@ import { chapters } from "@/features/chapters";
 import { fleet } from "@/features/fleet";
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
-import { rideLocations } from "@/features/ride-locations";
 import {
   returnWindow,
   rides,
@@ -31,24 +30,6 @@ async function assertRiders(passengerIds: string[], chapterId: string) {
     throw new DomainError("riderNotInChapter");
 }
 
-async function placeOf(
-  rideLocationId: string | null | undefined,
-  chapterId: string,
-) {
-  if (!rideLocationId) return { rideLocationId: null };
-  const location = await rideLocations.requireUsableRideLocation(
-    rideLocationId,
-    chapterId,
-  );
-  return {
-    rideLocationId: location.id,
-    locationName: location.name,
-    locationAddress: location.address,
-    latitude: location.latitude,
-    longitude: location.longitude,
-  };
-}
-
 async function assertPilots(userIds: string[], chapterId: string) {
   const roles = await membership.getMembersRoles(userIds, chapterId);
   if (userIds.some((userId) => !roles.get(userId)?.includes("pilot")))
@@ -71,8 +52,7 @@ export async function scheduleRideAt(
     chapterTimeZone(ride.chapterId),
     chapters.getSettings(ride.chapterId),
   ]);
-  const [place] = await Promise.all([
-    placeOf(ride.rideLocationId, ride.chapterId),
+  await Promise.all([
     fleet.assertUsable(ride.trishawIds, ride.chapterId),
     assertRiders(ride.passengerIds, ride.chapterId),
     assertPilots(ride.pilotIds, ride.chapterId),
@@ -81,7 +61,6 @@ export async function scheduleRideAt(
   return rides.scheduleRide(
     {
       ...ride,
-      ...place,
       ...outbound,
       returnLeg:
         roundTrip && ride.model === "functional"

@@ -30,7 +30,7 @@ We do not sell your data, show advertising or build profiles for marketing.
 
 ## Who we share it with
 
-Inside the app, people see what they need for a ride: your chapter's admins see its members and rides, pilots see the passengers on their ride, and chat members see the messages in their chat.
+Inside the app, people see what they need for a ride: your chapter's admins see its members and rides, pilots see the passengers on their ride, and chat members see the messages in their chat. People who sign up for the same event see each other's names in its group chat.
 
 These service providers process data on our behalf:
 

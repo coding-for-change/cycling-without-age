@@ -127,6 +127,18 @@ export const isDrillDown = <T extends { href: string; tab: boolean }>(
   return !item.tab || trimSlash(pathname) !== trimSlash(item.href);
 };
 
+export const parentItem = <
+  T extends { key: MemberNavKey; href: string; parent?: MemberNavKey },
+>(
+  pathname: string,
+  items: readonly T[],
+): T | null => {
+  const item = activeItem(pathname, items);
+  if (item === null) return null;
+  if (trimSlash(pathname) !== trimSlash(item.href)) return item;
+  return items.find((candidate) => candidate.key === item.parent) ?? null;
+};
+
 const CONVERSATION_PATH = /^\/(?:pilot|passenger)\/chat\/[^/]+\/?$/;
 
 export const isConversationPath = (pathname: string): boolean =>
@@ -139,6 +151,18 @@ export const isTrainingStepPath = (pathname: string): boolean =>
 
 export const hidesTabBar = (pathname: string): boolean =>
   isConversationPath(pathname) || isTrainingStepPath(pathname);
+
+export const hidesNativeTabs = ({
+  pathname,
+  narrow,
+  keyboardOpen,
+  overlayOpen,
+}: {
+  pathname: string;
+  narrow: boolean;
+  keyboardOpen: boolean;
+  overlayOpen: boolean;
+}): boolean => !narrow || keyboardOpen || overlayOpen || hidesTabBar(pathname);
 
 export type MemberPrimaryAction = { href: string; icon: IconKey };
 

@@ -34,7 +34,7 @@ describe("formatBadge", () => {
 
 describe("toInboxRow", () => {
   it("is unread until the notification carries a readAt", () => {
-    const options = { words: "en", notation: "en-GB" as const, now: NOW };
+    const options = { words: "en", now: NOW };
     expect(toInboxRow(item(), options).unread).toBe(true);
     expect(
       toInboxRow(item({ readAt: new Date("2026-09-08T00:00:00Z") }), options)
@@ -43,33 +43,23 @@ describe("toInboxRow", () => {
   });
 
   it("writes the relative time in the words locale", () => {
-    expect(
-      toInboxRow(item(), { words: "en", notation: "en-GB", now: NOW }).when,
-    ).toBe("2d ago");
-    expect(
-      toInboxRow(item(), { words: "de", notation: "en-GB", now: NOW }).when,
-    ).toBe("vorgestern");
+    expect(toInboxRow(item(), { words: "en", now: NOW }).when).toBe("2d ago");
+    expect(toInboxRow(item(), { words: "de", now: NOW }).when).toBe(
+      "vorgestern",
+    );
   });
 
-  it("writes the exact date in the notation locale, machine time in ISO", () => {
+  it("carries machine time in ISO for the device to date", () => {
     const row = toInboxRow(item(), {
       words: "en",
-      notation: "de-DE",
       now: NOW,
     });
-    expect(row.whenExact).toBe("07.09.2026");
     expect(row.dateTime).toBe("2026-09-07T09:30:00.000Z");
-
-    expect(
-      toInboxRow(item(), { words: "en", notation: "en-US", now: NOW })
-        .whenExact,
-    ).toBe("09/07/2026");
   });
 
   it("carries the notification through untouched", () => {
     const row = toInboxRow(item(), {
       words: "en",
-      notation: "en-GB",
       now: NOW,
     });
     expect(row).toMatchObject({

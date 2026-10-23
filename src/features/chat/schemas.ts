@@ -26,7 +26,14 @@ export const chatMessageKind = z.enum(["text", "system"]);
 export type ChatMessageKind = z.infer<typeof chatMessageKind>;
 
 export const systemMeta = z.object({
-  type: z.enum(["left", "continued", "announcementOn", "announcementOff"]),
+  type: z.enum([
+    "left",
+    "continued",
+    "announcementOn",
+    "announcementOff",
+    "joined",
+    "departed",
+  ]),
   actorUserId: z.string().nullable(),
 });
 export type SystemMeta = z.infer<typeof systemMeta>;

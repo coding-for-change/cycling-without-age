@@ -1,7 +1,7 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import { formatRelativeTime, wordsLocale, type Locale } from "@/lib/format";
+import { useMounted } from "@/lib/viewer-time";
 
 const formatters = new Map<string, Intl.DateTimeFormat>();
 
@@ -16,15 +16,6 @@ const formatter = (notation: Locale) => {
   }
   return found;
 };
-
-const noop = () => () => {};
-
-export const useMounted = (): boolean =>
-  useSyncExternalStore(
-    noop,
-    () => true,
-    () => false,
-  );
 
 export function LocalTime({
   value,

@@ -7,7 +7,11 @@ import { ChatLayout } from "@/features/chat/components/chat-layout";
 import { markdownToolLabels } from "@/components/markdown-editor";
 import { ConversationThread } from "@/features/chat/components/conversation-thread";
 import { membership } from "@/features/membership";
-import { requirePerspective } from "@/lib/auth-guards";
+import {
+  perspectiveViewerSession,
+  requirePerspective,
+} from "@/lib/auth-guards";
+import { GuestLocked } from "./guest-locked";
 import { resolveLocale } from "@/lib/format";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
@@ -22,7 +26,8 @@ export async function MemberChatShell({
   perspective: MemberPerspective;
   children: ReactNode;
 }) {
-  const session = await requirePerspective(perspective);
+  const session = await perspectiveViewerSession(perspective);
+  if (!session) return <GuestLocked page="chat" />;
   const userId = session.user.id;
 
   const [inbox, dict, language, head, memberships] = await Promise.all([

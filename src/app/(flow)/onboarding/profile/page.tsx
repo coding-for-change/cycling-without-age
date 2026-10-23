@@ -11,7 +11,11 @@ export default function ProfilePage() {
           <RidersStep
             progress={progress}
             defaults={defaults}
-            strings={{ ...dict.profile, ...dict.riders }}
+            strings={{
+              ...dict.profile,
+              ...dict.riders,
+              needs: dict.passenger.riderNeeds,
+            }}
             continueLabel={dict.common.continue}
             locale={locale}
           />

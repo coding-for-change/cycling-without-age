@@ -11,6 +11,14 @@ export type JoinPreset = {
 
 export const EMPTY_PRESET: JoinPreset = { chapterId: null, role: null };
 
+export const JOIN_PRESET_COOKIE_OPTIONS = {
+  httpOnly: true,
+  sameSite: "lax",
+  secure: process.env.NODE_ENV === "production",
+  path: "/",
+  maxAge: JOIN_PRESET_MAX_AGE,
+} as const;
+
 export const encodeJoinPreset = (preset: JoinPreset) =>
   `${preset.chapterId ?? ""}|${preset.role ?? ""}`;
 

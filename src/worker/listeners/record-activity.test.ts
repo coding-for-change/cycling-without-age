@@ -148,6 +148,7 @@ describe("recordActivity", () => {
         countryId: COUNTRY,
         userId: SUBJECT,
         actorUserId: ACTOR,
+        viaInvite: false,
       },
       {
         userId: SUBJECT,
@@ -167,6 +168,33 @@ describe("recordActivity", () => {
         userId: SUBJECT,
         actorUserId: ACTOR,
         type: "countryAdminRemoved",
+      },
+    ],
+    [
+      "a superadmin who accepted an invite",
+      {
+        type: "superadmin.granted",
+        inviteId: "invite-1",
+        userId: SUBJECT,
+        actorUserId: ACTOR,
+      },
+      {
+        userId: SUBJECT,
+        actorUserId: ACTOR,
+        type: "superadminGranted",
+      },
+    ],
+    [
+      "a superadmin removal",
+      {
+        type: "superadmin.removed",
+        userId: SUBJECT,
+        actorUserId: ACTOR,
+      },
+      {
+        userId: SUBJECT,
+        actorUserId: ACTOR,
+        type: "superadminRemoved",
       },
     ],
   ])("records %s", async (_name, event, expected) => {

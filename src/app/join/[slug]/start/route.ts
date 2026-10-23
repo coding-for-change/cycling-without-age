@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth-guards";
 import {
   encodeJoinPreset,
   JOIN_PRESET_COOKIE,
-  JOIN_PRESET_MAX_AGE,
+  JOIN_PRESET_COOKIE_OPTIONS,
 } from "@/lib/join-preset";
 
 export async function GET(
@@ -20,9 +20,6 @@ export async function GET(
     );
   }
 
-  const asked = request.nextUrl.searchParams.get("role");
-  const role = asked === "pilot" || asked === "passenger" ? asked : null;
-
   const destination = session ? "/onboarding" : "/sign-in";
   const response = NextResponse.redirect(new URL(destination, request.url));
 
@@ -31,14 +28,8 @@ export async function GET(
 
   response.cookies.set(
     JOIN_PRESET_COOKIE,
-    encodeJoinPreset({ chapterId: chapter.id, role }),
-    {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: JOIN_PRESET_MAX_AGE,
-    },
+    encodeJoinPreset({ chapterId: chapter.id, role: null }),
+    JOIN_PRESET_COOKIE_OPTIONS,
   );
   return response;
 }

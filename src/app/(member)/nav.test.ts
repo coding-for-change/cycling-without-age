@@ -3,12 +3,14 @@ import {
   MEMBER_NAV,
   activeItem,
   activeTabKey,
+  hidesNativeTabs,
   hidesTabBar,
   isConversationPath,
   isTrainingStepPath,
   isDrillDown,
   memberNav,
   nextPerspective,
+  parentItem,
   primaryAction,
   resolveMemberNav,
 } from "./nav";
@@ -220,6 +222,27 @@ describe("isDrillDown", () => {
   });
 });
 
+describe("parentItem", () => {
+  const pilot = memberNav("pilot");
+
+  it("leads a page below a tab back to that tab", () => {
+    expect(parentItem("/pilot/rides/42", pilot)?.href).toBe("/pilot/rides");
+    expect(parentItem("/pilot/training/course-1", pilot)?.href).toBe(
+      "/pilot/training",
+    );
+  });
+
+  it("leads a page that is not a tab back to its parent row", () => {
+    expect(parentItem("/pilot/training", pilot)?.href).toBe("/pilot");
+    expect(parentItem("/pilot/profile/", pilot)?.href).toBe("/pilot");
+  });
+
+  it("has nowhere to go from a tab root or outside the shell", () => {
+    expect(parentItem("/pilot/rides", pilot)).toBeNull();
+    expect(parentItem("/admin", pilot)).toBeNull();
+  });
+});
+
 describe("hidesTabBar", () => {
   it("steps aside for a lesson, the quiz and an open conversation", () => {
     expect(hidesTabBar("/pilot/training/course-1/lesson-1")).toBe(true);
@@ -289,5 +312,31 @@ describe("nextPerspective", () => {
 
   it("refuses to rotate from a hat this person does not hold", () => {
     expect(nextPerspective(["admin", "pilot"], "passenger")).toBeNull();
+  });
+});
+
+describe("hidesNativeTabs", () => {
+  const shown = {
+    pathname: "/passenger/rides",
+    narrow: true,
+    keyboardOpen: false,
+    overlayOpen: false,
+  };
+
+  it("shows the native tabs on a phone with nothing on top", () => {
+    expect(hidesNativeTabs(shown)).toBe(false);
+  });
+
+  it("hides them while a sheet, drawer or dialog is open and brings them back after", () => {
+    expect(hidesNativeTabs({ ...shown, overlayOpen: true })).toBe(true);
+    expect(hidesNativeTabs({ ...shown, overlayOpen: false })).toBe(false);
+  });
+
+  it("hides them for the keyboard, wide screens and tab-less pages", () => {
+    expect(hidesNativeTabs({ ...shown, keyboardOpen: true })).toBe(true);
+    expect(hidesNativeTabs({ ...shown, narrow: false })).toBe(true);
+    expect(
+      hidesNativeTabs({ ...shown, pathname: "/pilot/training/c-1/l-1" }),
+    ).toBe(true);
   });
 });

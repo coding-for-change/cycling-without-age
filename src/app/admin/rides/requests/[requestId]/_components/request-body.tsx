@@ -431,6 +431,7 @@ export async function RequestBody({
                 notation={notation}
                 words={language}
                 now={now}
+                timeZone={request.chapter.timeZone}
               />
             </TimelineEntry>
             {request.decidedAt && outcome ? (
@@ -453,6 +454,7 @@ export async function RequestBody({
                   notation={notation}
                   words={language}
                   now={now}
+                  timeZone={request.chapter.timeZone}
                 />
                 {request.decisionNote ? (
                   <TimelineBubble>{request.decisionNote}</TimelineBubble>

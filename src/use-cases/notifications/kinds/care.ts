@@ -137,3 +137,38 @@ export const careInvited = defineKind({
     };
   },
 });
+
+export const careLinked = defineKind({
+  event: "care.linked",
+  category: "membership",
+  policy: { push: true, email: "always", optional: false },
+  payload: z.object({
+    chapterName: z.string().nullable(),
+    caretakerName: z.string().nullable(),
+  }),
+  recipients: async (event) => [event.userId],
+  params: async (event) => {
+    const [chapterName, caretakerName] = await Promise.all([
+      nameOfChapter(event.chapterId),
+      nameOfPerson(event.actorUserId),
+    ]);
+    return { chapterName, caretakerName };
+  },
+  href: () => "/passenger/rides",
+  message: ({ chapterName, caretakerName }, strings, locale) => {
+    const copy = strings.careLinked;
+    const values = {
+      chapter: chapterName ?? ORG_NAME,
+      caretaker: caretakerName ?? copy.someone,
+    };
+    return {
+      subject: formatMessage(copy.subject, values, locale),
+      preview: formatMessage(copy.preview, values, locale),
+      heading: formatMessage(copy.heading, values, locale),
+      body: formatMessage(copy.intro, values, locale),
+      cta: copy.cta,
+      footer: copy.footer,
+      template: "careLinked",
+    };
+  },
+});

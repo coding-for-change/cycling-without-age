@@ -4,6 +4,7 @@ import {
   grainFor,
   periodBounds,
   reportRangeParams,
+  reportToday,
   resolveReportRange,
 } from "./report-range";
 
@@ -182,5 +183,28 @@ describe("reportRangeParams", () => {
       {},
     );
     expect(reportRangeParams({ from: "2026-01-01" })).toEqual({});
+  });
+});
+
+describe("reportToday", () => {
+  const halfPastMidnightBerlin = new Date("2026-10-22T22:30:00Z");
+
+  it("keeps a single zone on its own day", () => {
+    expect(reportToday(halfPastMidnightBerlin, ["Europe/Berlin"])).toBe(
+      "2026-10-23",
+    );
+    expect(reportToday(halfPastMidnightBerlin, ["UTC"])).toBe("2026-10-22");
+  });
+
+  it("takes the latest local day across zones so no chapter's today is cut", () => {
+    const today = reportToday(halfPastMidnightBerlin, ["UTC", "Europe/Berlin"]);
+    expect(today).toBe("2026-10-23");
+    const range = resolveReportRange({ range: "7d" }, { today });
+    expect(range.last).toBe("2026-10-23");
+    expect(range.to).toBe("2026-10-24");
+  });
+
+  it("reads UTC when the scope has no chapters", () => {
+    expect(reportToday(halfPastMidnightBerlin, [])).toBe("2026-10-22");
   });
 });

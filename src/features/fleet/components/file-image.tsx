@@ -6,11 +6,13 @@ export function FileImage({
   fileId,
   alt,
   fit = "cover",
+  loading = "lazy",
   className,
 }: {
   fileId: string | null | undefined;
   alt: string;
   fit?: "cover" | "contain";
+  loading?: "lazy" | "eager";
   className?: string;
 }) {
   if (!fileId)
@@ -31,7 +33,7 @@ export function FileImage({
     <img
       src={fileUrl(fileId)}
       alt={alt}
-      loading="lazy"
+      loading={loading}
       decoding="async"
       className={cn(
         fit === "contain"

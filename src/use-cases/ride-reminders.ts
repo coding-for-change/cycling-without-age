@@ -62,7 +62,7 @@ async function sweepDue(
   return done;
 }
 
-/** Lifecycle 5B-b: each rider's side hears about the ride and can confirm or give the seat up. */
+/** Lifecycle 5B-b: each rider's side hears the ride is coming up, and how to cancel if plans changed. */
 export const riderReminders = (now = new Date()) =>
   sweepDue(
     {

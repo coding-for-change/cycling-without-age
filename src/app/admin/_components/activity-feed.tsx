@@ -71,6 +71,8 @@ const ICON: Record<ActivityType, LucideIcon> = {
   trainingExemptionRevoked: ShieldMinus,
   inPersonTrainingConfirmed: Handshake,
   riderHandedOver: ArrowRightLeft,
+  superadminGranted: ShieldCheck,
+  superadminRemoved: ShieldMinus,
 };
 
 export function ActivityFeed({
@@ -80,6 +82,7 @@ export function ActivityFeed({
   empty,
   notation,
   words,
+  timeZone,
 }: {
   events: FeedEvent[];
   viewerId: string;
@@ -87,6 +90,7 @@ export function ActivityFeed({
   empty: string;
   notation: Locale;
   words: string;
+  timeZone: string;
 }) {
   const now = new Date();
 
@@ -144,6 +148,7 @@ export function ActivityFeed({
               notation={notation}
               words={words}
               now={now}
+              timeZone={timeZone}
             />
             {payload.note ? (
               <TimelineBubble>{payload.note}</TimelineBubble>

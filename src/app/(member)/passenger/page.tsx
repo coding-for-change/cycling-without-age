@@ -1,14 +1,17 @@
 import { Suspense } from "react";
-import { ChapterCards } from "../_components/home/chapter-cards";
+import { ChapterChoice } from "../_components/home/chapter-choice";
 import { Greeting } from "../_components/home/greeting";
+import { HappeningSoon } from "../_components/home/happening-soon";
 import {
   GreetingFallback,
-  SectionFallback,
+  HappeningSoonFallback,
+  HomeHeroFallback,
 } from "../_components/home/home-fallback";
-import { NextRideCard } from "../_components/home/next-ride-card";
-import { RideRequestsCard } from "../_components/home/ride-requests-card";
-import { UpcomingEventsCard } from "../_components/home/upcoming-events-card";
-import { SetupChecklist } from "../_components/home/setup-checklist";
+import { HomeHero } from "../_components/home/home-hero";
+import {
+  SetupRow,
+  SetupRowFallback,
+} from "../_components/home/setup-checklist";
 import { MemberPageShell } from "../_components/member-page";
 
 export default function PassengerHomePage() {
@@ -17,18 +20,17 @@ export default function PassengerHomePage() {
       <Suspense fallback={<GreetingFallback />}>
         <Greeting perspective="passenger" />
       </Suspense>
-      <Suspense fallback={<SectionFallback />}>
-        <NextRideCard perspective="passenger" />
-        <RideRequestsCard />
-      </Suspense>
-      <Suspense fallback={<SectionFallback />}>
-        <UpcomingEventsCard />
-      </Suspense>
-      <Suspense fallback={<SectionFallback />}>
-        <ChapterCards perspective="passenger" />
+      <Suspense fallback={<HomeHeroFallback />}>
+        <HomeHero />
       </Suspense>
       <Suspense fallback={null}>
-        <SetupChecklist perspective="passenger" />
+        <ChapterChoice />
+      </Suspense>
+      <Suspense fallback={<HappeningSoonFallback />}>
+        <HappeningSoon />
+      </Suspense>
+      <Suspense fallback={<SetupRowFallback />}>
+        <SetupRow perspective="passenger" />
       </Suspense>
     </MemberPageShell>
   );

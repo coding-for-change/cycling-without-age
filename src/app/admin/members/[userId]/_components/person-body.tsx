@@ -36,7 +36,9 @@ import { accessPerson, seesHealthDetails } from "@/use-cases/person-access";
 import { memberTrainingPanel } from "@/use-cases/training-progress";
 import type { ChapterRole } from "@/lib/access";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
-import { formatDate, resolveLocale } from "@/lib/format";
+import { isPhoneTempEmail } from "@/lib/identity";
+import { resolveLocale } from "@/lib/format";
+import { formatInstantDate } from "@/lib/instant-date";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { FALLBACK_TIME_ZONE } from "@/lib/time-zone";
@@ -50,6 +52,7 @@ import { SidePanel } from "../../../_components/side-panel";
 import { readActiveScope } from "../../../active-scope";
 import { MemberActions } from "../../_components/member-actions";
 import { deleteUserAction } from "../../actions";
+import { LinkCarer } from "./link-carer";
 import { PilotTraining } from "./pilot-training";
 import { pilotTrainingProps } from "./pilot-training-props";
 import { MemberOverviewStrip } from "./member-overview-strip";
@@ -81,6 +84,7 @@ export async function PersonBody({
     managedRows,
     helper,
     rideStats,
+    ownRider,
   ] = await Promise.all([
     profile.getProfile(userId),
     membership.listMembershipsOfUser(userId),
@@ -95,6 +99,7 @@ export async function PersonBody({
     passengers.listPassengersManagedBy(userId),
     accounts.getHelperDetails(userId),
     rides.volunteerRideStats(userId, chapterIds),
+    passengers.getOwnPassenger(userId),
   ]);
 
   const inScope = memberships.filter((m) => chapterIds.includes(m.chapterId));
@@ -112,6 +117,19 @@ export async function PersonBody({
     chapterIds.includes(rider.chapterId),
   );
   const showCaretaker = visibleRiders.length > 0;
+
+  const linkable =
+    ownRider &&
+    ownRider.managedByUserId === userId &&
+    chapterIds.includes(ownRider.chapterId)
+      ? ownRider
+      : null;
+  const [carerCandidates, carerLinks] = linkable
+    ? await Promise.all([
+        membership.listMembersOfChapters([linkable.chapterId]),
+        passengers.listPendingCareLinks(linkable.id),
+      ])
+    : [[], []];
 
   const isPilot = memberships.some((m) => m.roles.includes("pilot"));
   const piloting = isPilot || applications.some((a) => a.status === "pending");
@@ -273,6 +291,7 @@ export async function PersonBody({
                         labels={dict.admin.members}
                         cancel={dict.admin.chapters.cancel}
                         locale={words}
+                        removedHref={backHref}
                       />
                     </li>
                   ))}
@@ -283,6 +302,73 @@ export async function PersonBody({
                 </DetailEmpty>
               )}
             </SidePanel>
+            {linkable ? (
+              <SidePanel title={dict.admin.person.carer.title}>
+                <div className="grid gap-3 text-2sm">
+                  {carerLinks.length ? (
+                    <ul className="grid gap-1.25">
+                      {carerLinks.map((link) => (
+                        <li
+                          key={link.id}
+                          className="text-ink-soft"
+                        >
+                          {formatMessage(
+                            dict.admin.person.carer.pending,
+                            {
+                              name: link.caretaker.name || link.caretaker.email,
+                            },
+                            words,
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-ink-soft">
+                      {dict.admin.person.carer.none}
+                    </p>
+                  )}
+                  <LinkCarer
+                    passengerId={linkable.id}
+                    rider={`${linkable.firstName} ${linkable.lastName}`.trim()}
+                    chapter={chapterNames.get(linkable.chapterId) ?? ""}
+                    members={carerCandidates
+                      .filter((member) => member.userId !== userId)
+                      .map((member) => ({
+                        id: member.userId,
+                        name: member.user.name || member.user.email,
+                        avatar: avatarSvg(avatarSeed(member.user.email)),
+                        hint: isPhoneTempEmail(member.user.email)
+                          ? (member.user.phoneNumber ?? undefined)
+                          : member.user.email,
+                      }))}
+                    strings={{
+                      ...dict.admin.person.carer,
+                      picker: dict.admin.passengers.handOver.picker,
+                    }}
+                    errors={
+                      Object.fromEntries(
+                        Object.entries({
+                          ...dict.common.errors,
+                          ...dict.admin.passengers.handOver.errors,
+                          ...dict.admin.person.carer.errors,
+                        }).map(([key, template]) => [
+                          key,
+                          formatMessage(
+                            template,
+                            {
+                              rider:
+                                `${linkable.firstName} ${linkable.lastName}`.trim(),
+                            },
+                            words,
+                          ),
+                        ]),
+                      ) as Record<string, string> & { generic: string }
+                    }
+                    language={words}
+                  />
+                </div>
+              </SidePanel>
+            ) : null}
           </>
         }
       >
@@ -316,7 +402,13 @@ export async function PersonBody({
                 <span className="text-ink-soft">
                   {formatMessage(
                     dict.pilot.status.appliedOn,
-                    { date: formatDate(application.createdAt, notation) },
+                    {
+                      date: formatInstantDate(
+                        application.createdAt,
+                        notation,
+                        application.chapter.timeZone,
+                      ),
+                    },
                     words,
                   )}
                 </span>
@@ -438,6 +530,7 @@ export async function PersonBody({
             empty={dict.admin.person.historyEmpty}
             notation={notation}
             words={words}
+            timeZone={timeZone}
           />
         </HistorySection>
       </DetailLayout>

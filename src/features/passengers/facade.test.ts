@@ -17,6 +17,12 @@ import {
   insertPassengerIn,
   findPassengerById,
   moveRiderToManager,
+  findPendingCareLinks,
+  declinePendingCareLinks,
+  linkPassengerManager,
+  findPassengerOfUser,
+  deletePassengerOfUser,
+  updatePassengerNeeds,
 } from "@/features/passengers/services/passengers";
 
 jest.mock("@/features/passengers/services/passengers", () => ({
@@ -41,6 +47,11 @@ jest.mock("@/features/passengers/services/passengers", () => ({
   insertPassengerIn: jest.fn(),
   findPassengerById: jest.fn(),
   moveRiderToManager: jest.fn(),
+  findPendingCareLinks: jest.fn(),
+  declinePendingCareLinks: jest.fn(),
+  linkPassengerManager: jest.fn(),
+  deletePassengerOfUser: jest.fn(),
+  updatePassengerNeeds: jest.fn(),
 }));
 
 const emitted: unknown[] = [];
@@ -115,7 +126,7 @@ describe("addPassenger", () => {
         birthDate: new Date("1948-04-02"),
         gender: "female",
       },
-      { needsWheelchairBike: true, note: "  ", rideLocationId: "loc-1" },
+      { needsWheelchairBike: true, note: "  " },
     );
 
     expect(insertPassenger).toHaveBeenCalledTimes(1);
@@ -123,7 +134,6 @@ describe("addPassenger", () => {
       expect.objectContaining({
         needsWheelchairBike: true,
         note: null,
-        rideLocationId: "loc-1",
       }),
     );
   });
@@ -172,6 +182,27 @@ describe("addManagedPassengers", () => {
         longitude: 12.5,
       }),
     ]);
+  });
+
+  it("keeps the riding needs a carer gives for a new rider", async () => {
+    managed.mockResolvedValue([]);
+
+    await passengers.addManagedPassengers(USER, "chapter-a", [
+      {
+        ...rider,
+        pickup: { residence: "careHome" },
+        needs: { needsWheelchairBike: true, note: "  Hard of hearing " },
+      },
+      { ...rider, pickup: { residence: "careHome" } },
+    ]);
+
+    const [rows] = insertMany.mock.calls[0];
+    expect(rows[0]).toMatchObject({
+      needsWheelchairBike: true,
+      note: "Hard of hearing",
+    });
+    expect(rows[1]).not.toHaveProperty("needsWheelchairBike");
+    expect(rows[1]).not.toHaveProperty("needs");
   });
 
   it("refuses a rider in a different chapter from the ones already managed", async () => {
@@ -390,6 +421,7 @@ describe("care requests", () => {
       passengerId: "p-1",
       relationship: "child",
       chapterId: "chapter-a",
+      riderUserId: null,
     });
 
     expect(insertRider).toHaveBeenCalledWith(
@@ -556,5 +588,237 @@ describe("handOverRider", () => {
       passengers.handOverRider("erna", "user-new", "user-admin"),
     ).rejects.toMatchObject({ code: "unknownPassenger" });
     expect(emitted).toEqual([]);
+  });
+});
+
+describe("care links for a rider with their own account", () => {
+  const managed = findPassengersManagedBy as jest.Mock;
+  const byId = findPassengerById as jest.Mock;
+  const links = findPendingCareLinks as jest.Mock;
+  const insertRequest = insertCareRequest as jest.Mock;
+  const find = findCareRequest as jest.Mock;
+  const close = closeCareRequest as jest.Mock;
+  const link = linkPassengerManager as jest.Mock;
+  const declineOthers = declinePendingCareLinks as jest.Mock;
+  const insertRider = insertPassengerIn as jest.Mock;
+  const rider = {
+    id: "p-erna",
+    chapterId: "chapter-a",
+    userId: "user-erna",
+    managedByUserId: "user-erna",
+    firstName: "Erna",
+    lastName: "Lund",
+    birthDate: new Date("1936-03-01"),
+    gender: "female",
+  };
+  const request = {
+    id: "care-link",
+    chapterId: "chapter-a",
+    caretakerUserId: "user-hilde",
+    requestedByUserId: "admin-1",
+    status: "pending",
+    passengerId: "p-erna",
+    relationship: null,
+  };
+
+  beforeEach(() => {
+    emitted.length = 0;
+    managed.mockResolvedValue([]);
+    byId.mockResolvedValue(rider);
+    links.mockResolvedValue([]);
+    insertRequest.mockResolvedValue({ id: "care-link" });
+    find.mockResolvedValue(request);
+    close.mockResolvedValue({ count: 1 });
+    link.mockResolvedValue({ count: 1 });
+    declineOthers.mockResolvedValue({ count: 0 });
+  });
+
+  const ask = () =>
+    passengers.requestCareLink({
+      passengerId: "p-erna",
+      caretakerUserId: "user-hilde",
+      requestedByUserId: "admin-1",
+    });
+
+  it("asks the carer about the existing rider and changes nothing yet", async () => {
+    await expect(ask()).resolves.toEqual({
+      id: "care-link",
+      chapterId: "chapter-a",
+    });
+
+    expect(insertRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        passengerId: "p-erna",
+        caretakerUserId: "user-hilde",
+        firstName: "Erna",
+      }),
+      expect.anything(),
+    );
+    expect(link).not.toHaveBeenCalled();
+    expect(emitted).toEqual([
+      expect.objectContaining({ type: "care.requested", userId: "user-hilde" }),
+    ]);
+  });
+
+  it("does not ask the same carer twice", async () => {
+    links.mockResolvedValue([
+      { id: "care-old", caretakerUserId: "user-hilde" },
+    ]);
+
+    await expect(ask()).resolves.toEqual({
+      id: "care-old",
+      chapterId: "chapter-a",
+    });
+    expect(insertRequest).not.toHaveBeenCalled();
+    expect(emitted).toEqual([]);
+  });
+
+  it("only links riders who ride with their own account and book for themselves", async () => {
+    byId.mockResolvedValue({ ...rider, userId: null });
+    await expect(ask()).rejects.toMatchObject({ code: "unknownPassenger" });
+
+    byId.mockResolvedValue({ ...rider, managedByUserId: "user-other" });
+    await expect(ask()).rejects.toMatchObject({ code: "unknownPassenger" });
+
+    byId.mockResolvedValue(null);
+    await expect(ask()).rejects.toMatchObject({ code: "unknownPassenger" });
+    expect(insertRequest).not.toHaveBeenCalled();
+  });
+
+  it("refuses to make a rider their own carer", async () => {
+    await expect(
+      passengers.requestCareLink({
+        passengerId: "p-erna",
+        caretakerUserId: "user-erna",
+        requestedByUserId: "admin-1",
+      }),
+    ).rejects.toMatchObject({ code: "sameManager" });
+  });
+
+  it("refuses a carer whose riders ride with another chapter", async () => {
+    managed.mockResolvedValue([{ chapterId: "chapter-b", userId: null }]);
+
+    await expect(ask()).rejects.toMatchObject({
+      code: "passengerChapterMismatch",
+    });
+  });
+
+  it("makes the carer the rider's manager on yes and closes other open asks", async () => {
+    await expect(
+      passengers.acceptCareRequest("care-link", "user-hilde"),
+    ).resolves.toEqual({
+      passengerId: "p-erna",
+      relationship: null,
+      chapterId: "chapter-a",
+      riderUserId: "user-erna",
+    });
+
+    expect(link).toHaveBeenCalledWith(
+      "p-erna",
+      "user-erna",
+      "user-hilde",
+      expect.anything(),
+    );
+    expect(insertRider).not.toHaveBeenCalled();
+    expect(declineOthers).toHaveBeenCalledWith("p-erna", expect.anything());
+    expect(emitted).toEqual([
+      expect.objectContaining({ type: "care.decided", accepted: true }),
+      {
+        type: "care.linked",
+        requestId: "care-link",
+        chapterId: "chapter-a",
+        userId: "user-erna",
+        actorUserId: "user-hilde",
+        passengerId: "p-erna",
+      },
+    ]);
+  });
+
+  it("refuses a yes once the rider has a carer or moved chapter", async () => {
+    byId.mockResolvedValue({ ...rider, managedByUserId: "user-other" });
+    await expect(
+      passengers.acceptCareRequest("care-link", "user-hilde"),
+    ).rejects.toMatchObject({ code: "notFound" });
+
+    byId.mockResolvedValue({ ...rider, chapterId: "chapter-b" });
+    await expect(
+      passengers.acceptCareRequest("care-link", "user-hilde"),
+    ).rejects.toMatchObject({ code: "notFound" });
+    expect(link).not.toHaveBeenCalled();
+  });
+
+  it("loses the race cleanly when the rider changed meanwhile", async () => {
+    link.mockResolvedValue({ count: 0 });
+
+    await expect(
+      passengers.acceptCareRequest("care-link", "user-hilde"),
+    ).rejects.toMatchObject({ code: "notFound" });
+    expect(close).not.toHaveBeenCalled();
+    expect(emitted).toEqual([]);
+  });
+
+  it("closes open asks about a rider whose own row goes away", async () => {
+    (findPassengerOfUser as jest.Mock).mockResolvedValue(rider);
+
+    await passengers.removeOwnPassenger("user-erna");
+
+    expect(declineOthers).toHaveBeenCalledWith("p-erna");
+    expect(deletePassengerOfUser).toHaveBeenCalledWith("user-erna");
+  });
+});
+
+describe("needs of a rider someone books for", () => {
+  const managed = findPassengersManagedBy as jest.Mock;
+  const save = updatePassengerNeeds as jest.Mock;
+
+  beforeEach(() => {
+    managed.mockResolvedValue([
+      {
+        id: "p-own",
+        userId: "user-hilde",
+        chapterId: "chapter-a",
+        needsWheelchairBike: false,
+        note: null,
+      },
+      {
+        id: "p-inge",
+        userId: null,
+        chapterId: "chapter-a",
+        needsWheelchairBike: true,
+        note: "Loves the harbour",
+      },
+      {
+        id: "p-erna",
+        userId: "user-erna",
+        chapterId: "chapter-a",
+        needsWheelchairBike: false,
+        note: null,
+      },
+    ]);
+  });
+
+  it("lets the manager read and change them, with or without an account of the rider's own", async () => {
+    await expect(
+      passengers.getManagedRiderNeeds("p-inge", "user-hilde"),
+    ).resolves.toEqual({
+      needsWheelchairBike: true,
+      note: "Loves the harbour",
+    });
+
+    await expect(
+      passengers.setManagedRiderNeeds("p-erna", "user-hilde", {
+        needsWheelchairBike: true,
+      }),
+    ).resolves.toEqual({ chapterId: "chapter-a" });
+    expect(managed).toHaveBeenCalledWith("user-hilde");
+    expect(save).toHaveBeenCalledWith("p-erna", { needsWheelchairBike: true });
+  });
+
+  it("refuses a rider this account does not manage, and its own row", async () => {
+    for (const id of ["p-stranger", "p-own"])
+      await expect(
+        passengers.setManagedRiderNeeds(id, "user-hilde", { note: "x" }),
+      ).rejects.toMatchObject({ code: "unknownPassenger" });
+    expect(save).not.toHaveBeenCalled();
   });
 });

@@ -33,6 +33,7 @@ export async function MemberChrome({
       account={account}
       activePerspective={perspective}
       strings={dict.member.topBar[perspective]}
+      backLabel={dict.common.back}
       signIn={{ href: signInHref(next), label: dict.member.guest.signIn }}
       locale={locale}
       languageLabel={dict.common.language}

@@ -40,7 +40,7 @@ export const handlers = Object.fromEntries(
       ...(recordsActivityFor(type) ? { recordActivity } : {}),
       ...(type === "chat.messageSent" ? { chatNotify: notifyChatMessage } : {}),
       ...(syncsRideChat(type) ? { syncRideChat: syncRideChatListener } : {}),
-      ...(type === "ride.completed"
+      ...(type === "ride.completed" || type === "ride.cancelled"
         ? { freezeRideChat: freezeRideChatListener }
         : {}),
       ...(type === "member.roleChanged"

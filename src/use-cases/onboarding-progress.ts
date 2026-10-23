@@ -1,3 +1,4 @@
+import { admins } from "@/features/admins";
 import { chapters } from "@/features/chapters";
 import { membership } from "@/features/membership";
 import { profile } from "@/features/profile";
@@ -99,8 +100,12 @@ export async function resolveDestination(
     );
   }
 
-  const { progress } = await getOnboardingState(session.user.id, preset);
+  const [{ progress }, invite] = await Promise.all([
+    getOnboardingState(session.user.id, preset),
+    admins.openInviteOf(session.user.id),
+  ]);
   const step = nextOnboardingStep(progress);
+  if (step && invite) return admins.inviteHref(invite.id);
   if (step) return STEP_PATH[step];
   return next ?? HOME_BY_ROLE[progress.role ?? "passenger"];
 }

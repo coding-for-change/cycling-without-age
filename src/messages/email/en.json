@@ -364,6 +364,15 @@
     "footer": "You received this email because you asked someone to look after a passenger.",
     "someone": "someone"
   },
+  "careLinked": {
+    "subject": "{caretaker} now helps with your rides",
+    "preview": "{caretaker} can book rides for you with {chapter}",
+    "heading": "{caretaker} now helps with your rides",
+    "intro": "{caretaker} said yes when {chapter} asked them to look after you. From now on they can book rides for you, and you can still book and see your own rides. If this isn't right, tell your chapter.",
+    "cta": "Open your rides",
+    "footer": "You received this email because someone now books rides for you with a Cycling Without Age chapter.",
+    "someone": "someone"
+  },
   "careInvited": {
     "subject": "Book rides for {rider} with {chapter}",
     "preview": "An account is waiting for you",
@@ -443,11 +452,11 @@
     "footer": "You received this email because a Cycling Without Age chapter changed who books rides for a rider."
   },
   "rideReminder": {
-    "cta": "Confirm or cancel the seat",
+    "cta": "Open the ride",
     "footer": "You received this email because you book rides with a Cycling Without Age chapter.",
     "heading": "Your ride is coming up",
-    "intro": "Your ride on {date}, {time}, starts at {place} ({ride}). Please confirm the seat in the app — or give it up if plans have changed, so the chapter can offer it to someone else.",
-    "introBoth": "Your round trip on {date}: there at {time}, starting at {place} ({ride}), and back again. Please confirm the seat in the app — or give it up if plans have changed, so the chapter can offer it to someone else.",
+    "intro": "Your ride on {date}, {time}, starts at {place} ({ride}). If you can't make it, please cancel in the app so the chapter can offer the seat to someone else.",
+    "introBoth": "Your round trip on {date}: there at {time}, starting at {place} ({ride}), and back again. If you can't make it, please cancel in the app so the chapter can offer the seat to someone else.",
     "preview": "{ride} · {time}",
     "subject": "Your ride on {date}"
   },
@@ -480,5 +489,29 @@
     "preview": "{ride} · {time}",
     "someone": "A rider",
     "subject": "{rider} is riding on {date} after all"
+  },
+  "adminInvite": {
+    "superadmin": {
+      "subject": "You're invited to help run Cycling Without Age",
+      "heading": "Help run Cycling Without Age",
+      "intro": "{inviter} invited you to become a superadmin. Superadmins look after every country, every chapter and every setting."
+    },
+    "countryAdmin": {
+      "subject": "You're invited to look after {country}",
+      "heading": "Look after {country}",
+      "intro": "{inviter} invited you to become a country admin for {country}. Every chapter there would be yours to support."
+    },
+    "how": "Sign in with this email address and accept the invitation. You need a passkey for it, and we help you set one up. The invitation runs out after 7 days.",
+    "cta": "Open the invitation",
+    "preview": "An invitation to help run things",
+    "footer": "You received this email because a Cycling Without Age superadmin invited your address."
+  },
+  "superadminRemoved": {
+    "subject": "You're no longer a superadmin",
+    "preview": "Your role changed",
+    "heading": "You're no longer a superadmin",
+    "intro": "{actor} removed your superadmin role. Your account stays as it is. Thank you for everything you did for the movement.",
+    "cta": "Open Cycling Without Age",
+    "footer": "You received this email because your role at Cycling Without Age changed."
   }
 }

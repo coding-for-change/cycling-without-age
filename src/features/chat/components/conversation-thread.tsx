@@ -19,15 +19,17 @@ import {
   MessageScrollerProvider,
   MessageScrollerViewport,
 } from "@/components/ui/message-scroller";
-import { formatDate, type Locale } from "@/lib/format";
+import type { Locale } from "@/lib/format";
 import { formatMessage } from "@/lib/i18n/format";
 import { lockWebViewScroll } from "@/lib/native/keyboard";
 import { cn } from "@/lib/utils";
+import { useViewerTimeZone } from "@/lib/viewer-time";
 import { loadMessagesAction, markReadAction } from "../actions";
 import type { ChatMessageView } from "../schemas";
 import { ChatAvatar } from "./chat-avatar";
 import { ChatComposer } from "./chat-composer";
 import { RelativeTime } from "./local-time";
+import { formatMessageDay, messageDayKey } from "./message-day";
 import {
   markRead,
   prependMessages,
@@ -50,13 +52,12 @@ import type { ConversationView } from "./types";
 
 const GROUP_WINDOW_MS = 5 * 60_000;
 
-const dayKey = (iso: string) => iso.slice(0, 10);
-
-const sameBlock = (a: ChatMessageView, b: ChatMessageView) =>
+const sameBlock = (a: ChatMessageView, b: ChatMessageView, timeZone: string) =>
   a.kind === "text" &&
   b.kind === "text" &&
   a.senderId === b.senderId &&
-  dayKey(a.createdAt) === dayKey(b.createdAt) &&
+  messageDayKey(a.createdAt, timeZone) ===
+    messageDayKey(b.createdAt, timeZone) &&
   Math.abs(new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) <
     GROUP_WINDOW_MS;
 
@@ -92,6 +93,7 @@ export function ConversationThread({
 }) {
   const conversationId = view.conversation.id;
   const viewerId = view.viewerId;
+  const timeZone = useViewerTimeZone();
 
   useEffect(() => lockWebViewScroll(), []);
 
@@ -202,6 +204,8 @@ export function ConversationThread({
   const frozenAt = conversation.frozenAt;
   const locked =
     conversation.announcementOnly && conversation.me.role !== "owner";
+  const shutForGood =
+    view.event?.cancelled === true && conversation.me.role !== "owner";
 
   return (
     <div className="fixed inset-0 z-40 flex flex-col bg-canvas pb-[var(--keyboard-inset,0px)] transition-[padding] duration-250 ease-[cubic-bezier(0.32,0.72,0,1)] md:static md:z-auto md:min-h-0 md:w-full md:flex-1">
@@ -272,7 +276,8 @@ export function ConversationThread({
                 const next = messages[index + 1];
                 const newDay =
                   !previous ||
-                  dayKey(previous.createdAt) !== dayKey(message.createdAt);
+                  messageDayKey(previous.createdAt, timeZone) !==
+                    messageDayKey(message.createdAt, timeZone);
 
                 if (message.kind === "system")
                   return (
@@ -287,7 +292,11 @@ export function ConversationThread({
                           className="mb-3"
                         >
                           <MarkerContent>
-                            {formatDate(message.createdAt, notation)}
+                            {formatMessageDay(
+                              message.createdAt,
+                              notation,
+                              timeZone,
+                            )}
                           </MarkerContent>
                         </Marker>
                       ) : null}
@@ -296,7 +305,11 @@ export function ConversationThread({
                           {message.meta
                             ? formatMessage(
                                 strings.system[message.meta.type],
-                                { name: nameOf(message.meta.actorUserId) },
+                                {
+                                  name:
+                                    message.text ||
+                                    nameOf(message.meta.actorUserId),
+                                },
                                 language,
                               )
                             : ""}
@@ -310,9 +323,10 @@ export function ConversationThread({
                   ? people.get(message.senderId)
                   : undefined;
                 const groupedWithPrevious =
-                  previous !== undefined && sameBlock(previous, message);
+                  previous !== undefined &&
+                  sameBlock(previous, message, timeZone);
                 const groupedWithNext =
-                  next !== undefined && sameBlock(message, next);
+                  next !== undefined && sameBlock(message, next, timeZone);
                 const { receipt, seenByEveryone } = receiptFor(message);
 
                 return (
@@ -330,7 +344,11 @@ export function ConversationThread({
                         className="mb-3"
                       >
                         <MarkerContent>
-                          {formatDate(message.createdAt, notation)}
+                          {formatMessageDay(
+                            message.createdAt,
+                            notation,
+                            timeZone,
+                          )}
                         </MarkerContent>
                       </Marker>
                     ) : null}
@@ -395,13 +413,17 @@ export function ConversationThread({
               />
             </p>
             <p className="text-2sm text-ink-soft">
-              {strings.thread.frozen.body}
+              {view.event?.cancelled
+                ? strings.thread.frozen.cancelled
+                : strings.thread.frozen.body}
             </p>
           </div>
-          <KeepChattingButton
-            conversationId={conversationId}
-            strings={strings}
-          />
+          {shutForGood ? null : (
+            <KeepChattingButton
+              conversationId={conversationId}
+              strings={strings}
+            />
+          )}
         </div>
       ) : null}
 
@@ -410,7 +432,11 @@ export function ConversationThread({
           <MarkerIcon>
             <Megaphone />
           </MarkerIcon>
-          <MarkerContent>{strings.thread.announcementLocked}</MarkerContent>
+          <MarkerContent>
+            {view.event
+              ? strings.thread.announcementLockedAdmins
+              : strings.thread.announcementLocked}
+          </MarkerContent>
         </Marker>
       ) : (
         <ChatComposer

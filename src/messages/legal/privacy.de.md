@@ -30,7 +30,7 @@ Wir verkaufen keine Daten, zeigen keine Werbung und erstellen keine Profile für
 
 ## An wen wir Daten weitergeben
 
-In der App sieht jede Person, was sie für eine Ausfahrt braucht: Die Admins Ihrer Ortsgruppe sehen deren Mitglieder und Ausfahrten, Pilot:innen sehen die Fahrgäste ihrer Ausfahrt, und Chat-Mitglieder sehen die Nachrichten in ihrem Chat.
+In der App sieht jede Person, was sie für eine Ausfahrt braucht: Die Admins Ihrer Ortsgruppe sehen deren Mitglieder und Ausfahrten, Pilot:innen sehen die Fahrgäste ihrer Ausfahrt, und Chat-Mitglieder sehen die Nachrichten in ihrem Chat. Wer sich für dieselbe Veranstaltung anmeldet, sieht im Gruppenchat der Veranstaltung die Namen der anderen Angemeldeten.
 
 Diese Dienstleister verarbeiten Daten in unserem Auftrag:
 

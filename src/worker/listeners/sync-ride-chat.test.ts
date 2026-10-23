@@ -35,6 +35,8 @@ beforeEach(() => jest.clearAllMocks());
 
 it.each<EventType>([
   "rider.handedOver",
+  "ride.scheduled",
+  "ride.announced",
   "ride.pilotAssigned",
   "ride.pilotUnassigned",
   "ride.riderBooked",
@@ -45,8 +47,8 @@ it.each<EventType>([
 });
 
 it("leaves the chats alone for an event that changes no roster", () => {
-  expect(syncsRideChat("ride.scheduled")).toBe(false);
-  expect(handlers["ride.scheduled"].syncRideChat).toBeUndefined();
+  expect(syncsRideChat("ride.rescheduled")).toBe(false);
+  expect(handlers["ride.rescheduled"].syncRideChat).toBeUndefined();
 });
 
 it("moves a rider handed over to the chats of every ride they are on", async () => {
@@ -59,4 +61,19 @@ it("syncs the chat of the ride whose roster changed", async () => {
   await run(riderBooked);
   expect(syncRideChat).toHaveBeenCalledWith("ride-1");
   expect(syncRiderChats).not.toHaveBeenCalled();
+});
+
+it("opens the chats of both legs of a round trip once it is scheduled", async () => {
+  await run({
+    type: "ride.scheduled",
+    rideId: "ride-1",
+    chapterId: "chapter-muenchen",
+    actorUserId: "user-admin",
+    returnLegId: "ride-2",
+    requestId: null,
+  });
+  expect(jest.mocked(syncRideChat).mock.calls).toEqual([
+    ["ride-1"],
+    ["ride-2"],
+  ]);
 });

@@ -11,6 +11,7 @@ import { ServiceWorkerRegistrar } from "@/components/service-worker-registrar";
 import { TranslatorTools } from "@/components/translator-tools";
 import { translatorModeBuilt } from "@/lib/i18n/translator-mode";
 import { THEME_COLOR, themeScript } from "@/lib/theme";
+import { daypartScript } from "@/lib/daypart";
 import "./globals.css";
 
 const inter = Inter({
@@ -36,7 +37,7 @@ export const viewport: Viewport = {
   ],
 };
 
-const setLangScript = `(function(){try{var s=${JSON.stringify(locales)},m=document.cookie.match(/(?:^|; )${LOCALE_COOKIE}=([^;]*)/),l=m&&decodeURIComponent(m[1]);if(s.indexOf(l)<0){l=${JSON.stringify(defaultLocale)};var p=navigator.languages||[navigator.language];for(var i=0;i<p.length;i++){var c=(p[i]||"").slice(0,2).toLowerCase();if(s.indexOf(c)>=0){l=c;break}}}document.documentElement.lang=l}catch(e){}})()`;
+const setLangScript = `(function(){try{var s=${JSON.stringify(locales)},m=document.cookie.match(/(?:^|; )${LOCALE_COOKIE}=([^;]*)/),l=m&&decodeURIComponent(m[1]);if(s.indexOf(l)<0){l=${JSON.stringify(defaultLocale)};var p=navigator.languages||[navigator.language];for(var i=0;i<p.length;i++){var c=(p[i]||"").slice(0,2).toLowerCase();if(s.indexOf(c)>=0){l=c;break}}}document.documentElement.lang=l}catch(e){}})();${daypartScript}`;
 
 const setShellScript = `(function(){try{var u=navigator.userAgent;if(u.indexOf(${JSON.stringify(NATIVE_USER_AGENT)})<0)return;var s=/\\b(?:iPhone|iPad)\\b/.test(u)?"ios":/\\bAndroid\\b/.test(u)?"android":"";if(s)document.documentElement.dataset.shell=s}catch(e){}})()`;
 

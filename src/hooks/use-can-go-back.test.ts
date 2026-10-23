@@ -13,4 +13,10 @@ describe("backDepth", () => {
   it("restores the stamped depth when going back", () => {
     expect(backDepth({ cwaDepth: 0 }, 2)).toBe(0);
   });
+
+  it("keeps the depth when an entry is replaced", () => {
+    expect(backDepth({}, 0, true)).toBe(0);
+    expect(backDepth({}, 2, true)).toBe(2);
+    expect(backDepth(null, -1, true)).toBe(0);
+  });
 });

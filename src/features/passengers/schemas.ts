@@ -52,8 +52,17 @@ export const riderNeedsInput = z
       .max(RIDER_NOTE_MAX)
       .transform((value) => value || null)
       .nullable(),
-    rideLocationId: z.string().min(1).max(64).nullable(),
   })
   .partial();
 export type RiderNeedsInput = z.input<typeof riderNeedsInput>;
 export type RiderNeeds = z.output<typeof riderNeedsInput>;
+
+export const newManagedRiderInput = managedRiderInput.extend({
+  needs: riderNeedsInput.optional(),
+});
+export type NewManagedRiderInput = z.input<typeof newManagedRiderInput>;
+
+export const carerLinkInput = z.object({
+  passengerId: z.string().min(1).max(64),
+  caretakerUserId: z.string().min(1).max(64),
+});

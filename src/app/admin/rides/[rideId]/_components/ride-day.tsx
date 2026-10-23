@@ -89,6 +89,7 @@ export function RideDay({
                 notation={notation}
                 words={language}
                 now={now}
+                timeZone={ride.chapter.timeZone}
               />
             </p>
           ) : null}

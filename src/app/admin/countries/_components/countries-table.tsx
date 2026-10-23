@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { Pencil, Trash2, UserPlus, X } from "lucide-react";
+import { Clock, Pencil, Trash2, UserPlus, X } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { ICONS } from "@/components/icons";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -33,19 +33,22 @@ import {
   type ConfirmDeleteLabels,
 } from "@/components/confirm-delete-dialog";
 import {
-  appointCountryAdminAction,
   deleteCountryAction,
+  inviteCountryAdminAction,
   removeCountryAdminAction,
+  revokeCountryAdminInviteAction,
 } from "../actions";
 import { CountryDrawer, type CountryFormLabels } from "./country-drawer";
 
 type CountryAdmin = { userId: string; name: string; email: string };
+type CountryAdminInvite = { id: string; name: string; email: string };
 
 export type CountryRow = {
   id: string;
   name: string;
   code: string;
   admins: CountryAdmin[];
+  invites: CountryAdminInvite[];
   consequences: string[];
 };
 
@@ -57,7 +60,17 @@ export type CountriesTableLabels = CountryFormLabels & {
   appointed: string;
   removeAdmin: string;
   confirmRemoveAdmin: string;
-  appointDialog: { emailLabel: string; hint: string; placeholder: string };
+  pendingInvite: string;
+  revokeInvite: string;
+  confirmRevokeInvite: string;
+  revoked: string;
+  appointDialog: {
+    nameLabel: string;
+    namePlaceholder: string;
+    emailLabel: string;
+    hint: string;
+    placeholder: string;
+  };
   delete: Omit<ConfirmDeleteLabels, "errors">;
 };
 
@@ -132,6 +145,75 @@ function AdminChip({
   );
 }
 
+function InviteChip({
+  invite,
+  labels,
+  locale,
+}: {
+  invite: CountryAdminInvite;
+  labels: CountriesTableLabels;
+  locale: Locale;
+}) {
+  const [pending, startTransition] = useTransition();
+  const label = formatMessage(
+    labels.revokeInvite,
+    { name: invite.name },
+    locale,
+  );
+
+  const revoke = () =>
+    startTransition(async () => {
+      const result = await revokeCountryAdminInviteAction(invite.id);
+      notify(result, { done: labels.revoked, errors: labels.errors });
+    });
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Badge
+          asChild
+          variant="outline"
+          className="h-7 gap-1 border-dashed border-line px-2.5 text-2sm text-ink-soft hover:bg-mint-tint hover:text-ink"
+        >
+          <button
+            type="button"
+            disabled={pending}
+            aria-label={label}
+            title={invite.email}
+          >
+            <Clock aria-hidden />
+            {formatMessage(labels.pendingInvite, { name: invite.name }, locale)}
+            <X aria-hidden />
+          </button>
+        </Badge>
+      </AlertDialogTrigger>
+      <AlertDialogContent aria-describedby={undefined}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {formatMessage(
+              labels.confirmRevokeInvite,
+              { name: invite.name },
+              locale,
+            )}
+          </AlertDialogTitle>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="min-h-11">
+            {labels.cancel}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            variant="destructive"
+            className="min-h-11"
+            onClick={revoke}
+          >
+            {label}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 export function CountriesTable({
   rows,
   labels,
@@ -179,7 +261,9 @@ export function CountriesTable({
       meta: {
         label: labels.admins,
         searchValue: (row) =>
-          row.admins.map((admin) => `${admin.name} ${admin.email}`).join(" "),
+          [...row.admins, ...row.invites]
+            .map((person) => `${person.name} ${person.email}`)
+            .join(" "),
       },
       cell: ({ row }) => (
         <div
@@ -195,15 +279,31 @@ export function CountriesTable({
               locale={language}
             />
           ))}
+          {row.original.invites.map((invite) => (
+            <InviteChip
+              key={invite.id}
+              invite={invite}
+              labels={labels}
+              locale={language}
+            />
+          ))}
           <AppointByEmailDialog
             triggerLabel={labels.appoint}
             title={labels.appoint}
+            nameField={{
+              label: labels.appointDialog.nameLabel,
+              placeholder: labels.appointDialog.namePlaceholder,
+            }}
             emailLabel={labels.appointDialog.emailLabel}
             hint={labels.appointDialog.hint}
             placeholder={labels.appointDialog.placeholder}
             labels={{ done: labels.appointed, errors: labels.errors }}
-            action={(email) =>
-              appointCountryAdminAction({ countryId: row.original.id, email })
+            action={(email, name) =>
+              inviteCountryAdminAction({
+                countryId: row.original.id,
+                email,
+                name,
+              })
             }
             locale={language}
             trigger={(open) => (

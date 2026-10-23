@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { ActionResult } from "@/components/action-feedback";
 import { InlineField } from "@/components/inline-field";
 import { SettingsGroup } from "@/components/settings-group";
-import { FieldRow, SelectRow, ToggleRow } from "@/components/settings-rows";
+import { FieldRow, ToggleRow } from "@/components/settings-rows";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ownRiderNeedsAction,
@@ -14,11 +14,8 @@ import {
   RIDER_NOTE_MAX,
   type RiderNeedsInput,
 } from "@/features/passengers/schemas";
-import { formatMessage } from "@/lib/i18n/format";
-import type { OwnRiderNeeds } from "@/use-cases/set-own-rider-needs";
+import type { OwnRiderNeeds } from "@/features/passengers/facade";
 import type { AccountData } from "./types";
-
-const NONE = "none";
 
 type Strings = NonNullable<AccountData["riderNeeds"]>;
 type Labels = AccountData["strings"]["field"];
@@ -29,20 +26,11 @@ export function RiderNeedsGroup({ data }: { data: AccountData }) {
     <RiderNeeds
       strings={data.riderNeeds}
       labels={data.strings.field}
-      language={data.language}
     />
   );
 }
 
-function RiderNeeds({
-  strings,
-  labels,
-  language,
-}: {
-  strings: Strings;
-  labels: Labels;
-  language: AccountData["language"];
-}) {
+function RiderNeeds({ strings, labels }: { strings: Strings; labels: Labels }) {
   const [rider, setRider] = useState<OwnRiderNeeds | null | undefined>();
 
   useEffect(() => {
@@ -76,30 +64,6 @@ function RiderNeeds({
         labels={labels}
         onSave={(next) => save({ needsWheelchairBike: next })}
       />
-      {rider.careCenters.length > 0 ? (
-        <SelectRow
-          value={rider.rideLocationId ?? NONE}
-          label={strings.careCenter.label}
-          hint={strings.careCenter.hint}
-          options={[
-            { value: NONE, label: strings.careCenter.none },
-            ...rider.careCenters.map((place) => ({
-              value: place.id,
-              label: place.offered
-                ? place.name
-                : formatMessage(
-                    strings.careCenter.gone,
-                    { name: place.name },
-                    language,
-                  ),
-            })),
-          ]}
-          labels={labels}
-          onSave={(next) =>
-            save({ rideLocationId: next === NONE ? null : next })
-          }
-        />
-      ) : null}
       <FieldRow
         label={strings.note.label}
         hint={strings.note.hint}

@@ -7,6 +7,7 @@ import type { MemberPerspective } from "../nav";
 import { MemberChrome, MemberChromeFallback } from "./member-chrome";
 import { MemberSidebar } from "./member-sidebar";
 import { MemberSidebarSkeleton } from "./member-sidebar-skeleton";
+import { MemberTitleProvider } from "./member-title";
 import { MemberTabBar } from "./member-tab-bar";
 import { TabBarSkeleton } from "./tab-bar-skeleton";
 
@@ -30,10 +31,12 @@ export function MemberShell({
         data-member-inset
         className="bg-canvas pb-tabbar md:pb-0 md:peer-data-[variant=inset]:shadow-soft"
       >
-        <Suspense fallback={<MemberChromeFallback />}>
-          <MemberChrome perspective={perspective} />
-        </Suspense>
-        {children}
+        <MemberTitleProvider>
+          <Suspense fallback={<MemberChromeFallback />}>
+            <MemberChrome perspective={perspective} />
+          </Suspense>
+          {children}
+        </MemberTitleProvider>
       </SidebarInset>
 
       <Suspense fallback={<TabBarSkeleton />}>

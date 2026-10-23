@@ -1,6 +1,6 @@
 import { membership } from "@/features/membership";
 import { passengers } from "@/features/passengers";
-import type { ManagedRiderInput } from "@/features/passengers";
+import type { NewManagedRiderInput } from "@/features/passengers";
 import { profile } from "@/features/profile";
 import { DomainError } from "@/lib/domain-error";
 
@@ -9,7 +9,7 @@ export async function addManagedRider({
   rider,
 }: {
   userId: string;
-  rider: ManagedRiderInput;
+  rider: NewManagedRiderInput;
 }) {
   const [managed, joined] = await Promise.all([
     passengers.listPassengersManagedBy(userId),

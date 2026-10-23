@@ -41,10 +41,9 @@ export const requestedRiders = (request: {
 
 export const requestedRoute = (request: {
   pickupName: string | null;
-  rideLocation: { name: string } | null;
   destinationName: string | null;
 }) => ({
-  from: request.rideLocation?.name ?? request.pickupName,
+  from: request.pickupName,
   to: request.destinationName,
 });
 

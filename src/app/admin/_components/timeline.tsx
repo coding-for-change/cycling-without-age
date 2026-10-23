@@ -1,12 +1,8 @@
 import { Children, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import {
-  formatDate,
-  formatRelativeTime,
-  wordsLocale,
-  type Locale,
-} from "@/lib/format";
+import { formatRelativeTime, wordsLocale, type Locale } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { formatInstantDate } from "@/lib/instant-date";
 
 export const asRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" && !Array.isArray(value)
@@ -41,12 +37,14 @@ export function TimelineHeadline({
   notation,
   words,
   now,
+  timeZone,
 }: {
   sentence: ReactNode;
   at: Date;
   notation: Locale;
   words: string;
   now: Date;
+  timeZone: string;
 }) {
   return (
     <p className="text-2sm text-ink-soft">
@@ -57,6 +55,7 @@ export function TimelineHeadline({
         notation={notation}
         words={words}
         now={now}
+        timeZone={timeZone}
       />
     </p>
   );
@@ -122,16 +121,18 @@ export function RelativeTime({
   notation,
   words,
   now,
+  timeZone,
 }: {
   at: Date;
   notation: Locale;
   words: string;
   now: Date;
+  timeZone: string;
 }) {
   return (
     <time
       dateTime={at.toISOString()}
-      title={formatDate(at, notation)}
+      title={formatInstantDate(at, notation, timeZone)}
     >
       {formatRelativeTime(at, wordsLocale(words), now)}
     </time>

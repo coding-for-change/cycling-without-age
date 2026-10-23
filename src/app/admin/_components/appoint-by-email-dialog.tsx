@@ -18,6 +18,7 @@ import { AdminDrawer, submitOnCmdEnter } from "./admin-drawer";
 export function AppointByEmailDialog({
   triggerLabel,
   title,
+  nameField,
   emailLabel,
   hint,
   placeholder,
@@ -28,31 +29,35 @@ export function AppointByEmailDialog({
 }: {
   triggerLabel: string;
   title: string;
+  nameField?: { label: string; placeholder?: string };
   emailLabel: string;
   hint: string;
   placeholder?: string;
   labels: NotifyLabels;
-  action: (email: string) => Promise<ActionResult>;
+  action: (email: string, name: string) => Promise<ActionResult>;
   trigger?: (open: () => void) => ReactNode;
   locale: Locale;
 }) {
   const formId = useId();
   const inputId = useId();
+  const nameId = useId();
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [pending, startTransition] = useTransition();
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const value = email.trim();
     startTransition(async () => {
-      const result = await action(value);
+      const result = await action(value, name.trim());
       notify(result, {
         ...labels,
         done: formatMessage(labels.done, { email: value }, locale),
       });
       if (!result.ok) return;
       setEmail("");
+      setName("");
       setOpen(false);
     });
   };
@@ -76,7 +81,9 @@ export function AppointByEmailDialog({
         open={open}
         onOpenChange={(next) => {
           setOpen(next);
-          if (!next) setEmail("");
+          if (next) return;
+          setEmail("");
+          setName("");
         }}
         title={title}
         description={hint}
@@ -84,7 +91,7 @@ export function AppointByEmailDialog({
           <Button
             type="submit"
             form={formId}
-            disabled={pending || !email.trim()}
+            disabled={pending || !email.trim() || (nameField && !name.trim())}
             variant="brand"
             className="min-h-11"
           >
@@ -99,13 +106,29 @@ export function AppointByEmailDialog({
           aria-busy={pending}
           className="grid gap-4"
         >
+          {nameField ? (
+            <Field>
+              <FieldLabel htmlFor={nameId}>{nameField.label}</FieldLabel>
+              <Input
+                id={nameId}
+                required
+                autoFocus
+                autoComplete="name"
+                maxLength={120}
+                placeholder={nameField.placeholder}
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                className="h-11 border-line text-base"
+              />
+            </Field>
+          ) : null}
           <Field>
             <FieldLabel htmlFor={inputId}>{emailLabel}</FieldLabel>
             <Input
               id={inputId}
               type="email"
               required
-              autoFocus
+              autoFocus={!nameField}
               autoComplete="email"
               inputMode="email"
               placeholder={placeholder}

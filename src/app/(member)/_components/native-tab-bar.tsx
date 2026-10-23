@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { haptics } from "@/lib/native/haptics";
 import { useKeyboardOpen } from "@/lib/native/keyboard";
+import { useOverlayOpen } from "@/lib/native/overlay";
 import {
   hideNativeTabs,
   onTabSelect,
@@ -14,7 +15,7 @@ import {
 import { isSettlingFromSwipeBack } from "@/lib/native/swipe-back";
 import {
   activeTabKey,
-  hidesTabBar,
+  hidesNativeTabs,
   type MemberNavKey,
   type ResolvedMemberNavItem,
 } from "../nav";
@@ -32,9 +33,15 @@ export function NativeTabBar({
   const pathname = usePathname();
   const keyboardOpen = useKeyboardOpen();
   const narrow = useIsMobile();
+  const overlayOpen = useOverlayOpen();
 
   const selectedId = activeTabKey(pathname, items);
-  const hidden = !narrow || keyboardOpen || hidesTabBar(pathname);
+  const hidden = hidesNativeTabs({
+    pathname,
+    narrow,
+    keyboardOpen,
+    overlayOpen,
+  });
 
   const tabs = useMemo<NativeTab[]>(
     () =>

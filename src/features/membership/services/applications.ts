@@ -49,7 +49,9 @@ export const findApplicationsOfUser = (userId: string) =>
   prisma.chapterApplication.findMany({
     where: { userId },
     orderBy: { createdAt: "asc" },
-    include: { chapter: { select: { name: true, slug: true } } },
+    include: {
+      chapter: { select: { name: true, slug: true, timeZone: true } },
+    },
   });
 
 export const setApplicationDecision = (

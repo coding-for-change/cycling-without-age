@@ -17,6 +17,7 @@ import type {
 import {
   deleteMember,
   findAdminMembersOfChapter,
+  findAdminPhonesOfChapter,
   findMember,
   findMembersAmong,
   findMembersMatchingName,
@@ -73,6 +74,26 @@ export const listChapterAdmins = async (chapterId: string) =>
   (await findAdminMembersOfChapter(chapterId)).filter((m) =>
     parseRoles(m.role).includes("admin"),
   );
+
+export type ChapterAdminPhone = {
+  userId: string;
+  name: string;
+  phoneNumber: string;
+};
+
+/**
+ * The numbers people of a chapter are told to ring about one of its rides.
+ * Callers show them only to someone the ride concerns, read from that ride.
+ */
+export const listChapterAdminPhones = async (
+  chapterId: string,
+): Promise<ChapterAdminPhone[]> =>
+  (await findAdminPhonesOfChapter(chapterId)).flatMap((m) => {
+    const phoneNumber = m.user.phoneNumber?.trim();
+    return parseRoles(m.role).includes("admin") && phoneNumber
+      ? [{ userId: m.userId, name: m.user.name, phoneNumber }]
+      : [];
+  });
 
 export const getMemberRoles = async (userId: string, chapterId: string) =>
   parseRoles((await findMember(userId, chapterId))?.role);

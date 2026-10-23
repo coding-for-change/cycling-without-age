@@ -64,16 +64,31 @@ export async function hasNotificationPermission(): Promise<boolean> {
   }
 }
 
+const APNS_ATTEMPTS = 5;
+const APNS_WAIT_MS = 800;
+
+const waitingForApns = (error: unknown) =>
+  error instanceof Error && /APNS token/i.test(error.message);
+
+const pause = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 export async function getPushToken(): Promise<PushDevice | null> {
   const platform = nativePlatform();
   if (!platform) return null;
-  try {
-    const { token } = await (await messaging()).FirebaseMessaging.getToken();
-    return token ? { token, platform } : null;
-  } catch (error) {
-    breadcrumb("getToken", error);
-    Sentry.captureException(error);
-    return null;
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      const { token } = await (await messaging()).FirebaseMessaging.getToken();
+      return token ? { token, platform } : null;
+    } catch (error) {
+      breadcrumb("getToken", error);
+      if (!waitingForApns(error)) {
+        Sentry.captureException(error);
+        return null;
+      }
+      if (attempt === APNS_ATTEMPTS) return null;
+      await pause(APNS_WAIT_MS * attempt);
+    }
   }
 }
 

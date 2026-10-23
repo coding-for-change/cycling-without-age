@@ -31,6 +31,7 @@ import {
 } from "@/lib/identity";
 import { formatMessage } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
+import { useViewerToday } from "@/lib/viewer-time";
 import { AdminDrawer, submitOnCmdEnter } from "../../_components/admin-drawer";
 import { notify } from "@/components/action-feedback";
 import { useDrawerParam } from "../../_components/use-drawer-param";
@@ -59,7 +60,6 @@ const schemaOf = (country: CountryCode, invalid: string) => {
       helperContact: z.string().trim(),
       needsWheelchairBike: z.boolean(),
       riderNote: z.string().trim().max(RIDER_NOTE_MAX),
-      careCenterId: z.string(),
     })
     .superRefine((values, ctx) => {
       if (!values.withHelper) {
@@ -129,10 +129,7 @@ export type RiderNeedsLabels = {
   title: string;
   wheelchair: { label: string; hint: string };
   note: { label: string; hint: string; placeholder: string };
-  careCenter: { label: string; hint: string; none: string };
 };
-
-const NO_CARE_CENTER = "none";
 
 export function AddPassengerDrawer({
   chapterId,
@@ -141,7 +138,6 @@ export function AddPassengerDrawer({
   pickup: pickupStrings,
   relationships,
   needs,
-  careCenters,
   person,
   locale,
 }: {
@@ -151,7 +147,6 @@ export function AddPassengerDrawer({
   pickup: PickupStrings;
   relationships: Record<string, string>;
   needs: RiderNeedsLabels;
-  careCenters: { id: string; name: string }[];
   locale: Locale;
   person: {
     firstName: string;
@@ -164,6 +159,7 @@ export function AddPassengerDrawer({
   const { creating: open, close: clearParam } = useDrawerParam();
   const formId = useId();
   const anotherId = useId();
+  const today = useViewerToday();
   const [another, setAnother] = useState(false);
   const [pickup, setPickup] = useState<PickupValue>(CARE_HOME);
   const [pickupMissing, setPickupMissing] = useState(false);
@@ -186,7 +182,6 @@ export function AddPassengerDrawer({
       helperContact: "",
       needsWheelchairBike: false,
       riderNote: "",
-      careCenterId: NO_CARE_CENTER,
     },
   });
 
@@ -247,8 +242,6 @@ export function AddPassengerDrawer({
         needs: {
           needsWheelchairBike: data.needsWheelchairBike,
           note: data.riderNote || null,
-          rideLocationId:
-            data.careCenterId === NO_CARE_CENTER ? null : data.careCenterId,
         },
       });
       notify(result, {
@@ -343,7 +336,7 @@ export function AddPassengerDrawer({
               name="birthDate"
               label={person.birthDate}
               type="date"
-              max={new Date().toISOString().slice(0, 10)}
+              max={today}
             />
             <FormField
               control={form.control}
@@ -427,42 +420,6 @@ export function AddPassengerDrawer({
                 </FormItem>
               )}
             />
-            {careCenters.length > 0 ? (
-              <FormField
-                control={form.control}
-                name="careCenterId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{needs.careCenter.label}</FormLabel>
-                    <FormControl>
-                      <NativeSelect
-                        value={field.value}
-                        onChange={(event) => field.onChange(event.target.value)}
-                        onBlur={field.onBlur}
-                        name={field.name}
-                        wrapperClassName="w-full"
-                        className="h-11 border-line text-base"
-                      >
-                        <NativeSelectOption value={NO_CARE_CENTER}>
-                          {needs.careCenter.none}
-                        </NativeSelectOption>
-                        {careCenters.map((place) => (
-                          <NativeSelectOption
-                            key={place.id}
-                            value={place.id}
-                          >
-                            {place.name}
-                          </NativeSelectOption>
-                        ))}
-                      </NativeSelect>
-                    </FormControl>
-                    <span className="text-2sm text-ink-soft">
-                      {needs.careCenter.hint}
-                    </span>
-                  </FormItem>
-                )}
-              />
-            ) : null}
             <FormField
               control={form.control}
               name="riderNote"

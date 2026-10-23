@@ -21,7 +21,6 @@ const row = (over: Partial<InboxRow> = {}): InboxRow => ({
   unread: true,
   dateTime: "2026-09-07T09:30:00.000Z",
   when: "2d ago",
-  whenExact: "07/09/2026",
   ...over,
 });
 
@@ -32,6 +31,7 @@ const render = (rows: InboxRow[], unseen: number) =>
       unseen={unseen}
       strings={en.notifications}
       locale="en"
+      notation="en-GB"
     />,
   );
 

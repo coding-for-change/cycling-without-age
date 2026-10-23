@@ -8,6 +8,7 @@ import { profile } from "@/features/profile";
 import { avatarSeed, avatarSvg } from "@/lib/avatar";
 import { presence } from "@/lib/realtime";
 import type { Viewer } from "../person-access";
+import { eventOfChat } from "../ride-chat";
 import { displayOf, visiblePhotoUrls, type ChatDisplay } from "./chat-inbox";
 
 const MEMBER_DISPLAY_LIMIT = 200;
@@ -24,6 +25,7 @@ export type ConversationView = {
   display: ChatDisplay;
   members: ConversationMemberView[];
   messages: ChatMessageView[];
+  event: { cancelled: boolean } | null;
   viewerId: string;
 };
 
@@ -35,9 +37,10 @@ export async function getConversationView(
   const conversation = await chat.getConversation(conversationId, userId);
   if (!conversation) return null;
 
-  const [members, messages] = await Promise.all([
+  const [members, messages, event] = await Promise.all([
     chat.listMembers(conversationId),
     chat.listMessages(conversationId, userId),
+    conversation.origin === "ride" ? eventOfChat(conversationId) : null,
   ]);
 
   const shown = members.slice(0, MEMBER_DISPLAY_LIMIT);
@@ -63,6 +66,7 @@ export async function getConversationView(
       };
     }),
     messages,
+    event,
     viewerId: userId,
   };
 }

@@ -1,29 +1,28 @@
 import Link from "next/link";
 import {
-  ArrowLeft,
   ArrowLeftRight,
-  CalendarClock,
   CircleCheck,
   GraduationCap,
-  MapPin,
+  MapPinned,
   UsersRound,
 } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
+import { RichText } from "@/components/markdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { chapters } from "@/features/chapters";
 import { rides } from "@/features/rides";
-import { calendarDate } from "@/lib/calendar";
-import {
-  formatRelativeTime,
-  formatShortDateWithWeekday,
-  formatTimeRange,
-  type Locale,
-} from "@/lib/format";
+import { rideHeadline } from "@/features/rides/components/ride-presentation";
+import { formatRelativeTime, formatTimeRange, type Locale } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { getOpenRide } from "@/use-cases/open-rides";
 import { pilotReadiness } from "@/use-cases/pilot-readiness";
+import { MemberTitle } from "../../../../_components/member-title";
+import { EventHeader } from "../../../../_components/ride-detail/event-header";
+import { EventHero } from "../../../../_components/ride-detail/event-hero";
+import { PersonalHeader } from "../../../../_components/ride-detail/personal-header";
+import { PlaceCard } from "../../../../_components/ride-detail/place-card";
 import { SignUpButton } from "./sign-up-button";
 
 /**
@@ -54,7 +53,6 @@ export async function OpenRide({
   if (!ride)
     return (
       <>
-        <BackLink label={strings.detail.back} />
         <EmptyState
           icon={CircleCheck}
           title={strings.open.goneTitle}
@@ -91,69 +89,104 @@ export async function OpenRide({
     (leg) => leg?.status === "scheduled" && leg.startsAt > now,
   );
 
+  const event = ride.model === "event";
+  const headline = event
+    ? ride.title?.trim() || dict.calendar.models.event
+    : rideHeadline(ride, dict.calendar, {
+        rideTo: dict.calendar.card.rideTo,
+        rideFrom: dict.calendar.card.rideFrom,
+        words,
+      });
+  const needs = (
+    <Badge className="w-fit bg-mint-tint text-ink">
+      {formatMessage(strings.open.needsMore, { count: missing }, words)}
+    </Badge>
+  );
+  const relative = ` · ${formatRelativeTime(ride.startsAt, words, now)}`;
+
   return (
     <>
-      <BackLink label={strings.detail.back} />
-
-      <header className="flex flex-col gap-1.25">
-        <Badge className="bg-mint-tint text-ink w-fit">
-          {formatMessage(strings.open.needsMore, { count: missing }, words)}
-        </Badge>
-        <h1 className="text-2xl tracking-tight md:text-3xl">
-          {ride.title?.trim() || dict.calendar.models[ride.model]}
-        </h1>
-        <p className="text-ink-soft flex flex-wrap items-center gap-x-1.25">
-          <CalendarClock
-            aria-hidden
-            className="size-4 shrink-0"
+      <MemberTitle title={headline} />
+      {event ? (
+        <>
+          <EventHero
+            rideId={ride.id}
+            title={headline}
+            photos={ride.photos}
           />
-          <span>
-            {formatShortDateWithWeekday(
-              calendarDate(ride.startsAt, zone),
-              locale,
-            )}
-          </span>
-          <span aria-hidden>·</span>
-          <time dateTime={ride.startsAt.toISOString()}>
-            {formatTimeRange(ride.startsAt, ride.endsAt, locale, zone)}
-          </time>
-          <span aria-hidden>·</span>
-          <span>{formatRelativeTime(ride.startsAt, words, now)}</span>
-        </p>
-        <p className="text-2sm text-ink-soft">
-          {[dict.calendar.models[ride.model], ride.chapter.name].join(" · ")}
-        </p>
-      </header>
-
-      <ul className="border-line divide-line divide-y rounded-2xl border">
-        <li className="flex min-h-12 items-start gap-3 px-4 py-3">
-          <MapPin
-            aria-hidden
-            className="text-mint-ink mt-0.5 size-4 shrink-0"
+          <EventHeader
+            eyebrow={ride.chapter.name}
+            title={headline}
+            startsAt={ride.startsAt}
+            endsAt={ride.endsAt}
+            timeZone={zone}
+            locale={locale}
+            after={relative}
           />
-          <span className="flex min-w-0 flex-col">
-            <span>{ride.locationName ?? strings.detail.noPlace}</span>
-            {ride.locationAddress ? (
-              <span className="text-2sm text-ink-soft">
-                {ride.locationAddress}
-              </span>
-            ) : null}
-            {ride.destinationName ? (
-              <span className="text-2sm text-ink-soft">
-                {formatMessage(
-                  strings.signUp.to,
-                  { destination: ride.destinationName },
-                  words,
-                )}
-              </span>
-            ) : null}
-          </span>
-        </li>
+          {needs}
+        </>
+      ) : (
+        <PersonalHeader
+          badge={needs}
+          title={headline}
+          startsAt={ride.startsAt}
+          endsAt={ride.endsAt}
+          timeZone={zone}
+          locale={locale}
+          after={relative}
+        >
+          <p className="text-2sm text-ink-soft">
+            {[dict.calendar.models[ride.model], ride.chapter.name].join(" · ")}
+          </p>
+        </PersonalHeader>
+      )}
+
+      {ride.locationName?.trim() || ride.locationAddress?.trim() ? (
+        <PlaceCard
+          place={{
+            name: ride.locationName,
+            address: ride.locationAddress,
+            latitude: ride.latitude,
+            longitude: ride.longitude,
+          }}
+          mapOf={dict.passenger.rides.detail.mapOf}
+          strings={dict.member.rides.map}
+          words={words}
+        />
+      ) : (
+        <p className="rounded-2xl border border-line p-4 text-2sm text-ink-soft">
+          {strings.detail.noPlace}
+        </p>
+      )}
+
+      {event && ride.description?.trim() ? (
+        <RichText
+          text={ride.description}
+          className="text-base"
+        />
+      ) : null}
+
+      <ul className="divide-y divide-line rounded-2xl border border-line">
+        {ride.destinationName ? (
+          <li className="flex min-h-12 items-start gap-3 px-4 py-3">
+            <MapPinned
+              aria-hidden
+              className="mt-0.5 size-4 shrink-0 text-mint-ink"
+            />
+            <span>
+              {formatMessage(
+                strings.signUp.to,
+                { destination: ride.destinationName },
+                words,
+              )}
+            </span>
+          </li>
+        ) : null}
         {otherLeg ? (
           <li className="flex min-h-12 items-start gap-3 px-4 py-3">
             <ArrowLeftRight
               aria-hidden
-              className="text-ink-soft mt-0.5 size-4 shrink-0"
+              className="mt-0.5 size-4 shrink-0 text-ink-soft"
             />
             <span>
               {formatMessage(
@@ -176,7 +209,7 @@ export async function OpenRide({
         <li className="flex min-h-12 items-center gap-3 px-4 py-3">
           <UsersRound
             aria-hidden
-            className="text-ink-soft size-4 shrink-0"
+            className="size-4 shrink-0 text-ink-soft"
           />
           <span>
             {formatMessage(
@@ -243,21 +276,5 @@ export async function OpenRide({
         )}
       </div>
     </>
-  );
-}
-
-function BackLink({ label }: { label: string }) {
-  return (
-    <Link
-      href="/pilot/rides"
-      transitionTypes={["pop"]}
-      className="text-2sm text-ink-soft hover:text-ink -my-2 inline-flex min-h-11 w-fit items-center gap-1.25 rounded-md transition-colors motion-reduce:transition-none"
-    >
-      <ArrowLeft
-        aria-hidden
-        className="size-4"
-      />
-      {label}
-    </Link>
   );
 }

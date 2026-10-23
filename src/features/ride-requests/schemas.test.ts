@@ -69,16 +69,10 @@ describe("rideRequestInput", () => {
   });
 
   describe("the places", () => {
-    it("needs a place to be picked up when no Ride Location is chosen", () => {
+    it("needs a place to be picked up", () => {
       expect(issuesOf(request({ pickup: null }))).toEqual([
         { path: "pickup", message: "pickupRequired" },
       ]);
-    });
-
-    it("takes a Ride Location in place of a pickup", () => {
-      expect(
-        issuesOf(request({ pickup: null, rideLocationId: "location-1" })),
-      ).toEqual([]);
     });
 
     it("needs a destination to get somewhere, but not for a ride out", () => {
@@ -141,7 +135,6 @@ describe("rideRequestInput", () => {
 
     it("leaves out what was not chosen and a note of only spaces", () => {
       expect(rideRequestInput.parse(request({ note: "   " }))).toMatchObject({
-        rideLocationId: null,
         destination: null,
         note: null,
       });

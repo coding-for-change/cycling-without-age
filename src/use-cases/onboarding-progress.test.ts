@@ -1,3 +1,4 @@
+import { admins } from "@/features/admins";
 import { membership } from "@/features/membership";
 import { profile } from "@/features/profile";
 import { EMPTY_PRESET } from "@/lib/join-preset";
@@ -20,10 +21,17 @@ jest.mock("@/features/membership", () => ({
 jest.mock("@/features/profile", () => ({
   profile: { getProfile: jest.fn() },
 }));
+jest.mock("@/features/admins", () => ({
+  admins: {
+    openInviteOf: jest.fn(),
+    inviteHref: (id: string) => `/admin-invite/${id}`,
+  },
+}));
 
 const getProfile = profile.getProfile as jest.Mock;
 const listMemberships = membership.listMembershipsOfUser as jest.Mock;
 const listApplications = membership.listApplicationsOfUser as jest.Mock;
+const openInviteOf = admins.openInviteOf as jest.Mock;
 
 const CHAPTER = "chapter-muenchen";
 const NEXT = "/join/muenchen/ride";
@@ -69,6 +77,7 @@ beforeEach(() => {
     { chapterId: CHAPTER, roles: ["passenger"] },
   ]);
   listApplications.mockResolvedValue([]);
+  openInviteOf.mockResolvedValue(null);
 });
 
 describe("resolveDestination", () => {
@@ -89,6 +98,26 @@ describe("resolveDestination", () => {
     account({ privacyReadAt: null });
     await expect(resolveDestination(session, EMPTY_PRESET, NEXT)).resolves.toBe(
       "/onboarding/consent",
+    );
+  });
+
+  it("sends a brand-new invitee straight to their admin invite", async () => {
+    listMemberships.mockResolvedValue([]);
+    account({ privacyReadAt: null, onboardedAt: null, birthDate: null });
+    openInviteOf.mockResolvedValue({ id: "invite-1" });
+    await expect(
+      resolveDestination(
+        { ...session, access: { ...session.access, memberships: [] } },
+        EMPTY_PRESET,
+        null,
+      ),
+    ).resolves.toBe("/admin-invite/invite-1");
+  });
+
+  it("leaves an onboarded member's destination alone despite an open invite", async () => {
+    openInviteOf.mockResolvedValue({ id: "invite-1" });
+    await expect(resolveDestination(session, EMPTY_PRESET, NEXT)).resolves.toBe(
+      NEXT,
     );
   });
 });

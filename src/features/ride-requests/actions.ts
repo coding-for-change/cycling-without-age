@@ -9,18 +9,25 @@ import {
   requireChapterAdmin,
 } from "@/lib/auth-guards";
 import { createAttempt, type ActionResult } from "@/lib/domain-error";
+import { cyclingRoute } from "@/lib/mapbox";
 import { withinRateLimit } from "@/lib/rate-limit";
+import { trishawRoute } from "@/lib/trishaw-pace";
+import { changeRideRequest } from "@/use-cases/change-ride-request";
 import { scheduleFromRequest } from "@/use-cases/schedule-from-request";
 import { submitRideRequest } from "@/use-cases/submit-ride-request";
 import { rideRequests } from "./index";
-import { decisionInput, id, rideRequestInput } from "./schemas";
+import {
+  decisionInput,
+  id,
+  rideRequestInput,
+  routePreviewInput,
+} from "./schemas";
 
 const REQUEST_ERRORS = [
   "alreadyRequested",
   "beyondHorizon",
   "closedDate",
   "leadTime",
-  "locationNotInChapter",
   "notChapterMember",
   "outsideHours",
   "requestNotPending",
@@ -29,7 +36,6 @@ const REQUEST_ERRORS = [
   "tooManyRequests",
   "tooManyRiders",
   "unknownChapter",
-  "unknownLocation",
   "unknownPassenger",
   "unknownRequest",
 ] as const;
@@ -73,6 +79,69 @@ export async function submitRideRequestAction(
   if (!withinRateLimit(`ride-request:${session.user.id}`, SUBMIT_LIMIT))
     return { ok: false, error: "rateLimited" };
   return attempt(() => submitRideRequest(parsed.data, session.user.id));
+}
+
+const changeInput = z.object({
+  fromRequestId: id,
+  request: rideRequestInput,
+});
+
+/**
+ * The new request goes through the same checks as any other; the old one is
+ * read on the server and must belong to this account and still be open.
+ */
+export async function changeRideRequestAction(input: unknown): Promise<
+  RideRequestResult<{
+    id: string;
+    rideId: string | null;
+    oldRequestKept: boolean;
+  }>
+> {
+  const parsed = changeInput.safeParse(input);
+  if (!parsed.success) return INVALID;
+  const session = await requireAuth();
+  if (!withinRateLimit(`ride-request:${session.user.id}`, SUBMIT_LIMIT))
+    return { ok: false, error: "rateLimited" };
+  return attempt(() =>
+    changeRideRequest(
+      parsed.data.fromRequestId,
+      parsed.data.request,
+      session.user.id,
+    ),
+  );
+}
+
+export type RoutePreview = {
+  path: [number, number][];
+  distanceM: number;
+  durationSec: number;
+};
+
+const ROUTE_PREVIEW_LIMIT = { max: 30, windowMs: 60_000 };
+
+export async function previewRequestRouteAction(
+  input: unknown,
+): Promise<RoutePreview | null> {
+  const session = await requireAuth();
+  const parsed = routePreviewInput.safeParse(input);
+  if (!parsed.success) return null;
+  if (
+    !withinRateLimit(
+      `ride-request-route:${session.user.id}`,
+      ROUTE_PREVIEW_LIMIT,
+    )
+  )
+    return null;
+  const route = trishawRoute(
+    await cyclingRoute(parsed.data.from, parsed.data.to),
+  );
+  return (
+    route && {
+      path: route.path,
+      distanceM: route.distanceM,
+      durationSec: route.durationSec,
+    }
+  );
 }
 
 /** Who sent the request and whether it is still open are the facade's to check. */

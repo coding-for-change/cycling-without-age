@@ -16,7 +16,6 @@ export const requestSelect = {
   status: true,
   model: true,
   requesterUserId: true,
-  rideLocationId: true,
   pickupName: true,
   pickupAddress: true,
   pickupLatitude: true,
@@ -38,7 +37,6 @@ export const requestSelect = {
   chapter: {
     select: { id: true, name: true, slug: true, timeZone: true },
   },
-  rideLocation: { select: { id: true, name: true, kind: true } },
   requester: {
     select: { id: true, name: true, email: true, phoneNumber: true },
   },
@@ -258,9 +256,11 @@ export const removeRequestRider = (requestId: string, passengerId: string) =>
 export const countOpenRequestsOverlapping = (
   passengerIds: string[],
   window: { startsAt: Date; endsAt: Date },
+  exceptIds: string[] = [],
 ) =>
   prisma.rideRequest.count({
     where: {
+      ...(exceptIds.length ? { id: { notIn: exceptIds } } : {}),
       status: "pending",
       requestedStartsAt: { lt: window.endsAt },
       requestedEndsAt: { gt: window.startsAt },
@@ -271,9 +271,11 @@ export const countOpenRequestsOverlapping = (
 export const countOpenRequestsOfRequester = (
   requesterUserId: string,
   endingAfter: Date,
+  exceptIds: string[] = [],
 ) =>
   prisma.rideRequest.count({
     where: {
+      ...(exceptIds.length ? { id: { notIn: exceptIds } } : {}),
       requesterUserId,
       status: "pending",
       requestedEndsAt: { gt: endingAfter },
