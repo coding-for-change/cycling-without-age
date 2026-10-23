@@ -161,7 +161,7 @@ the chapters facade directly, `features/membership/actions` calls the membership
 directly, and the passkey and pilot-next-steps actions call the profile facade directly.
 `features/notifications/actions` is the same shape: mark seen, mark read, register and
 unregister a device are four writes into one facade, called from the bell and from the
-push registrar. `app/admin/settings/actions` likewise: one write of the chapter's
+push registrar. `app/admin/chapters/[chapterId]/actions` likewise: one write of the chapter's
 `ChapterSettings` row behind `requireChapterAdmin`, so it calls `chapters.updateSettings`
 directly.
 

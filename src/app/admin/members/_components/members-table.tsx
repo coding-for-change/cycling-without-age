@@ -59,6 +59,16 @@ export function MembersTable({
       meta: {
         label: labels.columns.person,
         searchValue: (row) => `${row.name} ${row.email} ${row.phone ?? ""}`,
+        mobile: {
+          leading: (row) => (
+            <PersonAvatar
+              svg={row.avatar}
+              photoUrl={row.photoUrl}
+            />
+          ),
+          title: (row) => row.name || row.email,
+          subtitle: (row) => (row.name ? row.email : null),
+        },
       },
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
@@ -83,7 +93,7 @@ export function MembersTable({
       id: "roles",
       accessorFn: (row) => row.roles,
       filterFn: "arrIncludes",
-      meta: { label: labels.columns.role },
+      meta: { label: labels.columns.role, mobile: "badge" },
       cell: ({ row }) => (
         <div className="flex flex-wrap gap-1.5">
           {row.original.roles.map((role) => (
@@ -103,13 +113,16 @@ export function MembersTable({
       ),
     },
     mutedColumn<MemberRow>("phone", labels.columns.phone, (row) => row.phone),
-    mutedColumn<MemberRow>("chapter", chapterColumn, (row) => row.chapterName),
+    mutedColumn<MemberRow>("chapter", chapterColumn, (row) => row.chapterName, {
+      mobile: "subtitle",
+    }),
     mutedColumn<MemberRow>(
       "joined",
       labels.columns.joined,
       (row) => row.since,
       {
         isoOf: (row) => row.sinceIso,
+        mobile: "trailing",
       },
     ),
   ];

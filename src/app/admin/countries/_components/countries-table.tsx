@@ -237,7 +237,7 @@ export function CountriesTable({
       accessorFn: (row) => row.name,
       enableHiding: false,
       enableSorting: true,
-      meta: { label: labels.fields.name },
+      meta: { label: labels.fields.name, mobile: "title" },
       cell: ({ row }) => (
         <span className="font-medium">{row.original.name}</span>
       ),
@@ -245,7 +245,10 @@ export function CountriesTable({
     {
       id: "code",
       accessorFn: (row) => row.code,
-      meta: { label: labels.fields.code },
+      meta: {
+        label: labels.fields.code,
+        mobile: { subtitle: (row) => row.code },
+      },
       cell: ({ row }) => (
         <Badge
           variant="outline"
@@ -264,6 +267,7 @@ export function CountriesTable({
           [...row.admins, ...row.invites]
             .map((person) => `${person.name} ${person.email}`)
             .join(" "),
+        mobile: "badge",
       },
       cell: ({ row }) => (
         <div
@@ -328,6 +332,7 @@ export function CountriesTable({
     {
       id: "actions",
       enableHiding: false,
+      meta: { mobile: "actions" },
       cell: ({ row }) => (
         <div
           className="flex items-center justify-end gap-1"

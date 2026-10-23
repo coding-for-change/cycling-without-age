@@ -1,6 +1,10 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
+export const TABLE_FRAME =
+  "-mx-4 overflow-hidden border-b border-line md:mx-0 md:rounded-2xl md:border";
+export const TABLE_HEAD = "hidden h-11 bg-canvas-deep md:block";
+
 export function PageHeaderSkeleton({ actions = [] }: { actions?: string[] }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">

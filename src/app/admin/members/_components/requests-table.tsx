@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { X } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,12 @@ export function RequestsTable({
   locale: Locale;
 }) {
   const [target, setTarget] = useState<DecisionTarget | null>(null);
+  const decide = (row: RequestRow, approve: boolean) =>
+    setTarget({
+      applicationId: row.applicationId,
+      name: row.name || row.email,
+      approve,
+    });
 
   const columns: ColumnDef<RequestRow, unknown>[] = [
     {
@@ -71,6 +78,11 @@ export function RequestsTable({
       meta: {
         label: labels.columns.person,
         searchValue: (row) => `${row.name} ${row.email} ${row.phone ?? ""}`,
+        mobile: {
+          leading: (row) => <PersonAvatar svg={row.avatar} />,
+          title: (row) => row.name || row.email,
+          subtitle: (row) => row.message ?? (row.name ? row.email : null),
+        },
       },
       cell: ({ row }) => (
         <div className="flex items-start gap-3">
@@ -98,6 +110,7 @@ export function RequestsTable({
       "chapter",
       labels.columns.chapter,
       (row) => row.chapterName,
+      { mobile: "subtitle" },
     ),
     mutedColumn<RequestRow>(
       "applied",
@@ -108,6 +121,31 @@ export function RequestsTable({
     {
       id: "actions",
       enableHiding: false,
+      meta: {
+        mobile: {
+          actions: (row) => (
+            <>
+              <Button
+                size="sm"
+                className="h-9 px-3 text-2sm"
+                onClick={() => decide(row, true)}
+              >
+                {labels.approve}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={labels.reject}
+                title={labels.reject}
+                className="size-9 text-ink-soft"
+                onClick={() => decide(row, false)}
+              >
+                <X aria-hidden />
+              </Button>
+            </>
+          ),
+        },
+      },
       cell: ({ row }) => (
         <div
           className="flex justify-end gap-2"
@@ -115,26 +153,14 @@ export function RequestsTable({
         >
           <Button
             className="min-h-11"
-            onClick={() =>
-              setTarget({
-                applicationId: row.original.applicationId,
-                name: row.original.name || row.original.email,
-                approve: true,
-              })
-            }
+            onClick={() => decide(row.original, true)}
           >
             {labels.approve}
           </Button>
           <Button
             variant="ghost"
             className="min-h-11"
-            onClick={() =>
-              setTarget({
-                applicationId: row.original.applicationId,
-                name: row.original.name || row.original.email,
-                approve: false,
-              })
-            }
+            onClick={() => decide(row.original, false)}
           >
             {labels.reject}
           </Button>

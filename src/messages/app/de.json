@@ -242,6 +242,10 @@
         "radius": "Wie weit sie fährt",
         "saved": "Gespeichert {when}",
         "saving": "Speichert",
+        "sections": {
+          "booking": "Buchung & Fahrzeiten",
+          "notifications": "Benachrichtigungen & Erinnerungen"
+        },
         "slug": "Webadresse",
         "started": "Gegründet am {date}",
         "timeZone": "Zeitzone",
@@ -575,7 +579,7 @@
       "passengers": "Passagiere",
       "reports": "Berichte",
       "rides": "Ausfahrten",
-      "settings": "Einstellungen",
+      "myChapter": "Meine Ortsgruppe",
       "training": "Training"
     },
     "navGroups": {
@@ -680,9 +684,9 @@
         "body": "Jede Fahrt, die deine Ortsgruppe gebucht hat, von der Anfrage bis zum Winken an der Tür. Noch ist nichts gebucht.",
         "title": "Ausfahrten"
       },
-      "settings": {
-        "body": "Wie weit deine Ortsgruppe fährt, wer zu erreichen ist und was auf der eigenen Seite der Ortsgruppe steht.",
-        "title": "Einstellungen"
+      "myChapter": {
+        "title": "Meine Ortsgruppe",
+        "body": "Wähle die Ortsgruppe, um die du dich kümmerst. Auf ihrer Seite findest du Beitrittslink, Fahrzeiten, Buchungsregeln und alles, womit sie arbeitet."
       },
       "training": {
         "title": "Training",
@@ -1085,8 +1089,7 @@
         "copied": "Link kopiert.",
         "copy": "Link kopieren",
         "downloadPng": "QR-Code als PNG speichern",
-        "poster": "Plakat drucken",
-        "title": "Beitrittslink"
+        "poster": "Plakat drucken"
       },
       "notifications": {
         "applicationPush": {
@@ -1118,10 +1121,6 @@
           "label": "Antwortadresse",
           "placeholder": "hallo@beispiel.de"
         },
-        "status": {
-          "saved": "Gespeichert {when}",
-          "saving": "Speichert"
-        },
         "title": "Benachrichtigungen",
         "welcomeNote": {
           "hint": "Ein paar Zeilen von dir, hervorgehoben in der Willkommensmail, die jede neue Pilotin und jeder neue Passagier bekommt.",
@@ -1133,7 +1132,6 @@
           "hint": "Schaltest du es aus, warten neue Anfragen trotzdem im Posteingang – mit einer E-Mail zwei Minuten später, falls sie noch niemand in der App gelesen hat."
         }
       },
-      "pickChapter": "Wähl links eine Ortsgruppe, um ihren Beitrittslink zu sehen.",
       "postRide": {
         "body": "Was Pilot:innen sehen, wenn sie eine Fahrt beenden: wohin mit der Rikscha, was zu prüfen ist, wen man anruft.",
         "hint": "Markdown möglich: **fett**, Listen, Links.",
@@ -1179,21 +1177,6 @@
         },
         "title": "Besetzung"
       },
-      "support": {
-        "body": "Im Admin hakt etwas? Ein Satz genügt — er landet bei den Leuten, die das hier warten.",
-        "drawer": {
-          "cancel": "Abbrechen",
-          "description": "Ein, zwei Sätze reichen völlig. Sie landen direkt bei den Leuten, die es reparieren.",
-          "done": "Danke. Das hilft mehr, als man denkt.",
-          "failed": "Das ging nicht raus. Gleich noch einmal versuchen.",
-          "placeholder": "Im Profil auf Speichern getippt, dann war der Bildschirm leer.",
-          "submit": "Abschicken",
-          "title": "Was ist passiert?",
-          "tooShort": "Ein paar Worte mehr bitte — mindestens zehn Zeichen."
-        },
-        "open": "Problem melden",
-        "title": "Problem melden"
-      },
       "hours": {
         "title": "Fahrzeiten",
         "body": "Wann deine Ortsgruppe fährt. Die Woche graut den Rest aus, und die Planung warnt, wenn eine Ausfahrt außerhalb liegt.",
@@ -1229,7 +1212,6 @@
         "shade": "Außerhalb der Fahrzeiten"
       },
       "booking": {
-        "title": "Buchung",
         "body": "Wie weit im Voraus geplant wird und womit eine neue Ausfahrt startet.",
         "leadTime": {
           "label": "Mindestvorlauf",
@@ -1262,8 +1244,10 @@
     },
     "table": {
       "all": "Alle",
+      "ascending": "Aufsteigend",
       "clearSearch": "Suche löschen",
       "columns": "Spalten",
+      "descending": "Absteigend",
       "filterAria": "Nach {column} filtern",
       "next": "Weiter",
       "noResults": "Nichts passt.",
@@ -1271,6 +1255,7 @@
       "pageInfo": "{from}–{to} von {total}",
       "previous": "Zurück",
       "search": "Suchen …",
+      "sort": "Sortieren",
       "sortAria": "Nach {column} sortieren"
     },
     "user": {

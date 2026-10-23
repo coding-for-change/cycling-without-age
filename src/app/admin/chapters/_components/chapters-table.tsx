@@ -87,7 +87,7 @@ export function ChaptersTable({
       accessorFn: (row) => row.name,
       enableHiding: false,
       enableSorting: true,
-      meta: { label: labels.fields.name },
+      meta: { label: labels.fields.name, mobile: "title" },
       cell: ({ row }) => (
         <span className="font-medium">{row.original.name}</span>
       ),
@@ -102,12 +102,14 @@ export function ChaptersTable({
         </span>
       ),
     },
-    mutedColumn<ChapterRow>("city", labels.fields.city, (row) => row.city),
+    mutedColumn<ChapterRow>("city", labels.fields.city, (row) => row.city, {
+      mobile: "subtitle",
+    }),
     mutedColumn<ChapterRow>(
       "country",
       labels.fields.country,
       (row) => row.countryName,
-      { filterFn: "equalsString" },
+      { filterFn: "equalsString", mobile: "subtitle" },
     ),
     mutedColumn<ChapterRow>(
       "serviceRadiusKm",

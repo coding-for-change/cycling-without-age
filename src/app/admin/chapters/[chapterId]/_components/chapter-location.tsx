@@ -8,7 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { formatDistance, type Locale } from "@/lib/format";
 import { nearestOverlap, type Coords } from "@/lib/geo";
 import type { ResolvedPlace } from "@/lib/mapbox";
-import { DetailSection } from "../../../_components/detail-page";
+import { SidePanel } from "../../../_components/side-panel";
 import { PlaceSearch } from "../../../_components/place-search";
 import { CHAPTER_RADIUS_KM } from "@/features/chapters/schemas";
 import { formatMessage } from "@/lib/i18n/format";
@@ -16,7 +16,6 @@ import { useOptimisticSave } from "@/components/use-optimistic-save";
 import type { MapPin } from "../../_components/chapter-map";
 import { updateChapterAction } from "../../actions";
 import type { ChapterLabels } from "./chapter-editor";
-import { ChapterTimeZone } from "./chapter-time-zone";
 
 const ChapterMap = dynamic(() => import("../../_components/chapter-map"), {
   ssr: false,
@@ -37,16 +36,14 @@ export function ChapterLocation({
   mapEnabled,
   language,
   notation,
+  editable,
   labels,
-  timeZone,
-  zones,
 }: {
   id: string;
   server: Place;
-  timeZone: string;
-  zones: readonly string[];
   others: MapPin[];
   mapEnabled: boolean;
+  editable: boolean;
   language: string;
   notation: Locale;
   labels: ChapterLabels;
@@ -86,17 +83,21 @@ export function ChapterLocation({
   const overlap = nearestOverlap(place.coords, radiusKm, others);
 
   return (
-    <DetailSection title={labels.location}>
-      <PlaceSearch
-        address={place.address}
-        language={language}
-        strings={labels.address}
-        failed={labels.field.errors.generic}
-        onPlace={pick}
-      />
+    <SidePanel title={labels.location}>
+      {editable ? (
+        <PlaceSearch
+          address={place.address}
+          language={language}
+          strings={labels.address}
+          failed={labels.field.errors.generic}
+          onPlace={pick}
+        />
+      ) : place.address ? (
+        <p className="text-2sm text-pretty">{place.address}</p>
+      ) : null}
 
       {mapEnabled ? (
-        <div className="h-72 overflow-hidden rounded-(--r-tile) border border-line md:h-80">
+        <div className="h-44 overflow-hidden rounded-(--r-tile) border border-line">
           <ChapterMap
             center={place.coords}
             radiusKm={radiusKm}
@@ -105,15 +106,15 @@ export function ChapterLocation({
           />
         </div>
       ) : (
-        <p className="grid h-72 place-items-center rounded-(--r-tile) bg-canvas-deep p-6 text-center text-2sm text-ink-soft md:h-80">
+        <p className="grid h-44 place-items-center rounded-(--r-tile) bg-canvas p-4 text-center text-2sm text-ink-soft">
           {labels.map.unavailable}
         </p>
       )}
 
       <div className="grid gap-2">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <span className="text-2sm font-medium">{labels.radius}</span>
-          <span className="text-2sm tabular-nums text-ink-soft">
+          <span className="text-2sm text-ink-soft">{labels.radius}</span>
+          <span className="text-2sm tabular-nums">
             {formatMessage(
               labels.radiusValue,
               { distance: formatDistance(radiusKm * 1000, notation) },
@@ -121,20 +122,22 @@ export function ChapterLocation({
             )}
           </span>
         </div>
-        <Slider
-          min={CHAPTER_RADIUS_KM.min}
-          max={CHAPTER_RADIUS_KM.sliderMax}
-          step={1}
-          value={[radiusKm]}
-          aria-label={labels.radius}
-          className="py-2"
-          onValueChange={([next]) => setDragging(next)}
-          onValueCommit={([next]) => {
-            setDragging(null);
-            if (next === place.radiusKm) return;
-            void persist({ ...place, radiusKm: next }, place);
-          }}
-        />
+        {editable ? (
+          <Slider
+            min={CHAPTER_RADIUS_KM.min}
+            max={CHAPTER_RADIUS_KM.sliderMax}
+            step={1}
+            value={[radiusKm]}
+            aria-label={labels.radius}
+            className="py-2"
+            onValueChange={([next]) => setDragging(next)}
+            onValueCommit={([next]) => {
+              setDragging(null);
+              if (next === place.radiusKm) return;
+              void persist({ ...place, radiusKm: next }, place);
+            }}
+          />
+        ) : null}
         {overlap ? (
           <p className="flex items-start gap-2 text-2sm text-ink-soft">
             <CircleAlert
@@ -151,18 +154,7 @@ export function ChapterLocation({
             )}
           </p>
         ) : null}
-
-        <ChapterTimeZone
-          id={id}
-          value={timeZone}
-          zones={zones}
-          labels={{
-            timeZone: labels.timeZone,
-            timeZoneHint: labels.timeZoneHint,
-            field: labels.field,
-          }}
-        />
       </div>
-    </DetailSection>
+    </SidePanel>
   );
 }

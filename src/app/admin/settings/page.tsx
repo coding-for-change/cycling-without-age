@@ -1,149 +1,80 @@
-import { Suspense, type ReactNode } from "react";
-import { cacheLife } from "next/cache";
-import { chapters } from "@/features/chapters";
-import { SupportCard } from "@/components/report-problem/support-card";
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { joinUrl } from "@/lib/app-url";
-import { requireAdminScope } from "@/lib/auth-guards";
-import { getDictionary, getLocale } from "@/lib/i18n";
+import { getDictionary } from "@/lib/i18n";
 import { AdminPageHeader, AdminPageShell } from "../_components/admin-page";
+import { DetailList, DetailListRow } from "../_components/detail-page";
+import { ChapterLogo } from "../chapters/_components/chapter-logo";
 import { readActiveScope, type AdminSearchParams } from "../active-scope";
-import { ADMIN_LIFE } from "../admin-viewer";
-import { JoinLinkCard } from "./_components/join-link-card";
-import { NotificationSettingsCard } from "./_components/notification-settings-card";
-import { PostRideInstructionsCard } from "./_components/post-ride-instructions-card";
-import { ReminderSettingsCard } from "./_components/reminder-settings-card";
-import { RidingHoursSettings } from "./_components/riding-hours-settings";
-import { BookingSettings } from "./_components/booking-settings";
-import { StaffingSettingsCard } from "./_components/staffing-settings-card";
-import { markdownToolLabels } from "@/components/markdown-editor";
+import { chapterHref } from "../nav";
 
 type PageProps = { searchParams: Promise<AdminSearchParams> };
 
-const CARDS = ["h-40", "h-72", "h-56", "h-64", "h-64", "h-72", "h-56"];
+const ROWS = ["w-40", "w-32", "w-44"];
 
-export default function SettingsPage({ searchParams }: PageProps) {
+export default function MyChapterPage({ searchParams }: PageProps) {
   return (
     <AdminPageShell>
-      <Suspense fallback={<SettingsSkeleton />}>
-        <SettingsFrame>
-          <Suspense fallback={<SettingsCardsSkeleton />}>
-            <ChapterSettings searchParams={searchParams} />
-          </Suspense>
-        </SettingsFrame>
+      <Suspense fallback={<PickerSkeleton />}>
+        <MyChapter searchParams={searchParams} />
       </Suspense>
     </AdminPageShell>
   );
 }
 
-function SettingsCardsSkeleton() {
-  return CARDS.map((height, index) => (
-    <Skeleton
-      key={index}
-      className={`${height} rounded-2xl`}
-    />
-  ));
-}
-
-function SettingsSkeleton() {
+function PickerSkeleton() {
   return (
-    <>
+    <div className="grid max-w-xl gap-4">
       <Skeleton className="h-9 w-44" />
-      <div className="grid gap-6">
-        <SettingsCardsSkeleton />
+      <Skeleton className="h-4 w-80 max-w-full" />
+      <div className="grid gap-1">
+        {ROWS.map((width) => (
+          <Skeleton
+            key={width}
+            className={`h-10 ${width}`}
+          />
+        ))}
       </div>
-    </>
+    </div>
   );
 }
 
-async function SettingsFrame({ children }: { children: ReactNode }) {
-  "use cache: private";
-  cacheLife(ADMIN_LIFE);
+async function MyChapter({ searchParams }: PageProps) {
+  const { active, chapters } = await readActiveScope(searchParams);
+  const only =
+    active.kind === "chapter"
+      ? active.chapter
+      : chapters.length === 1
+        ? chapters[0]
+        : null;
+  if (only) redirect(chapterHref(only.id));
 
-  const [, dict] = await Promise.all([requireAdminScope(), getDictionary()]);
-
-  return (
-    <>
-      <AdminPageHeader title={dict.admin.pages.settings.title} />
-      <div className="grid gap-6">
-        {children}
-        <SupportCard strings={dict.admin.settings.support} />
-      </div>
-    </>
-  );
-}
-
-async function ChapterSettings({ searchParams }: PageProps) {
-  const { active } = await readActiveScope(searchParams);
-  const chapter = active.kind === "chapter" ? active.chapter : null;
-
-  const [dict, language, settings] = await Promise.all([
-    getDictionary(),
-    getLocale(),
-    chapter ? chapters.getSettings(chapter.id) : null,
-  ]);
-  const strings = dict.admin.settings;
-
-  if (!chapter || !settings)
-    return (
-      <p className="max-w-prose text-sm text-ink-soft">{strings.pickChapter}</p>
-    );
+  const strings = (await getDictionary()).admin.pages.myChapter;
 
   return (
-    <>
-      <JoinLinkCard
-        url={joinUrl(chapter.slug)}
-        slug={chapter.slug}
-        labels={strings.joinLink}
-      />
-      <NotificationSettingsCard
-        chapterId={chapter.id}
-        settings={settings}
-        language={language}
-        labels={strings.notifications}
-      />
-      <PostRideInstructionsCard
-        chapterId={chapter.id}
-        value={settings.postRideInstructions}
-        language={language}
-        labels={{
-          markdown: markdownToolLabels(dict),
-          ...strings.postRide,
-          status: strings.notifications.status,
-          field: strings.notifications.field,
-        }}
-      />
-      <StaffingSettingsCard
-        chapterId={chapter.id}
-        settings={settings}
-        language={language}
-        labels={{
-          ...strings.staffing,
-          status: strings.notifications.status,
-          field: strings.notifications.field,
-        }}
-      />
-      <ReminderSettingsCard
-        chapterId={chapter.id}
-        settings={settings}
-        language={language}
-        labels={{
-          ...strings.reminders,
-          status: strings.notifications.status,
-          field: strings.notifications.field,
-        }}
-      />
-      <RidingHoursSettings
-        chapterId={chapter.id}
-        dict={dict}
-        language={language}
-      />
-      <BookingSettings
-        chapterId={chapter.id}
-        settings={settings}
-        dict={dict}
-        language={language}
-      />
-    </>
+    <div className="grid max-w-xl gap-4">
+      <AdminPageHeader title={strings.title} />
+      <p className="text-sm text-ink-soft">{strings.body}</p>
+      <DetailList>
+        {chapters.map((chapter) => (
+          <DetailListRow
+            key={chapter.id}
+            href={chapterHref(chapter.id)}
+          >
+            <ChapterLogo
+              logo={null}
+              name={chapter.name}
+              className="size-6 rounded-md text-xs"
+            />
+            <span className="min-w-0 flex-1 truncate">{chapter.name}</span>
+            <ChevronRight
+              aria-hidden
+              className="size-4 text-ink-soft"
+            />
+          </DetailListRow>
+        ))}
+      </DetailList>
+    </div>
   );
 }

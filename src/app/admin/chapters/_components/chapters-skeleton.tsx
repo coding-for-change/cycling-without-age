@@ -1,5 +1,9 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { PageHeaderSkeleton } from "../../_components/admin-skeletons";
+import {
+  PageHeaderSkeleton,
+  TABLE_FRAME,
+  TABLE_HEAD,
+} from "../../_components/admin-skeletons";
 
 const ACTIONS = ["h-11 w-40 rounded-full", "h-11 w-36 rounded-full"];
 const ROWS = ["w-40", "w-32", "w-44", "w-28", "w-36"];
@@ -24,8 +28,8 @@ export function ChapterRowsSkeleton() {
         <Skeleton className="h-9 w-64 max-w-full" />
         <Skeleton className="ml-auto h-9 w-24" />
       </div>
-      <div className="overflow-hidden rounded-2xl border border-line">
-        <div className="h-11 bg-canvas-deep" />
+      <div className={TABLE_FRAME}>
+        <div className={TABLE_HEAD} />
         {ROWS.map((width, index) => (
           <div
             key={index}

@@ -80,6 +80,17 @@ export function TypeCatalogue({
       meta: {
         label: labels.columns.name,
         searchValue: (row) => `${row.name} ${row.ownerName ?? ""}`,
+        mobile: {
+          leading: (row) => (
+            <FileThumb
+              fileId={row.photoFileId}
+              alt=""
+              size="sm"
+            />
+          ),
+          title: (row) => row.name,
+          subtitle: (row) => (row.archived ? labels.archived : null),
+        },
       },
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
@@ -107,7 +118,7 @@ export function TypeCatalogue({
       id: "scope",
       accessorFn: (row) => row.scope,
       filterFn: "equalsString",
-      meta: { label: labels.columns.scope },
+      meta: { label: labels.columns.scope, mobile: "badge" },
       cell: ({ row }) => (
         <div className="flex flex-wrap items-center gap-2">
           <Badge
@@ -131,7 +142,7 @@ export function TypeCatalogue({
       id: "seats",
       accessorFn: (row) => row.seats,
       enableSorting: true,
-      meta: { label: labels.columns.seats },
+      meta: { label: labels.columns.seats, mobile: "trailing" },
       cell: ({ row }) => (
         <span className="text-ink-soft tabular-nums">
           {row.original.seatsLabel}

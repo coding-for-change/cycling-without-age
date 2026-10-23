@@ -1,5 +1,9 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { PageHeaderSkeleton } from "../../../_components/admin-skeletons";
+import {
+  PageHeaderSkeleton,
+  TABLE_FRAME,
+  TABLE_HEAD,
+} from "../../../_components/admin-skeletons";
 
 const ROWS = ["w-32", "w-40", "w-28", "w-36", "w-32"];
 
@@ -11,8 +15,8 @@ export function RequestRowsSkeleton() {
   return (
     <section className="flex flex-col gap-3">
       <Skeleton className="h-8 w-80 max-w-full rounded-lg" />
-      <div className="overflow-hidden rounded-2xl border border-line">
-        <div className="h-11 bg-canvas-deep" />
+      <div className={TABLE_FRAME}>
+        <div className={TABLE_HEAD} />
         {ROWS.map((width, index) => (
           <div
             key={index}

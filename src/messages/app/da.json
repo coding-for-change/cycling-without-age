@@ -242,6 +242,10 @@
         "radius": "Hvor langt den kører",
         "saved": "Gemt {when}",
         "saving": "Gemmer",
+        "sections": {
+          "booking": "Booking og køretider",
+          "notifications": "Notifikationer og påmindelser"
+        },
         "slug": "Webadresse",
         "started": "Startet {date}",
         "timeZone": "Tidszone",
@@ -575,7 +579,7 @@
       "passengers": "Passagerer",
       "reports": "Rapporter",
       "rides": "Ture",
-      "settings": "Indstillinger",
+      "myChapter": "Min afdeling",
       "training": "Træning"
     },
     "navGroups": {
@@ -680,9 +684,9 @@
         "body": "Alle ture, din afdeling har booket, fra anmodningen til farvellet ved døren. Der er ikke booket noget endnu.",
         "title": "Ture"
       },
-      "settings": {
-        "body": "Hvor langt din afdeling kører, hvem man kan få fat på, og oplysningerne på afdelingens egen side.",
-        "title": "Indstillinger"
+      "myChapter": {
+        "title": "Min afdeling",
+        "body": "Vælg den afdeling, du passer på. Dens side har tilmeldingslinket, køretider, bookingregler og alt det andet, den kører på."
       },
       "training": {
         "title": "Træning",
@@ -1085,8 +1089,7 @@
         "copied": "Link kopieret.",
         "copy": "Kopier link",
         "downloadPng": "Gem QR-kode som PNG",
-        "poster": "Print plakaten",
-        "title": "Tilmeldingslink"
+        "poster": "Print plakaten"
       },
       "notifications": {
         "applicationPush": {
@@ -1118,10 +1121,6 @@
           "label": "Svaradresse",
           "placeholder": "hej@eksempel.dk"
         },
-        "status": {
-          "saved": "Gemt {when}",
-          "saving": "Gemmer"
-        },
         "title": "Notifikationer",
         "welcomeNote": {
           "hint": "Et par linjer fra dig, fremhævet i velkomstmailen, som alle nye piloter og passagerer får.",
@@ -1133,7 +1132,6 @@
           "hint": "Slår du det fra, venter nye ønsker stadig i indbakken – med en e-mail to minutter senere, hvis ingen har læst dem i appen."
         }
       },
-      "pickChapter": "Vælg en afdeling i sidemenuen for at se afdelingens link.",
       "postRide": {
         "body": "Det, piloter ser, når de afslutter en tur: hvor rickshawen skal hen, hvad der skal tjekkes, hvem man ringer til.",
         "hint": "Understøtter Markdown: **fed**, lister, links.",
@@ -1179,21 +1177,6 @@
         },
         "title": "Bemanding"
       },
-      "support": {
-        "body": "Driller noget i administrationen? Beskriv det i én sætning, så lander det hos dem, der passer på det.",
-        "drawer": {
-          "cancel": "Annuller",
-          "description": "En sætning eller to er rigeligt. Den går direkte til dem, der kan rette det.",
-          "done": "Tak. Det hjælper mere, end du tror.",
-          "failed": "Det blev ikke sendt. Prøv igen om lidt.",
-          "placeholder": "Jeg trykkede Gem på min profil, og så blev skærmen tom.",
-          "submit": "Send",
-          "title": "Hvad skete der?",
-          "tooShort": "Et par ord mere, tak — mindst ti tegn."
-        },
-        "open": "Meld et problem",
-        "title": "Meld et problem"
-      },
       "hours": {
         "title": "Køretider",
         "body": "Hvornår jeres afdeling kører. Ugen skraverer resten, og planlægningen advarer, når en tur ligger udenfor.",
@@ -1229,7 +1212,6 @@
         "shade": "Uden for køretiderne"
       },
       "booking": {
-        "title": "Booking",
         "body": "Hvor langt frem ture planlægges, og hvad en ny tur starter med.",
         "leadTime": {
           "label": "Mindste varsel",
@@ -1262,8 +1244,10 @@
     },
     "table": {
       "all": "Alle",
+      "ascending": "Stigende",
       "clearSearch": "Ryd søgning",
       "columns": "Kolonner",
+      "descending": "Faldende",
       "filterAria": "Filtrér efter {column}",
       "next": "Næste",
       "noResults": "Ingen træffere.",
@@ -1271,6 +1255,7 @@
       "pageInfo": "{from}–{to} af {total}",
       "previous": "Forrige",
       "search": "Søg …",
+      "sort": "Sortér",
       "sortAria": "Sortér efter {column}"
     },
     "user": {

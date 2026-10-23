@@ -75,6 +75,16 @@ export function TrishawsTable({
       meta: {
         label: labels.columns.trishaw,
         searchValue: (row) => `${row.name} ${row.model ?? ""} ${row.location}`,
+        mobile: {
+          leading: (row) => (
+            <FileThumb
+              fileId={row.photoFileId}
+              alt=""
+              size="sm"
+            />
+          ),
+          title: (row) => row.name,
+        },
       },
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
@@ -97,7 +107,10 @@ export function TrishawsTable({
       id: "model",
       accessorFn: (row) => row.model ?? "",
       filterFn: "equalsString",
-      meta: { label: labels.columns.model },
+      meta: {
+        label: labels.columns.model,
+        mobile: { subtitle: (row) => row.model ?? labels.noModel },
+      },
       cell: ({ row }) =>
         row.original.model ? (
           <div className="grid">
@@ -137,7 +150,10 @@ export function TrishawsTable({
       id: "location",
       accessorFn: (row) => row.location,
       filterFn: "equalsString",
-      meta: { label: labels.columns.location },
+      meta: {
+        label: labels.columns.location,
+        mobile: { subtitle: (row) => row.location },
+      },
       cell: ({ row }) => (
         <span className="inline-flex flex-wrap items-center gap-2 text-ink-soft">
           {row.original.location}
@@ -153,7 +169,7 @@ export function TrishawsTable({
       id: "status",
       accessorFn: (row) => row.status,
       filterFn: "equalsString",
-      meta: { label: labels.columns.status },
+      meta: { label: labels.columns.status, mobile: "badge" },
       cell: ({ row }) => (
         <TrishawStatusBadge
           status={row.original.status}
@@ -169,7 +185,7 @@ export function TrishawsTable({
       sortingFn: (a, b) =>
         DAMAGE_RANK[a.original.damage] - DAMAGE_RANK[b.original.damage] ||
         b.original.openDamages - a.original.openDamages,
-      meta: { label: labels.columns.damage },
+      meta: { label: labels.columns.damage, mobile: "badge" },
       cell: ({ row }) => (
         <TrishawDamageBadge
           state={row.original.damage}

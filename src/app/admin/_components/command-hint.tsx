@@ -19,7 +19,7 @@ export function CommandHint({ label }: { label: string }) {
   const mac = useSyncExternalStore(subscribe, isMacClient, () => true);
 
   return (
-    <p className="flex items-center gap-1.5 px-2 py-1 text-xs text-ink-faint group-data-[collapsible=icon]:hidden">
+    <p className="hidden items-center gap-1.5 px-2 py-1 md:flex text-xs text-ink-faint group-data-[collapsible=icon]:hidden">
       <KbdGroup>
         <Kbd>{mac ? "\u2318" : "Ctrl"}</Kbd>
         <Kbd>K</Kbd>

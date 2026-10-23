@@ -8,7 +8,7 @@ import { PersonAvatar } from "@/components/person-avatar";
 import type { Perspective } from "@/lib/access";
 import { haptics } from "@/lib/native/haptics";
 import { cn } from "@/lib/utils";
-import { nextPerspective } from "../nav";
+import { nextPerspective } from "@/lib/perspectives";
 
 const DOUBLE_TAP_MS = 250;
 
