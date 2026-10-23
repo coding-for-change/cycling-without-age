@@ -17,6 +17,12 @@ export type Message = NotificationMessage & {
 /** A calendar file the mail carries; `deliver-email` renders it with `lib/ics`. */
 export type CalendarAttachment = { filename: string; calendar: IcsCalendar };
 
+/**
+ * A recipient who reads the event in a role of their own: the audience lands
+ * in their stored payload and picks their copy and their link.
+ */
+export type Recipient = string | { userId: string; audience: string };
+
 export type DeliveryPolicy = {
   push: boolean;
   email: "always" | "ifNoPush" | "never";
@@ -31,14 +37,14 @@ export type Kind<
   category: NotificationCategory;
   policy: DeliveryPolicy;
   payload: P;
-  recipients: (event: EventOf<K>) => Promise<string[]>;
+  recipients: (event: EventOf<K>) => Promise<Recipient[]>;
   params: (event: EventOf<K>) => Promise<z.infer<P>>;
   /**
    * When one event reaches people in different roles, each stored row can
    * carry who it was written for, so the message reads right for that reader.
    */
   forRecipient?: (params: z.infer<P>, recipientUserId: string) => z.infer<P>;
-  href: (event: EventOf<K>) => string;
+  href: (event: EventOf<K>, audience?: string) => string;
   collapseKey?: (event: EventOf<K>) => string;
   chapterAllowsPush?: (chapterId: string | null) => Promise<boolean>;
   /**
@@ -71,13 +77,13 @@ export type AnyKind = {
   category: NotificationCategory;
   policy: DeliveryPolicy;
   payload: z.ZodType<NotificationPayload>;
-  recipients(event: DomainEvent): Promise<string[]>;
+  recipients(event: DomainEvent): Promise<Recipient[]>;
   params(event: DomainEvent): Promise<NotificationPayload>;
   forRecipient?(
     params: NotificationPayload,
     recipientUserId: string,
   ): NotificationPayload;
-  href(event: DomainEvent): string;
+  href(event: DomainEvent, audience?: string): string;
   collapseKey?(event: DomainEvent): string;
   chapterAllowsPush?(chapterId: string | null): Promise<boolean>;
   hydrate?(params: NotificationPayload): Promise<NotificationPayload>;

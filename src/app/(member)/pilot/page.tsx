@@ -11,6 +11,7 @@ import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
 import { getMemberHome } from "@/use-cases/member-home";
 import { Greeting } from "../_components/home/greeting";
+import { HappeningSoon } from "../_components/home/happening-soon";
 import { GreetingFallback } from "../_components/home/home-fallback";
 import { MEMBER_LIFE } from "../_components/instant";
 import { MemberPageShell } from "../_components/member-page";
@@ -30,11 +31,8 @@ import { RejectedCard } from "./_components/rejected-card";
 export default function PilotHomePage() {
   return (
     <MemberPageShell>
-      <Suspense fallback={<GreetingFallback hero />}>
-        <Greeting
-          perspective="pilot"
-          hero
-        />
+      <Suspense fallback={<GreetingFallback />}>
+        <Greeting perspective="pilot" />
       </Suspense>
       <Suspense fallback={null}>
         <PilotStatus />
@@ -44,6 +42,9 @@ export default function PilotHomePage() {
       </Suspense>
       <Suspense fallback={<NeedsPilotCarouselFallback />}>
         <NeedsPilotCarousel />
+      </Suspense>
+      <Suspense fallback={null}>
+        <HappeningSoon perspective="pilot" />
       </Suspense>
       <Suspense fallback={null}>
         <PilotSetupRow />

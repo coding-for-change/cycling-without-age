@@ -3185,7 +3185,8 @@
       },
       "open": {
         "title": "Ausfahrten, die einen Piloten suchen",
-        "seeAll": "Alle ansehen"
+        "seeAll": "Alle ansehen",
+        "empty": "Gerade sucht keine Ausfahrt einen Piloten. Wir sagen dir Bescheid, sobald es wieder eine gibt."
       }
     },
     "rides": {
@@ -3247,7 +3248,8 @@
         "titleAny": "Offene Fahrten",
         "goneTitle": "Hier wird kein Pilot mehr gesucht",
         "goneBody": "Vielleicht hat schon jemand übernommen, oder die Fahrt wurde verschoben oder abgesagt. Die anderen offenen Fahrten deiner Ortsgruppe findest du unter Meine Ausfahrten.",
-        "goneCta": "Offene Fahrten ansehen"
+        "goneCta": "Offene Fahrten ansehen",
+        "staffed": "Für diese Veranstaltung sind schon alle Piloten eingeteilt. Was geplant ist, kannst du dir trotzdem ansehen."
       },
       "signUp": {
         "alsoWayBack": "Teil einer Fahrt hin und zurück: Du fährst auch die Rückfahrt, {time}, wenn sie noch einen Piloten sucht.",

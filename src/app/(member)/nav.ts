@@ -151,17 +151,20 @@ export const isTrainingStepPath = (pathname: string): boolean =>
 export const hidesTabBar = (pathname: string): boolean =>
   isConversationPath(pathname) || isTrainingStepPath(pathname);
 
+/**
+ * The keyboard never hides the native tabs: hiding them moves the WebView out
+ * of the tab controller, which takes the focus and closes the keyboard again.
+ * The keyboard covers the tab bar anyway.
+ */
 export const hidesNativeTabs = ({
   pathname,
   narrow,
-  keyboardOpen,
   overlayOpen,
 }: {
   pathname: string;
   narrow: boolean;
-  keyboardOpen: boolean;
   overlayOpen: boolean;
-}): boolean => !narrow || keyboardOpen || overlayOpen || hidesTabBar(pathname);
+}): boolean => !narrow || overlayOpen || hidesTabBar(pathname);
 
 export type MemberPrimaryAction = { href: string; icon: IconKey };
 
@@ -171,7 +174,7 @@ export const primaryAction = (
   href:
     perspective === "passenger"
       ? `${PERSPECTIVE_HOME.passenger}/rides/new`
-      : `${PERSPECTIVE_HOME[perspective]}/rides`,
+      : `${PERSPECTIVE_HOME[perspective]}#open-rides`,
   icon: "rides",
 });
 

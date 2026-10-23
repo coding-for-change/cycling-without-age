@@ -407,6 +407,7 @@ const EVENTS: Record<EventType, DomainEvent> = {
     chapterId: CHAPTER,
     actorUserId: ACTOR,
     pair: null,
+    exceptUserId: null,
   },
   "ride.understaffed": {
     type: "ride.understaffed",
@@ -506,13 +507,26 @@ const eventsOf = (kind: AnyKind) => [
   ...(VARIANTS[kind.event] ?? []),
 ];
 
+const AUDIENCES: Partial<Record<EventType, string[]>> = {
+  "ride.announced": ["pilot"],
+};
+
 const readings = async (kind: AnyKind, event: DomainEvent) => {
   const shared = kind.payload.parse(await kind.params(event));
   const readers = kind.forRecipient
-    ? [...new Set(await kind.recipients(event))]
+    ? [
+        ...new Set(
+          (await kind.recipients(event)).map((recipient) =>
+            typeof recipient === "string" ? recipient : recipient.userId,
+          ),
+        ),
+      ]
     : [];
   return [
     shared,
+    ...(AUDIENCES[kind.event] ?? []).map((audience) =>
+      kind.payload.parse({ ...shared, audience }),
+    ),
     ...readers.map((reader) =>
       kind.payload.parse(kind.forRecipient!(shared, reader)),
     ),
@@ -642,6 +656,8 @@ describe.each(kinds.map((kind) => [kind.event, kind] as const))(
 
     it("points somewhere inside the app", () => {
       expect(kind.href(event)).toMatch(APP_RELATIVE);
+      for (const audience of AUDIENCES[kind.event] ?? [])
+        expect(kind.href(event, audience)).toMatch(APP_RELATIVE);
     });
 
     it.each(locales)("reads as finished prose in %s", async (locale) => {

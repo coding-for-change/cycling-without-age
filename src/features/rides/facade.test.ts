@@ -990,6 +990,25 @@ describe("updateRideDetails", () => {
     );
   });
 
+  it("offers a ride to pilots again when it needs more of them", async () => {
+    jest.useFakeTimers({ now: new Date("2026-09-01T08:00:00Z") });
+    db.ride.findUnique.mockResolvedValue(scheduled());
+    await rides.updateRideDetails("ride-1", { requiredPilots: 2 }, ADMIN);
+    expect(emitted).toEqual([
+      expect.objectContaining({
+        type: "ride.opened",
+        rideId: "ride-1",
+        exceptUserId: null,
+      }),
+    ]);
+
+    emitted.length = 0;
+    db.ride.findUnique.mockResolvedValue(scheduled({ requiredPilots: 2 }));
+    await rides.updateRideDetails("ride-1", { requiredPilots: 1 }, ADMIN);
+    expect(emitted).toEqual([]);
+    jest.useRealTimers();
+  });
+
   it("keeps the note for pilots out of the event and the log payload", async () => {
     db.ride.findUnique.mockResolvedValue(scheduled());
     await rides.updateRideDetails("ride-1", { note: "Ring twice." }, ADMIN);
@@ -2750,6 +2769,11 @@ describe("pilots signing up themselves", () => {
     });
     expect(emitted).toEqual([
       expect.objectContaining({ type: "ride.pilotUnassigned", self: true }),
+      expect.objectContaining({
+        type: "ride.opened",
+        rideId: "ride-1",
+        exceptUserId: "pilot-1",
+      }),
     ]);
   });
 });
@@ -2840,7 +2864,15 @@ describe("a pilot taking a round trip", () => {
     ).toEqual(["ride-back", "ride-there"]);
     expect(pairs()).toEqual([
       ["ride-back", "follow"],
+      ["ride-back", "follow"],
       ["ride-there", "lead"],
+      ["ride-there", "lead"],
+    ]);
+    expect(emitted.map((event) => event.type)).toEqual([
+      "ride.pilotUnassigned",
+      "ride.opened",
+      "ride.pilotUnassigned",
+      "ride.opened",
     ]);
 
     jest.clearAllMocks();

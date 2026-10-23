@@ -11,7 +11,7 @@ import { RichText } from "@/components/markdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { chapters } from "@/features/chapters";
-import { rides } from "@/features/rides";
+import { rides, type AnnouncedEventRow } from "@/features/rides";
 import { rideHeadline } from "@/features/rides/components/ride-presentation";
 import { formatRelativeTime, formatTimeRange, type Locale } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
@@ -50,7 +50,17 @@ export async function OpenRide({
 }) {
   const ride = await getOpenRide(rideId, pilotChapterIds);
   const strings = dict.pilot.rides;
-  if (!ride)
+  if (!ride) {
+    const event = await rides.getAnnouncedEvent(rideId, pilotChapterIds);
+    if (event)
+      return (
+        <StaffedEvent
+          event={event}
+          dict={dict}
+          locale={locale}
+          words={words}
+        />
+      );
     return (
       <>
         <EmptyState
@@ -62,7 +72,7 @@ export async function OpenRide({
               variant="outline"
             >
               <Link
-                href="/pilot/rides"
+                href="/pilot#open-rides"
                 transitionTypes={["pop"]}
               >
                 {strings.open.goneCta}
@@ -74,6 +84,7 @@ export async function OpenRide({
         </EmptyState>
       </>
     );
+  }
 
   const zone = ride.chapter.timeZone;
   const missing = Math.max(0, ride.requiredPilots - ride._count.assignments);
@@ -275,6 +286,67 @@ export async function OpenRide({
           </>
         )}
       </div>
+    </>
+  );
+}
+
+/**
+ * An announced event that already has its pilots: a pilot of the chapter may
+ * still see what is planned, the way its riders do, but not sign up.
+ */
+function StaffedEvent({
+  event,
+  dict,
+  locale,
+  words,
+}: {
+  event: AnnouncedEventRow;
+  dict: Dictionary;
+  locale: Locale;
+  words: Locale;
+}) {
+  const headline = event.title?.trim() || dict.calendar.models.event;
+  const relative = ` · ${formatRelativeTime(event.startsAt, words, new Date())}`;
+
+  return (
+    <>
+      <MemberTitle title={headline} />
+      <EventHero
+        rideId={event.id}
+        title={headline}
+        photos={event.photos}
+      />
+      <EventHeader
+        eyebrow={event.chapter.name}
+        title={headline}
+        startsAt={event.startsAt}
+        endsAt={event.endsAt}
+        timeZone={event.chapter.timeZone}
+        locale={locale}
+        after={relative}
+      />
+      <p className="rounded-2xl bg-canvas-deep p-4 text-2sm text-ink-soft">
+        {dict.pilot.rides.open.staffed}
+      </p>
+      {event.locationName?.trim() || event.locationAddress?.trim() ? (
+        <PlaceCard
+          place={{
+            name: event.locationName,
+            address: event.locationAddress,
+            latitude: event.latitude,
+            longitude: event.longitude,
+          }}
+          mapOf={dict.passenger.rides.detail.mapOf}
+          strings={dict.member.rides.map}
+          words={words}
+        />
+      ) : null}
+      {event.description?.trim() ? (
+        <RichText
+          text={event.description}
+          className="text-base"
+        />
+      ) : null}
     </>
   );
 }

@@ -339,6 +339,7 @@ describe("who hears about a ride", () => {
           ...scope,
           actorUserId: "admin-1",
           pair: follow,
+          exceptUserId: null,
         }),
       ).toEqual([]);
     });

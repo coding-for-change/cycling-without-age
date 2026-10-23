@@ -1,12 +1,9 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function GreetingFallback({ hero = false }: { hero?: boolean }) {
+export function GreetingFallback() {
   return (
     <section className="flex flex-col gap-3">
       <Skeleton className="h-8 w-48" />
-      {hero ? (
-        <Skeleton className="mt-2 h-14 w-full rounded-full md:hidden" />
-      ) : null}
     </section>
   );
 }
