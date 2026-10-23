@@ -59,7 +59,10 @@ export function CourseProgressTable({
       accessorFn: (row) => row.pilot,
       enableHiding: false,
       enableSorting: true,
-      meta: { label: labels.columns.pilot },
+      meta: {
+        label: labels.columns.pilot,
+        mobile: { title: (row) => row.pilot },
+      },
       cell: ({ row }) => (
         <Link
           href={href(row.original.userId)}
@@ -74,7 +77,7 @@ export function CourseProgressTable({
       id: "status",
       accessorFn: (row) => row.status,
       filterFn: "equalsString",
-      meta: { label: labels.columns.status },
+      meta: { label: labels.columns.status, mobile: "badge" },
       cell: ({ row }) => (
         <TrainingStatusPill
           status={row.original.status}
@@ -86,7 +89,10 @@ export function CourseProgressTable({
       id: "progress",
       accessorFn: (row) => row.percent,
       enableSorting: true,
-      meta: { label: labels.columns.progress },
+      meta: {
+        label: labels.columns.progress,
+        mobile: { trailing: (row) => row.percentLabel },
+      },
       cell: ({ row }) => (
         <span className="flex min-w-28 items-center gap-2">
           <PercentBar
@@ -125,7 +131,10 @@ export function CourseProgressTable({
       id: "lastActivity",
       accessorFn: (row) => row.lastActivity?.at ?? "",
       enableSorting: true,
-      meta: { label: labels.columns.lastActivity },
+      meta: {
+        label: labels.columns.lastActivity,
+        mobile: { subtitle: (row) => row.lastActivity?.label },
+      },
       cell: ({ row }) =>
         row.original.lastActivity ? (
           <time

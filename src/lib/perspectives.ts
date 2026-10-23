@@ -1,5 +1,5 @@
 import { availablePerspectives, getHighestRole } from "@/lib/access";
-import type { Access } from "@/lib/access";
+import type { Access, Perspective } from "@/lib/access";
 import type { IconKey } from "@/lib/commands";
 import type { Dictionary } from "@/lib/i18n";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
@@ -27,3 +27,12 @@ export function roleLabel(access: Access, dict: Dictionary): string {
   const role = getHighestRole(access);
   return role ? dict.admin.roles[role] : dict.admin.perspectives.admin;
 }
+
+export const nextPerspective = (
+  available: readonly Perspective[],
+  current: Perspective,
+): Perspective | null => {
+  if (available.length < 2) return null;
+  const index = available.indexOf(current);
+  return index === -1 ? null : available[(index + 1) % available.length];
+};

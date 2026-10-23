@@ -1,4 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { TABLE_FRAME, TABLE_HEAD } from "../../_components/admin-skeletons";
 
 export const INVITE_BUTTON = "h-11 w-44 rounded-full";
 
@@ -11,8 +12,8 @@ export function AdminsSectionSkeleton() {
         <Skeleton className="h-6 w-36" />
         <Skeleton className="h-4 w-72 max-w-full" />
       </div>
-      <div className="overflow-hidden rounded-2xl border border-line">
-        <div className="h-11 bg-canvas-deep" />
+      <div className={TABLE_FRAME}>
+        <div className={TABLE_HEAD} />
         {ROWS.map((width, index) => (
           <div
             key={index}

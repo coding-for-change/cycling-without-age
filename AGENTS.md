@@ -144,8 +144,10 @@ client-only: call them from client components; the wrappers are SSR-safe
   top of it. Capacitor forces `scrollView.bounces = false`; `AppViewController` turns the rubber
   band back on and CSS limits it to `data-shell="ios"`. On iOS phones the member top bar
   (`data-slot="member-top-bar"`) is `position: fixed` and `[data-member-inset]` pads for it, so
-  only content stretches; the WebView ground is `#ffffff` (`backgroundColor` in
-  `capacitor.config.ts`), never the system's dark background.
+  only content stretches. The WebView ground starts as `#ffffff` (`backgroundColor` in
+  `capacitor.config.ts`); `syncShellBackground` (`@/lib/native/shell-background`, the in-app
+  `ShellBackgroundPlugin`) then paints it, its superviews and the native interface style with the
+  app's own `--canvas` and theme, never the system's.
 - iOS runs the keyboard with `resize: "none"`: the WebView keeps its size, `@/lib/native/keyboard`
   writes the keyboard height to `--keyboard-inset`, and a full-screen surface with a bottom
   composer pads itself with it and calls `lockWebViewScroll()` while mounted, so the header stays

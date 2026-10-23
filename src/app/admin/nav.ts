@@ -1,4 +1,4 @@
-import type { AdminScope } from "@/lib/access";
+import type { ActiveScope, AdminScope } from "@/lib/access";
 import type { IconKey } from "@/lib/commands";
 import type { Dictionary } from "@/lib/i18n";
 
@@ -15,7 +15,7 @@ export type NavKey =
   | "chapters"
   | "countries"
   | "admins"
-  | "settings"
+  | "myChapter"
   | "help";
 
 export type NavGroup = "main" | "organisation" | "footer";
@@ -26,7 +26,34 @@ export type NavItem = {
   group: NavGroup;
   icon: IconKey;
   visible?: (scope: AdminScope) => boolean;
+  resolve?: (scope: AdminScope, active?: ActiveScope) => string | null;
 };
+
+export const MY_CHAPTER_HREF = "/admin/settings";
+
+export const chapterHref = (chapterId: string) =>
+  `/admin/chapters/${encodeURIComponent(chapterId)}`;
+
+/**
+ * The destination follows the active scope so the sidebar links straight to
+ * the chapter page. Outside a chapter scope an admin who can see the Chapters
+ * list already has it one row up, so the row steps aside; everyone else lands
+ * on the picker behind MY_CHAPTER_HREF.
+ */
+export function myChapterHref(
+  scope: AdminScope,
+  active?: ActiveScope,
+): string | null {
+  const chapter =
+    active?.kind === "chapter"
+      ? active.chapter
+      : scope.chapters.length === 1
+        ? scope.chapters[0]
+        : null;
+  if (chapter) return chapterHref(chapter.id);
+  if (active && scope.canSeeChapters) return null;
+  return MY_CHAPTER_HREF;
+}
 
 export const NAV: readonly NavItem[] = [
   { key: "overview", href: "/admin", group: "main", icon: "overview" },
@@ -80,10 +107,12 @@ export const NAV: readonly NavItem[] = [
     visible: (scope) => scope.global,
   },
   {
-    key: "settings",
-    href: "/admin/settings",
+    key: "myChapter",
+    href: MY_CHAPTER_HREF,
     group: "footer",
     icon: "settings",
+    visible: (scope) => scope.chapters.length > 0,
+    resolve: myChapterHref,
   },
   { key: "help", href: "/admin/help", group: "footer", icon: "help" },
 ];
@@ -104,14 +133,28 @@ export const canReach = (scope: AdminScope, key: NavKey): boolean => {
   return item ? (item.visible?.(scope) ?? true) : false;
 };
 
+export const navHref = (
+  item: NavItem,
+  scope: AdminScope,
+  active?: ActiveScope,
+): string | null => (item.resolve ? item.resolve(scope, active) : item.href);
+
 export const resolveNav = (
   scope: AdminScope,
   labels: Dictionary["admin"]["nav"],
+  active?: ActiveScope,
 ): ResolvedNavItem[] =>
-  navFor(scope).map(({ key, href, group, icon }) => ({
-    key,
-    href,
-    group,
-    icon,
-    label: labels[key],
-  }));
+  navFor(scope).flatMap((item) => {
+    const href = navHref(item, scope, active);
+    return href
+      ? [
+          {
+            key: item.key,
+            href,
+            group: item.group,
+            icon: item.icon,
+            label: labels[item.key],
+          },
+        ]
+      : [];
+  });

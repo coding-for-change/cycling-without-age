@@ -157,6 +157,26 @@ export function SuperadminsTable({
       meta: {
         label: labels.columns.name,
         searchValue: (row) => `${row.name} ${row.email}`,
+        mobile: {
+          leading: (row) => (
+            <PersonAvatar
+              svg={row.avatar}
+              className={cn(row.state === "pending" && "opacity-60")}
+            />
+          ),
+          title: (row) => (
+            <span className="truncate">
+              {row.name}
+              {row.isSelf ? (
+                <span className="font-normal text-ink-soft">
+                  {" "}
+                  ({labels.you})
+                </span>
+              ) : null}
+            </span>
+          ),
+          subtitle: (row) => row.email,
+        },
       },
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
@@ -182,7 +202,20 @@ export function SuperadminsTable({
     {
       id: "status",
       accessorFn: (row) => row.state,
-      meta: { label: labels.columns.status },
+      meta: {
+        label: labels.columns.status,
+        mobile: {
+          badge: (row) =>
+            row.state === "pending" ? (
+              <Badge
+                variant="outline"
+                className="border-dashed border-line font-normal text-ink-soft"
+              >
+                {row.status}
+              </Badge>
+            ) : null,
+        },
+      },
       cell: ({ row }) => (
         <Badge
           variant={row.original.state === "active" ? "default" : "outline"}
@@ -232,6 +265,7 @@ export function SuperadminsTable({
     {
       id: "actions",
       enableHiding: false,
+      meta: { mobile: "actions" },
       cell: ({ row }) => (
         <div
           className="flex items-center justify-end gap-1"

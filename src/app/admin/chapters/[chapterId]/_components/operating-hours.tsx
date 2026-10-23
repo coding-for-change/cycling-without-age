@@ -4,7 +4,6 @@ import { useId, useState, useTransition, type FormEvent } from "react";
 import { CalendarOff, Copy, Plus, X } from "lucide-react";
 import { notify } from "@/components/action-feedback";
 import type { InlineFieldLabels } from "@/components/inline-field";
-import { SaveStatus, SaveStatusProvider } from "@/components/save-status";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useOptimisticSave } from "@/components/use-optimistic-save";
@@ -38,7 +37,7 @@ const sorted = (windows: OperatingWindowInput[]) =>
     (a, b) => a.weekday - b.weekday || a.startMinute - b.startMinute,
   );
 
-export function OperatingHoursCard({
+export function OperatingHours({
   chapterId,
   windows,
   closures,
@@ -55,7 +54,6 @@ export function OperatingHoursCard({
   language: string;
   labels: {
     strings: Strings;
-    status: { saving: string; saved: string };
     field: InlineFieldLabels;
   };
 }) {
@@ -91,100 +89,94 @@ export function OperatingHoursCard({
     ]);
 
   return (
-    <SaveStatusProvider>
-      <section className="grid gap-3 rounded-2xl border border-line p-6">
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 className="text-lg">{strings.title}</h2>
-          <SaveStatus
-            labels={labels.status}
-            words={language}
-          />
-        </div>
-        <p className="max-w-prose text-sm text-ink-soft">{strings.body}</p>
-        {shown.length === 0 ? (
-          <p className="text-2sm text-ink-soft">{strings.unset}</p>
-        ) : null}
+    <div className="grid gap-3">
+      <div className="grid gap-1">
+        <h3 className="text-2sm font-medium">{strings.title}</h3>
+        <p className="max-w-prose text-2sm text-ink-soft">{strings.body}</p>
+      </div>
+      {shown.length === 0 ? (
+        <p className="text-2sm text-ink-soft">{strings.unset}</p>
+      ) : null}
 
-        <ul className="grid divide-y divide-line">
-          {weekdays.map(({ weekday, name }) => {
-            const day = shown.filter((window) => window.weekday === weekday);
-            return (
-              <li
-                key={weekday}
-                className="grid gap-2 py-3 sm:grid-cols-[8rem_minmax(0,1fr)] sm:items-center"
-              >
-                <span className="text-sm font-medium">{name}</span>
-                <div className="flex flex-wrap items-center gap-1.25">
-                  {day.length === 0 && shown.length > 0 ? (
-                    <span className="text-2sm text-ink-faint">
-                      {strings.closed}
-                    </span>
-                  ) : null}
-                  {day.map((window) => {
-                    const range = clockRangeLabel(
-                      window.startMinute,
-                      window.endMinute,
-                      notation,
-                    );
-                    return (
-                      <span
-                        key={window.startMinute}
-                        className={PILL}
+      <ul className="grid divide-y divide-line">
+        {weekdays.map(({ weekday, name }) => {
+          const day = shown.filter((window) => window.weekday === weekday);
+          return (
+            <li
+              key={weekday}
+              className="grid gap-2 py-3 sm:grid-cols-[8rem_minmax(0,1fr)] sm:items-center"
+            >
+              <span className="text-sm font-medium">{name}</span>
+              <div className="flex flex-wrap items-center gap-1.25">
+                {day.length === 0 && shown.length > 0 ? (
+                  <span className="text-2sm text-ink-faint">
+                    {strings.closed}
+                  </span>
+                ) : null}
+                {day.map((window) => {
+                  const range = clockRangeLabel(
+                    window.startMinute,
+                    window.endMinute,
+                    notation,
+                  );
+                  return (
+                    <span
+                      key={window.startMinute}
+                      className={PILL}
+                    >
+                      {range}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => remove(window)}
+                        aria-label={formatMessage(
+                          strings.remove,
+                          { range },
+                          language,
+                        )}
+                        className="size-6 rounded-full text-ink-soft hover:bg-mint"
                       >
-                        {range}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => remove(window)}
-                          aria-label={formatMessage(
-                            strings.remove,
-                            { range },
-                            language,
-                          )}
-                          className="size-6 rounded-full text-ink-soft hover:bg-mint"
-                        >
-                          <X aria-hidden />
-                        </Button>
-                      </span>
-                    );
-                  })}
-                  {day.length < OPERATING_HOURS.maxWindowsPerDay ? (
-                    <AddWindow
-                      onAdd={(startMinute, endMinute) =>
-                        write([...shown, { weekday, startMinute, endMinute }])
-                      }
-                      strings={strings}
-                    />
-                  ) : null}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                        <X aria-hidden />
+                      </Button>
+                    </span>
+                  );
+                })}
+                {day.length < OPERATING_HOURS.maxWindowsPerDay ? (
+                  <AddWindow
+                    onAdd={(startMinute, endMinute) =>
+                      write([...shown, { weekday, startMinute, endMinute }])
+                    }
+                    strings={strings}
+                  />
+                ) : null}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
 
-        {monday.length > 0 ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={copyMonday}
-            className="w-fit border-line"
-          >
-            <Copy aria-hidden />
-            {strings.copyMonday}
-          </Button>
-        ) : null}
+      {monday.length > 0 ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={copyMonday}
+          className="w-fit border-line"
+        >
+          <Copy aria-hidden />
+          {strings.copyMonday}
+        </Button>
+      ) : null}
 
-        <Closures
-          chapterId={chapterId}
-          closures={closures}
-          notation={notation}
-          language={language}
-          labels={labels}
-        />
-      </section>
-    </SaveStatusProvider>
+      <Closures
+        chapterId={chapterId}
+        closures={closures}
+        notation={notation}
+        language={language}
+        labels={labels}
+      />
+    </div>
   );
 }
 
@@ -342,9 +334,9 @@ function Closures({
     });
 
   return (
-    <div className="grid gap-3 border-t border-line pt-4">
+    <div className="grid gap-3 pt-4">
       <div className="grid gap-1">
-        <h3 className="text-base">{strings.title}</h3>
+        <h3 className="text-2sm font-medium">{strings.title}</h3>
         <p className="max-w-prose text-2sm text-ink-soft">{strings.body}</p>
       </div>
 

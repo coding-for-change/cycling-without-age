@@ -7,6 +7,7 @@ import { brand } from "@/lib/brand";
 import { hideKeyboardAccessoryBar } from "./keyboard";
 import { configureNativeNavigation } from "./navigation";
 import { nativePlatform } from "./platform";
+import { syncShellBackground } from "./shell-background";
 
 const UA_TRANSITION_BACKSTOP_MS = 5000;
 
@@ -52,7 +53,12 @@ export function NativeBootstrap() {
       colors: { tint: brand.mintDeep },
       glass: { effect: "liquidGlass" },
     });
-    return suppressViewTransitionsOnSwipeBack();
+    const stopSync = syncShellBackground();
+    const stopSwipe = suppressViewTransitionsOnSwipeBack();
+    return () => {
+      stopSync();
+      stopSwipe();
+    };
   }, []);
   return null;
 }

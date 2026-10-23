@@ -1,4 +1,5 @@
 import type { ColumnDef, FilterFnOption } from "@tanstack/react-table";
+import type { DataTableMobileSlot } from "@/components/ui/data-table";
 
 export function mutedColumn<T>(
   id: string,
@@ -8,13 +9,14 @@ export function mutedColumn<T>(
     isoOf?: (row: T) => string;
     sortable?: boolean;
     filterFn?: FilterFnOption<T>;
+    mobile?: DataTableMobileSlot;
   } = {},
 ): ColumnDef<T, unknown> {
-  const { isoOf, sortable, filterFn } = options;
+  const { isoOf, sortable, filterFn, mobile } = options;
   return {
     id,
     accessorFn: (row) => get(row) ?? "",
-    meta: { label },
+    meta: { label, mobile },
     ...(filterFn ? { filterFn } : {}),
     ...(isoOf
       ? {

@@ -295,8 +295,12 @@ Everything reads it through the facade, never the table: the notification kinds
 off, `user.onboarded` carries the welcome note into its payload,
 `pilotApplication.submitted` answers `chapterAllowsPush` from it) and
 `use-cases/notifications/deliver-email`, which puts the chapter's reply-to on the mail. The
-admin edits the row on `/admin/settings` through `app/admin/settings/actions`, behind
-`requireChapterAdmin(chapterId)` — the guard that makes these a chapter's own switches.
+admin edits the row on the chapter's own page (`/admin/chapters/[chapterId]`, "My chapter" in
+the sidebar; `/admin/settings` only forwards there) through `app/admin/chapters/[chapterId]/actions`,
+behind `requireChapterAdmin(chapterId)` — the guard that makes these a chapter's own switches.
+The chapter's identity (name, logo, location, time zone) and its deletion stay behind
+`requireCountryAdminOfChapter` in `app/admin/chapters/actions`, so a chapter admin sees those
+read-only on the same page.
 
 It is also the home for the per-chapter notification intervals the RFP asks for: a column, a
 default in `DEFAULT_CHAPTER_SETTINGS`, and the readers ask the facade the same way. The ride
@@ -310,7 +314,7 @@ The booking policy lives here too (COD-260): `bookingLeadTimeHours`, `bookingHor
 the scheduling drawer starts a new ride at `defaultRideMinutes`, a round trip's stay at
 `defaultStayMinutes`, and warns (never blocks) when a ride is booked on shorter notice or
 further ahead than the policy. Later PRs append their own columns at the end of the model
-and of `chapterSettingsInput`, and each adds one card to `/admin/settings`. The same policy is
+and of `chapterSettingsInput`, and each adds one row to a section of the chapter page. The same policy is
 what the Ride Request Form offers and `submit-ride-request` enforces (COD-261), which also
 added `schedulingMethod` (`scheduler` · `auto`, on the Booking card) and `requestAlertPush`
 (on the notification card).

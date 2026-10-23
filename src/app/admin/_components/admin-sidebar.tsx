@@ -37,7 +37,7 @@ export async function AdminSidebar() {
     chat.countUnreadConversations(session.user.id),
     storedActiveScope(scope),
   ]);
-  const items = resolveNav(scope, dict.admin.nav);
+  const items = resolveNav(scope, dict.admin.nav, stored);
   const inGroup = (group: string) => items.filter((i) => i.group === group);
 
   return (
