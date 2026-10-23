@@ -57,7 +57,10 @@ describe("replay text masking", () => {
   });
 
   it("shows the static fragments around a placeholder rendered on its own", () => {
-    expect(maskFn("See the")).toBe("See the");
+    const text = new StaticText().add({
+      notice: "See the {imprint} and the {privacy}.",
+    });
+    expect(maskUnlessStatic(text)("See the")).toBe("See the");
   });
 
   it("masks sample names and addresses from input placeholders", () => {

@@ -41,7 +41,7 @@ test("pilot-apply", async ({ record }) => {
   await tap(page, page.getByRole("button", { name: /^Request to join/ }), 800);
   await page.waitForURL(/\/onboarding\/consent/);
   await expect(
-    page.getByRole("heading", { name: /quick agreements/ }),
+    page.getByRole("heading", { name: /Before you start/ }),
   ).toBeVisible();
   await pause(page, 1500);
   await tickAll(page, page.getByRole("main"));

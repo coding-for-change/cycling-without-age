@@ -2048,17 +2048,15 @@
     "dateTime": "{date}, {time}"
   },
   "consent": {
-    "data": "I agree to the storage and processing of my data.",
-    "dataSuffix": "See the {imprint} and the {privacy}.",
+    "notice": "By continuing, you confirm that you've read our {privacy}. We'll email you important updates about your rides, and you can change that any time in Settings. See also the {imprint}.",
     "error": "We couldn't save that. Try again.",
     "imprint": "Imprint",
     "joining": "You're joining {chapter}.",
-    "notifications": "I agree to receive email and push notifications for important messages.",
     "privacy": "Privacy notice",
-    "required": "Tick all of them to continue.",
+    "required": "Tick the box to continue.",
     "safety": "I understand that rides are provided by trained volunteers, and I agree to the safety guidelines of the chapter.",
     "setUpBy": "{name} set this account up for you. Check the details and agree to continue.",
-    "title": "{count, plural, one {1 quick agreement} other {# quick agreements}}",
+    "title": "{count, plural, =0 {Before you start} one {1 quick agreement} other {# quick agreements}}",
     "health": "Optional: the chapter's pilots and admins may see what helps me on a ride, such as a wheelchair or hearing. These are health details, and I can withdraw this any time."
   },
   "fleet": {
@@ -4098,6 +4096,8 @@
     "dismissed": "Hidden. Your profile is always one tap away.",
     "confirmed": "Confirmed by the chapter",
     "waiting": "Waiting for confirmation from your chapter",
+    "enable": "Turn on",
+    "denied": "Your phone is blocking notifications. Allow them in Settings, then try again.",
     "steps": {
       "photo": "Add a profile photo",
       "bio": "Write a few words about yourself",
@@ -4115,7 +4115,8 @@
     "hints": {
       "training": "Short videos and a quiz, right in this app.",
       "inPersonTraining": "Your chapter confirms it once you've been.",
-      "firstRide": "A captain rides along the first time."
+      "firstRide": "A captain rides along the first time.",
+      "push": "We'll tell you when a ride is confirmed or changes."
     },
     "row": {
       "next": "Next: {step}",

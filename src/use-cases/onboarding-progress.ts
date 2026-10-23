@@ -69,7 +69,7 @@ export async function getOnboardingState(
     progress: {
       role,
       joined,
-      consented: account?.consentDataAt != null,
+      consented: account?.privacyReadAt != null,
       profiled,
       passkeyHandled:
         (account?._count.passkeys ?? 0) > 0 ||

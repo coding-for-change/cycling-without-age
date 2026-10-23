@@ -22,7 +22,7 @@ export const findProfile = (userId: string) =>
       notifyChatPush: true,
       notifyChatEmail: true,
       consentSafetyAt: true,
-      consentDataAt: true,
+      privacyReadAt: true,
       passkeyPromptedAt: true,
       onboardedAt: true,
       createdByUserId: true,
