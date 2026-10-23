@@ -37,6 +37,8 @@ model User {
   consentSafetyAt      DateTime?
   privacyReadAt        DateTime?
   privacyVersion       String?                  @db.VarChar(16)
+  termsAcceptedAt      DateTime?
+  termsVersion         String?                  @db.VarChar(16)
   passkeyPromptedAt    DateTime?
   pilotNextStepsSeenAt DateTime?
   onboardedAt          DateTime?

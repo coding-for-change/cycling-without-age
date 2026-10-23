@@ -94,13 +94,19 @@ describe("recordConsent", () => {
   it("records the privacy notice version and turns the service notifications on", async () => {
     db.user.findUnique.mockResolvedValue({ privacyReadAt: null });
 
-    await profile.recordConsent(USER, { safety: true, privacyVersion: "1.0" });
+    await profile.recordConsent(USER, {
+      safety: true,
+      privacyVersion: "1.0",
+      termsVersion: "1.0",
+    });
 
     expect(db.user.update).toHaveBeenCalledWith({
       where: { id: USER },
       data: {
         privacyReadAt: expect.any(Date),
         privacyVersion: "1.0",
+        termsAcceptedAt: expect.any(Date),
+        termsVersion: "1.0",
         consentSafetyAt: expect.any(Date),
         notifyEmail: true,
         notifyPush: true,
@@ -111,7 +117,11 @@ describe("recordConsent", () => {
   it("leaves the safety agreement unset when it was not given", async () => {
     db.user.findUnique.mockResolvedValue({ privacyReadAt: null });
 
-    await profile.recordConsent(USER, { safety: false, privacyVersion: "1.0" });
+    await profile.recordConsent(USER, {
+      safety: false,
+      privacyVersion: "1.0",
+      termsVersion: "1.0",
+    });
 
     expect(db.user.update.mock.calls[0][0].data).not.toHaveProperty(
       "consentSafetyAt",
@@ -124,12 +134,66 @@ describe("recordConsent", () => {
       consentSafetyAt: new Date("2026-10-01"),
     });
 
-    await profile.recordConsent(USER, { safety: true, privacyVersion: "1.1" });
+    await profile.recordConsent(USER, {
+      safety: true,
+      privacyVersion: "1.1",
+      termsVersion: "1.1",
+    });
 
     expect(db.user.update).toHaveBeenCalledWith({
       where: { id: USER },
-      data: { consentSafetyAt: new Date("2026-10-01") },
+      data: {
+        termsAcceptedAt: expect.any(Date),
+        termsVersion: "1.1",
+        consentSafetyAt: new Date("2026-10-01"),
+      },
     });
+  });
+});
+
+describe("acceptTerms", () => {
+  it("records the accepted edition and the privacy notice read with it", async () => {
+    db.user.findUnique.mockResolvedValue({
+      privacyReadAt: new Date("2026-01-01"),
+    });
+
+    await profile.acceptTerms(USER, {
+      termsVersion: "2.0",
+      privacyVersion: "1.1",
+    });
+
+    expect(db.user.update).toHaveBeenCalledWith({
+      where: { id: USER },
+      data: {
+        termsAcceptedAt: expect.any(Date),
+        termsVersion: "2.0",
+        privacyReadAt: expect.any(Date),
+        privacyVersion: "1.1",
+      },
+    });
+    const { data } = db.user.update.mock.calls[0][0];
+    expect(data.privacyReadAt).toEqual(data.termsAcceptedAt);
+  });
+
+  it("leaves the consent step to the consent step", async () => {
+    db.user.findUnique.mockResolvedValue({ privacyReadAt: null });
+
+    await profile.acceptTerms(USER, {
+      termsVersion: "1.0",
+      privacyVersion: "1.0",
+    });
+
+    expect(db.user.update).toHaveBeenCalledWith({
+      where: { id: USER },
+      data: { termsAcceptedAt: expect.any(Date), termsVersion: "1.0" },
+    });
+  });
+
+  it("refuses an empty version", async () => {
+    await expect(
+      profile.acceptTerms(USER, { termsVersion: "", privacyVersion: "1.0" }),
+    ).rejects.toThrow();
+    expect(db.user.update).not.toHaveBeenCalled();
   });
 });
 

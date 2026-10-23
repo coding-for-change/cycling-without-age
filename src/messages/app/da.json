@@ -2048,16 +2048,31 @@
     "dateTime": "{date} kl. {time}"
   },
   "consent": {
-    "notice": "Når du fortsætter, bekræfter du, at du har læst vores {privacy}. Vi sender dig e-mails om vigtige ting omkring dine ture, og du kan altid ændre det under Indstillinger. Se også {imprint}.",
+    "notice": "Når du fortsætter, bekræfter du, at du har læst vores {privacy}. Vigtige nyheder om dine ture sender vi på e‑mail (kan ændres under Indstillinger). Se også {imprint}.",
     "error": "Vi kunne ikke gemme det. Prøv igen.",
     "imprint": "Kolofon",
     "joining": "Du bliver en del af {chapter}.",
     "privacy": "Privatlivspolitik",
-    "required": "Sæt kryds for at fortsætte.",
-    "safety": "Jeg forstår, at turene køres af oplærte frivillige, og jeg følger afdelingens sikkerhedsretningslinjer.",
+    "safety": "Jeg ved, at turene køres af oplærte frivillige, og jeg følger afdelingens sikkerhedsregler.",
     "setUpBy": "{name} har oprettet denne konto til dig. Tjek oplysningerne, og sig ja for at fortsætte.",
     "title": "{count, plural, =0 {Inden du går i gang} one {1 hurtig aftale} other {# hurtige aftaler}}",
-    "health": "Frivilligt: Afdelingens piloter og administratorer må se, hvad der hjælper mig på en tur, fx en kørestol eller nedsat hørelse. Det er helbredsoplysninger, og jeg kan til enhver tid tilbagekalde det."
+    "health": "Frivilligt: Afdelingens piloter og administratorer må se mine helbredsoplysninger til turene, fx kørestol eller nedsat hørelse. Kan altid tilbagekaldes.",
+    "terms": "Jeg accepterer {terms}.",
+    "termsOfUse": "brugsvilkårene"
+  },
+  "termsStep": {
+    "first": {
+      "title": "Vores brugsvilkår",
+      "description": "Før du fortsætter, skal du læse og acceptere de vilkår, der gælder for alle, der bruger appen."
+    },
+    "updated": {
+      "title": "Vi har opdateret vores brugsvilkår",
+      "description": "Læs den nye version, og accepter den for at blive ved med at bruge appen."
+    },
+    "read": "Læs {terms}",
+    "accept": "Jeg accepterer {terms}.",
+    "notice": "Når du fortsætter, bekræfter du også, at du har læst vores {privacy}.",
+    "required": "Sæt kryds for at fortsætte."
   },
   "fleet": {
     "allocation": {

@@ -2048,16 +2048,31 @@
     "dateTime": "{date}, {time}"
   },
   "consent": {
-    "notice": "By continuing, you confirm that you've read our {privacy}. We'll email you important updates about your rides, and you can change that any time in Settings. See also the {imprint}.",
+    "notice": "By continuing, you confirm that you've read our {privacy}. We'll email you important ride updates (change this in Settings). See also the {imprint}.",
     "error": "We couldn't save that. Try again.",
     "imprint": "Imprint",
     "joining": "You're joining {chapter}.",
     "privacy": "Privacy notice",
-    "required": "Tick the box to continue.",
-    "safety": "I understand that rides are provided by trained volunteers, and I agree to the safety guidelines of the chapter.",
+    "safety": "I know that rides are provided by trained volunteers, and I'll follow the chapter's safety guidelines.",
     "setUpBy": "{name} set this account up for you. Check the details and agree to continue.",
     "title": "{count, plural, =0 {Before you start} one {1 quick agreement} other {# quick agreements}}",
-    "health": "Optional: the chapter's pilots and admins may see what helps me on a ride, such as a wheelchair or hearing. These are health details, and I can withdraw this any time."
+    "health": "Optional: the chapter's pilots and admins may see my health details for rides, like a wheelchair or hearing loss. I can withdraw this any time.",
+    "terms": "I accept the {terms}.",
+    "termsOfUse": "terms of use"
+  },
+  "termsStep": {
+    "first": {
+      "title": "Our terms of use",
+      "description": "Before you continue, read and accept the terms that apply to everyone using the app."
+    },
+    "updated": {
+      "title": "We've updated our terms of use",
+      "description": "Read the new version and accept it to keep using the app."
+    },
+    "read": "Read the {terms}",
+    "accept": "I accept the {terms}.",
+    "notice": "By continuing, you also confirm that you've read our {privacy}.",
+    "required": "Tick the box to continue."
   },
   "fleet": {
     "allocation": {

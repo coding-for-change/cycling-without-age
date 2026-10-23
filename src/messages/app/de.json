@@ -2048,16 +2048,31 @@
     "dateTime": "{date}, {time}"
   },
   "consent": {
-    "notice": "Wenn Sie fortfahren, bestätigen Sie, dass Sie unsere {privacy} gelesen haben. Wir senden Ihnen wichtige Neuigkeiten zu Ihren Fahrten per E-Mail; das können Sie jederzeit in den Einstellungen ändern. Siehe auch {imprint}.",
+    "notice": "Wenn Sie fortfahren, bestätigen Sie, dass Sie unsere {privacy} gelesen haben. Wichtiges zu Ihren Fahrten senden wir per E‑Mail (änderbar in den Einstellungen). Siehe auch {imprint}.",
     "error": "Das konnten wir nicht speichern. Versuchen Sie es erneut.",
     "imprint": "Impressum",
     "joining": "Sie treten {chapter} bei.",
     "privacy": "Datenschutzerklärung",
-    "required": "Setzen Sie das Häkchen, um fortzufahren.",
-    "safety": "Mir ist klar, dass die Ausfahrten von geschulten Freiwilligen gefahren werden, und ich halte mich an die Sicherheitsregeln der Ortsgruppe.",
+    "safety": "Ich weiß, dass die Ausfahrten von geschulten Freiwilligen gefahren werden, und halte mich an die Sicherheitsregeln der Ortsgruppe.",
     "setUpBy": "{name} hat dieses Konto für Sie eingerichtet. Prüfen Sie die Angaben und stimmen Sie zu, um fortzufahren.",
     "title": "{count, plural, =0 {Bevor es losgeht} one {1 kurze Zusage} other {# kurze Zusagen}}",
-    "health": "Freiwillig: Die Pilot:innen und Admins der Ortsgruppe dürfen sehen, was mir bei einer Fahrt hilft, etwa ein Rollstuhl oder schlechtes Hören. Das sind Gesundheitsangaben, und ich kann das jederzeit widerrufen."
+    "health": "Freiwillig: Pilot:innen und Admins der Ortsgruppe dürfen meine Gesundheitsangaben für Fahrten sehen, etwa Rollstuhl oder Hörprobleme. Jederzeit widerrufbar.",
+    "terms": "Ich akzeptiere die {terms}.",
+    "termsOfUse": "Nutzungsbedingungen"
+  },
+  "termsStep": {
+    "first": {
+      "title": "Unsere Nutzungsbedingungen",
+      "description": "Bevor es weitergeht, lesen und akzeptieren Sie bitte die Bedingungen, die für alle in der App gelten."
+    },
+    "updated": {
+      "title": "Wir haben unsere Nutzungsbedingungen aktualisiert",
+      "description": "Bitte lesen Sie die neue Fassung und akzeptieren Sie sie, um die App weiter zu nutzen."
+    },
+    "read": "{terms} lesen",
+    "accept": "Ich akzeptiere die {terms}.",
+    "notice": "Wenn Sie fortfahren, bestätigen Sie außerdem, dass Sie unsere {privacy} gelesen haben.",
+    "required": "Setzen Sie das Häkchen, um fortzufahren."
   },
   "fleet": {
     "allocation": {

@@ -8,13 +8,14 @@ export type OnboardingRole = "passenger" | "pilot";
 export const PASSKEY_REPROMPT_MS = 30 * 24 * 60 * 60 * 1000;
 
 export type OnboardingStep =
-  "role" | "location" | "consent" | "profile" | "passkey";
+  "role" | "location" | "consent" | "terms" | "profile" | "passkey";
 
 export type OnboardingProgress = {
   role: OnboardingRole | null;
   /** A membership exists, or a QR preset supplies both chapter and role. */
   joined: boolean;
   consented: boolean;
+  termsCurrent: boolean;
   profiled: boolean;
   passkeyHandled: boolean;
 };
@@ -23,6 +24,7 @@ const ORDER: OnboardingStep[] = [
   "role",
   "location",
   "consent",
+  "terms",
   "profile",
   "passkey",
 ];
@@ -31,6 +33,7 @@ export const STEP_PATH: Record<OnboardingStep, string> = {
   role: "/sign-in/role",
   location: "/location",
   consent: "/onboarding/consent",
+  terms: "/onboarding/terms",
   profile: "/onboarding/profile",
   passkey: "/onboarding/passkey",
 };
@@ -42,6 +45,7 @@ export function onboardingSteps(
   if (!progress.role) steps.push("role");
   if (!progress.joined) steps.push("location");
   if (!progress.consented) steps.push("consent");
+  else if (!progress.termsCurrent) steps.push("terms");
   if (!progress.profiled) steps.push("profile");
   if (!progress.passkeyHandled) steps.push("passkey");
   return steps;
@@ -56,6 +60,11 @@ export function canViewStep(
   if (!next) return true;
   return ORDER.indexOf(step) <= ORDER.indexOf(next);
 }
+
+export const owesTerms = (
+  agreements: Pick<OnboardingProgress, "consented" | "termsCurrent">,
+  admin: boolean,
+) => !agreements.termsCurrent && (admin || agreements.consented);
 
 /** The screen to show now, or `null` when onboarding is finished. */
 export function nextOnboardingStep(

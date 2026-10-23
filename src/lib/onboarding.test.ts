@@ -2,6 +2,7 @@ import {
   canViewStep,
   nextOnboardingStep,
   onboardingSteps,
+  owesTerms,
   STEP_PATH,
   stepProgress,
   type OnboardingProgress,
@@ -11,6 +12,7 @@ const fresh: OnboardingProgress = {
   role: null,
   joined: false,
   consented: false,
+  termsCurrent: false,
   profiled: false,
   passkeyHandled: false,
 };
@@ -19,6 +21,7 @@ const done: OnboardingProgress = {
   role: "passenger",
   joined: true,
   consented: true,
+  termsCurrent: true,
   profiled: true,
   passkeyHandled: true,
 };
@@ -42,6 +45,29 @@ describe("onboardingSteps", () => {
   it("drops role and location when a QR preset answered them", () => {
     expect(
       onboardingSteps({ ...fresh, role: "passenger", joined: true }),
+    ).toEqual(["consent", "profile", "passkey"]);
+  });
+
+  it("asks a finished account to accept terms that changed since", () => {
+    expect(onboardingSteps({ ...done, termsCurrent: false })).toEqual([
+      "terms",
+    ]);
+  });
+
+  it("leaves the terms to the consent step, which accepts them too", () => {
+    expect(
+      onboardingSteps({ ...fresh, role: "passenger", joined: true }),
+    ).not.toContain("terms");
+  });
+
+  it("still asks a former admin, who only accepted the terms, for consent", () => {
+    expect(
+      onboardingSteps({
+        ...fresh,
+        role: "pilot",
+        joined: true,
+        termsCurrent: true,
+      }),
     ).toEqual(["consent", "profile", "passkey"]);
   });
 
@@ -111,11 +137,30 @@ describe("stepProgress", () => {
   });
 });
 
+describe("owesTerms", () => {
+  const outdated = { ...done, termsCurrent: false };
+
+  it("holds a member to the current terms once past the consent step", () => {
+    expect(owesTerms(outdated, false)).toBe(true);
+    expect(owesTerms(done, false)).toBe(false);
+  });
+
+  it("keeps a member who has not consented yet on the consent step", () => {
+    expect(owesTerms(fresh, false)).toBe(false);
+  });
+
+  it("asks an admin, who never sees the consent step", () => {
+    expect(owesTerms(fresh, true)).toBe(true);
+    expect(owesTerms({ ...fresh, termsCurrent: true }, true)).toBe(false);
+  });
+});
+
 describe("canViewStep", () => {
   const midway: OnboardingProgress = {
     role: "passenger",
     joined: true,
     consented: true,
+    termsCurrent: true,
     profiled: false,
     passkeyHandled: false,
   };
