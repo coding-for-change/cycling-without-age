@@ -9,7 +9,7 @@
 4. Screen "Where would you like to ride?" with the subtitle "Chapters closest to you.". There is a map of chapters, a search field "Chapter or city", and a list with distances ("München – Seniorenheim Sonnenhof · 770 m away", "Augsburg – Haus am Park · 54 km away" …). The hint "Select a chapter to continue." sits under the list.
 5. Tap **München – Seniorenheim Sonnenhof**. It gets a check mark and the map zooms to it.
 6. Tap **Request to join**. While it saves, the button reads "Just a moment…".
-7. Screen "Before you start". There is no box to tick, only a note that continuing confirms the Privacy notice was read, with links to the Privacy notice and the Imprint.
+7. Screen "1 quick agreement". Tick "I accept the terms of use." (the words "terms of use" link to the terms). Under it, a note that continuing confirms the Privacy notice was read, with links to the Privacy notice and the Imprint.
 8. Tap **Continue**.
 9. Screen "A little about you": "Your chapter needs this to plan a ride. Nothing else, for now." Fill in **First name** `Paula`, **Last name** `Pedal`, **Birthday** (date picker, 10 May 1975) and **Gender** (Female / Male / Other → Female). Tap **Continue**. The button stays disabled until every field is filled.
 10. Screen "Create your passkey": "Your device remembers you — no password to keep." It has the field "Name this passkey (optional)" and the buttons "Create passkey" and "Not now". Tap **Not now**.

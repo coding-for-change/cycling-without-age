@@ -26,11 +26,20 @@ export const homeInput = z.object({
 });
 export type HomeInput = z.infer<typeof homeInput>;
 
+const editionVersion = z.string().min(1).max(16);
+
 export const consentInput = z.object({
   safety: z.boolean(),
-  privacyVersion: z.string().min(1).max(16),
+  privacyVersion: editionVersion,
+  termsVersion: editionVersion,
 });
 export type ConsentInput = z.infer<typeof consentInput>;
+
+export const termsAcceptance = z.object({
+  privacyVersion: editionVersion,
+  termsVersion: editionVersion,
+});
+export type TermsAcceptance = z.infer<typeof termsAcceptance>;
 
 const nonEmpty = (patch: Record<string, unknown>) =>
   Object.values(patch).some((value) => value !== undefined);

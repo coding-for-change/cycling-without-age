@@ -17,6 +17,7 @@ export async function acceptOnboardingConsent({
   await profile.recordConsent(userId, {
     safety: consent.safety,
     privacyVersion: legal.editionOf("privacy").version,
+    termsVersion: legal.editionOf("terms").version,
   });
   if (consent.health)
     await personProfiles.grantHealthConsent(
