@@ -7,6 +7,7 @@ import {
   ownDetailsPatch,
   personalDetailsInput,
   residence as residenceSchema,
+  termsAcceptance,
 } from "./schemas";
 import type {
   ConsentInput,
@@ -15,6 +16,7 @@ import type {
   OwnDetailsPatchInput,
   PersonalDetailsInput,
   Residence,
+  TermsAcceptance,
 } from "./schemas";
 import {
   countPasskeysOf,
@@ -92,15 +94,29 @@ export async function setResidence(
 }
 
 export async function recordConsent(userId: string, input: ConsentInput) {
-  const { safety, privacyVersion } = consentInput.parse(input);
+  const { safety, privacyVersion, termsVersion } = consentInput.parse(input);
 
   const existing = await findProfile(userId);
   const now = new Date();
   const firstTime = !existing?.privacyReadAt;
   return updateProfile(userId, {
     ...(firstTime ? { privacyReadAt: now, privacyVersion } : {}),
+    termsAcceptedAt: now,
+    termsVersion,
     ...(safety ? { consentSafetyAt: existing?.consentSafetyAt ?? now } : {}),
     ...(firstTime ? { notifyEmail: true, notifyPush: true } : {}),
+  });
+}
+
+export async function acceptTerms(userId: string, input: TermsAcceptance) {
+  const { privacyVersion, termsVersion } = termsAcceptance.parse(input);
+
+  const existing = await findProfile(userId);
+  const now = new Date();
+  return updateProfile(userId, {
+    termsAcceptedAt: now,
+    termsVersion,
+    ...(existing?.privacyReadAt ? { privacyReadAt: now, privacyVersion } : {}),
   });
 }
 

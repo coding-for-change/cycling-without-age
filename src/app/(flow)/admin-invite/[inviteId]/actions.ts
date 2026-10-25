@@ -5,10 +5,13 @@ import { inviteId as inviteIdSchema } from "@/features/admins";
 import { refreshSessionCookie, requireAuth } from "@/lib/auth-guards";
 import { invalidateAccess } from "@/lib/cache-tags";
 import { actionFailure } from "@/lib/domain-error";
+import { STEP_PATH } from "@/lib/onboarding";
+import { PERSPECTIVE_HOME } from "@/lib/redirects";
 import { acceptAdminInvite } from "@/use-cases/accept-admin-invite";
+import { owesCurrentTerms } from "@/use-cases/onboarding-progress";
 
 export type AcceptAdminInviteResult =
-  | { ok: true }
+  | { ok: true; next: string }
   | {
       ok: false;
       error:
@@ -31,7 +34,12 @@ export async function acceptAdminInviteAction(
     invalidateAccess({ userIds: [session.user.id] });
     await refreshSessionCookie();
     revalidatePath("/admin", "layout");
-    return { ok: true };
+    return {
+      ok: true,
+      next: (await owesCurrentTerms(session.user.id, true))
+        ? STEP_PATH.terms
+        : PERSPECTIVE_HOME.admin,
+    };
   } catch (error) {
     return actionFailure(error, {
       notFound: "notFound",

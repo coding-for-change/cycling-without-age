@@ -1,5 +1,6 @@
 import { admins } from "@/features/admins";
 import { chapters } from "@/features/chapters";
+import { legal } from "@/features/legal";
 import { membership } from "@/features/membership";
 import { profile } from "@/features/profile";
 import { availablePerspectives, getHighestRole } from "@/lib/access";
@@ -7,6 +8,7 @@ import type { Access } from "@/lib/access";
 import type { JoinPreset } from "@/lib/join-preset";
 import {
   nextOnboardingStep,
+  owesTerms,
   PASSKEY_REPROMPT_MS,
   STEP_PATH,
 } from "@/lib/onboarding";
@@ -22,6 +24,14 @@ export type OnboardingState = {
   };
   account: Awaited<ReturnType<typeof profile.getProfile>>;
 };
+
+const agreements = (account: OnboardingState["account"]) => ({
+  consented: account?.privacyReadAt != null,
+  termsCurrent: account?.termsVersion === legal.editionOf("terms").version,
+});
+
+export const owesCurrentTerms = async (userId: string, admin: boolean) =>
+  owesTerms(agreements(await profile.getProfile(userId)), admin);
 
 export async function getOnboardingState(
   userId: string,
@@ -69,7 +79,7 @@ export async function getOnboardingState(
     progress: {
       role,
       joined,
-      consented: account?.privacyReadAt != null,
+      ...agreements(account),
       profiled,
       passkeyHandled:
         (account?._count.passkeys ?? 0) > 0 ||
@@ -92,6 +102,7 @@ export async function resolveDestination(
     role === "countryAdmin" ||
     role === "chapterAdmin"
   ) {
+    if (await owesCurrentTerms(session.user.id, true)) return STEP_PATH.terms;
     return (
       next ??
       (preferMember && availablePerspectives(session.access).includes("pilot")

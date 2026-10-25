@@ -1,14 +1,17 @@
 import { Suspense, type ReactNode } from "react";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { accounts } from "@/features/accounts";
 import { passengers } from "@/features/passengers";
 import { readNextPath, requireAuth } from "@/lib/auth-guards";
 import { hasAnyAdminScope } from "@/lib/access";
+import { isHandheldRequest } from "@/lib/device";
 import { readJoinPreset } from "@/lib/join-preset";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { toIsoDateUtc } from "@/lib/format";
 import {
   canViewStep,
+  owesTerms,
   stepProgress,
   type OnboardingStep,
 } from "@/lib/onboarding";
@@ -28,6 +31,7 @@ export type StepDefaults = {
   birthDate: string;
   gender: "female" | "male" | "other" | null;
   safety: boolean;
+  terms: boolean;
 };
 
 export type StepContext = {
@@ -37,6 +41,7 @@ export type StepContext = {
   defaults: StepDefaults;
   presetChapterName: string | null;
   claimBanner: string | null;
+  termsAcceptedBefore: boolean;
   dict: Dictionary;
   locale: Locale;
 };
@@ -79,8 +84,20 @@ async function Resolve({
   ]);
   const { progress, account } = state;
 
-  if (!canViewStep(progress, step) && !hasAnyAdminScope(session.access)) {
-    redirect(await resolveDestination(session, preset, await readNextPath()));
+  const admin = hasAnyAdminScope(session.access);
+  const viewable =
+    step === "terms"
+      ? owesTerms(progress, admin)
+      : canViewStep(progress, step) || admin;
+  if (!viewable) {
+    redirect(
+      await resolveDestination(
+        session,
+        preset,
+        await readNextPath(),
+        isHandheldRequest(await headers()),
+      ),
+    );
   }
 
   const presetChapterName = state.preset.role ? state.preset.chapterName : null;
@@ -97,12 +114,14 @@ async function Resolve({
     caretaker: account?.managesOthers === true,
     presetChapterName,
     claimBanner,
+    termsAcceptedBefore: account?.termsVersion != null,
     defaults: {
       firstName: name.firstName,
       lastName: name.lastName,
       birthDate: name.birthDate ? toIsoDateUtc(name.birthDate) : "",
       gender: name.gender,
       safety: account?.consentSafetyAt != null,
+      terms: progress.termsCurrent,
     },
     progress: dots(dict, locale, {
       role: progress.role,

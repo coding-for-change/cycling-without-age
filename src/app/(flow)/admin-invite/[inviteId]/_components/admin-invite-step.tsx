@@ -47,7 +47,7 @@ export function AdminInviteStep({
         return;
       }
       haptics.success();
-      window.location.assign(PERSPECTIVE_HOME.admin);
+      window.location.assign(result.next);
     });
 
   if (status === "accepted")

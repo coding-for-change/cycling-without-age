@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import * as Sentry from "@sentry/nextjs";
 import { accounts } from "@/features/accounts";
 import { z } from "zod";
@@ -10,12 +11,15 @@ import {
   MAX_MANAGED_RIDERS,
   newManagedRiderInput,
 } from "@/features/passengers";
+import { hasAnyAdminScope } from "@/lib/access";
 import { readNextPath, requireAuth } from "@/lib/auth-guards";
 import { invalidateAccess } from "@/lib/cache-tags";
+import { isHandheldRequest } from "@/lib/device";
 import { actionFailure } from "@/lib/domain-error";
 import { readJoinPreset } from "@/lib/join-preset";
 import { getLocale } from "@/lib/i18n";
 import { canViewStep, type OnboardingStep } from "@/lib/onboarding";
+import { acceptCurrentTerms } from "@/use-cases/accept-current-terms";
 import { acceptOnboardingConsent } from "@/use-cases/accept-onboarding-consent";
 import {
   completeCaretakerOnboarding,
@@ -23,6 +27,7 @@ import {
 } from "@/use-cases/complete-onboarding-profile";
 import {
   getOnboardingState,
+  owesCurrentTerms,
   resolveDestination,
 } from "@/use-cases/onboarding-progress";
 
@@ -41,19 +46,21 @@ async function atStep(step: OnboardingStep) {
   return { session, userId: session.user.id, ...state };
 }
 
-const onward = async (
-  session: Parameters<typeof resolveDestination>[0],
-): Promise<StepResult> => ({
-  ok: true,
-  next: await resolveDestination(
+const destination = async (session: Parameters<typeof resolveDestination>[0]) =>
+  resolveDestination(
     session,
     await readJoinPreset(),
     await readNextPath(),
-  ),
-});
+    isHandheldRequest(await headers()),
+  );
+
+const onward = async (
+  session: Parameters<typeof resolveDestination>[0],
+): Promise<StepResult> => ({ ok: true, next: await destination(session) });
 
 const consentSchema = z.object({
   safety: z.boolean(),
+  terms: z.literal(true),
   health: z.boolean().optional(),
 });
 
@@ -74,7 +81,7 @@ export async function submitConsent(input: unknown): Promise<StepResult> {
     await acceptOnboardingConsent({
       userId: at.userId,
       consent: {
-        ...parsed.data,
+        safety: parsed.data.safety,
         health:
           at.progress.role === "passenger" &&
           at.account?.managesOthers !== true &&
@@ -94,6 +101,27 @@ export async function submitConsent(input: unknown): Promise<StepResult> {
   } catch (error) {
     Sentry.captureException(error);
     return { ok: false, error: "error" };
+  }
+}
+
+const termsSchema = z.object({ terms: z.literal(true) });
+
+export async function submitTerms(input: unknown): Promise<StepResult> {
+  const session = await requireAuth();
+  if (!termsSchema.safeParse(input).success)
+    return { ok: false, error: "required" };
+
+  if (
+    !(await owesCurrentTerms(session.user.id, hasAnyAdminScope(session.access)))
+  )
+    return onward(session);
+
+  try {
+    await acceptCurrentTerms(session.user.id);
+    revalidatePath(ONBOARDING);
+    return onward(session);
+  } catch (error) {
+    return actionFailure(error, {});
   }
 }
 
@@ -182,10 +210,5 @@ export async function markPasskeyAnswered(): Promise<StepResult> {
 }
 
 export async function nextOnboardingPath(): Promise<string> {
-  const session = await requireAuth();
-  return resolveDestination(
-    session,
-    await readJoinPreset(),
-    await readNextPath(),
-  );
+  return destination(await requireAuth());
 }

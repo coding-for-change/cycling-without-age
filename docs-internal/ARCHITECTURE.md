@@ -225,9 +225,18 @@ editing a sentence there would silently change a binding text without a new vers
 - **`features/legal`**: the service reads the file, the facade returns it with its edition
   from `LEGAL_EDITIONS` (`version`, `updatedOn`, `draft`). A text change bumps the edition.
   The onboarding consent step stores `editionOf("privacy").version` as `User.privacyVersion`
-  next to `privacyReadAt`; no terms version is recorded yet (T-14 §4 will store
-  `editionOf("terms").version`). Short UI strings around the texts (titles,
+  next to `privacyReadAt`, and the accepted `editionOf("terms").version` as `User.termsVersion`
+  next to `termsAcceptedAt`. Short UI strings around the texts (titles,
   "Version … · Last updated …", the draft notice) stay in `messages/app` under `legal`.
+- **Terms acceptance**: everyone accepts the current terms. Members tick them on the consent
+  step; anyone whose `termsVersion` is not the current edition, including admins (who skip
+  onboarding), is sent by `resolveDestination` to the `/onboarding/terms` interstitial at the
+  next sign-in (`owesTerms` in `lib/onboarding`, `owesCurrentTerms` in `onboarding-progress`),
+  and a new admin straight after accepting their invite. For an account past the consent step,
+  accepting there (`accept-current-terms`) also moves `privacyReadAt` and `privacyVersion` to the
+  edition shown with it, so the pair always says which edition was read when. It never sets
+  `privacyReadAt` for an account without it: that column is what marks the consent step done.
+  Bump the terms version only for a material change: every account has to accept it again.
 - **`lib/legal`**: the document list, `legalHref` and `legalLinks(titles)`, safe for any layer
   and for Client Components.
 - **Shipping**: the files are read at request time. `outputFileTracingIncludes` in

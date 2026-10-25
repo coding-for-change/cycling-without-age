@@ -1,4 +1,5 @@
 import { admins } from "@/features/admins";
+import { legal } from "@/features/legal";
 import { membership } from "@/features/membership";
 import { profile } from "@/features/profile";
 import { EMPTY_PRESET } from "@/lib/join-preset";
@@ -6,6 +7,7 @@ import type { Access } from "@/lib/access";
 import { PASSKEY_REPROMPT_MS } from "@/lib/onboarding";
 import {
   getOnboardingState,
+  owesCurrentTerms,
   resolveDestination,
 } from "@/use-cases/onboarding-progress";
 
@@ -41,6 +43,7 @@ type Account = {
   birthDate: Date | null;
   gender: string | null;
   privacyReadAt: Date | null;
+  termsVersion: string | null;
   consentSafetyAt: Date | null;
   passkeyPromptedAt: Date | null;
   onboardedAt: Date | null;
@@ -52,6 +55,7 @@ const DONE: Account = {
   birthDate: new Date("1950-04-01"),
   gender: "female",
   privacyReadAt: new Date("2026-01-01"),
+  termsVersion: legal.editionOf("terms").version,
   consentSafetyAt: new Date("2026-01-01"),
   passkeyPromptedAt: null,
   onboardedAt: new Date("2026-01-01"),
@@ -98,6 +102,13 @@ describe("resolveDestination", () => {
     account({ privacyReadAt: null });
     await expect(resolveDestination(session, EMPTY_PRESET, NEXT)).resolves.toBe(
       "/onboarding/consent",
+    );
+  });
+
+  it("asks a finished member to accept terms that changed since", async () => {
+    account({ termsVersion: "0.9" });
+    await expect(resolveDestination(session, EMPTY_PRESET, NEXT)).resolves.toBe(
+      "/onboarding/terms",
     );
   });
 
@@ -150,10 +161,36 @@ describe("where an admin lands", () => {
     ).resolves.toBe("/admin");
   });
 
+  it("asks an admin to accept the terms before anything else", async () => {
+    account({ termsVersion: null });
+    await expect(
+      resolveDestination(admin(["admin"]), EMPTY_PRESET, NEXT),
+    ).resolves.toBe("/onboarding/terms");
+  });
+
   it("lets a parked destination win over the device", async () => {
     await expect(
       resolveDestination(admin(["admin", "pilot"]), EMPTY_PRESET, NEXT, true),
     ).resolves.toBe(NEXT);
+  });
+});
+
+describe("owesCurrentTerms", () => {
+  it("holds a member who consented to the edition in force", async () => {
+    account({ termsVersion: "0.9" });
+    await expect(owesCurrentTerms("u1", false)).resolves.toBe(true);
+    account();
+    await expect(owesCurrentTerms("u1", false)).resolves.toBe(false);
+  });
+
+  it("leaves a member who has not consented to the consent step", async () => {
+    account({ privacyReadAt: null, termsVersion: null });
+    await expect(owesCurrentTerms("u1", false)).resolves.toBe(false);
+  });
+
+  it("asks a fresh admin, who skips the consent step", async () => {
+    account({ privacyReadAt: null, termsVersion: null });
+    await expect(owesCurrentTerms("u1", true)).resolves.toBe(true);
   });
 });
 
