@@ -828,6 +828,7 @@ export async function scheduleRide(
         chapterId: ride.chapterId,
         actorUserId,
         pair: back ? { role: "lead", otherRideId: back.id } : null,
+        exceptUserId: null,
       });
       if (back)
         await emit({
@@ -836,6 +837,7 @@ export async function scheduleRide(
           chapterId: back.chapterId,
           actorUserId,
           pair: { role: "follow", otherRideId: ride.id },
+          exceptUserId: null,
         });
     }
     if (data.announcedAt)
@@ -1158,6 +1160,19 @@ export async function updateRideDetails(
         ? { type: "ride.rescheduled", changes, pair: null }
         : undefined,
     );
+    if (
+      changed.includes("requiredPilots") &&
+      Number(wanted.requiredPilots) > ride.requiredPilots &&
+      ride.startsAt > new Date()
+    )
+      await emit({
+        type: "ride.opened",
+        rideId: ride.id,
+        chapterId: ride.chapterId,
+        actorUserId,
+        pair: null,
+        exceptUserId: null,
+      });
     if (leavingEvent && ride.announced)
       await record(tx, emit, ride, actorUserId, "edited", {
         fields: ["announced"],
@@ -1385,6 +1400,15 @@ export async function unassignVolunteer(
         pair: null,
       },
     );
+    if (role === "pilot" && ride.startsAt > new Date())
+      await emit({
+        type: "ride.opened",
+        rideId,
+        chapterId: ride.chapterId,
+        actorUserId,
+        pair: null,
+        exceptUserId: userId,
+      });
     return true;
   });
 }
@@ -1855,6 +1879,14 @@ export async function withdraw(
           pair: pairOfLegs(legs, leg),
         },
       );
+      await emit({
+        type: "ride.opened",
+        rideId: leg.id,
+        chapterId: leg.chapterId,
+        actorUserId: userId,
+        pair: pairOfLegs(legs, leg),
+        exceptUserId: userId,
+      });
     }
     return true;
   });

@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { haptics } from "@/lib/native/haptics";
-import { useKeyboardOpen } from "@/lib/native/keyboard";
 import { useOverlayOpen } from "@/lib/native/overlay";
 import {
   hideNativeTabs,
@@ -31,7 +30,6 @@ export function NativeTabBar({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const keyboardOpen = useKeyboardOpen();
   const narrow = useIsMobile();
   const overlayOpen = useOverlayOpen();
 
@@ -39,7 +37,6 @@ export function NativeTabBar({
   const hidden = hidesNativeTabs({
     pathname,
     narrow,
-    keyboardOpen,
     overlayOpen,
   });
 

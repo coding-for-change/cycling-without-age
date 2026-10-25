@@ -20,6 +20,8 @@ import { pilotChapterIds } from "../rides/_components/open-rides";
 
 const RIDES_HREF = "/pilot/rides";
 
+export const OPEN_RIDES_ANCHOR = "open-rides";
+
 const SCROLLER =
   "-mx-4 -my-2 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 py-2 scrollbar-none lg:-mx-6 lg:scroll-px-6 lg:px-6";
 
@@ -28,13 +30,14 @@ export async function NeedsPilotCarousel() {
   cacheLife(MEMBER_LIFE);
 
   const session = await requirePerspective("pilot");
+  const chapterIds = pilotChapterIds(session.access);
+  if (chapterIds.length === 0) return null;
   const [dict, language, head, open] = await Promise.all([
     getDictionary(),
     getLocale(),
     headers(),
-    listOpenRides(session.user.id, pilotChapterIds(session.access)),
+    listOpenRides(session.user.id, chapterIds),
   ]);
-  if (open.length === 0) return null;
 
   const locale = resolveLocale(head.get("accept-language"));
   const words = wordsLocale(language);
@@ -48,8 +51,9 @@ export async function NeedsPilotCarousel() {
 
   return (
     <section
+      id={OPEN_RIDES_ANCHOR}
       aria-labelledby="needs-pilot-title"
-      className="flex flex-col gap-3"
+      className="flex scroll-mt-20 flex-col gap-3"
     >
       <div className="flex items-center justify-between gap-3">
         <h2
@@ -58,86 +62,97 @@ export async function NeedsPilotCarousel() {
         >
           {strings.title}
         </h2>
-        <Link
-          href={RIDES_HREF}
-          transitionTypes={["tab"]}
-          className="-mr-2 inline-flex min-h-11 items-center gap-0.5 rounded-full px-2 text-2sm font-medium text-ink-soft transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none motion-reduce:transition-none"
-        >
-          {strings.seeAll}
-          <ChevronRight
-            aria-hidden
-            className="size-4"
-          />
-        </Link>
+        {open.length > 0 ? (
+          <Link
+            href={RIDES_HREF}
+            transitionTypes={["tab"]}
+            className="-mr-2 inline-flex min-h-11 items-center gap-0.5 rounded-full px-2 text-2sm font-medium text-ink-soft transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none motion-reduce:transition-none"
+          >
+            {strings.seeAll}
+            <ChevronRight
+              aria-hidden
+              className="size-4"
+            />
+          </Link>
+        ) : null}
       </div>
-      <ul className={SCROLLER}>
-        {open.map((ride) => {
-          const zone = ride.chapter.timeZone;
-          const missing = Math.max(
-            0,
-            ride.requiredPilots - ride._count.assignments,
-          );
-          const place = ride.locationName?.trim() || null;
-          return (
-            <li
-              key={ride.id}
-              className="flex w-64 shrink-0 snap-start"
-            >
-              <Link
-                href={`/pilot/rides/${ride.id}`}
-                transitionTypes={["push"]}
-                className="flex w-full flex-col gap-1.25 rounded-2xl border border-line bg-paper p-4 outline-none transition-[background-color,scale] hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink active:scale-99 motion-reduce:transition-none"
+      {open.length === 0 ? (
+        <p className="rounded-2xl bg-canvas-deep p-4 text-2sm text-ink-soft">
+          {strings.empty}
+        </p>
+      ) : (
+        <ul className={SCROLLER}>
+          {open.map((ride) => {
+            const zone = ride.chapter.timeZone;
+            const missing = Math.max(
+              0,
+              ride.requiredPilots - ride._count.assignments,
+            );
+            const place = ride.locationName?.trim() || null;
+            return (
+              <li
+                key={ride.id}
+                className="flex w-64 shrink-0 snap-start"
               >
-                <span className="text-2sm text-ink-soft">
-                  {formatShortDateWithWeekday(
-                    calendarDate(ride.startsAt, zone),
-                    locale,
-                  )}
-                  {" · "}
-                  <time dateTime={ride.startsAt.toISOString()}>
-                    {formatTime(ride.startsAt, locale, zone)}
-                  </time>
-                </span>
-                <span className="line-clamp-2 font-display leading-snug font-bold tracking-tight text-balance">
-                  {rideHeadline(ride, dict.calendar, phrases)}
-                </span>
-                {place ? (
-                  <span className="truncate text-2sm text-ink-soft">
-                    {place}
-                  </span>
-                ) : null}
-                <span className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-2 text-2sm">
-                  <span className="rounded-full bg-mint-tint px-2.5 py-0.5 font-medium text-ink">
-                    {formatMessage(
-                      openStrings.needsMore,
-                      { count: missing },
-                      words,
+                <Link
+                  href={`/pilot/rides/${ride.id}`}
+                  transitionTypes={["push"]}
+                  className="flex w-full flex-col gap-1.25 rounded-2xl border border-line bg-paper p-4 outline-none transition-[background-color,scale] hover:bg-canvas-deep focus-visible:ring-2 focus-visible:ring-ink active:scale-99 motion-reduce:transition-none"
+                >
+                  <span className="text-2sm text-ink-soft">
+                    {formatShortDateWithWeekday(
+                      calendarDate(ride.startsAt, zone),
+                      locale,
                     )}
+                    {" · "}
+                    <time dateTime={ride.startsAt.toISOString()}>
+                      {formatTime(ride.startsAt, locale, zone)}
+                    </time>
                   </span>
-                  <span className="inline-flex items-center gap-1 text-ink-soft">
-                    <UsersRound
-                      aria-hidden
-                      className="size-3.5"
-                    />
-                    {formatMessage(
-                      openStrings.riders,
-                      { count: ride._count.roster },
-                      words,
-                    )}
+                  <span className="line-clamp-2 font-display leading-snug font-bold tracking-tight text-balance">
+                    {rideHeadline(ride, dict.calendar, phrases)}
                   </span>
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+                  {place ? (
+                    <span className="truncate text-2sm text-ink-soft">
+                      {place}
+                    </span>
+                  ) : null}
+                  <span className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-2 text-2sm">
+                    <span className="rounded-full bg-mint-tint px-2.5 py-0.5 font-medium text-ink">
+                      {formatMessage(
+                        openStrings.needsMore,
+                        { count: missing },
+                        words,
+                      )}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-ink-soft">
+                      <UsersRound
+                        aria-hidden
+                        className="size-3.5"
+                      />
+                      {formatMessage(
+                        openStrings.riders,
+                        { count: ride._count.roster },
+                        words,
+                      )}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </section>
   );
 }
 
 export function NeedsPilotCarouselFallback() {
   return (
-    <section className="flex flex-col gap-3">
+    <section
+      id={OPEN_RIDES_ANCHOR}
+      className="flex scroll-mt-20 flex-col gap-3"
+    >
       <div className="flex min-h-11 items-center justify-between">
         <Skeleton className="h-5 w-44" />
         <Skeleton className="h-4 w-14" />

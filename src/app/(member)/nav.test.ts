@@ -280,7 +280,7 @@ describe("isConversationPath", () => {
 describe("primaryAction", () => {
   it("points the pilot's one red button at the open rides", () => {
     expect(primaryAction("pilot")).toEqual({
-      href: "/pilot/rides",
+      href: "/pilot#open-rides",
       icon: "rides",
     });
   });
@@ -319,7 +319,6 @@ describe("hidesNativeTabs", () => {
   const shown = {
     pathname: "/passenger/rides",
     narrow: true,
-    keyboardOpen: false,
     overlayOpen: false,
   };
 
@@ -332,8 +331,7 @@ describe("hidesNativeTabs", () => {
     expect(hidesNativeTabs({ ...shown, overlayOpen: false })).toBe(false);
   });
 
-  it("hides them for the keyboard, wide screens and tab-less pages", () => {
-    expect(hidesNativeTabs({ ...shown, keyboardOpen: true })).toBe(true);
+  it("hides them for wide screens and tab-less pages", () => {
     expect(hidesNativeTabs({ ...shown, narrow: false })).toBe(true);
     expect(
       hidesNativeTabs({ ...shown, pathname: "/pilot/training/c-1/l-1" }),

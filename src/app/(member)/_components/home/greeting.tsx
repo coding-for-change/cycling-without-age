@@ -1,12 +1,9 @@
-import Link from "next/link";
 import { cacheLife } from "next/cache";
-import { Button } from "@/components/ui/button";
 import { perspectiveViewerSession } from "@/lib/auth-guards";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { formatMessage } from "@/lib/i18n/format";
-import { PERSPECTIVE_HOME, signInHref } from "@/lib/redirects";
 import { firstName } from "@/lib/utils";
-import { primaryAction, type MemberPerspective } from "../../nav";
+import type { MemberPerspective } from "../../nav";
 import { MEMBER_LIFE } from "../instant";
 
 const VARIANTS = [
@@ -19,10 +16,8 @@ const VARIANTS = [
 
 export async function Greeting({
   perspective,
-  hero = false,
 }: {
   perspective: MemberPerspective;
-  hero?: boolean;
 }) {
   "use cache: private";
   cacheLife(MEMBER_LIFE);
@@ -32,7 +27,7 @@ export async function Greeting({
     getDictionary(),
     getLocale(),
   ]);
-  const { guest, home, action } = dict.member;
+  const { guest, home } = dict.member;
 
   if (!session)
     return (
@@ -41,21 +36,6 @@ export async function Greeting({
           {guest.greeting}
         </h1>
         <p className="text-ink-soft">{guest.tagline}</p>
-        {hero ? (
-          <>
-            <Button
-              asChild
-              variant="brand"
-              size="hero"
-              className="mt-2 md:hidden"
-            >
-              <Link href={signInHref(PERSPECTIVE_HOME[perspective])}>
-                {guest.hero}
-              </Link>
-            </Button>
-            <p className="text-sm text-ink-soft md:hidden">{guest.heroHint}</p>
-          </>
-        ) : null}
       </section>
     );
 
@@ -73,18 +53,6 @@ export async function Greeting({
           </span>
         ))}
       </h1>
-      {hero ? (
-        <Button
-          asChild
-          variant="brand"
-          size="hero"
-          className="mt-2 md:hidden"
-        >
-          <Link href={primaryAction(perspective).href}>
-            {action[perspective]}
-          </Link>
-        </Button>
-      ) : null}
     </section>
   );
 }

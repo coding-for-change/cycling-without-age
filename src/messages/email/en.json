@@ -150,6 +150,14 @@
     "preview": "{ride} · {time}",
     "subject": "{ride} on {date}"
   },
+  "rideAnnouncedPilot": {
+    "cta": "See the event",
+    "footer": "You received this email because you pilot with a Cycling Without Age chapter. You can turn these off in your notification settings.",
+    "heading": "A new event in your chapter",
+    "intro": "{chapter} is holding {ride} on {date}, {time}, at {place}. The details are in the app.",
+    "preview": "{ride} · {time}",
+    "subject": "{ride} on {date}"
+  },
   "rideBookingCancelled": {
     "cta": "Open the ride",
     "footer": "You received this email because you help run a Cycling Without Age chapter.",

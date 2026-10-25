@@ -185,6 +185,8 @@ export const eventSchema = z.discriminatedUnion("type", [
     type: z.literal("ride.opened"),
     ...rideScope,
     pair: ridePair,
+    /** The pilot whose leaving reopened the ride is not asked to come back. */
+    exceptUserId: z.string().min(1).nullable().default(null),
   }),
   z.object({
     type: z.literal("ride.understaffed"),

@@ -3198,7 +3198,8 @@
       },
       "open": {
         "title": "Ture, der mangler en pilot",
-        "seeAll": "Se alle"
+        "seeAll": "Se alle",
+        "empty": "Lige nu mangler ingen tur en pilot. Vi giver dig besked, så snart der er en."
       }
     },
     "rides": {
@@ -3260,7 +3261,8 @@
         "titleAny": "Åbne ture",
         "goneTitle": "Turen mangler ikke længere en pilot",
         "goneBody": "Måske har en anden taget den, eller turen er flyttet eller aflyst. Afdelingens andre åbne ture finder du under Mine ture.",
-        "goneCta": "Se åbne ture"
+        "goneCta": "Se åbne ture",
+        "staffed": "Arrangementet har allerede alle de piloter, det skal bruge. Du kan stadig se, hvad der er planlagt."
       },
       "signUp": {
         "alsoWayBack": "En del af en tur ud og hjem: Du kører også hjemturen, {time}, hvis den stadig mangler en pilot.",

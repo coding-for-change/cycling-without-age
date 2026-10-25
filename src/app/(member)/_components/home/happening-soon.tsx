@@ -13,26 +13,36 @@ import { formatMessage } from "@/lib/i18n/format";
 import { PERSPECTIVE_HOME } from "@/lib/redirects";
 import { cn } from "@/lib/utils";
 import { loadUpcomingEvents } from "../../passenger/rides/_components/upcoming-events";
+import { pilotChapterIds } from "../../pilot/rides/_components/open-rides";
 import { MEMBER_LIFE } from "../instant";
 import { dayAndTime } from "./when";
 
-async function eventsFor(userId: string | null) {
-  if (userId) return loadUpcomingEvents(userId);
+type Perspective = "passenger" | "pilot";
+type Viewer = Awaited<ReturnType<typeof perspectiveViewerSession>>;
+
+async function eventsFor(viewer: Viewer, perspective: Perspective) {
+  if (viewer && perspective === "pilot")
+    return rides.listChapterEvents(pilotChapterIds(viewer.access));
+  if (viewer) return loadUpcomingEvents(viewer.user.id);
   const chapterId = await readGuestChapterId();
   return chapterId ? rides.listChapterEvents([chapterId]) : [];
 }
 
-export async function HappeningSoon() {
+export async function HappeningSoon({
+  perspective = "passenger",
+}: {
+  perspective?: Perspective;
+}) {
   "use cache: private";
   cacheLife(MEMBER_LIFE);
 
   const [session, dict, language, head] = await Promise.all([
-    perspectiveViewerSession("passenger"),
+    perspectiveViewerSession(perspective),
     getDictionary(),
     getLocale(),
     headers(),
   ]);
-  const events = await eventsFor(session?.user.id ?? null);
+  const events = await eventsFor(session, perspective);
   if (!events.length) return null;
 
   const notation = resolveLocale(head.get("accept-language"));
@@ -51,6 +61,7 @@ export async function HappeningSoon() {
           >
             <EventCard
               event={event}
+              perspective={perspective}
               guest={!session}
               dict={dict}
               notation={notation}
@@ -65,12 +76,14 @@ export async function HappeningSoon() {
 
 function EventCard({
   event,
+  perspective,
   guest,
   dict,
   notation,
   words,
 }: {
   event: AnnouncedEventRow;
+  perspective: Perspective;
   guest: boolean;
   dict: Dictionary;
   notation: Locale;
@@ -80,7 +93,7 @@ function EventCard({
   const title = event.title?.trim() || dict.calendar.models.event;
   const photo = event.photos[0]?.fileId ?? null;
   const left = rides.seatsLeft(event);
-  const detail = `${PERSPECTIVE_HOME.passenger}/rides/${event.id}`;
+  const detail = `${PERSPECTIVE_HOME[perspective]}/rides/${event.id}`;
   const seats =
     left === null
       ? strings.open

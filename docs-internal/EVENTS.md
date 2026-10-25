@@ -234,7 +234,7 @@ the worker):
 | `ride.pilotUnassigned` | `userId`, `self` | `unassignVolunteer`, `withdraw` (per leg it leaves: stepping back from a round trip leaves the other leg too while it is outside the staffing window) |
 | `ride.riderBooked` | `passengerId`, `requestId` (null unless booked from a Ride Request) | `bookRider`, `bookSeats` (both take a given-up seat's row back) |
 | `ride.riderRemoved` | `passengerId`, `self` (the rider's own account gave the seat up), `rosterNowEmpty` (nobody is left to ride), `pair` | `cancelBooking` (an admin takes the rider off, the row goes), `cancelSeat` (the rider's side gives the seat up, the row stays as `cancelled`; per leg of a round trip it leaves) |
-| `ride.opened` | — | `scheduleRide`, per leg, when the chapter lets pilots sign up and the ride is still ahead and short of pilots |
+| `ride.opened` | `exceptUserId` | `scheduleRide`, per leg, when the chapter lets pilots sign up and the ride is still ahead and short of pilots; `withdraw` per leg and `unassignVolunteer` for a pilot on a ride still ahead (`exceptUserId` is the pilot who left); `updateRideDetails` when `requiredPilots` goes up on a ride still ahead |
 | `ride.understaffed` | `assigned`, `required` | `checkStaffing` (the worker's staffing check), once per ride, with `actorUserId: null`; the way there checks its way back along |
 | `ride.announced` | — | `scheduleRide` with `announced`, `setAnnounced` when it is switched on the first time; only for an event still ahead |
 | `ride.rosterRefilled` | `passengerId` | `bookSeats` when booking an event fills a roster that give-ups had emptied, once per booking |
@@ -272,10 +272,10 @@ PR 5 added four more, in `kinds/staffing.ts`, and widened `ridePilotAssigned`:
 | Kind | Event | Who hears it | Policy | Link |
 | --- | --- | --- | --- | --- |
 | `ridePilotAssigned` | `ride.pilotAssigned` with `self` | the pilot ("you're signed up", 3C) and the riders' accounts ("{pilot} pilots your ride", story 24b) | push, mail if no push | `/rides/{id}` |
-| `rideOpened` | `ride.opened` | the chapter's pilots not on the ride, minus the actor | push, mail if no push, opt-out-able | `/pilot/rides/{id}` |
+| `rideOpened` | `ride.opened` | the chapter's pilots not on the ride, minus the actor and `exceptUserId`; nobody unless, when the message goes out, the chapter lets pilots sign up and the ride is still ahead and short | push, mail if no push, opt-out-able | `/pilot/rides/{id}` |
 | `rideUnderstaffed` | `ride.understaffed` | chapter admins | push, mail if no push | `/admin/rides/{id}` |
 | `ridePilotWithdrew` | `ride.pilotUnassigned` with `self` | chapter admins minus the actor | push, mail if no push, opt-out-able | `/admin/rides/{id}` |
-| `rideAnnounced` | `ride.announced` | the accounts behind the chapter's riders, minus the actor | push, mail if no push, opt-out-able | `/passenger/rides/{id}` |
+| `rideAnnounced` | `ride.announced` | the accounts behind the chapter's riders, minus the actor; plus, as audience `pilot`, the chapter's pilots not on the event who do not book, unless the event is still open for pilots to sign up (`rideOpened` told them) | push, mail if no push, opt-out-able | `/passenger/rides/{id}`, `/pilot/rides/{id}` for audience `pilot` |
 
 PR 6 added four more, in `kinds/reminders.ts`, and widened `rideBookingCancelled`:
 
@@ -307,7 +307,10 @@ recording last Monday's crew and riders doesn't send "you're piloting on Monday"
 **One event, two readers.** A self sign-up reaches the pilot and the riders' side with
 different words. A kind may define `forRecipient(params, recipientUserId)`; `notify` stores
 each recipient's row with what it returns, so `ridePilotAssigned` remembers `audience: "pilot"`
-or `"rider"` per row and the bell, the push and the mail read it back.
+or `"rider"` per row and the bell, the push and the mail read it back. When the role is known
+only while choosing recipients, `recipients` may return `{ userId, audience }` instead of a
+bare id: `notify` writes that `audience` into the row's payload and passes it to
+`href(event, audience)`, so `rideAnnounced` gives pilots their own words and their own link.
 
 `ride.deleted` still has no listener and is marked processed without a job.
 `ride.scheduled` has one, `linkRideRequest` (COD-261): a ride scheduled from a Ride Request

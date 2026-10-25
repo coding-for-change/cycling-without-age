@@ -3198,7 +3198,8 @@
       },
       "open": {
         "title": "Rides that need a pilot",
-        "seeAll": "See all"
+        "seeAll": "See all",
+        "empty": "No ride needs a pilot right now. We'll let you know as soon as one does."
       }
     },
     "rides": {
@@ -3260,7 +3261,8 @@
         "titleAny": "Open rides",
         "goneTitle": "No pilot needed here anymore",
         "goneBody": "Someone else may have taken it, or the ride was moved or cancelled. Your chapter's other open rides are on My rides.",
-        "goneCta": "See open rides"
+        "goneCta": "See open rides",
+        "staffed": "This event already has all the pilots it needs. You can still have a look at what's planned."
       },
       "signUp": {
         "alsoWayBack": "Part of a round trip: you'll pilot the way back too, {time}, if it still needs a pilot.",

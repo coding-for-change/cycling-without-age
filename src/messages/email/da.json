@@ -150,6 +150,14 @@
     "preview": "{ride} · {time}",
     "subject": "{ride} {date}"
   },
+  "rideAnnouncedPilot": {
+    "cta": "Se arrangementet",
+    "footer": "Du modtager denne e-mail, fordi du er pilot i en Cycling Without Age-afdeling. Du kan slå dem fra i dine notifikationer.",
+    "heading": "Et nyt arrangement i din afdeling",
+    "intro": "{chapter} holder {ride} {date}, {time}, ved {place}. Detaljerne finder du i appen.",
+    "preview": "{ride} · {time}",
+    "subject": "{ride} {date}"
+  },
   "rideBookingCancelled": {
     "cta": "Åbn turen",
     "footer": "Du modtager denne e-mail, fordi du er med til at drive en Cycling Without Age-afdeling.",
