@@ -28,8 +28,7 @@ export type HomeInput = z.infer<typeof homeInput>;
 
 export const consentInput = z.object({
   safety: z.boolean(),
-  notifications: z.boolean(),
-  data: z.boolean(),
+  privacyVersion: z.string().min(1).max(16),
 });
 export type ConsentInput = z.infer<typeof consentInput>;
 

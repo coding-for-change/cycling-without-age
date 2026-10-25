@@ -1,7 +1,7 @@
+import { legal } from "@/features/legal";
 import { membership } from "@/features/membership";
 import { personProfiles } from "@/features/person-profiles";
 import { profile } from "@/features/profile";
-import type { ConsentInput } from "@/features/profile";
 import type { OnboardingRole } from "@/lib/onboarding";
 
 export async function acceptOnboardingConsent({
@@ -10,11 +10,14 @@ export async function acceptOnboardingConsent({
   preset,
 }: {
   userId: string;
-  consent: ConsentInput & { health?: boolean };
+  consent: { safety: boolean; health?: boolean };
   /** Already validated against the real chapter list by the caller. */
   preset?: { chapterId: string; role: OnboardingRole } | null;
 }) {
-  await profile.recordConsent(userId, consent);
+  await profile.recordConsent(userId, {
+    safety: consent.safety,
+    privacyVersion: legal.editionOf("privacy").version,
+  });
   if (consent.health)
     await personProfiles.grantHealthConsent(
       { kind: "user", id: userId },

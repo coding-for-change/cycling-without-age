@@ -224,8 +224,9 @@ editing a sentence there would silently change a binding text without a new vers
 
 - **`features/legal`**: the service reads the file, the facade returns it with its edition
   from `LEGAL_EDITIONS` (`version`, `updatedOn`, `draft`). A text change bumps the edition.
-  Nothing records an accepted version yet; versioned terms acceptance at onboarding (T-14 §4)
-  will store `editionOf(document).version`. Short UI strings around the texts (titles,
+  The onboarding consent step stores `editionOf("privacy").version` as `User.privacyVersion`
+  next to `privacyReadAt`; no terms version is recorded yet (T-14 §4 will store
+  `editionOf("terms").version`). Short UI strings around the texts (titles,
   "Version … · Last updated …", the draft notice) stay in `messages/app` under `legal`.
 - **`lib/legal`**: the document list, `legalHref` and `legalLinks(titles)`, safe for any layer
   and for Client Components.

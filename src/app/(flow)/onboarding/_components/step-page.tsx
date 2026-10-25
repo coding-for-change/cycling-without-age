@@ -27,9 +27,7 @@ export type StepDefaults = {
   lastName: string;
   birthDate: string;
   gender: "female" | "male" | "other" | null;
-  consented: boolean;
   safety: boolean;
-  notifications: boolean;
 };
 
 export type StepContext = {
@@ -104,9 +102,7 @@ async function Resolve({
       lastName: name.lastName,
       birthDate: name.birthDate ? toIsoDateUtc(name.birthDate) : "",
       gender: name.gender,
-      consented: account?.consentDataAt != null,
       safety: account?.consentSafetyAt != null,
-      notifications: account?.notifyEmail === true,
     },
     progress: dots(dict, locale, {
       role: progress.role,

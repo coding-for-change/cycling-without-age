@@ -10,10 +10,10 @@
 2. Scroll a little and tap **Ride with this chapter** (the "Come along for a ride" card).
 3. Screen "What's your email or phone number?". Type `new.rider.docs@cwa.local` and tap **Continue**.
 4. Screen "Enter your code". Type the 6-digit code from the email. It submits by itself.
-5. The chapter and the role come from the QR link, so the role and location screens are skipped. Screen "Three quick agreements" with "You're joining München – Seniorenheim Sonnenhof." Tick all three:
+5. The chapter and the role come from the QR link, so the role and location screens are skipped. Screen "2 quick agreements" with "You're joining München – Seniorenheim Sonnenhof." Tick both:
    - "I understand that rides are provided by trained volunteers, and I agree to the safety guidelines of the chapter."
-   - "I agree to receive email and push notifications for important messages."
-   - "I agree to the storage and processing of my data. See the Imprint and the Data processing agreement."
+   - The optional health box ("Optional: the chapter's pilots and admins may see what helps me on a ride …").
+   - Under the boxes, a note that continuing confirms the Privacy notice was read, with links to the Privacy notice and the Imprint.
    Tap **Continue**.
 6. Screen "A little about you". Fill in First name `Rosa`, Last name `Rider`, Birthday (14 March 1938) and Gender **Female**, then tap **Continue**. (Under it is the mint button "I'm creating this account for someone else to ride", see rider-caretaker.)
 7. Screen "Create your passkey". Tap **Not now**.
@@ -21,5 +21,5 @@
 
 Notes:
 - The QR preset is a cookie set by /join/<slug>/start?role=passenger. It also works if the person already has an account (they go straight to onboarding).
-- Riders get three agreements (including safety). Pilots get two.
+- Riders get the safety agreement and the optional health box. Caretakers get only the safety agreement. Pilots get no box, only the privacy note.
 - The birthday shows as mm/dd/yyyy in the headless recording. On a real phone it follows the device's format.

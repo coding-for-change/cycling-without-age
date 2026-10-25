@@ -46,7 +46,7 @@ test("rider-caretaker", async ({ record }) => {
   );
   await page.waitForURL(/\/onboarding\/consent/, { timeout: 30_000 });
   await expect(
-    page.getByRole("heading", { name: /quick agreements/ }),
+    page.getByRole("heading", { name: /quick agreement/ }),
   ).toBeVisible();
   await pause(page, 1500);
   await tickAll(page, page.getByRole("main"));
