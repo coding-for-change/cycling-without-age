@@ -394,7 +394,8 @@
   "legal": {
     "imprint": "Imprint",
     "privacy": "Privacy notice",
-    "terms": "Terms of use"
+    "terms": "Terms of use",
+    "help": "Help & support"
   },
   "rideRequestCommon": {
     "someone": "a rider",

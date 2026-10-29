@@ -1,6 +1,7 @@
 import { createPrivateKey, sign, type KeyObject } from "node:crypto";
 import { isSuperAdmin, type Access } from "@/lib/access";
 import { isAppPath } from "@/lib/app-path";
+import type { LegalLink } from "@/lib/legal";
 
 export type DocsGroup =
   "superadmin" | "country-admin" | "chapter-admin" | "pilot" | "rider";
@@ -75,9 +76,16 @@ export const DEFAULT_DOCS_HOST = "docs.cwa.codingforchange.com";
 export const docsHost = (env: Env = process.env) =>
   env.DOCS_HOST || DEFAULT_DOCS_HOST;
 
+export const docsPublicHref = (locale: string, env: Env = process.env) =>
+  `https://${docsHost(env)}/${locale}`;
+
+export const guidesLink = (label: string, locale: string): LegalLink => ({
+  href: docsPublicHref(locale),
+  label,
+});
+
 export function docsEntryHref(locale: string, env: Env = process.env) {
-  const path = `/${locale}`;
   return readDocsKey(env.DOCS_JWT_PRIVATE_KEY)
-    ? `/docs-login?redirect=${encodeURIComponent(path)}`
-    : `https://${docsHost(env)}${path}`;
+    ? `/docs-login?redirect=${encodeURIComponent(`/${locale}`)}`
+    : docsPublicHref(locale, env);
 }

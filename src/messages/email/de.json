@@ -393,8 +393,9 @@
   },
   "legal": {
     "imprint": "Impressum",
-    "privacy": "Datenschutzerklärung",
-    "terms": "Nutzungsbedingungen"
+    "privacy": "Datenschutz",
+    "terms": "Nutzungsbedingungen",
+    "help": "Hilfe & Support"
   },
   "rideRequestCommon": {
     "someone": "einen Fahrgast",

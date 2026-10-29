@@ -2635,6 +2635,7 @@
       "privacy": "Privatlivspolitik",
       "terms": "Brugsvilkår"
     },
+    "help": "Hjælp & support",
     "draft": "Dette er et udkast. Den endelige tekst bliver stadig gennemgået.",
     "edition": "Version {version} · Senest opdateret {date}",
     "label": "Juridisk",

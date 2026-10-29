@@ -8,6 +8,7 @@ import { getDictionary, getLocale } from "@/lib/i18n";
 import { resolveLocale } from "@/lib/format";
 import { defaultCountryFor } from "@/lib/identity";
 import { legalLinks } from "@/lib/legal";
+import { guidesLink } from "@/lib/docs-auth";
 import { LegalLinks } from "@/components/legal-links";
 import { IdentifierStep } from "./_components/identifier-step";
 import { StepSkeleton } from "../_components/step";
@@ -59,7 +60,10 @@ async function Identifier() {
       legal={
         <LegalLinks
           label={dict.legal.label}
-          links={legalLinks(dict.legal.documents)}
+          links={[
+            ...legalLinks(dict.legal.documents),
+            guidesLink(dict.legal.help, language),
+          ]}
           className="pt-1"
         />
       }

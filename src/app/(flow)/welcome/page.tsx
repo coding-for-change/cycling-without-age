@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { chapters } from "@/features/chapters";
 import { getDictionary, getLocale } from "@/lib/i18n";
-import { legalLinks } from "@/lib/legal";
+import { guidesLink } from "@/lib/docs-auth";
 import { LegalLinks } from "@/components/legal-links";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WelcomeCarousel } from "./_components/welcome-carousel";
@@ -40,8 +40,8 @@ async function Welcome() {
       chapterCoords={chapterCoords}
       legal={
         <LegalLinks
-          label={dict.legal.label}
-          links={legalLinks(dict.legal.documents)}
+          label={dict.legal.help}
+          links={[guidesLink(dict.legal.help, locale)]}
           className="pt-5"
         />
       }

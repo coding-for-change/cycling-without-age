@@ -5,6 +5,7 @@ import {
   DEFAULT_DOCS_HOST,
   docsCallbackUrl,
   docsEntryHref,
+  guidesLink,
   docsGroups,
   docsRedirectPath,
   readDocsKey,
@@ -169,5 +170,14 @@ describe("docsEntryHref", () => {
         DOCS_JWT_PRIVATE_KEY: pem,
       }),
     ).toBe("/docs-login?redirect=%2Fda");
+  });
+});
+
+describe("guidesLink", () => {
+  it("opens the public guides in the reader's language without signing in", () => {
+    expect(guidesLink("Help & support", "da")).toEqual({
+      href: `https://${DEFAULT_DOCS_HOST}/da`,
+      label: "Help & support",
+    });
   });
 });
