@@ -32,6 +32,13 @@
     "languages": [
       {
         "language": "en",
+        "navbar": {
+          "primary": {
+            "type": "button",
+            "label": "Contact",
+            "href": "https://cwa.codingforchange.com/legal/imprint?lang=en"
+          }
+        },
         "tabs": [
           {
             "tab": "Getting started",
@@ -159,6 +166,13 @@
       },
       {
         "language": "de",
+        "navbar": {
+          "primary": {
+            "type": "button",
+            "label": "Kontakt",
+            "href": "https://cwa.codingforchange.com/legal/imprint?lang=de"
+          }
+        },
         "tabs": [
           {
             "tab": "Erste Schritte",
@@ -286,6 +300,13 @@
       },
       {
         "language": "da",
+        "navbar": {
+          "primary": {
+            "type": "button",
+            "label": "Kontakt",
+            "href": "https://cwa.codingforchange.com/legal/imprint?lang=da"
+          }
+        },
         "tabs": [
           {
             "tab": "Kom i gang",
