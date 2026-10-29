@@ -2052,7 +2052,7 @@
     "error": "Das konnten wir nicht speichern. Versuchen Sie es erneut.",
     "imprint": "Impressum",
     "joining": "Sie treten {chapter} bei.",
-    "privacy": "Datenschutzerklärung",
+    "privacy": "Datenschutz",
     "safety": "Ich weiß, dass die Ausfahrten von geschulten Freiwilligen gefahren werden, und halte mich an die Sicherheitsregeln der Ortsgruppe.",
     "setUpBy": "{name} hat dieses Konto für Sie eingerichtet. Prüfen Sie die Angaben und stimmen Sie zu, um fortzufahren.",
     "title": "{count, plural, =0 {Bevor es losgeht} one {1 kurze Zusage} other {# kurze Zusagen}}",
@@ -2632,9 +2632,10 @@
   "legal": {
     "documents": {
       "imprint": "Impressum",
-      "privacy": "Datenschutzerklärung",
+      "privacy": "Datenschutz",
       "terms": "Nutzungsbedingungen"
     },
+    "help": "Hilfe & Support",
     "draft": "Dies ist ein Entwurf. Der endgültige Text wird noch geprüft.",
     "edition": "Version {version} · Zuletzt aktualisiert am {date}",
     "label": "Rechtliches",

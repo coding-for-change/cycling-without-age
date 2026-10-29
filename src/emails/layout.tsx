@@ -17,6 +17,7 @@ import { brand } from "@/lib/brand";
 import type { Locale } from "@/lib/i18n";
 import { LOCALE_PARAM } from "@/lib/i18n/locales";
 import { legalLinks } from "@/lib/legal";
+import { guidesLink } from "@/lib/docs-auth";
 import { getEmailStrings } from "./strings";
 
 export function EmailLayout({
@@ -56,11 +57,11 @@ export function EmailLayout({
           <Text style={styles.footer}>{footer}</Text>
           <Text style={styles.footer}>Cycling Without Age</Text>
           <Text style={styles.footer}>
-            {legalLinks(getEmailStrings(locale).legal).map((link, index) => (
+            {footerLinks(locale).map((link, index) => (
               <span key={link.href}>
                 {index > 0 ? " · " : null}
                 <Link
-                  href={`${APP_URL}${link.href}?${LOCALE_PARAM}=${locale}`}
+                  href={link.href}
                   style={styles.footerLink}
                 >
                   {link.label}
@@ -72,6 +73,17 @@ export function EmailLayout({
       </Body>
     </Html>
   );
+}
+
+function footerLinks(locale: Locale) {
+  const strings = getEmailStrings(locale).legal;
+  return [
+    ...legalLinks(strings).map((link) => ({
+      ...link,
+      href: `${APP_URL}${link.href}?${LOCALE_PARAM}=${locale}`,
+    })),
+    guidesLink(strings.help, locale),
+  ];
 }
 
 const styles = {
