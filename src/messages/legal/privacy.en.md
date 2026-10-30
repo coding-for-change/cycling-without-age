@@ -42,6 +42,7 @@ These service providers process data on our behalf:
 - **Google (Firebase Cloud Messaging)**: Delivering push notifications on Android (USA)
 - **Apple (Push Notification service)**: Delivering push notifications on iOS (USA)
 - **Google (Sign-in)**: Signing in with Google, only if you choose it (USA)
+- **Apple (Sign in with Apple)**: Signing in with Apple, only if you choose it; Apple may pass on a relay address instead of your email address (USA)
 - **Functional Software, Inc. (Sentry)**: Error reports, without message content (EU)
 - **Mapbox, Inc.**: Showing maps and finding addresses (USA)
 
