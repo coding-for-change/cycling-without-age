@@ -2,6 +2,8 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
+import { verifyProviderIdToken } from "better-auth/oauth2";
+import { apple } from "better-auth/social-providers";
 import {
   admin,
   customSession,
@@ -14,6 +16,12 @@ import { memberAc as orgMemberAc } from "better-auth/plugins/organization/access
 import { passkey } from "@better-auth/passkey";
 import { prisma } from "@/lib/prisma";
 import { APP_URL } from "@/lib/app-url";
+import {
+  APPLE_ID_URL,
+  appleCredentials,
+  appleProviderOptions,
+  type AppleCredentials,
+} from "@/lib/apple";
 import { createElement } from "react";
 import { sendMail } from "@/lib/mailer";
 import { getLocale } from "@/lib/i18n";
@@ -83,10 +91,25 @@ const bodyId = (body: unknown, key: string) => {
   return typeof value === "string" ? value : null;
 };
 
+type EndpointContext = Parameters<typeof verifyProviderIdToken>[3];
+
+const appleWithRawNonce = (credentials: AppleCredentials) => {
+  const betterAuthApple = apple(appleProviderOptions(credentials));
+  return appleProviderOptions(
+    credentials,
+    (token, nonce, context?: EndpointContext) =>
+      verifyProviderIdToken(betterAuthApple, token, nonce, context),
+  );
+};
+
 export const auth = betterAuth({
   appName: ORG_NAME,
   database: prismaAdapter(prisma, { provider: "mysql" }),
-  trustedOrigins: devTrustedOrigins,
+  // Apple returns from its sign-in page with a POST from its own origin.
+  trustedOrigins: [
+    ...(appleCredentials ? [APPLE_ID_URL] : []),
+    ...devTrustedOrigins,
+  ],
   session: {
     expiresIn: 60 * 60 * 24 * 90,
     updateAge: 60 * 60 * 24,
@@ -139,16 +162,17 @@ export const auth = betterAuth({
       "/phone-number/send-otp": { window: 60, max: 3 },
     },
   },
-  ...(googleClientId && googleClientSecret
-    ? {
-        socialProviders: {
+  socialProviders: {
+    ...(googleClientId && googleClientSecret
+      ? {
           google: {
             clientId: googleClientId,
             clientSecret: googleClientSecret,
           },
-        },
-      }
-    : {}),
+        }
+      : {}),
+    ...(appleCredentials ? { apple: appleWithRawNonce(appleCredentials) } : {}),
+  },
   plugins: [
     emailOTP({
       otpLength: 6,
