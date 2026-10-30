@@ -1,5 +1,7 @@
 cwa.codingforchange.com {
     import access_log
     log_skip /docs-login
+    # Apple's first sign-in carries the name and email in this URL's query.
+    log_skip /api/auth/callback/apple
     reverse_proxy localhost:3002
 }

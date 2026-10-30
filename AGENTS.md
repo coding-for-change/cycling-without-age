@@ -133,6 +133,11 @@ client-only: call them from client components; the wrappers are SSR-safe
   tied to the site by the `webcredentials:` entitlement, the Android `asset_statements`
   meta-data and `/.well-known/apple-app-site-association` + `/.well-known/assetlinks.json`
   (`src/app/.well-known/*`, identifiers in `src/lib/native-app.ts`).
+- Sign in with Apple goes through `@/lib/native/apple-sign-in` (`isAppleSignInAvailable`,
+  `authorizeWithApple`), backed by the in-app `AppleSignInPlugin`. UI never calls
+  `authClient.signIn.social({ provider: "apple" })` directly but `signInWithApple`
+  (`src/app/(flow)/sign-in/_components/sign-in-with-apple.ts`). The button exists only in the
+  iOS app, before Google.
 - The iOS tab bar goes through `@/lib/native/navigation` (`configureNativeNavigation`,
   `setNativeTabs`, `hideNativeTabs`, `onTabSelect`); it is a no-op off iOS. `<NativeTabBar />` is
   its only caller. Tab rows and SF Symbols come from `MEMBER_NAV` in `src/app/(member)/nav.ts`.

@@ -15,6 +15,8 @@ const phone = z
 export const contact = z.union([email, phone]);
 export type Contact = z.infer<typeof contact>;
 
+export const appleAuthorizationCode = z.string().min(1).max(1024);
+
 export const helperInput = z.object({
   name: z.string().trim().min(1).max(120),
   relationship: z.string().trim().min(1).max(80),

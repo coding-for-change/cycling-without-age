@@ -7,6 +7,7 @@ import { resolveDestination } from "@/use-cases/onboarding-progress";
 import { getDictionary, getLocale } from "@/lib/i18n";
 import { resolveLocale } from "@/lib/format";
 import { defaultCountryFor } from "@/lib/identity";
+import { isAppleSignInConfigured } from "@/lib/apple";
 import { legalLinks } from "@/lib/legal";
 import { guidesLink } from "@/lib/docs-auth";
 import { LegalLinks } from "@/components/legal-links";
@@ -57,6 +58,7 @@ async function Identifier() {
       googleEnabled={Boolean(
         process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,
       )}
+      appleEnabled={isAppleSignInConfigured()}
       legal={
         <LegalLinks
           label={dict.legal.label}

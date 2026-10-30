@@ -3916,6 +3916,8 @@
       "title": "Where's your phone number from?"
     },
     "identifier": {
+      "apple": "Continue with Apple",
+      "appleFailed": "Signing in with Apple didn't work. Try again or use your email address.",
       "changeCountry": "Change country code",
       "errors": {
         "empty": "Enter an email address or a phone number.",
