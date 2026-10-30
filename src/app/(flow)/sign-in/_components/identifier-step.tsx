@@ -4,6 +4,7 @@ import {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   useTransition,
   type ReactNode,
 } from "react";
@@ -12,6 +13,7 @@ import { AsYouType, type CountryCode } from "libphonenumber-js";
 import { authClient } from "@/lib/auth-client";
 import { useCharacter } from "@/components/character";
 import { dialCodeOf, looksLikePhone, parseIdentity } from "@/lib/identity";
+import { isAppleSignInAvailable } from "@/lib/native/apple-sign-in";
 import { haptics } from "@/lib/native/haptics";
 import { isNative } from "@/lib/native/platform";
 import { cn } from "@/lib/utils";
@@ -20,15 +22,20 @@ import type { Locale } from "@/lib/i18n/locales";
 import { Button } from "@/components/ui/button";
 import { Step } from "../../_components/step";
 import { useFlow } from "../../_components/flow-state";
+import { AppleButton } from "./apple-button";
 import { GoogleButton } from "./google-button";
 import { PasskeyButton } from "./passkey-button";
 import { clearOfflineCaches } from "@/lib/offline-caches";
+
+const NEVER_CHANGES = () => () => {};
 
 type Strings = {
   title: string;
   label: string;
   placeholder: string;
   changeCountry: string;
+  apple: string;
+  appleFailed: string;
   google: string;
   passkey: string;
   separator: string;
@@ -41,6 +48,7 @@ export function IdentifierStep({
   language,
   defaultCountry,
   googleEnabled,
+  appleEnabled,
   legal,
 }: {
   strings: Strings;
@@ -48,6 +56,7 @@ export function IdentifierStep({
   language: Locale;
   defaultCountry: CountryCode;
   googleEnabled: boolean;
+  appleEnabled: boolean;
   legal: ReactNode;
 }) {
   const router = useRouter();
@@ -57,6 +66,11 @@ export function IdentifierStep({
   const [value, setValue] = useState(flow.display ?? "");
   const [error, setError] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
+  const appleAvailable = useSyncExternalStore(
+    NEVER_CHANGES,
+    isAppleSignInAvailable,
+    () => false,
+  );
 
   const country = (flow.country as CountryCode | null) ?? defaultCountry;
   const isPhone = looksLikePhone(value);
@@ -154,6 +168,13 @@ export function IdentifierStep({
               {strings.separator}
             </p>
             <PasskeyButton label={strings.passkey} />
+            {/* App Store guideline 4.8: in the iOS app, Apple comes before Google. */}
+            {appleEnabled && appleAvailable && (
+              <AppleButton
+                label={strings.apple}
+                failed={strings.appleFailed}
+              />
+            )}
             {googleEnabled && <GoogleButton label={strings.google} />}
           </div>
           {legal}
