@@ -9,5 +9,6 @@ class AppViewController: CAPBridgeViewController {
         webView?.scrollView.alwaysBounceVertical = true
         bridge?.registerPluginInstance(SwipeBackPlugin())
         bridge?.registerPluginInstance(ShellBackgroundPlugin())
+        bridge?.registerPluginInstance(AppleSignInPlugin())
     }
 }
