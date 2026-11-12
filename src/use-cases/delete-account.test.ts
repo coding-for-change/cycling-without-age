@@ -4,10 +4,14 @@ import { personProfiles } from "@/features/person-profiles";
 import { rideRequests } from "@/features/ride-requests";
 import { rides } from "@/features/rides";
 import { domainCode } from "@/lib/domain-error";
+import { logger } from "@/lib/observability/logger";
 import { deleteAccount } from "./delete-account";
 
 jest.mock("@/features/accounts", () => ({
-  accounts: { deleteUser: jest.fn() },
+  accounts: { deleteUser: jest.fn(), revokeAppleSignIn: jest.fn() },
+}));
+jest.mock("@/lib/observability/logger", () => ({
+  logger: { warn: jest.fn() },
 }));
 jest.mock("@/features/passengers", () => ({
   passengers: {
@@ -62,6 +66,9 @@ beforeEach(() => {
       order.push("removeRiders");
     },
   );
+  (accounts.revokeAppleSignIn as jest.Mock).mockImplementation(async () => {
+    order.push("revokeApple");
+  });
   (accounts.deleteUser as jest.Mock).mockImplementation(async () => {
     order.push("deleteUser");
   });
@@ -95,9 +102,27 @@ describe("deleteAccount", () => {
       "cancel",
       "withdraw",
       "removeRiders",
+      "revokeApple",
       "deleteUser",
       "purge",
     ]);
+  });
+
+  it("revokes signing in with Apple before the account and its tokens are gone", async () => {
+    await deleteAccount("daughter-lena", "daughter-lena", REMOVE);
+
+    expect(accounts.revokeAppleSignIn).toHaveBeenCalledWith("daughter-lena");
+  });
+
+  it("still deletes the account when Apple cannot be reached", async () => {
+    (accounts.revokeAppleSignIn as jest.Mock).mockRejectedValue(
+      new Error("Apple token revocation failed with 503"),
+    );
+
+    await deleteAccount("daughter-lena", "daughter-lena", REMOVE);
+
+    expect(accounts.deleteUser).toHaveBeenCalledWith("daughter-lena");
+    expect(logger.warn).toHaveBeenCalled();
   });
 
   it("gives up the seats still ahead of every rider that goes with the account", async () => {

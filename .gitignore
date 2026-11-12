@@ -37,6 +37,7 @@ yarn-error.log*
 .env*
 !.env.example
 .vault_pass
+*.p8
 
 # generated
 src/generated/

@@ -15,7 +15,12 @@ import { getLocale } from "@/lib/i18n";
 import { withinRateLimit } from "@/lib/rate-limit";
 import { inviteChapterUser as invite } from "@/use-cases/invite-chapter-user";
 import { provisionAssistedPassenger } from "@/use-cases/provision-assisted-passenger";
-import { assistedPassengerInput, inviteInput } from "./schemas";
+import { accounts } from "@/features/accounts";
+import {
+  appleAuthorizationCode,
+  assistedPassengerInput,
+  inviteInput,
+} from "./schemas";
 import { deleteAccount } from "@/use-cases/delete-account";
 
 export type AccountActionResult =
@@ -140,5 +145,27 @@ export async function deleteOwnAccountAction(
   } finally {
     invalidateAccess({ userIds: [session.user.id] });
     expirePasskeys(session.user.id);
+  }
+}
+
+/** Called right after the native iOS sheet signed someone in with Apple. */
+export async function keepNativeAppleRefreshTokenAction(
+  authorizationCode: unknown,
+): Promise<{ ok: true } | { ok: false; error: "generic" }> {
+  const parsed = appleAuthorizationCode.safeParse(authorizationCode);
+  if (!parsed.success) return { ok: false, error: "generic" };
+  const session = await requireAuth();
+
+  const allowed = withinRateLimit(`apple-sign-in:${session.user.id}`, {
+    max: 5,
+    windowMs: 60_000,
+  });
+  if (!allowed) return { ok: false, error: "generic" };
+
+  try {
+    await accounts.keepNativeAppleRefreshToken(session.user.id, parsed.data);
+    return { ok: true };
+  } catch (error) {
+    return actionFailure(error, {});
   }
 }

@@ -19,6 +19,7 @@
 		A1C0DE5E2F00000000000001 /* AppViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0DE5E2F00000000000002 /* AppViewController.swift */; };
 		A1C0DE5E2F00000000000003 /* SwipeBackPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0DE5E2F00000000000004 /* SwipeBackPlugin.swift */; };
 		A1C0DE5E2F00000000000005 /* ShellBackgroundPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0DE5E2F00000000000006 /* ShellBackgroundPlugin.swift */; };
+		A1C0DE5E2F00000000000007 /* AppleSignInPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0DE5E2F00000000000008 /* AppleSignInPlugin.swift */; };
 		C7119A853050C3240031DC87 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = C7119A843050C3240031DC87 /* GoogleService-Info.plist */; };
 		C7119A883050C44C0031DC87 /* FirebaseInstallations in Frameworks */ = {isa = PBXBuildFile; productRef = C7119A873050C44C0031DC87 /* FirebaseInstallations */; };
 		C7119A8A3050C44C0031DC87 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = C7119A893050C44C0031DC87 /* FirebaseMessaging */; };
@@ -40,6 +41,7 @@
 		A1C0DE5E2F00000000000002 /* AppViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewController.swift; sourceTree = "<group>"; };
 		A1C0DE5E2F00000000000004 /* SwipeBackPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeBackPlugin.swift; sourceTree = "<group>"; };
 		A1C0DE5E2F00000000000006 /* ShellBackgroundPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellBackgroundPlugin.swift; sourceTree = "<group>"; };
+		A1C0DE5E2F00000000000008 /* AppleSignInPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInPlugin.swift; sourceTree = "<group>"; };
 		C7119A843050C3240031DC87 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		C7A1B2C33060A1000031DC87 /* Sentry.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Sentry.xcconfig; path = Config/Sentry.xcconfig; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
@@ -84,6 +86,7 @@
 				A1C0DE5E2F00000000000002 /* AppViewController.swift */,
 				A1C0DE5E2F00000000000004 /* SwipeBackPlugin.swift */,
 				A1C0DE5E2F00000000000006 /* ShellBackgroundPlugin.swift */,
+				A1C0DE5E2F00000000000008 /* AppleSignInPlugin.swift */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
@@ -253,6 +256,7 @@
 				A1C0DE5E2F00000000000001 /* AppViewController.swift in Sources */,
 				A1C0DE5E2F00000000000003 /* SwipeBackPlugin.swift in Sources */,
 				A1C0DE5E2F00000000000005 /* ShellBackgroundPlugin.swift in Sources */,
+				A1C0DE5E2F00000000000007 /* AppleSignInPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

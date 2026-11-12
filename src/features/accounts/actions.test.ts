@@ -1,9 +1,14 @@
+import { accounts } from "@/features/accounts";
 import { canDeleteOwnAccount } from "@/lib/access";
 import { requireAuth, requireChapterAdmin } from "@/lib/auth-guards";
 import { DomainError } from "@/lib/domain-error";
 import { deleteAccount } from "@/use-cases/delete-account";
 import { provisionAssistedPassenger } from "@/use-cases/provision-assisted-passenger";
-import { addAssistedPassenger, deleteOwnAccountAction } from "./actions";
+import {
+  addAssistedPassenger,
+  deleteOwnAccountAction,
+  keepNativeAppleRefreshTokenAction,
+} from "./actions";
 
 jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }));
 jest.mock("@/lib/cache-tags", () => ({
@@ -16,6 +21,9 @@ jest.mock("@/lib/auth-guards", () => ({
   requireChapterAdmin: jest.fn(),
 }));
 jest.mock("@/lib/access", () => ({ canDeleteOwnAccount: jest.fn() }));
+jest.mock("@/features/accounts", () => ({
+  accounts: { keepNativeAppleRefreshToken: jest.fn() },
+}));
 jest.mock("@/lib/avatar", () => ({
   avatarSeed: jest.fn(),
   avatarSvg: jest.fn(),
@@ -148,5 +156,44 @@ describe("deleteOwnAccountAction", () => {
       ok: false,
       error: "managesRiders",
     });
+  });
+});
+
+describe("keepNativeAppleRefreshTokenAction", () => {
+  it("keeps the token for the signed-in account only", async () => {
+    signInAs("pilot-anna");
+
+    await expect(keepNativeAppleRefreshTokenAction("code-1")).resolves.toEqual({
+      ok: true,
+    });
+    expect(accounts.keepNativeAppleRefreshToken).toHaveBeenCalledWith(
+      "pilot-anna",
+      "code-1",
+    );
+  });
+
+  it("ignores anything that is not an authorization code", async () => {
+    signInAs("pilot-anna");
+
+    await expect(
+      keepNativeAppleRefreshTokenAction({ code: "x" }),
+    ).resolves.toEqual({
+      ok: false,
+      error: "generic",
+    });
+    await expect(keepNativeAppleRefreshTokenAction("")).resolves.toEqual({
+      ok: false,
+      error: "generic",
+    });
+    expect(accounts.keepNativeAppleRefreshToken).not.toHaveBeenCalled();
+  });
+
+  it("needs a session", async () => {
+    signedIn.mockRejectedValue(new Error("unauthorized"));
+
+    await expect(keepNativeAppleRefreshTokenAction("code-1")).rejects.toThrow(
+      "unauthorized",
+    );
+    expect(accounts.keepNativeAppleRefreshToken).not.toHaveBeenCalled();
   });
 });

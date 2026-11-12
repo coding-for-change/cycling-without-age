@@ -899,6 +899,38 @@ entitlement, the Android `asset_statements` meta-data and by
 (`src/app/.well-known/*`, identifiers in `src/lib/native-app.ts`). On `localhost` there is
 nothing to associate, so native passkeys only work against the deployed domain.
 
+### Sign in with Apple
+
+better-auth's `apple` provider is configured from `lib/apple.ts` only when `APPLE_SERVICES_ID`,
+`APPLE_KEY_ID` and `APPLE_PRIVATE_KEY` (base64 of the `.p8`) are all set and the key parses;
+otherwise the button is not rendered and every other sign-in keeps working. Apple has no static
+client secret: `appleProviderOptions` exposes `clientSecret` as a getter that signs a fresh
+5-minute ES256 JWT on every read, and better-auth keeps the options object by reference.
+
+The button appears only in the iOS app (`isAppleSignInAvailable()` in
+`@/lib/native/apple-sign-in`), where App Store guideline 4.8 asks for it next to Google, and only
+in a build that has the plugin. The website and the Android app show no Apple button: on
+Android Apple's page would open in Chrome, where the WebView's state cookie is missing and a
+session would stay in the browser.
+
+In the app `AppleSignInPlugin.swift` opens the system sheet. The client sends Apple the SHA-256
+of a random nonce and better-auth the raw nonce together with the identity token (`aud` = bundle
+ID, which is why `audience` lists both client ids). `requireRawNonce` refuses a token without
+that pair, so a leaked identity token cannot be replayed. The sheet yields no refresh token, so
+`keepNativeAppleRefreshTokenAction` exchanges its one-time authorization code as the bundle ID
+and keeps the token only if the code's `sub` is the signed-in user's Apple ID.
+
+better-auth's web redirect with the Services ID stays configured on the server, though no screen
+starts it: Apple answers with a `form_post` from `https://appleid.apple.com` (hence the
+`trustedOrigins` entry and the Caddy `log_skip` for the callback, whose query carries the name and
+email), and better-auth stores the refresh token on the `account` row itself. Offering Apple on
+the website again is only a matter of showing the button there.
+
+Apple requires a deleted account's tokens to be revoked. `deleteAccount` calls
+`accounts.revokeAppleSignIn`, which hands every stored Apple refresh token back to Apple under
+both client ids (the row does not record which one issued it). When Apple cannot be reached the
+deletion still goes ahead and a warning is logged.
+
 ### Pilot status & celebration
 
 `/pilot` reads the facades rather than `session.access`, because a freshly approved pilot's

@@ -111,6 +111,9 @@ jest.mock("@/features/chapters", () => ({
 jest.mock("@/features/passengers", () => ({
   passengers: { getPassenger: jest.fn() },
 }));
+jest.mock("@/features/accounts", () => ({
+  accounts: { keepNativeAppleRefreshToken: jest.fn() },
+}));
 jest.mock("@/use-cases/delete-account", () => ({ deleteAccount: jest.fn() }));
 jest.mock("@/use-cases/hand-over-rider", () => ({ handOverRider: jest.fn() }));
 jest.mock("@/use-cases/pilot-steps", () => ({

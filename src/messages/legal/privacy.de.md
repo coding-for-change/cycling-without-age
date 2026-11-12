@@ -42,6 +42,7 @@ Diese Dienstleister verarbeiten Daten in unserem Auftrag:
 - **Google (Firebase Cloud Messaging)**: Zustellung von Push-Benachrichtigungen auf Android (USA)
 - **Apple (Push Notification Service)**: Zustellung von Push-Benachrichtigungen auf iOS (USA)
 - **Google (Anmeldung)**: Anmeldung mit Google, nur wenn Sie sie wählen (USA)
+- **Apple (Mit Apple anmelden)**: Anmeldung mit Apple, nur wenn Sie sie wählen; Apple kann statt Ihrer E-Mail-Adresse eine Weiterleitungsadresse übermitteln (USA)
 - **Functional Software, Inc. (Sentry)**: Fehlerberichte, ohne Nachrichteninhalte (EU)
 - **Mapbox, Inc.**: Karten anzeigen und Adressen finden (USA)
 

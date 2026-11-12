@@ -42,6 +42,7 @@ Disse leverandører behandler data på vores vegne:
 - **Google (Firebase Cloud Messaging)**: levering af push-notifikationer på Android (USA)
 - **Apple (Push Notification Service)**: levering af push-notifikationer på iOS (USA)
 - **Google (login)**: login med Google, kun hvis du vælger det (USA)
+- **Apple (Log ind med Apple)**: login med Apple, kun hvis du vælger det; Apple kan videregive en videresendelsesadresse i stedet for din e-mailadresse (USA)
 - **Functional Software, Inc. (Sentry)**: fejlrapporter uden beskedindhold (EU)
 - **Mapbox, Inc.**: visning af kort og søgning af adresser (USA)
 

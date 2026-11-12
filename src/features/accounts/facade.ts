@@ -1,8 +1,20 @@
 import { activity } from "@/lib/activity";
+import {
+  appleClientIds,
+  appleCredentials,
+  type AppleCredentials,
+} from "@/lib/apple";
 import { DomainError } from "@/lib/domain-error";
 import { phoneTempEmail } from "@/lib/identity";
+import { NATIVE_APP } from "@/lib/native-app";
 import { contact as contactSchema } from "./schemas";
 import type { HelperInput } from "./schemas";
+import {
+  exchangeAppleCode,
+  findAppleAccounts,
+  revokeAppleToken,
+  saveAppleRefreshToken,
+} from "./services/apple";
 import {
   createAuthUser,
   findProvenance,
@@ -101,3 +113,57 @@ export const displayNames = async (
   ids.length
     ? Object.fromEntries((await findUserNames(ids)).map((u) => [u.id, u.name]))
     : {};
+
+/**
+ * Signing in with the native iOS sheet yields only a one-time authorization
+ * code. Exchanged for a refresh token, it is what `revokeAppleSignIn` later
+ * hands back to Apple when the account is deleted. The website flow needs
+ * none of this: better-auth already keeps the refresh token it receives.
+ */
+export async function keepNativeAppleRefreshToken(
+  userId: string,
+  authorizationCode: string,
+) {
+  const linked = await findAppleAccounts(userId);
+  if (!appleCredentials || !linked.length) throw new DomainError("notFound");
+
+  const { refreshToken, subject } = await exchangeAppleCode(
+    appleCredentials,
+    NATIVE_APP.bundleId,
+    authorizationCode,
+  );
+  const account = linked.find(({ accountId }) => accountId === subject);
+  if (!account) throw new DomainError("notOwnAccount");
+
+  await saveAppleRefreshToken(account.id, refreshToken);
+}
+
+/**
+ * The account does not record whether its token came from the website or the
+ * app, so both client ids ask Apple; one of them accepting it is enough.
+ */
+const revokeAtEitherClient = async (
+  credentials: AppleCredentials,
+  refreshToken: string,
+) => {
+  const results = await Promise.allSettled(
+    appleClientIds(credentials).map((clientId) =>
+      revokeAppleToken(credentials, clientId, refreshToken),
+    ),
+  );
+  if (results.some(({ status }) => status === "fulfilled")) return;
+  throw (results[0] as PromiseRejectedResult).reason;
+};
+
+/** Apple requires apps to revoke a deleted account's tokens. */
+export async function revokeAppleSignIn(userId: string) {
+  const credentials = appleCredentials;
+  if (!credentials) return;
+
+  const refreshTokens = (await findAppleAccounts(userId)).flatMap(
+    ({ refreshToken }) => (refreshToken ? [refreshToken] : []),
+  );
+  await Promise.all(
+    refreshTokens.map((token) => revokeAtEitherClient(credentials, token)),
+  );
+}

@@ -3916,6 +3916,8 @@
       "title": "Hvor er dit telefonnummer fra?"
     },
     "identifier": {
+      "apple": "Fortsæt med Apple",
+      "appleFailed": "Login med Apple virkede ikke. Prøv igen, eller brug din e-mailadresse.",
       "changeCountry": "Skift landekode",
       "errors": {
         "empty": "Indtast en e-mailadresse eller et telefonnummer.",
