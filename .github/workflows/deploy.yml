@@ -1,32 +1,53 @@
 name: Deploy
 
+# Build both images (cwa and cwa-media-worker) from one commit, push them to the registry of
+# infra-v2, then start the deploy in infra-v2 (starts the inactive blue/green slot with the app
+# and the queue workers, waits for the health checks, switches Caddy, stops the workers of the
+# previous slot). The server side (compose file, runtime secrets, Redis, Caddy) lives in
+# infra-v2, role `cwa`.
+#
+# Until DNS points at the new server, a deploy lands on the rehearsal address
+# cwa-new.codingforchange.com. The old VPS (cwa.codingforchange.com) gets no new versions
+# any more.
+#
+# Secrets:
+#   - .config/secrets.yml (inline vault, repo secret ANSIBLE_VAULT_PASSWORD): only the
+#     build-time keys in BUILD_KEYS. Runtime secrets are in infra-v2's vault.
+#   - org secrets REGISTRY_*, DEPLOY_APP_ID, DEPLOY_APP_PRIVATE_KEY (this repo is in
+#     `github_secret_repos` of infra-v2)
+#
+# This repo is public and may not call a workflow of the private infra-v2, so the deploy
+# job starts infra-v2's deploy-dispatch.yml through the API and waits for it. The deploy
+# logs stay in infra-v2.
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
-# Keys read out of .config/secrets.yml. All are masked in the logs; RUNTIME_KEYS
-# are written to the prod .env, and a key absent from the vault is omitted there.
+# One run at a time, newer pushes wait instead of cancelling a deploy that is under way
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 env:
+  # The Docker registry of the infrastructure, the same for every project
+  REGISTRY: docker-registry.codingforchange.com
+  # Keys read out of .config/secrets.yml, all masked in the logs
   BUILD_KEYS: >-
-    REGISTRY_USERNAME REGISTRY_PASSWORD NEXT_PUBLIC_MAPBOX_TOKEN
-    SENTRY_AUTH_TOKEN NEXT_PUBLIC_SENTRY_DSN
-  RUNTIME_KEYS: >-
-    DATABASE_URL BETTER_AUTH_SECRET RESEND_API_KEY MAPBOX_TOKEN
-    GATEWAYAPI_TOKEN GATEWAYAPI_SENDER GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET
-    APPLE_SERVICES_ID APPLE_KEY_ID APPLE_PRIVATE_KEY
-    FIREBASE_SERVICE_ACCOUNT PASSKEY_ANDROID_ORIGINS ANDROID_CERT_SHA256_FINGERPRINTS
-    CHAT_MASTER_KEY SENTRY_DSN_WEB SENTRY_DSN_WORKER
-    S3_BUCKET S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY S3_MEDIA_BUCKET MEDIA_PUBLIC_URL TRAINING_REQUIRED
+    NEXT_PUBLIC_MAPBOX_TOKEN SENTRY_AUTH_TOKEN NEXT_PUBLIC_SENTRY_DSN
   SENTRY_ORG: codingforchange
   SENTRY_PROJECT: cycling-without-age
-  HEALTH_URL: https://cwa.codingforchange.com/api/health
+  APP_URL: https://cwa.codingforchange.com
 
 jobs:
-  deploy:
+  build:
+    name: Build and push the images
     runs-on: ubuntu-latest
+    outputs:
+      has_sentry_token: ${{ steps.secrets.outputs.has_sentry_token }}
 
     steps:
       - name: Checkout
@@ -34,7 +55,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Decrypt Secrets
+      - name: Decrypt the build secrets
         id: secrets
         run: |
           if ! command -v ansible-playbook &> /dev/null; then
@@ -45,7 +66,8 @@ jobs:
           echo "SECRETS_DIR=$SECRETS_DIR" >> "$GITHUB_ENV"
           echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > "$SECRETS_DIR/.vault_pass"
 
-          # Since the file uses inline !vault tags rather than full-file encryption, we use a simple playbook to parse it.
+          # The file uses inline !vault tags rather than full-file encryption, so a tiny
+          # playbook parses it.
           cat << EOF > "$SECRETS_DIR/dump.yml"
           - hosts: localhost
             gather_facts: false
@@ -58,15 +80,19 @@ jobs:
           EOF
           ansible-playbook "$SECRETS_DIR/dump.yml" --vault-password-file "$SECRETS_DIR/.vault_pass"
 
-          # Register secrets with GitHub Actions to dynamically mask them in the logs
-          for key in $BUILD_KEYS $RUNTIME_KEYS; do
-            value=$(jq -r --arg k "$key" '.[$k] // empty' "$SECRETS_DIR/decrypted.json")
-            # A mask covers one line, so a multi-line secret is masked line by line.
+          # Keep only the build keys, so nothing else from the vault is on the runner
+          jq --arg keys "$BUILD_KEYS" '. as $all | reduce ($keys | split(" ")[] | select(. != "")) as $k ({}; .[$k] = ($all[$k] // ""))' \
+            "$SECRETS_DIR/decrypted.json" > "$SECRETS_DIR/build.json"
+          rm -f "$SECRETS_DIR/decrypted.json" "$SECRETS_DIR/.vault_pass"
+
+          # Register the values with GitHub Actions to mask them in the (public) logs
+          for key in $BUILD_KEYS; do
+            value=$(jq -r --arg k "$key" '.[$k]' "$SECRETS_DIR/build.json")
             while IFS= read -r line; do
               if [ -n "$line" ]; then echo "::add-mask::$line"; fi
             done <<< "$value"
           done
-          if [ -n "$(jq -r '.SENTRY_AUTH_TOKEN // empty' "$SECRETS_DIR/decrypted.json")" ]; then
+          if [ -n "$(jq -r '.SENTRY_AUTH_TOKEN' "$SECRETS_DIR/build.json")" ]; then
             echo "has_sentry_token=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_sentry_token=false" >> "$GITHUB_OUTPUT"
@@ -82,33 +108,37 @@ jobs:
         if: steps.secrets.outputs.has_sentry_token == 'true'
         continue-on-error: true
         run: |
-          SENTRY_AUTH_TOKEN="$(jq -r '.SENTRY_AUTH_TOKEN // empty' "$SECRETS_DIR/decrypted.json")"
+          SENTRY_AUTH_TOKEN="$(jq -r '.SENTRY_AUTH_TOKEN' "$SECRETS_DIR/build.json")"
           export SENTRY_AUTH_TOKEN
           sentry release create "$SENTRY_ORG/${{ github.sha }}" --project cycling-without-age,cwa-worker
           sentry release set-commits "$SENTRY_ORG/${{ github.sha }}" --auto
 
-      # 2. Build and push the Docker image, reusing layers from earlier runs
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Expose the Actions cache to Buildx
         uses: crazy-max/ghaction-github-runtime@3cb05d89e1f492524af3d41a1c98c83bc3025124 # v3.1.0
 
-      - name: Login to registry
-        run: |
-          jq -r '.REGISTRY_PASSWORD // empty' "$SECRETS_DIR/decrypted.json" | docker login registry.infra.codingforchange.com \
-            -u "$(jq -r '.REGISTRY_USERNAME // empty' "$SECRETS_DIR/decrypted.json")" \
-            --password-stdin
+      - name: Log in to the registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Build and push Docker images
+      # Tag = commit sha only. No `latest`: the nightly prune deletes by digest and would
+      # take the running image's manifest with it. The image names must match what the
+      # infra-v2 role pulls: localhost:5000/cwa and localhost:5000/cwa-media-worker, both
+      # with the same tag.
+      - name: Build and push the images
         run: |
-          SENTRY_AUTH_TOKEN="$(jq -r '.SENTRY_AUTH_TOKEN // empty' "$SECRETS_DIR/decrypted.json")"
+          SENTRY_AUTH_TOKEN="$(jq -r '.SENTRY_AUTH_TOKEN' "$SECRETS_DIR/build.json")"
           export SENTRY_AUTH_TOKEN
 
           BUILD_ARGS=(
-            --build-arg NEXT_PUBLIC_APP_URL=https://cwa.codingforchange.com
-            --build-arg NEXT_PUBLIC_MAPBOX_TOKEN="$(jq -r '.NEXT_PUBLIC_MAPBOX_TOKEN // empty' "$SECRETS_DIR/decrypted.json")"
-            --build-arg NEXT_PUBLIC_SENTRY_DSN="$(jq -r '.NEXT_PUBLIC_SENTRY_DSN // empty' "$SECRETS_DIR/decrypted.json")"
+            --build-arg NEXT_PUBLIC_APP_URL="$APP_URL"
+            --build-arg NEXT_PUBLIC_MAPBOX_TOKEN="$(jq -r '.NEXT_PUBLIC_MAPBOX_TOKEN' "$SECRETS_DIR/build.json")"
+            --build-arg NEXT_PUBLIC_SENTRY_DSN="$(jq -r '.NEXT_PUBLIC_SENTRY_DSN' "$SECRETS_DIR/build.json")"
             --build-arg NEXT_PUBLIC_SENTRY_ENVIRONMENT=production
             --build-arg SENTRY_RELEASE=${{ github.sha }}
             --build-arg SENTRY_ORG="$SENTRY_ORG"
@@ -120,8 +150,8 @@ jobs:
             --cache-from type=gha,scope=cwa-main \
             --cache-to type=gha,scope=cwa-main,mode=max \
             "${BUILD_ARGS[@]}" \
-            -t registry.infra.codingforchange.com/cwa:${{ github.sha }} \
-            -t registry.infra.codingforchange.com/cwa:latest \
+            --provenance=false \
+            -t "$REGISTRY/cwa:${{ github.sha }}" \
             --push \
             .
 
@@ -130,97 +160,101 @@ jobs:
             --cache-from type=gha,scope=cwa-main \
             --target media-worker \
             "${BUILD_ARGS[@]}" \
-            -t registry.infra.codingforchange.com/cwa-media-worker:${{ github.sha }} \
-            -t registry.infra.codingforchange.com/cwa-media-worker:latest \
+            --provenance=false \
+            -t "$REGISTRY/cwa-media-worker:${{ github.sha }}" \
             --push \
             .
 
-      # 4. Deploy to VPS via SSH
-      - name: Setup SSH
+      - name: Clean up the secrets
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/secrets"
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # The deploy runs in the private repo infra-v2 (workflow deploy-dispatch.yml): this job
+    # starts it with a token of the GitHub App "c4c-infra-deploy" and waits for the result.
+    # Its logs stay in infra-v2; this repo needs only DEPLOY_APP_ID and DEPLOY_APP_PRIVATE_KEY.
+    steps:
+      - name: Get a token for infra-v2
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.DEPLOY_APP_ID }}
+          private-key: ${{ secrets.DEPLOY_APP_PRIVATE_KEY }}
+          owner: coding-for-change
+          repositories: infra-v2
+          permission-actions: write
+
+      - name: Start the deploy in infra-v2 and wait for it
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP: cwa
+          IMAGE_TAG: ${{ github.sha }}
+          CALLER: ${{ github.repository }}#${{ github.run_id }}-${{ github.run_attempt }}
+          INFRA_REPO: coding-for-change/infra-v2
         run: |
-          mkdir -p ~/.ssh
-          jq -r '.VPS_DEPLOY_KEY // empty' "$SECRETS_DIR/decrypted.json" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H codingforchange.com >> ~/.ssh/known_hosts
+          gh workflow run deploy-dispatch.yml --repo "$INFRA_REPO" --ref main \
+            -f app="$APP" -f image_tag="$IMAGE_TAG" -f caller="$CALLER"
 
-      - name: Copy files to VPS
-        run: |
-          SSH="ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key"
-          SCP="scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key"
-          SSH_TARGET="deploy-cwa@codingforchange.com"
-
-          # Ensure target directory exists
-          $SSH $SSH_TARGET "mkdir -p /var/www/cwa"
-
-          # Copy docker-compose (prod → docker-compose.yml on VPS)
-          $SCP docker-compose.prod.yml ${SSH_TARGET}:/var/www/cwa/docker-compose.yml
-
-          # Copy Caddyfile
-          $SCP Caddyfile ${SSH_TARGET}:/var/www/cwa/Caddyfile
-
-          # Write .env from decrypted secrets and copy to VPS
-          {
-            echo "NEXT_PUBLIC_APP_URL=https://cwa.codingforchange.com"
-            echo "BETTER_AUTH_URL=https://cwa.codingforchange.com"
-            echo "REDIS_URL=redis://redis:6379"
-            echo "EMAIL_FROM=cwa@codingforchange.com"
-            echo "IMAGE_TAG=${{ github.sha }}"
-            echo "SENTRY_ENVIRONMENT=production"
-            echo "SENTRY_RELEASE=${{ github.sha }}"
-            echo "METRICS_PORT=9464"
-            echo "S3_REGION=auto"
-          } > /tmp/.env
-          S3_ENDPOINT=$(jq -r '.S3_ENDPOINT // empty' "$SECRETS_DIR/decrypted.json" | sed -E 's#^(https://[^/]+).*#\1#')
-          if [ -n "$S3_ENDPOINT" ]; then echo "S3_ENDPOINT=$S3_ENDPOINT" >> /tmp/.env; fi
-          for key in $RUNTIME_KEYS; do
-            value=$(jq -r --arg k "$key" '.[$k] // empty' "$SECRETS_DIR/decrypted.json")
-            if [ -n "$value" ]; then echo "$key=$value" >> /tmp/.env; fi
-          done
-          $SCP /tmp/.env ${SSH_TARGET}:/var/www/cwa/.env
-          rm -f /tmp/.env
-
-      - name: Deploy on VPS
-        run: |
-          SSH="ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key deploy-cwa@codingforchange.com"
-
-          $SSH "SHA='${{ github.sha }}' bash -s" << 'EOF'
-          set -e
-          cd /var/www/cwa
-          docker compose pull
-          docker compose up -d
-          sudo systemctl reload caddy
-
-          # The Grafana annotation is best effort: a missing token never fails a deploy.
-          if [ -r /var/www/cwa/.grafana-token ]; then
-            curl -fsS -X POST http://127.0.0.1:3001/api/annotations \
-              -H "Authorization: Bearer $(cat /var/www/cwa/.grafana-token)" \
-              -H 'Content-Type: application/json' \
-              -d "{\"tags\":[\"deploy\",\"cwa\",\"production\"],\"text\":\"cwa $SHA\"}" || true
-          fi
-          EOF
-
-      - name: Smoke test the deployment
-        run: |
+          # The run name ends with "(<caller>)": find our run
+          RUN_ID=""
           for _ in $(seq 1 30); do
-            if curl -fsS "$HEALTH_URL" | grep -q '"ok":true'; then
-              echo "health ok"
-              exit 0
-            fi
+            RUN_ID=$(gh run list --repo "$INFRA_REPO" --workflow deploy-dispatch.yml \
+                --event workflow_dispatch --limit 30 --json databaseId,displayTitle \
+              | jq -r --arg c "($CALLER)" '[.[] | select(.displayTitle | endswith($c))][0].databaseId // empty')
+            [ -n "$RUN_ID" ] && break
             sleep 5
           done
-          echo "no healthy response from $HEALTH_URL"
-          exit 1
+          [ -n "$RUN_ID" ] || { echo "::error::deploy run in infra-v2 not found"; exit 1; }
+          echo "Deploy run in infra-v2 (private): https://github.com/$INFRA_REPO/actions/runs/$RUN_ID" | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - name: Finalize Sentry release
-        if: steps.secrets.outputs.has_sentry_token == 'true'
-        continue-on-error: true
+          while :; do
+            STATE=$(gh run view "$RUN_ID" --repo "$INFRA_REPO" --json status,conclusion --jq '.status + " " + .conclusion')
+            [ "${STATE%% *}" = completed ] && break
+            sleep 15
+          done
+          echo "Result: ${STATE#* }" | tee -a "$GITHUB_STEP_SUMMARY"
+          [ "${STATE#* }" = success ]
+
+  # The Sentry token is in the vault file, so the job decrypts it again (job outputs cannot
+  # carry secrets).
+  sentry:
+    name: Finalize the Sentry release
+    needs: [build, deploy]
+    if: needs.build.outputs.has_sentry_token == 'true'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Finalize and mark the deploy
         run: |
-          SENTRY_AUTH_TOKEN="$(jq -r '.SENTRY_AUTH_TOKEN // empty' "$SECRETS_DIR/decrypted.json")"
+          if ! command -v ansible-playbook &> /dev/null; then
+            pipx install ansible-core
+          fi
+          SECRETS_DIR="$RUNNER_TEMP/secrets"
+          mkdir -p "$SECRETS_DIR" && chmod 700 "$SECRETS_DIR"
+          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > "$SECRETS_DIR/.vault_pass"
+          cat << EOF > "$SECRETS_DIR/dump.yml"
+          - hosts: localhost
+            gather_facts: false
+            vars_files:
+              - $GITHUB_WORKSPACE/.config/secrets.yml
+            tasks:
+              - copy:
+                  content: "{{ {'t': SENTRY_AUTH_TOKEN} | to_json }}"
+                  dest: $SECRETS_DIR/token.json
+          EOF
+          ansible-playbook "$SECRETS_DIR/dump.yml" --vault-password-file "$SECRETS_DIR/.vault_pass" > /dev/null
+          SENTRY_AUTH_TOKEN=$(jq -r .t "$SECRETS_DIR/token.json")
+          rm -rf "$SECRETS_DIR"
+          echo "::add-mask::$SENTRY_AUTH_TOKEN"
           export SENTRY_AUTH_TOKEN
+          curl https://cli.sentry.dev/install -fsS | bash -s -- --version 0.45.0
+          export PATH="$HOME/.local/bin:$PATH"
           sentry release finalize "$SENTRY_ORG/${{ github.sha }}"
-          sentry release deploy "$SENTRY_ORG/${{ github.sha }}" production --url https://cwa.codingforchange.com
-
-      - name: Clean up Secrets
-        if: always()
-        run: |
-          rm -rf "$RUNNER_TEMP/secrets"
+          sentry release deploy "$SENTRY_ORG/${{ github.sha }}" production --url "$APP_URL"
