@@ -4,7 +4,7 @@ name: Deploy
 # infra-v2, then start the deploy in infra-v2 (starts the inactive blue/green slot with the app
 # and the queue workers, waits for the health checks, switches Caddy, stops the workers of the
 # previous slot). The server side (compose file, runtime secrets, Redis, Caddy) lives in
-# infra-v2, role `cwa`.
+# infra-v2, role `cycling_without_age`.
 #
 # Until DNS points at the new server, a deploy lands on the rehearsal address
 # cwa-new.codingforchange.com. The old VPS (cwa.codingforchange.com) gets no new versions
@@ -128,7 +128,7 @@ jobs:
 
       # Tag = commit sha only. No `latest`: the nightly prune deletes by digest and would
       # take the running image's manifest with it. The image names must match what the
-      # infra-v2 role pulls: localhost:5000/cwa and localhost:5000/cwa-media-worker, both
+      # infra-v2 role (cycling_without_age) pulls: localhost:5000/cwa and localhost:5000/cwa-media-worker, both
       # with the same tag.
       - name: Build and push the images
         run: |
@@ -191,7 +191,7 @@ jobs:
       - name: Start the deploy in infra-v2 and wait for it
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          APP: cwa
+          APP: cycling_without_age
           IMAGE_TAG: ${{ github.sha }}
           CALLER: ${{ github.repository }}#${{ github.run_id }}-${{ github.run_attempt }}
           INFRA_REPO: coding-for-change/infra-v2
