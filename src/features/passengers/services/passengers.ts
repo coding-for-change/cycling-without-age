@@ -152,9 +152,6 @@ export const findBookingAccountsOfChapters = (chapterIds: string[]) =>
     distinct: ["managedByUserId"],
   });
 
-export const countPassengersManagedBy = (managedByUserId: string) =>
-  prisma.passenger.count({ where: { managedByUserId } });
-
 export const updatePassengerOfUser = (
   userId: string,
   data: Prisma.PassengerUpdateManyMutationInput,

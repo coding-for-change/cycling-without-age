@@ -26,7 +26,6 @@ import {
 } from "@/features/passengers/services/passengers";
 
 jest.mock("@/features/passengers/services/passengers", () => ({
-  countPassengersManagedBy: jest.fn(),
   deletePassengerWithoutAccount: jest.fn(),
   findPassengersWithOtherAccountManagedBy: jest.fn(),
   setPassengerManagers: jest.fn(),

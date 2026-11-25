@@ -33,9 +33,6 @@ const footprintSelect = {
   },
 } as const;
 
-export const findCountryFootprint = (id: string) =>
-  prisma.country.findUnique({ where: { id }, select: footprintSelect });
-
 export const findCountryFootprints = (ids: string[]) =>
   prisma.country.findMany({
     where: { id: { in: ids } },
