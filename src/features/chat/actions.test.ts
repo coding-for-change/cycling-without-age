@@ -2,6 +2,8 @@ import { chat } from "@/features/chat/index";
 import { createGroupChat } from "@/use-cases/chat/create-group-chat";
 import {
   createGroupChatAction,
+  editMessageAction,
+  sendMessageAction,
   toggleReactionAction,
 } from "@/features/chat/actions";
 
@@ -25,13 +27,48 @@ jest.mock("@/use-cases/chat/create-group-chat", () => ({
 }));
 jest.mock("@/features/chat/index", () => ({
   ...jest.requireActual("@/features/chat/schemas"),
-  chat: { toggleReaction: jest.fn(async () => []) },
+  chat: {
+    toggleReaction: jest.fn(async () => []),
+    sendMessage: jest.fn(async () => ({ id: "m1" })),
+    editMessage: jest.fn(async () => ({ id: "m1" })),
+  },
 }));
 
 const toggleReaction = chat.toggleReaction as jest.Mock;
+const sendMessage = chat.sendMessage as jest.Mock;
+const editMessage = chat.editMessage as jest.Mock;
 const createGroup = createGroupChat as jest.Mock;
 
 beforeEach(() => jest.clearAllMocks());
+
+describe("sendMessageAction", () => {
+  it("refuses a message of only spaces before it reaches the facade", async () => {
+    await expect(
+      sendMessageAction({ conversationId: "c1", text: "   ", clientId: "k1" }),
+    ).resolves.toEqual({ ok: false, error: "generic" });
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+
+  it("hands the facade the trimmed text", async () => {
+    await sendMessageAction({
+      conversationId: "c1",
+      text: "  hello  ",
+      clientId: "k1",
+    });
+    expect(sendMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "hello", senderId: "user-bo" }),
+    );
+  });
+});
+
+describe("editMessageAction", () => {
+  it("refuses an edit to only spaces before it reaches the facade", async () => {
+    await expect(
+      editMessageAction({ messageId: "m1", text: " \n " }),
+    ).resolves.toEqual({ ok: false, error: "generic" });
+    expect(editMessage).not.toHaveBeenCalled();
+  });
+});
 
 describe("toggleReactionAction", () => {
   it("refuses a reaction that is not a single emoji", async () => {
