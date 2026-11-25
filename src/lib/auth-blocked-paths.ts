@@ -1,4 +1,4 @@
-const BLOCKED_PREFIXES = ["/admin/"];
+const BLOCKED_PREFIXES = ["/admin/", "/organization/"];
 
 export const isBlockedOverHttp = (
   path: string | null | undefined,

@@ -3,7 +3,6 @@ import {
   adminClient,
   customSessionClient,
   emailOTPClient,
-  organizationClient,
   phoneNumberClient,
 } from "better-auth/client/plugins";
 import { passkeyClient } from "@better-auth/passkey/client";
@@ -15,7 +14,6 @@ export const authClient = createAuthClient({
     phoneNumberClient(),
     passkeyClient(),
     adminClient(),
-    organizationClient(),
     customSessionClient<typeof auth>(),
   ],
 });

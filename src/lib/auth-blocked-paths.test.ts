@@ -14,9 +14,34 @@ const ADMIN_ENDPOINTS = [
   "/admin/revoke-user-sessions",
 ];
 
+const ORGANIZATION_ENDPOINTS = [
+  "/organization/list",
+  "/organization/list-members",
+  "/organization/get-full-organization",
+  "/organization/get-active-member",
+  "/organization/set-active",
+  "/organization/leave",
+  "/organization/remove-member",
+  "/organization/update-member-role",
+  "/organization/invite-member",
+];
+
 describe("better-auth's admin endpoints", () => {
   it.each(ADMIN_ENDPOINTS)("refuses %s over HTTP", (path) => {
     expect(isBlockedOverHttp(path, true)).toBe(true);
+  });
+
+  it.each(ORGANIZATION_ENDPOINTS)("refuses %s over HTTP", (path) => {
+    expect(isBlockedOverHttp(path, true)).toBe(true);
+  });
+
+  it("still lets the server reach the organization plugin through auth.api", () => {
+    expect(isBlockedOverHttp("/organization/list-members", false)).toBe(false);
+  });
+
+  it("keeps the organization client plugin out of the browser", () => {
+    const source = readFileSync(join(__dirname, "auth-client.ts"), "utf8");
+    expect(source).not.toContain("organizationClient");
   });
 
   it("still lets the server provision accounts through auth.api", () => {
@@ -27,7 +52,6 @@ describe("better-auth's admin endpoints", () => {
     "/passkey/verify-authentication",
     "/sign-in/email-otp",
     "/get-session",
-    "/organization/list",
   ])("leaves %s alone", (path) => {
     expect(isBlockedOverHttp(path, true)).toBe(false);
   });
