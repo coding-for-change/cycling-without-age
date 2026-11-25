@@ -61,7 +61,7 @@ src/
 │       ├── facade.ts     # FEATURE BRAIN: Internal orchestration.
 │       ├── actions.ts    # Server Actions for this feature.
 │       ├── commands.ts   # ⌘K entries this slice contributes to the admin palette.
-│       ├── index.ts      # PUBLIC API: Export ONLY the Facade and Components.
+│       ├── index.ts      # PUBLIC API: the Facade, plus schemas, types and pure modules.
 │       └── schemas.ts    # Contracts: Zod schemas and TS types.
 ├── components/           # SHARED UI: cross-route components over `lib` infra.
 │   ├── account/          # The account surface (dialog + sheet) and its sections.
@@ -77,6 +77,32 @@ src/
 ## Manifesto Rules
 - **Deep-linking into a feature's `/services` folder is a build-breaking offense.**
 - **Every Feature MUST expose its logic through a single `facade.ts`.**
+
+### What the linter enforces
+
+`boundaries/dependencies` in `eslint.config.mjs` is `default: "disallow"` over these
+elements, matched on the full path (`mode: "full"`) with the slice name captured:
+
+| Element | Files | May import |
+| --- | --- | --- |
+| `app` | `src/app/**` | `app`, `use-cases`, a slice's `index.ts` and surface, `lib`, `components/ui` |
+| `use-cases` | `src/use-cases/**` | `use-cases`, a slice's `index.ts` and surface, `lib` |
+| `worker` | `src/worker/**` | `worker`, `use-cases`, a slice's `index.ts`, `lib` (not `lib/auth*`) |
+| `feature-public` | `src/features/*/index.ts` | its own facade and surface |
+| `feature-facade` | `src/features/*/facade.ts`, `facade/**` | its own services and surface, `lib` (not `lib/auth*`) |
+| `feature-services` | `src/features/*/services/**` | its own services and surface, `lib` (not `lib/auth*`) |
+| `feature-surface` | everything else in a slice: actions, components, schemas, commands, pure modules | any slice's surface and `index.ts`, its own facade, `use-cases`, `lib`, `components/ui` |
+| `lib` | `src/lib/**` | `lib` |
+| `lib-auth` | `src/lib/auth.ts`, `src/lib/auth-guards.ts` | `lib`, a slice's `index.ts`, `use-cases` |
+
+So nothing outside a slice reaches its `services/`, a facade reaches no other slice and no
+use case, and `lib` stays below the features. Two deliberate openings: `lib-auth` reads
+features because the session's `access` object is assembled from their facades, and
+`accounts/services` may import `lib/auth` because creating a user goes through better-auth's
+own API. A slice's surface may be imported directly across slices (`@/features/rides/schemas`)
+because `index.ts` also exports the facade, which must stay out of client bundles. Test files
+are not checked. A file that matches no element (`src/components/**` outside `ui`,
+`src/hooks`, `src/emails`) is not checked either.
 
 ## Native Shell (Capacitor)
 
@@ -169,7 +195,9 @@ of one per layer it passed through.
 
 `actionFailure` in `lib/domain-error.ts` is the only door from a thrown error to a returned
 result: it `unstable_rethrow`s framework errors first, turns a `DomainError` into the error
-string the UI expects, and logs plus captures everything else.
+string the UI expects, and logs plus captures everything else. `createAttempt(codes, refresh)`
+in the same file wraps it for the common action shape: `attempt(run)` runs the work, calls
+`refresh` on success and returns `{ ok: true, ...result }`, or the mapped failure.
 
 Every log line carries `trace_id` and `span_id` read from the active Sentry span, so a line and
 the issue it belongs to meet without an id of our own. Sentry is initialised in the worker by
@@ -574,11 +602,10 @@ owns instead of inventing a second wording for the same row, which is also what 
 sidebar label and the palette label from drifting apart.
 
 `commands.ts` is now part of a slice's public surface, alongside `facade.ts` and
-`index.ts`: the `feature-facade` element pattern in `eslint.config.mjs` is
-`src/features/*/{facade,index,commands}.ts`, which is what lets `src/app` import it without
-tripping `boundaries/dependencies`. Do **not** re-export it through `index.ts` — that file
-stays the facade's door ("export ONLY the Facade and Components"), and a presentation
-registry has no business behind it.
+`index.ts`: it is a `feature-surface` file in `eslint.config.mjs`, which is what lets `src/app`
+import it without tripping `boundaries/dependencies`. Do **not** re-export it through
+`index.ts` — that file stays the facade's door, and a presentation registry has no business
+behind it.
 
 ### How the shell assembles them
 
