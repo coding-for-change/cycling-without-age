@@ -16,12 +16,6 @@ coordinated one facade and nothing else, so it collapsed into `membership.decide
 — which now owns the transaction the `Event` row commits in — and `app/admin/members/actions`
 calls that facade directly. Its old work is two listeners in the worker.
 
-> Newly qualifying for the same treatment: `manage-chapter` and `manage-country` now touch
-> only `chapters` plus the log, so both could collapse into their Actions or into the
-> `chapters` facade. Left as-is deliberately — the facade already exports thin
-> `createChapter`/`updateChapter`/`deleteChapter` wrappers, so merging them is a naming
-> decision rather than a mechanical move.
-
 
 | Use case | Facades it coordinates | Why it exists |
 | --- | --- | --- |

@@ -18,7 +18,6 @@ export type {
   ReadinessChapter,
   ReadinessGroup,
   RequiredFamily,
-  RequirementListItem,
   RequirementRelation,
   RequirementView,
   LearnerLesson,

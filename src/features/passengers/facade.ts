@@ -20,7 +20,6 @@ import type {
 import {
   findBookingAccountsOfChapters,
   countPassengersInChapters,
-  countPassengersManagedBy,
   countRosterEntriesOf,
   deletePassengerWithoutAccount,
   findPassengerById,
@@ -169,9 +168,6 @@ export async function addManagedPassengers(
     })),
   );
 }
-
-export const countPassengers = (userId: string) =>
-  countPassengersManagedBy(userId);
 
 export async function saveOwnPassenger(input: PassengerInput) {
   const data = passengerInput.parse(input);

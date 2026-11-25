@@ -45,7 +45,6 @@ import {
   findCountryAdminsOfCountries,
   findCountryByCode,
   findCountryById,
-  findCountryFootprint,
   findCountryFootprints,
   insertCountry,
   insertCountryAdmin,
@@ -161,13 +160,6 @@ const toFootprint = (row: {
     rides: total("rides"),
   };
 };
-
-export async function getCountryFootprint(
-  id: string,
-): Promise<CountryFootprint | null> {
-  const row = await findCountryFootprint(id);
-  return row ? toFootprint(row) : null;
-}
 
 export async function listCountryFootprints(ids: string[]) {
   const rows = await findCountryFootprints(ids);

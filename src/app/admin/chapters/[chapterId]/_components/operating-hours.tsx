@@ -11,7 +11,7 @@ import {
   OPERATING_HOURS,
   type OperatingWindowInput,
 } from "@/features/chapters/schemas";
-import type { ChapterClosureRow } from "@/features/chapters/facade";
+import type { ChapterClosureRow } from "@/features/chapters";
 import { clockRangeLabel, clockToMinutes } from "@/lib/clock";
 import { formatDate, type Locale as Notation } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";

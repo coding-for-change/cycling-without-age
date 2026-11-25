@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import * as Sentry from "@sentry/nextjs";
 import { accounts } from "@/features/accounts";
 import { z } from "zod";
 import { profile } from "@/features/profile";
@@ -99,8 +98,7 @@ export async function submitConsent(input: unknown): Promise<StepResult> {
 
     return onward(at.session);
   } catch (error) {
-    Sentry.captureException(error);
-    return { ok: false, error: "error" };
+    return actionFailure(error, {});
   }
 }
 

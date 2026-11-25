@@ -56,7 +56,7 @@ const seq = z.number().int().min(0);
 
 const sendInput = z.object({
   conversationId: id,
-  text: z.string().min(1),
+  text: z.string().trim().min(1),
   clientId: z.string().min(1).max(64),
   replyToId: id.optional(),
 });
@@ -88,7 +88,7 @@ export async function sendMessageAction(
   }
 }
 
-const editInput = z.object({ messageId: id, text: z.string().min(1) });
+const editInput = z.object({ messageId: id, text: z.string().trim().min(1) });
 
 export async function editMessageAction(
   input: z.input<typeof editInput>,

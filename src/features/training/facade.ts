@@ -887,13 +887,6 @@ export function videoSearchFor(course: CourseRow): CatalogueSearchInput {
   return { countryIds: [], chapterIds: [] };
 }
 
-export async function videoChoices(elementId: string) {
-  const element = await requireElement(elementId);
-  const course = await requireCourse(element.courseId);
-  const videos = await listVideosVisibleTo(videoSearchFor(course));
-  return videos.filter((video) => video.status === "ready");
-}
-
 export async function courseVideoLibrary(courseId: string) {
   const course = await requireCourse(courseId);
   return listVideosVisibleTo(videoSearchFor(course));
@@ -1590,53 +1583,6 @@ const requirementWhere = ({
     { scope: "chapter" as const, chapterId: { in: chapterIds } },
   ],
 });
-
-export type RequirementListItem = RequirementView & {
-  ownerName: string | null;
-  family: {
-    id: string;
-    scope: "global" | "country" | "chapter";
-    countryId: string | null;
-    chapterId: string | null;
-    variants: {
-      courseId: string;
-      language: string;
-      title: string;
-      published: boolean;
-    }[];
-  };
-  authority: Authority;
-};
-
-const listItemOf = (row: RequirementListRow): RequirementListItem => ({
-  ...requirementViewOf(row),
-  ownerName:
-    row.scope === "country"
-      ? (row.country?.name ?? null)
-      : row.scope === "chapter"
-        ? (row.chapter?.name ?? null)
-        : null,
-  family: {
-    id: row.family.id,
-    scope: row.family.scope,
-    countryId: row.family.countryId,
-    chapterId: row.family.chapterId,
-    variants: row.family.courses.map((course) => ({
-      courseId: course.id,
-      language: course.language,
-      title: course.title,
-      published: course.publishedAt !== null,
-    })),
-  },
-  authority: authorityOf(row),
-});
-
-export async function listRequirements(search: CatalogueSearchInput) {
-  const rows = await findRequirementList(
-    requirementWhere(catalogueSearchInput.parse(search)),
-  );
-  return rows.map(listItemOf);
-}
 
 export async function removeRequirementOf(input: RequirementInput) {
   const { owner, familyId } = requirementInput.parse(input);

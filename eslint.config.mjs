@@ -25,6 +25,8 @@ const OBSERVABILITY_IMPORTS = {
   message: "Log and measure through @/lib/observability/*.",
 };
 
+const SAME_FEATURE = { feature: "{{ from.captured.feature }}" };
+
 const NATIVE_FILES = "src/lib/native/**/*.{ts,tsx}";
 const PUSH_FILES = "src/lib/push.ts";
 const OBSERVABILITY_FILES = "src/lib/observability/**/*.{ts,tsx}";
@@ -67,16 +69,42 @@ const eslintConfig = defineConfig([
       boundaries: boundariesPlugin,
     },
     settings: {
+      "boundaries/ignore": ["**/*.test.{ts,tsx}"],
       "boundaries/elements": [
-        { type: "app", pattern: "src/app/**/*" },
-        { type: "use-cases", pattern: "src/use-cases/**/*" },
-        { type: "worker", pattern: "src/worker/**/*" },
+        { type: "app", mode: "full", pattern: "src/app/**" },
+        { type: "use-cases", mode: "full", pattern: "src/use-cases/**" },
+        { type: "worker", mode: "full", pattern: "src/worker/**" },
+        {
+          type: "feature-services",
+          mode: "full",
+          pattern: "src/features/(*)/services/**",
+          capture: ["feature"],
+        },
         {
           type: "feature-facade",
-          pattern: "src/features/*/{facade,index,commands}.ts",
+          mode: "full",
+          pattern: ["src/features/(*)/facade.ts", "src/features/(*)/facade/**"],
+          capture: ["feature"],
         },
-        { type: "feature-internal", pattern: "src/features/*/services/**/*" },
-        { type: "shared", pattern: "src/components/ui/**/*" },
+        {
+          type: "feature-public",
+          mode: "full",
+          pattern: "src/features/(*)/index.ts",
+          capture: ["feature"],
+        },
+        {
+          type: "feature-surface",
+          mode: "full",
+          pattern: "src/features/(*)/**",
+          capture: ["feature"],
+        },
+        {
+          type: "lib-auth",
+          mode: "full",
+          pattern: "src/lib/{auth,auth-guards}.ts",
+        },
+        { type: "lib", mode: "full", pattern: "src/lib/**" },
+        { type: "shared", mode: "full", pattern: "src/components/ui/**" },
       ],
     },
     rules: {
@@ -89,31 +117,102 @@ const eslintConfig = defineConfig([
             {
               from: { type: "app" },
               allow: [
+                { to: { type: "app" } },
                 { to: { type: "use-cases" } },
-                { to: { type: "feature-facade" } },
+                { to: { type: "feature-public" } },
+                { to: { type: "feature-surface" } },
+                { to: { type: "lib" } },
+                { to: { type: "lib-auth" } },
                 { to: { type: "shared" } },
               ],
             },
             {
               from: { type: "use-cases" },
-              allow: [{ to: { type: "feature-facade" } }],
+              allow: [
+                { to: { type: "use-cases" } },
+                { to: { type: "feature-public" } },
+                { to: { type: "feature-surface" } },
+                { to: { type: "lib" } },
+                { to: { type: "lib-auth" } },
+              ],
             },
             {
               // The worker is a boundary layer like actions.ts: it carries no
               // session and calls inwards, never sideways into services.
               from: { type: "worker" },
               allow: [
+                { to: { type: "worker" } },
                 { to: { type: "use-cases" } },
-                { to: { type: "feature-facade" } },
+                { to: { type: "feature-public" } },
+                { to: { type: "lib" } },
+              ],
+            },
+            {
+              from: { type: "feature-public" },
+              allow: [
+                { to: { type: "feature-facade", captured: SAME_FEATURE } },
+                { to: { type: "feature-surface", captured: SAME_FEATURE } },
               ],
             },
             {
               from: { type: "feature-facade" },
-              allow: [{ to: { type: "feature-internal" } }],
+              allow: [
+                { to: { type: "feature-facade", captured: SAME_FEATURE } },
+                { to: { type: "feature-services", captured: SAME_FEATURE } },
+                { to: { type: "feature-surface", captured: SAME_FEATURE } },
+                { to: { type: "lib" } },
+              ],
             },
             {
-              from: { type: "feature-internal" },
-              allow: [{ to: { type: "shared" } }],
+              from: { type: "feature-services" },
+              allow: [
+                { to: { type: "feature-services", captured: SAME_FEATURE } },
+                { to: { type: "feature-surface", captured: SAME_FEATURE } },
+                { to: { type: "lib" } },
+              ],
+            },
+            {
+              // Creating a user goes through better-auth's own API, which
+              // only `lib/auth` holds.
+              from: {
+                type: "feature-services",
+                captured: { feature: "accounts" },
+              },
+              allow: [{ to: { type: "lib-auth" } }],
+            },
+            {
+              // Actions, components, schemas and pure modules of a slice. They
+              // may read another slice's surface directly: its index.ts also
+              // exports the facade, which must stay out of client bundles.
+              from: { type: "feature-surface" },
+              allow: [
+                { to: { type: "feature-surface" } },
+                { to: { type: "feature-facade", captured: SAME_FEATURE } },
+                { to: { type: "feature-public" } },
+                { to: { type: "use-cases" } },
+                { to: { type: "lib" } },
+                { to: { type: "lib-auth" } },
+                { to: { type: "shared" } },
+              ],
+            },
+            {
+              from: { type: "lib" },
+              allow: [{ to: { type: "lib" } }, { to: { type: "lib-auth" } }],
+            },
+            {
+              // Session assembly is the one place infrastructure reads
+              // features: the access object comes from their facades.
+              from: { type: "lib-auth" },
+              allow: [
+                { to: { type: "lib" } },
+                { to: { type: "lib-auth" } },
+                { to: { type: "feature-public" } },
+                { to: { type: "use-cases" } },
+              ],
+            },
+            {
+              from: { type: "shared" },
+              allow: [{ to: { type: "shared" } }, { to: { type: "lib" } }],
             },
           ],
         },
