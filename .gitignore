@@ -21,7 +21,6 @@
 /build
 worker.js
 worker-instrument.js
-seed.js
 
 # misc
 .DS_Store

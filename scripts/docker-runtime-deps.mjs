@@ -1,6 +1,6 @@
 // node scripts/docker-runtime-deps.mjs <out> <entry>...
 // Merges into <out>/node_modules the packages the given bundles require at runtime, so the
-// image ships Next's traced standalone node_modules plus the worker's and seed's, never the
+// image ships Next's traced standalone node_modules plus the worker's, never the
 // full install. Prebuilt binaries for other platforms are dropped on the way.
 import { cpSync, globSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";

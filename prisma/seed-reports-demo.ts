@@ -10,7 +10,7 @@ import type {
   RideModel,
 } from "@/generated/prisma";
 
-if (process.env.NODE_ENV === "production" && !process.env.FEATURE_BRANCH) {
+if (process.env.NODE_ENV === "production") {
   throw new Error("Refusing to seed: NODE_ENV=production");
 }
 

@@ -12,18 +12,12 @@ import { defaultLocationFor } from "@/use-cases/manage-chapter";
 import { seedTraining } from "./seed-training";
 import type { ChapterRole } from "@/lib/access";
 
-if (process.env.NODE_ENV === "production" && !process.env.FEATURE_BRANCH) {
+if (process.env.NODE_ENV === "production") {
   throw new Error("Refusing to seed: NODE_ENV=production");
 }
 
-const seedMailbox = process.env.SEED_MAILBOX?.trim();
-
 function address(name: string) {
-  if (!seedMailbox) return `${name}@cwa.local`;
-  const [local, domain] = seedMailbox.split("@");
-  if (!local || !domain)
-    throw new Error("SEED_MAILBOX is not an email address");
-  return `${local}+${name}@${domain}`;
+  return `${name}@cwa.local`;
 }
 
 type CountrySeed = { code: string; name: string };
@@ -634,28 +628,8 @@ function describeRoles(persona: Persona) {
     .join(", ");
 }
 
-async function listAccounts() {
-  const existing = new Set(
-    (
-      await prisma.user.findMany({
-        where: { email: { in: PERSONAS.map((p) => p.email) } },
-        select: { email: true },
-      })
-    ).map((user) => user.email),
-  );
-  for (const persona of PERSONAS) {
-    if (existing.has(persona.email))
-      console.log(`SEED_ACCOUNT\t${persona.email}\t${describeRoles(persona)}`);
-  }
-}
-
 async function main() {
-  if (process.argv.includes("--if-empty") && (await prisma.user.count()) > 0) {
-    console.log("Database already has accounts, skipping the seed.");
-  } else {
-    await seed();
-  }
-  if (process.argv.includes("--list-accounts")) await listAccounts();
+  await seed();
 }
 
 async function seed() {
