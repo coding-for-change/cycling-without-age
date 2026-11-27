@@ -4,7 +4,7 @@
 // full install. Prebuilt binaries for other platforms are dropped on the way.
 import { cpSync, globSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
-import { basename, join } from "node:path";
+import { basename, dirname, join, relative } from "node:path";
 
 const { nodeFileTrace } = createRequire(import.meta.url)(
   "next/dist/compiled/@vercel/nft",
@@ -19,6 +19,21 @@ for (const file of fileList) {
   if (file.startsWith("node_modules/")) {
     cpSync(join(base, file), join(out, file), { verbatimSymlinks: true });
   }
+}
+
+// Packages loaded through a computed require the trace cannot see, copied whole.
+// @bull-board/api resolves @bull-board/ui/package.json inside an eval and serves the board's
+// static files from that folder; without it the worker exits with MODULE_NOT_FOUND.
+const untraced = [["@bull-board/api", "@bull-board/ui"]];
+for (const [from, pkg] of untraced) {
+  const requireFrom = createRequire(
+    join(base, "node_modules", from, "package.json"),
+  );
+  const dir = dirname(requireFrom.resolve(`${pkg}/package.json`));
+  cpSync(dir, join(out, relative(base, dir)), {
+    recursive: true,
+    verbatimSymlinks: true,
+  });
 }
 
 for (const dir of globSync(
