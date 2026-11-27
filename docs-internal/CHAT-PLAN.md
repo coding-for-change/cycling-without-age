@@ -124,7 +124,7 @@ Build order is by dependency and by what the review is most likely to send back 
 | Where | State |
 | --- | --- |
 | `CHAT_MASTER_KEY` in `.config/secrets.yml` | done 2026-09-18 |
-| `CHAT_MASTER_KEY` in `deploy.yml` / `deploy-feature.yml` | done |
+| `CHAT_MASTER_KEY` in `deploy.yml` | done |
 | `FIREBASE_SERVICE_ACCOUNT`, `GOOGLE_CLIENT_*`, `APPLE_SERVICES_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`, `GATEWAYAPI_SENDER`, `PASSKEY_ANDROID_ORIGINS`, `ANDROID_CERT_SHA256_FINGERPRINTS` in the vault | open; each is silently omitted from the prod `.env` while missing |
 | Resend sending domain verified for `EMAIL_FROM` | check after the mailer fix ships |
 | `init: true` on `app` and `worker` in `docker-compose.prod.yml` | open; stops zombie `node` children |
