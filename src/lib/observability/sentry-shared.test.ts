@@ -59,7 +59,11 @@ describe("tracesSampler", () => {
     context: Partial<Parameters<typeof tracesSampler>[0]> & { name: string },
   ) => {
     const inheritOrSampleWith = jest.fn((rate: number) => rate);
-    const rate = tracesSampler({ inheritOrSampleWith, ...context });
+    const rate = tracesSampler({
+      inheritOrSampleWith,
+      attributes: {},
+      ...context,
+    });
     return { rate, inheritOrSampleWith };
   };
 

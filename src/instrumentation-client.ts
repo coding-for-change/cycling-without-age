@@ -66,7 +66,6 @@ safely(() => {
     replaysSessionSampleRate: 0,
     replaysOnErrorSampleRate: 1,
     tunnel: "/monitoring",
-    enableLogs: true,
   });
 
   Sentry.setTag("platform", nativePlatform());

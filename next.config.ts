@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
       "scripts/**/*",
       "ios/**/*",
       "android/**/*",
+      "build/**/*",
       "coverage/**/*",
       "test-results/**/*",
       "playwright-report/**/*",
@@ -59,5 +60,5 @@ export default withSentryConfig(nextConfig, {
     finalize: false,
   },
   bundleSizeOptimizations: { excludeDebugStatements: true },
-  _experimental: { turbopackReactComponentAnnotation: { enabled: true } },
+  reactComponentAnnotation: { enabled: true },
 });

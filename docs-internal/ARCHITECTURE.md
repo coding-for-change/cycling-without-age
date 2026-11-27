@@ -41,7 +41,7 @@ listener), and two delivery queues — `email`, rate limited to Resend's budget 
 behind it. A fifth queue, `media`, carries the training-video transcodes and is consumed by
 a separate container (see Training → Worker role split).
 
-Sentry is loaded into the worker by preload (`node --require ./worker-instrument.js`), never
+Sentry is loaded into the worker by preload (`node --import ./worker-instrument.js`), never
 by an import in `index.ts`.
 
 ## Folder Structure Definition
@@ -173,7 +173,7 @@ string the UI expects, and logs plus captures everything else.
 
 Every log line carries `trace_id` and `span_id` read from the active Sentry span, so a line and
 the issue it belongs to meet without an id of our own. Sentry is initialised in the worker by
-preload (`node --require ./worker-instrument.js worker.js`) rather than a first import, because
+preload (`node --import ./worker-instrument.js worker.js`) rather than a first import, because
 the SDK must instrument pino, Prisma and ioredis before they load.
 
 Session Replay records on error only and never on `/chat` or `/admin/passengers`
@@ -208,7 +208,7 @@ Production never calls Tolgee.
   its own categories.
 - **Emails**: `getEmailStrings(locale)` in `src/emails/strings` over `messages/email`, the
   same `formatMessage` for interpolation; the worker bundle inlines the JSON.
-- **Translator mode**: a feature-branch build with `NEXT_PUBLIC_TRANSLATOR_MODE=1` makes
+- **Translator mode**: a non-production build with `NEXT_PUBLIC_TRANSLATOR_MODE=1` makes
   `loadMessages` fetch live translations from Tolgee (server-side `TOLGEE_READ_KEY`, `translations.view` only) and append
   Tolgee's invisible key marker to every `app` message; `<TranslatorTools />` in the root
   layout starts Tolgee's observer so Alt+click opens the in-context editor. The translator's
@@ -1724,9 +1724,9 @@ own gate, like `/api/chat/stream`. What makes the address safe to keep showing:
   `captureRequestError`, messages, breadcrumbs, logs. Responses are `private, no-cache`,
   `no-referrer`, `noindex`. Session Replay masks everything but translated copy and records link `href`s as
   they are, and the subscribe buttons carry the address in theirs — so the whole feed block
-  in `calendar-section.tsx` is `data-sentry-block`. The one place the path still lands is the reverse proxy's access
-  log (`Caddyfile` → `import access_log`), which is worth a `log_skip /api/calendar/*` on the
-  server.
+  in `calendar-section.tsx` is `data-sentry-block`. The one place the path could still land is the reverse proxy's access
+  log: Caddy is configured in infra-v2, and any access log added there needs a
+  `log_skip /api/calendar/*`.
 
 **What a feed may contain** is the union of `/pilot` and `/passenger`, under the same rules.
 Piloted rides follow `/pilot` exactly: the reader must hold the pilot role in some chapter

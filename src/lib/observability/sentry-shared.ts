@@ -1,8 +1,10 @@
 import type {
   Breadcrumb,
+  DataCollection,
   ErrorEvent,
   Log,
   SamplingContext,
+  TracesSamplerSamplingContext,
   TransactionEvent,
 } from "@sentry/core";
 import { CALENDAR_FEED_TOKEN, scrubObject, scrubText } from "./errors";
@@ -64,7 +66,7 @@ const targetOf = (context: SamplingContext): string | undefined => {
   return candidates.find((value): value is string => typeof value === "string");
 };
 
-export function tracesSampler(context: SamplingContext): number {
+export function tracesSampler(context: TracesSamplerSamplingContext): number {
   const op = context.attributes?.["sentry.op"];
   if (
     context.parentSampled === undefined &&
@@ -178,6 +180,20 @@ export const ignoreErrors: Array<string | RegExp> = [
   /Non-Error promise rejection captured/,
 ];
 
+export const dataCollection: DataCollection = {
+  userInfo: false,
+  cookies: false,
+  httpBodies: [],
+  urlQueryParams: false,
+  graphQL: { document: false, variables: false },
+  genAI: { inputs: false, outputs: false },
+  mcp: { inputs: false, outputs: false },
+  databaseQueryData: false,
+  queues: false,
+  stackFrameVariables: false,
+  frameContextLines: 7,
+};
+
 export type BaseOptionsInput = {
   dsn: string | undefined;
   service: Service;
@@ -196,7 +212,9 @@ export function baseOptions({
     enabled: Boolean(dsn),
     environment: environment ?? process.env.SENTRY_ENVIRONMENT ?? "development",
     release: release ?? process.env.SENTRY_RELEASE,
-    sendDefaultPii: false,
+    dataCollection,
+    attachStacktrace: false,
+    traceLifecycle: "static" as const,
     initialScope: { tags: { service } },
     tracesSampler,
     beforeSend,

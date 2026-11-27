@@ -4,11 +4,34 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      sentry:
+        patterns:
+          - "@sentry/*"
+      next:
+        patterns:
+          - "next"
+          - "eslint-config-next"
+      prisma:
+        patterns:
+          - "prisma"
+          - "@prisma/*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      docker-actions:
+        patterns:
+          - "docker/*"
+          - "crazy-max/ghaction-github-runtime"
 
   - package-ecosystem: "docker"
     directory: "/"

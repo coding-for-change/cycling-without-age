@@ -17,5 +17,4 @@ Sentry.init({
   profileSessionSampleRate: 1,
   profileLifecycle: "trace",
   includeLocalVariables: false,
-  enableLogs: true,
 });

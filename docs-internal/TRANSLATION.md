@@ -66,7 +66,9 @@ the branch has committed, so commit new keys before pulling.
 
 For someone who edits texts directly on the site:
 
-1. Run the **Deploy Feature Branch** workflow with **translator_mode** ticked. The build gets
+1. Translator mode needs a non-production deployment. The **Deploy Feature Branch** workflow
+   that offered it was removed with the move to infra-v2, so there is no one-click way to start
+   one at the moment. Such a build gets
    `NEXT_PUBLIC_TRANSLATOR_MODE=1`, and the server gets `TOLGEE_READ_KEY` / `TOLGEE_PROJECT_ID`
    from the vault. `TOLGEE_READ_KEY` is a separate project API key with only `translations.view`,
    because it sits in plain text in the feature server's `.env`. The deploy fails if it's missing.

@@ -6,10 +6,6 @@ name: Deploy
 # previous slot). The server side (compose file, runtime secrets, Redis, Caddy) lives in
 # infra-v2, role `cycling_without_age`.
 #
-# Until DNS points at the new server, a deploy lands on the rehearsal address
-# cwa-new.codingforchange.com. The old VPS (cwa.codingforchange.com) gets no new versions
-# any more.
-#
 # Secrets:
 #   - .config/secrets.yml (inline vault, repo secret ANSIBLE_VAULT_PASSWORD): only the
 #     build-time keys in BUILD_KEYS. Runtime secrets are in infra-v2's vault.
@@ -114,13 +110,13 @@ jobs:
           sentry release set-commits "$SENTRY_ORG/${{ github.sha }}" --auto
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Expose the Actions cache to Buildx
-        uses: crazy-max/ghaction-github-runtime@3cb05d89e1f492524af3d41a1c98c83bc3025124 # v3.1.0
+        uses: crazy-max/ghaction-github-runtime@04d248b84655b509d8c44dc1d6f990c879747487 # v4.0.0
 
       - name: Log in to the registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ secrets.REGISTRY_USERNAME }}
@@ -180,7 +176,7 @@ jobs:
     steps:
       - name: Get a token for infra-v2
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.DEPLOY_APP_ID }}
           private-key: ${{ secrets.DEPLOY_APP_PRIVATE_KEY }}
