@@ -190,7 +190,7 @@ reviews:
         with it. Flag PII added to a model without a reason in the PR.
 
     # ------------------------------------------------------- CI, deploy, infra --
-    - path: "{.github/**,Dockerfile,docker-compose*.yml,Caddyfile,.config/**,scripts/**,.husky/**}"
+    - path: "{.github/**,Dockerfile,docker-compose*.yml,.config/**,scripts/**,.husky/**}"
       instructions: |
         - Workflows: flag `pull_request_target`, a third-party action pinned to
           a tag instead of a SHA, `${{ github.event.* }}` or other untrusted

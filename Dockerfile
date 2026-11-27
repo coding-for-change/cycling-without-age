@@ -2,10 +2,11 @@
 
 FROM node:22-bookworm-slim AS base
 RUN apt-get update \
+  && apt-get upgrade -y \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-FROM mwader/static-ffmpeg:9.0.2@sha256:7d9bdaaf887f7e6ce6151f67325c344074b5ff1fb75316011c3376503e449a7b AS ffmpeg
+FROM mwader/static-ffmpeg:9.1@sha256:dd09509d8c2152bfa601c8c20e3dd166bde906d37951b9f7e8bbd922267f5ac9 AS ffmpeg
 
 FROM base AS deps
 WORKDIR /app
@@ -23,7 +24,7 @@ FROM base AS prisma-cli
 WORKDIR /opt/prisma
 COPY --from=prisma-version /prisma-version ./
 RUN --mount=type=cache,target=/root/.npm \
-  echo '{"private":true}' > package.json \
+  echo '{"private":true,"overrides":{"effect":"3.22.1","deepmerge-ts":"8.0.0"}}' > package.json \
   && npm install --omit=dev --no-audit --no-fund --no-package-lock "prisma@$(cat prisma-version)" \
   && find node_modules \( -name '*.map' -o -name '*.d.ts' -o -name '*.d.mts' -o -name '*.d.cts' \) -delete \
   && rm -rf node_modules/prisma/prisma-client
@@ -77,7 +78,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 RUN groupadd --system --gid 1001 nodejs \
-  && useradd --system --uid 1001 --gid nodejs --no-create-home nextjs
+  && useradd --system --uid 1001 --gid nodejs --no-create-home nextjs \
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-v* \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg
 
 COPY --link --from=builder /out/node_modules ./node_modules
 COPY --link --from=builder --chown=1001:1001 /out/app ./
@@ -102,7 +105,7 @@ USER nextjs
 
 EXPOSE 9464
 
-CMD ["node", "--require", "./worker-instrument.js", "worker.js"]
+CMD ["node", "--import", "./worker-instrument.js", "worker.js"]
 
 FROM runtime AS runner
 
