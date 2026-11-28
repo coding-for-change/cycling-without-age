@@ -4,3 +4,8 @@ export const NATIVE_APP = {
   bundleId: "com.codingforchange.cwa",
   androidPackage: "com.codingforchange.cwa",
 } as const;
+
+export const NATIVE_OFFLINE_PAGE_ORIGINS: ReadonlySet<string> = new Set([
+  "capacitor://localhost",
+  "https://localhost",
+]);

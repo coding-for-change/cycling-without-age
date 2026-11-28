@@ -110,6 +110,22 @@ the operational rules.
   `limitsNavigationsToAppBoundDomains` for a service worker; both apply only to a shell synced
   against production (the Xcode phase "Strip environment plist keys" drops the plist key
   otherwise, because it blocks the bridge on unlisted hosts).
+- **Native offline page (T-18).** When the WebView gets nothing from the server, the shell
+  shows the page written in `native/offline-page/` (Capacitor's `server.errorPath`), bundled in the app. The
+  service worker above answers first once it is installed, so this page covers a fresh
+  install, an evicted worker, a gateway error and a hung load. `scripts/build-native-offline-page.mjs`
+  runs as the `capacitor:copy:before` hook and inlines the page's stylesheet and script, the
+  `nativeOffline` messages for every locale, the colour tokens from `globals.css` and the logos
+  into one self-contained `native/build/index.html` (the gitignored `webDir`), so the page never
+  drifts from the app. It has to be one file: with a remote `server.url`, Android's
+  `WebViewLocalServer` serves only the exact error URL locally and sends every other request to
+  the network, which is gone. A main-frame 502–599 shows the page (4xx, 500 and 501
+  are the app's own error pages), and so does a load of the app host that has not answered after
+  20 s while no app page is showing yet. Android does this in `OfflinePageWebViewClient` (a
+  `BridgeWebViewClient` subclass that also hides the splash natively, because Capacitor injects
+  its JS bridge only into the app's origin), iOS in `OfflinePageNavigationDelegate` (a proxy in
+  front of Capacitor's `WebViewDelegationHandler`). The page polls `/api/health`, which allows
+  CORS only for `NATIVE_OFFLINE_PAGE_ORIGINS`, and reopens the app once the server answers.
 - **Motion.** View-transition types `push`, `pop` and `tab` drive `MemberPageShell` and the chat
   thread pane. Under `data-shell="ios"` push/pop slide like `UINavigationController`;
   elsewhere they fade. `AppViewController` keeps WKWebView's edge swipe-back off and re-enables the rubber band that

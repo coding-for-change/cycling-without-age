@@ -2833,6 +2833,19 @@
     "retry": "Prøv igen",
     "title": "Ingen forbindelse lige nu"
   },
+  "nativeOffline": {
+    "checking": "Tjekker…",
+    "notYet": "Ikke endnu. Vi bliver ved med at prøve.",
+    "offline": {
+      "description": "Cycling Without Age skal bruge internet for at åbne. Så snart du er online igen, åbner appen af sig selv.",
+      "title": "Ingen forbindelse lige nu"
+    },
+    "retry": "Prøv igen",
+    "unreachable": {
+      "description": "Cycling Without Age svarer ikke lige nu. Vi prøver igen i baggrunden, og appen åbner af sig selv, så snart den er tilbage.",
+      "title": "Vi er snart tilbage"
+    }
+  },
   "passenger": {
     "browsing": "Du kigger på {chapter}",
     "noChapter": "Du har ikke valgt en lokalafdeling endnu",

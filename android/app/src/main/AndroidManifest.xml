@@ -58,6 +58,7 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Capacitor's own BridgeWebChromeClient requests these at runtime when
          the WebView asks for a position, so /location needs no Geolocation

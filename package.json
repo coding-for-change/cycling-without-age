@@ -25,6 +25,7 @@
     "cap:android": "cap run android",
     "cap:ios:dev": "CAP_SERVER_URL=http://localhost:3000 cap run ios",
     "cap:android:dev": "CAP_SERVER_URL=http://10.0.2.2:3000 cap run android",
+    "capacitor:copy:before": "node scripts/build-native-offline-page.mjs",
     "prepare": "husky",
     "check:brand": "node scripts/check-brand-tokens.mjs",
     "test": "jest",

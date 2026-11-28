@@ -2833,6 +2833,19 @@
     "retry": "Try again",
     "title": "No connection right now"
   },
+  "nativeOffline": {
+    "checking": "Checking…",
+    "notYet": "Not yet. We'll keep trying.",
+    "offline": {
+      "description": "Cycling Without Age needs the internet to open. As soon as you're back online, the app opens by itself.",
+      "title": "No connection right now"
+    },
+    "retry": "Try again",
+    "unreachable": {
+      "description": "Cycling Without Age isn't answering right now. We keep trying in the background, and the app opens by itself as soon as it's back.",
+      "title": "We'll be right back"
+    }
+  },
   "passenger": {
     "browsing": "Browsing {chapter}",
     "noChapter": "No chapter chosen yet",

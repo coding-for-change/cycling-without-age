@@ -3,6 +3,7 @@
 import "./globals.css";
 import { ErrorFallback } from "@/components/error-fallback";
 import { Toaster } from "@/components/ui/sonner";
+import { NativeBootstrap } from "@/lib/native/native-bootstrap";
 
 export default function GlobalError({
   error,
@@ -22,6 +23,7 @@ export default function GlobalError({
           retry={retry}
         />
         <Toaster />
+        <NativeBootstrap />
       </body>
     </html>
   );

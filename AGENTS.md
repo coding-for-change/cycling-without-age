@@ -157,3 +157,14 @@ client-only: call them from client components; the wrappers are SSR-safe
   writes the keyboard height to `--keyboard-inset`, and a full-screen surface with a bottom
   composer pads itself with it and calls `lockWebViewScroll()` while mounted, so the header stays
   put (chat thread). The form accessory bar is hidden.
+- The native offline page is written in `native/offline-page/` and shown as `server.errorPath`.
+  `scripts/build-native-offline-page.mjs`, the `capacitor:copy:before` hook, bundles it with its
+  strings, colours and logos into one self-contained `native/build/index.html` (the `webDir`), so
+  `npx cap sync` rebuilds it — never hand-edit or commit `native/build/`; change the sources, the
+  `nativeOffline` messages or the tokens instead. It must stay one file: with a remote `server.url`
+  Android serves only the exact error URL from the app, so a linked stylesheet, script or image
+  never loads offline. It appears for a
+  main-frame 502–599 and for an app load that hangs 20 s before any app page has shown
+  (`OfflinePageWebViewClient` on Android, `OfflinePageNavigationDelegate` on iOS), never in the
+  middle of using the app. It may only reach `/api/health`, whose CORS allows exactly
+  `NATIVE_OFFLINE_PAGE_ORIGINS`.

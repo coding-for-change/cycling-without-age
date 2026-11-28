@@ -2833,6 +2833,19 @@
     "retry": "Erneut versuchen",
     "title": "Gerade keine Verbindung"
   },
+  "nativeOffline": {
+    "checking": "Wird geprüft…",
+    "notYet": "Noch nicht. Wir versuchen es weiter.",
+    "offline": {
+      "description": "Cycling Without Age braucht Internet zum Öffnen. Sobald die Verbindung wieder da ist, öffnet sich die App von selbst.",
+      "title": "Gerade keine Verbindung"
+    },
+    "retry": "Erneut versuchen",
+    "unreachable": {
+      "description": "Cycling Without Age antwortet gerade nicht. Wir versuchen es im Hintergrund weiter, und die App öffnet sich von selbst, sobald sie wieder erreichbar ist.",
+      "title": "Gleich wieder da"
+    }
+  },
   "passenger": {
     "browsing": "Sie sehen {chapter}",
     "noChapter": "Sie haben noch keine Ortsgruppe gewählt",

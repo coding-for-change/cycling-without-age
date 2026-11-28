@@ -3,14 +3,15 @@ import type { KeyboardResize } from "@capacitor/keyboard";
 
 const PRODUCTION_URL = "https://cwa.codingforchange.com";
 const url = process.env.CAP_SERVER_URL ?? PRODUCTION_URL;
+const isPlainHttpDevServer = url.startsWith("http://");
 
 const config: CapacitorConfig = {
   appId: "com.codingforchange.cwa",
   appName: "Cycling Without Age",
-  webDir: "native/www",
+  webDir: "native/build",
   server: {
     url,
-    cleartext: url.startsWith("http://"),
+    cleartext: isPlainHttpDevServer,
     errorPath: "index.html",
   },
   // Lets the server detect the native shell by user agent — isNativePlatform()
@@ -21,6 +22,9 @@ const config: CapacitorConfig = {
   ios: {
     limitsNavigationsToAppBoundDomains: url === PRODUCTION_URL,
     allowsLinkPreview: false,
+  },
+  android: {
+    allowMixedContent: isPlainHttpDevServer,
   },
   plugins: {
     SplashScreen: {

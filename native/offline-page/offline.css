@@ -1,0 +1,181 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--canvas);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-wrap: pretty;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.screen {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(env(safe-area-inset-top) + 20px) 20px
+    calc(env(safe-area-inset-bottom) + 20px);
+  text-align: center;
+}
+
+.logo img {
+  display: block;
+  width: 140px;
+  height: auto;
+}
+
+.message {
+  display: flex;
+  max-width: 24rem;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding-block: 20px;
+}
+
+.badge {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 8px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--mint);
+  color: var(--ink);
+}
+
+.badge-icon {
+  display: none;
+  width: 28px;
+  height: 28px;
+}
+
+body[data-reason="offline"] [data-shown-when="offline"],
+body[data-reason="unreachable"] [data-shown-when="unreachable"] {
+  display: block;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 2rem;
+  text-wrap: balance;
+}
+
+.description {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  max-width: 20rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.retry {
+  display: inline-flex;
+  width: 100%;
+  height: 56px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--red);
+  color: white;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    transform 150ms ease;
+}
+
+.retry:active {
+  background: var(--red-hover);
+  transform: scale(0.98);
+}
+
+@media (hover: hover) {
+  .retry:hover {
+    background: var(--red-hover);
+  }
+}
+
+.retry:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--ink) 50%, transparent);
+  outline-offset: 2px;
+}
+
+.retry-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.status {
+  min-height: 1.25rem;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .message,
+  .actions {
+    animation: rise-in 400ms ease-out both;
+  }
+
+  .actions {
+    animation-delay: 80ms;
+  }
+
+  .retry[aria-busy="true"] .retry-icon {
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
