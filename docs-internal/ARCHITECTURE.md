@@ -124,8 +124,11 @@ the operational rules.
   20 s while no app page is showing yet. Android does this in `OfflinePageWebViewClient` (a
   `BridgeWebViewClient` subclass that also hides the splash natively, because Capacitor injects
   its JS bridge only into the app's origin), iOS in `OfflinePageNavigationDelegate` (a proxy in
-  front of Capacitor's `WebViewDelegationHandler`). The page polls `/api/health`, which allows
-  CORS only for `NATIVE_OFFLINE_PAGE_ORIGINS`, and reopens the app once the server answers.
+  front of Capacitor's `WebViewDelegationHandler`). The page polls `/api/health` and reopens the
+  app only on a 200, so a proxy's 502 or a 503 while the database is down keeps it waiting instead
+  of bouncing between the app and the offline page. `/api/health` sends
+  `Access-Control-Allow-Origin: *` (no credentials) so the page can read that status from whatever
+  origin Capacitor gives it.
 - **Motion.** View-transition types `push`, `pop` and `tab` drive `MemberPageShell` and the chat
   thread pane. Under `data-shell="ios"` push/pop slide like `UINavigationController`;
   elsewhere they fade. `AppViewController` keeps WKWebView's edge swipe-back off and re-enables the rubber band that

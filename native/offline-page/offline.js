@@ -46,15 +46,15 @@ function showNotYet() {
   setText("status", messages.notYet);
 }
 
-async function appServerAnswers() {
+async function appServerIsHealthy() {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS);
   try {
-    await fetch(HEALTH_CHECK_URL, {
+    const response = await fetch(HEALTH_CHECK_URL, {
       cache: "no-store",
       signal: controller.signal,
     });
-    return true;
+    return response.ok;
   } catch {
     return false;
   } finally {
@@ -73,7 +73,7 @@ async function tryToReconnect({ announce }) {
   if (announce) showChecking();
   const checkingStartedAt = Date.now();
 
-  if (await appServerAnswers()) {
+  if (await appServerIsHealthy()) {
     location.replace(appUrl);
     return;
   }

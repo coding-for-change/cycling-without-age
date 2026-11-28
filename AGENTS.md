@@ -166,5 +166,6 @@ client-only: call them from client components; the wrappers are SSR-safe
   never loads offline. It appears for a
   main-frame 502–599 and for an app load that hangs 20 s before any app page has shown
   (`OfflinePageWebViewClient` on Android, `OfflinePageNavigationDelegate` on iOS), never in the
-  middle of using the app. It may only reach `/api/health`, whose CORS allows exactly
-  `NATIVE_OFFLINE_PAGE_ORIGINS`.
+  middle of using the app. It probes `/api/health` and reopens the app only on a 200, so it waits
+  through a proxy's 502 or a 503 instead of bouncing. `/api/health` therefore keeps
+  `Access-Control-Allow-Origin: *`; never narrow it to a list of app origins.
